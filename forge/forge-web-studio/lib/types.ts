@@ -56,6 +56,7 @@ export interface Task {
   createdAt: Date;
   startedAt?: Date;
   completedAt?: Date;
+  updatedAt?: Date;
   errorMessage?: string;
 }
 
