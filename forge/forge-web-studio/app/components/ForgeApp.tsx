@@ -29,7 +29,7 @@ const MODELS = [
   { id:'forge-creative',   name:'Forge Creative',    provider:'Forge',      input:0.003,   output:0.015,  markup:1.5,  badge:'🎨 Forge Creative',tier:'starter', free:false },
   // Anthropic
   { id:'claude-opus-4',    name:'Claude Opus 4',     provider:'Anthropic',  input:0.015,   output:0.075,  markup:1.35, badge:'🏆 Best',          tier:'pro',     free:false },
-  { id:'claude-sonnet-4',  name:'Claude Sonnet 4',   provider:'Anthropic',  input:0.003,   output:0.015,  markup:1.35, badge:'⚖️ Balanced',     tier:'starter', free:false },
+  { id:'claude-sonnet-4',  name:'Claude Sonnet 4',   provider:'Anthropic',  input:0.003,   output:0.015,  markup:1.35, badge:'⚖ Balanced',     tier:'starter', free:false },
   { id:'claude-haiku-4',   name:'Claude Haiku 4.5',  provider:'Anthropic',  input:0.0008,  output:0.004,  markup:1.4,  badge:'⚡ Fast',           tier:'free',    free:true  },
   // OpenAI
   { id:'gpt-4o',           name:'GPT-4o',            provider:'OpenAI',     input:0.0025,  output:0.010,  markup:1.35, badge:'🚀 Popular',        tier:'starter', free:false },
@@ -594,7 +594,7 @@ function StudioTab({ messages, input, setInput, sending, sendMessage, language, 
           <label style={{ fontSize:11, color:'#64748b', textTransform:'uppercase', letterSpacing:1 }}>Input Mode</label>
           <div style={{ display:'flex', gap:4, marginTop:6 }}>
             {(['chat','voice','sketch'] as const).map(m=>(
-              <button key={m} onClick={()=>setInputMode(m)} style={{ flex:1, padding:'6px 0', borderRadius:6, border:'1px solid', fontSize:11, cursor:'pointer', borderColor: inputMode===m?'#7C3AED':'#334155', background: inputMode===m?'#7C3AED20':'transparent', color: inputMode===m?'#a78bfa':'#94a3b8' }}>{m==='chat'?'💬':m==='voice'?'🎙️':'✏️'}</button>
+              <button key={m} onClick={()=>setInputMode(m)} style={{ flex:1, padding:'6px 0', borderRadius:6, border:'1px solid', fontSize:11, cursor:'pointer', borderColor: inputMode===m?'#7C3AED':'#334155', background: inputMode===m?'#7C3AED20':'transparent', color: inputMode===m?'#a78bfa':'#94a3b8' }}>{m==='chat'?'💬':m==='voice'?'🎙':'✏'}</button>
             ))}
           </div>
         </div>
@@ -639,7 +639,7 @@ function StudioTab({ messages, input, setInput, sending, sendMessage, language, 
         {/* Input bar */}
         <div style={{ padding:16, borderTop:'1px solid #1e293b', background:'#0f172a' }}>
           {inputMode === 'sketch' && (
-            <div style={{ height:100, background:'#1e293b', borderRadius:10, marginBottom:10, display:'flex', alignItems:'center', justifyContent:'center', color:'#475569', fontSize:13, border:'1px dashed #334155' }}>✏️ Sketch canvas — draw your idea here</div>
+            <div style={{ height:100, background:'#1e293b', borderRadius:10, marginBottom:10, display:'flex', alignItems:'center', justifyContent:'center', color:'#475569', fontSize:13, border:'1px dashed #334155' }}>✏ Sketch canvas — draw your idea here</div>
           )}
           {inputMode === 'voice' && (
             <div style={{ height:60, background:'#1e293b', borderRadius:10, marginBottom:10, display:'flex', alignItems:'center', justifyContent:'center', gap:10, color:'#475569', fontSize:13 }}>
@@ -674,7 +674,7 @@ const AGENT_MODELS = [
   'mistral-large','mistral-small',
   'forge-ultra','forge-pro','forge-fast','forge-code','forge-creative',
 ];
-const AGENT_ICONS = ['🧠','⚡','🔮','🔥','🌊','🎨','🤖','🦾','🔬','💡','🛡️','🚀'];
+const AGENT_ICONS = ['🧠','⚡','🔮','🔥','🌊','🎨','🤖','🦾','🔬','💡','🛡','🚀'];
 
 function AgentsTab({ agents, setAgents, agentMode, setAgentMode, dbAgents, loading, agentForm, setAgentForm, editingAgent, setEditingAgent, onSave, onDelete, onEdit, message, setMessage }: any) {
   const [showForm, setShowForm] = useState(false);
@@ -699,7 +699,7 @@ function AgentsTab({ agents, setAgents, agentMode, setAgentMode, dbAgents, loadi
             <div style={{ display:'flex', background:'#1e293b', borderRadius:10, padding:4 }}>
               {(['auto','manual'] as const).map(m=>(
                 <button key={m} onClick={()=>setAgentMode(m)} style={{ padding:'8px 16px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:600, fontSize:13, background: agentMode===m?'#7C3AED':'transparent', color: agentMode===m?'#fff':'#94a3b8' }}>
-                  {m==='auto'?'🤖 Auto':'⚙️ Manual'}
+                  {m==='auto'?'🤖 Auto':'⚙ Manual'}
                 </button>
               ))}
             </div>
@@ -719,7 +719,7 @@ function AgentsTab({ agents, setAgents, agentMode, setAgentMode, dbAgents, loadi
         {/* Create/Edit form */}
         {(showForm || editingAgent) && (
           <div style={{ padding:24, background:'#0f172a', borderRadius:16, border:'1px dashed #7C3AED50', marginBottom:28 }}>
-            <h3 style={{ margin:'0 0 18px', fontSize:16, fontWeight:700, color:'#a78bfa' }}>{editingAgent ? '✏️ Edit Agent' : '✨ Create New Agent'}</h3>
+            <h3 style={{ margin:'0 0 18px', fontSize:16, fontWeight:700, color:'#a78bfa' }}>{editingAgent ? '✏ Edit Agent' : '✨ Create New Agent'}</h3>
             {message && <div style={{ padding:10, borderRadius:8, marginBottom:12, fontSize:13, background: message.startsWith('✅')?'#05966915':'#DC262615', color: message.startsWith('✅')?'#4ade80':'#f87171' }}>{message}</div>}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
               <div>
@@ -770,13 +770,13 @@ function AgentsTab({ agents, setAgents, agentMode, setAgentMode, dbAgents, loadi
                       <div style={{ fontSize:11, color:'#64748b', fontFamily:'monospace' }}>{a.model}</div>
                     </div>
                     <div style={{ display:'flex', gap:4 }}>
-                      <button onClick={()=>{ onEdit(a); setShowForm(false); }} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid #334155', background:'transparent', color:'#94a3b8', cursor:'pointer', fontSize:11 }}>✏️</button>
+                      <button onClick={()=>{ onEdit(a); setShowForm(false); }} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid #334155', background:'transparent', color:'#94a3b8', cursor:'pointer', fontSize:11 }}>✏</button>
                       <button onClick={()=>onDelete(a.id)} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid #ef444440', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:11 }}>✕</button>
                     </div>
                   </div>
                   {a.description && <div style={{ fontSize:12, color:'#64748b', lineHeight:1.5, marginBottom:10 }}>{a.description.slice(0,120)}{a.description.length>120?'…':''}</div>}
                   <div style={{ display:'flex', gap:8, fontSize:11, color:'#475569' }}>
-                    <span>🌡️ {a.temperature}</span>
+                    <span>🌡 {a.temperature}</span>
                     <span>·</span>
                     <span>📏 {(a.max_tokens||2048).toLocaleString()} tokens</span>
                     <span>·</span>
@@ -1131,7 +1131,7 @@ function SettingsTab({ savedKeys, keyInputs, setKeyInputs, onSave, saving, messa
     { id:'together',   label:'Together AI', icon:'🤝', free:false, desc:'Open-source models — Llama, Qwen, DBRX',    placeholder:'…',                signup:'https://api.together.ai/settings/api-keys',      color:'#8B5CF6', monthly:'api.together.ai' },
     { id:'perplexity', label:'Perplexity',  icon:'🔍', free:false, desc:'Sonar models with web search built-in',     placeholder:'pplx-…',           signup:'https://www.perplexity.ai/settings/api',         color:'#06B6D4', monthly:'perplexity.ai/settings' },
     { id:'cohere',     label:'Cohere',      icon:'🌊', free:true,  desc:'FREE trial — Command R+, enterprise NLP',   placeholder:'…',                signup:'https://dashboard.cohere.com/api-keys',          color:'#0EA5E9', monthly:'dashboard.cohere.com' },
-    { id:'cursor',     label:'Cursor',      icon:'🖱️', free:false, desc:'Cursor Pro/Business API access',            placeholder:'…',                signup:'https://cursor.sh/settings',                     color:'#6366F1', monthly:'cursor.sh/settings' },
+    { id:'cursor',     label:'Cursor',      icon:'🖱', free:false, desc:'Cursor Pro/Business API access',            placeholder:'…',                signup:'https://cursor.sh/settings',                     color:'#6366F1', monthly:'cursor.sh/settings' },
   ];
 
   const filtered = orModels.filter((m: any) => {
