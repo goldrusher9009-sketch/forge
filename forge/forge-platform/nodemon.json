@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "ignore": ["src/**/__tests__/**", "forge.db", "forge-test.db"],
+  "exec": "ts-node --transpile-only src/index.ts"
+}

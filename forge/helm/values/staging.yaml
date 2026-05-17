@@ -1,0 +1,57 @@
+global:
+  environment: staging
+  domain: staging-forge.ai
+  namespace: forge-staging
+
+replicaCount: 2
+
+image:
+  tag: "staging-latest"
+  pullPolicy: Always
+
+serviceAccount:
+  name: "forge-platform-staging"
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 85
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+ingress:
+  enabled: true
+  hosts:
+    - host: staging-forge.ai
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: staging-forge-tls
+      hosts:
+        - staging-forge.ai
+
+env:
+  NODE_ENV: staging
+  REACT_APP_ENV: staging
+  LOG_LEVEL: debug
+
+livenessProbe:
+  initialDelaySeconds: 20
+  periodSeconds: 15
+
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10

@@ -1,0 +1,119 @@
+{{- range $service := .Values.services -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ $.Values.global.namespace | default "forge" }}
+  labels:
+    app: {{ $service.name }}
+    environment: {{ $.Values.global.environment }}
+spec:
+  replicas: {{ $service.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ $service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $service.name }}
+        environment: {{ $.Values.global.environment }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: {{ $service.name }}-sa
+      securityContext:
+        runAsNonRoot: {{ $.Values.global.securityContext.runAsNonRoot }}
+        runAsUser: {{ $.Values.global.securityContext.runAsUser }}
+        fsGroup: {{ $.Values.global.securityContext.fsGroup }}
+      containers:
+      - name: {{ $service.name }}
+        image: "{{ $service.image.repository }}:{{ $service.image.tag | default $.Chart.AppVersion }}"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: {{ $service.port }}
+          protocol: TCP
+        env:
+        - name: ENVIRONMENT
+          value: {{ $.Values.global.environment }}
+        - name: LOG_LEVEL
+          value: {{ $service.logLevel | default "info" }}
+        {{- if $service.postgresql }}
+        - name: POSTGRES_HOST
+          value: "postgresql-cluster.{{ $.Values.global.namespace | default "forge" }}.svc.cluster.local"
+        - name: POSTGRES_PORT
+          value: "5432"
+        {{- end }}
+        {{- if $service.redis }}
+        - name: REDIS_HOST
+          value: "redis-cluster.{{ $.Values.global.namespace | default "forge" }}.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        {{- end }}
+        resources:
+          requests:
+            memory: {{ $service.resources.requests.memory | default "256Mi" }}
+            cpu: {{ $service.resources.requests.cpu | default "250m" }}
+          limits:
+            memory: {{ $service.resources.limits.memory | default "512Mi" }}
+            cpu: {{ $service.resources.limits.cpu | default "500m" }}
+        livenessProbe:
+          httpGet:
+            path: {{ $service.healthCheck.path | default "/health" }}
+            port: http
+          initialDelaySeconds: {{ $service.healthCheck.initialDelay | default 30 }}
+          periodSeconds: {{ $service.healthCheck.periodSeconds | default 10 }}
+          timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 5 }}
+          failureThreshold: {{ $service.healthCheck.failureThreshold | default 3 }}
+        readinessProbe:
+          httpGet:
+            path: {{ $service.healthCheck.path | default "/health" }}
+            port: http
+          initialDelaySeconds: {{ $service.healthCheck.initialDelay | default 10 }}
+          periodSeconds: {{ $service.healthCheck.periodSeconds | default 10 }}
+          timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 5 }}
+          failureThreshold: {{ $service.healthCheck.failureThreshold | default 3 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/cache
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - {{ $service.name }}
+              topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: {{ $service.name }}
+---
+{{- end }}

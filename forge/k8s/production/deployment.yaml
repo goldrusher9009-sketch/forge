@@ -1,0 +1,384 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: forge-production
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forge-frontend-config
+  namespace: forge-production
+data:
+  REACT_APP_API_URL: "https://api.forge.ai/v1"
+  REACT_APP_ANALYTICS_ENABLED: "true"
+  REACT_APP_PERFORMANCE_MONITORING: "true"
+  REACT_APP_SENTRY_ENVIRONMENT: "production"
+  LOG_LEVEL: "info"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: forge-frontend-secrets
+  namespace: forge-production
+type: Opaque
+stringData:
+  # These should be injected via CI/CD pipeline
+  REACT_APP_CLIENT_ID: "${PROD_CLIENT_ID}"
+  REACT_APP_SENTRY_DSN: "${PROD_SENTRY_DSN}"
+  REACT_APP_ANALYTICS_ID: "${PROD_GA_ID}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forge-frontend
+  namespace: forge-production
+  labels:
+    app: forge
+    component: frontend
+    environment: production
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: forge
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: forge
+        component: frontend
+        version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - forge
+                - key: component
+                  operator: In
+                  values:
+                  - frontend
+              topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: forge-frontend
+        image: ghcr.io/forge-platform:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        envFrom:
+        - configMapRef:
+            name: forge-frontend-config
+        - secretRef:
+            name: forge-frontend-secrets
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2048Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        startupProbe:
+          httpGet:
+            path: /startup
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          failureThreshold: 30
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.cache
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: forge-frontend
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: forge-frontend
+  namespace: forge-production
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forge-frontend
+  namespace: forge-production
+  labels:
+    app: forge
+    component: frontend
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: forge
+    component: frontend
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: forge-frontend-pdb
+  namespace: forge-production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: forge
+      component: frontend
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: forge-frontend-hpa
+  namespace: forge-production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: forge-frontend
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 2
+        periodSeconds: 15
+      selectPolicy: Max
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: forge-frontend-netpol
+  namespace: forge-production
+spec:
+  podSelector:
+    matchLabels:
+      app: forge
+      component: frontend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000
+  egress:
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 80
+  - to:
+    - podSelector:
+        matchLabels:
+          app: forge
+          component: api
+    ports:
+    - protocol: TCP
+      port: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: forge-frontend-ingress
+  namespace: forge-production
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+spec:
+  tls:
+  - hosts:
+    - forge.ai
+    - www.forge.ai
+    - app.forge.ai
+    secretName: forge-tls-cert
+  rules:
+  - host: forge.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: forge-frontend
+            port:
+              number: 80
+  - host: www.forge.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: forge-frontend
+            port:
+              number: 80
+  - host: app.forge.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: forge-frontend
+            port:
+              number: 80
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: forge-frontend
+  namespace: forge-production
+  labels:
+    app: forge
+    component: frontend
+spec:
+  selector:
+    matchLabels:
+      app: forge
+      component: frontend
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: forge-production
+data:
+  forge-rules.yaml: |
+    groups:
+    - name: forge.rules
+      interval: 30s
+      rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        annotations:
+          summary: "High error rate detected"
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, http_request_duration_seconds) > 1
+        for: 5m
+        annotations:
+          summary: "High request latency detected"
+      - alert: PodMemoryUsage
+        expr: container_memory_usage_bytes{pod=~"forge-frontend.*"} > 1.8e9
+        for: 5m
+        annotations:
+          summary: "Pod memory usage is high"
+      - alert: PodCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{pod=~"forge-frontend.*"}[5m]) > 1.5
+        for: 5m
+        annotations:
+          summary: "Pod CPU usage is high"

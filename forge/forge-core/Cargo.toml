@@ -1,0 +1,65 @@
+[package]
+name = "forge-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web framework
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1.40", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+hyper = "1.1"
+
+# JSON and serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls", "json", "uuid", "chrono"] }
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID generation
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Async traits
+async-trait = "0.1"
+
+# Concurrent data structures
+dashmap = "5.5"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI and env
+clap = { version = "4.4", features = ["derive"] }
+dotenv = "0.15"
+
+[dev-dependencies]
+# Testing
+tokio-test = "0.4"
+mockall = "0.12"
+async-trait = "0.1"
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls", "json", "uuid", "chrono", "macros"] }
+
+[lib]
+name = "forge_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "forge"
+path = "src/main.rs"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
+lto = true

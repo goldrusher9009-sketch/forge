@@ -1,0 +1,235 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                  FORGE PLATFORM - COMMANDS REFERENCE                        ║
+║                     Copy & paste for quick access                           ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 1. INITIAL SETUP (Run once)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Get DigitalOcean API Token
+# Visit: https://cloud.digitalocean.com/account/api/tokens
+
+# Configure your domain (replace with YOUR domain)
+./scripts/setup-domain.sh forge.example.com
+
+# Edit terraform configuration with your API token
+nano terraform/terraform.tfvars
+
+# Initialize Terraform
+terraform init
+
+# Verify the plan
+terraform plan
+
+# Create infrastructure (takes ~5-10 minutes)
+terraform apply
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 2. DNS CONFIGURATION (After terraform apply)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# At your domain registrar, add these records:
+# 
+# A Record:
+#   Name: forge
+#   Type: A
+#   Value: <LOAD_BALANCER_IP from terraform output>
+#
+# CNAME Records:
+#   Name: www -> Value: forge.yourdomain.com
+#   Name: api -> Value: forge.yourdomain.com
+#
+# Then wait 5-15 minutes for DNS propagation
+
+# Verify DNS is working
+nslookup forge.yourdomain.com
+
+# Should show your Load Balancer IP
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 3. DEPLOY SERVICES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Configure kubectl with your cluster
+doctl kubernetes cluster kubeconfig save forge-cluster
+
+# Deploy all services
+./scripts/deploy.sh
+
+# Verify deployment is healthy
+./scripts/verify-deployment.sh
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 4. ACCESS YOUR SERVICES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Frontend (Web Studio):       https://forge.yourdomain.com
+Backend API:                https://api.forge.yourdomain.com
+API Health Check:           https://api.forge.yourdomain.com/health
+API Status:                 https://api.forge.yourdomain.com/ready
+Grafana Monitoring:         https://api.forge.yourdomain.com/grafana
+Prometheus Metrics:         https://api.forge.yourdomain.com/prometheus
+Kibana Logs:                https://api.forge.yourdomain.com/kibana
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 5. TROUBLESHOOTING COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Check pod status
+kubectl get pods -n forge
+
+# View pod logs
+kubectl logs -n forge -l app=forge-backend
+kubectl logs -n forge -l app=forge-frontend
+
+# Describe a pod for detailed info
+kubectl describe pod <pod-name> -n forge
+
+# Check service status
+kubectl get svc -n forge
+
+# View ingress configuration
+kubectl get ingress -n forge
+kubectl describe ingress forge-ingress -n forge
+
+# Check certificate status
+kubectl get certificate -n forge
+kubectl describe certificate forge-tls -n forge
+
+# View cert-manager logs
+kubectl logs -n cert-manager deploy/cert-manager -f
+
+# Check all resources in namespace
+kubectl get all -n forge
+
+# Monitor pod events in real-time
+kubectl events -n forge --watch
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 6. DATABASE COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# List your databases
+doctl databases list
+
+# Get database details
+doctl databases get YOUR_DATABASE_ID
+
+# Check database firewall rules
+doctl databases firewall list YOUR_DATABASE_ID
+
+# View database connection string
+kubectl get secret forge-secrets -n forge -o yaml | grep DATABASE_URL
+
+# Connect to PostgreSQL (if psql installed)
+psql "user=doadmin password=<password> host=<host> port=25060 dbname=forge sslmode=require"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 7. MONITORING COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Get Prometheus password
+kubectl get secret grafana-admin -n forge-monitoring -o jsonpath='{.data.admin-password}' | base64 -d
+
+# View Prometheus targets
+kubectl port-forward -n forge-monitoring svc/prometheus 9090:9090
+# Then visit: http://localhost:9090/targets
+
+# View Grafana dashboards
+kubectl port-forward -n forge-monitoring svc/grafana 3000:3000
+# Then visit: http://localhost:3000
+# Username: admin
+# Password: <from above command>
+
+# Check alert status
+kubectl get alertmanager -n forge-monitoring
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 8. SCALING & PERFORMANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# View auto-scaling status
+kubectl get hpa -n forge
+
+# Get detailed HPA metrics
+kubectl describe hpa forge-backend-hpa -n forge
+kubectl describe hpa forge-frontend-hpa -n forge
+
+# Check node status
+kubectl get nodes
+kubectl describe nodes
+
+# View resource usage
+kubectl top nodes
+kubectl top pods -n forge
+
+# See cluster events
+kubectl get events -n forge --sort-by='.lastTimestamp'
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 9. CLEANUP & TEARDOWN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Delete all Kubernetes resources (keeps infrastructure)
+kubectl delete namespace forge
+kubectl delete namespace forge-monitoring
+
+# Delete everything (infrastructure + services)
+terraform destroy
+
+# Confirm deletion
+# Type 'yes' when prompted
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 10. USEFUL TIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Watch pods deploying in real-time
+kubectl get pods -n forge --watch
+
+# Follow logs from all backend pods
+kubectl logs -n forge -l app=forge-backend -f --all-containers
+
+# Execute command in pod
+kubectl exec -it <pod-name> -n forge -- /bin/sh
+
+# Copy file from pod
+kubectl cp forge/<pod-name>:/path/to/file ./local/path
+
+# Port forward to service for local testing
+kubectl port-forward -n forge svc/forge-backend 3000:3000
+kubectl port-forward -n forge svc/forge-frontend 3001:3001
+
+# Check Kubernetes version
+kubectl version
+
+# Get cluster info
+kubectl cluster-info
+
+# Debug networking issues
+kubectl get networkpolicies -n forge
+kubectl describe networkpolicy -n forge
+
+# Check available resources
+kubectl api-resources
+
+# Save cluster state backup
+kubectl get all -A -o yaml > cluster-backup.yaml
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║ For complete documentation, see:                                           ║
+║ - QUICK_START.md (5-minute setup)                                         ║
+║ - DEPLOYMENT_SETUP.md (detailed guide)                                    ║
+║ - README.md (architecture & advanced config)                              ║
+╚════════════════════════════════════════════════════════════════════════════╝

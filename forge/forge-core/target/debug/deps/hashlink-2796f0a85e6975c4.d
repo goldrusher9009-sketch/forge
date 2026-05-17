@@ -1,0 +1,8 @@
+C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-core\target\debug\deps\hashlink-2796f0a85e6975c4.d: C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\lib.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\linked_hash_map.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\linked_hash_set.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\lru_cache.rs
+
+C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-core\target\debug\deps\libhashlink-2796f0a85e6975c4.rmeta: C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\lib.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\linked_hash_map.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\linked_hash_set.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\lru_cache.rs
+
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\lib.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\linked_hash_map.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\linked_hash_set.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hashlink-0.8.4\src\lru_cache.rs:

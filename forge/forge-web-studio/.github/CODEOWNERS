@@ -1,0 +1,45 @@
+# Forge Web Studio - CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Frontend Components & Pages
+/app @frontend-team
+/components @frontend-team
+/lib @frontend-team
+/public @frontend-team
+
+# Styling & Design System
+/styles @design-team
+/tailwind.config.ts @design-team
+/components/ui @design-team
+
+# State Management & Hooks
+/lib/hooks @frontend-team
+/lib/store @frontend-team
+
+# API Integration
+/lib/api @backend-team
+/app/api @backend-team
+
+# Infrastructure & DevOps
+/.github @devops-team
+/docker @devops-team
+/.github/workflows @devops-team
+
+# Configuration & Build
+/tsconfig.json @architects
+/next.config.ts @architects
+/jest.config.js @architects
+/eslint.config.mjs @architects
+/package.json @architects
+/README.md @architects
+
+# Tests
+/__tests__ @qa-team
+/jest.setup.js @qa-team
+
+# Documentation
+*.md @documentation-team
+/docs @documentation-team
+
+# Default reviewers
+* @frontend-team

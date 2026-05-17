@@ -1,0 +1,111 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: forge-platform
+
+commonLabels:
+  app: forge-platform
+  managed-by: helm
+  version: v1
+
+commonAnnotations:
+  deployment-tool: kustomize
+  team: platform
+
+resources:
+  - resources/namespace.yaml
+  - resources/deployment.yaml
+  - resources/service.yaml
+  - resources/ingress.yaml
+  - resources/serviceaccount.yaml
+  - resources/configmap.yaml
+  - resources/hpa.yaml
+
+configMapGenerator:
+  - name: forge-config
+    files:
+      - config/application.properties
+      - config/logging.properties
+    behavior: merge
+
+secretGenerator:
+  - name: forge-secrets
+    envs:
+      - secrets/secrets.env
+    behavior: merge
+
+images:
+  - name: forge-frontend
+    newName: ghcr.io/forge-platform/frontend
+    newTag: latest
+  - name: forge-api
+    newName: ghcr.io/forge-platform/api
+    newTag: latest
+
+replicas:
+  - name: forge-frontend
+    count: 1
+  - name: forge-api
+    count: 1
+
+vars:
+  - name: DEPLOYMENT_NAMESPACE
+    objref:
+      kind: Service
+      name: forge-frontend
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.namespace
+
+patches:
+  - target:
+      kind: Deployment
+      name: forge-frontend
+    patch: |-
+      - op: replace
+        path: /spec/template/metadata/labels/version
+        value: $(IMAGE_TAG)
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: forge-config
+      fieldpath: data.application\.defaults.DEFAULT_PAGE_SIZE
+    targets:
+      - select:
+          kind: Deployment
+        fieldPaths:
+          - spec.template.spec.containers[].env[name=DEFAULT_PAGE_SIZE].value
+
+# HPA configuration references
+# These will be applied per environment in overlays
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: forge-frontend
+    spec:
+      template:
+        metadata:
+          labels:
+            tier: frontend
+            version: v1
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: forge-api
+    spec:
+      template:
+        metadata:
+          labels:
+            tier: backend
+            version: v1
+
+# Kustomization metadata
+metadata:
+  name: forge-platform-base
+  description: Base Kustomization for Forge Platform Kubernetes manifests
+  labels:
+    kustomize.config.k8s.io/needs-hash: "true"

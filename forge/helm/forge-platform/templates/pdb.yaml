@@ -1,0 +1,16 @@
+{{- range $service := .Values.services -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $service.name }}-pdb
+  namespace: {{ $.Values.global.namespace | default "forge" }}
+  labels:
+    app: {{ $service.name }}
+    environment: {{ $.Values.global.environment }}
+spec:
+  minAvailable: {{ $service.podDisruptionBudget.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ $service.name }}
+---
+{{- end }}

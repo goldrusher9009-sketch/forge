@@ -1,0 +1,40 @@
+# Forge Platform - CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Frontend & UI
+/src/api/handlers/ui @frontend-team
+/src/api/routes @frontend-team
+
+# Core Business Logic
+/src/core @backend-team
+/src/core/queue @backend-team
+/src/core/agents @backend-team
+/src/core/workflows @backend-team
+
+# Infrastructure & DevOps
+/.github @devops-team
+/docker @devops-team
+/k8s @devops-team
+/.github/workflows @devops-team
+
+# Configuration & Build
+/tsconfig.json @architects
+/jest.config.js @architects
+/.eslintrc.json @architects
+/package.json @architects
+/README.md @architects
+
+# Tests
+/src/__tests__ @qa-team
+/jest.setup.js @qa-team
+
+# API Middleware
+/src/api/middleware @security-team
+/src/api/middleware/auth.ts @security-team
+
+# Documentation
+*.md @documentation-team
+/docs @documentation-team
+
+# Default reviewers for any files not matching above
+* @backend-team

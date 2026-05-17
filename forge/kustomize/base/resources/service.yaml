@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: forge-frontend
+  namespace: forge-platform
+  labels:
+    app: forge-frontend
+    version: v1
+  annotations:
+    description: "Service for Forge Frontend application"
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+    - name: metrics
+      port: 3001
+      targetPort: 3001
+      protocol: TCP
+  selector:
+    app: forge-frontend
+  sessionAffinity: None
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forge-api
+  namespace: forge-platform
+  labels:
+    app: forge-api
+    version: v1
+  annotations:
+    description: "Service for Forge API application"
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
+    - name: metrics
+      port: 8001
+      targetPort: 8001
+      protocol: TCP
+  selector:
+    app: forge-api
+  sessionAffinity: None
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forge-postgres
+  namespace: forge-platform
+  labels:
+    app: forge-postgres
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: forge-postgres
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forge-redis
+  namespace: forge-platform
+  labels:
+    app: forge-redis
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app: forge-redis

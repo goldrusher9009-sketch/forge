@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: forge
+  labels:
+    name: forge
+    environment: production
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: forge-monitoring
+  labels:
+    name: forge-monitoring
+    environment: production

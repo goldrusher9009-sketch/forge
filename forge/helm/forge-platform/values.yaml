@@ -1,0 +1,479 @@
+# Default values for forge-platform Helm chart
+# This is a YAML-formatted file declaring variables to be passed into templates
+
+# Global configuration
+global:
+  domain: forge-platform.local
+  environment: production
+  region: us-east-1
+  
+  # Container registry configuration
+  imageRegistry: gcr.io
+  imagePullSecrets: []
+  
+  # TLS/SSL configuration
+  tls:
+    enabled: true
+    certificateIssuer: letsencrypt-prod
+    
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+# Forge API service configuration
+forgeApi:
+  enabled: true
+  replicaCount: 3
+  
+  image:
+    repository: forge/api
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    annotations: {}
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: api.forge-platform.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: forge-api-tls
+        hosts:
+          - api.forge-platform.local
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 2
+  
+  env:
+    - name: LOG_LEVEL
+      value: "info"
+    - name: DATABASE_POOL_SIZE
+      value: "20"
+    - name: CACHE_TTL_SECONDS
+      value: "3600"
+  
+  # Pod Disruption Budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  
+  # Network Policy
+  networkPolicy:
+    enabled: true
+    ingress:
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+    egress:
+      - to:
+        - namespaceSelector: {}
+      - ports:
+        - protocol: TCP
+          port: 5432
+
+# Forge Frontend service configuration
+forgeFrontend:
+  enabled: true
+  replicaCount: 3
+  
+  image:
+    repository: forge/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: forge-platform.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: forge-frontend-tls
+        hosts:
+          - forge-platform.local
+  
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  
+  # Cache configuration
+  cache:
+    enabled: true
+    maxAge: 3600
+    sMaxAge: 86400
+
+# Authentication service configuration
+forgeAuth:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: forge/auth
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 8081
+    targetPort: 8081
+  
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 75
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  
+  # OAuth2 configuration
+  oauth2:
+    enabled: true
+    providers:
+      - google
+      - github
+  
+  # JWT configuration
+  jwt:
+    issuer: https://forge-platform.local
+    expirationSeconds: 3600
+    refreshExpirationSeconds: 604800
+
+# PostgreSQL operator configuration
+postgresOperator:
+  enabled: true
+  
+  replicas: 2
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+# PostgreSQL cluster configuration
+postgresql:
+  enabled: true
+  
+  clusterName: forge-pg-cluster
+  
+  replicas: 3
+  
+  storage:
+    size: 100Gi
+    storageClassName: fast-ssd
+  
+  postgresql:
+    version: "14"
+    maxConnections: 200
+    sharedBuffers: "256MB"
+    effectiveCacheSize: "1GB"
+    maintenanceWorkMem: "64MB"
+    checkpointCompletionTarget: 0.9
+    walLevel: logical
+    maxWalSenders: 3
+    maxReplicationSlots: 3
+  
+  backup:
+    enabled: true
+    retentionDays: 30
+    schedule: "0 2 * * *"
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Redis operator configuration
+redisOperator:
+  enabled: true
+  
+  replicas: 1
+  
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "250m"
+
+# Redis cluster configuration
+redis:
+  enabled: true
+  
+  clusterName: forge-redis-cluster
+  
+  replicas: 3
+  
+  memory: "4Gi"
+  
+  storage:
+    size: 50Gi
+    storageClassName: fast-ssd
+  
+  persistence:
+    enabled: true
+    appendonly: "yes"
+    appendfsync: "everysec"
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Elasticsearch operator configuration
+elasticsearchOperator:
+  enabled: true
+  
+  replicas: 1
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+# Elasticsearch cluster configuration
+elasticsearch:
+  enabled: true
+  
+  clusterName: forge-es-cluster
+  
+  nodeSets:
+    - name: data
+      count: 3
+      config:
+        node.roles: ["data", "ingest"]
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: fast-ssd
+            resources:
+              requests:
+                storage: 100Gi
+      podTemplate:
+        spec:
+          containers:
+          - name: elasticsearch
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+    
+    - name: master
+      count: 3
+      config:
+        node.roles: ["master"]
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: fast-ssd
+            resources:
+              requests:
+                storage: 10Gi
+      podTemplate:
+        spec:
+          containers:
+          - name: elasticsearch
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Monitoring and observability
+monitoring:
+  enabled: true
+  
+  prometheus:
+    enabled: true
+    retention: 15d
+    storageSize: 50Gi
+  
+  grafana:
+    enabled: true
+    adminPassword: ""  # Must be set via values override
+    persistence:
+      enabled: true
+      size: 10Gi
+  
+  alerting:
+    enabled: true
+    rules:
+      - alert: PodHighMemoryUsage
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9
+        for: 5m
+      - alert: PodHighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total[5m]) > 0.9
+        for: 5m
+
+# Logging configuration
+logging:
+  enabled: true
+  
+  fluentd:
+    enabled: true
+    image: fluent/fluentd-kubernetes-daemonset:v1-debian-elasticsearch
+  
+  elasticsearch:
+    host: elasticsearch
+    port: 9200
+    logstashFormat: true
+    includeTagKey: true
+    tagKey: _fluentd_tag
+
+# Networking
+networkPolicies:
+  enabled: true
+  
+  defaultDeny: true
+  
+  allowDNS: true
+
+# RBAC configuration
+rbac:
+  enabled: true
+  
+  serviceAccounts:
+    forgeApi:
+      create: true
+      name: forge-api
+    forgeFrontend:
+      create: true
+      name: forge-frontend
+    forgeAuth:
+      create: true
+      name: forge-auth
+
+# Security policies
+securityPolicies:
+  enabled: true
+  
+  podSecurityPolicy: restricted
+  
+  networkPolicies: true
+  
+  rbacEnabled: true
+
+# Resource quotas and limits
+resourceQuotas:
+  enabled: true
+  
+  compute:
+    requests:
+      cpu: "100"
+      memory: "200Gi"
+    limits:
+      cpu: "200"
+      memory: "400Gi"
+  
+  pods: 500
+  services: 100
+
+# Backup and disaster recovery
+backupRecovery:
+  enabled: true
+  
+  schedule: "0 2 * * *"
+  retentionDays: 30
+  
+  volumes:
+    - name: database
+      type: postgresql
+    - name: cache
+      type: redis
+    - name: search
+      type: elasticsearch

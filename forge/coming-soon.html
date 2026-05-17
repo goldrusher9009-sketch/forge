@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forge - The Future of Team Collaboration</title>
+    <meta name="description" content="Forge is coming soon. The all-in-one platform for distributed teams to collaborate seamlessly.">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary-light);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .hero {
+            max-width: 800px;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 10vw, 4rem);
+            color: white;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            font-weight: 800;
+        }
+
+        h1 .highlight {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            margin-bottom: 2rem;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        .value-props {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+            margin-top: 2rem;
+        }
+
+        .prop {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .prop:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+
+        .prop-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prop h3 {
+            color: white;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .prop p {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .signup-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .signup-section h2 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input[type="email"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="email"]::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        input[type="email"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.85rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .countdown {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .countdown p {
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .countdown-timer {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .countdown-item {
+            text-align: center;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--primary);
+            min-width: 70px;
+        }
+
+        .countdown-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            display: block;
+        }
+
+        .countdown-label {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+
+        .success-message {
+            display: none;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgb(34, 197, 94);
+            color: rgb(134, 239, 172);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        footer {
+            padding: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: white;
+        }
+
+        .footer-links {
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            margin: 0 1rem;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .tagline {
+                font-size: 1rem;
+            }
+
+            .value-props {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo">Forge<span>.</span></a>
+        <div class="social-links">
+            <a href="https://twitter.com" title="Twitter" aria-label="Follow on Twitter">𝕏</a>
+            <a href="https://linkedin.com" title="LinkedIn" aria-label="Connect on LinkedIn">in</a>
+            <a href="https://github.com" title="GitHub" aria-label="Follow on GitHub">⚙️</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero">
+            <h1>The Future of <span class="highlight">Team Collaboration</span> is Here</h1>
+            <p class="tagline">Forge brings distributed teams together with real-time collaboration, seamless integrations, and intelligent automation. All in one platform.</p>
+        </div>
+
+        <div class="value-props">
+            <div class="prop">
+                <div class="prop-icon">⚡</div>
+                <h3>Real-Time Sync</h3>
+                <p>Instant collaboration across your entire distributed team without delays or conflicts.</p>
+            </div>
+            <div class="prop">
+                <div class="prop-icon">🔒</div>
+                <h3>Enterprise Security</h3>
+                <p>Bank-grade encryption, SSO, audit logs, and compliance with SOC 2, GDPR, and more.</p>
+            </div>
+            <div class="prop">
+                <div class="prop-icon">🚀</div>
+                <h3>Lightning Fast</h3>
+                <p>Optimized for speed with sub-100ms latency and automatic performance scaling.</p>
+            </div>
+        </div>
+
+        <div class="signup-section">
+            <h2>Be the First to Know</h2>
+            <div class="success-message" id="successMessage">
+                ✓ Thanks! We'll notify you when Forge launches.
+            </div>
+            <form id="emailForm" onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <input type="email" placeholder="your@email.com" required id="emailInput">
+                </div>
+                <button type="submit" id="submitBtn">Notify Me</button>
+            </form>
+
+            <div class="countdown">
+                <p>Launching Soon</p>
+                <div class="countdown-timer">
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="days">00</span>
+                        <span class="countdown-label">Days</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="hours">00</span>
+                        <span class="countdown-label">Hours</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="minutes">00</span>
+                        <span class="countdown-label">Minutes</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="seconds">00</span>
+                        <span class="countdown-label">Seconds</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="#privacy">Privacy Policy</a>
+            <a href="#terms">Terms of Service</a>
+            <a href="mailto:hello@forge.app">Contact Us</a>
+        </div>
+        <p>&copy; 2026 Forge. All rights reserved. Coming to a distributed team near you.</p>
+    </footer>
+
+    <script>
+        // Update countdown timer
+        function updateCountdown() {
+            // Set launch date to June 15, 2026
+            const launchDate = new Date('2026-06-15T00:00:00').getTime();
+            const now = new Date().getTime();
+            const distance = launchDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('days').textContent = String(days).padStart(2, '0');
+            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+        }
+
+        // Handle email signup
+        function handleSignup(event) {
+            event.preventDefault();
+            const email = document.getElementById('emailInput').value;
+            const form = document.getElementById('emailForm');
+            const successMessage = document.getElementById('successMessage');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Disable button and show success
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Email Saved!';
+            successMessage.style.display = 'block';
+            form.style.opacity = '0.6';
+
+            // In production, this would send to your backend
+            console.log('Email signup:', email);
+
+            // Reset after 5 seconds
+            setTimeout(() => {
+                form.reset();
+                form.style.opacity = '1';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Notify Me';
+                successMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Initialize countdown
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>

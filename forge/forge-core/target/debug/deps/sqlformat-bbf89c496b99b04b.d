@@ -1,0 +1,10 @@
+C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-core\target\debug\deps\sqlformat-bbf89c496b99b04b.d: C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\lib.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\formatter.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\indentation.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\inline_block.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\params.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\tokenizer.rs
+
+C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-core\target\debug\deps\libsqlformat-bbf89c496b99b04b.rmeta: C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\lib.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\formatter.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\indentation.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\inline_block.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\params.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\tokenizer.rs
+
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\lib.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\formatter.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\indentation.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\inline_block.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\params.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlformat-0.2.6\src\tokenizer.rs:

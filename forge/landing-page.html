@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forge AI - Your AI Infrastructure, Fully Autonomous</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes blob {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        
+        @keyframes blob-delay {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-30px, 50px) scale(0.9); }
+            66% { transform: translate(20px, -20px) scale(1.1); }
+        }
+        
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+            animation: blob-delay 7s infinite 2s;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+        }
+        
+        .bg-clip-text {
+            background-clip: text;
+        }
+        
+        .text-transparent {
+            color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- HERO SECTION -->
+    <section class="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+        <!-- Background animation elements -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+            <div class="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div class="relative max-w-6xl mx-auto px-6 py-32 flex items-center justify-center min-h-screen flex-col">
+            <div class="text-center space-y-6 mb-12">
+                <h1 class="text-5xl md:text-7xl font-bold leading-tight">
+                    Your AI Infrastructure,
+                    <br />
+                    <span class="bg-gradient-primary bg-clip-text text-transparent">
+                        Fully Autonomous
+                    </span>
+                </h1>
+
+                <p class="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                    Deploy, monitor, and scale AI agents without the infrastructure headache. 
+                    Forge handles the complexity so you focus on innovation.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition">
+                        Get Started Free
+                    </button>
+                    <button class="border border-gray-400 hover:border-white text-white px-8 py-4 rounded-lg font-semibold transition">
+                        Watch Demo
+                    </button>
+                </div>
+
+                <!-- Social proof -->
+                <div class="pt-8">
+                    <p class="text-sm text-gray-400 mb-3">Trusted by forward-thinking teams</p>
+                    <div class="flex gap-6 justify-center items-center flex-wrap">
+                        <span class="text-gray-500 font-medium">TechCorp</span>
+                        <span class="text-gray-500 font-medium">InnovateLabs</span>
+                        <span class="text-gray-500 font-medium">FutureAI</span>
+                        <span class="text-gray-500 font-medium">DataFlow</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero visualization -->
+            <div class="w-full mt-16 aspect-video bg-gradient-to-b from-purple-500/20 to-transparent rounded-2xl border border-purple-500/30 flex items-center justify-center">
+                <div class="text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-purple-600/30 border border-purple-500/50 flex items-center justify-center">
+                        <span class="text-2xl">⚙️</span>
+                    </div>
+                    <p class="text-gray-400">AI Agent Orchestration Visualization</p>
+                </div>
+            </div>
+
+            <!-- Scroll indicator -->
+            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="py-24 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    Everything You Need for AI Success
+                </h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Built with the hard-earned lessons from thousands of production deployments
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="p-8 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300">
+                    <div class="text-4xl mb-4">🚀</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Deploy Instantly</h3>
+                    <p class="text-gray-600 mb-4">Get your AI agents running in minutes, not months. Pre-configured infrastructure handles scaling automatically.</p>
+                </div>
+
+                <div class="p-8 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300">
+                    <div class="text-4xl mb-4">📊</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Real-time Monitoring</h3>
+                    <p class="text-gray-600 mb-4">Track agent performance, logs, and metrics in a beautiful dashboard. Spot issues before they become problems.</p>
+                </div>
+
+                <div class="p-8 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300">
+                    <div class="text-4xl mb-4">🔄</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Seamless Integration</h3>
+                    <p class="text-gray-600 mb-4">Connect to your existing APIs, databases, and services. No vendor lock-in, full control.</p>
+                </div>
+
+                <div class="p-8 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300">
+                    <div class="text-4xl mb-4">🛡️</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Enterprise Security</h3>
+                    <p class="text-gray-600 mb-4">Bank-level encryption, audit trails, and compliance frameworks. Your data, your rules.</p>
+                </div>
+
+                <div class="p-8 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Auto-Scaling</h3>
+                    <p class="text-gray-600 mb-4">Handle millions of requests without manual intervention. Performance at any scale.</p>
+                </div>
+
+                <div class="p-8 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300">
+                    <div class="text-4xl mb-4">🤖</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Agent Orchestration</h3>
+                    <p class="text-gray-600 mb-4">Coordinate multiple agents, manage dependencies, and optimize workflows automatically.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    How It Works
+                </h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Five simple steps from idea to production AI
+                </p>
+            </div>
+
+            <div class="space-y-8">
+                <div class="flex gap-8 items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-primary text-white font-bold text-xl">1</div>
+                    </div>
+                    <div class="flex-1 pt-2">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Define Your Agent</h3>
+                        <p class="text-lg text-gray-600">Specify agent behavior, capabilities, and constraints in simple YAML or Python.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-8 items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-primary text-white font-bold text-xl">2</div>
+                    </div>
+                    <div class="flex-1 pt-2">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Connect Your Tools</h3>
+                        <p class="text-lg text-gray-600">Link to APIs, databases, and services your agent needs to operate.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-8 items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-primary text-white font-bold text-xl">3</div>
+                    </div>
+                    <div class="flex-1 pt-2">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Deploy & Test</h3>
+                        <p class="text-lg text-gray-600">Push to production with one click. Test in sandbox mode before going live.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-8 items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-primary text-white font-bold text-xl">4</div>
+                    </div>
+                    <div class="flex-1 pt-2">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Monitor & Optimize</h3>
+                        <p class="text-lg text-gray-600">Watch your agent perform in real-time. Get AI-powered optimization suggestions.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-8 items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-primary text-white font-bold text-xl">5</div>
+                    </div>
+                    <div class="flex-1 pt-2">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Scale Confidently</h3>
+                        <p class="text-lg text-gray-600">Serve millions of requests. Forge handles infrastructure scaling automatically.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section class="py-24 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    Simple, Transparent Pricing
+                </h2>
+                <p class="text-xl text-gray-600 mb-8">
+                    Start free, scale as you grow. No surprise charges.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Starter -->
+                <div class="rounded-2xl p-8 border border-gray-200 bg-white hover:shadow-lg transition-all">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Starter</h3>
+                    <p class="text-gray-600 mb-6 text-sm">Perfect for individuals and small projects</p>
+                    <div class="mb-6">
+                        <span class="text-5xl font-bold text-gray-900">$29</span>
+                        <span class="text-gray-600 ml-2">/month</span>
+                    </div>
+                    <button class="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-900 hover:bg-gray-50 mb-8 transition">
+                        Get Started
+                    </button>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Up to 3 agents</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">1M API calls/month</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Community support</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Basic monitoring</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professional (Popular) -->
+                <div class="rounded-2xl p-8 border-2 border-purple-600 shadow-2xl scale-105 bg-purple-50">
+                    <div class="inline-block bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold mb-4">
+                        Most Popular
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Professional</h3>
+                    <p class="text-gray-600 mb-6 text-sm">For teams building production AI systems</p>
+                    <div class="mb-6">
+                        <span class="text-5xl font-bold text-gray-900">$99</span>
+                        <span class="text-gray-600 ml-2">/month</span>
+                    </div>
+                    <button class="w-full rounded-lg bg-gradient-primary text-white px-4 py-2 font-semibold hover:opacity-90 mb-8 transition">
+                        Start Free Trial
+                    </button>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Unlimited agents</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">50M API calls/month</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Priority support</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Advanced monitoring & alerts</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Team collaboration</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="rounded-2xl p-8 border border-gray-200 bg-white hover:shadow-lg transition-all">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
+                    <p class="text-gray-600 mb-6 text-sm">Custom solutions for large-scale deployments</p>
+                    <div class="mb-6">
+                        <span class="text-5xl font-bold text-gray-900">Custom</span>
+                    </div>
+                    <button class="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-900 hover:bg-gray-50 mb-8 transition">
+                        Contact Sales
+                    </button>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Unlimited everything</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Dedicated support team</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Custom SLA</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">On-premise deployment</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold">✓</span>
+                            <span class="text-gray-700">Advanced compliance</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section class="py-24 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    Trusted by Industry Leaders
+                </h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    See what teams are building with Forge
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
+                    <div class="flex gap-1 mb-4">
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                    </div>
+                    <p class="text-gray-700 mb-6 leading-relaxed italic">
+                        "Forge reduced our AI deployment time from weeks to days. The monitoring dashboard alone saved us countless debugging sessions."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">👨‍💼</div>
+                        <div>
+                            <p class="font-semibold text-gray-900">Alex Chen</p>
+                            <p class="text-sm text-gray-600">CTO, TechCorp AI</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
+                    <div class="flex gap-1 mb-4">
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                    </div>
+                    <p class="text-gray-700 mb-6 leading-relaxed italic">
+                        "Finally, AI infrastructure that doesn't require a PhD. The developer experience is incredible, and scaling is truly automatic."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">👩‍💻</div>
+                        <div>
+                            <p class="font-semibold text-gray-900">Sarah Rodriguez</p>
+                            <p class="text-sm text-gray-600">Engineering Lead, InnovateLabs</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
+                    <div class="flex gap-1 mb-4">
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                        <span class="text-yellow-400">★</span>
+                    </div>
+                    <p class="text-gray-700 mb-6 leading-relaxed italic">
+                        "We went from MVP to production serving 10K daily users in 3 weeks. Forge's reliability has been exceptional."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">👨‍🔬</div>
+                        <div>
+                            <p class="font-semibold text-gray-900">James Park</p>
+                            <p class="text-sm text-gray-600">Founder, FutureAI Startup</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA BANNER -->
+    <section class="py-16 bg-gradient-primary text-white">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                Ready to Deploy AI at Scale?
+            </h2>
+            <p class="text-xl mb-8 text-blue-100">
+                Join hundreds of teams already using Forge to power their AI infrastructure
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-8 justify-center items-center mb-8">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">⚡</span>
+                    <span>Get started in minutes</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🔒</span>
+                    <span>Enterprise security included</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📞</span>
+                    <span>Expert support available</span>
+                </div>
+            </div>
+
+            <button class="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold transition">
+                Start Your Free Trial Now
+            </button>
+            <p class="text-sm text-blue-200 mt-4">
+                No credit card required. 14-day free trial with full access.
+            </p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-gray-900 text-gray-300 py-16 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Forge</h4>
+                    <p class="text-sm text-gray-400">
+                        AI infrastructure for the modern world
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Product</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Features</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Pricing</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Documentation</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">API Reference</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Company</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">About</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Blog</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Careers</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Legal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Privacy</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Terms</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Security</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Social</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">Twitter</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">GitHub</a></li>
+                        <li><a href="#" class="text-sm hover:text-white transition-colors">LinkedIn</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-sm text-gray-400">
+                        © 2026 Forge AI. All rights reserved.
+                    </p>
+                    <div class="flex gap-6 mt-4 md:mt-0">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Twitter</a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">GitHub</a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">LinkedIn</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

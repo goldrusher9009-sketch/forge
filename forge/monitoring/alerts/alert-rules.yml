@@ -1,0 +1,188 @@
+groups:
+  - name: forge-platform-alerts
+    interval: 30s
+    rules:
+      # Application Error Rate Alerts
+      - alert: HighErrorRate
+        expr: 'rate(http_requests_total{status=~"5.."}[5m]) > 0.05'
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "High error rate detected on {{ $labels.service }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          dashboard: "https://grafana.forge.ai/d/errors"
+          runbook: "https://docs.forge.ai/runbooks/high-error-rate"
+
+      # Application Latency Alerts
+      - alert: HighLatency
+        expr: 'histogram_quantile(0.95, http_request_duration_seconds_bucket) > 1'
+        for: 5m
+        labels:
+          severity: warning
+          team: performance
+        annotations:
+          summary: "High latency detected on {{ $labels.service }}"
+          description: "P95 latency is {{ $value }}s (threshold: 1s)"
+          dashboard: "https://grafana.forge.ai/d/latency"
+          runbook: "https://docs.forge.ai/runbooks/high-latency"
+
+      - alert: ExtremeLatency
+        expr: 'histogram_quantile(0.99, http_request_duration_seconds_bucket) > 5'
+        for: 2m
+        labels:
+          severity: critical
+          team: performance
+        annotations:
+          summary: "Extreme latency detected on {{ $labels.service }}"
+          description: "P99 latency is {{ $value }}s (threshold: 5s)"
+          dashboard: "https://grafana.forge.ai/d/latency"
+          runbook: "https://docs.forge.ai/runbooks/extreme-latency"
+
+      # Pod Resource Alerts
+      - alert: PodMemoryUsage
+        expr: 'container_memory_usage_bytes{pod=~"forge-.*"} > 1.8e9'
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage on pod {{ $labels.pod }}"
+          description: "Memory usage is {{ $value | humanize }}B (threshold: 1.8GB)"
+          dashboard: "https://grafana.forge.ai/d/pod-resources"
+
+      - alert: PodMemoryCritical
+        expr: 'container_memory_usage_bytes{pod=~"forge-.*"} > 3.5e9'
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Critical memory usage on pod {{ $labels.pod }}"
+          description: "Memory usage is {{ $value | humanize }}B (threshold: 3.5GB)"
+          dashboard: "https://grafana.forge.ai/d/pod-resources"
+
+      - alert: PodCPUUsage
+        expr: 'rate(container_cpu_usage_seconds_total{pod=~"forge-.*"}[5m]) > 1.5'
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage on pod {{ $labels.pod }}"
+          description: "CPU usage is {{ $value }}cores (threshold: 1.5)"
+          dashboard: "https://grafana.forge.ai/d/pod-resources"
+
+      # Database Alerts
+      - alert: DatabaseConnectionPoolNearCapacity
+        expr: 'pg_connections / pg_max_connections > 0.8'
+        for: 3m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Database connection pool near capacity"
+          description: "{{ $value | humanizePercentage }} of connections in use"
+          runbook: "https://docs.forge.ai/runbooks/db-connections"
+
+      - alert: DatabaseSlowQueries
+        expr: 'rate(pg_slow_queries_total[5m]) > 0.1'
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "High rate of slow queries detected"
+          description: "{{ $value }} slow queries per second"
+          runbook: "https://docs.forge.ai/runbooks/slow-queries"
+
+      # Cache Alerts
+      - alert: RedisMemoryUsage
+        expr: 'redis_memory_used_bytes / redis_memory_max_bytes > 0.85'
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+          runbook: "https://docs.forge.ai/runbooks/redis-memory"
+
+      # Availability Alerts
+      - alert: PodRestartingFrequently
+        expr: 'rate(kube_pod_container_status_restarts_total{namespace="forge-production"}[1h]) > 0.1'
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Pod {{ $labels.pod }} restarting frequently"
+          description: "Pod has restarted {{ $value }} times in the last hour"
+
+      - alert: DeploymentReplicasMismatch
+        expr: 'kube_deployment_spec_replicas{namespace="forge-production"} != kube_deployment_status_replicas_available{namespace="forge-production"}'
+        for: 10m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Deployment {{ $labels.deployment }} has unavailable replicas"
+          description: "Expected {{ $value }} replicas but only available"
+
+      # Network Alerts
+      - alert: HighNetworkErrorRate
+        expr: 'rate(network_transmit_errs_total[5m]) > 100'
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High network error rate on {{ $labels.device }}"
+          description: "{{ $value }} errors per second"
+
+      # Certificate Expiry Alert
+      - alert: SSLCertificateExpiringSoon
+        expr: 'certmanager_certificate_expiration_timestamp_seconds - time() < 7 * 24 * 3600'
+        for: 1h
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "SSL certificate expiring soon for {{ $labels.name }}"
+          description: "Certificate expires in {{ $value | humanizeDuration }}"
+          runbook: "https://docs.forge.ai/runbooks/cert-renewal"
+
+      - alert: SSLCertificateExpired
+        expr: 'certmanager_certificate_expiration_timestamp_seconds - time() < 0'
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "SSL certificate has expired for {{ $labels.name }}"
+          description: "Immediate action required to renew certificate"
+          runbook: "https://docs.forge.ai/runbooks/cert-renewal"
+
+  - name: forge-availability-alerts
+    interval: 60s
+    rules:
+      - alert: APIServiceDown
+        expr: 'up{job="api"} == 0'
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "API service is down"
+          description: "API service has been unavailable for 2 minutes"
+
+      - alert: FrontendServiceDown
+        expr: 'up{job="frontend"} == 0'
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Frontend service is down"
+          description: "Frontend service has been unavailable for 2 minutes"

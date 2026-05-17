@@ -1,0 +1,11 @@
+C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-core\target\debug\deps\sqlx-769f4dd7f5a507a0.d: C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\lib.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\any\mod.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\macros\mod.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\ty_match.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\lib.md C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\macros/test.md C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\any\install_drivers_note.md
+
+C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-core\target\debug\deps\libsqlx-769f4dd7f5a507a0.rmeta: C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\lib.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\any\mod.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\macros\mod.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\ty_match.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\lib.md C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\macros/test.md C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\any\install_drivers_note.md
+
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\lib.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\any\mod.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\macros\mod.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\ty_match.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\lib.md:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\macros/test.md:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\sqlx-0.7.4\src\any\install_drivers_note.md:

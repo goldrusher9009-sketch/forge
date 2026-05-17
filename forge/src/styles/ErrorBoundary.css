@@ -1,0 +1,51 @@
+@import './variables.css';
+
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fee 0%, #ffe 100%);
+}
+
+.error-content {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2xl);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  max-width: 500px;
+}
+
+.error-content h2 {
+  color: var(--danger);
+  margin-bottom: var(--spacing-lg);
+}
+
+.error-content p {
+  color: var(--gray-600);
+  margin-bottom: var(--spacing-lg);
+  font-family: 'Monaco', monospace;
+  font-size: var(--font-size-sm);
+  background: var(--gray-100);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  text-align: left;
+  overflow-x: auto;
+}
+
+.error-retry-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.error-retry-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}

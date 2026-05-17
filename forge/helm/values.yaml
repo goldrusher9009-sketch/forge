@@ -1,0 +1,237 @@
+global:
+  environment: production
+  domain: forge.ai
+  namespace: forge-production
+
+replicaCount: 3
+
+image:
+  registry: ghcr.io
+  repository: forge-ai/forge-platform
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "forge-platform"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 3000
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+  hosts:
+    - host: forge.ai
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: www.forge.ai
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: app.forge.ai
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: forge-tls
+      hosts:
+        - forge.ai
+        - www.forge.ai
+        - app.forge.ai
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2048Mi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 2
+          periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 15
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - forge-platform
+          topologyKey: kubernetes.io/hostname
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /startup
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 30
+
+env:
+  NODE_ENV: production
+  REACT_APP_ENV: production
+  LOG_LEVEL: info
+
+envFrom:
+  - configMapRef:
+      name: forge-config
+  - secretRef:
+      name: forge-secrets
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /.cache
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - podSelector:
+            matchLabels:
+              app: forge-api
+      ports:
+        - protocol: TCP
+          port: 8000
+
+monitoring:
+  enabled: true
+  interval: 30s
+  path: /metrics
+
+prometheus:
+  enabled: true
+  alertRules:
+    - name: HighErrorRate
+      expr: 'rate(http_requests_total{status=~"5.."}[5m]) > 0.05'
+      for: 5m
+      severity: critical
+    - name: HighLatency
+      expr: 'histogram_quantile(0.95, http_request_duration_seconds_bucket) > 1'
+      for: 5m
+      severity: warning
+    - name: PodMemoryUsage
+      expr: 'container_memory_usage_bytes{pod=~"forge-.*"} > 1.8e9'
+      for: 5m
+      severity: warning
+    - name: PodCPUUsage
+      expr: 'rate(container_cpu_usage_seconds_total{pod=~"forge-.*"}[5m]) > 1.5'
+      for: 5m
+      severity: warning

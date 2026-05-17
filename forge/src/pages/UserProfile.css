@@ -1,0 +1,377 @@
+.user-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.user-profile-header {
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 1.5rem;
+}
+
+.user-profile-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: var(--text-primary);
+}
+
+.user-profile-content {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+}
+
+.user-profile-section {
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background-color: var(--surface-bg);
+}
+
+.user-profile-section h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.user-profile-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-profile-field label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.user-profile-field input {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.user-profile-field input:disabled {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.user-profile-field input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.user-profile-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.user-profile-actions button {
+  flex: 1;
+}
+
+.mfa-section {
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background-color: var(--surface-bg);
+  margin-bottom: 1.5rem;
+}
+
+.mfa-section h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mfa-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: var(--bg-secondary);
+  border-radius: 0.375rem;
+  border-left: 4px solid var(--primary-color);
+}
+
+.mfa-status-icon {
+  font-size: 1.5rem;
+  width: 24px;
+  text-align: center;
+}
+
+.mfa-status-content h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mfa-status-content p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.mfa-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mfa-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mfa-step-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mfa-step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.mfa-step.completed .mfa-step-number {
+  background-color: #10b981;
+}
+
+.mfa-step.active .mfa-step-number {
+  background-color: var(--primary-color);
+}
+
+.mfa-step.pending .mfa-step-number {
+  background-color: var(--text-secondary);
+}
+
+.mfa-step-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.mfa-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-left: 48px;
+}
+
+.mfa-qr-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mfa-qr-placeholder {
+  width: 200px;
+  height: 200px;
+  border: 2px dashed var(--border-color);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--input-bg);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.mfa-code-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mfa-code-input label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.mfa-code-input input {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.mfa-step-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mfa-step-actions button {
+  flex: 1;
+}
+
+.mfa-success {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #d1fae5;
+  border: 1px solid #a7f3d0;
+  border-radius: 0.375rem;
+  color: #065f46;
+}
+
+.mfa-success-icon {
+  font-size: 1.5rem;
+}
+
+.password-section {
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background-color: var(--surface-bg);
+}
+
+.password-section h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.password-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.user-profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.user-profile-card {
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background-color: var(--surface-bg);
+}
+
+.user-profile-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-profile-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.user-profile-info-label {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.user-profile-info-value {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .user-profile {
+    padding: 1rem;
+  }
+
+  .user-profile-content {
+    grid-template-columns: 1fr;
+  }
+
+  .user-profile-actions {
+    flex-wrap: wrap;
+  }
+
+  .user-profile-actions button {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .mfa-step-content {
+    padding-left: 0;
+  }
+
+  .mfa-qr-placeholder {
+    width: 150px;
+    height: 150px;
+  }
+
+  .mfa-step-actions {
+    flex-wrap: wrap;
+  }
+
+  .mfa-step-actions button {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .user-profile-info-row {
+    flex-direction: column;
+  }
+
+  .user-profile-info-value {
+    text-align: left;
+  }
+}

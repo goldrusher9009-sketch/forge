@@ -1,0 +1,9 @@
+C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-core\target\debug\deps\validator_derive-c0f0f981363a8723.d: C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\lib.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\asserts.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\lit.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\quoting.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\validation.rs
+
+C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-core\target\debug\deps\validator_derive-c0f0f981363a8723.dll: C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\lib.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\asserts.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\lit.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\quoting.rs C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\validation.rs
+
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\lib.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\asserts.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\lit.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\quoting.rs:
+C:\Users\teste\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\validator_derive-0.16.0\src\validation.rs:

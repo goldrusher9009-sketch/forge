@@ -1,0 +1,24 @@
+{{- range $service := .Values.services -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ $.Values.global.namespace | default "forge" }}
+  labels:
+    app: {{ $service.name }}
+    environment: {{ $.Values.global.environment }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ $service.name }}
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+---
+{{- end }}

@@ -1,0 +1,25 @@
+apiVersion: v2
+name: forge-platform
+description: A comprehensive Helm chart for deploying the Forge Platform on Kubernetes
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - forge
+  - platform
+  - kubernetes
+  - deployment
+
+home: https://github.com/forge-platform/deployment
+sources:
+  - https://github.com/forge-platform/deployment
+
+maintainers:
+  - name: Forge Platform Team
+    email: devops@forge-platform.com
+
+dependencies: []
+
+# Chart-specific metadata for Kubernetes 1.24+
+kubeVersion: ">=1.24.0-0"

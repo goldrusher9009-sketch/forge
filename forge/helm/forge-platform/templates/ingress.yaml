@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: forge-platform
+  namespace: {{ .Values.global.namespace | default "forge" }}
+  labels:
+    app: forge-platform
+    environment: {{ .Values.global.environment }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - {{ .Values.global.domain }}
+    secretName: forge-platform-tls
+  rules:
+  - host: {{ .Values.global.domain }}
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: forge-api
+            port:
+              number: 80
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: forge-auth
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: forge-frontend
+            port:
+              number: 80

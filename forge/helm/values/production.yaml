@@ -1,0 +1,92 @@
+global:
+  environment: production
+  domain: forge.ai
+  namespace: forge-production
+
+replicaCount: 5
+
+image:
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  name: "forge-platform-production"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+resources:
+  limits:
+    cpu: 4000m
+    memory: 4096Mi
+  requests:
+    cpu: 1000m
+    memory: 1024Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 3
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/rate-limit: "500"
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+  hosts:
+    - host: forge.ai
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: www.forge.ai
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: app.forge.ai
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: forge-prod-tls
+      hosts:
+        - forge.ai
+        - www.forge.ai
+        - app.forge.ai
+
+env:
+  NODE_ENV: production
+  REACT_APP_ENV: production
+  LOG_LEVEL: warn
+
+livenessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+
+monitoring:
+  enabled: true
+  interval: 15s
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - forge-platform
+        topologyKey: kubernetes.io/hostname

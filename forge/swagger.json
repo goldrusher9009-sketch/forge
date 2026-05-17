@@ -1,0 +1,449 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Forge Platform API",
+    "description": "Complete API documentation for the Forge AI automation platform",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Forge Support",
+      "email": "support@forge.ai"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.forge.ai/v1",
+      "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Development Server"
+    }
+  ],
+  "securityDefinitions": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT"
+    },
+    "apiKey": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-API-Key"
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    },
+    {
+      "apiKey": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and authorization"
+    },
+    {
+      "name": "Workflows",
+      "description": "Workflow management and execution"
+    },
+    {
+      "name": "Agents",
+      "description": "AI agent management and configuration"
+    },
+    {
+      "name": "Executions",
+      "description": "Workflow execution tracking and history"
+    },
+    {
+      "name": "API Keys",
+      "description": "API key management"
+    },
+    {
+      "name": "Users",
+      "description": "User profile and account management"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "fullName"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  },
+                  "fullName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "email": { "type": "string" },
+                    "fullName": { "type": "string" },
+                    "verified": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or user already exists"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Login user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "email": { "type": "string" },
+                        "fullName": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/workflows": {
+      "get": {
+        "tags": ["Workflows"],
+        "summary": "List all workflows",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["active", "inactive", "archived"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of workflows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "name": { "type": "string" },
+                          "description": { "type": "string" },
+                          "status": { "type": "string" },
+                          "createdAt": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Workflows"],
+        "summary": "Create a new workflow",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "steps": { "type": "array" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workflow created"
+          }
+        }
+      }
+    },
+    "/workflows/{id}": {
+      "get": {
+        "tags": ["Workflows"],
+        "summary": "Get workflow details",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workflow details"
+          },
+          "404": {
+            "description": "Workflow not found"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Workflows"],
+        "summary": "Update workflow",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workflow updated"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Workflows"],
+        "summary": "Delete workflow",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Workflow deleted"
+          }
+        }
+      }
+    },
+    "/workflows/{id}/execute": {
+      "post": {
+        "tags": ["Workflows"],
+        "summary": "Execute a workflow",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Workflow execution started"
+          }
+        }
+      }
+    },
+    "/agents": {
+      "get": {
+        "tags": ["Agents"],
+        "summary": "List all agents",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of agents"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Agents"],
+        "summary": "Create a new agent",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "201": {
+            "description": "Agent created"
+          }
+        }
+      }
+    },
+    "/executions": {
+      "get": {
+        "tags": ["Executions"],
+        "summary": "List execution history",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "Execution history"
+          }
+        }
+      }
+    },
+    "/api-keys": {
+      "get": {
+        "tags": ["API Keys"],
+        "summary": "List API keys",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of API keys"
+          }
+        }
+      },
+      "post": {
+        "tags": ["API Keys"],
+        "summary": "Generate new API key",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "201": {
+            "description": "API key created"
+          }
+        }
+      }
+    },
+    "/users/profile": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user profile",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user profile",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile updated"
+          }
+        }
+      }
+    }
+  }
+}

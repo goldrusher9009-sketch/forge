@@ -1,0 +1,23 @@
+apiVersion: v2
+name: forge-platform
+description: Forge AI Platform - Production-grade Kubernetes Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - forge
+  - ai
+  - platform
+  - kubernetes
+  - helm
+
+home: https://forge.ai
+sources:
+  - https://github.com/forge-ai/forge-platform
+
+maintainers:
+  - name: Forge Platform Team
+    email: platform@forge.ai
+
+dependencies: []

@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forge-config
+  namespace: forge
+data:
+  APPLICATION_ENVIRONMENT: "production"
+  LOG_FORMAT: "json"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"
+  CACHE_TTL: "3600"
+  FEATURE_FLAGS: "enable_analytics,enable_monitoring"
+  CORS_ORIGIN: "https://forge.yourdomain.com"
+  API_BASE_URL: "https://api.forge.yourdomain.com"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: forge-monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    
+    scrape_configs:
+      - job_name: 'forge-backend'
+        static_configs:
+          - targets: ['forge-backend:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+      
+      - job_name: 'kubernetes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provisioning
+  namespace: forge-monitoring
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+      - name: Elasticsearch
+        type: elasticsearch
+        access: proxy
+        url: http://elasticsearch:9200
+        database: forge-logs

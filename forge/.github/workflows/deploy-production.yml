@@ -1,0 +1,445 @@
+name: Production Deployment Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  HELM_VERSION: v3.12.0
+  KUSTOMIZE_VERSION: v5.0.0
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run type checking
+        run: npm run type-check
+
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          CI: true
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forge_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: true
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run SAST analysis
+        uses: github/super-linter@v4
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+
+      - name: Upload filesystem scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+
+      - name: Run secret scanning
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sh
+          ./gitleaks detect --source . --verbose
+
+  validate-helm:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Validate Helm chart
+        run: |
+          helm lint helm/forge-platform
+          helm template forge-platform helm/forge-platform --namespace forge-production > /tmp/manifest.yaml
+          echo "Generated manifest has $(wc -l < /tmp/manifest.yaml) lines"
+
+      - name: Dry-run Helm deployment
+        run: |
+          helm template forge-platform helm/forge-platform \
+            --namespace forge-production \
+            --values helm/values-production.yaml \
+            --set image.tag=${{ needs.build-and-test.outputs.image-tag }} \
+            > /tmp/dry-run-manifest.yaml
+          echo "Dry-run manifest generated successfully"
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, validate-helm]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging.forge.ai
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.STAGING_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Deploy to staging
+        run: |
+          chmod +x scripts/deploy/helm-deploy.sh
+          ./scripts/deploy/helm-deploy.sh \
+            --environment staging \
+            --version ${{ needs.build-and-test.outputs.image-tag }} \
+            --namespace forge-staging \
+            --timeout 600
+
+      - name: Verify deployment
+        run: |
+          chmod +x scripts/deploy/verify-deployment.sh
+          ./scripts/deploy/verify-deployment.sh \
+            --environment staging \
+            --namespace forge-staging \
+            --timeout 300
+
+      - name: Run smoke tests
+        run: npm run test:smoke
+        env:
+          API_URL: https://staging-api.forge.ai
+          TEST_USER_EMAIL: ${{ secrets.STAGING_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.STAGING_TEST_USER_PASSWORD }}
+
+      - name: Notify deployment status
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "Staging Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🚀 *Forge Staging Deployment*\n*Status*: ${{ job.status }}\n*Version*: ${{ needs.build-and-test.outputs.image-tag }}\n*Commit*: ${{ github.sha }}\n*Author*: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+
+  load-test-staging:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run k6 load test
+        uses: grafana/k6-action@v0.3.0
+        with:
+          filename: scripts/load-tests/load-test.js
+          cloud: true
+        env:
+          K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+          BASE_URL: https://staging.forge.ai
+          API_BASE: https://staging-api.forge.ai
+
+      - name: Comment PR with load test results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Load testing completed. Check k6 Cloud for detailed results.'
+            })
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, validate-helm, load-test-staging]
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: production
+      url: https://forge.ai
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.PRODUCTION_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Create backup
+        run: |
+          kubectl get all -n forge-production -o yaml > /tmp/pre-deployment-backup.yaml
+          echo "Backup created: /tmp/pre-deployment-backup.yaml"
+
+      - name: Deploy to production
+        run: |
+          chmod +x scripts/deploy/helm-deploy.sh
+          ./scripts/deploy/helm-deploy.sh \
+            --environment production \
+            --version ${{ needs.build-and-test.outputs.image-tag }} \
+            --namespace forge-production \
+            --timeout 900
+
+      - name: Verify deployment
+        run: |
+          chmod +x scripts/deploy/verify-deployment.sh
+          ./scripts/deploy/verify-deployment.sh \
+            --environment production \
+            --namespace forge-production \
+            --timeout 300
+
+      - name: Run production smoke tests
+        run: npm run test:smoke
+        env:
+          API_URL: https://api.forge.ai
+          TEST_USER_EMAIL: ${{ secrets.PRODUCTION_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.PRODUCTION_TEST_USER_PASSWORD }}
+
+      - name: Health check monitoring
+        run: |
+          for i in {1..10}; do
+            echo "Health check attempt $i/10"
+            curl -f https://api.forge.ai/health || exit 1
+            sleep 10
+          done
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          files: |
+            /tmp/pre-deployment-backup.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify production deployment
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "Production Deployment: SUCCESS ✅",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🎉 *Forge Production Deployment - SUCCESS*\n*Version*: ${{ needs.build-and-test.outputs.image-tag }}\n*Commit*: ${{ github.sha }}\n*Author*: ${{ github.actor }}\n*URL*: https://forge.ai"
+                  }
+                }
+              ]
+            }
+
+      - name: Notify production deployment failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "Production Deployment: FAILED ❌",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Forge Production Deployment - FAILED*\n*Version*: ${{ needs.build-and-test.outputs.image-tag }}\n*Run*: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                }
+              ]
+            }
+
+  rollback:
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: failure()
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.PRODUCTION_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Perform rollback
+        run: |
+          CURRENT_RELEASE=$(helm list -n forge-production -o json | jq -r '.[0].name')
+          PREVIOUS_REVISION=$(helm history ${CURRENT_RELEASE} -n forge-production -o json | jq -r '.[1].revision')
+          helm rollback ${CURRENT_RELEASE} ${PREVIOUS_REVISION} -n forge-production
+          echo "Rolled back to revision ${PREVIOUS_REVISION}"
+
+      - name: Verify rollback
+        run: |
+          kubectl rollout status deployment/forge-frontend -n forge-production --timeout=5m
+          kubectl rollout status deployment/forge-api -n forge-production --timeout=5m
+
+      - name: Notify rollback
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "Production Rollback: EXECUTED",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ *Forge Production Rollback - EXECUTED*\n*Reason*: Deployment failure detected\n*Run*: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Action Required*: Investigate deployment failure"
+                  }
+                }
+              ]
+            }

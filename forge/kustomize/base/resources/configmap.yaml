@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forge-config
+  namespace: forge-platform
+  labels:
+    app: forge-platform
+data:
+  # Frontend configuration
+  frontend.env: |
+    REACT_APP_ENV=production
+    REACT_APP_VERSION=1.0.0
+    REACT_APP_BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+    REACT_APP_LOG_LEVEL=warn
+    REACT_APP_ANALYTICS_ENABLED=true
+    REACT_APP_FEATURE_FLAGS_URL=https://api.forge.ai/api/v1/feature-flags
+    REACT_APP_SENTRY_DSN=https://key@sentry.forge.ai/project-id
+    REACT_APP_AMPLITUDE_KEY=amp_project_key
+    REACT_APP_SESSION_TIMEOUT=3600
+    REACT_APP_REFRESH_INTERVAL=60
+    REACT_APP_MAX_RETRIES=3
+    REACT_APP_RETRY_DELAY=1000
+
+  # API configuration
+  api.env: |
+    NODE_ENV=production
+    LOG_LEVEL=warn
+    API_PORT=8000
+    API_HOST=0.0.0.0
+    API_VERSION=v1
+    API_DEBUG=false
+    API_RATE_LIMIT=1000
+    API_TIMEOUT=30000
+    CORS_ORIGIN=https://forge.ai,https://staging.forge.ai
+    SESSION_SECRET=supersecret
+    SESSION_TIMEOUT=86400
+    CACHE_TTL=3600
+    CACHE_MAX_SIZE=1000
+    JWT_ALGORITHM=HS256
+    JWT_EXPIRY=7d
+    REFRESH_TOKEN_EXPIRY=30d
+    PASSWORD_MIN_LENGTH=12
+    PASSWORD_REQUIRE_SPECIAL=true
+    RATE_LIMIT_WINDOW=900
+    RATE_LIMIT_MAX_REQUESTS=100
+    FILE_UPLOAD_MAX_SIZE=10485760
+    FILE_UPLOAD_ALLOWED_TYPES=jpg,jpeg,png,pdf,doc,docx,xls,xlsx
+    DATABASE_POOL_SIZE=20
+    DATABASE_POOL_IDLE_TIMEOUT=30000
+    DATABASE_QUERY_TIMEOUT=30000
+    DATABASE_REPLICA_ENABLED=true
+    REDIS_POOL_SIZE=20
+    REDIS_KEY_PREFIX=forge:
+    REDIS_DB=0
+    WORKER_CONCURRENCY=5
+    WORKER_TIMEOUT=30000
+    WORKER_RETRY_ATTEMPTS=3
+    WORKER_RETRY_DELAY=5000
+    ENCRYPTION_ALGORITHM=aes-256-gcm
+    HASH_ALGORITHM=bcrypt
+    HASH_ROUNDS=12
+    SMTP_HOST=smtp.sendgrid.net
+    SMTP_PORT=587
+    SMTP_FROM=noreply@forge.ai
+    SLACK_ENABLED=true
+    SLACK_CHANNEL_ALERTS=#alerts
+    SENTRY_ENABLED=true
+    SENTRY_ENVIRONMENT=production
+    SENTRY_TRACE_SAMPLE_RATE=0.1
+    METRICS_ENABLED=true
+    METRICS_PORT=8001
+    METRICS_PATH=/metrics
+
+  # Database configuration
+  database.conf: |
+    # PostgreSQL connection pool settings
+    max_connections = 100
+    shared_buffers = 256MB
+    effective_cache_size = 1GB
+    work_mem = 16MB
+    maintenance_work_mem = 64MB
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    wal_buffers = 16MB
+    default_statistics_target = 100
+    
+    # Logging and performance
+    log_min_duration_statement = 1000
+    log_connections = on
+    log_disconnections = on
+    log_lock_waits = on
+    log_statement = 'all'
+    log_duration = off
+    
+    # Replication and backup
+    wal_level = replica
+    max_wal_senders = 5
+    wal_keep_segments = 64
+    
+    # Query optimization
+    join_collapse_limit = 12
+    from_collapse_limit = 12
+
+  # Redis configuration
+  redis.conf: |
+    maxmemory 2gb
+    maxmemory-policy allkeys-lru
+    appendonly yes
+    appendfsync everysec
+    save 900 1
+    save 300 10
+    save 60 10000
+    timeout 0
+    tcp-keepalive 300
+    
+  # Nginx configuration for ingress
+  nginx.conf: |
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=api:10m rate=100r/s;
+    limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+    
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss;
+    gzip_comp_level 6;
+    
+    # Caching headers
+    expires 1d;
+    add_header Cache-Control "public, max-age=86400, immutable";
+    
+    # Security headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'" always;
+
+  # Monitoring and observability
+  prometheus.rules: |
+    groups:
+      - name: forge-platform
+        interval: 30s
+        rules:
+          - alert: HighErrorRate
+            expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+            for: 5m
+            annotations:
+              summary: "High error rate detected"
+              
+          - alert: PodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total[15m]) > 0.1
+            for: 5m
+            annotations:
+              summary: "Pod is crash looping"
+              
+          - alert: HighMemoryUsage
+            expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9
+            for: 5m
+            annotations:
+              summary: "High memory usage detected"
+              
+          - alert: HighCPUUsage
+            expr: rate(container_cpu_usage_seconds_total[5m]) > 0.8
+            for: 5m
+            annotations:
+              summary: "High CPU usage detected"
+
+  # Application defaults
+  application.defaults: |
+    DEFAULT_PAGE_SIZE: "20"
+    DEFAULT_SORT_ORDER: "desc"
+    DEFAULT_TIMEZONE: "UTC"
+    DEFAULT_LANGUAGE: "en"
+    MAX_REQUEST_BODY_SIZE: "10485760"
+    REQUEST_TIMEOUT: "30000"
+    KEEPALIVE_TIMEOUT: "65000"
+    IDLE_TIMEOUT: "120000"
+    GRACEFUL_SHUTDOWN_TIMEOUT: "30000"

@@ -1,0 +1,99 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Metadata for this Kustomization
+metadata:
+  name: forge-platform-base
+
+# Namespace for all resources
+namespace: forge-production
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: forge-platform
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/component: platform
+  app.kubernetes.io/managed-by: kustomize
+
+# Common annotations applied to all resources
+commonAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "3000"
+  prometheus.io/path: "/metrics"
+
+# List of resource files to include
+resources:
+  - resources/deployment.yaml
+  - resources/service.yaml
+  - resources/ingress.yaml
+  - resources/serviceaccount.yaml
+  - resources/configmap.yaml
+
+# ConfigMap generators
+configMapGenerator:
+  - name: forge-config
+    literals:
+      - APP_NAME=Forge
+      - NODE_ENV=production
+    files:
+      - config/app.conf
+
+# Secret generators
+secretGenerator:
+  - name: forge-secrets
+    type: Opaque
+    literals:
+      - JWT_SECRET=PLACEHOLDER_REPLACE_IN_OVERLAY
+      - DB_PASSWORD=PLACEHOLDER_REPLACE_IN_OVERLAY
+
+# Image replacement rules
+images:
+  - name: forge-frontend
+    newName: ghcr.io/forge-platform/frontend
+    newTag: "1.0.0"
+  - name: forge-api
+    newName: ghcr.io/forge-platform/api
+    newTag: "1.0.0"
+
+# Vars for template substitution
+vars:
+  - name: NAMESPACE
+    objref:
+      kind: Namespace
+      name: forge-production
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name
+  - name: SERVICE_PORT
+    objref:
+      kind: Service
+      name: forge-platform
+      apiVersion: v1
+    fieldref:
+      fieldpath: spec.ports[0].port
+
+# Replicas
+replicas:
+  - name: forge-platform
+    count: 3
+
+# Patches to apply
+patches:
+  - target:
+      kind: Deployment
+      name: forge-platform
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+
+# Strategic merge patches
+patchesStrategicMerge:
+  - deployment-patch.yaml
+
+# Name prefix/suffix
+namePrefix: forge-
+nameSuffix: ""
+
+# Resource validation
+commonValidationRequired: true
