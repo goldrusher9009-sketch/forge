@@ -146,18 +146,26 @@ export default function ForgeApp() {
     e.preventDefault();
     setAuthLoading(true); setAuthError('');
     try {
-      const endpoint = authMode === 'login' ? '/auth/login' : '/auth/register';
-      const body = authMode === 'login'
-        ? { email: authEmail, password: authPassword }
-        : { name: authName, email: authEmail, password: authPassword };
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      // Register: create account then auto-login
+      if (authMode === 'register') {
+        const nameParts = authName.trim().split(' ');
+        const regRes = await fetch(`${API_BASE}/auth/register`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: authEmail, password: authPassword, firstName: nameParts[0] || '', lastName: nameParts.slice(1).join(' ') || '' })
+        });
+        const regData = await regRes.json();
+        if (!regRes.ok) throw new Error(regData.message || regData.error || 'Registration failed');
+      }
+      // Login (either direct login or post-register auto-login)
+      const loginRes = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmail, password: authPassword })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || (data.data && data.data.error) || 'Auth failed');
-      const tk = data.token || data.accessToken || (data.data && (data.data.accessToken || data.data.token)) || '';
+      const loginData = await loginRes.json();
+      if (!loginRes.ok) throw new Error(loginData.message || loginData.error || 'Login failed');
+      const tk = loginData.data?.accessToken || loginData.accessToken || loginData.token || '';
       if (!tk) throw new Error('No token received from server');
-      const uname = data.name || data.first_name || (data.data && data.data.user && (data.data.user.first_name || data.data.user.email)) || authName || authEmail.split('@')[0];
+      const uname = loginData.data?.user?.first_name || loginData.data?.user?.email || authName || authEmail.split('@')[0];
       setToken(tk);
       setUser({ name: uname, email: authEmail });
       localStorage.setItem('forge_token', tk);
