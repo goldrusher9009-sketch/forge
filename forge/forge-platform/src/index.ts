@@ -807,6 +807,602 @@ app.get('/api/admin/users', requireAuth, requireAdmin, (_req, res) => {
   res.json({ success: true, data: db.prepare('SELECT id,email,first_name,last_name,role,verified,created_at FROM users ORDER BY created_at DESC').all() });
 });
 
+// ═══════════════════════════════════════════════════════════════
+// ── FORGE WORKSPACE — Projects, Threads, Artifacts, Agents,
+//    Tasks, Dispatch (SSE), Scheduler
+// ═══════════════════════════════════════════════════════════════
+
+// ── Workspace DB tables ────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL DEFAULT '#7F77DD',
+    system_prompt TEXT NOT NULL DEFAULT '',
+    pinned INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS threads (
+    id TEXT PRIMARY KEY,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL DEFAULT 'New conversation',
+    model TEXT NOT NULL DEFAULT 'forge-fast',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK(role IN ('user','assistant','system')),
+    content TEXT NOT NULL,
+    artifact_ids TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS artifacts (
+    id TEXT PRIMARY KEY,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    thread_id TEXT REFERENCES threads(id) ON DELETE SET NULL,
+    message_id TEXT,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL DEFAULT 'code',
+    title TEXT NOT NULL DEFAULT 'Untitled',
+    content TEXT NOT NULL DEFAULT '',
+    language TEXT NOT NULL DEFAULT '',
+    version INTEGER NOT NULL DEFAULT 1,
+    pinned INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_agents (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL DEFAULT '#7F77DD',
+    icon TEXT NOT NULL DEFAULT 'robot',
+    system_prompt TEXT NOT NULL DEFAULT '',
+    tools TEXT NOT NULL DEFAULT '[]',
+    model TEXT NOT NULL DEFAULT 'forge-fast',
+    active INTEGER NOT NULL DEFAULT 1,
+    is_builtin INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_tasks (
+    id TEXT PRIMARY KEY,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    thread_id TEXT REFERENCES threads(id) ON DELETE SET NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'todo' CHECK(status IN ('backlog','todo','in_progress','done','cancelled')),
+    agent_id TEXT REFERENCES workspace_agents(id) ON DELETE SET NULL,
+    artifact_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS dispatch_runs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    prompt TEXT NOT NULL,
+    agent_ids TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'queued' CHECK(status IN ('queued','running','done','error','cancelled')),
+    output TEXT NOT NULL DEFAULT '',
+    error TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS scheduled_tasks (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    name TEXT NOT NULL,
+    cron_expr TEXT NOT NULL DEFAULT '0 9 * * 1',
+    prompt TEXT NOT NULL,
+    agent_ids TEXT NOT NULL DEFAULT '[]',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    last_run TEXT,
+    last_status TEXT NOT NULL DEFAULT 'never',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
+// Seed default workspace agents for every new user on first use
+function ensureDefaultAgents(userId: string) {
+  const count = (db.prepare('SELECT COUNT(*) as c FROM workspace_agents WHERE user_id=?').get(userId) as any).c;
+  if (count > 0) return;
+  const defaults = [
+    { name: 'Coder',      color: '#7F77DD', icon: 'code',       system_prompt: 'You are an expert software engineer. Write clean, production-ready code. When creating files or code artifacts, make them complete and runnable.', tools: '["create_artifact","create_task"]' },
+    { name: 'Deployer',   color: '#1D9E75', icon: 'server',     system_prompt: 'You are a DevOps and deployment expert. Help with Railway, Vercel, Docker, git operations, CI/CD, environment config, and production troubleshooting.', tools: '["create_artifact","create_task"]' },
+    { name: 'Researcher', color: '#D85A30', icon: 'search',     system_prompt: 'You are a thorough researcher. Synthesize information clearly, cite sources, summarize findings, and present actionable insights.', tools: '["create_artifact"]' },
+    { name: 'Designer',   color: '#BA7517', icon: 'palette',    system_prompt: 'You are a UI/UX expert. Create beautiful, accessible HTML/CSS/React components and mockups. Output complete, renderable code.', tools: '["create_artifact"]' },
+  ];
+  defaults.forEach(d => {
+    db.prepare('INSERT INTO workspace_agents (id,user_id,name,color,icon,system_prompt,tools,model,is_builtin) VALUES (?,?,?,?,?,?,?,?,?)')
+      .run(uuidv4(), userId, d.name, d.color, d.icon, d.system_prompt, d.tools, 'forge-fast', 1);
+  });
+}
+
+// ── Projects ──────────────────────────────────────────────────
+app.get('/api/projects', requireAuth, (req: AuthRequest, res) => {
+  ensureDefaultAgents(req.user!.sub);
+  const rows = db.prepare('SELECT * FROM projects WHERE user_id=? ORDER BY pinned DESC, updated_at DESC').all(req.user!.sub);
+  res.json({ success: true, data: rows });
+});
+
+app.post('/api/projects', requireAuth, (req: AuthRequest, res) => {
+  const { name, color = '#7F77DD', system_prompt = '' } = req.body;
+  if (!name) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'name required' }); return; }
+  const id = uuidv4();
+  db.prepare("INSERT INTO projects (id,user_id,name,color,system_prompt) VALUES (?,?,?,?,?)").run(id, req.user!.sub, name, color, system_prompt);
+  res.status(201).json({ success: true, data: db.prepare('SELECT * FROM projects WHERE id=?').get(id) });
+});
+
+app.get('/api/projects/:id', requireAuth, (req: AuthRequest, res) => {
+  const p = db.prepare('SELECT * FROM projects WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub);
+  if (!p) { res.status(404).json({ success: false, error: 'PROJECT_NOT_FOUND' }); return; }
+  const threadCount = (db.prepare('SELECT COUNT(*) as c FROM threads WHERE project_id=?').get(req.params.id) as any).c;
+  const artifactCount = (db.prepare('SELECT COUNT(*) as c FROM artifacts WHERE project_id=?').get(req.params.id) as any).c;
+  const taskCount = (db.prepare("SELECT COUNT(*) as c FROM workspace_tasks WHERE project_id=? AND status!='done'").get(req.params.id) as any).c;
+  res.json({ success: true, data: { ...(p as any), threadCount, artifactCount, taskCount } });
+});
+
+app.patch('/api/projects/:id', requireAuth, (req: AuthRequest, res) => {
+  const { name, color, system_prompt, pinned } = req.body;
+  if (!db.prepare('SELECT id FROM projects WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
+    res.status(404).json({ success: false, error: 'PROJECT_NOT_FOUND' }); return;
+  }
+  db.prepare("UPDATE projects SET name=COALESCE(?,name),color=COALESCE(?,color),system_prompt=COALESCE(?,system_prompt),pinned=COALESCE(?,pinned),updated_at=datetime('now') WHERE id=?")
+    .run(name ?? null, color ?? null, system_prompt ?? null, pinned !== undefined ? (pinned ? 1 : 0) : null, req.params.id);
+  res.json({ success: true, data: db.prepare('SELECT * FROM projects WHERE id=?').get(req.params.id) });
+});
+
+app.delete('/api/projects/:id', requireAuth, (req: AuthRequest, res) => {
+  const r = db.prepare('DELETE FROM projects WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  if (!r.changes) { res.status(404).json({ success: false, error: 'PROJECT_NOT_FOUND' }); return; }
+  res.json({ success: true, message: 'Project deleted' });
+});
+
+// ── Threads ───────────────────────────────────────────────────
+app.get('/api/threads', requireAuth, (req: AuthRequest, res) => {
+  const { project_id, limit = '20' } = req.query;
+  let q = 'SELECT * FROM threads WHERE user_id=?';
+  const params: any[] = [req.user!.sub];
+  if (project_id) { q += ' AND project_id=?'; params.push(project_id); }
+  q += ` ORDER BY updated_at DESC LIMIT ${parseInt(limit as string, 10) || 20}`;
+  res.json({ success: true, data: db.prepare(q).all(...params) });
+});
+
+app.post('/api/threads', requireAuth, (req: AuthRequest, res) => {
+  const { project_id, title = 'New conversation', model = 'forge-fast' } = req.body;
+  const id = uuidv4();
+  db.prepare('INSERT INTO threads (id,user_id,project_id,title,model) VALUES (?,?,?,?,?)').run(id, req.user!.sub, project_id || null, title, model);
+  res.status(201).json({ success: true, data: db.prepare('SELECT * FROM threads WHERE id=?').get(id) });
+});
+
+app.get('/api/threads/:id/messages', requireAuth, (req: AuthRequest, res) => {
+  const t = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub);
+  if (!t) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  res.json({ success: true, data: db.prepare('SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(req.params.id) });
+});
+
+app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res) => {
+  const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const { content, agent_ids = [] } = req.body;
+  if (!content?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
+  const userId = req.user!.sub;
+  ensureSubscription(userId);
+
+  // Save user message
+  const userMsgId = uuidv4();
+  db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(userMsgId, thread.id, 'user', content.trim());
+  // Auto-title thread on first user message
+  const msgCount = (db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id=?').get(thread.id) as any).c;
+  if (msgCount === 1) {
+    const autoTitle = content.trim().slice(0, 60) + (content.trim().length > 60 ? '…' : '');
+    db.prepare("UPDATE threads SET title=?,updated_at=datetime('now') WHERE id=?").run(autoTitle, thread.id);
+  }
+
+  // Build system prompt from project + active agents
+  const systemParts: string[] = [];
+  if (thread.project_id) {
+    const proj = db.prepare('SELECT system_prompt FROM projects WHERE id=?').get(thread.project_id) as any;
+    if (proj?.system_prompt) systemParts.push(proj.system_prompt);
+  }
+  if (agent_ids.length > 0) {
+    const agentRows = db.prepare(`SELECT system_prompt FROM workspace_agents WHERE id IN (${agent_ids.map(()=>'?').join(',')}) AND user_id=?`).all(...agent_ids, userId) as any[];
+    agentRows.forEach(a => { if (a.system_prompt) systemParts.push(a.system_prompt); });
+  }
+
+  // Build message history
+  const history = (db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(thread.id) as any[])
+    .filter(m => m.role !== 'system');
+  const llmMessages = systemParts.length > 0
+    ? [{ role: 'system', content: systemParts.join('\n\n---\n\n') }, ...history]
+    : history;
+
+  // Route through existing /api/chat logic
+  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
+  if (sub && sub.tokens_used >= sub.tokens_limit) {
+    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `Token limit reached. Please upgrade.` }); return;
+  }
+  const model = thread.model || 'forge-fast';
+  const actualModel = resolveForgeModel(model);
+  const provider = getProviderForModel(actualModel);
+  const apiKey = getUserKey(userId, provider);
+  if (!apiKey) {
+    const asstMsgId = uuidv4();
+    const errMsg = `⚠️ No ${provider} API key found. Go to Settings → LLM Providers to add your key.`;
+    db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(asstMsgId, thread.id, 'assistant', errMsg);
+    res.json({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
+    return;
+  }
+  try {
+    const result = await callLLM(provider, apiKey, actualModel, llmMessages);
+    const totalTokens = result.promptTokens + result.completionTokens;
+    const costs = MODEL_COSTS[model] || { input: 0.001, output: 0.001, markup: 1.3 };
+    const providerCost = (result.promptTokens/1000)*costs.input + (result.completionTokens/1000)*costs.output;
+    const forgeRevenue = providerCost * (costs.markup || 1.3);
+    db.prepare('INSERT INTO usage_logs (id,user_id,model,provider,prompt_tokens,completion_tokens,total_tokens,provider_cost,forge_revenue,markup_multiplier) VALUES (?,?,?,?,?,?,?,?,?,?)')
+      .run(uuidv4(), userId, model, provider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup || 1.3);
+    db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
+    const asstMsgId = uuidv4();
+    db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content);
+    db.prepare("UPDATE threads SET updated_at=datetime('now') WHERE id=?").run(thread.id);
+    res.json({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens } });
+  } catch (err: any) {
+    console.error('Thread chat error:', err.message);
+    res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });
+  }
+});
+
+app.patch('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
+  const { title, model, project_id } = req.body;
+  if (!db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
+    res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return;
+  }
+  db.prepare("UPDATE threads SET title=COALESCE(?,title),model=COALESCE(?,model),project_id=COALESCE(?,project_id),updated_at=datetime('now') WHERE id=?")
+    .run(title ?? null, model ?? null, project_id ?? null, req.params.id);
+  res.json({ success: true, data: db.prepare('SELECT * FROM threads WHERE id=?').get(req.params.id) });
+});
+
+app.delete('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
+  const r = db.prepare('DELETE FROM threads WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  if (!r.changes) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  res.json({ success: true, message: 'Thread deleted' });
+});
+
+// ── Artifacts ─────────────────────────────────────────────────
+app.get('/api/artifacts', requireAuth, (req: AuthRequest, res) => {
+  const { project_id, thread_id, pinned } = req.query;
+  let q = 'SELECT * FROM artifacts WHERE user_id=?';
+  const params: any[] = [req.user!.sub];
+  if (project_id) { q += ' AND project_id=?'; params.push(project_id); }
+  if (thread_id) { q += ' AND thread_id=?'; params.push(thread_id); }
+  if (pinned === 'true') { q += ' AND pinned=1'; }
+  q += ' ORDER BY updated_at DESC LIMIT 50';
+  res.json({ success: true, data: db.prepare(q).all(...params) });
+});
+
+app.post('/api/artifacts', requireAuth, (req: AuthRequest, res) => {
+  const { title = 'Untitled', type = 'code', content = '', language = '', project_id, thread_id, message_id } = req.body;
+  const id = uuidv4();
+  db.prepare('INSERT INTO artifacts (id,user_id,project_id,thread_id,message_id,type,title,content,language) VALUES (?,?,?,?,?,?,?,?,?)')
+    .run(id, req.user!.sub, project_id || null, thread_id || null, message_id || null, type, title, content, language);
+  res.status(201).json({ success: true, data: db.prepare('SELECT * FROM artifacts WHERE id=?').get(id) });
+});
+
+app.get('/api/artifacts/:id', requireAuth, (req: AuthRequest, res) => {
+  const a = db.prepare('SELECT * FROM artifacts WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub);
+  if (!a) { res.status(404).json({ success: false, error: 'ARTIFACT_NOT_FOUND' }); return; }
+  res.json({ success: true, data: a });
+});
+
+app.patch('/api/artifacts/:id', requireAuth, (req: AuthRequest, res) => {
+  const { title, content, language, pinned, type } = req.body;
+  if (!db.prepare('SELECT id FROM artifacts WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
+    res.status(404).json({ success: false, error: 'ARTIFACT_NOT_FOUND' }); return;
+  }
+  db.prepare("UPDATE artifacts SET title=COALESCE(?,title),content=COALESCE(?,content),language=COALESCE(?,language),type=COALESCE(?,type),pinned=COALESCE(?,pinned),version=version+1,updated_at=datetime('now') WHERE id=?")
+    .run(title ?? null, content ?? null, language ?? null, type ?? null, pinned !== undefined ? (pinned ? 1 : 0) : null, req.params.id);
+  res.json({ success: true, data: db.prepare('SELECT * FROM artifacts WHERE id=?').get(req.params.id) });
+});
+
+app.delete('/api/artifacts/:id', requireAuth, (req: AuthRequest, res) => {
+  const r = db.prepare('DELETE FROM artifacts WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  if (!r.changes) { res.status(404).json({ success: false, error: 'ARTIFACT_NOT_FOUND' }); return; }
+  res.json({ success: true, message: 'Artifact deleted' });
+});
+
+// ── Workspace Agents ──────────────────────────────────────────
+app.get('/api/workspace-agents', requireAuth, (req: AuthRequest, res) => {
+  ensureDefaultAgents(req.user!.sub);
+  res.json({ success: true, data: db.prepare('SELECT * FROM workspace_agents WHERE user_id=? ORDER BY is_builtin DESC, created_at ASC').all(req.user!.sub) });
+});
+
+app.post('/api/workspace-agents', requireAuth, (req: AuthRequest, res) => {
+  const { name, color = '#7F77DD', icon = 'robot', system_prompt = '', tools = [], model = 'forge-fast' } = req.body;
+  if (!name) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'name required' }); return; }
+  const id = uuidv4();
+  db.prepare('INSERT INTO workspace_agents (id,user_id,name,color,icon,system_prompt,tools,model) VALUES (?,?,?,?,?,?,?,?)')
+    .run(id, req.user!.sub, name, color, icon, system_prompt, JSON.stringify(tools), model);
+  res.status(201).json({ success: true, data: db.prepare('SELECT * FROM workspace_agents WHERE id=?').get(id) });
+});
+
+app.patch('/api/workspace-agents/:id', requireAuth, (req: AuthRequest, res) => {
+  const { name, color, icon, system_prompt, tools, model, active } = req.body;
+  if (!db.prepare('SELECT id FROM workspace_agents WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
+    res.status(404).json({ success: false, error: 'AGENT_NOT_FOUND' }); return;
+  }
+  db.prepare("UPDATE workspace_agents SET name=COALESCE(?,name),color=COALESCE(?,color),icon=COALESCE(?,icon),system_prompt=COALESCE(?,system_prompt),tools=COALESCE(?,tools),model=COALESCE(?,model),active=COALESCE(?,active),updated_at=datetime('now') WHERE id=?")
+    .run(name ?? null, color ?? null, icon ?? null, system_prompt ?? null, tools ? JSON.stringify(tools) : null, model ?? null, active !== undefined ? (active ? 1 : 0) : null, req.params.id);
+  res.json({ success: true, data: db.prepare('SELECT * FROM workspace_agents WHERE id=?').get(req.params.id) });
+});
+
+app.delete('/api/workspace-agents/:id', requireAuth, (req: AuthRequest, res) => {
+  const agent = db.prepare('SELECT * FROM workspace_agents WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!agent) { res.status(404).json({ success: false, error: 'AGENT_NOT_FOUND' }); return; }
+  if (agent.is_builtin) { res.status(400).json({ success: false, error: 'CANNOT_DELETE_BUILTIN', message: 'Built-in agents cannot be deleted. Disable them instead.' }); return; }
+  db.prepare('DELETE FROM workspace_agents WHERE id=?').run(req.params.id);
+  res.json({ success: true, message: 'Agent deleted' });
+});
+
+// Test an agent with a sample prompt
+app.post('/api/workspace-agents/:id/test', requireAuth, async (req: AuthRequest, res) => {
+  const agent = db.prepare('SELECT * FROM workspace_agents WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!agent) { res.status(404).json({ success: false, error: 'AGENT_NOT_FOUND' }); return; }
+  const testPrompt = req.body.prompt || 'Say hello and describe what you can help with in 1-2 sentences.';
+  const model = agent.model || 'forge-fast';
+  const actualModel = resolveForgeModel(model);
+  const provider = getProviderForModel(actualModel);
+  const apiKey = getUserKey(req.user!.sub, provider);
+  if (!apiKey) { res.json({ success: false, error: 'NO_API_KEY', provider, message: `No ${provider} key configured` }); return; }
+  try {
+    const msgs: any[] = agent.system_prompt ? [{ role: 'system', content: agent.system_prompt }, { role: 'user', content: testPrompt }] : [{ role: 'user', content: testPrompt }];
+    const result = await callLLM(provider, apiKey, actualModel, msgs);
+    res.json({ success: true, response: result.content, model, provider });
+  } catch (err: any) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+// ── Workspace Tasks ───────────────────────────────────────────
+app.get('/api/workspace-tasks', requireAuth, (req: AuthRequest, res) => {
+  const { project_id, status, thread_id } = req.query;
+  let q = 'SELECT t.*,a.name as agent_name,a.color as agent_color FROM workspace_tasks t LEFT JOIN workspace_agents a ON t.agent_id=a.id WHERE t.user_id=?';
+  const params: any[] = [req.user!.sub];
+  if (project_id) { q += ' AND t.project_id=?'; params.push(project_id); }
+  if (status) { q += ' AND t.status=?'; params.push(status); }
+  if (thread_id) { q += ' AND t.thread_id=?'; params.push(thread_id); }
+  q += ' ORDER BY t.created_at DESC LIMIT 100';
+  res.json({ success: true, data: db.prepare(q).all(...params) });
+});
+
+app.post('/api/workspace-tasks', requireAuth, (req: AuthRequest, res) => {
+  const { title, description = '', project_id, thread_id, agent_id, status = 'todo' } = req.body;
+  if (!title) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'title required' }); return; }
+  const id = uuidv4();
+  db.prepare('INSERT INTO workspace_tasks (id,user_id,project_id,thread_id,title,description,agent_id,status) VALUES (?,?,?,?,?,?,?,?)')
+    .run(id, req.user!.sub, project_id || null, thread_id || null, title, description, agent_id || null, status);
+  res.status(201).json({ success: true, data: db.prepare('SELECT * FROM workspace_tasks WHERE id=?').get(id) });
+});
+
+app.patch('/api/workspace-tasks/:id', requireAuth, (req: AuthRequest, res) => {
+  const { title, description, status, agent_id, artifact_id } = req.body;
+  if (!db.prepare('SELECT id FROM workspace_tasks WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
+    res.status(404).json({ success: false, error: 'TASK_NOT_FOUND' }); return;
+  }
+  db.prepare("UPDATE workspace_tasks SET title=COALESCE(?,title),description=COALESCE(?,description),status=COALESCE(?,status),agent_id=COALESCE(?,agent_id),artifact_id=COALESCE(?,artifact_id),updated_at=datetime('now') WHERE id=?")
+    .run(title ?? null, description ?? null, status ?? null, agent_id ?? null, artifact_id ?? null, req.params.id);
+  res.json({ success: true, data: db.prepare('SELECT * FROM workspace_tasks WHERE id=?').get(req.params.id) });
+});
+
+app.post('/api/workspace-tasks/bulk', requireAuth, (req: AuthRequest, res) => {
+  const { tasks, project_id, thread_id } = req.body;
+  if (!Array.isArray(tasks)) { res.status(400).json({ success: false, error: 'INVALID_INPUT' }); return; }
+  const created: any[] = [];
+  const insert = db.prepare('INSERT INTO workspace_tasks (id,user_id,project_id,thread_id,title,description,status) VALUES (?,?,?,?,?,?,?)');
+  const insertMany = db.transaction((ts: any[]) => ts.forEach(t => {
+    const id = uuidv4();
+    insert.run(id, req.user!.sub, project_id || null, thread_id || null, t.title, t.description || '', t.status || 'todo');
+    created.push(db.prepare('SELECT * FROM workspace_tasks WHERE id=?').get(id));
+  }));
+  insertMany(tasks);
+  res.status(201).json({ success: true, data: created });
+});
+
+app.delete('/api/workspace-tasks/:id', requireAuth, (req: AuthRequest, res) => {
+  const r = db.prepare('DELETE FROM workspace_tasks WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  if (!r.changes) { res.status(404).json({ success: false, error: 'TASK_NOT_FOUND' }); return; }
+  res.json({ success: true, message: 'Task deleted' });
+});
+
+// ── Dispatch (with SSE streaming) ─────────────────────────────
+// Active SSE clients: runId -> response
+const sseClients = new Map<string, Response>();
+
+async function executeDispatchRun(runId: string, userId: string) {
+  const run = db.prepare('SELECT * FROM dispatch_runs WHERE id=?').get(runId) as any;
+  if (!run) return;
+  db.prepare("UPDATE dispatch_runs SET status='running',updated_at=datetime('now') WHERE id=?").run(runId);
+  const sendEvent = (type: string, data: any) => {
+    const client = sseClients.get(runId);
+    if (client) {
+      try { client.write(`data: ${JSON.stringify({ type, ...data })}\n\n`); } catch {}
+    }
+  };
+  sendEvent('RUN_STARTED', { run_id: runId });
+
+  try {
+    const agentIds: string[] = JSON.parse(run.agent_ids || '[]');
+    const systemParts: string[] = ['You are a helpful AI assistant inside Forge workspace.'];
+    if (agentIds.length > 0) {
+      const agentRows = db.prepare(`SELECT system_prompt FROM workspace_agents WHERE id IN (${agentIds.map(()=>'?').join(',')}) AND user_id=?`).all(...agentIds, userId) as any[];
+      agentRows.forEach(a => { if (a.system_prompt) systemParts.push(a.system_prompt); });
+    }
+    if (run.project_id) {
+      const proj = db.prepare('SELECT system_prompt FROM projects WHERE id=?').get(run.project_id) as any;
+      if (proj?.system_prompt) systemParts.unshift(proj.system_prompt);
+    }
+    const messages = [{ role: 'system', content: systemParts.join('\n\n---\n\n') }, { role: 'user', content: run.prompt }];
+    const model = 'forge-fast';
+    const actualModel = resolveForgeModel(model);
+    const provider = getProviderForModel(actualModel);
+    const apiKey = getUserKey(userId, provider);
+    if (!apiKey) {
+      sendEvent('RUN_ERROR', { error: `No ${provider} API key. Add it in Settings.` });
+      db.prepare("UPDATE dispatch_runs SET status='error',error=?,updated_at=datetime('now') WHERE id=?").run(`No ${provider} API key`, runId);
+      return;
+    }
+    sendEvent('TEXT_MESSAGE_START', { run_id: runId });
+    const result = await callLLM(provider, apiKey, actualModel, messages);
+    // Simulate streaming by sending content in chunks
+    const words = result.content.split(' ');
+    let accumulated = '';
+    for (let i = 0; i < words.length; i += 5) {
+      const chunk = words.slice(i, i + 5).join(' ') + ' ';
+      accumulated += chunk;
+      sendEvent('TEXT_MESSAGE_CHUNK', { delta: chunk });
+      await new Promise(r => setTimeout(r, 20));
+    }
+    db.prepare("UPDATE dispatch_runs SET status='done',output=?,updated_at=datetime('now') WHERE id=?").run(result.content, runId);
+    sendEvent('RUN_FINISHED', { run_id: runId, output: result.content });
+  } catch (err: any) {
+    console.error('Dispatch error:', err.message);
+    db.prepare("UPDATE dispatch_runs SET status='error',error=?,updated_at=datetime('now') WHERE id=?").run(err.message, runId);
+    sendEvent('RUN_ERROR', { error: err.message });
+  }
+}
+
+app.post('/api/dispatch', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt, agent_ids = [], project_id } = req.body;
+  if (!prompt?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'prompt required' }); return; }
+  const id = uuidv4();
+  db.prepare('INSERT INTO dispatch_runs (id,user_id,project_id,prompt,agent_ids) VALUES (?,?,?,?,?)').run(id, req.user!.sub, project_id || null, prompt.trim(), JSON.stringify(agent_ids));
+  res.status(201).json({ success: true, data: { run_id: id } });
+  // Execute asynchronously
+  executeDispatchRun(id, req.user!.sub).catch(console.error);
+});
+
+app.get('/api/dispatch/:id/stream', requireAuth, (req: AuthRequest, res) => {
+  const run = db.prepare('SELECT * FROM dispatch_runs WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub);
+  if (!run) { res.status(404).json({ success: false, error: 'RUN_NOT_FOUND' }); return; }
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+  sseClients.set(req.params.id, res as any);
+  req.on('close', () => { sseClients.delete(req.params.id); });
+});
+
+app.post('/api/dispatch/:id/cancel', requireAuth, (req: AuthRequest, res) => {
+  const run = db.prepare('SELECT * FROM dispatch_runs WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!run) { res.status(404).json({ success: false, error: 'RUN_NOT_FOUND' }); return; }
+  db.prepare("UPDATE dispatch_runs SET status='cancelled',updated_at=datetime('now') WHERE id=?").run(req.params.id);
+  const client = sseClients.get(req.params.id);
+  if (client) { try { (client as any).write(`data: ${JSON.stringify({ type: 'RUN_CANCELLED' })}\n\n`); (client as any).end(); } catch {} sseClients.delete(req.params.id); }
+  res.json({ success: true, message: 'Run cancelled' });
+});
+
+app.get('/api/dispatch', requireAuth, (req: AuthRequest, res) => {
+  res.json({ success: true, data: db.prepare('SELECT * FROM dispatch_runs WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.user!.sub) });
+});
+
+// ── Scheduled Tasks ───────────────────────────────────────────
+app.get('/api/schedule', requireAuth, (req: AuthRequest, res) => {
+  res.json({ success: true, data: db.prepare('SELECT * FROM scheduled_tasks WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub) });
+});
+
+app.post('/api/schedule', requireAuth, (req: AuthRequest, res) => {
+  const { name, cron_expr = '0 9 * * 1', prompt, agent_ids = [], project_id } = req.body;
+  if (!name || !prompt) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'name and prompt required' }); return; }
+  const id = uuidv4();
+  db.prepare('INSERT INTO scheduled_tasks (id,user_id,project_id,name,cron_expr,prompt,agent_ids) VALUES (?,?,?,?,?,?,?)').run(id, req.user!.sub, project_id || null, name, cron_expr, prompt, JSON.stringify(agent_ids));
+  const task = db.prepare('SELECT * FROM scheduled_tasks WHERE id=?').get(id) as any;
+  // Register with scheduler immediately
+  registerScheduledTask(task);
+  res.status(201).json({ success: true, data: task });
+});
+
+app.patch('/api/schedule/:id', requireAuth, (req: AuthRequest, res) => {
+  const { name, cron_expr, prompt, agent_ids, enabled } = req.body;
+  if (!db.prepare('SELECT id FROM scheduled_tasks WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
+    res.status(404).json({ success: false, error: 'TASK_NOT_FOUND' }); return;
+  }
+  db.prepare("UPDATE scheduled_tasks SET name=COALESCE(?,name),cron_expr=COALESCE(?,cron_expr),prompt=COALESCE(?,prompt),agent_ids=COALESCE(?,agent_ids),enabled=COALESCE(?,enabled),updated_at=datetime('now') WHERE id=?")
+    .run(name ?? null, cron_expr ?? null, prompt ?? null, agent_ids ? JSON.stringify(agent_ids) : null, enabled !== undefined ? (enabled ? 1 : 0) : null, req.params.id);
+  res.json({ success: true, data: db.prepare('SELECT * FROM scheduled_tasks WHERE id=?').get(req.params.id) });
+});
+
+app.delete('/api/schedule/:id', requireAuth, (req: AuthRequest, res) => {
+  const r = db.prepare('DELETE FROM scheduled_tasks WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  if (!r.changes) { res.status(404).json({ success: false, error: 'TASK_NOT_FOUND' }); return; }
+  res.json({ success: true, message: 'Scheduled task deleted' });
+});
+
+// Manual trigger
+app.post('/api/schedule/:id/run-now', requireAuth, async (req: AuthRequest, res) => {
+  const task = db.prepare('SELECT * FROM scheduled_tasks WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!task) { res.status(404).json({ success: false, error: 'TASK_NOT_FOUND' }); return; }
+  const runId = await triggerScheduledTask(task);
+  res.json({ success: true, message: 'Task triggered', run_id: runId });
+});
+
+// ── Scheduler (node-cron lightweight alternative) ─────────────
+// We use setInterval-based scheduling to avoid adding node-cron dependency
+// Each task is checked every minute for whether it should fire
+const activeSchedules = new Map<string, NodeJS.Timeout>();
+
+function parseCronToMinutes(cron: string): number {
+  // Very simple: extract interval from common patterns
+  // "*/5 * * * *" → 5 min, "0 * * * *" → 60 min, "0 9 * * 1" → weekly (~10080)
+  const parts = cron.trim().split(/\s+/);
+  if (parts[0].startsWith('*/')) return parseInt(parts[0].slice(2), 10) || 60;
+  if (parts[0] === '0' && parts[1] === '*') return 60;
+  if (parts[0] === '0' && parts[2] === '*') return 1440; // daily
+  return 10080; // weekly default
+}
+
+async function triggerScheduledTask(task: any): Promise<string> {
+  db.prepare("UPDATE scheduled_tasks SET last_run=datetime('now'),last_status='running',updated_at=datetime('now') WHERE id=?").run(task.id);
+  // Create a dispatch run for this scheduled task
+  const runId = uuidv4();
+  db.prepare('INSERT INTO dispatch_runs (id,user_id,project_id,prompt,agent_ids) VALUES (?,?,?,?,?)').run(runId, task.user_id, task.project_id || null, `[Scheduled: ${task.name}]\n\n${task.prompt}`, task.agent_ids);
+  executeDispatchRun(runId, task.user_id)
+    .then(() => db.prepare("UPDATE scheduled_tasks SET last_status='done' WHERE id=?").run(task.id))
+    .catch(() => db.prepare("UPDATE scheduled_tasks SET last_status='error' WHERE id=?").run(task.id));
+  return runId;
+}
+
+function registerScheduledTask(task: any) {
+  if (!task.enabled) return;
+  // Clear existing
+  const existing = activeSchedules.get(task.id);
+  if (existing) clearInterval(existing);
+  const intervalMs = parseCronToMinutes(task.cron_expr) * 60 * 1000;
+  const timer = setInterval(() => {
+    const current = db.prepare('SELECT * FROM scheduled_tasks WHERE id=?').get(task.id) as any;
+    if (current && current.enabled) triggerScheduledTask(current).catch(console.error);
+    else { clearInterval(timer); activeSchedules.delete(task.id); }
+  }, intervalMs);
+  activeSchedules.set(task.id, timer);
+}
+
+// Boot: load all enabled scheduled tasks
+(function bootScheduler() {
+  try {
+    const tasks = db.prepare('SELECT * FROM scheduled_tasks WHERE enabled=1').all() as any[];
+    tasks.forEach(registerScheduledTask);
+    console.log(`Scheduler: loaded ${tasks.length} task(s)`);
+  } catch (e) { console.error('Scheduler boot error:', e); }
+})();
+
 // ── 404 + Error handler ───────────────────────────────────────
 app.use((req, res) => { res.status(404).json({ success: false, error: 'NOT_FOUND', message: `${req.method} ${req.path} not found` }); });
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
