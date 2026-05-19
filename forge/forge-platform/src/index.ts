@@ -334,6 +334,32 @@ try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT 
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN key_preview TEXT NOT NULL DEFAULT ''`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 
+// ── Schema repair: rebuild api_keys if it has a broken DEFAULT from old schema ──
+// The old schema had DEFAULT (datetime('now', '+30 days')) which SQLite rejects at runtime.
+// We rebuild via rename → recreate → copy → drop (SQLite doesn't support ALTER COLUMN).
+try {
+  const schemaRow = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='api_keys'`).get() as any;
+  if (schemaRow && schemaRow.sql && schemaRow.sql.includes("'+30 days'")) {
+    db.exec(`
+      ALTER TABLE api_keys RENAME TO api_keys_old;
+      CREATE TABLE api_keys (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        provider TEXT NOT NULL,
+        key_encrypted TEXT NOT NULL,
+        key_preview TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(user_id, provider)
+      );
+      INSERT INTO api_keys (id,user_id,provider,key_encrypted,key_preview,created_at,updated_at)
+        SELECT id,user_id,provider,key_encrypted,COALESCE(key_preview,''),COALESCE(created_at,datetime('now')),COALESCE(updated_at,datetime('now')) FROM api_keys_old;
+      DROP TABLE api_keys_old;
+    `);
+    console.log('Repaired api_keys table schema');
+  }
+} catch (e) { console.error('Schema repair error:', e); }
+
 // Ensure every user has a subscription row
 function ensureSubscription(userId: string) {
   const existing = db.prepare('SELECT id FROM subscriptions WHERE user_id=?').get(userId);
