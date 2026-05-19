@@ -1,0 +1,49 @@
+{
+  "name": "forge-desktop",
+  "version": "1.0.0",
+  "description": "Forge AI Desktop — folder context, memory, browser integration",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "build:all": "electron-builder --win --mac --linux"
+  },
+  "keywords": ["forge", "ai", "electron", "desktop"],
+  "author": "Forge AI",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.17.0",
+    "chokidar": "^3.6.0"
+  },
+  "build": {
+    "appId": "com.forgeai.desktop",
+    "productName": "Forge AI",
+    "icon": "assets/icon",
+    "files": ["src/**/*", "assets/**/*"],
+    "win": {
+      "target": ["nsis"],
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    }
+  }
+}
