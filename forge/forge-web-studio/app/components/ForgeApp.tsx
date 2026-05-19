@@ -71,7 +71,7 @@ function ago(ts: number) {
 
 // ─── Main App ────────────────────────────────────────────────────────────────
 export default function ForgeApp() {
-  const [tab, setTab] = useState<'studio'|'agents'|'router'|'workflow'|'billing'|'output'|'settings'>('studio');
+  const [tab, setTab] = useState<'studio'|'agents'|'router'|'workflow'|'billing'|'output'|'settings'|'download'>('studio');
   const [token, setToken] = useState<string|null>(null);
   const [user, setUser] = useState<{name:string;email:string}|null>(null);
   const [authMode, setAuthMode] = useState<'login'|'register'>('login');
@@ -496,7 +496,7 @@ export default function ForgeApp() {
     password={authPassword} setPassword={setAuthPassword} name={authName} setName={setAuthName}
     error={authError} loading={authLoading} onSubmit={handleAuth} />;
 
-  const TAB_ICONS: Record<string, string> = { studio:'💬', agents:'🤖', router:'⚡', workflow:'🔀', billing:'💳', output:'📤', settings:'⚙' };
+  const TAB_ICONS: Record<string, string> = { studio:'💬', agents:'🤖', router:'⚡', workflow:'🔀', billing:'💳', output:'📤', settings:'⚙', download:'⬇' };
 
   return (
     <div style={{ minHeight:'100vh', background:'#0a0a0f', color:'#e2e8f0', fontFamily:'system-ui,sans-serif', display:'flex', flexDirection:'column' }}>
@@ -515,6 +515,11 @@ export default function ForgeApp() {
                 transition:'all .2s'
               }}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
             ))}
+            <button onClick={() => setTab('download')} style={{
+              padding:'6px 14px', borderRadius:8, border:'1px solid #7C3AED50', cursor:'pointer', fontSize:13, fontWeight:600,
+              background: tab==='download' ? '#7C3AED' : '#7C3AED15', color: tab==='download' ? '#fff' : '#a78bfa',
+              transition:'all .2s', display:'flex', alignItems:'center', gap:5
+            }}>⬇ Desktop</button>
           </nav>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
             <div style={{ textAlign:'right' }}>
@@ -565,19 +570,30 @@ export default function ForgeApp() {
             onAddProvider={addCustomProvider} addingProvider={addingProvider}
             onDeleteProvider={deleteCustomProvider} onTestProvider={testCustomProvider}
             testingProvider={testingProvider} providerMsg={providerMsg} />}
+        {tab === 'download'  && <DownloadTab />}
       </main>
+
+      {/* Persistent Download Bar — always visible at bottom on desktop */}
+      {!isMobile && tab !== 'download' && (
+        <div style={{ background:'#0f172a', borderTop:'1px solid #1e293b', padding:'8px 24px', display:'flex', alignItems:'center', gap:16, flexShrink:0 }}>
+          <span style={{ fontSize:12, color:'#64748b', fontWeight:600 }}>⬇ Get the Desktop App:</span>
+          <DownloadButtons compact />
+          <span style={{ marginLeft:'auto', fontSize:11, color:'#334155', cursor:'pointer' }} onClick={() => setTab('download')}>See all downloads →</span>
+        </div>
+      )}
 
       {/* Mobile bottom nav */}
       {isMobile && (
         <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'#0f172a', borderTop:'1px solid #1e293b', display:'flex', zIndex:100 }}>
-          {(['studio','agents','router','workflow','billing','output','settings'] as const).map(t => (
+          {(['studio','agents','router','workflow','billing','output','settings','download'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
-              flex:1, padding:'8px 0', border:'none', cursor:'pointer', background:'transparent',
+              flex:1, padding:'8px 0', border:'none', cursor:'pointer',
+              background: t==='download' ? (tab===t?'#7C3AED':'#7C3AED15') : 'transparent',
               display:'flex', flexDirection:'column', alignItems:'center', gap:2,
-              color: tab===t ? '#a78bfa' : '#475569'
+              color: tab===t ? (t==='download'?'#fff':'#a78bfa') : (t==='download'?'#a78bfa':'#475569')
             }}>
-              <span style={{ fontSize:18 }}>{TAB_ICONS[t]}</span>
-              <span style={{ fontSize:9, fontWeight:600, textTransform:'capitalize' }}>{t}</span>
+              <span style={{ fontSize:16 }}>{TAB_ICONS[t]}</span>
+              <span style={{ fontSize:8, fontWeight:600, textTransform:'capitalize' }}>{t==='download'?'App':t}</span>
             </button>
           ))}
         </nav>
@@ -1497,6 +1513,236 @@ function SettingsTab({ savedKeys, keyInputs, setKeyInputs, onSave, saving, messa
               {filtered.length > 200 && <div style={{ textAlign:'center', color:'#475569', fontSize:13, marginTop:12 }}>Showing 200 of {filtered.length} — narrow search to see more</div>}
             </>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Download Buttons (reusable) ──────────────────────────────────────────────
+const GITHUB_BASE = 'https://github.com/goldrusher9009-sketch/forge/raw/main/forge-desktop';
+
+function downloadFile(url: string, filename: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function downloadExtensionZip() {
+  // Generate extension zip instructions as a text guide since we can't zip server-side
+  const guide = `Forge AI Chrome Extension — Setup Guide
+==========================================
+
+1. Download the extension files from GitHub:
+   https://github.com/goldrusher9009-sketch/forge/tree/main/forge-desktop/chrome-extension
+
+2. Or clone the repo:
+   git clone https://github.com/goldrusher9009-sketch/forge.git
+   cd forge/forge-desktop/chrome-extension
+
+3. Open Chrome and go to:  chrome://extensions/
+
+4. Enable "Developer mode" (top-right toggle)
+
+5. Click "Load unpacked" and select the chrome-extension/ folder
+
+6. The Forge AI icon appears in your Chrome toolbar ⚡
+
+7. Start Forge Desktop first, then click the icon to connect
+
+DIRECT FILE LINKS:
+- manifest.json  → ${GITHUB_BASE}/chrome-extension/manifest.json
+- background.js  → ${GITHUB_BASE}/chrome-extension/background.js
+- content.js     → ${GITHUB_BASE}/chrome-extension/content.js
+- popup.html     → ${GITHUB_BASE}/chrome-extension/popup.html
+- popup.js       → ${GITHUB_BASE}/chrome-extension/popup.js
+`;
+  const blob = new Blob([guide], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  downloadFile(url, 'forge-chrome-extension-setup.txt');
+}
+
+function downloadDesktopSetup() {
+  const guide = `Forge AI Desktop App — Setup Guide
+=====================================
+
+REQUIREMENTS
+- Node.js 18+ (download from https://nodejs.org)
+- Git (download from https://git-scm.com)
+
+INSTALLATION
+1. Clone the repository:
+   git clone https://github.com/goldrusher9009-sketch/forge.git
+   cd forge/forge-desktop
+
+2. Install dependencies:
+   npm install
+
+3. Run in development mode:
+   npm start
+
+BUILD INSTALLERS
+- Windows .exe:  npm run build:win
+- macOS .dmg:    npm run build:mac
+- Linux AppImage: npm run build:linux
+
+Installers appear in the dist/ folder.
+
+WHAT YOU GET
+✓ Forge AI loads in a native desktop window
+✓ Open any folder — Forge reads your files for context
+✓ Persistent memory saved between sessions
+✓ Chrome extension bridge (see separate download)
+✓ Live file watching — Forge updates when files change
+
+SOURCE CODE
+https://github.com/goldrusher9009-sketch/forge/tree/main/forge-desktop
+
+SUPPORT
+https://forge-sand-two.vercel.app
+`;
+  const blob = new Blob([guide], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  downloadFile(url, 'forge-desktop-setup.txt');
+}
+
+export function DownloadButtons({ compact = false }: { compact?: boolean }) {
+  const btnStyle = (color: string): React.CSSProperties => ({
+    padding: compact ? '5px 12px' : '10px 20px',
+    borderRadius: 8,
+    border: `1px solid ${color}50`,
+    background: `${color}15`,
+    color: color,
+    cursor: 'pointer',
+    fontSize: compact ? 12 : 13,
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    whiteSpace: 'nowrap' as const,
+    transition: 'all .15s',
+  });
+  return (
+    <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+      <button style={btnStyle('#a78bfa')} onClick={downloadDesktopSetup}
+        onMouseEnter={e=>(e.currentTarget.style.background='#7C3AED30')}
+        onMouseLeave={e=>(e.currentTarget.style.background='#7C3AED15')}>
+        🖥 {compact ? 'Desktop App' : 'Download Desktop App'}
+      </button>
+      <button style={btnStyle('#60a5fa')} onClick={downloadExtensionZip}
+        onMouseEnter={e=>(e.currentTarget.style.background='#2563EB30')}
+        onMouseLeave={e=>(e.currentTarget.style.background='#2563EB15')}>
+        🔌 {compact ? 'Chrome Ext' : 'Chrome Extension Setup'}
+      </button>
+      <a href="https://github.com/goldrusher9009-sketch/forge/tree/main/forge-desktop"
+        target="_blank" rel="noopener noreferrer"
+        style={{ ...btnStyle('#4ade80'), textDecoration:'none' }}>
+        📂 {compact ? 'Source' : 'View Source Code'}
+      </a>
+    </div>
+  );
+}
+
+// ─── Download Tab ─────────────────────────────────────────────────────────────
+function DownloadTab() {
+  const features = [
+    { icon:'📁', title:'Folder Context', desc:'Open any folder — Forge reads your code, docs, and files for full context.' },
+    { icon:'🧠', title:'Persistent Memory', desc:'Forge remembers things across sessions. Notes, preferences, project context.' },
+    { icon:'🌐', title:'Chrome Bridge', desc:'Connect Chrome to share the current page, selected text, and tab context with Forge.' },
+    { icon:'👁', title:'Live File Watching', desc:'Files change? Forge knows instantly. Context stays fresh as you work.' },
+    { icon:'💻', title:'Native Desktop Window', desc:'Full-size native app. No browser tab. Forge is always one click away.' },
+    { icon:'🔒', title:'100% Local', desc:'Files and memory stay on your computer. No cloud sync unless you choose it.' },
+  ];
+
+  const steps = [
+    { n:1, title:'Install Node.js', desc:'Download from nodejs.org if you don\'t have it. v18 or newer.' },
+    { n:2, title:'Clone & Install', desc:'git clone the repo, cd forge/forge-desktop, run npm install' },
+    { n:3, title:'Launch', desc:'Run npm start to open Forge Desktop. Or build an installer with npm run build:win / build:mac' },
+    { n:4, title:'Add Chrome Extension', desc:'Load the chrome-extension/ folder as an unpacked extension in Chrome DevMode' },
+    { n:5, title:'Open a Folder', desc:'Click "Open Folder" in the sidebar. Forge now has full context of your project.' },
+  ];
+
+  return (
+    <div style={{ flex:1, overflow:'auto', background:'#0a0a0f' }}>
+      {/* Hero */}
+      <div style={{ background:'linear-gradient(135deg,#0f0a1e,#0a1628)', borderBottom:'1px solid #1e293b', padding:'48px 40px', textAlign:'center' }}>
+        <div style={{ fontSize:56, marginBottom:12 }}>⚡</div>
+        <h1 style={{ margin:'0 0 10px', fontSize:34, fontWeight:900, background:'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+          Forge AI Desktop
+        </h1>
+        <p style={{ margin:'0 0 28px', fontSize:16, color:'#94a3b8', maxWidth:540, marginLeft:'auto', marginRight:'auto', lineHeight:1.6 }}>
+          The full Forge AI platform as a native desktop app — with folder access, persistent memory, and Chrome integration. Like Manus or Claude Desktop, but yours.
+        </p>
+        <div style={{ display:'flex', justifyContent:'center', flexWrap:'wrap', gap:12 }}>
+          <DownloadButtons />
+        </div>
+        <p style={{ margin:'16px 0 0', fontSize:12, color:'#475569' }}>
+          Free & open source · Windows, macOS, Linux · Requires Node.js 18+
+        </p>
+      </div>
+
+      <div style={{ maxWidth:960, margin:'0 auto', padding:'40px 32px' }}>
+        {/* Features */}
+        <h2 style={{ margin:'0 0 20px', fontSize:20, fontWeight:700, color:'#e2e8f0' }}>What's included</h2>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:16, marginBottom:48 }}>
+          {features.map(f => (
+            <div key={f.title} style={{ padding:20, background:'#0f172a', borderRadius:14, border:'1px solid #1e293b' }}>
+              <div style={{ fontSize:28, marginBottom:10 }}>{f.icon}</div>
+              <div style={{ fontWeight:700, fontSize:15, marginBottom:6 }}>{f.title}</div>
+              <div style={{ fontSize:13, color:'#64748b', lineHeight:1.6 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Setup steps */}
+        <h2 style={{ margin:'0 0 20px', fontSize:20, fontWeight:700, color:'#e2e8f0' }}>Getting started</h2>
+        <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:48 }}>
+          {steps.map(s => (
+            <div key={s.n} style={{ display:'flex', gap:16, padding:18, background:'#0f172a', borderRadius:12, border:'1px solid #1e293b', alignItems:'flex-start' }}>
+              <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,#7C3AED,#2563EB)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:14, color:'#fff', flexShrink:0 }}>{s.n}</div>
+              <div>
+                <div style={{ fontWeight:700, fontSize:14, marginBottom:4 }}>{s.title}</div>
+                <div style={{ fontSize:13, color:'#64748b', lineHeight:1.5 }}>{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Chrome extension */}
+        <div style={{ padding:28, background:'#0f172a', borderRadius:16, border:'1px solid #2563EB30', marginBottom:40 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
+            <span style={{ fontSize:32 }}>🔌</span>
+            <div>
+              <div style={{ fontWeight:800, fontSize:17 }}>Chrome Extension</div>
+              <div style={{ fontSize:13, color:'#64748b' }}>Browse alongside Forge — share pages, selections, and tab context</div>
+            </div>
+          </div>
+          <div style={{ fontSize:13, color:'#94a3b8', lineHeight:1.8, marginBottom:18 }}>
+            Once Forge Desktop is running, install the Chrome extension to let Forge see what you're browsing. Highlight text on any page and Forge gets it instantly. Click the ⚡ icon in your toolbar to send the whole page as context.
+          </div>
+          <div style={{ padding:14, background:'#1e293b', borderRadius:10, fontFamily:'monospace', fontSize:12, color:'#94a3b8', marginBottom:16, lineHeight:2 }}>
+            1. Open Chrome → <strong style={{color:'#60a5fa'}}>chrome://extensions/</strong><br/>
+            2. Enable <strong style={{color:'#60a5fa'}}>Developer mode</strong> (top right)<br/>
+            3. Click <strong style={{color:'#60a5fa'}}>Load unpacked</strong> → select the <strong style={{color:'#a78bfa'}}>chrome-extension/</strong> folder<br/>
+            4. The ⚡ Forge icon appears in your toolbar
+          </div>
+          <button onClick={downloadExtensionZip} style={{ padding:'10px 20px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#2563EB,#0EA5E9)', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+            🔌 Download Extension Setup Guide
+          </button>
+        </div>
+
+        {/* CTA */}
+        <div style={{ textAlign:'center', padding:'32px', background:'linear-gradient(135deg,#7C3AED15,#2563EB15)', borderRadius:16, border:'1px solid #7C3AED30' }}>
+          <div style={{ fontSize:24, fontWeight:800, marginBottom:8 }}>Ready to download?</div>
+          <div style={{ fontSize:14, color:'#64748b', marginBottom:24 }}>Get the setup guide and start using Forge on your desktop in minutes.</div>
+          <div style={{ display:'flex', justifyContent:'center', gap:12, flexWrap:'wrap' }}>
+            <DownloadButtons />
+          </div>
         </div>
       </div>
     </div>
