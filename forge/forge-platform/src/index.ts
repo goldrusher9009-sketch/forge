@@ -730,8 +730,8 @@ app.post('/api/billing/upgrade', requireAuth, async (req: AuthRequest, res) => {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${STRIPE_SECRET}`, 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(Object.entries(sessionBody).flatMap(([k, v]) =>
-          typeof v === 'object' ? Object.entries(v as any).map(([k2, v2]) => [`${k}[${k2}]`, String(v2)]) : [[k, String(v)]]
-        )).toString(),
+          typeof v === 'object' ? Object.entries(v as any).map(([k2, v2]: [string, any]) => [String(`${k}[${k2}]`), String(v2)] as [string, string]) : [[k, String(v)] as [string, string]]
+        ) as [string, string][]).toString(),
       });
       if (!r.ok) throw new Error(await r.text());
       const session: any = await r.json();
