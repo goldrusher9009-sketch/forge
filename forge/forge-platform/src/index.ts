@@ -1406,47 +1406,42 @@ function registerScheduledTask(task: any) {
 // ── 404 + Error handler ───────────────────────────────────────
 app.use((req, res) => { res.status(404).json({ success: false, error: 'NOT_FOUND', message: `${req.method} ${req.path} not found` }); });
 // ── Route Aliases (frontend compatibility) ────────────────────
-// Frontend uses /api/workspace/agents and /api/workspace/tasks
-app.use('/api/workspace/agents', requireAuth, (req: AuthRequest, res, next) => {
-  req.url = req.url === '/' ? '' : req.url;
-  // Proxy to /api/agents handlers inline
-  if (req.method === 'GET') {
-    const agents = db.prepare('SELECT * FROM workspace_agents WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub);
-    return res.json({ success: true, data: agents });
-  }
-  if (req.method === 'POST') {
-    const { name, icon = '🤖', color = '#6366f1', system_prompt = '', model = 'claude-3-5-sonnet-20241022', enabled = 1 } = req.body as any;
-    if (!name) { return res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'name required' }); }
-    const id = uuidv4();
-    db.prepare('INSERT INTO workspace_agents (id,user_id,name,icon,color,system_prompt,model,enabled) VALUES (?,?,?,?,?,?,?,?)').run(id, req.user!.sub, name, icon, color, system_prompt, model, enabled);
-    return res.status(201).json({ success: true, data: db.prepare('SELECT * FROM workspace_agents WHERE id=?').get(id) });
-  }
-  next();
+// Frontend uses /api/workspace/agents, /api/workspace/tasks, /api/schedules
+app.get('/api/workspace/agents', requireAuth, (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: db.prepare('SELECT * FROM workspace_agents WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub) });
 });
 
-app.patch('/api/workspace/agents/:id', requireAuth, (req: AuthRequest, res) => {
+app.post('/api/workspace/agents', requireAuth, (req: AuthRequest, res: Response) => {
+  const { name, icon = '🤖', color = '#6366f1', system_prompt = '', model = 'claude-3-5-sonnet-20241022', enabled = 1 } = req.body as any;
+  if (!name) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'name required' }); return; }
+  const id = uuidv4();
+  db.prepare('INSERT INTO workspace_agents (id,user_id,name,icon,color,system_prompt,model,enabled) VALUES (?,?,?,?,?,?,?,?)').run(id, req.user!.sub, name, icon, color, system_prompt, model, enabled);
+  res.status(201).json({ success: true, data: db.prepare('SELECT * FROM workspace_agents WHERE id=?').get(id) });
+});
+
+app.patch('/api/workspace/agents/:id', requireAuth, (req: AuthRequest, res: Response) => {
   const { name, icon, color, system_prompt, model, enabled } = req.body as any;
   if (!db.prepare('SELECT id FROM workspace_agents WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
-    return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    res.status(404).json({ success: false, error: 'NOT_FOUND' }); return;
   }
   db.prepare("UPDATE workspace_agents SET name=COALESCE(?,name),icon=COALESCE(?,icon),color=COALESCE(?,color),system_prompt=COALESCE(?,system_prompt),model=COALESCE(?,model),enabled=COALESCE(?,enabled),updated_at=datetime('now') WHERE id=?")
     .run(name??null, icon??null, color??null, system_prompt??null, model??null, enabled!==undefined?(enabled?1:0):null, req.params.id);
-  return res.json({ success: true, data: db.prepare('SELECT * FROM workspace_agents WHERE id=?').get(req.params.id) });
+  res.json({ success: true, data: db.prepare('SELECT * FROM workspace_agents WHERE id=?').get(req.params.id) });
 });
 
-app.delete('/api/workspace/agents/:id', requireAuth, (req: AuthRequest, res) => {
+app.delete('/api/workspace/agents/:id', requireAuth, (req: AuthRequest, res: Response) => {
   const r = db.prepare('DELETE FROM workspace_agents WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
-  if (!r.changes) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
-  return res.json({ success: true });
+  if (!r.changes) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
+  res.json({ success: true });
 });
 
-// /api/workspace/tasks → /api/workspace-tasks aliases
-app.get('/api/workspace/tasks', requireAuth, (req: AuthRequest, res) => {
+// /api/workspace/tasks aliases
+app.get('/api/workspace/tasks', requireAuth, (req: AuthRequest, res: Response) => {
   const tasks = db.prepare('SELECT t.*,a.name as agent_name,a.color as agent_color FROM workspace_tasks t LEFT JOIN workspace_agents a ON t.agent_id=a.id WHERE t.user_id=? ORDER BY t.created_at DESC').all(req.user!.sub);
   res.json({ success: true, data: tasks });
 });
 
-app.post('/api/workspace/tasks', requireAuth, (req: AuthRequest, res) => {
+app.post('/api/workspace/tasks', requireAuth, (req: AuthRequest, res: Response) => {
   const { title, description, status = 'todo', priority = 'medium', project_id, agent_id } = req.body as any;
   if (!title) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'title required' }); return; }
   const id = uuidv4();
@@ -1455,7 +1450,7 @@ app.post('/api/workspace/tasks', requireAuth, (req: AuthRequest, res) => {
   res.status(201).json({ success: true, data: db.prepare('SELECT * FROM workspace_tasks WHERE id=?').get(id) });
 });
 
-app.patch('/api/workspace/tasks/:id', requireAuth, (req: AuthRequest, res) => {
+app.patch('/api/workspace/tasks/:id', requireAuth, (req: AuthRequest, res: Response) => {
   const { title, description, status, priority, agent_id } = req.body as any;
   if (!db.prepare('SELECT id FROM workspace_tasks WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
     res.status(404).json({ success: false, error: 'NOT_FOUND' }); return;
@@ -1465,20 +1460,20 @@ app.patch('/api/workspace/tasks/:id', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data: db.prepare('SELECT * FROM workspace_tasks WHERE id=?').get(req.params.id) });
 });
 
-app.delete('/api/workspace/tasks/:id', requireAuth, (req: AuthRequest, res) => {
+app.delete('/api/workspace/tasks/:id', requireAuth, (req: AuthRequest, res: Response) => {
   const r = db.prepare('DELETE FROM workspace_tasks WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
   if (!r.changes) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
   res.json({ success: true });
 });
 
-// /api/schedules → /api/schedule aliases
-app.get('/api/schedules', requireAuth, (req: AuthRequest, res) => {
+// /api/schedules aliases
+app.get('/api/schedules', requireAuth, (req: AuthRequest, res: Response) => {
   res.json({ success: true, data: db.prepare('SELECT * FROM scheduled_tasks WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub) });
 });
 
-app.post('/api/schedules', requireAuth, (req: AuthRequest, res) => {
+app.post('/api/schedules', requireAuth, (req: AuthRequest, res: Response) => {
   const { name, cron_expression, cron_expr, prompt, agent_ids = [], project_id } = req.body as any;
-  const cronStr = cron_expression || cron_expr || '0 9 * * 1';
+  const cronStr = (cron_expression || cron_expr || '0 9 * * 1') as string;
   if (!name || !prompt) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'name and prompt required' }); return; }
   const id = uuidv4();
   db.prepare('INSERT INTO scheduled_tasks (id,user_id,project_id,name,cron_expr,prompt,agent_ids) VALUES (?,?,?,?,?,?,?)').run(id, req.user!.sub, project_id||null, name, cronStr, prompt, JSON.stringify(agent_ids));
@@ -1487,24 +1482,24 @@ app.post('/api/schedules', requireAuth, (req: AuthRequest, res) => {
   res.status(201).json({ success: true, data: task });
 });
 
-app.patch('/api/schedules/:id', requireAuth, (req: AuthRequest, res) => {
+app.patch('/api/schedules/:id', requireAuth, (req: AuthRequest, res: Response) => {
   const { name, cron_expression, cron_expr, prompt, agent_ids, enabled } = req.body as any;
-  const cronStr = cron_expression || cron_expr || undefined;
+  const cronStr = (cron_expression || cron_expr || null) as string | null;
   if (!db.prepare('SELECT id FROM scheduled_tasks WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
     res.status(404).json({ success: false, error: 'TASK_NOT_FOUND' }); return;
   }
   db.prepare("UPDATE scheduled_tasks SET name=COALESCE(?,name),cron_expr=COALESCE(?,cron_expr),prompt=COALESCE(?,prompt),agent_ids=COALESCE(?,agent_ids),enabled=COALESCE(?,enabled),updated_at=datetime('now') WHERE id=?")
-    .run(name??null, cronStr??null, prompt??null, agent_ids?JSON.stringify(agent_ids):null, enabled!==undefined?(enabled?1:0):null, req.params.id);
+    .run(name??null, cronStr, prompt??null, agent_ids?JSON.stringify(agent_ids):null, enabled!==undefined?(enabled?1:0):null, req.params.id);
   res.json({ success: true, data: db.prepare('SELECT * FROM scheduled_tasks WHERE id=?').get(req.params.id) });
 });
 
-app.delete('/api/schedules/:id', requireAuth, (req: AuthRequest, res) => {
+app.delete('/api/schedules/:id', requireAuth, (req: AuthRequest, res: Response) => {
   const r = db.prepare('DELETE FROM scheduled_tasks WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
   if (!r.changes) { res.status(404).json({ success: false, error: 'TASK_NOT_FOUND' }); return; }
   res.json({ success: true });
 });
 
-app.post('/api/schedules/:id/run', requireAuth, async (req: AuthRequest, res) => {
+app.post('/api/schedules/:id/run', requireAuth, async (req: AuthRequest, res: Response) => {
   const task = db.prepare('SELECT * FROM scheduled_tasks WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!task) { res.status(404).json({ success: false, error: 'TASK_NOT_FOUND' }); return; }
   const runId = await triggerScheduledTask(task);
