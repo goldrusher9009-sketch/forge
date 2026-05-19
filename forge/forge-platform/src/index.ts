@@ -1506,6 +1506,51 @@ app.post('/api/schedules/:id/run', requireAuth, async (req: AuthRequest, res: Re
   res.json({ success: true, message: 'Task triggered', run_id: runId });
 });
 
+// Dispatch aliases: frontend uses /runs, /run, /cancel/:id paths
+app.get('/api/dispatch/runs', requireAuth, (req: AuthRequest, res: Response) => {
+  const runs = db.prepare('SELECT * FROM dispatch_runs WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user!.sub);
+  res.json({ success: true, data: runs });
+});
+
+app.post('/api/dispatch/run', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { prompt, agent_ids = [], project_id, thread_id } = req.body as any;
+  if (!prompt?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'prompt required' }); return; }
+  const id = uuidv4();
+  db.prepare('INSERT INTO dispatch_runs (id,user_id,project_id,thread_id,prompt,agent_ids) VALUES (?,?,?,?,?,?)').run(id, req.user!.sub, project_id||null, thread_id||null, prompt.trim(), JSON.stringify(agent_ids));
+  // Run async without awaiting
+  const runDispatch = async () => {
+    try {
+      db.prepare("UPDATE dispatch_runs SET status='running',updated_at=datetime('now') WHERE id=?").run(id);
+      const agents: any[] = agent_ids.length
+        ? (db.prepare(`SELECT * FROM workspace_agents WHERE id IN (${agent_ids.map(() => '?').join(',')}) AND enabled=1`).all(...agent_ids) as any[])
+        : [];
+      const systemPrompt = agents.map((a: any) => a.system_prompt).filter(Boolean).join('\n\n') || 'You are a helpful assistant.';
+      const apiKeyRow = db.prepare("SELECT key_value FROM api_keys WHERE user_id=? AND provider='anthropic' AND is_active=1 LIMIT 1").get(req.user!.sub) as any;
+      const apiKey = apiKeyRow?.key_value || process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) { db.prepare("UPDATE dispatch_runs SET status='error',error=?,updated_at=datetime('now') WHERE id=?").run('No Anthropic API key configured', id); return; }
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-3-5-haiku-20241022', max_tokens: 4096, system: systemPrompt, messages: [{ role: 'user', content: prompt.trim() }] })
+      });
+      const data = await resp.json() as any;
+      const result = data.content?.[0]?.text || JSON.stringify(data);
+      db.prepare("UPDATE dispatch_runs SET status='done',output=?,updated_at=datetime('now') WHERE id=?").run(result, id);
+    } catch (err: any) {
+      db.prepare("UPDATE dispatch_runs SET status='error',error=?,updated_at=datetime('now') WHERE id=?").run(err.message, id);
+    }
+  };
+  runDispatch();
+  res.status(201).json({ success: true, data: { id, status: 'queued' } });
+});
+
+app.post('/api/dispatch/cancel/:id', requireAuth, (req: AuthRequest, res: Response) => {
+  const run = db.prepare('SELECT * FROM dispatch_runs WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub);
+  if (!run) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
+  db.prepare("UPDATE dispatch_runs SET status='cancelled',updated_at=datetime('now') WHERE id=?").run(req.params.id);
+  res.json({ success: true });
+});
+
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
   res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: err.message });
