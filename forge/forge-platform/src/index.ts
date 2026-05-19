@@ -1403,8 +1403,6 @@ function registerScheduledTask(task: any) {
   } catch (e) { console.error('Scheduler boot error:', e); }
 })();
 
-// ── 404 + Error handler ───────────────────────────────────────
-app.use((req, res) => { res.status(404).json({ success: false, error: 'NOT_FOUND', message: `${req.method} ${req.path} not found` }); });
 // ── Route Aliases (frontend compatibility) ────────────────────
 // Frontend uses /api/workspace/agents, /api/workspace/tasks, /api/schedules
 app.get('/api/workspace/agents', requireAuth, (req: AuthRequest, res: Response) => {
@@ -1550,6 +1548,9 @@ app.post('/api/dispatch/cancel/:id', requireAuth, (req: AuthRequest, res: Respon
   db.prepare("UPDATE dispatch_runs SET status='cancelled',updated_at=datetime('now') WHERE id=?").run(req.params.id);
   res.json({ success: true });
 });
+
+// ── 404 + Error handler ───────────────────────────────────────
+app.use((req, res) => { res.status(404).json({ success: false, error: 'NOT_FOUND', message: `${req.method} ${req.path} not found` }); });
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
