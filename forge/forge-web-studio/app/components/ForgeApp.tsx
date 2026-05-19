@@ -161,6 +161,9 @@ export default function ForgeApp() {
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
 
+  // Expose setTab globally so child components (e.g. "Go to Settings" button) can navigate
+  useEffect(() => { (window as any).__forgeSetTab = setTab; return () => { delete (window as any).__forgeSetTab; }; }, [setTab]);
+
   // ── Auth ──────────────────────────────────────────────────────────────────
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault();
@@ -240,6 +243,16 @@ export default function ForgeApp() {
         })
       });
       const data = await res.json();
+      // Handle "no API key" case — show a special system message, not an error
+      if (data.error === 'NO_API_KEY' || data.needsApiKey) {
+        const providerName = data.providerName || data.provider || 'provider';
+        const keyMsg: Message = { role:'assistant', content: `__NO_KEY__${providerName}__${data.model || model}`, ts: Date.now() };
+        setMessages(prev => [...prev, keyMsg]);
+        setLiveStatus('⚠️ API key needed'); setLivePreview('');
+        if (liveTimerRef.current) clearInterval(liveTimerRef.current);
+        setSending(false);
+        return;
+      }
       if (!res.ok) throw new Error((data.message) || data.error || 'API error');
       const payload = data.data || data;
       const responseText = payload.response || payload.content || payload.message || payload.text || 'No response';
@@ -716,18 +729,46 @@ function StudioTab({ messages, input, setInput, sending, sendMessage, language, 
               </div>
             </div>
           )}
-          {messages.map((m: Message, i: number) => (
-            <div key={i} style={{ display:'flex', justifyContent: m.role==='user'?'flex-end':'flex-start', gap:10 }}>
-              {m.role==='assistant' && <div style={{ width:32, height:32, borderRadius:8, background:'linear-gradient(135deg,#7C3AED,#2563EB)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>⚡</div>}
-              <div style={{ maxWidth:'75%' }}>
-                <div style={{ padding:'12px 16px', borderRadius: m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px', background: m.role==='user'?'#7C3AED':'#1e293b', color:'#e2e8f0', fontSize:14, lineHeight:1.6, whiteSpace:'pre-wrap' }}>{m.content}</div>
-                <div style={{ fontSize:11, color:'#475569', marginTop:4, textAlign: m.role==='user'?'right':'left' }}>
-                  {m.model && <span style={{ background:'#1e293b', padding:'2px 6px', borderRadius:4, marginRight:6 }}>{m.model}</span>}
-                  {ago(m.ts)}
+          {messages.map((m: Message, i: number) => {
+            // Special "no API key" card
+            if (m.role === 'assistant' && m.content.startsWith('__NO_KEY__')) {
+              const parts = m.content.split('__');
+              const providerName = parts[2] || 'Provider';
+              const modelName = parts[3] || '';
+              return (
+                <div key={i} style={{ display:'flex', gap:10 }}>
+                  <div style={{ width:32, height:32, borderRadius:8, background:'#D97706', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>⚠</div>
+                  <div style={{ maxWidth:'80%', padding:'14px 16px', borderRadius:'16px 16px 16px 4px', background:'#1e293b', border:'1px solid #D9770640' }}>
+                    <div style={{ fontWeight:700, fontSize:13, color:'#fbbf24', marginBottom:6 }}>
+                      No {providerName} API key connected
+                    </div>
+                    <div style={{ fontSize:13, color:'#94a3b8', lineHeight:1.6, marginBottom:12 }}>
+                      To use <span style={{ color:'#a78bfa', fontWeight:600 }}>{modelName || providerName}</span>, add your {providerName} API key in Settings.
+                      {providerName === 'Groq' || providerName === 'Gemini' || providerName === 'Mistral'
+                        ? ' This model is free tier — just needs a key signup.'
+                        : ' It routes directly through your own account.'}
+                    </div>
+                    <button onClick={() => { /* navigate to settings — handled via prop */ (window as any).__forgeSetTab?.('settings'); }}
+                      style={{ padding:'7px 16px', borderRadius:8, border:'none', background:'linear-gradient(135deg,#7C3AED,#2563EB)', color:'#fff', fontWeight:600, fontSize:12, cursor:'pointer' }}>
+                      ⚙ Go to Settings
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div key={i} style={{ display:'flex', justifyContent: m.role==='user'?'flex-end':'flex-start', gap:10 }}>
+                {m.role==='assistant' && <div style={{ width:32, height:32, borderRadius:8, background:'linear-gradient(135deg,#7C3AED,#2563EB)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>⚡</div>}
+                <div style={{ maxWidth:'75%' }}>
+                  <div style={{ padding:'12px 16px', borderRadius: m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px', background: m.role==='user'?'#7C3AED':'#1e293b', color:'#e2e8f0', fontSize:14, lineHeight:1.6, whiteSpace:'pre-wrap' }}>{m.content}</div>
+                  <div style={{ fontSize:11, color:'#475569', marginTop:4, textAlign: m.role==='user'?'right':'left' }}>
+                    {m.model && <span style={{ background:'#1e293b', padding:'2px 6px', borderRadius:4, marginRight:6 }}>{m.model}</span>}
+                    {ago(m.ts)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {sending && (
             <div style={{ display:'flex', gap:10, alignItems:'center' }}>
               <div style={{ width:32, height:32, borderRadius:8, background:'linear-gradient(135deg,#7C3AED,#2563EB)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>⚡</div>

@@ -490,18 +490,9 @@ app.post('/api/chat', requireAuth, async (req: AuthRequest, res) => {
   // Get user's API key for this provider
   const apiKey = getUserKey(userId, provider);
   if (!apiKey) {
-    // Provide a helpful fallback message instead of erroring
     const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
-    const asstMsg = `I'd love to help! To send real messages via **${providerName}** (needed for **${actualModel}**), please add your ${providerName} API key in the **Settings** tab. It takes 30 seconds and routes everything through your own account at provider rates.
-
-**Quick setup:**
-1. Go to ⚙️ Settings
-2. Paste your ${providerName} API key
-3. Click Save API Keys
-4. Come back and send your message!
-
-Free options you can use right now: Llama 3.3 70B (Groq), Gemini 2.0 Flash (Google), or Mistral Small — all free tier with their own API keys.`;
-    res.json({ success: true, data: { response: asstMsg, model: `${forgeModelId} (no key)`, tokensUsed: 0, needsApiKey: true, provider } });
+    res.json({ success: false, error: 'NO_API_KEY', needsApiKey: true, provider, providerName, model: forgeModelId,
+      message: `No ${providerName} API key found. Go to Settings → LLM Providers and add your ${providerName} key to use ${actualModel}.` });
     return;
   }
 
