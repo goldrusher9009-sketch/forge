@@ -550,21 +550,36 @@ app.post('/api/keys', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
   const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor'];
   const saved: string[] = [];
+
+  const upsertKey = (provider: string, value: string, preview: string) => {
+    const enc = encryptKey(value);
+    const existing = db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider);
+    if (existing) {
+      db.prepare("UPDATE api_keys SET key_encrypted=?,key_preview=? WHERE user_id=? AND provider=?").run(enc, preview, userId, provider);
+    } else {
+      db.prepare('INSERT INTO api_keys (id,user_id,provider,key_encrypted,key_preview) VALUES (?,?,?,?,?)').run(uuidv4(), userId, provider, enc, preview);
+    }
+    saved.push(provider);
+  };
+
   providers.forEach(p => {
+    // API key
     const key = req.body[`${p}_key`];
     if (key && typeof key === 'string' && key.trim()) {
       const trimmed = key.trim();
-      const enc = encryptKey(trimmed);
-      const preview = previewKey(trimmed);
-      const existing = db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, p);
-      if (existing) {
-        db.prepare("UPDATE api_keys SET key_encrypted=?,key_preview=? WHERE user_id=? AND provider=?").run(enc, preview, userId, p);
-      } else {
-        db.prepare('INSERT INTO api_keys (id,user_id,provider,key_encrypted,key_preview) VALUES (?,?,?,?,?)').run(uuidv4(), userId, p, enc, preview);
-      }
-      saved.push(p);
+      upsertKey(p, trimmed, previewKey(trimmed));
+    }
+    // Account email + password (stored as JSON under provider key "${p}_account")
+    const email = req.body[`${p}_account_email`];
+    const password = req.body[`${p}_account_password`];
+    if (email && typeof email === 'string' && email.trim() &&
+        password && typeof password === 'string' && password.trim()) {
+      const creds = JSON.stringify({ email: email.trim(), password: password.trim() });
+      const preview = email.trim().slice(0, 4) + '***';
+      upsertKey(`${p}_account`, creds, preview);
     }
   });
+
   res.json({ success: true, message: `Saved keys for: ${saved.join(', ') || 'none'}`, saved });
 });
 

@@ -133,7 +133,14 @@ export default function ForgeApp() {
 
   // Settings / API keys state
   const [savedKeys, setSavedKeys] = useState<{has_anthropic:boolean;has_openai:boolean;has_openrouter:boolean;has_gemini:boolean;anthropic_key:string|null;openai_key:string|null;openrouter_key:string|null;gemini_key:string|null}>({has_anthropic:false,has_openai:false,has_openrouter:false,has_gemini:false,anthropic_key:null,openai_key:null,openrouter_key:null,gemini_key:null});
-  const [keyInputs, setKeyInputs] = useState({anthropic:'',openai:'',openrouter:'',gemini:''});
+  const [keyInputs, setKeyInputs] = useState<Record<string,string>>({
+    anthropic:'', openai:'', openrouter:'', groq:'', gemini:'', mistral:'', together:'', perplexity:'', cohere:'',
+    anthropic_email:'', anthropic_password:'', openai_email:'', openai_password:'',
+    openrouter_email:'', openrouter_password:'', groq_email:'', groq_password:'',
+    gemini_email:'', gemini_password:'', mistral_email:'', mistral_password:'',
+    together_email:'', together_password:'', perplexity_email:'', perplexity_password:'',
+    cohere_email:'', cohere_password:'',
+  });
   const [keysSaving, setKeysSaving] = useState(false);
   const [keysMsg, setKeysMsg] = useState('');
   const [orModels, setOrModels] = useState<any[]>([]);
@@ -287,17 +294,28 @@ export default function ForgeApp() {
     setKeysSaving(true); setKeysMsg('');
     try {
       const body: any = {};
-      if (keyInputs.anthropic)  body.anthropic_key  = keyInputs.anthropic;
-      if (keyInputs.openai)     body.openai_key     = keyInputs.openai;
-      if (keyInputs.openrouter) body.openrouter_key = keyInputs.openrouter;
-      if (keyInputs.gemini)     body.gemini_key     = keyInputs.gemini;
+      const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere'];
+      providers.forEach(p => {
+        // API key mode
+        if (keyInputs[p]) body[`${p}_key`] = keyInputs[p];
+        // Monthly account mode — store email as key and password separately
+        if (keyInputs[`${p}_email`] && keyInputs[`${p}_password`]) {
+          body[`${p}_account_email`] = keyInputs[`${p}_email`];
+          body[`${p}_account_password`] = keyInputs[`${p}_password`];
+        }
+      });
+      if (Object.keys(body).length === 0) { setKeysMsg('❌ Enter at least one API key or account credential'); setKeysSaving(false); return; }
       const res = await fetch(`${API_BASE}/keys`, {
         method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
         body: JSON.stringify(body)
       });
       const data = await res.json();
-      if (data.success) { setKeysMsg('✅ Keys saved!'); setKeyInputs({anthropic:'',openai:'',openrouter:'',gemini:''}); loadKeys(); }
-      else setKeysMsg('❌ ' + (data.error || 'Save failed'));
+      if (data.success) {
+        setKeysMsg('✅ Saved!');
+        // Reset all inputs
+        setKeyInputs(prev => Object.fromEntries(Object.keys(prev).map(k => [k, ''])));
+        loadKeys();
+      } else setKeysMsg('❌ ' + (data.error || data.message || 'Save failed'));
     } catch (e:any) { setKeysMsg('❌ ' + e.message); }
     setKeysSaving(false);
   }
