@@ -20,9 +20,9 @@ import Database from 'better-sqlite3';
 const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const JWT_SECRET = process.env.JWT_SECRET || 'forge-dev-secret-change-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-const REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '7d';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3001';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '30d';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://forge-sand-two.vercel.app';
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'forge.db');
 
 // ── Database ──────────────────────────────────────────────────
@@ -102,7 +102,22 @@ function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): void
 const app = express();
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({ origin: [FRONTEND_URL, 'http://localhost:3000', 'http://localhost:3001'], credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow: no origin (curl/Postman), localhost, Vercel deployments
+    const allowed = [
+      FRONTEND_URL,
+      'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002',
+      'https://forge-sand-two.vercel.app',
+    ];
+    if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // open CORS for now — tighten post-launch
+    }
+  },
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());

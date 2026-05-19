@@ -1291,17 +1291,26 @@ const selectStyle: React.CSSProperties = { width:'100%', padding:'8px 10px', bor
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 function SettingsTab({ savedKeys, keyInputs, setKeyInputs, onSave, saving, message, orModels, orLoading, onLoadOrModels, orSearch, setOrSearch, onSelectModel, customProviders, newProvider, setNewProvider, onAddProvider, addingProvider, onDeleteProvider, onTestProvider, testingProvider, providerMsg }: any) {
+  const [settingsSection, setSettingsSection] = useState<'forge'|'providers'|'custom'>('forge');
+  const [providerMode, setProviderMode] = useState<Record<string,'api'|'account'>>({});
+
   const providers = [
-    { id:'anthropic',  label:'Anthropic',   icon:'🟣', free:false, desc:'Claude Opus 4, Sonnet 4, Haiku 4.5',         placeholder:'sk-ant-api03-…',   signup:'https://console.anthropic.com/settings/keys',    color:'#7C3AED', monthly:'claude.ai/settings' },
-    { id:'openai',     label:'OpenAI',      icon:'🟢', free:false, desc:'GPT-4o, GPT-4.1, o3 Mini, o1',              placeholder:'sk-proj-…',        signup:'https://platform.openai.com/api-keys',           color:'#059669', monthly:'platform.openai.com/account/billing' },
-    { id:'openrouter', label:'OpenRouter',  icon:'🔵', free:false, desc:'400+ models — every frontier model in one key',placeholder:'sk-or-v1-…',      signup:'https://openrouter.ai/keys',                     color:'#2563EB', monthly:'openrouter.ai/credits' },
-    { id:'groq',       label:'Groq',        icon:'⚡', free:true,  desc:'FREE — Llama 3.3, Mixtral, ultra-fast inference',placeholder:'gsk_…',          signup:'https://console.groq.com/keys',                  color:'#F59E0B', monthly:'console.groq.com' },
-    { id:'gemini',     label:'Google',      icon:'🔴', free:true,  desc:'FREE tier — Gemini 2.0 Flash, 1.5 Pro',     placeholder:'AIza…',            signup:'https://aistudio.google.com/app/apikey',         color:'#DC2626', monthly:'aistudio.google.com' },
-    { id:'mistral',    label:'Mistral AI',  icon:'🇫🇷', free:true,  desc:'FREE tier — Mistral Small, EU-based models', placeholder:'…',               signup:'https://console.mistral.ai/api-keys',            color:'#E25822', monthly:'console.mistral.ai' },
-    { id:'together',   label:'Together AI', icon:'🤝', free:false, desc:'Open-source models — Llama, Qwen, DBRX',    placeholder:'…',                signup:'https://api.together.ai/settings/api-keys',      color:'#8B5CF6', monthly:'api.together.ai' },
-    { id:'perplexity', label:'Perplexity',  icon:'🔍', free:false, desc:'Sonar models with web search built-in',     placeholder:'pplx-…',           signup:'https://www.perplexity.ai/settings/api',         color:'#06B6D4', monthly:'perplexity.ai/settings' },
-    { id:'cohere',     label:'Cohere',      icon:'🌊', free:true,  desc:'FREE trial — Command R+, enterprise NLP',   placeholder:'…',                signup:'https://dashboard.cohere.com/api-keys',          color:'#0EA5E9', monthly:'dashboard.cohere.com' },
-    { id:'cursor',     label:'Cursor',      icon:'🖱', free:false, desc:'Cursor Pro/Business API access',            placeholder:'…',                signup:'https://cursor.sh/settings',                     color:'#6366F1', monthly:'cursor.sh/settings' },
+    { id:'anthropic',  label:'Anthropic',   icon:'🟣', free:false, desc:'Claude Opus 4, Sonnet 4, Haiku 4.5',          placeholder:'sk-ant-api03-…',  signup:'https://console.anthropic.com/settings/keys',  color:'#7C3AED', monthlyUrl:'https://claude.ai/settings',              monthlyDesc:'claude.ai subscription (Pro/Team)' },
+    { id:'openai',     label:'OpenAI',      icon:'🟢', free:false, desc:'GPT-4o, GPT-4.1, o3 Mini, o1',               placeholder:'sk-proj-…',       signup:'https://platform.openai.com/api-keys',         color:'#059669', monthlyUrl:'https://chat.openai.com',                  monthlyDesc:'ChatGPT Plus / Team account' },
+    { id:'openrouter', label:'OpenRouter',  icon:'🔵', free:false, desc:'400+ models via one key',                      placeholder:'sk-or-v1-…',      signup:'https://openrouter.ai/keys',                   color:'#2563EB', monthlyUrl:'https://openrouter.ai/credits',            monthlyDesc:'Credit-based — no subscription needed' },
+    { id:'groq',       label:'Groq',        icon:'⚡', free:true,  desc:'FREE — Llama 3.3, Mixtral, ultra-fast',       placeholder:'gsk_…',           signup:'https://console.groq.com/keys',                color:'#F59E0B', monthlyUrl:'https://console.groq.com',                 monthlyDesc:'Free tier — sign up for API key' },
+    { id:'gemini',     label:'Google',      icon:'🔴', free:true,  desc:'FREE tier — Gemini 2.0 Flash, 1.5 Pro',      placeholder:'AIza…',           signup:'https://aistudio.google.com/app/apikey',       color:'#DC2626', monthlyUrl:'https://one.google.com',                   monthlyDesc:'Google One / Gemini Advanced subscription' },
+    { id:'mistral',    label:'Mistral AI',  icon:'🇫🇷', free:true,  desc:'FREE tier — Mistral Small, EU models',       placeholder:'…',               signup:'https://console.mistral.ai/api-keys',          color:'#E25822', monthlyUrl:'https://chat.mistral.ai',                  monthlyDesc:'Le Chat Pro subscription' },
+    { id:'together',   label:'Together AI', icon:'🤝', free:false, desc:'Open-source — Llama, Qwen, DBRX',             placeholder:'…',               signup:'https://api.together.ai/settings/api-keys',    color:'#8B5CF6', monthlyUrl:'https://api.together.ai/settings/billing',  monthlyDesc:'Together credits / monthly plan' },
+    { id:'perplexity', label:'Perplexity',  icon:'🔍', free:false, desc:'Sonar models with web search built-in',       placeholder:'pplx-…',          signup:'https://www.perplexity.ai/settings/api',       color:'#06B6D4', monthlyUrl:'https://www.perplexity.ai/pro',            monthlyDesc:'Perplexity Pro subscription' },
+    { id:'cohere',     label:'Cohere',      icon:'🌊', free:true,  desc:'FREE trial — Command R+, enterprise NLP',    placeholder:'…',               signup:'https://dashboard.cohere.com/api-keys',        color:'#0EA5E9', monthlyUrl:'https://dashboard.cohere.com/billing',     monthlyDesc:'Cohere pay-as-you-go / enterprise' },
+  ];
+
+  const forgePlans = [
+    { id:'free',       name:'Free',       price:0,   tokens:'10K/mo',  badge:'',           color:'#475569', features:['10K tokens/month','Free models only','2 agents','Community support'] },
+    { id:'starter',    name:'Starter',    price:29,  tokens:'500K/mo', badge:'Popular',    color:'#7C3AED', features:['500K tokens/month','All models','4 agents','Email support','ForgeRouter access'] },
+    { id:'pro',        name:'Pro',        price:99,  tokens:'2M/mo',   badge:'Best Value', color:'#2563EB', features:['2M tokens/month','All 6 agents','Priority routing','Analytics','Custom workflows'] },
+    { id:'enterprise', name:'Enterprise', price:499, tokens:'10M/mo',  badge:'',           color:'#059669', features:['10M tokens/month','Unlimited agents','Dedicated routing','24/7 SLA','Custom models'] },
   ];
 
   const filtered = orModels.filter((m: any) => {
@@ -1309,210 +1318,352 @@ function SettingsTab({ savedKeys, keyInputs, setKeyInputs, onSave, saving, messa
     return !q || m.id?.toLowerCase().includes(q) || m.name?.toLowerCase().includes(q);
   });
 
+  const getMode = (id: string) => providerMode[id] || 'api';
+  const setMode = (id: string, mode: 'api'|'account') => setProviderMode(prev => ({...prev, [id]: mode}));
+
   return (
-    <div style={{ flex:1, overflow:'auto', padding:32 }}>
-      <div style={{ maxWidth:860, margin:'0 auto' }}>
-        <h2 style={{ margin:'0 0 6px', fontSize:22, fontWeight:700 }}>Settings — API Keys</h2>
-        <p style={{ margin:'0 0 28px', color:'#64748b', fontSize:14 }}>
-          Add your own API keys. Forge routes your requests through them — you pay providers directly at their rates with no extra Forge markup.
-        </p>
+    <div style={{ flex:1, overflow:'auto' }}>
+      {/* Section nav */}
+      <div style={{ background:'#0f172a', borderBottom:'1px solid #1e293b', padding:'0 32px', display:'flex', gap:0 }}>
+        {([['forge','⚡ Forge Plans'],['providers','🔌 LLM Providers'],['custom','🛠 Custom Providers']] as const).map(([id,label]) => (
+          <button key={id} onClick={()=>setSettingsSection(id)} style={{
+            padding:'14px 20px', border:'none', background:'transparent', cursor:'pointer', fontSize:13, fontWeight:600,
+            color: settingsSection===id ? '#a78bfa' : '#475569',
+            borderBottom: settingsSection===id ? '2px solid #7C3AED' : '2px solid transparent',
+          }}>{label}</button>
+        ))}
+      </div>
 
-        {/* Key inputs */}
-        <div style={{ display:'flex', flexDirection:'column', gap:14, marginBottom:28 }}>
-          {providers.map(p => {
-            const hasKey = savedKeys[`has_${p.id}`];
-            const masked = savedKeys[`${p.id}_key`];
-            return (
-              <div key={p.id} style={{ padding:20, background:'#0f172a', borderRadius:14, border:`1px solid ${hasKey ? p.color+'40' : '#1e293b'}` }}>
-                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-                  <span style={{ fontSize:20 }}>{p.icon}</span>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:700, fontSize:15, display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
-                      {p.label}
-                      {hasKey && <span style={{ fontSize:11, background:p.color+'20', color:p.color, padding:'2px 8px', borderRadius:99, fontWeight:600 }}>✓ Connected</span>}
-                      {(p as any).free && <span style={{ fontSize:10, background:'#05966920', color:'#4ade80', padding:'2px 6px', borderRadius:99, fontWeight:700 }}>FREE TIER</span>}
-                    </div>
-                    <div style={{ fontSize:12, color:'#64748b' }}>{p.desc}</div>
+      <div style={{ padding:32 }}>
+        <div style={{ maxWidth:860, margin:'0 auto' }}>
+
+        {/* ── FORGE PLANS ── */}
+        {settingsSection === 'forge' && (
+          <div>
+            <h2 style={{ margin:'0 0 6px', fontSize:22, fontWeight:700 }}>⚡ Forge Plans</h2>
+            <p style={{ margin:'0 0 24px', color:'#64748b', fontSize:14 }}>
+              Buy a Forge plan and use all models instantly — no external API keys needed. Forge routes everything for you.
+            </p>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:16, marginBottom:32 }}>
+              {forgePlans.map(p => (
+                <div key={p.id} style={{ padding:22, borderRadius:16, border:`2px solid ${p.color}40`, background:`${p.color}08`, display:'flex', flexDirection:'column', position:'relative' }}>
+                  {p.badge && <div style={{ position:'absolute', top:-10, left:'50%', transform:'translateX(-50%)', background:p.color, color:'#fff', fontSize:10, fontWeight:700, padding:'2px 10px', borderRadius:99, whiteSpace:'nowrap' }}>{p.badge}</div>}
+                  <div style={{ fontWeight:800, fontSize:17, marginBottom:4 }}>{p.name}</div>
+                  <div style={{ fontSize:28, fontWeight:900, color:p.color, marginBottom:2 }}>
+                    {p.price === 0 ? 'Free' : `$${p.price}`}
+                    {p.price > 0 && <span style={{ fontSize:12, fontWeight:400, color:'#64748b' }}>/mo</span>}
                   </div>
-                  <div style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'flex-end' }}>
-                    <a href={p.signup} target="_blank" rel="noreferrer" style={{ fontSize:12, color:'#7C3AED', textDecoration:'none', background:'#7C3AED10', padding:'4px 10px', borderRadius:6, whiteSpace:'nowrap' }}>Get key →</a>
-                    <a href={`https://${(p as any).monthly}`} target="_blank" rel="noreferrer" style={{ fontSize:11, color:'#64748b', textDecoration:'none' }}>Monthly plan ↗</a>
-                  </div>
-                </div>
-                <div style={{ display:'flex', gap:8 }}>
-                  <input
-                    type="password"
-                    value={keyInputs[p.id as keyof typeof keyInputs]}
-                    onChange={e => setKeyInputs((prev: any) => ({ ...prev, [p.id]: e.target.value }))}
-                    placeholder={hasKey ? `Current: ${masked} — paste new key to update` : p.placeholder}
-                    style={{ ...inputStyle, flex:1, fontFamily:'monospace', fontSize:13 }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {message && (
-          <div style={{ padding:12, borderRadius:10, marginBottom:16, fontSize:14,
-            background: message.startsWith('✅') ? '#05966915' : '#DC262615',
-            border: `1px solid ${message.startsWith('✅') ? '#059669' : '#DC2626'}`,
-            color: message.startsWith('✅') ? '#4ade80' : '#f87171' }}>
-            {message}
-          </div>
-        )}
-
-        <button onClick={onSave} disabled={saving || !Object.values(keyInputs).some(Boolean)} style={{
-          padding:'12px 28px', borderRadius:12, border:'none', cursor:'pointer', fontWeight:700, fontSize:15,
-          background:'linear-gradient(135deg,#7C3AED,#2563EB)', color:'#fff',
-          opacity: (saving || !Object.values(keyInputs).some(Boolean)) ? 0.5 : 1, marginBottom:40
-        }}>
-          {saving ? 'Saving…' : 'Save API Keys'}
-        </button>
-
-        {/* Custom Providers */}
-        <div style={{ borderTop:'1px solid #1e293b', paddingTop:32, marginBottom:32 }}>
-          <h3 style={{ margin:'0 0 6px', fontSize:18, fontWeight:700 }}>🔌 Custom Providers</h3>
-          <p style={{ margin:'0 0 20px', color:'#64748b', fontSize:13 }}>Add any OpenAI-compatible API. Forge routes calls through it with your markup on top.</p>
-
-          {/* Existing custom providers */}
-          {customProviders.length > 0 && (
-            <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:20 }}>
-              {customProviders.map((p:any) => (
-                <div key={p.id} style={{ padding:16, background:'#0f172a', borderRadius:12, border:'1px solid #1e293b', display:'flex', alignItems:'center', gap:12 }}>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:700, fontSize:14, display:'flex', alignItems:'center', gap:8 }}>
-                      {p.name}
-                      <span style={{ fontSize:11, background:'#7C3AED20', color:'#a78bfa', padding:'2px 6px', borderRadius:99 }}>{p.markup_multiplier}× markup</span>
-                      {!p.active && <span style={{ fontSize:11, color:'#ef4444' }}>disabled</span>}
-                    </div>
-                    <div style={{ fontSize:12, color:'#475569', fontFamily:'monospace' }}>{p.base_url}</div>
-                    {p.notes && <div style={{ fontSize:12, color:'#64748b', marginTop:2 }}>{p.notes}</div>}
-                  </div>
-                  <div style={{ display:'flex', gap:6 }}>
-                    <button onClick={() => onTestProvider(p.id)} disabled={testingProvider===p.id} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid #334155', background:'transparent', color:'#94a3b8', cursor:'pointer', fontSize:12 }}>
-                      {testingProvider===p.id ? '⏳' : '🧪 Test'}
-                    </button>
-                    <button onClick={() => onDeleteProvider(p.id)} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid #ef444440', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
-                  </div>
+                  <div style={{ fontSize:12, color:'#64748b', marginBottom:14 }}>{p.tokens} tokens</div>
+                  <ul style={{ padding:0, margin:'0 0 16px', listStyle:'none', flex:1 }}>
+                    {p.features.map(f => <li key={f} style={{ fontSize:12, color:'#94a3b8', padding:'2px 0' }}>✓ {f}</li>)}
+                  </ul>
+                  <a href={`https://forge-sand-two.vercel.app/billing`} target="_blank" rel="noreferrer"
+                    style={{ display:'block', padding:'9px', borderRadius:10, border:'none', cursor:'pointer', fontWeight:700, fontSize:13, textAlign:'center',
+                      background: p.price===0 ? '#1e293b' : `linear-gradient(135deg,${p.color},${p.color}cc)`,
+                      color: p.price===0 ? '#64748b' : '#fff', textDecoration:'none' }}>
+                    {p.price === 0 ? 'Current' : 'Subscribe →'}
+                  </a>
                 </div>
               ))}
             </div>
-          )}
-
-          {/* Add new custom provider */}
-          <div style={{ padding:20, background:'#0f172a', borderRadius:14, border:'1px dashed #334155' }}>
-            <div style={{ fontSize:14, fontWeight:600, marginBottom:16, color:'#94a3b8' }}>+ Add Custom Provider</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
-              <div>
-                <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Provider Name *</label>
-                <input value={newProvider.name} onChange={e=>setNewProvider((p:any)=>({...p,name:e.target.value}))} placeholder="e.g. My Llama Server" style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Base URL * (OpenAI-compatible)</label>
-                <input value={newProvider.base_url} onChange={e=>setNewProvider((p:any)=>({...p,base_url:e.target.value}))} placeholder="https://api.example.com/v1" style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>API Key *</label>
-                <input type="password" value={newProvider.api_key} onChange={e=>setNewProvider((p:any)=>({...p,api_key:e.target.value}))} placeholder="sk-…" style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Markup Multiplier (Forge charges this × cost)</label>
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <input type="range" min="1.0" max="5.0" step="0.05" value={newProvider.markup_multiplier}
-                    onChange={e=>setNewProvider((p:any)=>({...p,markup_multiplier:parseFloat(e.target.value)}))}
-                    style={{ flex:1 }} />
-                  <span style={{ fontSize:14, fontWeight:700, color:'#7C3AED', minWidth:40 }}>{newProvider.markup_multiplier}×</span>
-                </div>
-                <div style={{ fontSize:11, color:'#475569', marginTop:2 }}>= {Math.round((newProvider.markup_multiplier-1)*100)}% margin on every call</div>
-              </div>
-              <div>
-                <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Default Model Prefix (optional)</label>
-                <input value={newProvider.model_prefix} onChange={e=>setNewProvider((p:any)=>({...p,model_prefix:e.target.value}))} placeholder="e.g. meta-llama" style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Notes (optional)</label>
-                <input value={newProvider.notes} onChange={e=>setNewProvider((p:any)=>({...p,notes:e.target.value}))} placeholder="e.g. Local Ollama instance" style={inputStyle} />
-              </div>
+            <div style={{ padding:16, background:'#0f172a', borderRadius:12, border:'1px solid #1e293b', fontSize:13, color:'#475569' }}>
+              💳 Subscriptions managed via Stripe. Cancel anytime. Switch to your own API keys anytime in the <strong style={{color:'#94a3b8'}}>LLM Providers</strong> tab — you'll pay providers directly with no Forge markup.
             </div>
-
-            <div style={{ padding:12, background:'#1e293b', borderRadius:8, marginBottom:12, fontSize:12, color:'#64748b' }}>
-              <strong style={{ color:'#94a3b8' }}>Compatible with:</strong> Ollama · LM Studio · vLLM · Together AI · Replicate · Any OpenAI-format API
-              <br/><strong style={{ color:'#94a3b8' }}>In Studio, select model as:</strong> <code style={{ color:'#7C3AED' }}>custom:[provider-id]:[model-name]</code>
-            </div>
-
-            {providerMsg && <div style={{ padding:10, borderRadius:8, marginBottom:12, fontSize:13,
-              background: providerMsg.startsWith('✅')?'#05966915':'#DC262615',
-              color: providerMsg.startsWith('✅')?'#4ade80':'#f87171' }}>{providerMsg}</div>}
-
-            <button onClick={onAddProvider} disabled={addingProvider||!newProvider.name||!newProvider.base_url||!newProvider.api_key} style={{
-              padding:'10px 24px', borderRadius:10, border:'none', cursor:'pointer', fontWeight:700, fontSize:14,
-              background:'linear-gradient(135deg,#7C3AED,#2563EB)', color:'#fff',
-              opacity:(addingProvider||!newProvider.name||!newProvider.base_url||!newProvider.api_key)?0.5:1
-            }}>{addingProvider?'Adding…':'Add Provider'}</button>
           </div>
-        </div>
+        )}
 
-        {/* OpenRouter model browser */}
-        <div style={{ borderTop:'1px solid #1e293b', paddingTop:32 }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-            <div>
-              <h3 style={{ margin:0, fontSize:18, fontWeight:700 }}>⚡ OpenRouter Model Browser</h3>
-              <p style={{ margin:'4px 0 0', color:'#64748b', fontSize:13 }}>400+ models — click any to use it instantly in Studio</p>
+        {/* ── LLM PROVIDERS ── */}
+        {settingsSection === 'providers' && (
+          <div>
+            <h2 style={{ margin:'0 0 6px', fontSize:22, fontWeight:700 }}>🔌 LLM Provider Connections</h2>
+            <p style={{ margin:'0 0 6px', color:'#64748b', fontSize:14 }}>
+              Connect your own provider accounts. Each provider supports two connection methods:
+            </p>
+            <div style={{ display:'flex', gap:20, marginBottom:24, fontSize:13, color:'#94a3b8' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}><span style={{ padding:'2px 8px', borderRadius:6, background:'#7C3AED20', color:'#a78bfa', fontWeight:600, fontSize:11 }}>API Key</span> Paste your API key — direct access, no markup</div>
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}><span style={{ padding:'2px 8px', borderRadius:6, background:'#2563EB20', color:'#60a5fa', fontWeight:600, fontSize:11 }}>Monthly Account</span> Your email + password for their web subscription</div>
             </div>
-            <button onClick={onLoadOrModels} disabled={orLoading || !savedKeys.has_openrouter} style={{
-              padding:'8px 18px', borderRadius:10, border:'1px solid #334155', background:'#0f172a',
-              color: savedKeys.has_openrouter ? '#94a3b8' : '#475569', cursor: savedKeys.has_openrouter ? 'pointer' : 'not-allowed', fontSize:13
-            }}>
-              {orLoading ? '⏳ Loading…' : orModels.length > 0 ? `↻ Refresh (${orModels.length})` : 'Load Models'}
-            </button>
-          </div>
 
-          {!savedKeys.has_openrouter && (
-            <div style={{ padding:20, background:'#1e293b', borderRadius:12, textAlign:'center', color:'#64748b', fontSize:14 }}>
-              Add your <strong style={{ color:'#2563EB' }}>OpenRouter API key</strong> above to browse 400+ models
-            </div>
-          )}
-
-          {orModels.length > 0 && (
-            <>
-              <input
-                value={orSearch}
-                onChange={e => setOrSearch(e.target.value)}
-                placeholder="Search models — llama, mistral, claude, gemini, qwen…"
-                style={{ ...inputStyle, width:'100%', boxSizing:'border-box', marginBottom:14 }}
-              />
-              <div style={{ fontSize:12, color:'#475569', marginBottom:10 }}>{filtered.length} models{orSearch ? ` matching "${orSearch}"` : ''}</div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:10, maxHeight:520, overflowY:'auto' }}>
-                {filtered.slice(0,200).map((m: any) => {
-                  const priceIn  = m.pricing?.prompt  ? `$${(parseFloat(m.pricing.prompt)*1000).toFixed(4)}/1K`  : 'free';
-                  const priceOut = m.pricing?.completion ? `$${(parseFloat(m.pricing.completion)*1000).toFixed(4)}/1K` : 'free';
-                  const isFree   = priceIn === 'free' && priceOut === 'free';
-                  return (
-                    <div key={m.id} onClick={() => onSelectModel(m.id)} style={{
-                      padding:14, background:'#0f172a', borderRadius:12, border:'1px solid #1e293b',
-                      cursor:'pointer', transition:'all .15s'
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor='#7C3AED')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor='#1e293b')}>
-                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
-                        <div style={{ fontWeight:600, fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:160 }}>{m.name || m.id}</div>
-                        {isFree && <span style={{ fontSize:10, background:'#05966920', color:'#4ade80', padding:'2px 6px', borderRadius:99, fontWeight:700 }}>FREE</span>}
+            <div style={{ display:'flex', flexDirection:'column', gap:14, marginBottom:28 }}>
+              {providers.map(p => {
+                const hasKey = savedKeys[`has_${p.id}`];
+                const masked = savedKeys[`${p.id}_key`];
+                const mode = getMode(p.id);
+                return (
+                  <div key={p.id} style={{ padding:20, background:'#0f172a', borderRadius:14, border:`1px solid ${hasKey ? p.color+'50' : '#1e293b'}` }}>
+                    {/* Header */}
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+                      <span style={{ fontSize:22 }}>{p.icon}</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:700, fontSize:15, display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                          {p.label}
+                          {hasKey && <span style={{ fontSize:11, background:p.color+'20', color:p.color, padding:'2px 8px', borderRadius:99, fontWeight:600 }}>✓ Connected</span>}
+                          {p.free && <span style={{ fontSize:10, background:'#05966920', color:'#4ade80', padding:'2px 6px', borderRadius:99, fontWeight:700 }}>FREE TIER</span>}
+                        </div>
+                        <div style={{ fontSize:12, color:'#64748b' }}>{p.desc}</div>
                       </div>
-                      <div style={{ fontSize:11, color:'#475569', fontFamily:'monospace', marginBottom:6, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.id}</div>
-                      <div style={{ display:'flex', gap:6 }}>
-                        <span style={{ fontSize:11, color:'#64748b' }}>In: {priceIn}</span>
-                        <span style={{ fontSize:11, color:'#334155' }}>·</span>
-                        <span style={{ fontSize:11, color:'#64748b' }}>Out: {priceOut}</span>
-                      </div>
-                      {m.context_length && <div style={{ fontSize:11, color:'#475569', marginTop:4 }}>{(m.context_length/1000).toFixed(0)}K ctx</div>}
                     </div>
-                  );
-                })}
+
+                    {/* Mode toggle */}
+                    <div style={{ display:'flex', background:'#1e293b', borderRadius:8, padding:3, marginBottom:14, width:'fit-content' }}>
+                      <button onClick={()=>setMode(p.id,'api')} style={{ padding:'5px 14px', borderRadius:6, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, background: mode==='api'?'#7C3AED':'transparent', color: mode==='api'?'#fff':'#64748b', transition:'all .15s' }}>🔑 API Key</button>
+                      <button onClick={()=>setMode(p.id,'account')} style={{ padding:'5px 14px', borderRadius:6, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, background: mode==='account'?'#2563EB':'transparent', color: mode==='account'?'#fff':'#64748b', transition:'all .15s' }}>👤 Monthly Account</button>
+                    </div>
+
+                    {/* API Key mode */}
+                    {mode === 'api' && (
+                      <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                        <input
+                          type="password"
+                          value={keyInputs[p.id as keyof typeof keyInputs] || ''}
+                          onChange={e => setKeyInputs((prev: any) => ({ ...prev, [p.id]: e.target.value }))}
+                          placeholder={hasKey ? `Connected — paste new key to update` : p.placeholder}
+                          style={{ ...inputStyle, flex:1, fontFamily:'monospace', fontSize:13 }}
+                        />
+                        <a href={p.signup} target="_blank" rel="noreferrer" style={{ padding:'9px 14px', borderRadius:8, background:'#7C3AED15', color:'#a78bfa', fontSize:12, fontWeight:600, textDecoration:'none', whiteSpace:'nowrap', border:'1px solid #7C3AED30' }}>Get key →</a>
+                      </div>
+                    )}
+
+                    {/* Monthly Account mode */}
+                    {mode === 'account' && (
+                      <div>
+                        <div style={{ padding:12, background:'#1e293b', borderRadius:8, marginBottom:12, fontSize:12, color:'#64748b' }}>
+                          <strong style={{color:'#94a3b8'}}>How it works:</strong> Enter your {p.label} account credentials. Forge will use your subscription to route requests — you keep your existing plan and billing.
+                          <br/><span style={{color:'#475569'}}>Plan: </span><span style={{color:'#94a3b8'}}>{p.monthlyDesc}</span>
+                        </div>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+                          <div>
+                            <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Email / Username</label>
+                            <input
+                              type="email"
+                              value={keyInputs[`${p.id}_email`] || ''}
+                              onChange={e => setKeyInputs((prev: any) => ({ ...prev, [`${p.id}_email`]: e.target.value }))}
+                              placeholder={`your@email.com`}
+                              style={{ ...inputStyle, fontSize:13 }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Password</label>
+                            <input
+                              type="password"
+                              value={keyInputs[`${p.id}_password`] || ''}
+                              onChange={e => setKeyInputs((prev: any) => ({ ...prev, [`${p.id}_password`]: e.target.value }))}
+                              placeholder="••••••••"
+                              style={{ ...inputStyle, fontSize:13 }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                          <a href={p.monthlyUrl} target="_blank" rel="noreferrer" style={{ padding:'7px 12px', borderRadius:8, background:'#2563EB15', color:'#60a5fa', fontSize:12, fontWeight:600, textDecoration:'none', border:'1px solid #2563EB30' }}>Manage subscription ↗</a>
+                          <span style={{ fontSize:11, color:'#334155' }}>Don't have one?</span>
+                          <a href={p.monthlyUrl} target="_blank" rel="noreferrer" style={{ fontSize:11, color:'#475569', textDecoration:'underline' }}>Sign up →</a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {message && (
+              <div style={{ padding:12, borderRadius:10, marginBottom:16, fontSize:14,
+                background: message.startsWith('✅') ? '#05966915' : '#DC262615',
+                border: `1px solid ${message.startsWith('✅') ? '#059669' : '#DC2626'}`,
+                color: message.startsWith('✅') ? '#4ade80' : '#f87171' }}>
+                {message}
               </div>
-              {filtered.length > 200 && <div style={{ textAlign:'center', color:'#475569', fontSize:13, marginTop:12 }}>Showing 200 of {filtered.length} — narrow search to see more</div>}
-            </>
-          )}
+            )}
+
+            <button onClick={onSave} disabled={saving || !Object.values(keyInputs).some(Boolean)} style={{
+              padding:'12px 28px', borderRadius:12, border:'none', cursor:'pointer', fontWeight:700, fontSize:15,
+              background:'linear-gradient(135deg,#7C3AED,#2563EB)', color:'#fff',
+              opacity: (saving || !Object.values(keyInputs).some(Boolean)) ? 0.5 : 1, marginBottom:40
+            }}>
+              {saving ? 'Saving…' : 'Save Connections'}
+            </button>
+
+            {/* OpenRouter browser */}
+            <div style={{ borderTop:'1px solid #1e293b', paddingTop:32 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                <div>
+                  <h3 style={{ margin:0, fontSize:18, fontWeight:700 }}>⚡ OpenRouter Model Browser</h3>
+                  <p style={{ margin:'4px 0 0', color:'#64748b', fontSize:13 }}>400+ models — click any to use it in Studio</p>
+                </div>
+                <button onClick={onLoadOrModels} disabled={orLoading || !savedKeys.has_openrouter} style={{
+                  padding:'8px 18px', borderRadius:10, border:'1px solid #334155', background:'#0f172a',
+                  color: savedKeys.has_openrouter ? '#94a3b8' : '#475569', cursor: savedKeys.has_openrouter ? 'pointer' : 'not-allowed', fontSize:13
+                }}>
+                  {orLoading ? '⏳ Loading…' : orModels.length > 0 ? `↻ Refresh (${orModels.length})` : 'Load Models'}
+                </button>
+              </div>
+              {!savedKeys.has_openrouter && (
+                <div style={{ padding:20, background:'#1e293b', borderRadius:12, textAlign:'center', color:'#64748b', fontSize:14 }}>
+                  Add your <strong style={{ color:'#2563EB' }}>OpenRouter API key</strong> above to browse 400+ models
+                </div>
+              )}
+              {orModels.length > 0 && (
+                <>
+                  <input value={orSearch} onChange={e => setOrSearch(e.target.value)} placeholder="Search models…" style={{ ...inputStyle, width:'100%', boxSizing:'border-box' as const, marginBottom:12 }} />
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:10, maxHeight:480, overflowY:'auto' }}>
+                    {filtered.slice(0,200).map((m: any) => {
+                      const priceIn  = m.pricing?.prompt       ? `$${(parseFloat(m.pricing.prompt)*1000).toFixed(4)}/1K`      : 'free';
+                      const priceOut = m.pricing?.completion   ? `$${(parseFloat(m.pricing.completion)*1000).toFixed(4)}/1K`  : 'free';
+                      const isFree   = priceIn==='free'&&priceOut==='free';
+                      return (
+                        <div key={m.id} onClick={() => onSelectModel(m.id)} style={{ padding:14, background:'#0f172a', borderRadius:12, border:'1px solid #1e293b', cursor:'pointer', transition:'all .15s' }}
+                          onMouseEnter={e=>(e.currentTarget.style.borderColor='#7C3AED')} onMouseLeave={e=>(e.currentTarget.style.borderColor='#1e293b')}>
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+                            <div style={{ fontWeight:600, fontSize:12, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:150 }}>{m.name||m.id}</div>
+                            {isFree && <span style={{ fontSize:10, background:'#05966920', color:'#4ade80', padding:'2px 5px', borderRadius:99, fontWeight:700 }}>FREE</span>}
+                          </div>
+                          <div style={{ fontSize:10, color:'#475569', fontFamily:'monospace', marginBottom:5, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.id}</div>
+                          <div style={{ fontSize:11, color:'#64748b' }}>In: {priceIn} · Out: {priceOut}</div>
+                          {m.context_length && <div style={{ fontSize:10, color:'#334155', marginTop:3 }}>{(m.context_length/1000).toFixed(0)}K ctx</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {filtered.length>200 && <div style={{ textAlign:'center', color:'#475569', fontSize:12, marginTop:10 }}>Showing 200 of {filtered.length}</div>}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── CUSTOM PROVIDERS ── */}
+        {settingsSection === 'custom' && (
+          <div>
+            <h2 style={{ margin:'0 0 6px', fontSize:22, fontWeight:700 }}>🛠 Custom Providers</h2>
+            <p style={{ margin:'0 0 24px', color:'#64748b', fontSize:14 }}>Add any OpenAI-compatible API endpoint. Forge routes calls through it with your markup applied.</p>
+
+            {/* Existing custom providers */}
+            {customProviders.length > 0 && (
+              <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:24 }}>
+                {customProviders.map((p:any) => (
+                  <div key={p.id} style={{ padding:16, background:'#0f172a', borderRadius:12, border:'1px solid #1e293b', display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:700, fontSize:14, display:'flex', alignItems:'center', gap:8 }}>
+                        {p.name}
+                        <span style={{ fontSize:11, background:'#7C3AED20', color:'#a78bfa', padding:'2px 6px', borderRadius:99 }}>{p.markup_multiplier}× markup</span>
+                        {!p.active && <span style={{ fontSize:11, color:'#ef4444' }}>disabled</span>}
+                      </div>
+                      <div style={{ fontSize:12, color:'#475569', fontFamily:'monospace' }}>{p.base_url}</div>
+                      {p.notes && <div style={{ fontSize:12, color:'#64748b', marginTop:2 }}>{p.notes}</div>}
+                    </div>
+                    <div style={{ display:'flex', gap:6 }}>
+                      <button onClick={() => onTestProvider(p.id)} disabled={testingProvider===p.id} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid #334155', background:'transparent', color:'#94a3b8', cursor:'pointer', fontSize:12 }}>
+                        {testingProvider===p.id ? '⏳' : '🧪 Test'}
+                      </button>
+                      <button onClick={() => onDeleteProvider(p.id)} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid #ef444440', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add new custom provider */}
+            <div style={{ padding:24, background:'#0f172a', borderRadius:14, border:'1px dashed #334155', marginBottom:32 }}>
+              <div style={{ fontSize:15, fontWeight:700, marginBottom:18, color:'#94a3b8' }}>+ Add Custom Provider</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:14 }}>
+                <div>
+                  <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Provider Name *</label>
+                  <input value={newProvider.name} onChange={e=>setNewProvider((p:any)=>({...p,name:e.target.value}))} placeholder="e.g. My Llama Server" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Base URL * (OpenAI-compatible)</label>
+                  <input value={newProvider.base_url} onChange={e=>setNewProvider((p:any)=>({...p,base_url:e.target.value}))} placeholder="https://api.example.com/v1" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>API Key *</label>
+                  <input type="password" value={newProvider.api_key} onChange={e=>setNewProvider((p:any)=>({...p,api_key:e.target.value}))} placeholder="sk-…" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Markup Multiplier</label>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <input type="range" min="1.0" max="5.0" step="0.05" value={newProvider.markup_multiplier}
+                      onChange={e=>setNewProvider((p:any)=>({...p,markup_multiplier:parseFloat(e.target.value)}))}
+                      style={{ flex:1 }} />
+                    <span style={{ fontSize:14, fontWeight:700, color:'#7C3AED', minWidth:40 }}>{newProvider.markup_multiplier}×</span>
+                  </div>
+                  <div style={{ fontSize:11, color:'#475569', marginTop:2 }}>{Math.round((newProvider.markup_multiplier-1)*100)}% margin on every call</div>
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Model Prefix (optional)</label>
+                  <input value={newProvider.model_prefix} onChange={e=>setNewProvider((p:any)=>({...p,model_prefix:e.target.value}))} placeholder="e.g. meta-llama" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#64748b', display:'block', marginBottom:4 }}>Notes (optional)</label>
+                  <input value={newProvider.notes} onChange={e=>setNewProvider((p:any)=>({...p,notes:e.target.value}))} placeholder="e.g. Local Ollama instance" style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ padding:12, background:'#1e293b', borderRadius:8, marginBottom:14, fontSize:12, color:'#64748b' }}>
+                <strong style={{ color:'#94a3b8' }}>Compatible with:</strong> Ollama · LM Studio · vLLM · Together AI · Replicate · Any OpenAI-format API
+                <br/><strong style={{ color:'#94a3b8' }}>Use in Studio:</strong> <code style={{ color:'#a78bfa' }}>custom:[provider-id]:[model-name]</code>
+              </div>
+
+              {providerMsg && <div style={{ padding:10, borderRadius:8, marginBottom:12, fontSize:13,
+                background: providerMsg.startsWith('✅')?'#05966915':'#DC262615',
+                color: providerMsg.startsWith('✅')?'#4ade80':'#f87171' }}>{providerMsg}</div>}
+
+              <button onClick={onAddProvider} disabled={addingProvider||!newProvider.name||!newProvider.base_url||!newProvider.api_key} style={{
+                padding:'10px 24px', borderRadius:10, border:'none', cursor:'pointer', fontWeight:700, fontSize:14,
+                background:'linear-gradient(135deg,#7C3AED,#2563EB)', color:'#fff',
+                opacity:(addingProvider||!newProvider.name||!newProvider.base_url||!newProvider.api_key)?0.5:1
+              }}>{addingProvider?'Adding…':'Add Provider'}</button>
+            </div>
+
+            {/* OpenRouter model browser */}
+            <div style={{ borderTop:'1px solid #1e293b', paddingTop:32 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                <div>
+                  <h3 style={{ margin:0, fontSize:18, fontWeight:700 }}>⚡ OpenRouter Model Browser</h3>
+                  <p style={{ margin:'4px 0 0', color:'#64748b', fontSize:13 }}>400+ models — click any to use it instantly in Studio</p>
+                </div>
+                <button onClick={onLoadOrModels} disabled={orLoading || !savedKeys.has_openrouter} style={{
+                  padding:'8px 18px', borderRadius:10, border:'1px solid #334155', background:'#0f172a',
+                  color: savedKeys.has_openrouter ? '#94a3b8' : '#475569', cursor: savedKeys.has_openrouter ? 'pointer' : 'not-allowed', fontSize:13
+                }}>
+                  {orLoading ? '⏳ Loading…' : orModels.length > 0 ? `↻ Refresh (${orModels.length})` : 'Load Models'}
+                </button>
+              </div>
+              {!savedKeys.has_openrouter && (
+                <div style={{ padding:20, background:'#1e293b', borderRadius:12, textAlign:'center', color:'#64748b', fontSize:14 }}>
+                  Add your <strong style={{ color:'#2563EB' }}>OpenRouter API key</strong> in the <strong>LLM Providers</strong> tab to browse 400+ models
+                </div>
+              )}
+              {orModels.length > 0 && (
+                <>
+                  <input value={orSearch} onChange={e=>setOrSearch(e.target.value)} placeholder="Search models — llama, mistral, claude, gemini…"
+                    style={{ ...inputStyle, width:'100%', boxSizing:'border-box' as const, marginBottom:12 }} />
+                  <div style={{ fontSize:12, color:'#475569', marginBottom:10 }}>{filtered.length} models{orSearch?` matching "${orSearch}"`:''}
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:10, maxHeight:520, overflowY:'auto' }}>
+                    {filtered.slice(0,200).map((m:any)=>{
+                      const priceIn  = m.pricing?.prompt      ? `$${(parseFloat(m.pricing.prompt)*1000).toFixed(4)}/1K`      : 'free';
+                      const priceOut = m.pricing?.completion  ? `$${(parseFloat(m.pricing.completion)*1000).toFixed(4)}/1K`  : 'free';
+                      const isFree   = priceIn==='free'&&priceOut==='free';
+                      return (
+                        <div key={m.id} onClick={()=>onSelectModel(m.id)} style={{ padding:14, background:'#0f172a', borderRadius:12, border:'1px solid #1e293b', cursor:'pointer', transition:'all .15s' }}
+                          onMouseEnter={e=>(e.currentTarget.style.borderColor='#7C3AED')} onMouseLeave={e=>(e.currentTarget.style.borderColor='#1e293b')}>
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                            <div style={{ fontWeight:600, fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:160 }}>{m.name||m.id}</div>
+                            {isFree && <span style={{ fontSize:10, background:'#05966920', color:'#4ade80', padding:'2px 6px', borderRadius:99, fontWeight:700 }}>FREE</span>}
+                          </div>
+                          <div style={{ fontSize:11, color:'#475569', fontFamily:'monospace', marginBottom:5, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.id}</div>
+                          <div style={{ fontSize:11, color:'#64748b' }}>In: {priceIn} · Out: {priceOut}</div>
+                          {m.context_length && <div style={{ fontSize:10, color:'#334155', marginTop:3 }}>{(m.context_length/1000).toFixed(0)}K ctx</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {filtered.length>200 && <div style={{ textAlign:'center', color:'#475569', fontSize:12, marginTop:10 }}>Showing 200 of {filtered.length} — narrow search to see more</div>}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         </div>
       </div>
     </div>
