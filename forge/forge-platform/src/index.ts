@@ -322,12 +322,17 @@ db.exec(`
     tokens_used INTEGER NOT NULL DEFAULT 0,
     tokens_limit INTEGER NOT NULL DEFAULT 10000,
     period_start TEXT NOT NULL DEFAULT (datetime('now')),
-    period_end TEXT NOT NULL DEFAULT (datetime('now', '+30 days')),
+    period_end TEXT NOT NULL DEFAULT (datetime('now')),
     status TEXT NOT NULL DEFAULT 'active',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
+
+// ── Safe migrations (add columns that may be missing in older DBs) ──
+try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
+try { db.exec(`ALTER TABLE api_keys ADD COLUMN key_preview TEXT NOT NULL DEFAULT ''`); } catch {}
+try { db.exec(`ALTER TABLE subscriptions ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 
 // Ensure every user has a subscription row
 function ensureSubscription(userId: string) {
@@ -553,7 +558,7 @@ app.post('/api/keys', requireAuth, (req: AuthRequest, res) => {
       const preview = previewKey(trimmed);
       const existing = db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, p);
       if (existing) {
-        db.prepare("UPDATE api_keys SET key_encrypted=?,key_preview=?,updated_at=datetime('now') WHERE user_id=? AND provider=?").run(enc, preview, userId, p);
+        db.prepare("UPDATE api_keys SET key_encrypted=?,key_preview=? WHERE user_id=? AND provider=?").run(enc, preview, userId, p);
       } else {
         db.prepare('INSERT INTO api_keys (id,user_id,provider,key_encrypted,key_preview) VALUES (?,?,?,?,?)').run(uuidv4(), userId, p, enc, preview);
       }
