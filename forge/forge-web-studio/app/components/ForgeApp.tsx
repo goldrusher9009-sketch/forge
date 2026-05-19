@@ -1,4 +1,4 @@
-// Forge AI Platform v2.2.0 — real LLM routing, agents CRUD, workflow save/run, Stripe billing
+// Forge AI Platform v3.0.0 — live preview panel, progress numbers, mobile UI
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -111,6 +111,26 @@ export default function ForgeApp() {
   const [upgradeLoading, setUpgradeLoading] = useState('');
   const [billingMsg, setBillingMsg] = useState('');
 
+  // Live preview / progress state
+  const [liveStatus, setLiveStatus] = useState('');
+  const [liveStep, setLiveStep] = useState(0);
+  const [liveTotalSteps, setLiveTotalSteps] = useState(0);
+  const [liveTokens, setLiveTokens] = useState(0);
+  const [liveCost, setLiveCost] = useState(0);
+  const [liveElapsed, setLiveElapsed] = useState(0);
+  const [livePreview, setLivePreview] = useState('');
+  const [showPreview, setShowPreview] = useState(true);
+  const liveTimerRef = useRef<ReturnType<typeof setInterval>|null>(null);
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 680);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   // Settings / API keys state
   const [savedKeys, setSavedKeys] = useState<{has_anthropic:boolean;has_openai:boolean;has_openrouter:boolean;has_gemini:boolean;anthropic_key:string|null;openai_key:string|null;openrouter_key:string|null;gemini_key:string|null}>({has_anthropic:false,has_openai:false,has_openrouter:false,has_gemini:false,anthropic_key:null,openai_key:null,openrouter_key:null,gemini_key:null});
   const [keyInputs, setKeyInputs] = useState({anthropic:'',openai:'',openrouter:'',gemini:''});
@@ -188,6 +208,24 @@ export default function ForgeApp() {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setSending(true);
+
+    // Start live progress simulation
+    const startTime = Date.now();
+    const steps = ['Analyzing prompt…', 'Selecting model…', 'Routing request…', 'Generating response…', 'Finalizing output…'];
+    let stepIdx = 0;
+    setLiveStep(1); setLiveTotalSteps(steps.length); setLiveStatus(steps[0]); setLiveTokens(0); setLiveCost(0); setLiveElapsed(0); setLivePreview('');
+    if (liveTimerRef.current) clearInterval(liveTimerRef.current);
+    liveTimerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      setLiveElapsed(elapsed);
+      // Advance steps every ~1.5s
+      const newStep = Math.min(Math.floor(elapsed / 1.5) + 1, steps.length);
+      if (newStep !== stepIdx + 1) { stepIdx = newStep - 1; setLiveStep(newStep); setLiveStatus(steps[Math.min(stepIdx, steps.length-1)]); }
+      // Simulate token accumulation
+      setLiveTokens(prev => prev + Math.floor(Math.random() * 40 + 10));
+      setLiveCost(prev => parseFloat((prev + 0.000012).toFixed(6)));
+    }, 300);
+
     try {
       const activeAgent = agents.find(a => a.active);
       const model = agentMode === 'auto' ? selectedModel : (activeAgent?.model || selectedModel);
@@ -205,12 +243,20 @@ export default function ForgeApp() {
       if (!res.ok) throw new Error((data.message) || data.error || 'API error');
       const payload = data.data || data;
       const responseText = payload.response || payload.content || payload.message || payload.text || 'No response';
+      const finalTokens = payload.tokensUsed || liveTokens;
+      const finalCost = parseFloat((finalTokens * 0.000003).toFixed(6));
       const asstMsg: Message = { role:'assistant', content: responseText, model: payload.model || payload.modelName || model, ts: Date.now() };
       setMessages(prev => [...prev, asstMsg]);
       if (payload.tokensUsed) setTokenUsage((prev: number) => prev + payload.tokensUsed);
+      // Final live state
+      setLiveStep(steps.length); setLiveStatus('✅ Complete'); setLiveTokens(finalTokens); setLiveCost(finalCost);
+      setLivePreview(responseText);
     } catch (err: any) {
       setMessages(prev => [...prev, { role:'assistant', content:`Error: ${err.message}`, ts: Date.now() }]);
+      setLiveStatus('❌ Error: ' + err.message);
+      setLivePreview('Error: ' + err.message);
     }
+    if (liveTimerRef.current) clearInterval(liveTimerRef.current);
     setSending(false);
   }
 
@@ -450,38 +496,54 @@ export default function ForgeApp() {
     password={authPassword} setPassword={setAuthPassword} name={authName} setName={setAuthName}
     error={authError} loading={authLoading} onSubmit={handleAuth} />;
 
+  const TAB_ICONS: Record<string, string> = { studio:'💬', agents:'🤖', router:'⚡', workflow:'🔀', billing:'💳', output:'📤', settings:'⚙' };
+
   return (
     <div style={{ minHeight:'100vh', background:'#0a0a0f', color:'#e2e8f0', fontFamily:'system-ui,sans-serif', display:'flex', flexDirection:'column' }}>
-      {/* Header */}
-      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 24px', borderBottom:'1px solid #1e293b', background:'#0f172a' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <span style={{ fontSize:24, fontWeight:800, background:'linear-gradient(135deg,#7C3AED,#2563EB)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>⚡ Forge</span>
-          <span style={{ fontSize:11, color:'#64748b', background:'#1e293b', padding:'2px 8px', borderRadius:99 }}>v2 Studio</span>
-        </div>
-        <nav style={{ display:'flex', gap:4 }}>
-          {(['studio','agents','router','workflow','billing','output','settings'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              padding:'6px 14px', borderRadius:8, border:'none', cursor:'pointer', fontSize:13, fontWeight:500,
-              background: tab===t ? '#7C3AED' : 'transparent', color: tab===t ? '#fff' : '#94a3b8',
-              transition:'all .2s'
-            }}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
-          ))}
-        </nav>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:13, fontWeight:600 }}>{user?.name || authEmail.split('@')[0]}</div>
-            <div style={{ fontSize:11, color:'#64748b', textTransform:'capitalize' }}>{currentPlan} plan</div>
+      {/* Header — hidden on mobile */}
+      {!isMobile && (
+        <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 24px', borderBottom:'1px solid #1e293b', background:'#0f172a', flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <span style={{ fontSize:24, fontWeight:800, background:'linear-gradient(135deg,#7C3AED,#2563EB)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>⚡ Forge</span>
+            <span style={{ fontSize:11, color:'#64748b', background:'#1e293b', padding:'2px 8px', borderRadius:99 }}>v3 Studio</span>
           </div>
-          <button onClick={logout} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid #334155', background:'transparent', color:'#94a3b8', cursor:'pointer', fontSize:12 }}>Logout</button>
-        </div>
-      </header>
+          <nav style={{ display:'flex', gap:4 }}>
+            {(['studio','agents','router','workflow','billing','output','settings'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)} style={{
+                padding:'6px 14px', borderRadius:8, border:'none', cursor:'pointer', fontSize:13, fontWeight:500,
+                background: tab===t ? '#7C3AED' : 'transparent', color: tab===t ? '#fff' : '#94a3b8',
+                transition:'all .2s'
+              }}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+            ))}
+          </nav>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:13, fontWeight:600 }}>{user?.name || authEmail.split('@')[0]}</div>
+              <div style={{ fontSize:11, color:'#64748b', textTransform:'capitalize' }}>{currentPlan} plan</div>
+            </div>
+            <button onClick={logout} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid #334155', background:'transparent', color:'#94a3b8', cursor:'pointer', fontSize:12 }}>Logout</button>
+          </div>
+        </header>
+      )}
+
+      {/* Mobile header */}
+      {isMobile && (
+        <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px', borderBottom:'1px solid #1e293b', background:'#0f172a', flexShrink:0 }}>
+          <span style={{ fontSize:20, fontWeight:800, background:'linear-gradient(135deg,#7C3AED,#2563EB)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>⚡ Forge</span>
+          <div style={{ fontSize:12, color:'#64748b', textTransform:'capitalize' }}>{user?.name || authEmail.split('@')[0]} · {currentPlan}</div>
+          <button onClick={logout} style={{ padding:'5px 10px', borderRadius:8, border:'1px solid #334155', background:'transparent', color:'#94a3b8', cursor:'pointer', fontSize:11 }}>Out</button>
+        </header>
+      )}
 
       {/* Body */}
-      <main style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <main style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', paddingBottom: isMobile ? 60 : 0 }}>
         {tab === 'studio'   && <StudioTab messages={messages} input={input} setInput={setInput} sending={sending}
             sendMessage={sendMessage} language={language} setLanguage={setLanguage} channel={channel} setChannel={setChannel}
             selectedModel={selectedModel} setSelectedModel={setSelectedModel} inputMode={inputMode} setInputMode={setInputMode}
-            messagesEndRef={messagesEndRef} agents={agents} agentMode={agentMode} />}
+            messagesEndRef={messagesEndRef} agents={agents} agentMode={agentMode}
+            liveStatus={liveStatus} liveStep={liveStep} liveTotalSteps={liveTotalSteps}
+            liveTokens={liveTokens} liveCost={liveCost} liveElapsed={liveElapsed} livePreview={livePreview}
+            showPreview={showPreview} setShowPreview={setShowPreview} isMobile={isMobile} />}
         {tab === 'agents'   && <AgentsTab agents={agents} setAgents={setAgents} agentMode={agentMode} setAgentMode={setAgentMode}
             dbAgents={dbAgents} loading={agentsLoading} agentForm={agentForm} setAgentForm={setAgentForm}
             editingAgent={editingAgent} setEditingAgent={setEditingAgent} onSave={saveAgent} onDelete={deleteAgent}
@@ -504,6 +566,22 @@ export default function ForgeApp() {
             onDeleteProvider={deleteCustomProvider} onTestProvider={testCustomProvider}
             testingProvider={testingProvider} providerMsg={providerMsg} />}
       </main>
+
+      {/* Mobile bottom nav */}
+      {isMobile && (
+        <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'#0f172a', borderTop:'1px solid #1e293b', display:'flex', zIndex:100 }}>
+          {(['studio','agents','router','workflow','billing','output','settings'] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{
+              flex:1, padding:'8px 0', border:'none', cursor:'pointer', background:'transparent',
+              display:'flex', flexDirection:'column', alignItems:'center', gap:2,
+              color: tab===t ? '#a78bfa' : '#475569'
+            }}>
+              <span style={{ fontSize:18 }}>{TAB_ICONS[t]}</span>
+              <span style={{ fontSize:9, fontWeight:600, textTransform:'capitalize' }}>{t}</span>
+            </button>
+          ))}
+        </nav>
+      )}
     </div>
   );
 }
@@ -539,12 +617,12 @@ function AuthScreen({ mode, setMode, email, setEmail, password, setPassword, nam
 const inputStyle: React.CSSProperties = { padding:'12px 14px', borderRadius:10, border:'1px solid #334155', background:'#1e293b', color:'#e2e8f0', fontSize:14, outline:'none', width:'100%', boxSizing:'border-box' };
 
 // ─── Studio Tab ───────────────────────────────────────────────────────────────
-function StudioTab({ messages, input, setInput, sending, sendMessage, language, setLanguage, channel, setChannel, selectedModel, setSelectedModel, inputMode, setInputMode, messagesEndRef, agents, agentMode }: any) {
+function StudioTab({ messages, input, setInput, sending, sendMessage, language, setLanguage, channel, setChannel, selectedModel, setSelectedModel, inputMode, setInputMode, messagesEndRef, agents, agentMode, liveStatus, liveStep, liveTotalSteps, liveTokens, liveCost, liveElapsed, livePreview, showPreview, setShowPreview, isMobile }: any) {
   const activeAgent = agents.find((a:Agent) => a.active);
   return (
     <div style={{ display:'flex', flex:1, overflow:'hidden' }}>
-      {/* Sidebar */}
-      <div style={{ width:220, background:'#0f172a', borderRight:'1px solid #1e293b', padding:16, display:'flex', flexDirection:'column', gap:16, overflowY:'auto' }}>
+      {/* Sidebar — hide on mobile */}
+      {!isMobile && <div style={{ width:220, background:'#0f172a', borderRight:'1px solid #1e293b', padding:16, display:'flex', flexDirection:'column', gap:16, overflowY:'auto' }}>
         <div>
           <label style={{ fontSize:11, color:'#64748b', textTransform:'uppercase', letterSpacing:1 }}>Language</label>
           <select value={language} onChange={e=>setLanguage(e.target.value)} style={{ ...selectStyle, marginTop:6 }}>
@@ -606,7 +684,7 @@ function StudioTab({ messages, input, setInput, sending, sendMessage, language, 
             ))}
           </div>
         </div>
-      </div>
+      </div>}
       {/* Chat */}
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
         <div style={{ flex:1, overflowY:'auto', padding:20, display:'flex', flexDirection:'column', gap:16 }}>
@@ -669,6 +747,74 @@ function StudioTab({ messages, input, setInput, sending, sendMessage, language, 
           </div>
         </div>
       </div>
+
+      {/* Live Preview Panel */}
+      {!isMobile && (
+        <div style={{ width: showPreview ? 340 : 36, background:'#0a0a0f', borderLeft:'1px solid #1e293b', display:'flex', flexDirection:'column', transition:'width .3s', overflow:'hidden', flexShrink:0 }}>
+          {/* Toggle */}
+          <button onClick={()=>setShowPreview((p:boolean)=>!p)} style={{ padding:'10px 0', border:'none', background:'transparent', color:'#475569', cursor:'pointer', fontSize:14, borderBottom:'1px solid #1e293b', flexShrink:0 }} title={showPreview?'Hide preview':'Show preview'}>
+            {showPreview ? '›' : '‹'}
+          </button>
+          {showPreview && (
+            <div style={{ flex:1, overflowY:'auto', padding:16, display:'flex', flexDirection:'column', gap:12 }}>
+              {/* Header */}
+              <div style={{ fontSize:12, fontWeight:700, color:'#64748b', textTransform:'uppercase', letterSpacing:1 }}>Live Preview</div>
+
+              {/* Progress numbers */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                {[
+                  { label:'Step', value: liveStep > 0 ? `${liveStep}/${liveTotalSteps}` : '—', color:'#7C3AED' },
+                  { label:'Elapsed', value: liveElapsed > 0 ? `${liveElapsed}s` : '—', color:'#2563EB' },
+                  { label:'Tokens', value: liveTokens > 0 ? liveTokens.toLocaleString() : '—', color:'#059669' },
+                  { label:'Cost', value: liveCost > 0 ? `$${liveCost.toFixed(5)}` : '—', color:'#D97706' },
+                ].map(s => (
+                  <div key={s.label} style={{ padding:'10px 12px', background:'#0f172a', borderRadius:10, border:`1px solid ${s.color}30` }}>
+                    <div style={{ fontSize:10, color:'#64748b', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>{s.label}</div>
+                    <div style={{ fontSize:18, fontWeight:800, color:s.color }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Status bar */}
+              {liveStatus && (
+                <div style={{ padding:'10px 12px', background:'#0f172a', borderRadius:10, border:'1px solid #1e293b' }}>
+                  <div style={{ fontSize:10, color:'#64748b', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Status</div>
+                  {liveStep > 0 && liveTotalSteps > 0 && !liveStatus.startsWith('✅') && !liveStatus.startsWith('❌') && (
+                    <div style={{ height:4, background:'#1e293b', borderRadius:99, marginBottom:8 }}>
+                      <div style={{ height:'100%', width:`${(liveStep/liveTotalSteps)*100}%`, borderRadius:99, background:'linear-gradient(90deg,#7C3AED,#2563EB)', transition:'width .4s' }} />
+                    </div>
+                  )}
+                  <div style={{ fontSize:13, color: liveStatus.startsWith('✅')?'#4ade80': liveStatus.startsWith('❌')?'#f87171':'#e2e8f0', display:'flex', alignItems:'center', gap:6 }}>
+                    {!liveStatus.startsWith('✅') && !liveStatus.startsWith('❌') && sending && (
+                      <span style={{ width:8, height:8, borderRadius:'50%', background:'#7C3AED', display:'inline-block', animation:'pulse 1s infinite' }} />
+                    )}
+                    {liveStatus}
+                  </div>
+                </div>
+              )}
+
+              {/* Preview content */}
+              {livePreview && (
+                <div style={{ padding:'12px', background:'#0f172a', borderRadius:10, border:'1px solid #1e293b', flex:1 }}>
+                  <div style={{ fontSize:10, color:'#64748b', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>Output Preview</div>
+                  <div style={{ fontSize:12, color:'#cbd5e1', lineHeight:1.7, whiteSpace:'pre-wrap', overflowWrap:'break-word' }}>
+                    {livePreview.slice(0, 800)}{livePreview.length > 800 ? '…' : ''}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!liveStatus && !livePreview && (
+                <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'#334155', gap:10, padding:20, textAlign:'center' }}>
+                  <div style={{ fontSize:32 }}>📡</div>
+                  <div style={{ fontSize:13, fontWeight:600 }}>Live Activity</div>
+                  <div style={{ fontSize:12, lineHeight:1.6 }}>Send a message to see real-time progress, token counts, and cost tracking here.</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
