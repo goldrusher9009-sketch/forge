@@ -1220,12 +1220,107 @@ export default function ForgeApp() {
               <h2 style={{ color:'#fff', margin:'0 0 4px', fontSize:22 }}>⚙️ Settings</h2>
               <p style={{ color:'#6b7280', margin:'0 0 24px', fontSize:14 }}>Configure API keys, agents, and preferences</p>
 
-              {/* API Keys */}
+              {/* Connected Services */}
               <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:16, padding:24, marginBottom:24 }}>
-                <h3 style={{ color:'#94a3b8', fontSize:14, margin:'0 0 16px', textTransform:'uppercase', letterSpacing:'0.05em' }}>API Keys</h3>
+                <h3 style={{ color:'#94a3b8', fontSize:14, margin:'0 0 4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Connected Services</h3>
+                <p style={{ color:'#4b5563', fontSize:12, margin:'0 0 16px' }}>Sign in with your existing subscriptions or enter API keys to use Claude, OpenAI, and Cursor.</p>
+                {([
+                  { id:'claude', icon:'🟣', name:'Claude', color:'#7C3AED', apiKeyId:'anthropic', placeholder:'sk-ant-...', keyHint:'console.anthropic.com/keys' },
+                  { id:'openai', icon:'🟢', name:'OpenAI / ChatGPT', color:'#059669', apiKeyId:'openai', placeholder:'sk-...', keyHint:'platform.openai.com/api-keys' },
+                  { id:'cursor', icon:'🔵', name:'Cursor', color:'#2563EB', apiKeyId:'', placeholder:'', keyHint:'' },
+                ] as const).map(svc => {
+                  const creds = serviceCreds[svc.id];
+                  const hasApiKey = svc.apiKeyId && apiKeys[svc.apiKeyId];
+                  return (
+                    <div key={svc.id} style={{ marginBottom:16, background:'#0a0a0f', borderRadius:12, border:`1px solid ${creds.connected || hasApiKey ? svc.color + '66' : '#1e1e2e'}`, overflow:'hidden' }}>
+                      {/* Service header */}
+                      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 14px', borderBottom:'1px solid #1e1e2e' }}>
+                        <span style={{ fontSize:18 }}>{svc.icon}</span>
+                        <p style={{ margin:0, fontSize:14, fontWeight:600, color:'#e2e8f0' }}>{svc.name}</p>
+                        <div style={{ marginLeft:'auto', display:'flex', gap:6, alignItems:'center' }}>
+                          {creds.connected && <span style={{ fontSize:11, color:'#059669', background:'#05966922', padding:'2px 8px', borderRadius:20 }}>✓ Signed in · {creds.email}</span>}
+                          {!creds.connected && hasApiKey && <span style={{ fontSize:11, color:'#059669', background:'#05966922', padding:'2px 8px', borderRadius:20 }}>✓ API key active</span>}
+                          {!creds.connected && !hasApiKey && <span style={{ fontSize:11, color:'#4b5563' }}>Not connected</span>}
+                        </div>
+                      </div>
+
+                      <div style={{ padding:'14px' }}>
+                        {/* Subscription login */}
+                        <p style={{ margin:'0 0 8px', fontSize:11, color:'#6b7280', fontWeight:600, textTransform:'uppercase' }}>Monthly subscription login</p>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                          <input
+                            placeholder="Email address"
+                            type="email"
+                            value={creds.email}
+                            onChange={e => setServiceCreds(p => ({ ...p, [svc.id]: { ...p[svc.id], email: e.target.value } }))}
+                            style={{ padding:'9px 12px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13, boxSizing:'border-box' }}
+                          />
+                          <input
+                            placeholder="Password"
+                            type="password"
+                            value={creds.password}
+                            onChange={e => setServiceCreds(p => ({ ...p, [svc.id]: { ...p[svc.id], password: e.target.value } }))}
+                            style={{ padding:'9px 12px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13, boxSizing:'border-box' }}
+                          />
+                        </div>
+                        <div style={{ display:'flex', gap:8, marginBottom: svc.apiKeyId ? 14 : 0 }}>
+                          <button
+                            onClick={() => {
+                              if (creds.email && creds.password) {
+                                setServiceCreds(p => ({ ...p, [svc.id]: { ...p[svc.id], connected: true } }));
+                                localStorage.setItem(`forge_svc_${svc.id}`, JSON.stringify({ email: creds.email, connected: true }));
+                              }
+                            }}
+                            style={{ padding:'8px 16px', background: creds.connected ? '#05966933' : svc.color, border: creds.connected ? `1px solid #059669` : 'none', borderRadius:8, color: creds.connected ? '#059669' : '#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}
+                          >
+                            {creds.connected ? '✓ Connected' : 'Connect Account'}
+                          </button>
+                          {creds.connected && (
+                            <button
+                              onClick={() => { setServiceCreds(p => ({ ...p, [svc.id]: { email:'', password:'', connected:false } })); localStorage.removeItem(`forge_svc_${svc.id}`); }}
+                              style={{ padding:'8px 12px', background:'transparent', border:'1px solid #DC2626', borderRadius:8, color:'#DC2626', fontSize:12, cursor:'pointer' }}
+                            >
+                              Disconnect
+                            </button>
+                          )}
+                          <button onClick={() => window.open(svc.id === 'claude' ? 'https://claude.ai/upgrade' : svc.id === 'openai' ? 'https://chat.openai.com/upgrade' : 'https://cursor.sh/pricing', '_blank')} style={{ padding:'8px 12px', background:'transparent', border:'1px solid #1e1e2e', borderRadius:8, color:'#6b7280', fontSize:12, cursor:'pointer' }}>
+                            View plans →
+                          </button>
+                        </div>
+
+                        {/* API Key section */}
+                        {svc.apiKeyId && (
+                          <>
+                            <div style={{ borderTop:'1px solid #1e1e2e', paddingTop:12, marginTop:4 }}>
+                              <p style={{ margin:'0 0 8px', fontSize:11, color:'#6b7280', fontWeight:600, textTransform:'uppercase' }}>Or use API key</p>
+                              <div style={{ display:'flex', gap:8 }}>
+                                <input
+                                  type="password"
+                                  placeholder={svc.placeholder}
+                                  value={apiKeys[svc.apiKeyId] || ''}
+                                  onChange={e => setApiKeys(prev => ({ ...prev, [svc.apiKeyId]: e.target.value }))}
+                                  style={{ flex:1, padding:'9px 12px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13 }}
+                                />
+                                <button onClick={saveApiKeys} style={{ padding:'9px 16px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer' }}>
+                                  {keysSaved ? '✓ Saved' : 'Save'}
+                                </button>
+                                <button onClick={() => window.open(`https://${svc.keyHint}`, '_blank')} style={{ padding:'9px 12px', background:'transparent', border:'1px solid #1e1e2e', borderRadius:8, color:'#6b7280', fontSize:12, cursor:'pointer' }}>
+                                  Get key →
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* API Keys — other providers */}
+              <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:16, padding:24, marginBottom:24 }}>
+                <h3 style={{ color:'#94a3b8', fontSize:14, margin:'0 0 16px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Other API Keys</h3>
                 {[
-                  { key:'anthropic', label:'Anthropic (Claude)', placeholder:'sk-ant-...', hint:'claude.ai/account' },
-                  { key:'openai', label:'OpenAI (GPT)', placeholder:'sk-...', hint:'platform.openai.com' },
                   { key:'openrouter', label:'OpenRouter (400+ models)', placeholder:'sk-or-...', hint:'openrouter.ai/keys' },
                   { key:'groq', label:'Groq (Llama / Mixtral)', placeholder:'gsk_...', hint:'console.groq.com' },
                   { key:'gemini', label:'Google Gemini', placeholder:'AIza...', hint:'aistudio.google.com' },
