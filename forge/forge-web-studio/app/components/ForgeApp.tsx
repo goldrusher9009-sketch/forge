@@ -216,6 +216,7 @@ export default function ForgeApp() {
   // Settings / API keys
   const [apiKeys, setApiKeys] = useState<Record<string,string>>({});
   const [keysSaved, setKeysSaved] = useState(false);
+  const [savedProviders, setSavedProviders] = useState<Record<string,boolean>>({});
 
   // Service credentials (subscription logins — Claude, OpenAI, Cursor) — persisted in localStorage
   const [serviceCreds, setServiceCreds] = useState<Record<string, { email:string; password:string; connected:boolean }>>({
@@ -317,41 +318,45 @@ export default function ForgeApp() {
     if (!user) return;
     try {
       const d = await apiFetch('/keys', {}, user.token);
-      // Backend returns { success, data: { anthropic_key: 'preview...', has_anthropic: true, ... } }
-      // We need to rebuild apiKeys as { anthropic: 'full-key-if-in-state-or-preview' }
-      // We keep full keys already in state (user typed them), but mark providers as active
-      const data = d?.data || d?.keys || {};
-      // Build a map of provider -> preview (so we know which are saved)
-      const saved: Record<string,string> = {};
+      // Backend returns { success, data: { has_anthropic: true, anthropic_key: 'sk-an...preview', ... } }
+      const data = d?.data || {};
       const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor'];
-      providers.forEach(p => {
-        if (data[`has_${p}`]) {
-          // Provider has a key saved — keep existing full key in state if present, else mark with preview
-          saved[p] = apiKeys[p] || data[`${p}_key`] || '__saved__';
-        }
-      });
-      setApiKeys(prev => ({ ...prev, ...saved }));
+      const confirmed: Record<string,boolean> = {};
+      providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
+      setSavedProviders(confirmed);
     } catch {}
   };
 
-  // ── Save API keys ──────────────────────────────────────────────────────────
-  const saveApiKeys = async () => {
+  // ── Save a single provider's API key ──────────────────────────────────────
+  const saveOneKey = async (provider: string, key: string) => {
     if (!user) return;
+    const trimmed = key.trim();
+    if (!trimmed) { alert('Please paste a key first.'); return; }
     try {
-      // Backend expects flat body: { anthropic_key: 'sk-ant-...', openai_key: 'sk-...', ... }
-      const body: Record<string,string> = {};
-      Object.entries(apiKeys).forEach(([provider, key]) => {
-        if (key && key !== '__saved__' && key.trim().length > 0) {
-          body[`${provider}_key`] = key.trim();
-        }
-      });
+      // Backend expects flat body: { anthropic_key: 'sk-ant-...' }
+      await apiFetch('/keys', { method:'POST', body:JSON.stringify({ [`${provider}_key`]: trimmed }) }, user.token);
+      setKeysSaved(true); setTimeout(() => setKeysSaved(false), 3000);
+      // Mark this provider as saved in state
+      setSavedProviders(prev => ({ ...prev, [provider]: true }));
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      alert(`Save failed: ${msg}`);
+    }
+  };
+  // Legacy alias used in some places
+  const saveApiKeys = async () => {
+    // Save whichever keys are currently non-empty in apiKeys state
+    if (!user) return;
+    const body: Record<string,string> = {};
+    Object.entries(apiKeys).forEach(([p, k]) => {
+      if (k && k !== '__saved__' && k.trim().length > 0) body[`${p}_key`] = k.trim();
+    });
+    if (!Object.keys(body).length) { alert('No key to save.'); return; }
+    try {
       await apiFetch('/keys', { method:'POST', body:JSON.stringify(body) }, user.token);
       setKeysSaved(true); setTimeout(() => setKeysSaved(false), 3000);
       await loadApiKeys();
-    } catch (e: any) {
-      const msg = e?.message || String(e);
-      alert(`Save failed: ${msg}\n\nMake sure you are logged in and try again.`);
-    }
+    } catch (e: any) { alert(`Save failed: ${e?.message || e}`); }
   };
 
   // ── Projects ───────────────────────────────────────────────────────────────
@@ -418,11 +423,23 @@ export default function ForgeApp() {
 
     try {
       const body: any = { content:userContent, model:selectedModel, agent_ids:activeAgentIds };
-      await apiFetch(`/threads/${activeThread.id}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
-      await loadMessages(activeThread.id);
+      let threadId = activeThread.id;
+      try {
+        await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
+      } catch (e: any) {
+        // Thread was wiped (Railway redeploy) — create a fresh one and retry
+        if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
+          const fresh = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: userContent.slice(0,60), model: selectedModel }) }, user.token);
+          const newT = fresh?.data || fresh;
+          threadId = newT.id;
+          setActiveThread(newT);
+          await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
+          await loadThreads(activeProject?.id);
+        } else { throw e; }
+      }
+      await loadMessages(threadId);
       await loadArtifacts();
       await loadThreads(activeProject?.id);
-      // Auto-refresh sketch if active
       if (sketchMode) {
         const fresh = await apiFetch('/artifacts', {}, user.token);
         const arr = Array.isArray(fresh) ? fresh : Array.isArray(fresh?.data) ? fresh.data : [];
@@ -722,7 +739,7 @@ export default function ForgeApp() {
               {/* Multi-response toggle */}
               <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? '#1e1e2e' : 'transparent', border:`1px solid ${multiResponse ? '#D97706' : '#2d2d44'}`, borderRadius:6, color:multiResponse ? '#D97706' : '#6b7280', cursor:'pointer', fontSize:12 }}>⚡ Multi</button>
 
-              {/* Model selector — shows all models; marks ones with no API key */}
+              {/* Model selector — only shows models whose provider key is confirmed saved */}
               {(() => {
                 const providerForId = (id: string) => {
                   if (['forge-ultra','forge-pro','forge-flash','forge-code'].includes(id) || id.startsWith('claude')) return 'anthropic';
@@ -732,15 +749,17 @@ export default function ForgeApp() {
                   if (id.startsWith('mistral')) return 'mistral';
                   return null;
                 };
-                const hasKey = (id: string) => { const p = providerForId(id); return !p || !!apiKeys[p]; };
+                const hasKey = (id: string) => { const p = providerForId(id); return !p || !!savedProviders[p]; };
+                const availableForge = FORGE_MODELS.filter(m => hasKey(m.id));
+                const availableDirect = DIRECT_MODELS.map(g => ({ ...g, models: g.models.filter(m => hasKey(m.id)) })).filter(g => g.models.length > 0);
+                const noKeys = availableForge.length === 0 && availableDirect.length === 0;
                 return (
-                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color:'#a78bfa', padding:'6px 10px', fontSize:12, cursor:'pointer' }}>
-                    <optgroup label="Forge (with markup)">
-                      {FORGE_MODELS.map(m => <option key={m.id} value={m.id}>{hasKey(m.id) ? '' : '⚠ '}{m.label}</option>)}
-                    </optgroup>
-                    {DIRECT_MODELS.map(grp => (
+                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color: noKeys ? '#6b7280' : '#a78bfa', padding:'6px 10px', fontSize:12, cursor:'pointer' }}>
+                    {noKeys && <option value="">⚠ Add an API key in Settings</option>}
+                    {availableForge.length > 0 && <optgroup label="Forge (with markup)">{availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</optgroup>}
+                    {availableDirect.map(grp => (
                       <optgroup key={grp.group} label={grp.group}>
-                        {grp.models.map(m => <option key={m.id} value={m.id}>{hasKey(m.id) ? '' : '⚠ '}{m.label}</option>)}
+                        {grp.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
                       </optgroup>
                     ))}
                   </select>
@@ -1268,8 +1287,8 @@ export default function ForgeApp() {
                                   onChange={e => setApiKeys(prev => ({ ...prev, [service.apiKeyId]: e.target.value }))}
                                   style={{ flex:1, padding:'9px 12px', background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13 }}
                                 />
-                                <button onClick={async () => { await saveApiKeys(); }} style={{ padding:'9px 16px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', whiteSpace:'nowrap' }}>
-                                  {keysSaved ? '✓ Saved!' : 'Save Key'}
+                                <button onClick={() => saveOneKey(service.apiKeyId, apiKeys[service.apiKeyId] || '')} style={{ padding:'9px 16px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', whiteSpace:'nowrap' }}>
+                                  {savedProviders[service.apiKeyId] ? '✓ Saved' : 'Save Key'}
                                 </button>
                                 <button onClick={() => window.open(service.id === 'claude' ? 'https://console.anthropic.com/keys' : 'https://platform.openai.com/api-keys', '_blank')} style={{ padding:'9px 12px', background:'transparent', border:'1px solid #1e1e2e', borderRadius:8, color:'#6b7280', fontSize:12, cursor:'pointer', whiteSpace:'nowrap' }}>
                                   Get key →
@@ -1439,8 +1458,8 @@ export default function ForgeApp() {
                                   onChange={e => setApiKeys(prev => ({ ...prev, [svc.apiKeyId]: e.target.value }))}
                                   style={{ flex:1, padding:'9px 12px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13 }}
                                 />
-                                <button onClick={saveApiKeys} style={{ padding:'9px 16px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer' }}>
-                                  {keysSaved ? '✓ Saved' : 'Save'}
+                                <button onClick={() => saveOneKey(svc.apiKeyId, apiKeys[svc.apiKeyId] || '')} style={{ padding:'9px 16px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer' }}>
+                                  {savedProviders[svc.apiKeyId] ? '✓ Saved' : 'Save'}
                                 </button>
                                 <button onClick={() => window.open(`https://${svc.keyHint}`, '_blank')} style={{ padding:'9px 12px', background:'transparent', border:'1px solid #1e1e2e', borderRadius:8, color:'#6b7280', fontSize:12, cursor:'pointer' }}>
                                   Get key →
