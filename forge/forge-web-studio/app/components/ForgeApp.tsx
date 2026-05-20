@@ -175,22 +175,36 @@ export default function ForgeApp() {
   const [apiKeys, setApiKeys] = useState<Record<string,string>>({});
   const [keysSaved, setKeysSaved] = useState(false);
 
-  // Service credentials (subscription logins — Claude, OpenAI, Cursor)
-  const [serviceCreds, setServiceCreds] = useState<Record<string, { email:string; password:string; connected:boolean }>>({
-    claude: { email:'', password:'', connected:false },
-    openai: { email:'', password:'', connected:false },
-    cursor: { email:'', password:'', connected:false },
+  // Service credentials (subscription logins — Claude, OpenAI, Cursor) — persisted in localStorage
+  const [serviceCreds, setServiceCreds] = useState<Record<string, { email:string; password:string; connected:boolean }>>(() => {
+    const defaults = {
+      claude: { email:'', password:'', connected:false },
+      openai: { email:'', password:'', connected:false },
+      cursor: { email:'', password:'', connected:false },
+    };
+    try {
+      const stored = localStorage.getItem('forge_service_creds');
+      if (stored) return { ...defaults, ...JSON.parse(stored) };
+    } catch {}
+    return defaults;
   });
   const [serviceExpanded, setServiceExpanded] = useState<Record<string,boolean>>({});
 
-  // LLM provider credentials (username + password + API key)
-  const [llmCreds, setLlmCreds] = useState<Record<string, { username:string; password:string; connected:boolean }>>({
-    openrouter: { username:'', password:'', connected:false },
-    groq: { username:'', password:'', connected:false },
-    gemini: { username:'', password:'', connected:false },
-    mistral: { username:'', password:'', connected:false },
-    together: { username:'', password:'', connected:false },
-    perplexity: { username:'', password:'', connected:false },
+  // LLM provider credentials (username + password + API key) — persisted in localStorage
+  const [llmCreds, setLlmCreds] = useState<Record<string, { username:string; password:string; connected:boolean }>>(() => {
+    const defaults = {
+      openrouter: { username:'', password:'', connected:false },
+      groq: { username:'', password:'', connected:false },
+      gemini: { username:'', password:'', connected:false },
+      mistral: { username:'', password:'', connected:false },
+      together: { username:'', password:'', connected:false },
+      perplexity: { username:'', password:'', connected:false },
+    };
+    try {
+      const stored = localStorage.getItem('forge_llm_creds');
+      if (stored) return { ...defaults, ...JSON.parse(stored) };
+    } catch {}
+    return defaults;
   });
   const [llmExpanded, setLlmExpanded] = useState<Record<string,boolean>>({});
 
@@ -218,6 +232,10 @@ export default function ForgeApp() {
 
   // Register session-expiry handler so apiFetch can auto-logout on 401
   useEffect(() => { _onSessionExpired = handleLogout; return () => { _onSessionExpired = null; }; }, [handleLogout]);
+
+  // Persist credentials to localStorage whenever they change
+  useEffect(() => { localStorage.setItem('forge_service_creds', JSON.stringify(serviceCreds)); }, [serviceCreds]);
+  useEffect(() => { localStorage.setItem('forge_llm_creds', JSON.stringify(llmCreds)); }, [llmCreds]);
 
   useEffect(() => {
     if (!user) return;
