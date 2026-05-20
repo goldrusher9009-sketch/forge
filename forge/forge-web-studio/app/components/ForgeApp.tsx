@@ -272,7 +272,20 @@ export default function ForgeApp() {
   const loadSchedules = async () => { if (!user) return; try { const d = await apiFetch('/schedules', {}, user.token); setSchedules(d); } catch {} };
   const loadCustomProviders = async () => { if (!user) return; try { const d = await apiFetch('/providers/custom', {}, user.token); setCustomProviders(Array.isArray(d) ? d : []); } catch {} };
   const loadUsageLogs = async () => { if (!user) return; try { const d = await apiFetch('/billing/usage', {}, user.token); setUsageLogs(Array.isArray(d?.logs) ? d.logs : []); } catch {} };
-  const loadSubscription = async () => { if (!user) return; try { const d = await apiFetch('/billing/subscription', {}, user.token); setSubscription(d); } catch {} };
+  const loadSubscription = async () => {
+    if (!user) return;
+    try {
+      const d = await apiFetch('/billing/subscription', {}, user.token);
+      if (!d || !d.success) return;
+      // Backend returns camelCase (tokensUsed/tokenLimit) — normalize to snake_case for our Subscription type
+      setSubscription({
+        plan: d.plan || 'free',
+        tokens_used: d.tokens_used ?? d.tokensUsed ?? 0,
+        token_limit: d.token_limit ?? d.tokenLimit ?? 10000,
+        period_end: d.period_end ?? d.periodEnd,
+      });
+    } catch {}
+  };
   const loadOpenRouterModels = async () => { if (!user) return; try { const d = await apiFetch('/keys/openrouter-models', {}, user.token); setOpenRouterModels(Array.isArray(d) ? d : []); } catch {} };
   const loadApiKeys = async () => { if (!user) return; try { const d = await apiFetch('/keys', {}, user.token); if (d?.keys) setApiKeys(d.keys); } catch {} };
 
@@ -1033,7 +1046,7 @@ export default function ForgeApp() {
                       {subscription.period_end && <p style={{ margin:0, fontSize:12, color:'#4b5563' }}>Renews {new Date(subscription.period_end).toLocaleDateString()}</p>}
                     </div>
                     <div style={{ textAlign:'right' }}>
-                      <p style={{ margin:0, fontSize:14, color:'#e2e8f0' }}>{subscription.tokens_used.toLocaleString()} / {subscription.token_limit.toLocaleString()} tokens</p>
+                      <p style={{ margin:0, fontSize:14, color:'#e2e8f0' }}>{(subscription.tokens_used ?? 0).toLocaleString()} / {(subscription.token_limit ?? 10000).toLocaleString()} tokens</p>
                       <p style={{ margin:'4px 0 0', fontSize:12, color:'#4b5563' }}>{usagePercent}% used</p>
                     </div>
                   </div>

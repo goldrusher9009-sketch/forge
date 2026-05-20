@@ -333,6 +333,11 @@ db.exec(`
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN key_preview TEXT NOT NULL DEFAULT ''`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
+try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_limit INTEGER NOT NULL DEFAULT 10000`); } catch {}
+try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_used INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_start TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
+try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_end TEXT NOT NULL DEFAULT (datetime('now', '+30 days'))`); } catch {}
+try { db.exec(`ALTER TABLE subscriptions ADD COLUMN status TEXT NOT NULL DEFAULT 'active'`); } catch {}
 
 // ── Schema repair: rebuild api_keys if it has a broken DEFAULT from old schema ──
 // The old schema had DEFAULT (datetime('now', '+30 days')) which SQLite rejects at runtime.

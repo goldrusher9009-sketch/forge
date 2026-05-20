@@ -1,0 +1,12 @@
+fix: resolve Application error crash on login
+
+Root cause: /api/billing/subscription threw INTERNAL_ERROR due to
+missing tokens_limit column in older Railway DB. Frontend then called
+.toLocaleString() on undefined which crashed the React tree.
+
+1. Backend: safe ALTER TABLE migrations for tokens_limit, tokens_used,
+   period_start, period_end, status columns so older DBs get patched.
+2. Frontend loadSubscription: normalize camelCase API response to
+   snake_case, skip state update if response has success:false.
+3. Frontend billing render: null-coalesce tokens_used/token_limit
+   before .toLocaleString() to prevent crash if values missing.
