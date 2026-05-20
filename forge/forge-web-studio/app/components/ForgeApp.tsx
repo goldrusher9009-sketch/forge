@@ -41,14 +41,16 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string): P
 const PROJECT_COLORS = ['#7C3AED','#2563EB','#059669','#DC2626','#D97706','#DB2777','#0891B2','#65A30D'];
 const AGENT_ICONS = ['🧠','⚡','🔮','🔥','🌊','🎨','🚀','💻'];
 const FORGE_MODELS = [
-  { id:'forge-ultra',  label:'Forge Ultra',  desc:'Claude Opus 4.5 + markup',       base:'claude-opus-4-5' },
-  { id:'forge-pro',    label:'Forge Pro',    desc:'Claude Sonnet 4.5 + markup',     base:'claude-sonnet-4-5' },
+  { id:'forge-ultra',  label:'Forge Ultra',  desc:'Claude Opus 4.6 + markup',       base:'claude-opus-4-6' },
+  { id:'forge-pro',    label:'Forge Pro',    desc:'Claude Sonnet 4.6 + markup',     base:'claude-sonnet-4-6' },
   { id:'forge-flash',  label:'Forge Flash',  desc:'Claude Haiku 4.5 + markup',      base:'claude-haiku-4-5-20251001' },
   { id:'forge-gpt',    label:'Forge GPT',    desc:'GPT-4o + markup',                base:'gpt-4o' },
   { id:'forge-gemini', label:'Forge Gemini', desc:'Gemini 2.0 Flash + markup',      base:'gemini-2.0-flash' },
 ];
 const DIRECT_MODELS = [
   { group:'Anthropic', models:[
+    { id:'claude-opus-4-6',         label:'Claude Opus 4.6' },
+    { id:'claude-sonnet-4-6',       label:'Claude Sonnet 4.6' },
     { id:'claude-opus-4-5',         label:'Claude Opus 4.5' },
     { id:'claude-sonnet-4-5',       label:'Claude Sonnet 4.5' },
     { id:'claude-haiku-4-5',        label:'Claude Haiku 4.5' },
@@ -173,7 +175,7 @@ export default function ForgeApp() {
   // Composer
   const [input, setInput] = useState('');
   const [activeAgentIds, setActiveAgentIds] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5');
+  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-6');
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
