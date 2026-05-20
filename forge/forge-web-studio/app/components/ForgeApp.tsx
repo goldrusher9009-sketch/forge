@@ -1003,6 +1003,66 @@ export default function ForgeApp() {
                 ))}
               </div>
 
+              {/* AI Tools & Services */}
+              <h3 style={{ color:'#94a3b8', fontSize:15, margin:'0 0 4px' }}>AI Tools & Services</h3>
+              <p style={{ color:'#4b5563', fontSize:13, margin:'0 0 16px' }}>Use with a monthly subscription or bring your own API key — your choice.</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:16, marginBottom:28 }}>
+                {[
+                  {
+                    icon:'🟣', name:'Claude (Anthropic)', color:'#7C3AED',
+                    apiKey:'anthropic',
+                    plans:[
+                      { label:'Claude Free', price:'$0/mo', desc:'Claude.ai web access, limited messages', url:'https://claude.ai' },
+                      { label:'Claude Pro', price:'$20/mo', desc:'5× more usage, priority access, longer context', url:'https://claude.ai/upgrade' },
+                      { label:'Claude API', price:'Pay per token', desc:'Direct API access — add key in Settings', url:'https://console.anthropic.com' },
+                    ],
+                  },
+                  {
+                    icon:'🟢', name:'OpenAI', color:'#059669',
+                    apiKey:'openai',
+                    plans:[
+                      { label:'ChatGPT Free', price:'$0/mo', desc:'GPT-4o mini, limited GPT-4o access', url:'https://chat.openai.com' },
+                      { label:'ChatGPT Plus', price:'$20/mo', desc:'Full GPT-4o, DALL·E, browsing, plugins', url:'https://chat.openai.com/upgrade' },
+                      { label:'OpenAI API', price:'Pay per token', desc:'Direct API access — add key in Settings', url:'https://platform.openai.com' },
+                    ],
+                  },
+                  {
+                    icon:'🔵', name:'Cursor', color:'#2563EB',
+                    apiKey:'',
+                    plans:[
+                      { label:'Cursor Free', price:'$0/mo', desc:'2000 completions/mo, limited AI features', url:'https://cursor.sh' },
+                      { label:'Cursor Pro', price:'$20/mo', desc:'Unlimited completions, GPT-4, Claude inside editor', url:'https://cursor.sh/pricing' },
+                      { label:'Cursor Business', price:'$40/user/mo', desc:'SSO, usage analytics, admin controls', url:'https://cursor.sh/pricing' },
+                    ],
+                  },
+                ].map(service => (
+                  <div key={service.name} style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:14, overflow:'hidden' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, padding:'14px 18px', borderBottom:'1px solid #1e1e2e' }}>
+                      <span style={{ fontSize:20 }}>{service.icon}</span>
+                      <p style={{ margin:0, fontSize:16, fontWeight:700, color:'#e2e8f0' }}>{service.name}</p>
+                      {service.apiKey && apiKeys[service.apiKey] && (
+                        <span style={{ marginLeft:'auto', fontSize:11, color:'#059669', background:'#05966922', padding:'2px 8px', borderRadius:20 }}>✓ API key saved</span>
+                      )}
+                      {service.apiKey && !apiKeys[service.apiKey] && (
+                        <button onClick={() => setMainTab('settings')} style={{ marginLeft:'auto', fontSize:11, color:'#D97706', background:'transparent', border:'1px solid #D97706', padding:'2px 8px', borderRadius:20, cursor:'pointer' }}>Add API key →</button>
+                      )}
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)' }}>
+                      {service.plans.map((plan, i) => (
+                        <div key={plan.label} style={{ padding:'16px 18px', borderRight: i < 2 ? '1px solid #1e1e2e' : 'none' }}>
+                          <p style={{ margin:'0 0 2px', fontSize:14, fontWeight:600, color:service.color }}>{plan.label}</p>
+                          <p style={{ margin:'0 0 6px', fontSize:18, fontWeight:800, color:'#e2e8f0' }}>{plan.price}</p>
+                          <p style={{ margin:'0 0 12px', fontSize:12, color:'#6b7280', lineHeight:1.4 }}>{plan.desc}</p>
+                          <button onClick={() => window.open(plan.url, '_blank')} style={{ padding:'7px 14px', background:service.color, border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:500 }}>
+                            {plan.label.includes('API') ? 'Get API Key' : 'Subscribe →'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {/* Usage logs */}
               <h3 style={{ color:'#94a3b8', fontSize:15, margin:'0 0 12px' }}>Usage Logs</h3>
               {usageLogs.length === 0 && <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', padding:24 }}>No usage logged yet.</p>}
