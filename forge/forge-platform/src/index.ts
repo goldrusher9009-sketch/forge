@@ -404,12 +404,31 @@ const MODEL_COSTS: Record<string, { input: number; output: number; provider: str
   'mistral-small':    { input: 0.0001,  output: 0.0003, provider: 'mistral',   markup: 1.5  },
 };
 
+// Canonical Anthropic model IDs (as of mid-2025)
+const ANTHROPIC_MODEL_MAP: Record<string,string> = {
+  'claude-opus-4-5':            'claude-opus-4-5',
+  'claude-opus-4':              'claude-opus-4-5',
+  'claude-sonnet-4-5':          'claude-sonnet-4-5',
+  'claude-sonnet-4':            'claude-sonnet-4-5',
+  'claude-haiku-4-5':           'claude-haiku-4-5-20251001',
+  'claude-haiku-4':             'claude-haiku-4-5-20251001',
+  'claude-3-5-sonnet':          'claude-3-5-sonnet-20241022',
+  'claude-3-5-haiku':           'claude-3-5-haiku-20241022',
+  'claude-3-opus':              'claude-3-opus-20240229',
+};
+
 function resolveForgeModel(modelId: string): string {
-  const map: Record<string,string> = {
-    'forge-ultra': 'claude-opus-4', 'forge-pro': 'claude-sonnet-4',
-    'forge-fast': 'llama-3.3-70b', 'forge-code': 'gpt-4.1', 'forge-creative': 'gpt-4o',
+  const forgeMap: Record<string,string> = {
+    'forge-ultra':    'claude-opus-4-5',
+    'forge-pro':      'claude-sonnet-4-5',
+    'forge-flash':    'claude-haiku-4-5-20251001',
+    'forge-fast':     'llama-3.3-70b',
+    'forge-code':     'gpt-4.1',
+    'forge-creative': 'gpt-4o',
+    'forge-gpt':      'gpt-4o',
+    'forge-gemini':   'gemini-2.0-flash',
   };
-  return map[modelId] || modelId;
+  return forgeMap[modelId] || ANTHROPIC_MODEL_MAP[modelId] || modelId;
 }
 
 function getProviderForModel(modelId: string): string {
@@ -422,10 +441,25 @@ function getProviderForModel(modelId: string): string {
   return MODEL_COSTS[modelId]?.provider || 'openrouter';
 }
 
+// Env-var fallback map — Railway redeploys wipe the SQLite DB, so env vars are the reliable source
+const PROVIDER_ENV_KEYS: Record<string,string> = {
+  anthropic:   process.env.ANTHROPIC_API_KEY   || '',
+  openai:      process.env.OPENAI_API_KEY       || '',
+  gemini:      process.env.GEMINI_API_KEY       || '',
+  groq:        process.env.GROQ_API_KEY         || '',
+  mistral:     process.env.MISTRAL_API_KEY      || '',
+  openrouter:  process.env.OPENROUTER_API_KEY   || '',
+};
+
 function getUserKey(userId: string, provider: string): string | null {
+  // First check per-user key in DB
   const row = db.prepare('SELECT key_encrypted FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider) as any;
-  if (!row) return null;
-  return decryptKey(row.key_encrypted);
+  if (row) {
+    const key = decryptKey(row.key_encrypted);
+    if (key) return key;
+  }
+  // Fall back to server-level env var (so Railway deploys always work)
+  return PROVIDER_ENV_KEYS[provider] || null;
 }
 
 async function callLLM(provider: string, apiKey: string, model: string, messages: any[], _language?: string): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
