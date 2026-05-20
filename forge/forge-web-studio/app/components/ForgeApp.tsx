@@ -19,11 +19,21 @@ interface UsageLog { id: string; model: string; tokens_in: number; tokens_out: n
 interface Subscription { plan: string; tokens_used: number; token_limit: number; period_end?: string; }
 
 // ─── API Helper ───────────────────────────────────────────────────────────────
+let _onSessionExpired: (() => void) | null = null;
 async function apiFetch(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API}${path}`, { ...opts, headers });
-  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `HTTP ${res.status}`); }
+  if (res.status === 401) {
+    const err = await res.json().catch(() => ({}));
+    if (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN') {
+      // Session expired — clear local auth and force re-login
+      localStorage.removeItem('forge_user');
+      if (_onSessionExpired) _onSessionExpired();
+    }
+    throw new Error(err.error || 'Session expired. Please log in again.');
+  }
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || err.message || `HTTP ${res.status}`); }
   return res.json().catch(() => ({}));
 }
 
@@ -204,7 +214,10 @@ export default function ForgeApp() {
   }, []);
 
   const handleLogin = (u: User) => { setUser(u); localStorage.setItem('forge_user', JSON.stringify(u)); };
-  const handleLogout = () => { setUser(null); localStorage.removeItem('forge_user'); };
+  const handleLogout = useCallback(() => { setUser(null); localStorage.removeItem('forge_user'); }, []);
+
+  // Register session-expiry handler so apiFetch can auto-logout on 401
+  useEffect(() => { _onSessionExpired = handleLogout; return () => { _onSessionExpired = null; }; }, [handleLogout]);
 
   useEffect(() => {
     if (!user) return;
@@ -1141,8 +1154,8 @@ export default function ForgeApp() {
                                   onChange={e => setApiKeys(prev => ({ ...prev, [service.apiKeyId]: e.target.value }))}
                                   style={{ flex:1, padding:'9px 12px', background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13 }}
                                 />
-                                <button onClick={saveApiKeys} style={{ padding:'9px 16px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', whiteSpace:'nowrap' }}>
-                                  Save Key
+                                <button onClick={async () => { await saveApiKeys(); }} style={{ padding:'9px 16px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', whiteSpace:'nowrap' }}>
+                                  {keysSaved ? '✓ Saved!' : 'Save Key'}
                                 </button>
                                 <button onClick={() => window.open(service.id === 'claude' ? 'https://console.anthropic.com/keys' : 'https://platform.openai.com/api-keys', '_blank')} style={{ padding:'9px 12px', background:'transparent', border:'1px solid #1e1e2e', borderRadius:8, color:'#6b7280', fontSize:12, cursor:'pointer', whiteSpace:'nowrap' }}>
                                   Get key →
