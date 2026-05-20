@@ -68,10 +68,28 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
     setError(''); setLoading(true);
     try {
       const body: any = { email, password };
-      if (mode === 'register') body.name = name;
-      const data = await apiFetch(`/auth/${mode}`, { method:'POST', body:JSON.stringify(body) });
-      onLogin({ ...data.user, token:data.token });
-    } catch (e: any) { setError(e.message); }
+      if (mode === 'register') { body.firstName = name; body.lastName = ''; }
+      if (mode === 'register') {
+        await apiFetch('/auth/register', { method:'POST', body:JSON.stringify(body) });
+        // Auto-login after register
+        const login = await apiFetch('/auth/login', { method:'POST', body:JSON.stringify({ email, password }) });
+        const u = login.data?.user || login.user || {};
+        const token = login.data?.accessToken || login.token || '';
+        onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token });
+      } else {
+        const data = await apiFetch('/auth/login', { method:'POST', body:JSON.stringify(body) });
+        const u = data.data?.user || data.user || {};
+        const token = data.data?.accessToken || data.token || '';
+        if (!token) throw new Error('No token received — check credentials');
+        onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token });
+      }
+    } catch (e: any) {
+      const msg = e.message || '';
+      if (msg.includes('INVALID_CREDENTIALS')) setError('Invalid email or password');
+      else if (msg.includes('DUPLICATE_EMAIL')) setError('Email already registered — try signing in');
+      else if (msg.includes('INVALID_PASSWORD')) setError('Password must be at least 8 characters');
+      else setError(msg || 'Something went wrong');
+    }
     finally { setLoading(false); }
   };
 
