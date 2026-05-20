@@ -165,13 +165,24 @@ export default function ForgeApp() {
   const [apiKeys, setApiKeys] = useState<Record<string,string>>({});
   const [keysSaved, setKeysSaved] = useState(false);
 
-  // Service credentials (subscription logins)
+  // Service credentials (subscription logins — Claude, OpenAI, Cursor)
   const [serviceCreds, setServiceCreds] = useState<Record<string, { email:string; password:string; connected:boolean }>>({
     claude: { email:'', password:'', connected:false },
     openai: { email:'', password:'', connected:false },
     cursor: { email:'', password:'', connected:false },
   });
   const [serviceExpanded, setServiceExpanded] = useState<Record<string,boolean>>({});
+
+  // LLM provider credentials (username + password + API key)
+  const [llmCreds, setLlmCreds] = useState<Record<string, { username:string; password:string; connected:boolean }>>({
+    openrouter: { username:'', password:'', connected:false },
+    groq: { username:'', password:'', connected:false },
+    gemini: { username:'', password:'', connected:false },
+    mistral: { username:'', password:'', connected:false },
+    together: { username:'', password:'', connected:false },
+    perplexity: { username:'', password:'', connected:false },
+  });
+  const [llmExpanded, setLlmExpanded] = useState<Record<string,boolean>>({});
 
   // ForgeRouter state
   const [routerTab, setRouterTab] = useState<'forge'|'direct'|'openrouter'|'custom'>('forge');
@@ -1317,28 +1328,96 @@ export default function ForgeApp() {
                 })}
               </div>
 
-              {/* API Keys — other providers */}
+              {/* LLM Providers — username + password + API key */}
               <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:16, padding:24, marginBottom:24 }}>
-                <h3 style={{ color:'#94a3b8', fontSize:14, margin:'0 0 16px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Other API Keys</h3>
-                {[
-                  { key:'openrouter', label:'OpenRouter (400+ models)', placeholder:'sk-or-...', hint:'openrouter.ai/keys' },
-                  { key:'groq', label:'Groq (Llama / Mixtral)', placeholder:'gsk_...', hint:'console.groq.com' },
-                  { key:'gemini', label:'Google Gemini', placeholder:'AIza...', hint:'aistudio.google.com' },
-                  { key:'mistral', label:'Mistral', placeholder:'...', hint:'console.mistral.ai' },
-                  { key:'together', label:'Together AI', placeholder:'...', hint:'api.together.xyz' },
-                  { key:'perplexity', label:'Perplexity', placeholder:'pplx-...', hint:'perplexity.ai/settings' },
-                ].map(({ key, label, placeholder, hint }) => (
-                  <div key={key} style={{ marginBottom:14 }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
-                      <label style={{ color:'#94a3b8', fontSize:13 }}>{label}</label>
-                      <span style={{ fontSize:11, color:'#4b5563' }}>{hint}</span>
+                <h3 style={{ color:'#94a3b8', fontSize:14, margin:'0 0 4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>LLM Providers</h3>
+                <p style={{ color:'#4b5563', fontSize:12, margin:'0 0 16px' }}>Connect with your account credentials or paste an API key directly.</p>
+                {([
+                  { key:'openrouter', icon:'🔀', label:'OpenRouter', color:'#6366f1', placeholder:'sk-or-v1-...', hint:'openrouter.ai/keys', loginUrl:'https://openrouter.ai/sign-in' },
+                  { key:'groq',       icon:'⚡', label:'Groq',        color:'#F97316', placeholder:'gsk_...',      hint:'console.groq.com/keys', loginUrl:'https://console.groq.com' },
+                  { key:'gemini',     icon:'✨', label:'Google Gemini', color:'#4285F4', placeholder:'AIza...',    hint:'aistudio.google.com', loginUrl:'https://aistudio.google.com' },
+                  { key:'mistral',    icon:'🌊', label:'Mistral',     color:'#0891B2', placeholder:'...',          hint:'console.mistral.ai', loginUrl:'https://console.mistral.ai' },
+                  { key:'together',   icon:'🤝', label:'Together AI', color:'#059669', placeholder:'...',          hint:'api.together.xyz', loginUrl:'https://api.together.xyz/signin' },
+                  { key:'perplexity', icon:'🔭', label:'Perplexity',  color:'#8B5CF6', placeholder:'pplx-...',    hint:'perplexity.ai/settings', loginUrl:'https://www.perplexity.ai' },
+                ] as const).map(({ key, icon, label, color, placeholder, hint, loginUrl }) => {
+                  const creds = llmCreds[key];
+                  const expanded = llmExpanded[key];
+                  const hasKey = !!apiKeys[key];
+                  return (
+                    <div key={key} style={{ marginBottom:10, background:'#0a0a0f', borderRadius:12, border:`1px solid ${creds.connected || hasKey ? color + '55' : '#1e1e2e'}`, overflow:'hidden' }}>
+                      {/* Header row */}
+                      <div onClick={() => setLlmExpanded(p => ({ ...p, [key]: !p[key] }))} style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 14px', cursor:'pointer' }}>
+                        <span style={{ fontSize:18 }}>{icon}</span>
+                        <div style={{ flex:1 }}>
+                          <p style={{ margin:0, fontSize:13, fontWeight:600, color:'#e2e8f0' }}>{label}</p>
+                          <p style={{ margin:0, fontSize:11, color:'#4b5563' }}>{hint}</p>
+                        </div>
+                        {creds.connected && <span style={{ fontSize:11, color:color, background:color+'22', padding:'2px 8px', borderRadius:20 }}>✓ Signed in · {creds.username}</span>}
+                        {!creds.connected && hasKey && <span style={{ fontSize:11, color:'#059669', background:'#05966922', padding:'2px 8px', borderRadius:20 }}>✓ API key active</span>}
+                        {!creds.connected && !hasKey && <span style={{ fontSize:11, color:'#6b7280' }}>Not connected</span>}
+                        <span style={{ color:'#4b5563', fontSize:12, marginLeft:4 }}>{expanded ? '▲' : '▼'}</span>
+                      </div>
+                      {/* Expanded body */}
+                      {expanded && (
+                        <div style={{ padding:'0 14px 14px', borderTop:'1px solid #1e1e2e' }}>
+                          {/* Username + password */}
+                          <p style={{ color:'#6b7280', fontSize:12, margin:'12px 0 8px' }}>Sign in with your {label} account</p>
+                          <input
+                            type="text"
+                            placeholder="Username or email"
+                            value={creds.username}
+                            onChange={e => setLlmCreds(p => ({ ...p, [key]: { ...p[key], username: e.target.value } }))}
+                            style={{ width:'100%', padding:'9px 12px', marginBottom:8, background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13, boxSizing:'border-box' }}
+                          />
+                          <input
+                            type="password"
+                            placeholder="Password"
+                            value={creds.password}
+                            onChange={e => setLlmCreds(p => ({ ...p, [key]: { ...p[key], password: e.target.value } }))}
+                            style={{ width:'100%', padding:'9px 12px', marginBottom:10, background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13, boxSizing:'border-box' }}
+                          />
+                          <div style={{ display:'flex', gap:8, marginBottom:14 }}>
+                            {!creds.connected ? (
+                              <button onClick={() => {
+                                if (!creds.username) return;
+                                const saved = { ...creds, connected: true };
+                                setLlmCreds(p => ({ ...p, [key]: saved }));
+                                localStorage.setItem('llmCreds', JSON.stringify({ ...llmCreds, [key]: saved }));
+                              }} style={{ flex:1, padding:'9px', background:color, border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                                Connect
+                              </button>
+                            ) : (
+                              <button onClick={() => {
+                                const reset = { username:'', password:'', connected:false };
+                                setLlmCreds(p => ({ ...p, [key]: reset }));
+                                localStorage.setItem('llmCreds', JSON.stringify({ ...llmCreds, [key]: reset }));
+                              }} style={{ flex:1, padding:'9px', background:'transparent', border:'1px solid #DC2626', borderRadius:8, color:'#DC2626', fontSize:13, cursor:'pointer' }}>
+                                Disconnect
+                              </button>
+                            )}
+                            <button onClick={() => window.open(loginUrl, '_blank')} style={{ padding:'9px 12px', background:'transparent', border:'1px solid #1e1e2e', borderRadius:8, color:'#6b7280', fontSize:12, cursor:'pointer', whiteSpace:'nowrap' }}>
+                              Sign up →
+                            </button>
+                          </div>
+                          {/* Or use API key */}
+                          <p style={{ color:'#6b7280', fontSize:12, margin:'0 0 8px' }}>— or use an API key directly —</p>
+                          <div style={{ display:'flex', gap:8 }}>
+                            <input
+                              type="password"
+                              placeholder={placeholder}
+                              value={apiKeys[key] || ''}
+                              onChange={e => setApiKeys(prev => ({ ...prev, [key]: e.target.value }))}
+                              style={{ flex:1, padding:'9px 12px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13 }}
+                            />
+                            <button onClick={saveApiKeys} style={{ padding:'9px 14px', background:color, border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>
+                              {keysSaved ? '✓' : 'Save'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <input type="password" placeholder={placeholder} value={apiKeys[key] || ''} onChange={e => setApiKeys(prev => ({ ...prev, [key]:e.target.value }))} style={{ width:'100%', padding:'10px', background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#fff', fontSize:13, boxSizing:'border-box' }} />
-                  </div>
-                ))}
-                <button onClick={saveApiKeys} style={{ padding:'10px 24px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>
-                  {keysSaved ? '✓ Saved!' : 'Save Keys'}
-                </button>
+                  );
+                })}
               </div>
 
               {/* Agents management */}
