@@ -998,7 +998,7 @@ app.get('/api/threads/:id/messages', requireAuth, (req: AuthRequest, res) => {
 app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res) => {
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [] } = req.body;
+  const { content, agent_ids = [], model: bodyModel } = req.body;
   if (!content?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
   const userId = req.user!.sub;
   ensureSubscription(userId);
@@ -1036,7 +1036,12 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   if (sub && sub.tokens_used >= sub.tokens_limit) {
     res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `Token limit reached. Please upgrade.` }); return;
   }
-  const model = thread.model || 'forge-fast';
+  // Use model from request body if provided, fall back to thread's saved model
+  const model = bodyModel || thread.model || 'claude-sonnet-4';
+  // If a new model was specified, update the thread so future messages use it
+  if (bodyModel && bodyModel !== thread.model) {
+    db.prepare("UPDATE threads SET model=?,updated_at=datetime('now') WHERE id=?").run(bodyModel, thread.id);
+  }
   const actualModel = resolveForgeModel(model);
   const provider = getProviderForModel(actualModel);
   const apiKey = getUserKey(userId, provider);
