@@ -404,8 +404,10 @@ const MODEL_COSTS: Record<string, { input: number; output: number; provider: str
   'mistral-small':    { input: 0.0001,  output: 0.0003, provider: 'mistral',   markup: 1.5  },
 };
 
-// Canonical Anthropic model IDs (as of mid-2025)
+// Canonical Anthropic model IDs (as of 2025)
 const ANTHROPIC_MODEL_MAP: Record<string,string> = {
+  'claude-opus-4-6':            'claude-opus-4-6',
+  'claude-sonnet-4-6':          'claude-sonnet-4-6',
   'claude-opus-4-5':            'claude-opus-4-5',
   'claude-opus-4':              'claude-opus-4-5',
   'claude-sonnet-4-5':          'claude-sonnet-4-5',
@@ -419,8 +421,8 @@ const ANTHROPIC_MODEL_MAP: Record<string,string> = {
 
 function resolveForgeModel(modelId: string): string {
   const forgeMap: Record<string,string> = {
-    'forge-ultra':    'claude-opus-4-5',
-    'forge-pro':      'claude-sonnet-4-5',
+    'forge-ultra':    'claude-opus-4-6',
+    'forge-pro':      'claude-sonnet-4-6',
     'forge-flash':    'claude-haiku-4-5-20251001',
     'forge-fast':     'llama-3.3-70b',
     'forge-code':     'gpt-4.1',
