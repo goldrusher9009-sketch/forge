@@ -261,30 +261,6 @@ export default function ForgeApp() {
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
 
-  // Auto-select best available model based on saved API keys
-  useEffect(() => {
-    const providerForModel = (id: string) => {
-      if (id.startsWith('claude') || id.startsWith('forge-ultra') || id.startsWith('forge-pro') || id.startsWith('forge-flash') || id.startsWith('forge-code')) return 'anthropic';
-      if (id.startsWith('gpt') || id.startsWith('forge-gpt') || id.startsWith('o3')) return 'openai';
-      if (id.startsWith('gemini') || id.startsWith('forge-gemini')) return 'gemini';
-      if (id.startsWith('llama') || id.startsWith('mixtral') || id.startsWith('forge-fast')) return 'groq';
-      if (id.startsWith('mistral')) return 'mistral';
-      return null;
-    };
-    const hasKey = (modelId: string) => {
-      const p = providerForModel(modelId);
-      return p ? !!apiKeys[p] : false;
-    };
-    // Prefer current selection if it already has a key
-    if (hasKey(selectedModel)) return;
-    // Otherwise auto-select first model with a key
-    const allModels = [
-      ...FORGE_MODELS.map(m => m.id),
-      ...DIRECT_MODELS.flatMap(g => g.models.map(m => m.id)),
-    ];
-    const best = allModels.find(id => hasKey(id));
-    if (best) setSelectedModel(best);
-  }, [apiKeys]);
 
   // ── Data loaders ───────────────────────────────────────────────────────────
   const unwrap = (d: any): any[] => Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : [];
@@ -341,16 +317,17 @@ export default function ForgeApp() {
       // Backend expects flat body: { anthropic_key: 'sk-ant-...', openai_key: 'sk-...', ... }
       const body: Record<string,string> = {};
       Object.entries(apiKeys).forEach(([provider, key]) => {
-        if (key && key !== '__saved__' && key.length > 8) {
-          body[`${provider}_key`] = key;
+        if (key && key !== '__saved__' && key.trim().length > 0) {
+          body[`${provider}_key`] = key.trim();
         }
       });
-      if (Object.keys(body).length === 0) { alert('No new API key to save — please paste a key first.'); return; }
       await apiFetch('/keys', { method:'POST', body:JSON.stringify(body) }, user.token);
-      setKeysSaved(true); setTimeout(() => setKeysSaved(false), 2000);
-      // Reload to confirm what's saved
+      setKeysSaved(true); setTimeout(() => setKeysSaved(false), 3000);
       await loadApiKeys();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      alert(`Save failed: ${msg}\n\nMake sure you are logged in and try again.`);
+    }
   };
 
   // ── Projects ───────────────────────────────────────────────────────────────
@@ -721,31 +698,25 @@ export default function ForgeApp() {
               {/* Multi-response toggle */}
               <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? '#1e1e2e' : 'transparent', border:`1px solid ${multiResponse ? '#D97706' : '#2d2d44'}`, borderRadius:6, color:multiResponse ? '#D97706' : '#6b7280', cursor:'pointer', fontSize:12 }}>⚡ Multi</button>
 
-              {/* Model selector — only shows models whose provider has a key saved */}
+              {/* Model selector — shows all models; marks ones with no API key */}
               {(() => {
                 const providerForId = (id: string) => {
                   if (['forge-ultra','forge-pro','forge-flash','forge-code'].includes(id) || id.startsWith('claude')) return 'anthropic';
                   if (['forge-gpt'].includes(id) || id.startsWith('gpt') || id.startsWith('o3')) return 'openai';
                   if (['forge-gemini'].includes(id) || id.startsWith('gemini')) return 'gemini';
-                  if (id.startsWith('llama') || id.startsWith('mixtral')) return 'groq';
+                  if (id.startsWith('llama') || id.startsWith('mixtral') || id === 'forge-fast') return 'groq';
                   if (id.startsWith('mistral')) return 'mistral';
                   return null;
                 };
-                const hasKey = (id: string) => { const p = providerForId(id); return p ? !!apiKeys[p] : false; };
-                const availableForge = FORGE_MODELS.filter(m => hasKey(m.id));
-                const availableDirect = DIRECT_MODELS.map(g => ({ ...g, models: g.models.filter(m => hasKey(m.id)) })).filter(g => g.models.length > 0);
-                const noKeys = availableForge.length === 0 && availableDirect.length === 0;
+                const hasKey = (id: string) => { const p = providerForId(id); return !p || !!apiKeys[p]; };
                 return (
-                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color: noKeys ? '#6b7280' : '#a78bfa', padding:'6px 10px', fontSize:12, cursor:'pointer' }}>
-                    {noKeys && <option value="">— Add an API key in Settings —</option>}
-                    {availableForge.length > 0 && (
-                      <optgroup label="Forge (with markup)">
-                        {availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
-                      </optgroup>
-                    )}
-                    {availableDirect.map(grp => (
+                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color:'#a78bfa', padding:'6px 10px', fontSize:12, cursor:'pointer' }}>
+                    <optgroup label="Forge (with markup)">
+                      {FORGE_MODELS.map(m => <option key={m.id} value={m.id}>{hasKey(m.id) ? '' : '⚠ '}{m.label}</option>)}
+                    </optgroup>
+                    {DIRECT_MODELS.map(grp => (
                       <optgroup key={grp.group} label={grp.group}>
-                        {grp.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+                        {grp.models.map(m => <option key={m.id} value={m.id}>{hasKey(m.id) ? '' : '⚠ '}{m.label}</option>)}
                       </optgroup>
                     ))}
                   </select>
