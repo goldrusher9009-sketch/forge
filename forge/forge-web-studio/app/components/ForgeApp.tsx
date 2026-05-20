@@ -313,14 +313,43 @@ export default function ForgeApp() {
     } catch {}
   };
   const loadOpenRouterModels = async () => { if (!user) return; try { const d = await apiFetch('/keys/openrouter-models', {}, user.token); setOpenRouterModels(Array.isArray(d) ? d : []); } catch {} };
-  const loadApiKeys = async () => { if (!user) return; try { const d = await apiFetch('/keys', {}, user.token); if (d?.keys) setApiKeys(d.keys); } catch {} };
+  const loadApiKeys = async () => {
+    if (!user) return;
+    try {
+      const d = await apiFetch('/keys', {}, user.token);
+      // Backend returns { success, data: { anthropic_key: 'preview...', has_anthropic: true, ... } }
+      // We need to rebuild apiKeys as { anthropic: 'full-key-if-in-state-or-preview' }
+      // We keep full keys already in state (user typed them), but mark providers as active
+      const data = d?.data || d?.keys || {};
+      // Build a map of provider -> preview (so we know which are saved)
+      const saved: Record<string,string> = {};
+      const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor'];
+      providers.forEach(p => {
+        if (data[`has_${p}`]) {
+          // Provider has a key saved — keep existing full key in state if present, else mark with preview
+          saved[p] = apiKeys[p] || data[`${p}_key`] || '__saved__';
+        }
+      });
+      setApiKeys(prev => ({ ...prev, ...saved }));
+    } catch {}
+  };
 
   // ── Save API keys ──────────────────────────────────────────────────────────
   const saveApiKeys = async () => {
     if (!user) return;
     try {
-      await apiFetch('/keys', { method:'POST', body:JSON.stringify({ keys: apiKeys }) }, user.token);
+      // Backend expects flat body: { anthropic_key: 'sk-ant-...', openai_key: 'sk-...', ... }
+      const body: Record<string,string> = {};
+      Object.entries(apiKeys).forEach(([provider, key]) => {
+        if (key && key !== '__saved__' && key.length > 8) {
+          body[`${provider}_key`] = key;
+        }
+      });
+      if (Object.keys(body).length === 0) { alert('No new API key to save — please paste a key first.'); return; }
+      await apiFetch('/keys', { method:'POST', body:JSON.stringify(body) }, user.token);
       setKeysSaved(true); setTimeout(() => setKeysSaved(false), 2000);
+      // Reload to confirm what's saved
+      await loadApiKeys();
     } catch (e: any) { alert(e.message); }
   };
 
