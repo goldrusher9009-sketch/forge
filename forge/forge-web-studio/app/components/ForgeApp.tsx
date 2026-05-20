@@ -41,18 +41,40 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string): P
 const PROJECT_COLORS = ['#7C3AED','#2563EB','#059669','#DC2626','#D97706','#DB2777','#0891B2','#65A30D'];
 const AGENT_ICONS = ['🧠','⚡','🔮','🔥','🌊','🎨','🚀','💻'];
 const FORGE_MODELS = [
-  { id:'forge-ultra', label:'Forge Ultra', desc:'Claude Opus 4 + 2.5× markup', base:'claude-opus-4' },
-  { id:'forge-pro', label:'Forge Pro', desc:'Claude Sonnet 4 + 2×', base:'claude-sonnet-4' },
-  { id:'forge-flash', label:'Forge Flash', desc:'Claude Haiku 4.5 + 1.5×', base:'claude-haiku-4' },
-  { id:'forge-gpt', label:'Forge GPT', desc:'GPT-4o + 2×', base:'gpt-4o' },
-  { id:'forge-gemini', label:'Forge Gemini', desc:'Gemini 2.0 Flash + 1.5×', base:'gemini-2.0-flash' },
+  { id:'forge-ultra',  label:'Forge Ultra',  desc:'Claude Opus 4.5 + markup',       base:'claude-opus-4-5' },
+  { id:'forge-pro',    label:'Forge Pro',    desc:'Claude Sonnet 4.5 + markup',     base:'claude-sonnet-4-5' },
+  { id:'forge-flash',  label:'Forge Flash',  desc:'Claude Haiku 4.5 + markup',      base:'claude-haiku-4-5-20251001' },
+  { id:'forge-gpt',    label:'Forge GPT',    desc:'GPT-4o + markup',                base:'gpt-4o' },
+  { id:'forge-gemini', label:'Forge Gemini', desc:'Gemini 2.0 Flash + markup',      base:'gemini-2.0-flash' },
 ];
 const DIRECT_MODELS = [
-  { group:'Anthropic', models:[{ id:'claude-opus-4', label:'Claude Opus 4' },{ id:'claude-sonnet-4', label:'Claude Sonnet 4' },{ id:'claude-haiku-4', label:'Claude Haiku 4.5' }] },
-  { group:'OpenAI', models:[{ id:'gpt-4o', label:'GPT-4o' },{ id:'gpt-4o-mini', label:'GPT-4o Mini' },{ id:'gpt-4-turbo', label:'GPT-4 Turbo' }] },
-  { group:'Google', models:[{ id:'gemini-2.0-flash', label:'Gemini 2.0 Flash' },{ id:'gemini-1.5-pro', label:'Gemini 1.5 Pro' }] },
-  { group:'Groq', models:[{ id:'llama-3.3-70b-versatile', label:'Llama 3.3 70B' },{ id:'mixtral-8x7b-32768', label:'Mixtral 8×7B' }] },
-  { group:'Mistral', models:[{ id:'mistral-large', label:'Mistral Large' },{ id:'mistral-small', label:'Mistral Small' }] },
+  { group:'Anthropic', models:[
+    { id:'claude-opus-4-5',         label:'Claude Opus 4.5' },
+    { id:'claude-sonnet-4-5',       label:'Claude Sonnet 4.5' },
+    { id:'claude-haiku-4-5',        label:'Claude Haiku 4.5' },
+    { id:'claude-3-5-sonnet',       label:'Claude 3.5 Sonnet' },
+    { id:'claude-3-5-haiku',        label:'Claude 3.5 Haiku' },
+    { id:'claude-3-opus',           label:'Claude 3 Opus' },
+  ]},
+  { group:'OpenAI', models:[
+    { id:'gpt-4o',      label:'GPT-4o' },
+    { id:'gpt-4o-mini', label:'GPT-4o Mini' },
+    { id:'gpt-4.1',     label:'GPT-4.1' },
+    { id:'o3-mini',     label:'o3 Mini' },
+  ]},
+  { group:'Google', models:[
+    { id:'gemini-2.0-flash', label:'Gemini 2.0 Flash' },
+    { id:'gemini-1.5-pro',   label:'Gemini 1.5 Pro' },
+  ]},
+  { group:'Groq', models:[
+    { id:'llama-3.3-70b',  label:'Llama 3.3 70B' },
+    { id:'llama-3.1-8b',   label:'Llama 3.1 8B' },
+    { id:'mixtral-8x7b',   label:'Mixtral 8×7B' },
+  ]},
+  { group:'Mistral', models:[
+    { id:'mistral-large', label:'Mistral Large' },
+    { id:'mistral-small', label:'Mistral Small' },
+  ]},
 ];
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
@@ -151,7 +173,7 @@ export default function ForgeApp() {
   // Composer
   const [input, setInput] = useState('');
   const [activeAgentIds, setActiveAgentIds] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4');
+  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5');
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
