@@ -2511,20 +2511,21 @@ export default function ForgeApp() {
 
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:16 }}>
                 {[
-                  { icon:'🖥️', name:'Desktop App', desc:'Native Electron app for Mac, Windows, Linux. Works offline and syncs with your workspace.', badge:'Download', badgeColor:'var(--fg-orange)', action:() => window.open('https://github.com/goldrusher9009-sketch/forge/releases', '_blank') },
-                  { icon:'📱', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android — add to home screen from your browser.', badge:'Open App', badgeColor:'var(--fg-blue)', action:() => window.open('https://forge-sand-two.vercel.app', '_blank') },
-                  { icon:'🤖', name:'Telegram Bot', desc:'Chat with your Forge agents via Telegram. Add your bot token in Settings to connect.', badge:'Get Token', badgeColor:'var(--fg-blue)', action:() => window.open('https://t.me/BotFather', '_blank') },
-                  { icon:'💬', name:'Slack Bot', desc:'Bring Forge into your Slack workspace. Ask questions and run agents without leaving Slack.', badge:'Coming Soon', badgeColor:'var(--fg-text3)', action:() => {} },
-                  { icon:'🔌', name:'REST API', desc:'Full API access with your JWT token. Use any language or framework to call Forge models.', badge:'View Docs', badgeColor:'var(--fg-orange)', action:() => window.open('https://forge-production-2692.up.railway.app/health', '_blank') },
-                  { icon:'🧩', name:'Chrome Extension', desc:'Use Forge on any webpage — highlight text, run agents, get answers in context.', badge:'Coming Soon', badgeColor:'var(--fg-text3)', action:() => {} },
+                  { icon:'🖥️', name:'Desktop App', desc:'Native Electron app for Mac, Windows, Linux. Works offline and syncs with your workspace.', badge:'View Releases', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => window.open('https://github.com/goldrusher9009/forge/releases', '_blank') },
+                  { icon:'📱', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android — tap Share → Add to Home Screen in your browser.', badge:'Open App', badgeColor:'var(--fg-blue)', comingSoon:false, action:() => window.open('https://forge-sand-two.vercel.app', '_blank') },
+                  { icon:'🔌', name:'REST API', desc:'Full API access with your JWT token. Use any language or framework to call Forge models and agents.', badge:'API Docs', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => window.open(`${API.replace('/api','')}/health`, '_blank') },
+                  { icon:'🤖', name:'Telegram Bot', desc:'Chat with your Forge agents via Telegram. Add your bot token in Settings to connect.', badge:'Get Token', badgeColor:'#229ED9', comingSoon:false, action:() => window.open('https://t.me/BotFather', '_blank') },
+                  { icon:'💬', name:'Slack Bot', desc:'Bring Forge into your Slack workspace. Ask questions and run agents without leaving Slack.', badge:'Coming Soon', badgeColor:'var(--fg-text3)', comingSoon:true, action:() => {} },
+                  { icon:'🧩', name:'Chrome Extension', desc:'Use Forge on any webpage — highlight text, run agents, get answers in context.', badge:'Coming Soon', badgeColor:'var(--fg-text3)', comingSoon:true, action:() => {} },
                 ].map(p => (
-                  <div key={p.name} style={{ padding:'20px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:14 }}>
+                  <div key={p.name} style={{ padding:'20px', background:'var(--fg-bg3)', border:`1px solid ${p.comingSoon ? 'var(--fg-border)' : 'var(--fg-border2)'}`, borderRadius:14, opacity: p.comingSoon ? 0.7 : 1 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
                       <span style={{ fontSize:28 }}>{p.icon}</span>
                       <p style={{ margin:0, fontSize:16, fontWeight:600, color:'var(--fg-text)' }}>{p.name}</p>
+                      {!p.comingSoon && <span style={{ marginLeft:'auto', fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.12)', padding:'2px 8px', borderRadius:20, fontWeight:600 }}>LIVE</span>}
                     </div>
                     <p style={{ margin:'0 0 14px', fontSize:13, color:'var(--fg-text3)', lineHeight:1.5 }}>{p.desc}</p>
-                    <button onClick={p.action} style={{ padding:'8px 16px', background:p.badgeColor, border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer' }}>{p.badge}</button>
+                    <button onClick={p.action} disabled={p.comingSoon} style={{ padding:'8px 16px', background: p.comingSoon ? 'var(--fg-bg4)' : p.badgeColor, border: p.comingSoon ? '1px solid var(--fg-border)' : 'none', borderRadius:8, color: p.comingSoon ? 'var(--fg-text3)' : '#fff', fontSize:13, cursor: p.comingSoon ? 'default' : 'pointer', fontWeight:600 }}>{p.badge}</button>
                   </div>
                 ))}
               </div>
