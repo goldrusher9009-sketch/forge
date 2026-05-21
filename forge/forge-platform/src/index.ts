@@ -602,8 +602,9 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   throw new Error(`Unknown provider: ${provider}`);
 }
 
-// ── Chat ──────────────────────────────────────────────────────
-app.post('/api/chat', requireAuth, async (req: AuthRequest, res) => {
+// ── Chat (also aliased as /api/chat/completions for OpenAI-compat clients) ──
+app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRequest, res) => {
+  // Support both Forge format {messages,model} and OpenAI format {messages,model}
   const { messages, model = 'forge-fast', language = 'English', channel = 'Chat' } = req.body;
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'messages array required' }); return;
@@ -648,7 +649,8 @@ app.post('/api/chat', requireAuth, async (req: AuthRequest, res) => {
     // Update token usage
     db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
 
-    res.json({ success: true, data: { response: result.content, model: forgeModelId, modelName: actualModel, provider, tokensUsed: totalTokens, promptTokens: result.promptTokens, completionTokens: result.completionTokens, cost: providerCost, revenue: forgeRevenue } });
+    // Return both Forge format and OpenAI-compat format so ForgeCo and other clients work
+    res.json({ success: true, data: { response: result.content, model: forgeModelId, modelName: actualModel, provider, tokensUsed: totalTokens, promptTokens: result.promptTokens, completionTokens: result.completionTokens, cost: providerCost, revenue: forgeRevenue }, choices: [{ message: { role: 'assistant', content: result.content } }], model: forgeModelId });
   } catch (err: any) {
     console.error('Chat error:', err.message);
     res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });
