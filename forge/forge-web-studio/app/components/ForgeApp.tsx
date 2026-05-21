@@ -767,11 +767,13 @@ export default function ForgeApp() {
     try {
       const body: any = { title: title || 'New conversation' };
       if (activeProject) body.project_id = activeProject.id;
+      if (selectedModel) body.model = selectedModel;
       const d = await apiFetch('/threads', { method:'POST', body:JSON.stringify(body) }, user.token);
-      const t: Thread = d?.data || d;
+      const t: Thread = (d?.data && typeof d.data === 'object' && d.data.id) ? d.data : (d?.id ? d : null);
+      if (!t) throw new Error('Failed to create thread — unexpected response');
       await loadThreads(activeProject?.id); setActiveThread(t); setMessages([]);
       return t;
-    } catch (e: any) { alert(e.message); return null; }
+    } catch (e: any) { console.error('newThread error:', e.message); return null; }
   };
 
   const selectThread = async (t: Thread) => { setActiveThread(t); await loadMessages(t.id); loadThreadTokenStats(t.id); };

@@ -460,7 +460,9 @@ function resolveForgeModel(modelId: string): string {
     'forge-gpt':      'gpt-4o',
     'forge-gemini':   'gemini-2.0-flash',
   };
-  return forgeMap[modelId] || ANTHROPIC_MODEL_MAP[modelId] || modelId;
+  // Strip "openrouter/" prefix — frontend prefixes OR models but OR API expects bare IDs
+  const cleaned = modelId.startsWith('openrouter/') ? modelId.slice('openrouter/'.length) : modelId;
+  return forgeMap[cleaned] || ANTHROPIC_MODEL_MAP[cleaned] || cleaned;
 }
 
 function getProviderForModel(modelId: string): string {
@@ -469,7 +471,7 @@ function getProviderForModel(modelId: string): string {
   if (modelId.startsWith('gemini')) return 'gemini';
   if (modelId.startsWith('llama') || modelId.startsWith('mixtral')) return 'groq';
   if (modelId.startsWith('mistral')) return 'mistral';
-  if (modelId.startsWith('openrouter/') || modelId.includes('/')) return 'openrouter';
+  if (modelId.startsWith('openrouter/') || (modelId.includes('/') && !modelId.startsWith('claude') && !modelId.startsWith('gpt') && !modelId.startsWith('gemini') && !modelId.startsWith('llama') && !modelId.startsWith('mistral'))) return 'openrouter';
   return MODEL_COSTS[modelId]?.provider || 'openrouter';
 }
 
