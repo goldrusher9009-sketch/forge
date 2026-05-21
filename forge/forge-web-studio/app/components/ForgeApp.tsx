@@ -1,4 +1,4 @@
-// Forge AI Workspace v5.9 — Full OR model list (358 models, grouped), proxy browser (server-side fetch), ForgeAgent (web search + fetch tool loop)
+// Forge AI Workspace v5.9 -- Full OR model list (358 models, grouped), proxy browser (server-side fetch), ForgeAgent (web search + fetch tool loop)
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -91,7 +91,7 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string): P
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
     if (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN') {
-      // Session expired — clear local auth and force re-login
+      // Session expired -- clear local auth and force re-login
       localStorage.removeItem('forge_user');
       if (_onSessionExpired) _onSessionExpired();
     }
@@ -172,13 +172,13 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
         const data = await apiFetch('/auth/login', { method:'POST', body:JSON.stringify(body) });
         const u = data.data?.user || data.user || {};
         const token = data.data?.accessToken || data.token || '';
-        if (!token) throw new Error('No token received — check credentials');
+        if (!token) throw new Error('No token received -- check credentials');
         onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token, role: u.role });
       }
     } catch (e: any) {
       const msg = e.message || '';
       if (msg.includes('INVALID_CREDENTIALS')) setError('Invalid email or password');
-      else if (msg.includes('DUPLICATE_EMAIL')) setError('Email already registered — try signing in');
+      else if (msg.includes('DUPLICATE_EMAIL')) setError('Email already registered -- try signing in');
       else if (msg.includes('INVALID_PASSWORD')) setError('Password must be at least 8 characters');
       else setError(msg || 'Something went wrong');
     }
@@ -232,7 +232,7 @@ export default function ForgeApp() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
-  // Main tab — 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin' | 'super'
+  // Main tab -- 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin' | 'super'
   const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'>('workspace');
 
   // Right panel tabs
@@ -295,7 +295,7 @@ export default function ForgeApp() {
   const [adminKeyInputs, setAdminKeyInputs] = useState<Record<string,string>>({});
   const [adminSaving, setAdminSaving] = useState('');
 
-  // Service credentials (subscription logins — Claude, OpenAI, Cursor) — persisted in localStorage
+  // Service credentials (subscription logins -- Claude, OpenAI, Cursor) -- persisted in localStorage
   const [serviceCreds, setServiceCreds] = useState<Record<string, { email:string; password:string; connected:boolean }>>({
     claude: { email:'', password:'', connected:false },
     openai: { email:'', password:'', connected:false },
@@ -303,7 +303,7 @@ export default function ForgeApp() {
   });
   const [serviceExpanded, setServiceExpanded] = useState<Record<string,boolean>>({});
 
-  // LLM provider credentials (username + password + API key) — persisted in localStorage
+  // LLM provider credentials (username + password + API key) -- persisted in localStorage
   const [llmCreds, setLlmCreds] = useState<Record<string, { username:string; password:string; connected:boolean }>>({
     openrouter: { username:'', password:'', connected:false },
     groq: { username:'', password:'', connected:false },
@@ -353,7 +353,7 @@ export default function ForgeApp() {
   const [liveEvents, setLiveEvents] = useState<{type:string;message:string;model?:string;elapsed?:number;ts:number}[]>([]);
   const liveSSERef = useRef<EventSource|null>(null);
 
-  // Context bar — per-thread token tracking + model context limits
+  // Context bar -- per-thread token tracking + model context limits
   const MODEL_CONTEXT_LIMITS: Record<string, number> = {
     'claude-sonnet-4-6': 200000, 'claude-opus-4-6': 200000, 'claude-haiku-4-5-20251001': 200000,
     'gpt-4o': 128000, 'gpt-4o-mini': 128000, 'o3': 200000, 'o4-mini': 200000,
@@ -385,7 +385,7 @@ export default function ForgeApp() {
 
   // Terminal state
   const [terminalLines, setTerminalLines] = useState<{text:string;type:'input'|'output'|'error'|'system'}[]>([
-    { text: '⚡ Forge Terminal — type commands below', type:'system' },
+    { text: '⚡ Forge Terminal -- type commands below', type:'system' },
     { text: 'Safe commands: ls, cat, echo, date, pwd, env, node, python, curl, git log/status', type:'system' },
   ]);
   const [terminalInput, setTerminalInput] = useState('');
@@ -489,7 +489,7 @@ export default function ForgeApp() {
     try {
       const d = await apiFetch('/billing/subscription', {}, user.token);
       if (!d || !d.success) return;
-      // Backend returns camelCase (tokensUsed/tokenLimit) — normalize to snake_case for our Subscription type
+      // Backend returns camelCase (tokensUsed/tokenLimit) -- normalize to snake_case for our Subscription type
       setSubscription({
         plan: d.plan || 'free',
         tokens_used: d.tokens_used ?? d.tokensUsed ?? 0,
@@ -635,7 +635,7 @@ export default function ForgeApp() {
       // Refresh vault + api key flags
       await loadVault();
       await loadApiKeys();
-      // Validate immediately — shows Active/Invalid badge right away
+      // Validate immediately -- shows Active/Invalid badge right away
       await validateVaultKey(provider);
       // Fetch latest models for this provider from its API
       await loadProviderModels(provider);
@@ -739,7 +739,7 @@ export default function ForgeApp() {
           try {
             const evt = JSON.parse(line.slice(6));
             if (evt.type === 'tool_call') {
-              setAgentMessages(prev => [...prev, { role:'tool', content: `Using **${evt.tool}**${evt.reasoning ? ` — ${evt.reasoning}` : ''}`, tool: evt.tool, args: evt.args }]);
+              setAgentMessages(prev => [...prev, { role:'tool', content: `Using **${evt.tool}**${evt.reasoning ? ` -- ${evt.reasoning}` : ''}`, tool: evt.tool, args: evt.args }]);
             } else if (evt.type === 'tool_result') {
               setAgentMessages(prev => [...prev, { role:'tool_result', content: evt.result, tool: evt.tool }]);
             } else if (evt.type === 'response') {
@@ -886,7 +886,7 @@ export default function ForgeApp() {
       if (selectedModel) body.model = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
       const d = await apiFetch('/threads', { method:'POST', body:JSON.stringify(body) }, user.token);
       const t: Thread = (d?.data && typeof d.data === 'object' && d.data.id) ? d.data : (d?.id ? d : null);
-      if (!t) throw new Error('Failed to create thread — unexpected response');
+      if (!t) throw new Error('Failed to create thread -- unexpected response');
       await loadThreads(activeProject?.id); setActiveThread(t); setMessages([]);
       return t;
     } catch (e: any) { 
@@ -956,7 +956,7 @@ export default function ForgeApp() {
       try {
         await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
       } catch (e: any) {
-        // Thread was wiped (Railway redeploy) — create a fresh one and retry
+        // Thread was wiped (Railway redeploy) -- create a fresh one and retry
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
           const fresh = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: userContent.slice(0,60), model: cleanModel }) }, user.token);
           const newT = fresh?.data || fresh;
@@ -1337,7 +1337,7 @@ export default function ForgeApp() {
                 <h2 style={{ margin:0, fontSize:15, fontWeight:600, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                   {activeThread ? activeThread.title : activeProject ? activeProject.name : 'Forge Workspace'}
                 </h2>
-                {/* Mini sparkline — token usage per message in current thread */}
+                {/* Mini sparkline -- token usage per message in current thread */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
                   const vals = threadStats.token_history.map(h => h.tokens);
                   const max = Math.max(...vals, 1);
@@ -1359,7 +1359,7 @@ export default function ForgeApp() {
                   </span>
                 )}
               </div>
-              {/* Global token counter — always visible */}
+              {/* Global token counter -- always visible */}
               <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'var(--fg-bg4)', borderRadius:8, border:'1px solid var(--fg-border2)', flexShrink:0 }}>
                 <span style={{ fontSize:10 }}>⚡</span>
                 <span style={{ fontSize:11, color: totalTokens > 0 ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:600 }}>
@@ -1373,7 +1373,7 @@ export default function ForgeApp() {
               {/* Multi-response toggle */}
               <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? 'var(--fg-border)' : 'transparent', border:`1px solid ${multiResponse ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:multiResponse ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>⚡ Multi</button>
 
-              {/* Model selector — shows models from all providers with saved keys */}
+              {/* Model selector -- shows models from all providers with saved keys */}
               {(() => {
                 const providerForId = (id: string) => {
                   if (['forge-ultra','forge-pro','forge-flash','forge-code'].includes(id) || id.startsWith('claude')) return 'anthropic';
@@ -1676,7 +1676,7 @@ export default function ForgeApp() {
                       </div>
                     )}
 
-                    {/* CONTEXT — Token progress bar */}
+                    {/* CONTEXT -- Token progress bar */}
                     {rightTab==='context' && (() => {
                       const used = threadStats?.total_tokens || 0;
                       const limit = getContextLimit(selectedModel);
@@ -1710,7 +1710,7 @@ export default function ForgeApp() {
                                   await apiFetch(`/threads/${activeThread.id}/compact`, { method:'POST', body:JSON.stringify({ keep_recent: 6, summary_hint: summarizeContent.slice(0,2000) }) }, user.token);
                                   await loadMessages(activeThread.id);
                                   loadThreadTokenStats(activeThread.id);
-                                } catch { alert('Compact not available yet — coming soon!'); }
+                                } catch { alert('Compact not available yet -- coming soon!'); }
                               }} style={{ width:'100%', padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:600 }}>⚡ Compact Now</button>
                             </div>
                           )}
@@ -1733,7 +1733,7 @@ export default function ForgeApp() {
                       );
                     })()}
 
-                    {/* LIVE — Manus-style agent activity */}
+                    {/* LIVE -- Manus-style agent activity */}
                     {rightTab==='live' && (
                       <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
                         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
@@ -1770,7 +1770,7 @@ export default function ForgeApp() {
                       </div>
                     )}
 
-                    {/* BROWSER — ForgeBrowser */}
+                    {/* BROWSER -- ForgeBrowser */}
                     {rightTab==='browser' && (
                       <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden' }}>
                         {/* Browser toolbar */}
@@ -1805,8 +1805,8 @@ export default function ForgeApp() {
                             {!browserLoading && !browserPage && (
                               <div style={{ padding:24, color:'var(--fg-text3)', textAlign:'center' }}>
                                 <div style={{ fontSize:40, marginBottom:12 }}>🌐</div>
-                                <div style={{ fontSize:14, color:'var(--fg-text3)', marginBottom:8 }}>ForgeBrowser — Proxy Reader Mode</div>
-                                <div style={{ fontSize:12, color:'var(--fg-bg5)' }}>Fetches pages server-side — bypasses CORS and CSP restrictions.<br/>Click a quick link above or type a URL and press Go.</div>
+                                <div style={{ fontSize:14, color:'var(--fg-text3)', marginBottom:8 }}>ForgeBrowser -- Proxy Reader Mode</div>
+                                <div style={{ fontSize:12, color:'var(--fg-bg5)' }}>Fetches pages server-side -- bypasses CORS and CSP restrictions.<br/>Click a quick link above or type a URL and press Go.</div>
                               </div>
                             )}
                             {!browserLoading && browserPage && (
@@ -1814,7 +1814,7 @@ export default function ForgeApp() {
                                 {/* Page header */}
                                 <div style={{ marginBottom:12, paddingBottom:12, borderBottom:'1px solid var(--fg-border)' }}>
                                   <div style={{ fontSize:16, fontWeight:600, color:'var(--fg-text)', marginBottom:4 }}>{browserPage.title || browserPage.url}</div>
-                                  <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{browserPage.url} — HTTP {browserPage.status}</div>
+                                  <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{browserPage.url} -- HTTP {browserPage.status}</div>
                                   {browserPage.error && <div style={{ marginTop:6, padding:'6px 10px', background:'rgba(248,113,113,0.07)', border:'1px solid rgba(248,113,113,0.15)', borderRadius:6, color:'var(--fg-red)', fontSize:12 }}>⚠ {browserPage.error}</div>}
                                 </div>
                                 {/* Links sidebar */}
@@ -1844,19 +1844,19 @@ export default function ForgeApp() {
                           <>
                             <iframe ref={browserFrameRef} src={browserUrl} title="ForgeBrowser" style={{ flex:1, border:'none', background:'#fff' }} sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-navigation" onLoad={e => { try { setBrowserInput((e.target as HTMLIFrameElement).contentDocument?.location?.href || browserUrl); } catch {} }} />
                             <div style={{ padding:'4px 8px', background:'var(--fg-bg)', borderTop:'1px solid var(--fg-border)', flexShrink:0 }}>
-                              <span style={{ fontSize:10, color:'var(--fg-text3)' }}>🌐 iFrame mode — some sites block embedding. Switch to 📖 Reader mode for full access.</span>
+                              <span style={{ fontSize:10, color:'var(--fg-text3)' }}>🌐 iFrame mode -- some sites block embedding. Switch to 📖 Reader mode for full access.</span>
                             </div>
                           </>
                         )}
                       </div>
                     )}
 
-                    {/* TERMINAL — Forge Terminal */}
+                    {/* TERMINAL -- Forge Terminal */}
                     {rightTab==='terminal' && (
                       <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden', background:'var(--fg-bg)', fontFamily:'ui-monospace,monospace' }}>
                         <div style={{ padding:'6px 10px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
                           <span style={{ fontSize:12, color:'var(--fg-green)', fontWeight:600 }}>⚡ Forge Terminal</span>
-                          <button onClick={() => setTerminalLines([{ text:'⚡ Forge Terminal — cleared', type:'system' }])} style={{ marginLeft:'auto', padding:'2px 8px', background:'none', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>Clear</button>
+                          <button onClick={() => setTerminalLines([{ text:'⚡ Forge Terminal -- cleared', type:'system' }])} style={{ marginLeft:'auto', padding:'2px 8px', background:'none', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>Clear</button>
                         </div>
                         <div style={{ flex:1, overflowY:'auto', padding:'8px 12px', display:'flex', flexDirection:'column', gap:2 }}>
                           {terminalLines.map((line, i) => (
@@ -1877,8 +1877,8 @@ export default function ForgeApp() {
                       </div>
                     )}
 
-                    {/* DISPATCH — Swarm */}
-                    {/* 🤖 SUPERAGENT — autonomous web + tool use chat */}
+                    {/* DISPATCH -- Swarm */}
+                    {/* 🤖 SUPERAGENT -- autonomous web + tool use chat */}
                     {rightTab==='agent' && (
                       <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden' }}>
                         {/* Header */}
@@ -1886,7 +1886,7 @@ export default function ForgeApp() {
                           <span style={{ fontSize:16 }}>🤖</span>
                           <div>
                             <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-orange)' }}>ForgeAgent</div>
-                            <div style={{ fontSize:10, color:'var(--fg-text3)' }}>Autonomous — browses web, fetches data, returns results</div>
+                            <div style={{ fontSize:10, color:'var(--fg-text3)' }}>Autonomous -- browses web, fetches data, returns results</div>
                           </div>
                           <button onClick={() => setAgentMessages([])} style={{ marginLeft:'auto', padding:'2px 8px', background:'none', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>Clear</button>
                         </div>
@@ -1945,7 +1945,7 @@ export default function ForgeApp() {
                           <div style={{ display:'flex', gap:6 }}>
                             <textarea value={agentInput} onChange={e => setAgentInput(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAgent(); } }}
-                              placeholder="Ask ForgeAgent anything — it can browse the web…" rows={2}
+                              placeholder="Ask ForgeAgent anything -- it can browse the web…" rows={2}
                               style={{ flex:1, padding:'8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, resize:'none', outline:'none', fontFamily:'inherit' }} />
                             <button onClick={runAgent} disabled={agentRunning || !agentInput.trim()} style={{ padding:'8px 12px', background: agentRunning ? 'var(--fg-bg4)' : 'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', cursor: agentRunning ? 'default' : 'pointer', fontSize:13, fontWeight:600, alignSelf:'flex-end' }}>
                               {agentRunning ? '⟳' : '▶'}
@@ -2372,12 +2372,12 @@ export default function ForgeApp() {
           <div style={{ flex:1, overflowY:'auto', padding:32 }}>
             <div style={{ maxWidth:800, margin:'0 auto' }}>
               <h2 style={{ color:'var(--fg-orange)', margin:'0 0 4px', fontSize:22, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.3px' }}>🌐 Platforms</h2>
-              <p style={{ color:'var(--fg-text3)', margin:'0 0 24px', fontSize:14 }}>Access Forge from anywhere — desktop, mobile, bots, and APIs</p>
+              <p style={{ color:'var(--fg-text3)', margin:'0 0 24px', fontSize:14 }}>Access Forge from anywhere -- desktop, mobile, bots, and APIs</p>
 
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:16 }}>
                 {[
                   { icon:'🖥️', name:'Desktop App', desc:'Native Electron app for Mac, Windows, Linux. Works offline and syncs with your workspace.', badge:'Download', badgeColor:'var(--fg-orange)', action:() => alert('Desktop app download link: https://github.com/goldrusher9009/forge/releases') },
-                  { icon:'📱', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android — works from your browser.', badge:'Open Web', badgeColor:'var(--fg-blue)', action:() => window.open('/') },
+                  { icon:'📱', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android -- works from your browser.', badge:'Open Web', badgeColor:'var(--fg-blue)', action:() => window.open('/') },
                   { icon:'🤖', name:'Telegram Bot', desc:'Chat with your Forge agents via Telegram. Use /help to see available commands.', badge:'Connect', badgeColor:'var(--fg-blue)', action:() => alert('Add your Telegram Bot token in Settings → Platforms → Telegram') },
                   { icon:'💬', name:'WeChat / WeCom', desc:'Integrate Forge with WeChat or WeCom for enterprise team messaging.', badge:'Configure', badgeColor:'var(--fg-green)', action:() => alert('WeChat integration coming soon. Email support@forge.ai for early access.') },
                   { icon:'🔌', name:'REST API', desc:'Full API access with your JWT token. Use any language or framework to call Forge models.', badge:'Docs', badgeColor:'var(--fg-orange)', action:() => window.open('/api-docs') },
@@ -2515,13 +2515,13 @@ export default function ForgeApp() {
                 })}
               </div>
 
-              {/* Key Vault — all saved keys with status, update, delete */}
+              {/* Key Vault -- all saved keys with status, update, delete */}
               {vaultKeys.length > 0 && (
                 <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:16, padding:24, marginBottom:24 }}>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
                     <div>
                       <h3 style={{ color:'var(--fg-orange)', fontSize:14, margin:'0 0 2px', textTransform:'uppercase', letterSpacing:'0.05em' }}>🔐 Key Vault</h3>
-                      <p style={{ color:'var(--fg-text3)', fontSize:12, margin:0 }}>Your API keys are encrypted and saved — no re-entry needed on login.</p>
+                      <p style={{ color:'var(--fg-text3)', fontSize:12, margin:0 }}>Your API keys are encrypted and saved -- no re-entry needed on login.</p>
                     </div>
                     <button onClick={loadVault} style={{ background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'4px 10px' }}>↻ Refresh</button>
                   </div>
@@ -2562,7 +2562,7 @@ export default function ForgeApp() {
                 </div>
               )}
 
-              {/* LLM Providers — username + password + API key */}
+              {/* LLM Providers -- username + password + API key */}
               <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
                 <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:'0 0 4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>LLM Providers</h3>
                 <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 16px' }}>Connect with your account credentials or paste an API key directly.</p>
@@ -2634,7 +2634,7 @@ export default function ForgeApp() {
                             </button>
                           </div>
                           {/* Or use API key */}
-                          <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 8px' }}>— or use an API key directly —</p>
+                          <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 8px' }}>-- or use an API key directly --</p>
                           <div style={{ display:'flex', gap:8 }}>
                             <input
                               type="password"
@@ -2756,7 +2756,7 @@ export default function ForgeApp() {
                           <option value="user">user</option>
                           <option value="admin">admin</option>
                         </select>
-                        <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</span>
+                        <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '--'}</span>
                         <span style={{ fontSize:11, color:u.verified ? 'var(--fg-green)' : 'var(--fg-red)' }}>{u.verified ? '✓ verified' : '✗ unverified'}</span>
                       </div>
                     ))}
@@ -2826,7 +2826,7 @@ export default function ForgeApp() {
                           <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{m.id}{m.is_forge_model ? ' · forge' : ''}</p>
                         </div>
                         <span style={{ fontSize:12, color:'var(--fg-text3)', textTransform:'capitalize' }}>{m.provider}</span>
-                        <span style={{ fontSize:12, color:'var(--fg-text3)' }}>{m.markup ? `×${m.markup}` : '—'}</span>
+                        <span style={{ fontSize:12, color:'var(--fg-text3)' }}>{m.markup ? `×${m.markup}` : '--'}</span>
                         <button onClick={() => toggleAdminModel(m.id, !m.enabled)} style={{ padding:'5px 12px', background:m.enabled ? 'rgba(34,197,94,0.13)' : 'var(--fg-border)', border:`1px solid ${m.enabled ? 'var(--fg-green)' : 'var(--fg-border2)'}`, borderRadius:20, color:m.enabled ? 'var(--fg-green)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight:600, transition:'all 0.15s' }}>
                           {m.enabled ? 'ON' : 'OFF'}
                         </button>
@@ -2881,7 +2881,7 @@ export default function ForgeApp() {
                     <div style={{ textAlign:'center', padding:'60px 0', color:'var(--fg-text3)' }}>
                       <div style={{ fontSize:48, marginBottom:12, animation:'forge-flash 3s ease-in-out infinite', display:'inline-block' }}>🌟</div>
                       <p style={{ fontSize:16, color:'var(--fg-text3)', margin:'0 0 8px' }}>Forge SuperAgent is ready</p>
-                      <p style={{ fontSize:13, color:'var(--fg-text3)', margin:0 }}>Start chatting — it knows your workspace history. Hit "Harvest Memory" first for best results.</p>
+                      <p style={{ fontSize:13, color:'var(--fg-text3)', margin:0 }}>Start chatting -- it knows your workspace history. Hit "Harvest Memory" first for best results.</p>
                     </div>
                   )}
                   {superMessages.map((m, i) => (
