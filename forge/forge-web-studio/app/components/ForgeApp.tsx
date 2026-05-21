@@ -232,12 +232,20 @@ export default function ForgeApp() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
-  // Main tab -- 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin' | 'super' | 'forgeauto' | 'forgemulti'
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'>('workspace');
+  // Main tab -- 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin' | 'super' | 'forgeauto' | 'forgemulti' | 'forgeco'
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'>('workspace');
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'>('artifacts');
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  useEffect(() => {
+    const check = () => { const m = window.innerWidth < 768; setIsMobile(m); if (m) setSidebarExpanded(false); };
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
   const [rightExpanded, setRightExpanded] = useState(true);
 
   // Composer
@@ -354,6 +362,17 @@ export default function ForgeApp() {
   const [multiRunning, setMultiRunning] = useState(false);
   const [multiResults, setMultiResults] = useState<{agents:{role:string;icon:string;content:string;elapsed:number}[];synthesis:string}|null>(null);
   const [multiSelectedRoles, setMultiSelectedRoles] = useState<string[]>(['Analyst','Creative','Critic','Strategist','Researcher']);
+
+  // ForgeCo state
+  const [coTab, setCoTab] = useState<'code'|'cowork'>('code');
+  const [coCode, setCoCode] = useState('// Start coding here...\n');
+  const [coCodeLang, setCoCodeLang] = useState('typescript');
+  const [coCodePrompt, setCoCodePrompt] = useState('');
+  const [coCodeRunning, setCoCodeRunning] = useState(false);
+  const [coCodeOutput, setCoCodeOutput] = useState('');
+  const [coCoworkInput, setCoCoworkInput] = useState('');
+  const [coCoworkMessages, setCoCoworkMessages] = useState<{role:string;content:string}[]>([]);
+  const [coCoworkRunning, setCoCoworkRunning] = useState(false);
 
   // ForgeRouter state
   const [routerTab, setRouterTab] = useState<'forge'|'direct'|'openrouter'|'custom'>('forge');
@@ -1253,10 +1272,23 @@ export default function ForgeApp() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden' }} onClick={() => { setThreadMenu(null); setProjectMenu(null); }}>
+    <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden', position:'relative' }} onClick={() => { setThreadMenu(null); setProjectMenu(null); if(isMobile) setMobileDrawerOpen(false); }}>
+
+      {/* Mobile overlay */}
+      {isMobile && mobileDrawerOpen && <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:98 }} onClick={() => setMobileDrawerOpen(false)} />}
+
+      {/* Mobile top bar */}
+      {isMobile && (
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:52, background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', padding:'0 14px', gap:10, zIndex:99, flexShrink:0 }}>
+          <button onClick={e => { e.stopPropagation(); setMobileDrawerOpen(o=>!o); }} style={{ background:'none', border:'none', color:'var(--fg-text2)', fontSize:20, cursor:'pointer', padding:4 }}>☰</button>
+          <div style={{ width:28, height:28, background:'var(--fg-orange)', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>⚡</div>
+          <span style={{ fontWeight:800, fontSize:15, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>Forge</span>
+          <div style={{ marginLeft:'auto', fontSize:12, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{selectedModel || 'forge-fast'}</div>
+        </div>
+      )}
 
       {/* ── LEFT SIDEBAR ──────────────────────────────────────────────────── */}
-      <div style={{ width:sidebarExpanded ? 260 : 60, background:'var(--fg-bg)', borderRight:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0, transition:'width 0.2s', overflow:'hidden' }}>
+      <div style={{ width: isMobile ? (mobileDrawerOpen ? 260 : 0) : (sidebarExpanded ? 260 : 60), background:'var(--fg-bg)', borderRight:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0, transition:'width 0.2s', overflow:'hidden', position: isMobile ? 'fixed' : 'relative', top:0, left:0, bottom:0, zIndex: isMobile ? 99 : 'auto' as any }} onClick={e => e.stopPropagation()}>
         {/* Logo + collapse */}
         <div style={{ padding:'16px 12px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid var(--fg-border)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, overflow:'hidden' }}>
@@ -1275,6 +1307,7 @@ export default function ForgeApp() {
             { id:'platforms', icon:'🌐', label:'Platforms' },
             { id:'settings', icon:'⚙️', label:'Settings' },
             { id:'super', icon:'🌟', label:'Forge Super' },
+            { id:'forgeco', icon:'🧑‍💻', label:'ForgeCo' },
             { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
             ...(user.role === 'admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
@@ -1394,7 +1427,7 @@ export default function ForgeApp() {
       </div>
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────────── */}
-      <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', marginTop: isMobile ? 52 : 0 }}>
 
         {/* ── WORKSPACE TAB ─────────────────────────────────────────────────── */}
         {mainTab === 'workspace' && (
@@ -1602,6 +1635,32 @@ export default function ForgeApp() {
                   <div ref={messagesEndRef} />
                 </div>
 
+                {/* ── Manus-style inline live activity strip ── */}
+                {(typing || liveEvents.length > 0) && (
+                  <div style={{ padding:'6px 16px', background:'var(--fg-bg2)', borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', gap:4, maxHeight:120, overflowY:'auto', flexShrink:0 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                      <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', animation:'pulse 1s ease-in-out infinite' }} />
+                      <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>Live Activity</span>
+                      <button onClick={() => setLiveEvents([])} style={{ marginLeft:'auto', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>✕</button>
+                    </div>
+                    {typing && (
+                      <div style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 8px', background:'rgba(249,115,22,0.08)', borderRadius:6, border:'1px solid rgba(249,115,22,0.2)' }}>
+                        <span style={{ animation:'forge-flash 0.6s ease-in-out infinite', display:'inline-block', fontSize:12 }}>⚡</span>
+                        <span style={{ fontSize:12, color:'var(--fg-orange2)' }}>Model generating response…</span>
+                        <div style={{ marginLeft:'auto', display:'flex', gap:3 }}>{[0,1,2].map(i => <div key={i} style={{ width:4, height:4, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}</div>
+                      </div>
+                    )}
+                    {liveEvents.slice(-4).map((ev, i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'3px 8px', background:'var(--fg-bg3)', borderRadius:6, fontSize:11, color:'var(--fg-text2)' }}>
+                        <span style={{ color: ev.type==='error' ? 'var(--fg-red)' : ev.type==='success' ? 'var(--fg-green)' : 'var(--fg-orange2)', flexShrink:0 }}>{ev.type==='error' ? '✗' : ev.type==='success' ? '✓' : '→'}</span>
+                        <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.message}</span>
+                        {ev.model && <span style={{ color:'var(--fg-text3)', flexShrink:0, fontFamily:'var(--fg-font-mono)', fontSize:10 }}>{ev.model}</span>}
+                        {ev.elapsed && <span style={{ color:'var(--fg-text3)', flexShrink:0, fontFamily:'var(--fg-font-mono)', fontSize:10 }}>{(ev.elapsed/1000).toFixed(1)}s</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* Composer */}
                 <div style={{ padding:'12px 24px 16px', background:'var(--fg-bg)', borderTop:'1px solid var(--fg-border)' }}>
                   <div style={{ display:'flex', gap:6, marginBottom:10, flexWrap:'wrap' }}>
@@ -1665,7 +1724,7 @@ export default function ForgeApp() {
               </div>
 
               {/* Right panel */}
-              {rightExpanded && (
+              {rightExpanded && !isMobile && (
                 <div style={{ width:360, background:'var(--fg-bg)', borderLeft:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0 }}>
                   <div style={{ display:'flex', borderBottom:'1px solid var(--fg-border)', padding:'0 2px', overflowX:'auto' }}>
                     {([
@@ -2444,12 +2503,12 @@ export default function ForgeApp() {
 
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:16 }}>
                 {[
-                  { icon:'🖥️', name:'Desktop App', desc:'Native Electron app for Mac, Windows, Linux. Works offline and syncs with your workspace.', badge:'Download', badgeColor:'var(--fg-orange)', action:() => alert('Desktop app download link: https://github.com/goldrusher9009/forge/releases') },
-                  { icon:'📱', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android -- works from your browser.', badge:'Open Web', badgeColor:'var(--fg-blue)', action:() => window.open('/') },
-                  { icon:'🤖', name:'Telegram Bot', desc:'Chat with your Forge agents via Telegram. Use /help to see available commands.', badge:'Connect', badgeColor:'var(--fg-blue)', action:() => alert('Add your Telegram Bot token in Settings → Platforms → Telegram') },
-                  { icon:'💬', name:'WeChat / WeCom', desc:'Integrate Forge with WeChat or WeCom for enterprise team messaging.', badge:'Configure', badgeColor:'var(--fg-green)', action:() => alert('WeChat integration coming soon. Email support@forge.ai for early access.') },
-                  { icon:'🔌', name:'REST API', desc:'Full API access with your JWT token. Use any language or framework to call Forge models.', badge:'Docs', badgeColor:'var(--fg-orange)', action:() => window.open('/api-docs') },
-                  { icon:'⚡', name:'Slack', desc:'Bring Forge into your Slack workspace. Ask questions and run agents without leaving Slack.', badge:'Install', badgeColor:'var(--fg-orange)', action:() => alert('Slack app coming soon. Join waitlist at forge.ai/slack') },
+                  { icon:'🖥️', name:'Desktop App', desc:'Native Electron app for Mac, Windows, Linux. Works offline and syncs with your workspace.', badge:'Download', badgeColor:'var(--fg-orange)', action:() => window.open('https://github.com/goldrusher9009-sketch/forge/releases', '_blank') },
+                  { icon:'📱', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android — add to home screen from your browser.', badge:'Open App', badgeColor:'var(--fg-blue)', action:() => window.open('https://forge-sand-two.vercel.app', '_blank') },
+                  { icon:'🤖', name:'Telegram Bot', desc:'Chat with your Forge agents via Telegram. Add your bot token in Settings to connect.', badge:'Get Token', badgeColor:'var(--fg-blue)', action:() => window.open('https://t.me/BotFather', '_blank') },
+                  { icon:'💬', name:'Slack Bot', desc:'Bring Forge into your Slack workspace. Ask questions and run agents without leaving Slack.', badge:'Coming Soon', badgeColor:'var(--fg-text3)', action:() => {} },
+                  { icon:'🔌', name:'REST API', desc:'Full API access with your JWT token. Use any language or framework to call Forge models.', badge:'View Docs', badgeColor:'var(--fg-orange)', action:() => window.open('https://forge-production-2692.up.railway.app/health', '_blank') },
+                  { icon:'🧩', name:'Chrome Extension', desc:'Use Forge on any webpage — highlight text, run agents, get answers in context.', badge:'Coming Soon', badgeColor:'var(--fg-text3)', action:() => {} },
                 ].map(p => (
                   <div key={p.name} style={{ padding:'20px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:14 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
@@ -3038,6 +3097,157 @@ export default function ForgeApp() {
           </div>
         )}
 
+        {/* ── FORGECO ───────────────────────────────────────────────────── */}
+        {mainTab === 'forgeco' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
+            {/* Header */}
+            <div style={{ padding:'12px 24px', borderBottom:'1px solid var(--fg-border)', flexShrink:0, display:'flex', alignItems:'center', gap:12 }}>
+              <span style={{ fontSize:22 }}>🧑‍💻</span>
+              <div>
+                <h2 style={{ margin:0, fontSize:17, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeCo</h2>
+                <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Code + Cowork — AI-assisted development and collaboration</p>
+              </div>
+              <div style={{ marginLeft:'auto', display:'flex', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, padding:3, gap:2 }}>
+                {(['code','cowork'] as const).map(t => (
+                  <button key={t} onClick={() => setCoTab(t)} style={{ padding:'5px 16px', background:coTab===t ? 'var(--fg-orange)' : 'transparent', border:'none', borderRadius:6, color:coTab===t ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:13, fontWeight:coTab===t ? 600 : 400, textTransform:'capitalize' }}>{t === 'code' ? '💻 Code' : '🤝 Cowork'}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Code tab */}
+            {coTab === 'code' && (
+              <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
+                {/* Editor pane */}
+                <div style={{ flex:1, display:'flex', flexDirection:'column', borderRight:'1px solid var(--fg-border)' }}>
+                  <div style={{ padding:'8px 12px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+                    <span style={{ fontSize:12, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>editor</span>
+                    <select value={coCodeLang} onChange={e => setCoCodeLang(e.target.value)} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text2)', fontSize:11, cursor:'pointer' }}>
+                      {['typescript','javascript','python','rust','go','html','css','json','bash','sql'].map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                  <textarea
+                    value={coCode}
+                    onChange={e => setCoCode(e.target.value)}
+                    spellCheck={false}
+                    style={{ flex:1, padding:16, background:'var(--fg-bg2)', border:'none', color:'var(--fg-text)', fontSize:13, fontFamily:'var(--fg-font-mono)', lineHeight:1.7, resize:'none', outline:'none', tabSize:2 }}
+                  />
+                  {/* AI prompt bar */}
+                  <div style={{ padding:'10px 12px', borderTop:'1px solid var(--fg-border)', background:'var(--fg-bg3)', display:'flex', gap:8, flexShrink:0 }}>
+                    <input
+                      value={coCodePrompt}
+                      onChange={e => setCoCodePrompt(e.target.value)}
+                      onKeyDown={async e => {
+                        if (e.key !== 'Enter' || !coCodePrompt.trim() || !user) return;
+                        e.preventDefault();
+                        setCoCodeRunning(true);
+                        try {
+                          const d = await apiFetch('/chat/completions', { method:'POST', body:JSON.stringify({ model: selectedModel||'forge-fast', messages:[{role:'system',content:`You are an expert ${coCodeLang} developer. Current code:\n\`\`\`${coCodeLang}\n${coCode}\n\`\`\`\nRespond with ONLY the updated code, no markdown fences.`},{role:'user',content:coCodePrompt}] }) }, user.token);
+                          if (d?.choices?.[0]?.message?.content) { setCoCode(d.choices[0].message.content); setCoCodePrompt(''); }
+                        } catch(err:any) { setCoCodeOutput('Error: '+err.message); } finally { setCoCodeRunning(false); }
+                      }}
+                      placeholder="Ask AI to edit this code… (Enter to apply)"
+                      style={{ flex:1, padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, outline:'none' }}
+                    />
+                    <button onClick={() => { navigator.clipboard?.writeText(coCode); }} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>Copy</button>
+                    {coCodeRunning && <span style={{ fontSize:12, color:'var(--fg-orange)', alignSelf:'center', animation:'forge-flash 0.8s ease-in-out infinite' }}>✦</span>}
+                  </div>
+                </div>
+                {/* Output pane */}
+                <div style={{ width:340, display:'flex', flexDirection:'column', background:'var(--fg-bg2)' }}>
+                  <div style={{ padding:'8px 12px', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+                    <span style={{ fontSize:12, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>output</span>
+                    <button onClick={() => setCoCodeOutput('')} style={{ marginLeft:'auto', padding:'2px 8px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:4, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>Clear</button>
+                  </div>
+                  <div style={{ flex:1, padding:14, fontFamily:'var(--fg-font-mono)', fontSize:12, color:'var(--fg-green)', lineHeight:1.7, overflowY:'auto', whiteSpace:'pre-wrap', wordBreak:'break-all' }}>
+                    {coCodeOutput || <span style={{ color:'var(--fg-text3)' }}>// output will appear here\n// use the AI prompt bar to edit code\n// or paste your code and ask questions</span>}
+                  </div>
+                  {/* Quick actions */}
+                  <div style={{ padding:'10px 12px', borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
+                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', fontWeight:600, textTransform:'uppercase' }}>Quick Actions</p>
+                    {['Explain this code','Add TypeScript types','Write unit tests','Find bugs','Optimize performance','Add error handling'].map(action => (
+                      <button key={action} onClick={async () => {
+                        if (!user || !coCode.trim()) return;
+                        setCoCodeRunning(true); setCoCodePrompt(action);
+                        try {
+                          const d = await apiFetch('/chat/completions', { method:'POST', body:JSON.stringify({ model: selectedModel||'forge-fast', messages:[{role:'system',content:`You are an expert ${coCodeLang} developer.`},{role:'user',content:`${action}:\n\`\`\`${coCodeLang}\n${coCode}\n\`\`\``}] }) }, user.token);
+                          if (d?.choices?.[0]?.message?.content) setCoCodeOutput(d.choices[0].message.content);
+                        } catch(err:any) { setCoCodeOutput('Error: '+err.message); } finally { setCoCodeRunning(false); setCoCodePrompt(''); }
+                      }} style={{ padding:'5px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:11, textAlign:'left' }}>{action}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Cowork tab */}
+            {coTab === 'cowork' && (
+              <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+                <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
+                  {coCoworkMessages.length === 0 && (
+                    <div style={{ textAlign:'center', padding:'60px 0', color:'var(--fg-text3)' }}>
+                      <div style={{ fontSize:48, marginBottom:16 }}>🤝</div>
+                      <p style={{ fontSize:16, margin:'0 0 8px', color:'var(--fg-text2)' }}>ForgeCo Cowork</p>
+                      <p style={{ fontSize:13, margin:'0 0 28px', color:'var(--fg-text3)', maxWidth:460, marginLeft:'auto', marginRight:'auto', lineHeight:1.6 }}>Your AI collaboration partner. Plan projects, write docs, review code, brainstorm ideas, draft proposals — all in a shared workspace.</p>
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center' }}>
+                        {['Plan a new product feature','Review and improve this document','Help me write a technical spec','Brainstorm solutions for this problem','Create a project roadmap'].map(s => (
+                          <button key={s} onClick={() => setCoCoworkInput(s)} style={{ padding:'8px 16px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:20, color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>{s}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {coCoworkMessages.map((m, i) => (
+                    <div key={i} style={{ display:'flex', gap:12, marginBottom:20, flexDirection: m.role==='user' ? 'row-reverse' : 'row' }}>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background: m.role==='user' ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
+                        {m.role==='user' ? '👤' : '🤝'}
+                      </div>
+                      <div style={{ maxWidth:'72%', padding:'12px 16px', borderRadius: m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background: m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg2)', border:`1px solid ${m.role==='user' ? 'var(--fg-border2)' : 'rgba(124,58,237,0.3)'}`, color:'var(--fg-text)', fontSize:14, lineHeight:1.7, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
+                        {m.content}
+                      </div>
+                    </div>
+                  ))}
+                  {coCoworkRunning && (
+                    <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,var(--fg-orange),#7c3aed)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>🤝</div>
+                      <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid rgba(124,58,237,0.3)', display:'flex', gap:6, alignItems:'center' }}>
+                        {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'#7c3aed', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding:'12px 24px 20px', borderTop:'1px solid var(--fg-border)', flexShrink:0 }}>
+                  <div style={{ display:'flex', gap:10, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, padding:'8px 12px', alignItems:'flex-end' }}>
+                    <textarea value={coCoworkInput} onChange={e => setCoCoworkInput(e.target.value)} onKeyDown={async e => {
+                      if (e.key !== 'Enter' || e.shiftKey || !coCoworkInput.trim() || !user) return;
+                      e.preventDefault();
+                      const msg = coCoworkInput.trim();
+                      setCoCoworkInput('');
+                      const newMsgs = [...coCoworkMessages, {role:'user', content:msg}];
+                      setCoCoworkMessages(newMsgs);
+                      setCoCoworkRunning(true);
+                      try {
+                        const d = await apiFetch('/chat/completions', { method:'POST', body:JSON.stringify({ model: selectedModel||'forge-pro', messages:[{role:'system',content:'You are ForgeCo, an expert AI collaboration partner. Help with planning, writing, coding, brainstorming, and all knowledge work. Be thorough, practical, and insightful.'}, ...newMsgs.map(m=>({role:m.role,content:m.content}))] }) }, user.token);
+                        if (d?.choices?.[0]?.message?.content) setCoCoworkMessages(prev => [...prev, {role:'assistant', content:d.choices[0].message.content}]);
+                      } catch(err:any) { setCoCoworkMessages(prev => [...prev, {role:'assistant', content:'Error: '+err.message}]); } finally { setCoCoworkRunning(false); }
+                    }} placeholder="Collaborate with AI — plan, write, code, brainstorm… (Enter to send)" rows={2} style={{ flex:1, background:'transparent', border:'none', color:'var(--fg-text)', fontSize:14, resize:'none', outline:'none', lineHeight:1.6 }} />
+                    <button onClick={async () => {
+                      if (!coCoworkInput.trim() || !user) return;
+                      const msg = coCoworkInput.trim();
+                      setCoCoworkInput('');
+                      const newMsgs = [...coCoworkMessages, {role:'user', content:msg}];
+                      setCoCoworkMessages(newMsgs);
+                      setCoCoworkRunning(true);
+                      try {
+                        const d = await apiFetch('/chat/completions', { method:'POST', body:JSON.stringify({ model: selectedModel||'forge-pro', messages:[{role:'system',content:'You are ForgeCo, an expert AI collaboration partner.'}, ...newMsgs.map(m=>({role:m.role,content:m.content}))] }) }, user.token);
+                        if (d?.choices?.[0]?.message?.content) setCoCoworkMessages(prev => [...prev, {role:'assistant', content:d.choices[0].message.content}]);
+                      } catch(err:any) { setCoCoworkMessages(prev => [...prev, {role:'assistant', content:'Error: '+err.message}]); } finally { setCoCoworkRunning(false); }
+                    }} disabled={coCoworkRunning||!coCoworkInput.trim()} style={{ width:36, height:36, background: coCoworkRunning||!coCoworkInput.trim() ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed)', border:'none', borderRadius:8, color:'#fff', cursor:coCoworkInput.trim()&&!coCoworkRunning ? 'pointer' : 'default', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>↑</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── FORGEAUTO ─────────────────────────────────────────────────── */}
         {mainTab === 'forgeauto' && (
           <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
@@ -3180,7 +3390,7 @@ export default function ForgeApp() {
                 if (!user || !multiPrompt.trim() || multiSelectedRoles.length===0) return;
                 setMultiRunning(true); setMultiResults(null);
                 try {
-                  const d = await apiFetch('/forgemulti/run', { method:'POST', body:JSON.stringify({ prompt:multiPrompt, model:multiModel, roles:multiSelectedRoles }) }, user.token);
+                  const d = await apiFetch('/forgemulti/run', { method:'POST', body:JSON.stringify({ prompt:multiPrompt, model:multiModel, agent_roles:multiSelectedRoles }) }, user.token);
                   if (d?.success) setMultiResults(d.data);
                 } catch(e:any) { alert('ForgeMulti error: '+e.message); } finally { setMultiRunning(false); }
               }} style={{ padding:'10px 28px', background: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-bg4)' : 'linear-gradient(135deg,#7c3aed,var(--fg-orange))', border:'none', borderRadius:8, color: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
