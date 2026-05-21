@@ -23,7 +23,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'forge-dev-secret-change-in-product
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '30d';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://forge-sand-two.vercel.app';
-const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'forge.db');
+// Use /data volume on Railway (persistent), fall back to cwd for local dev
+const DB_PATH = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? '/data/forge.db' : path.join(process.cwd(), 'forge.db'));
 
 // ── Database ──────────────────────────────────────────────────
 const db = new Database(DB_PATH);
@@ -844,8 +845,132 @@ app.get('/api/router/usage/history', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ── Admin ─────────────────────────────────────────────────────
+// ── Platform settings table ──────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS platform_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS platform_api_keys (
+    provider TEXT PRIMARY KEY,
+    key_encrypted TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS platform_models (
+    id TEXT PRIMARY KEY,
+    provider TEXT NOT NULL,
+    label TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    is_forge_model INTEGER NOT NULL DEFAULT 0,
+    markup REAL NOT NULL DEFAULT 1.3,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
+// Seed default model list if empty
+const modelCount = (db.prepare('SELECT COUNT(*) as c FROM platform_models').get() as any).c;
+if (modelCount === 0) {
+  const defaultModels = [
+    { id:'forge-ultra',      provider:'anthropic', label:'Forge Ultra (Opus 4.6)',    is_forge:1, markup:2.5 },
+    { id:'forge-pro',        provider:'anthropic', label:'Forge Pro (Sonnet 4.6)',    is_forge:1, markup:2.0 },
+    { id:'forge-flash',      provider:'anthropic', label:'Forge Flash (Haiku 4.5)',   is_forge:1, markup:1.5 },
+    { id:'forge-gpt',        provider:'openai',    label:'Forge GPT (GPT-4o)',        is_forge:1, markup:2.0 },
+    { id:'forge-gemini',     provider:'gemini',    label:'Forge Gemini (Flash 2.0)',  is_forge:1, markup:1.5 },
+    { id:'claude-opus-4-6',  provider:'anthropic', label:'Claude Opus 4.6',           is_forge:0, markup:1.0 },
+    { id:'claude-sonnet-4-6',provider:'anthropic', label:'Claude Sonnet 4.6',         is_forge:0, markup:1.0 },
+    { id:'claude-opus-4-5',  provider:'anthropic', label:'Claude Opus 4.5',           is_forge:0, markup:1.0 },
+    { id:'claude-sonnet-4-5',provider:'anthropic', label:'Claude Sonnet 4.5',         is_forge:0, markup:1.0 },
+    { id:'claude-haiku-4-5', provider:'anthropic', label:'Claude Haiku 4.5',          is_forge:0, markup:1.0 },
+    { id:'claude-3-5-sonnet',provider:'anthropic', label:'Claude 3.5 Sonnet',         is_forge:0, markup:1.0 },
+    { id:'gpt-4o',           provider:'openai',    label:'GPT-4o',                    is_forge:0, markup:1.0 },
+    { id:'gpt-4o-mini',      provider:'openai',    label:'GPT-4o Mini',               is_forge:0, markup:1.0 },
+    { id:'gpt-4.1',          provider:'openai',    label:'GPT-4.1',                   is_forge:0, markup:1.0 },
+    { id:'gemini-2.0-flash', provider:'gemini',    label:'Gemini 2.0 Flash',          is_forge:0, markup:1.0 },
+    { id:'gemini-1.5-pro',   provider:'gemini',    label:'Gemini 1.5 Pro',            is_forge:0, markup:1.0 },
+    { id:'llama-3.3-70b',    provider:'groq',      label:'Llama 3.3 70B',             is_forge:0, markup:1.0 },
+    { id:'mistral-large',    provider:'mistral',   label:'Mistral Large',             is_forge:0, markup:1.0 },
+  ];
+  const ins = db.prepare('INSERT OR IGNORE INTO platform_models (id,provider,label,enabled,is_forge_model,markup) VALUES (?,?,?,1,?,?)');
+  defaultModels.forEach(m => ins.run(m.id, m.provider, m.label, m.is_forge, m.markup));
+}
+
+// ── Admin routes ─────────────────────────────────────────────
 app.get('/api/admin/users', requireAuth, requireAdmin, (_req, res) => {
   res.json({ success: true, data: db.prepare('SELECT id,email,first_name,last_name,role,verified,created_at FROM users ORDER BY created_at DESC').all() });
+});
+
+app.patch('/api/admin/users/:id', requireAuth, requireAdmin, (req: AuthRequest, res) => {
+  const { role, verified } = req.body;
+  db.prepare("UPDATE users SET role=COALESCE(?,role), verified=COALESCE(?,verified), updated_at=datetime('now') WHERE id=?")
+    .run(role ?? null, verified ?? null, req.params.id);
+  res.json({ success: true, data: db.prepare('SELECT id,email,first_name,last_name,role,verified FROM users WHERE id=?').get(req.params.id) });
+});
+
+app.delete('/api/admin/users/:id', requireAuth, requireAdmin, (req: AuthRequest, res) => {
+  if (req.params.id === req.user!.sub) { res.status(400).json({ success:false, error:'Cannot delete yourself' }); return; }
+  db.prepare('DELETE FROM users WHERE id=?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// Platform-level API keys (used as fallback for all users)
+app.get('/api/admin/platform-keys', requireAuth, requireAdmin, (_req, res) => {
+  const rows = db.prepare('SELECT provider, enabled, updated_at FROM platform_api_keys').all();
+  res.json({ success: true, data: rows });
+});
+
+app.post('/api/admin/platform-keys', requireAuth, requireAdmin, (req: AuthRequest, res) => {
+  const { provider, key } = req.body;
+  if (!provider || !key) { res.status(400).json({ success:false, error:'provider and key required' }); return; }
+  const enc = encryptKey(key.trim());
+  const existing = db.prepare('SELECT provider FROM platform_api_keys WHERE provider=?').get(provider);
+  if (existing) {
+    db.prepare("UPDATE platform_api_keys SET key_encrypted=?,enabled=1,updated_at=datetime('now') WHERE provider=?").run(enc, provider);
+  } else {
+    db.prepare('INSERT INTO platform_api_keys (provider,key_encrypted,enabled) VALUES (?,?,1)').run(provider, enc);
+  }
+  res.json({ success: true, message: `Platform key saved for ${provider}` });
+});
+
+app.delete('/api/admin/platform-keys/:provider', requireAuth, requireAdmin, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM platform_api_keys WHERE provider=?').run(req.params.provider);
+  res.json({ success: true });
+});
+
+// Model management
+app.get('/api/admin/models', requireAuth, requireAdmin, (_req, res) => {
+  res.json({ success: true, data: db.prepare('SELECT * FROM platform_models ORDER BY provider, id').all() });
+});
+
+app.patch('/api/admin/models/:id', requireAuth, requireAdmin, (req: AuthRequest, res) => {
+  const { enabled, label, markup } = req.body;
+  db.prepare("UPDATE platform_models SET enabled=COALESCE(?,enabled), label=COALESCE(?,label), markup=COALESCE(?,markup), updated_at=datetime('now') WHERE id=?")
+    .run(enabled ?? null, label ?? null, markup ?? null, req.params.id);
+  res.json({ success: true, data: db.prepare('SELECT * FROM platform_models WHERE id=?').get(req.params.id) });
+});
+
+app.post('/api/admin/models', requireAuth, requireAdmin, (req: AuthRequest, res) => {
+  const { id, provider, label, is_forge_model = 0, markup = 1.0 } = req.body;
+  if (!id || !provider || !label) { res.status(400).json({ success:false, error:'id, provider, label required' }); return; }
+  db.prepare('INSERT OR REPLACE INTO platform_models (id,provider,label,enabled,is_forge_model,markup) VALUES (?,?,?,1,?,?)').run(id, provider, label, is_forge_model, markup);
+  res.json({ success: true });
+});
+
+// Public endpoint — returns enabled models (used by frontend to populate dropdown)
+app.get('/api/models', requireAuth, (_req, res) => {
+  const rows = db.prepare('SELECT id,provider,label,is_forge_model,markup FROM platform_models WHERE enabled=1 ORDER BY is_forge_model DESC, provider, id').all();
+  res.json({ success: true, data: rows });
+});
+
+// Admin stats
+app.get('/api/admin/stats', requireAuth, requireAdmin, (_req, res) => {
+  const users = (db.prepare('SELECT COUNT(*) as c FROM users').get() as any).c;
+  const threads = (db.prepare('SELECT COUNT(*) as c FROM threads').get() as any).c;
+  const messages = (db.prepare('SELECT COUNT(*) as c FROM messages').get() as any).c;
+  const revenue = (db.prepare('SELECT COALESCE(SUM(forge_revenue),0) as r FROM usage_logs').get() as any).r;
+  const topModels = db.prepare('SELECT model, COUNT(*) as uses FROM usage_logs GROUP BY model ORDER BY uses DESC LIMIT 5').all();
+  res.json({ success: true, data: { users, threads, messages, revenue, topModels } });
 });
 
 // ═══════════════════════════════════════════════════════════════
