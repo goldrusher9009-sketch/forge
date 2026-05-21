@@ -1983,7 +1983,7 @@ app.post('/api/forgeauto/run', requireAuth, async (req: AuthRequest, res) => {
       const apiKey = getUserKey(userId, provider);
       if (!apiKey) return { model: modelId, error: `No ${provider} key`, content: null };
       const start = Date.now();
-      const result = await callLLM(actualModel, provider, apiKey, [{ role:'user', content: prompt }]);
+      const result = await callLLM(provider, apiKey, actualModel, [{ role:'user', content: prompt }]);
       emitAgentActivity(userId, { type: 'done', message: `✅ ${modelId} responded (${((Date.now()-start)/1000).toFixed(1)}s)`, model: modelId });
       return { model: modelId, content: result.content, tokens: result.promptTokens + result.completionTokens, elapsed: Date.now() - start };
     }));
@@ -2088,17 +2088,6 @@ app.post('/api/forgeasi/run', requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
-// ─── 404 handler ─────────────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({ success: false, error: 'NOT_FOUND', message: `Route ${req.method} ${req.path} not found` });
-});
-
-// ─── Start server ─────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`🚀 Forge Platform running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
     res.json({ success: true, data: { agents: responses, synthesis: synthesis.content } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ ForgeMulti error: ${err.message}` });
@@ -2121,36 +2110,36 @@ app.post('/api/forgeasi/run', requireAuth, async (req: AuthRequest, res) => {
     const steps: { phase: string; content: string; tokens: number }[] = [];
 
     // Phase 1: Deep Analysis
-    emitAgentActivity(userId, 'thinking', 'ForgeASI: Deep analysis phase…');
-    const p1 = await callLLM(actualModel, provider, apiKey, [
+    emitAgentActivity(userId, { type: 'thinking', message: 'ForgeASI: Deep analysis phase…' });
+    const p1 = await callLLM(provider, apiKey, actualModel, [
       { role: 'system', content: 'You are a deep analytical reasoner. Break down the problem thoroughly. Identify assumptions, constraints, unknowns, and first principles.' },
       { role: 'user', content: `Deeply analyze this problem or question:\n\n${prompt}\n\nProvide: 1) Core problem breakdown 2) Key assumptions 3) Hidden constraints 4) What we know vs what we need to find out` }
     ]);
-    steps.push({ phase: 'Deep Analysis', content: p1.content || '', tokens: p1.usage?.total_tokens || 0 });
+    steps.push({ phase: 'Deep Analysis', content: p1.content || '', tokens: (p1.promptTokens || 0) + (p1.completionTokens || 0) });
 
     // Phase 2: Multi-path reasoning
-    emitAgentActivity(userId, 'thinking', 'ForgeASI: Generating solution paths…');
-    const p2 = await callLLM(actualModel, provider, apiKey, [
+    emitAgentActivity(userId, { type: 'thinking', message: 'ForgeASI: Generating solution paths…' });
+    const p2 = await callLLM(provider, apiKey, actualModel, [
       { role: 'system', content: 'You are a creative strategic thinker. Generate multiple distinct approaches.' },
       { role: 'user', content: `Given this problem: ${prompt}\n\nAnd this analysis: ${p1.content}\n\nGenerate ${Math.min(depth, 5)} distinct solution paths or approaches. For each: name it, explain the approach, estimate tradeoffs, and rate feasibility 1-10.` }
     ]);
-    steps.push({ phase: 'Solution Paths', content: p2.content || '', tokens: p2.usage?.total_tokens || 0 });
+    steps.push({ phase: 'Solution Paths', content: p2.content || '', tokens: (p2.promptTokens || 0) + (p2.completionTokens || 0) });
 
     // Phase 3: Self-critique
-    emitAgentActivity(userId, 'thinking', 'ForgeASI: Self-critique phase…');
-    const p3 = await callLLM(actualModel, provider, apiKey, [
+    emitAgentActivity(userId, { type: 'thinking', message: 'ForgeASI: Self-critique phase…' });
+    const p3 = await callLLM(provider, apiKey, actualModel, [
       { role: 'system', content: 'You are a rigorous critic. Find flaws, risks, and blindspots in reasoning. Be brutally honest.' },
       { role: 'user', content: `Critically evaluate these solution paths:\n\n${p2.content}\n\nFor each path: What could go wrong? What assumptions are weak? What is being overlooked? Rate risk 1-10.` }
     ]);
-    steps.push({ phase: 'Self-Critique', content: p3.content || '', tokens: p3.usage?.total_tokens || 0 });
+    steps.push({ phase: 'Self-Critique', content: p3.content || '', tokens: (p3.promptTokens || 0) + (p3.completionTokens || 0) });
 
     // Phase 4: Synthesis + Final answer
-    emitAgentActivity(userId, 'success', 'ForgeASI: Synthesizing final answer…');
-    const p4 = await callLLM(actualModel, provider, apiKey, [
+    emitAgentActivity(userId, { type: 'success', message: 'ForgeASI: Synthesizing final answer…' });
+    const p4 = await callLLM(provider, apiKey, actualModel, [
       { role: 'system', content: 'You are a master synthesizer. You take all the analysis, paths, and critiques and produce the definitive, optimal answer. Be concrete and actionable.' },
       { role: 'user', content: `Original question: ${prompt}\n\nAnalysis: ${p1.content}\n\nSolution paths: ${p2.content}\n\nCritiques: ${p3.content}\n\nNow synthesize everything into the BEST answer. Be specific, actionable, and complete. Address the strongest critiques. Provide a clear recommendation.` }
     ]);
-    steps.push({ phase: 'Synthesis', content: p4.content || '', tokens: p4.usage?.total_tokens || 0 });
+    steps.push({ phase: 'Synthesis', content: p4.content || '', tokens: (p4.promptTokens || 0) + (p4.completionTokens || 0) });
 
     const totalTokens = steps.reduce((a, s) => a + s.tokens, 0);
     res.json({ success: true, data: { steps, synthesis: p4.content, totalTokens, model: actualModel } });
@@ -2292,7 +2281,6 @@ app.use((req: any, res: any) => {
   res.status(404).json({ success: false, error: 'NOT_FOUND', path: req.path });
 });
 
-const PORT = parseInt(process.env.PORT || '3001', 10);
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Forge Platform v5.9 running on port ${PORT}`);
 });
