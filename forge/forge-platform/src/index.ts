@@ -558,10 +558,11 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   }
   // OpenRouter (passthrough for 400+ models)
   if (provider === 'openrouter') {
+    const orModel = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://forge-sand-two.vercel.app', 'X-Title': 'Forge Studio' },
-      body: JSON.stringify({ model, messages, max_tokens: 2048 }),
+      body: JSON.stringify({ model: orModel, messages, max_tokens: 2048 }),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenRouter error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -1647,6 +1648,62 @@ app.get('/api/dispatch/:id', requireAuth, (req: AuthRequest, res) => {
 app.get('/api/dispatch', requireAuth, (req: AuthRequest, res) => {
   const runs = db.prepare('SELECT * FROM dispatch_runs WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user!.sub) as any[];
   res.json(runs.map(r => ({ ...r, agent_ids: JSON.parse(r.agent_ids || '[]') })));
+});
+
+// ─── Live activity SSE ────────────────────────────────────────────────────────
+app.get('/api/live/activity', (req: any, res: any) => {
+  const tokenFromHeader = req.headers.authorization?.replace('Bearer ', '');
+  const tokenFromQuery = req.query.token as string | undefined;
+  const token = tokenFromHeader || tokenFromQuery;
+  if (!token) { res.status(401).json({ error: 'No token' }); return; }
+  let userId: string;
+  try {
+    const payload: any = verifyToken(token);
+    userId = payload.sub;
+  } catch {
+    res.status(401).json({ error: 'Invalid token' });
+    return;
+  }
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  res.write(`data: ${JSON.stringify({ type: 'connected', message: '🟢 Connected to live activity feed' })}\n\n`);
+  if (!agentActivityClients.has(userId)) agentActivityClients.set(userId, new Set());
+  agentActivityClients.get(userId)!.add(res);
+  const hb = setInterval(() => { try { res.write(': heartbeat\n\n'); } catch { clearInterval(hb); } }, 20000);
+  req.on('close', () => {
+    clearInterval(hb);
+    agentActivityClients.get(userId)?.delete(res);
+    if (agentActivityClients.get(userId)?.size === 0) agentActivityClients.delete(userId);
+  });
+});
+
+// ─── Terminal exec ─────────────────────────────────────────────────────────────
+const ALLOWED_COMMANDS = /^(echo|ls|pwd|cat|head|tail|grep|find|date|whoami|uname|df|du|node|npm|python|python3|curl|ping|env|printenv|which|type|wc|sort|uniq|tr|cut|awk|sed|jq|git\s+(log|status|diff|branch|show))/;
+
+app.post('/api/terminal/exec', requireAuth, async (req: AuthRequest, res) => {
+  const { command } = req.body;
+  if (!command || typeof command !== 'string') { res.status(400).json({ error: 'command required' }); return; }
+  const trimmed = command.trim();
+  if (!ALLOWED_COMMANDS.test(trimmed)) {
+    res.json({ output: `❌ Command not allowed: "${trimmed.split(' ')[0]}". Allowed: ls, cat, echo, grep, find, git log/status/diff, node, npm, python, curl, date, etc.`, exitCode: 1 });
+    return;
+  }
+  try {
+    const output = await new Promise<string>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Command timed out after 10s')), 10000);
+      execFile('sh', ['-c', trimmed], { maxBuffer: 65536, timeout: 10000 }, (err, stdout, stderr) => {
+        clearTimeout(timeout);
+        const out = (stdout || '') + (stderr ? `\nSTDERR: ${stderr}` : '');
+        resolve(out.slice(0, 65536) || (err ? `Exit code ${err.code}` : '(no output)'));
+      });
+    });
+    res.json({ output, exitCode: 0 });
+  } catch (err: any) {
+    res.json({ output: `❌ ${err.message}`, exitCode: 1 });
+  }
 });
 
 // ─── 404 ───────────────────────────────────────────────────────────────────
