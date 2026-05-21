@@ -3027,6 +3027,4 @@ export default function ForgeApp() {
       )}
     </div>
   );
-};
-
-export default ForgeApp;
+}
