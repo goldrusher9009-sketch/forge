@@ -1,4 +1,4 @@
-// Forge AI Workspace v5.7 — OpenRouter prefix fix (bare model IDs), copy buttons on messages, new thread fallback
+// Forge AI Workspace v5.8 — Full OR model list (358 models, grouped), proxy browser (server-side fetch), ForgeAgent (web search + fetch tool loop)
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -201,7 +201,7 @@ export default function ForgeApp() {
   const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'>('workspace');
 
   // Right panel tabs
-  const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'>('artifacts');
+  const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'>('artifacts');
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [rightExpanded, setRightExpanded] = useState(true);
 
@@ -338,6 +338,15 @@ export default function ForgeApp() {
   const [browserHistory, setBrowserHistory] = useState<string[]>([]);
   const [browserHistoryIdx, setBrowserHistoryIdx] = useState(0);
   const browserFrameRef = useRef<HTMLIFrameElement>(null);
+  const [browserMode, setBrowserMode] = useState<'proxy'|'iframe'>('proxy');
+  const [browserLoading, setBrowserLoading] = useState(false);
+  const [browserPage, setBrowserPage] = useState<{title:string;text:string;links:{text:string;href:string}[];url:string;status:number;error?:string}|null>(null);
+
+  // SuperAgent / agent chat state
+  const [agentMessages, setAgentMessages] = useState<{role:'user'|'agent'|'tool'|'tool_result'|'error';content:string;tool?:string;args?:any}[]>([]);
+  const [agentInput, setAgentInput] = useState('');
+  const [agentRunning, setAgentRunning] = useState(false);
+  const agentScrollRef = useRef<HTMLDivElement>(null);
 
   // Terminal state
   const [terminalLines, setTerminalLines] = useState<{text:string;type:'input'|'output'|'error'|'system'}[]>([
@@ -638,7 +647,7 @@ export default function ForgeApp() {
   };
 
   // ── Browser navigation ────────────────────────────────────────────────────
-  const browserNavigate = (url: string) => {
+  const browserNavigate = async (url: string) => {
     let nav = url.trim();
     if (!nav.startsWith('http://') && !nav.startsWith('https://')) {
       nav = nav.includes('.') ? `https://${nav}` : `https://www.google.com/search?q=${encodeURIComponent(nav)}`;
@@ -646,6 +655,70 @@ export default function ForgeApp() {
     setBrowserHistory(prev => { const next = [...prev.slice(0, browserHistoryIdx + 1), nav]; setBrowserHistoryIdx(next.length - 1); return next; });
     setBrowserUrl(nav);
     setBrowserInput(nav);
+
+    if (browserMode === 'proxy') {
+      setBrowserLoading(true);
+      setBrowserPage(null);
+      try {
+        const d = await apiFetch('/browser/fetch', { method:'POST', body: JSON.stringify({ url: nav }) }, user?.token || '');
+        if (d?.error) {
+          setBrowserPage({ title:'Error', text: d.error, links:[], url: nav, status: 0, error: d.error });
+        } else {
+          setBrowserPage({ title: d.title || nav, text: d.text || '', links: d.links || [], url: nav, status: d.status || 200 });
+        }
+      } catch (e: any) {
+        setBrowserPage({ title:'Error', text: e.message, links:[], url: nav, status: 0, error: e.message });
+      }
+      setBrowserLoading(false);
+    }
+  };
+
+  // SuperAgent run via SSE
+  const runAgent = async () => {
+    if (!agentInput.trim() || agentRunning || !user) return;
+    const prompt = agentInput.trim();
+    setAgentInput('');
+    setAgentRunning(true);
+    setAgentMessages(prev => [...prev, { role:'user', content: prompt }]);
+
+    try {
+      const token = user.token;
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-e4d6.up.railway.app'}/api/agent/run`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ prompt, model: selectedModel }),
+      });
+
+      if (!resp.ok || !resp.body) throw new Error(`Agent error: ${resp.status}`);
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const evt = JSON.parse(line.slice(6));
+            if (evt.type === 'tool_call') {
+              setAgentMessages(prev => [...prev, { role:'tool', content: `Using **${evt.tool}**${evt.reasoning ? ` — ${evt.reasoning}` : ''}`, tool: evt.tool, args: evt.args }]);
+            } else if (evt.type === 'tool_result') {
+              setAgentMessages(prev => [...prev, { role:'tool_result', content: evt.result, tool: evt.tool }]);
+            } else if (evt.type === 'response') {
+              setAgentMessages(prev => [...prev, { role:'agent', content: evt.content }]);
+            } else if (evt.type === 'error') {
+              setAgentMessages(prev => [...prev, { role:'error', content: evt.message }]);
+            }
+            setTimeout(() => agentScrollRef.current?.scrollTo({ top: 99999, behavior:'smooth' }), 50);
+          } catch {}
+        }
+      }
+    } catch (e: any) {
+      setAgentMessages(prev => [...prev, { role:'error', content: e.message }]);
+    }
+    setAgentRunning(false);
   };
 
   // ── Projects ───────────────────────────────────────────────────────────────
@@ -1189,7 +1262,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'#7C3AED' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'#2d2d44', background:'#1a1a2e', padding:'1px 5px', borderRadius:4, border:'1px solid #2d2d44', fontFamily:'monospace' }}>v5.7</span>
+                  <span style={{ fontSize:10, color:'#2d2d44', background:'#1a1a2e', padding:'1px 5px', borderRadius:4, border:'1px solid #2d2d44', fontFamily:'monospace' }}>v5.8</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -1284,12 +1357,23 @@ export default function ForgeApp() {
                         {grp.models.map(m => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
                       </optgroup>
                     ))}
-                    {orModels.length > 0 && (
-                      <optgroup label="🔀 OpenRouter">
-                        {orModels.filter(m => m.id.includes(':free') || m.pricing?.prompt === '0').slice(0,10).map(m => <option key={`openrouter/${m.id}`} value={m.id}>🆓 {m.name || m.id}</option>)}
-                        {orModels.filter(m => !m.id.includes(':free') && m.pricing?.prompt !== '0').slice(0,20).map(m => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
-                      </optgroup>
-                    )}
+                    {orModels.length > 0 && (() => {
+                      // Group OR models by provider prefix for the dropdown
+                      const orGrouped: Record<string, typeof orModels> = {};
+                      orModels.forEach(m => {
+                        const grpKey = m.id.includes('/') ? m.id.split('/')[0] : 'other';
+                        if (!orGrouped[grpKey]) orGrouped[grpKey] = [];
+                        orGrouped[grpKey].push(m);
+                      });
+                      return Object.entries(orGrouped).sort(([a],[b]) => a.localeCompare(b)).map(([grp, ms]) => (
+                        <optgroup key={`or-${grp}`} label={`🔀 OR · ${grp}`}>
+                          {ms.sort((a,b) => (a.name||a.id).localeCompare(b.name||b.id)).map(m => {
+                            const isFree = m.id.includes(':free') || m.pricing?.prompt === '0';
+                            return <option key={m.id} value={m.id}>{isFree ? '🆓 ' : ''}{m.name || m.id}</option>;
+                          })}
+                        </optgroup>
+                      ));
+                    })()}
                   </select>
                 );
               })()}
@@ -1466,7 +1550,7 @@ export default function ForgeApp() {
                     {([
                       {id:'artifacts',icon:'📄'},{id:'tasks',icon:'✅'},{id:'context',icon:'📊'},
                       {id:'live',icon:'📺'},{id:'browser',icon:'🌐'},{id:'terminal',icon:'💻'},
-                      {id:'dispatch',icon:'🚀'},{id:'schedule',icon:'⏱'},
+                      {id:'agent',icon:'🤖'},{id:'dispatch',icon:'🚀'},{id:'schedule',icon:'⏱'},
                     ] as const).map(tab => (
                       <button key={tab.id} onClick={() => setRightTab(tab.id as any)} title={tab.id} style={{ flex:'0 0 auto', padding:'10px 8px', background:'none', border:'none', borderBottom:rightTab===tab.id ? '2px solid #7C3AED' : '2px solid transparent', color:rightTab===tab.id ? '#a78bfa' : '#4b5563', cursor:'pointer', fontSize:14 }}>{tab.icon}</button>
                     ))}
@@ -1639,26 +1723,78 @@ export default function ForgeApp() {
                         {/* Browser toolbar */}
                         <div style={{ padding:'8px', background:'#0a0a0f', borderBottom:'1px solid #1e1e2e', display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
                           <button onClick={() => {
-                            if (browserHistoryIdx > 0) { const prev = browserHistory[browserHistoryIdx - 1]; setBrowserHistoryIdx(i => i-1); setBrowserUrl(prev); setBrowserInput(prev); }
+                            if (browserHistoryIdx > 0) { const prev2 = browserHistory[browserHistoryIdx - 1]; setBrowserHistoryIdx(i => i-1); browserNavigate(prev2); }
                           }} disabled={browserHistoryIdx <= 0} style={{ padding:'4px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12 }}>◀</button>
                           <button onClick={() => {
-                            if (browserHistoryIdx < browserHistory.length - 1) { const next = browserHistory[browserHistoryIdx + 1]; setBrowserHistoryIdx(i => i+1); setBrowserUrl(next); setBrowserInput(next); }
+                            if (browserHistoryIdx < browserHistory.length - 1) { const next2 = browserHistory[browserHistoryIdx + 1]; setBrowserHistoryIdx(i => i+1); browserNavigate(next2); }
                           }} disabled={browserHistoryIdx >= browserHistory.length - 1} style={{ padding:'4px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12 }}>▶</button>
-                          <button onClick={() => { if (browserFrameRef.current) browserFrameRef.current.src = browserUrl; }} style={{ padding:'4px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12 }}>⟳</button>
+                          <button onClick={() => browserNavigate(browserUrl)} style={{ padding:'4px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12 }}>{browserLoading ? '✕' : '⟳'}</button>
                           <input value={browserInput} onChange={e => setBrowserInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') browserNavigate(browserInput); }} placeholder="Enter URL or search..." style={{ flex:1, padding:'5px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#e2e8f0', fontSize:12, outline:'none' }} />
                           <button onClick={() => browserNavigate(browserInput)} style={{ padding:'4px 8px', background:'#7C3AED', border:'none', borderRadius:6, color:'#fff', cursor:'pointer', fontSize:12 }}>Go</button>
+                          {/* Mode toggle */}
+                          <button onClick={() => setBrowserMode(m => m === 'proxy' ? 'iframe' : 'proxy')} title={browserMode === 'proxy' ? 'Switch to iframe mode' : 'Switch to reader mode'} style={{ padding:'4px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>{browserMode === 'proxy' ? '📖' : '🌐'}</button>
                         </div>
                         {/* Quick links */}
                         <div style={{ padding:'6px 8px', background:'#0a0a0f', borderBottom:'1px solid #1e1e2e', display:'flex', gap:6, flexShrink:0, flexWrap:'wrap' }}>
-                          {[['🔍','https://google.com'],['🐙','https://github.com'],['📚','https://docs.anthropic.com'],['🎨','https://v0.dev'],['🤖','https://openrouter.ai/models']].map(([icon, url]) => (
-                            <button key={url} onClick={() => browserNavigate(url)} title={url} style={{ padding:'3px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:4, color:'#94a3b8', cursor:'pointer', fontSize:13 }}>{icon}</button>
+                          {[['🔍 Google','https://www.google.com/search?q='],['🐙 GitHub','https://github.com'],['📚 Anthropic','https://docs.anthropic.com'],['🤖 OpenRouter','https://openrouter.ai/models'],['📰 HN','https://news.ycombinator.com'],['🐦 Twitter','https://twitter.com'],['▶ YouTube','https://youtube.com']].map(([label, url]) => (
+                            <button key={url} onClick={() => browserNavigate(url)} title={url as string} style={{ padding:'3px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:4, color:'#94a3b8', cursor:'pointer', fontSize:11, whiteSpace:'nowrap' }}>{label as string}</button>
                           ))}
                         </div>
-                        {/* iFrame browser */}
-                        <iframe ref={browserFrameRef} src={browserUrl} title="ForgeBrowser" style={{ flex:1, border:'none', background:'#fff' }} sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-navigation" onLoad={e => { try { setBrowserInput((e.target as HTMLIFrameElement).contentDocument?.location?.href || browserUrl); } catch {} }} />
-                        <div style={{ padding:'4px 8px', background:'#0a0a0f', borderTop:'1px solid #1e1e2e', flexShrink:0 }}>
-                          <span style={{ fontSize:10, color:'#4b5563' }}>⚡ ForgeBrowser — some sites block embedding</span>
-                        </div>
+
+                        {/* Content area */}
+                        {browserMode === 'proxy' ? (
+                          <div style={{ flex:1, overflowY:'auto', background:'#0d0d15' }}>
+                            {browserLoading && (
+                              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:200, color:'#6b7280', fontSize:13 }}>
+                                <span>⟳ Fetching {browserUrl}…</span>
+                              </div>
+                            )}
+                            {!browserLoading && !browserPage && (
+                              <div style={{ padding:24, color:'#4b5563', textAlign:'center' }}>
+                                <div style={{ fontSize:40, marginBottom:12 }}>🌐</div>
+                                <div style={{ fontSize:14, color:'#6b7280', marginBottom:8 }}>ForgeBrowser — Proxy Reader Mode</div>
+                                <div style={{ fontSize:12, color:'#374151' }}>Fetches pages server-side — bypasses CORS and CSP restrictions.<br/>Click a quick link above or type a URL and press Go.</div>
+                              </div>
+                            )}
+                            {!browserLoading && browserPage && (
+                              <div style={{ padding:16, maxWidth:900, margin:'0 auto' }}>
+                                {/* Page header */}
+                                <div style={{ marginBottom:12, paddingBottom:12, borderBottom:'1px solid #1e1e2e' }}>
+                                  <div style={{ fontSize:16, fontWeight:600, color:'#e2e8f0', marginBottom:4 }}>{browserPage.title || browserPage.url}</div>
+                                  <div style={{ fontSize:11, color:'#4b5563' }}>{browserPage.url} — HTTP {browserPage.status}</div>
+                                  {browserPage.error && <div style={{ marginTop:6, padding:'6px 10px', background:'#1f0a0a', border:'1px solid #7f1d1d', borderRadius:6, color:'#fca5a5', fontSize:12 }}>⚠ {browserPage.error}</div>}
+                                </div>
+                                {/* Links sidebar */}
+                                {browserPage.links.length > 0 && (
+                                  <details style={{ marginBottom:12 }}>
+                                    <summary style={{ fontSize:11, color:'#6b7280', cursor:'pointer', padding:'4px 0' }}>🔗 {browserPage.links.length} links on this page</summary>
+                                    <div style={{ marginTop:6, display:'flex', flexDirection:'column', gap:2, maxHeight:200, overflowY:'auto', padding:'6px', background:'#111118', borderRadius:6 }}>
+                                      {browserPage.links.map((l, i) => (
+                                        <button key={i} onClick={() => browserNavigate(l.href)} style={{ background:'none', border:'none', color:'#818cf8', cursor:'pointer', fontSize:11, textAlign:'left', padding:'2px 4px', borderRadius:3, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }} title={l.href}>
+                                          {l.text || l.href}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </details>
+                                )}
+                                {/* Page text content */}
+                                <pre style={{ fontSize:13, color:'#d1d5db', whiteSpace:'pre-wrap', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', lineHeight:1.6, margin:0 }}>{browserPage.text}</pre>
+                                {/* Copy button */}
+                                <div style={{ marginTop:12, paddingTop:12, borderTop:'1px solid #1e1e2e', display:'flex', gap:8 }}>
+                                  <button onClick={() => navigator.clipboard.writeText(browserPage.text)} style={{ padding:'6px 12px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#a78bfa', cursor:'pointer', fontSize:12 }}>📋 Copy text</button>
+                                  <button onClick={() => { const q = `Content from ${browserPage.url}:\n\n${browserPage.text.slice(0,4000)}`; setInput(prev => prev + (prev ? '\n\n' : '') + q); setActiveTab('workspace'); }} style={{ padding:'6px 12px', background:'#7C3AED', border:'none', borderRadius:6, color:'#fff', cursor:'pointer', fontSize:12 }}>💬 Send to chat</button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            <iframe ref={browserFrameRef} src={browserUrl} title="ForgeBrowser" style={{ flex:1, border:'none', background:'#fff' }} sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-navigation" onLoad={e => { try { setBrowserInput((e.target as HTMLIFrameElement).contentDocument?.location?.href || browserUrl); } catch {} }} />
+                            <div style={{ padding:'4px 8px', background:'#0a0a0f', borderTop:'1px solid #1e1e2e', flexShrink:0 }}>
+                              <span style={{ fontSize:10, color:'#4b5563' }}>🌐 iFrame mode — some sites block embedding. Switch to 📖 Reader mode for full access.</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
 
@@ -1689,6 +1825,84 @@ export default function ForgeApp() {
                     )}
 
                     {/* DISPATCH — Swarm */}
+                    {/* 🤖 SUPERAGENT — autonomous web + tool use chat */}
+                    {rightTab==='agent' && (
+                      <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden' }}>
+                        {/* Header */}
+                        <div style={{ padding:'10px 12px', background:'#0d0d15', borderBottom:'1px solid #1e1e2e', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+                          <span style={{ fontSize:16 }}>🤖</span>
+                          <div>
+                            <div style={{ fontSize:13, fontWeight:600, color:'#a78bfa' }}>ForgeAgent</div>
+                            <div style={{ fontSize:10, color:'#4b5563' }}>Autonomous — browses web, fetches data, returns results</div>
+                          </div>
+                          <button onClick={() => setAgentMessages([])} style={{ marginLeft:'auto', padding:'2px 8px', background:'none', border:'1px solid #2d2d44', borderRadius:4, color:'#4b5563', cursor:'pointer', fontSize:10 }}>Clear</button>
+                        </div>
+
+                        {/* Tool legend */}
+                        <div style={{ padding:'6px 10px', background:'#0a0a0f', borderBottom:'1px solid #1e1e2e', display:'flex', gap:8, flexShrink:0, flexWrap:'wrap' }}>
+                          {[['🔍','web_search'],['🌐','web_fetch'],['📊','extract_data'],['📝','summarize']].map(([icon, name]) => (
+                            <span key={name} style={{ fontSize:10, color:'#374151', display:'flex', alignItems:'center', gap:2 }}>{icon} {name}</span>
+                          ))}
+                        </div>
+
+                        {/* Messages */}
+                        <div ref={agentScrollRef} style={{ flex:1, overflowY:'auto', padding:'12px', display:'flex', flexDirection:'column', gap:8 }}>
+                          {agentMessages.length === 0 && (
+                            <div style={{ textAlign:'center', padding:24, color:'#374151' }}>
+                              <div style={{ fontSize:32, marginBottom:8 }}>🤖</div>
+                              <div style={{ fontSize:13, color:'#6b7280', marginBottom:4 }}>ForgeAgent is ready</div>
+                              <div style={{ fontSize:11, color:'#374151' }}>Ask it to search the web, fetch pages, extract data, or research any topic.</div>
+                              <div style={{ marginTop:12, display:'flex', flexDirection:'column', gap:4 }}>
+                                {['Search for latest AI news and summarize', 'What are the top 5 open-source LLMs right now?', 'Fetch openrouter.ai/models and list free models', 'Research competitors of Anthropic Claude'].map(s => (
+                                  <button key={s} onClick={() => setAgentInput(s)} style={{ padding:'6px 10px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#818cf8', cursor:'pointer', fontSize:11, textAlign:'left' }}>{s}</button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {agentMessages.map((msg, i) => (
+                            <div key={i} style={{
+                              padding: msg.role === 'tool' || msg.role === 'tool_result' ? '6px 10px' : '10px 12px',
+                              background: msg.role === 'user' ? '#1a1a2e' : msg.role === 'agent' ? '#0f1929' : msg.role === 'error' ? '#1f0a0a' : '#0d1117',
+                              border: `1px solid ${msg.role === 'tool' ? '#1d2d1d' : msg.role === 'tool_result' ? '#1a2a1a' : msg.role === 'error' ? '#7f1d1d' : '#1e1e2e'}`,
+                              borderRadius: 8,
+                              borderLeft: msg.role === 'tool' ? '3px solid #059669' : msg.role === 'tool_result' ? '3px solid #10b981' : msg.role === 'agent' ? '3px solid #7C3AED' : 'none',
+                            }}>
+                              <div style={{ fontSize:10, color:'#4b5563', marginBottom:3, textTransform:'uppercase', fontWeight:600 }}>
+                                {msg.role === 'user' ? '👤 You' : msg.role === 'agent' ? '🤖 ForgeAgent' : msg.role === 'tool' ? `🔧 Tool: ${msg.tool}` : msg.role === 'tool_result' ? `📥 Result: ${msg.tool}` : '⚠ Error'}
+                              </div>
+                              <div style={{ fontSize:12, color: msg.role === 'error' ? '#fca5a5' : msg.role === 'tool' ? '#86efac' : '#d1d5db', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{msg.content}</div>
+                              {msg.role === 'agent' && (
+                                <div style={{ marginTop:4, display:'flex', gap:4 }}>
+                                  <button onClick={() => navigator.clipboard.writeText(msg.content)} style={{ padding:'2px 6px', background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:10 }}>📋 Copy</button>
+                                  <button onClick={() => { setInput(prev => prev + (prev ? '\n\n' : '') + msg.content); setActiveTab('workspace'); }} style={{ padding:'2px 6px', background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:10 }}>💬 To chat</button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          {agentRunning && (
+                            <div style={{ padding:'8px 12px', background:'#0d1117', border:'1px solid #1e1e2e', borderRadius:8, display:'flex', alignItems:'center', gap:8 }}>
+                              <span style={{ fontSize:12, color:'#a78bfa' }}>⚡ Agent working…</span>
+                              <span style={{ fontSize:10, color:'#4b5563', animation:'pulse 1s infinite' }}>searching and fetching data</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Input */}
+                        <div style={{ padding:'8px', background:'#0a0a0f', borderTop:'1px solid #1e1e2e', flexShrink:0 }}>
+                          <div style={{ display:'flex', gap:6 }}>
+                            <textarea value={agentInput} onChange={e => setAgentInput(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAgent(); } }}
+                              placeholder="Ask ForgeAgent anything — it can browse the web…" rows={2}
+                              style={{ flex:1, padding:'8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#e2e8f0', fontSize:12, resize:'none', outline:'none', fontFamily:'inherit' }} />
+                            <button onClick={runAgent} disabled={agentRunning || !agentInput.trim()} style={{ padding:'8px 12px', background: agentRunning ? '#1a1a2e' : '#7C3AED', border:'none', borderRadius:6, color:'#fff', cursor: agentRunning ? 'default' : 'pointer', fontSize:13, fontWeight:600, alignSelf:'flex-end' }}>
+                              {agentRunning ? '⟳' : '▶'}
+                            </button>
+                          </div>
+                          <div style={{ fontSize:10, color:'#374151', marginTop:4 }}>Enter to send · Shift+Enter for newline · Uses {selectedModel}</div>
+                        </div>
+                      </div>
+                    )}
+
                     {rightTab==='dispatch' && (
                       <div>
                         <p style={{ color:'#4b5563', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>Agent Dispatch</p>
@@ -2631,9 +2845,9 @@ export default function ForgeApp() {
                 {/* Input */}
                 <div style={{ padding:'12px 24px 20px', borderTop:'1px solid #1e1e2e', flexShrink:0 }}>
                   <div style={{ display:'flex', gap:10, background:'#111118', border:'1px solid #2d2d44', borderRadius:12, padding:'8px 12px', alignItems:'flex-end' }}>
-                    <textarea value={superInput} onChange={e => setSuperInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendSuperMessage(); } }} placeholder="Ask Forge SuperAgent anything… it remembers your work" rows={2} style={{ flex:1, background:'transparent', border:'none', color:'#e2e8f0', fontSize:14, resize:'none', outline:'none', lineHeight:1.6 }} />
-                    <button onClick={sendSuperMessage} disabled={superSending || !superInput.trim()} style={{ width:36, height:36, background: superSending ? '#7C3AED' : superInput.trim() ? '#7C3AED' : '#1a1a2e', border:'none', borderRadius:8, color:'#fff', cursor:superInput.trim() && !superSending ? 'pointer' : 'default', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center', animation: superSending ? 'send-pulse 0.9s ease-in-out infinite' : 'none', flexShrink:0 }}>
-                      {superSending ? '⚡' : '↑'}
+                    <textarea value={superInput} onChange={e => setSuperInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendSuperMessage(); } }} placeholder="Ask Forge SuperAgent anything\u2026 it remembers your work" rows={2} style={{ flex:1, background:'transparent', border:'none', color:'#e2e8f0', fontSize:14, resize:'none', outline:'none', lineHeight:1.6 }} />
+                    <button onClick={sendSuperMessage} disabled={superSending || !superInput.trim()} style={{ width:36, height:36, background: superSending ? '#7C3AED' : superInput.trim() ? '#7C3AED' : '#1a1a2e', border:'none', borderRadius:8, color:'#fff', cursor:superInput.trim() && !superSending ? 'pointer' : 'default', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      {superSending ? '\u26a1' : '\u2191'}
                     </button>
                   </div>
                 </div>
@@ -2644,25 +2858,24 @@ export default function ForgeApp() {
               <div style={{ flex:1, overflowY:'auto', padding:24 }}>
                 {superMemory.length === 0 ? (
                   <div style={{ textAlign:'center', padding:'60px 0' }}>
-                    <p style={{ fontSize:32, margin:'0 0 12px' }}>🧠</p>
+                    <p style={{ fontSize:32, margin:'0 0 12px' }}>\ud83e\udde0</p>
                     <p style={{ color:'#6b7280', fontSize:15, margin:'0 0 8px' }}>No memory yet</p>
                     <p style={{ color:'#4b5563', fontSize:13, margin:'0 0 20px' }}>Click "Harvest Memory" to distill your conversation history into SuperAgent knowledge.</p>
                     <button onClick={harvestMemory} disabled={superHarvesting} style={{ padding:'10px 24px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>
-                      {superHarvesting ? '⚡ Harvesting…' : '⚡ Harvest Memory Now'}
+                      {superHarvesting ? '\u26a1 Harvesting\u2026' : '\u26a1 Harvest Memory Now'}
                     </button>
                   </div>
                 ) : (
                   <div style={{ maxWidth:800, margin:'0 auto' }}>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
                       <div>
-                        <h3 style={{ color:'#fff', margin:'0 0 4px', fontSize:18 }}>🧠 SuperAgent Memory</h3>
+                        <h3 style={{ color:'#fff', margin:'0 0 4px', fontSize:18 }}>\ud83e\udde0 SuperAgent Memory</h3>
                         <p style={{ color:'#6b7280', margin:0, fontSize:13 }}>{superMemory.length} insights across {superMemory.reduce((a,m)=>a+m.frequency,0)} observations</p>
                       </div>
-                      {/* Energy bar */}
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                         <span style={{ fontSize:12, color:'#6b7280' }}>Strength</span>
                         <div style={{ width:120, height:8, background:'#1a1a2e', borderRadius:4, overflow:'hidden' }}>
-                          <div style={{ height:'100%', width:`${Math.min(100, superMemory.length * 5)}%`, background:'linear-gradient(90deg,#7C3AED,#2563EB,#059669)', borderRadius:4, animation:'forge-flash 3s ease-in-out infinite', backgroundSize:'200% 100%' }} />
+                          <div style={{ height:'100%', width:`${Math.min(100, superMemory.length * 5)}%`, background:'linear-gradient(90deg,#7C3AED,#2563EB,#059669)', borderRadius:4 }} />
                         </div>
                         <span style={{ fontSize:11, color:'#a78bfa', fontWeight:600 }}>{Math.min(100, superMemory.length * 5)}%</span>
                       </div>
@@ -2671,13 +2884,13 @@ export default function ForgeApp() {
                       {superMemory.map(m => (
                         <div key={m.id} style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:12, padding:16, position:'relative' }}>
                           <div style={{ display:'flex', alignItems:'flex-start', gap:8, marginBottom:8 }}>
-                            <div style={{ width:6, height:6, borderRadius:'50%', background:`hsl(${(m.strength*120).toFixed(0)},70%,60%)`, marginTop:5, flexShrink:0, boxShadow:`0 0 6px hsl(${(m.strength*120).toFixed(0)},70%,60%)` }} />
+                            <div style={{ width:6, height:6, borderRadius:'50%', background:`hsl(${(m.strength*120).toFixed(0)},70%,60%)`, marginTop:5, flexShrink:0 }} />
                             <p style={{ margin:0, fontSize:13, fontWeight:600, color:'#a78bfa', flex:1 }}>{m.topic}</p>
-                            <button onClick={() => deleteMemoryEntry(m.id)} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:12, padding:2, lineHeight:1 }}>✕</button>
+                            <button onClick={() => deleteMemoryEntry(m.id)} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:12, padding:2, lineHeight:1 }}>\u2715</button>
                           </div>
                           <p style={{ margin:'0 0 8px', fontSize:13, color:'#94a3b8', lineHeight:1.5 }}>{m.insight}</p>
                           <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                            <span style={{ fontSize:10, color:'#4b5563' }}>Seen {m.frequency}×</span>
+                            <span style={{ fontSize:10, color:'#4b5563' }}>Seen {m.frequency}\u00d7</span>
                             <div style={{ flex:1, height:3, background:'#1a1a2e', borderRadius:2, overflow:'hidden' }}>
                               <div style={{ height:'100%', width:`${Math.round(m.strength*100)}%`, background:`hsl(${(m.strength*120).toFixed(0)},70%,60%)`, borderRadius:2 }} />
                             </div>
@@ -2693,11 +2906,10 @@ export default function ForgeApp() {
           </div>
         )}
 
-      </div>{/* closes main content */}
+      </div>
 
-      {/* ── MODALS ────────────────────────────────────────────────────────────── */}
+      {/* ── MODALS ────────────────────────────────────────────────────── */}
 
-      {/* New Project */}
       {showNewProject && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setShowNewProject(false)}>
           <div style={{ width:420, background:'#111118', borderRadius:16, padding:24, border:'1px solid #1e1e2e' }} onClick={e => e.stopPropagation()}>
@@ -2719,12 +2931,11 @@ export default function ForgeApp() {
         </div>
       )}
 
-      {/* New Task */}
       {showNewTask && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setShowNewTask(false)}>
           <div style={{ width:380, background:'#111118', borderRadius:16, padding:24, border:'1px solid #1e1e2e' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ color:'#fff', margin:'0 0 20px', fontSize:18 }}>New Task</h3>
-            <input placeholder="Task title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} style={{ width:'100%', padding:'12px', marginBottom:12, background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#fff', fontSize:14, boxSizing:'border-box' }} />
+            <input placeholder="Task title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} onKeyDown={e => { if (e.key==='Enter') addTask(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:12, background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#fff', fontSize:14, boxSizing:'border-box', outline:'none' }} />
             <div style={{ display:'flex', gap:6, marginBottom:16 }}>
               {(['low','medium','high'] as const).map(p => {
                 const tpc: Record<string,string> = { low:'#6b7280', medium:'#D97706', high:'#DC2626' };
@@ -2733,77 +2944,20 @@ export default function ForgeApp() {
             </div>
             <div style={{ display:'flex', gap:10 }}>
               <button onClick={() => setShowNewTask(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid #2d2d44', borderRadius:8, color:'#6b7280', cursor:'pointer' }}>Cancel</button>
-              <button onClick={async () => {
-                if (!user || !newTaskTitle.trim()) return;
-                try { await apiFetch('/tasks', { method:'POST', body:JSON.stringify({ title:newTaskTitle.trim(), priority:newTaskPriority, project_id:activeProject?.id }) }, user.token); setShowNewTask(false); setNewTaskTitle(''); await loadTasks(); } catch (e:any) { alert(e.message); }
-              }} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Create</button>
+              <button onClick={addTask} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Add Task</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Artifact viewer */}
-      {viewArtifact && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setViewArtifact(null)}>
-          <div style={{ width:'80vw', maxWidth:900, height:'80vh', background:'#111118', borderRadius:16, padding:24, border:'1px solid #1e1e2e', display:'flex', flexDirection:'column' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
-              <span style={{ fontSize:22 }}>{({ code:'💻', html:'🌐', react:'⚛️', markdown:'📝', 'live-dashboard':'📊', diff:'📋', default:'📄' } as Record<string,string>)[viewArtifact.type] || '📄'}</span>
-              <h3 style={{ color:'#fff', margin:0, fontSize:18, flex:1 }}>{viewArtifact.title}</h3>
-              <span style={{ fontSize:11, color:'#4b5563', background:'#1a1a2e', padding:'4px 8px', borderRadius:6 }}>v{viewArtifact.version} · {viewArtifact.type}</span>
-              <button onClick={() => setViewArtifact(null)} style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontSize:18 }}>✕</button>
-            </div>
-            {(viewArtifact.type === 'html' || viewArtifact.type === 'react') ? (
-              <iframe srcDoc={viewArtifact.content} style={{ flex:1, border:'1px solid #1e1e2e', borderRadius:8, background:'#fff' }} title={viewArtifact.title} />
-            ) : (
-              <div style={{ flex:1, overflowY:'auto', background:'#0a0a0f', borderRadius:8, padding:16, border:'1px solid #1e1e2e' }}>
-                <pre style={{ margin:0, fontSize:13, color:'#e2e8f0', fontFamily:'ui-monospace, monospace', whiteSpace:'pre-wrap', wordBreak:'break-word', lineHeight:1.6 }}>{viewArtifact.content}</pre>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── THREAD CONTEXT MENU ─────────────────────────────────────────────── */}
-      {threadMenu && (() => {
-        const t = threads.find(x => x.id === threadMenu.threadId);
-        if (!t) return null;
-        return (
-          <div style={{ position:'fixed', left:threadMenu.x, top:threadMenu.y, background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:10, boxShadow:'0 8px 32px rgba(0,0,0,0.6)', zIndex:2000, minWidth:170, padding:'4px 0' }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding:'8px 14px 6px', borderBottom:'1px solid #2d2d44', marginBottom:2 }}>
-              <p style={{ margin:0, fontSize:11, color:'#6b7280', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>Thread</p>
-              <p style={{ margin:'2px 0 0', fontSize:12, color:'#a78bfa', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:150 }}>{t.title || 'Untitled'}</p>
-            </div>
-            {([
-              { icon:'✏️', label:'Rename', action: () => { setRenamingThread({ id:t.id, title:t.title || '' }); setThreadMenu(null); }, danger:false },
-              { icon:'📌', label: t.pinned ? 'Unpin' : 'Pin to top', action: () => { pinThread(t); setThreadMenu(null); }, danger:false },
-              { icon:'📦', label: t.archived ? 'Unarchive' : 'Archive', action: () => { archiveThread(t); setThreadMenu(null); }, danger:false },
-              { icon:'🗑️', label:'Delete', action: () => { if (confirm('Delete this thread?')) { deleteThread(t.id); setThreadMenu(null); } }, danger:true },
-            ] as { icon:string; label:string; action:()=>void; danger:boolean }[]).map(item => (
-              <button key={item.label} onClick={item.action}
-                style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'9px 14px', background:'transparent', border:'none', color:item.danger ? '#ef4444' : '#e2e8f0', cursor:'pointer', fontSize:13, textAlign:'left' }}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                <span>{item.icon}</span><span>{item.label}</span>
-              </button>
-            ))}
-          </div>
-        );
-      })()}
-
-      {/* ── RENAME THREAD MODAL ──────────────────────────────────────────────── */}
-      {renamingThread && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2001 }} onClick={() => setRenamingThread(null)}>
-          <div style={{ width:360, background:'#111118', borderRadius:16, padding:24, border:'1px solid #2d2d44' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ color:'#fff', margin:'0 0 16px', fontSize:18 }}>Rename Thread</h3>
-            <input
-              value={renamingThread.title}
-              onChange={e => setRenamingThread(prev => prev ? { ...prev, title: e.target.value } : null)}
-              onKeyDown={e => { if (e.key === 'Enter') renameThread(); if (e.key === 'Escape') setRenamingThread(null); }}
-              style={{ width:'100%', padding:'10px 12px', background:'#0d0d15', border:'1px solid #2d2d44', borderRadius:8, color:'#e2e8f0', fontSize:14, marginBottom:16, boxSizing:'border-box' }}
-              autoFocus
-            />
+      {renameThread && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenameThread(null)}>
+          <div style={{ width:380, background:'#111118', borderRadius:16, padding:24, border:'1px solid #1e1e2e' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'#fff', margin:'0 0 20px', fontSize:18 }}>Rename Thread</h3>
+            <input value={renameTitle} onChange={e => setRenameTitle(e.target.value)} onKeyDown={e => { if (e.key==='Enter') doRename(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:16, background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#fff', fontSize:14, boxSizing:'border-box', outline:'none' }} />
             <div style={{ display:'flex', gap:10 }}>
-              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid #2d2d44', borderRadius:8, color:'#6b7280', cursor:'pointer' }}>Cancel</button>
-              <button onClick={renameThread} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Rename</button>
+              <button onClick={() => setRenameThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid #2d2d44', borderRadius:8, color:'#6b7280', cursor:'pointer' }}>Cancel</button>
+              <button onClick={doRename} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Rename</button>
             </div>
           </div>
         </div>
@@ -2812,3 +2966,5 @@ export default function ForgeApp() {
     </div>
   );
 }
+
+export default ForgeApp;
