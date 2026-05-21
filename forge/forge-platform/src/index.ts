@@ -597,12 +597,6 @@ app.post('/api/chat', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.sub;
   ensureSubscription(userId);
 
-  // Check token budget
-  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
-  if (sub && sub.tokens_used >= sub.tokens_limit) {
-    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `You've used all ${sub.tokens_limit.toLocaleString()} tokens on your ${sub.plan} plan. Please upgrade.` }); return;
-  }
-
   const forgeModelId = model;
   const actualModel = resolveForgeModel(model);
   const provider = getProviderForModel(actualModel);
@@ -614,6 +608,12 @@ app.post('/api/chat', requireAuth, async (req: AuthRequest, res) => {
     res.json({ success: false, error: 'NO_API_KEY', needsApiKey: true, provider, providerName, model: forgeModelId,
       message: `No ${providerName} API key found. Go to Settings → LLM Providers and add your ${providerName} key to use ${actualModel}.` });
     return;
+  }
+
+  // Check token budget only when using Forge-managed keys (user has their own key — no limit)
+  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
+  if (sub && sub.tokens_used >= sub.tokens_limit && sub.plan === 'free' && !apiKey) {
+    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `You've used all ${sub.tokens_limit.toLocaleString()} tokens on your ${sub.plan} plan. Please upgrade.` }); return;
   }
 
   try {
@@ -1378,11 +1378,6 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     ? [{ role: 'system', content: systemParts.join('\n\n---\n\n') }, ...history]
     : history;
 
-  // Route through existing /api/chat logic
-  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
-  if (sub && sub.tokens_used >= sub.tokens_limit) {
-    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `Token limit reached. Please upgrade.` }); return;
-  }
   // Use model from request body if provided, fall back to thread's saved model
   const model = bodyModel || thread.model || 'claude-sonnet-4';
   // If a new model was specified, update the thread so future messages use it
@@ -1392,6 +1387,11 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   const actualModel = resolveForgeModel(model);
   const provider = getProviderForModel(actualModel);
   const apiKey = getUserKey(userId, provider);
+  // Only enforce token budget when no personal key is present (Forge-managed keys)
+  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
+  if (!apiKey && sub && sub.tokens_used >= sub.tokens_limit) {
+    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `Token limit reached. Please upgrade.` }); return;
+  }
   if (!apiKey) {
     const asstMsgId = uuidv4();
     const errMsg = `⚠️ No ${provider} API key found. Go to Settings → LLM Providers to add your key.`;
@@ -1594,12 +1594,30 @@ app.delete('/api/workspace-tasks/:id', requireAuth, (req: AuthRequest, res) => {
 
 // ── Live agent activity pub/sub (must be declared before executeDispatchRun) ──
 const agentActivityClients = new Map<string, Set<Response>>();
+// In-memory circular log per user (last 50 events) — survives SSE reconnects
+const agentActivityLog = new Map<string, Array<{ type: string; message: string; model?: string; elapsed?: number; ts: number }>>();
 function emitAgentActivity(userId: string, event: { type: string; message: string; model?: string; elapsed?: number }) {
+  const stamped = { ...event, ts: Date.now() };
+  // Store in log
+  if (!agentActivityLog.has(userId)) agentActivityLog.set(userId, []);
+  const log = agentActivityLog.get(userId)!;
+  log.unshift(stamped);
+  if (log.length > 50) log.pop();
+  // Push to SSE clients
   const clients = agentActivityClients.get(userId);
   if (!clients) return;
-  const data = `data: ${JSON.stringify(event)}\n\n`;
+  const data = `data: ${JSON.stringify(stamped)}\n\n`;
   clients.forEach(r => { try { r.write(data); } catch {} });
 }
+
+// GET /api/live/events — poll last N events (fallback for when SSE misses events)
+app.get('/api/live/events', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const since = parseInt(req.query.since as string || '0', 10);
+  const log = agentActivityLog.get(userId) || [];
+  const events = since > 0 ? log.filter(e => e.ts > since) : log.slice(0, 20);
+  res.json({ success: true, data: events });
+});
 
 // ── Dispatch (with SSE streaming) ─────────────────────────────
 // Active SSE clients: runId -> response

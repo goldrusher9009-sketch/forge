@@ -4,31 +4,31 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --fg-bg:      #08080d;
-  --fg-bg2:     #0e0e16;
-  --fg-bg3:     #13131e;
-  --fg-bg4:     #1a1a2a;
-  --fg-bg5:     #22223a;
-  --fg-orange:  #f97316;
-  --fg-orange2: #fb923c;
-  --fg-odim:    rgba(249,115,22,0.12);
-  --fg-odim2:   rgba(249,115,22,0.20);
-  --fg-border:  rgba(255,255,255,0.055);
-  --fg-border2: rgba(255,255,255,0.10);
-  --fg-border3: rgba(249,115,22,0.25);
-  --fg-text:    #f0f0f8;
-  --fg-text2:   #8888aa;
-  --fg-text3:   #4a4a66;
-  --fg-green:   var(--fg-green);
-  --fg-purple:  var(--fg-orange2);
-  --fg-blue:    #38bdf8;
-  --fg-red:     var(--fg-red);
-  --fg-font-ui: 'Inter', system-ui, sans-serif;
-  --fg-font-display: 'Syne', system-ui, sans-serif;
-  --fg-font-mono: 'DM Mono', 'Fira Code', monospace;
+  --fg-bg:      #0a0a0f;
+  --fg-bg2:     #0f0f18;
+  --fg-bg3:     #141420;
+  --fg-bg4:     #1c1c2e;
+  --fg-bg5:     #252540;
+  --fg-orange:  #da7756;
+  --fg-orange2: #e8956d;
+  --fg-odim:    rgba(218,119,86,0.12);
+  --fg-odim2:   rgba(218,119,86,0.20);
+  --fg-border:  rgba(255,255,255,0.06);
+  --fg-border2: rgba(255,255,255,0.11);
+  --fg-border3: rgba(218,119,86,0.28);
+  --fg-text:    #ececf1;
+  --fg-text2:   #8e8ea0;
+  --fg-text3:   #565666;
+  --fg-green:   #4ade80;
+  --fg-purple:  #a78bfa;
+  --fg-blue:    #60a5fa;
+  --fg-red:     #f87171;
+  --fg-font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --fg-font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --fg-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -457,7 +457,7 @@ export default function ForgeApp() {
   useEffect(() => { superEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [superMessages]);
   useEffect(() => { terminalEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [terminalLines]);
 
-  // Connect live activity SSE when user logs in
+  // Connect live activity SSE + polling fallback when user logs in
   useEffect(() => {
     if (!user) { liveSSERef.current?.close(); liveSSERef.current = null; return; }
     const token = user.token;
@@ -466,11 +466,31 @@ export default function ForgeApp() {
       try {
         const data = JSON.parse(ev.data);
         if (data.type === 'connected') return;
-        setLiveEvents(prev => [{ ...data, ts: Date.now() }, ...prev].slice(0, 100));
+        setLiveEvents(prev => {
+          const exists = prev.some(e => e.ts === data.ts);
+          if (exists) return prev;
+          return [{ ...data, ts: data.ts || Date.now() }, ...prev].slice(0, 100);
+        });
       } catch {}
     };
     liveSSERef.current = es;
-    return () => { es.close(); };
+    // Polling fallback — catches events when SSE is on a different backend instance
+    let lastTs = 0;
+    const poll = setInterval(async () => {
+      try {
+        const d = await apiFetch(`/live/events?since=${lastTs}`, {}, token);
+        if (d?.data?.length) {
+          setLiveEvents(prev => {
+            const newEvs = (d.data as any[]).filter(e => !prev.some(p => p.ts === e.ts));
+            if (!newEvs.length) return prev;
+            if (newEvs.length > 0) lastTs = Math.max(...newEvs.map((e:any) => e.ts));
+            return [...newEvs, ...prev].slice(0, 100);
+          });
+          lastTs = Math.max(lastTs, ...d.data.map((e:any) => e.ts));
+        }
+      } catch {}
+    }, 3000);
+    return () => { es.close(); clearInterval(poll); };
   }, [user]);
 
 
