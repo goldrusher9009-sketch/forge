@@ -1499,10 +1499,10 @@ export default function ForgeApp() {
                 <span style={{ fontSize:10, color:'var(--fg-text3)' }}>tokens</span>
               </div>
               {/* Sketch toggle */}
-              <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'5px 10px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>✏️ Sketch</button>
+              {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'5px 10px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>✏️ Sketch</button>}
 
               {/* Multi-response toggle */}
-              <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? 'var(--fg-border)' : 'transparent', border:`1px solid ${multiResponse ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:multiResponse ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>⚡ Multi</button>
+              {!isMobile && <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? 'var(--fg-border)' : 'transparent', border:`1px solid ${multiResponse ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:multiResponse ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>⚡ Multi</button>}
 
               {/* Model selector -- shows models from all providers with saved keys */}
               {(() => {
@@ -1528,7 +1528,7 @@ export default function ForgeApp() {
                 const orModels = providerModels['openrouter'] || openRouterModels;
                 const noKeys = availableForge.length === 0 && availableDirect.length === 0 && dynamicGroups.length === 0;
                 return (
-                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color: noKeys && orModels.length === 0 ? 'var(--fg-text2)' : 'var(--fg-orange2)', padding:'6px 10px', fontSize:12, cursor:'pointer', maxWidth:240 }}>
+                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color: noKeys && orModels.length === 0 ? 'var(--fg-text2)' : 'var(--fg-orange2)', padding:'6px 10px', fontSize:12, cursor:'pointer', maxWidth: isMobile ? 140 : 240 }}>
                     {noKeys && orModels.length === 0 && <option value="">⚠ Add an API key in Settings</option>}
                     {availableForge.length > 0 && <optgroup label="⚡ Forge Models">{availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</optgroup>}
                     {availableDirect.map(grp => (
@@ -1562,7 +1562,7 @@ export default function ForgeApp() {
                 );
               })()}
 
-              <button onClick={() => setRightExpanded(!rightExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{rightExpanded ? '▶' : '◀'}</button>
+              {!isMobile && <button onClick={() => setRightExpanded(!rightExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{rightExpanded ? '▶' : '◀'}</button>}
             </div>
 
             <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
@@ -1591,7 +1591,7 @@ export default function ForgeApp() {
                 )}
 
                 {/* Messages canvas */}
-                <div style={{ flex:1, overflowY:'auto', padding:'24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
+                <div style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
                   {messages.length === 0 && !activeThread && (
                     <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
                       <div style={{ fontSize:48 }}>⚡</div>
@@ -1723,7 +1723,7 @@ export default function ForgeApp() {
                 )}
 
                 {/* Composer */}
-                <div style={{ padding:'12px 24px 16px', background:'var(--fg-bg)', borderTop:'1px solid var(--fg-border)' }}>
+                <div style={{ padding: isMobile ? '8px 10px 12px' : '12px 24px 16px', background:'var(--fg-bg)', borderTop:'1px solid var(--fg-border)' }}>
                   <div style={{ display:'flex', gap:6, marginBottom:10, flexWrap:'wrap' }}>
                     {agents.filter(a => a.enabled).map(a => (
                       <button key={a.id} onClick={() => toggleAgent(a.id)} style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20, border:activeAgentIds.includes(a.id) ? `1px solid ${a.color}` : '1px solid var(--fg-border2)', background:activeAgentIds.includes(a.id) ? `${a.color}22` : 'transparent', color:activeAgentIds.includes(a.id) ? a.color : 'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight:500, transition:'all 0.15s' }}>
@@ -1753,7 +1753,7 @@ export default function ForgeApp() {
                     </div>
                   )}
                   <div style={{ position:'relative', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, overflow:'hidden' }}>
-                    <textarea ref={textareaRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} placeholder={activeThread ? 'Message... (Shift+Enter for newline)' : 'Start a conversation...'} rows={3} style={{ width:'100%', padding:'14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize:14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
+                    <textarea ref={textareaRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} placeholder={activeThread ? 'Message...' : 'Start a conversation...'} rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
                         {/* Voice button */}
