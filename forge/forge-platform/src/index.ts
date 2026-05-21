@@ -466,13 +466,15 @@ function resolveForgeModel(modelId: string): string {
 }
 
 function getProviderForModel(modelId: string): string {
-  if (modelId.startsWith('claude')) return 'anthropic';
-  if (modelId.startsWith('gpt') || modelId.startsWith('o3')) return 'openai';
-  if (modelId.startsWith('gemini')) return 'gemini';
-  if (modelId.startsWith('llama') || modelId.startsWith('mixtral')) return 'groq';
-  if (modelId.startsWith('mistral')) return 'mistral';
-  if (modelId.startsWith('openrouter/') || (modelId.includes('/') && !modelId.startsWith('claude') && !modelId.startsWith('gpt') && !modelId.startsWith('gemini') && !modelId.startsWith('llama') && !modelId.startsWith('mistral'))) return 'openrouter';
-  return MODEL_COSTS[modelId]?.provider || 'openrouter';
+  // Strip openrouter/ prefix if present before routing
+  const mid = modelId.startsWith('openrouter/') ? modelId.slice('openrouter/'.length) : modelId;
+  if (mid.startsWith('claude')) return 'anthropic';
+  if (mid.startsWith('gpt') || mid.startsWith('o3') || mid.startsWith('o1') || mid.startsWith('o4')) return 'openai';
+  if (mid.startsWith('gemini')) return 'gemini';
+  if (mid.startsWith('llama') || mid.startsWith('mixtral')) return 'groq';
+  if (mid.startsWith('mistral')) return 'mistral';
+  if (mid.includes('/')) return 'openrouter';
+  return MODEL_COSTS[mid]?.provider || 'anthropic';
 }
 
 // Env-var fallback map — Railway redeploys wipe the SQLite DB, so env vars are the reliable source

@@ -767,13 +767,22 @@ export default function ForgeApp() {
     try {
       const body: any = { title: title || 'New conversation' };
       if (activeProject) body.project_id = activeProject.id;
-      if (selectedModel) body.model = selectedModel;
+      if (selectedModel) body.model = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
       const d = await apiFetch('/threads', { method:'POST', body:JSON.stringify(body) }, user.token);
       const t: Thread = (d?.data && typeof d.data === 'object' && d.data.id) ? d.data : (d?.id ? d : null);
       if (!t) throw new Error('Failed to create thread — unexpected response');
       await loadThreads(activeProject?.id); setActiveThread(t); setMessages([]);
       return t;
-    } catch (e: any) { console.error('newThread error:', e.message); return null; }
+    } catch (e: any) { 
+      console.error('newThread error:', e.message);
+      // Fallback: create thread with minimal data
+      try {
+        const fallback = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: title || 'New conversation' }) }, user.token);
+        const t2: Thread = fallback?.data || fallback;
+        if (t2?.id) { await loadThreads(activeProject?.id); setActiveThread(t2); setMessages([]); return t2; }
+      } catch {}
+      return null; 
+    }
   };
 
   const selectThread = async (t: Thread) => { setActiveThread(t); await loadMessages(t.id); loadThreadTokenStats(t.id); };
@@ -823,14 +832,15 @@ export default function ForgeApp() {
     }
 
     try {
-      const body: any = { content:userContent, model:selectedModel, agent_ids:activeAgentIds };
+      const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
+      const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds };
       let threadId = currentThread.id;
       try {
         await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
       } catch (e: any) {
         // Thread was wiped (Railway redeploy) — create a fresh one and retry
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
-          const fresh = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: userContent.slice(0,60), model: selectedModel }) }, user.token);
+          const fresh = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: userContent.slice(0,60), model: cleanModel }) }, user.token);
           const newT = fresh?.data || fresh;
           threadId = newT.id;
           setActiveThread(newT);
@@ -1331,9 +1341,24 @@ export default function ForgeApp() {
                       <div style={{ maxWidth:'75%', padding:'12px 16px', borderRadius:m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background:m.role==='user' ? '#1a1a2e' : '#111118', border:'1px solid #1e1e2e', lineHeight:1.6 }}>
                         <p style={{ margin:0, fontSize:14, color:'#e2e8f0', whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{m.content}</p>
                         {m.model && <p style={{ margin:'6px 0 0', fontSize:11, color:'#4b5563' }}>{m.model}</p>}
-                        {m.role === 'assistant' && (
-                          <button onClick={() => speakText(m.content)} style={{ marginTop:4, background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:11 }} title="Read aloud">🔊</button>
-                        )}
+                        <div style={{ display:'flex', gap:4, marginTop:6, opacity:0.5, transition:'opacity 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.opacity='1')}
+                          onMouseLeave={e => (e.currentTarget.style.opacity='0.5')}>
+                          <button onClick={() => { navigator.clipboard.writeText(m.content); }} title="Copy"
+                            style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
+                            onMouseEnter={e => (e.currentTarget.style.background='#1e1e2e')}
+                            onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                            📋 Copy
+                          </button>
+                          {m.role === 'assistant' && (
+                            <button onClick={() => speakText(m.content)} title="Read aloud"
+                              style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
+                              onMouseEnter={e => (e.currentTarget.style.background='#1e1e2e')}
+                              onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                              🔊 Read
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
