@@ -1,6 +1,6 @@
 {
   "name": "forge-platform",
-  "version": "1.0.0",
+  "version": "5.4.0",
   "description": "Forge - Distributed multi-agent platform",
   "main": "dist/index.js",
   "engines": {

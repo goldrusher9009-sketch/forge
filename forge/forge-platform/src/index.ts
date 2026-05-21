@@ -1,5 +1,5 @@
 /**
- * Forge Platform v5.2 — Key vault, thread actions, token tracking, SuperAgent memory
+ * Forge Platform v5.4 — OpenRouter model browser, key validation, chat fixes, voice
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */

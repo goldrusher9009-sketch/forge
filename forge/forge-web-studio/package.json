@@ -1,6 +1,6 @@
 {
   "name": "forge-web-studio",
-  "version": "5.0.0",
+  "version": "5.4.0",
   "description": "Forge AI - Web Studio for Agent Management & Task Execution",
   "private": true,
   "scripts": {

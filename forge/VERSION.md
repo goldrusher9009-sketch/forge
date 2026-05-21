@@ -1,6 +1,36 @@
 # Forge Platform — Version History
 
-## v5.1 — 2026-05-20 (current)
+## v5.4 — 2026-05-20 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **OpenRouter key fix** — Save button now calls `saveOneKey` with immediate `loadOpenRouterModels()` reload. Inline key entry added directly on the OpenRouter tab so user never has to leave the model browser
+- **OpenRouter model browser** — Full openrouter.ai feature clone: stats bar (total/free/paid count), FREE badge on `:free` models, $/1M prompt+completion pricing, context window chip, filter (all/free/paid), sort (name/price↑/price↓/context), 120 results with search refinement prompt
+- **Key validation** — `validateVaultKey()` pings backend `/api/keys/:provider/validate`. Each vault row shows ✓ Active / ✗ Invalid / ● Inactive badge + ⚡ Validate button. Keys auto-validate 500ms after being saved
+- **Chat Enter fix** — `newThread()` now returns the created thread. `sendMessage` creates thread AND sends in one shot — no double-press needed. Thread title set from first message
+- **Voice button** — Purple, pulsing during recording, labeled "● Recording…" vs "Voice"
+- **Token counter** — Always visible in navbar (shows 0 when empty, was hidden before)
+
+### Backend: forge-platform/src/index.ts
+- **POST /api/keys/:provider/validate** — pings provider API (Anthropic, OpenAI, OpenRouter, Groq, Gemini, Mistral), sets `key_status` to `active` or `invalid` in DB, returns `{ valid, error }`
+
+### Version bumps
+- forge-web-studio/package.json: 5.0.0 → 5.4.0
+- forge-platform/package.json: 1.0.0 → 5.4.0
+
+---
+
+## v5.3 — 2026-05-20
+- JSX structural fixes (div balance errors, adjacent JSX elements, null bytes)
+- Vercel + Railway deployment verified end-to-end
+
+---
+
+## v5.2 — 2026-05-20
+- Key vault UI, thread sidebar context menu, navbar token counter, Forge Super tab
+
+---
+
+## v5.1 — 2026-05-20
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx (1878 lines)
 - **Admin panel** — 🛡️ tab visible only to `role=admin` users

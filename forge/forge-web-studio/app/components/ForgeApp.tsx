@@ -1,4 +1,4 @@
-// Forge AI Workspace v5.3 — Key vault, thread actions+tokens, SuperAgent memory
+// Forge AI Workspace v5.4 — OpenRouter model browser, key validation, chat/voice/token fixes
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
