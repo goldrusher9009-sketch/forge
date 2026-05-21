@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://forge-production-2692.up.railway.app/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface User { id: string; email: string; name?: string; token: string; plan?: string; }
+interface User { id: string; email: string; name?: string; token: string; plan?: string; role?: string; }
 interface Project { id: string; name: string; color: string; system_prompt?: string; pinned?: number; created_at: string; }
 interface Thread { id: string; project_id?: string; title: string; created_at: string; }
 interface Message { id: string; thread_id: string; role: 'user' | 'assistant'; content: string; model?: string; created_at: string; }
@@ -99,13 +99,13 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
         const login = await apiFetch('/auth/login', { method:'POST', body:JSON.stringify({ email, password }) });
         const u = login.data?.user || login.user || {};
         const token = login.data?.accessToken || login.token || '';
-        onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token });
+        onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token, role: u.role });
       } else {
         const data = await apiFetch('/auth/login', { method:'POST', body:JSON.stringify(body) });
         const u = data.data?.user || data.user || {};
         const token = data.data?.accessToken || data.token || '';
         if (!token) throw new Error('No token received — check credentials');
-        onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token });
+        onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token, role: u.role });
       }
     } catch (e: any) {
       const msg = e.message || '';
@@ -164,8 +164,8 @@ export default function ForgeApp() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
-  // Main tab — 'workspace' | 'router' | 'billing' | 'platforms' | 'settings'
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'>('workspace');
+  // Main tab — 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin'
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'>('workspace');
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'>('artifacts');
@@ -217,6 +217,15 @@ export default function ForgeApp() {
   const [apiKeys, setApiKeys] = useState<Record<string,string>>({});
   const [keysSaved, setKeysSaved] = useState(false);
   const [savedProviders, setSavedProviders] = useState<Record<string,boolean>>({});
+
+  // Admin panel state
+  const [adminTab, setAdminTab] = useState<'stats'|'users'|'keys'|'models'>('stats');
+  const [adminStats, setAdminStats] = useState<any>(null);
+  const [adminUsers, setAdminUsers] = useState<any[]>([]);
+  const [adminPlatformKeys, setAdminPlatformKeys] = useState<any[]>([]);
+  const [adminModels, setAdminModels] = useState<any[]>([]);
+  const [adminKeyInputs, setAdminKeyInputs] = useState<Record<string,string>>({});
+  const [adminSaving, setAdminSaving] = useState('');
 
   // Service credentials (subscription logins — Claude, OpenAI, Cursor) — persisted in localStorage
   const [serviceCreds, setServiceCreds] = useState<Record<string, { email:string; password:string; connected:boolean }>>({
@@ -325,6 +334,46 @@ export default function ForgeApp() {
       providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
       setSavedProviders(confirmed);
     } catch {}
+  };
+
+  // ── Admin loaders ──────────────────────────────────────────────────────────
+  const loadAdminStats   = async () => { if (!user) return; try { const d = await apiFetch('/admin/stats', {}, user.token); setAdminStats(d?.data || d); } catch {} };
+  const loadAdminUsers   = async () => { if (!user) return; try { const d = await apiFetch('/admin/users', {}, user.token); setAdminUsers(unwrap(d)); } catch {} };
+  const loadAdminKeys    = async () => { if (!user) return; try { const d = await apiFetch('/admin/platform-keys', {}, user.token); setAdminPlatformKeys(unwrap(d)); } catch {} };
+  const loadAdminModels  = async () => { if (!user) return; try { const d = await apiFetch('/admin/models', {}, user.token); setAdminModels(unwrap(d)); } catch {} };
+
+  const saveAdminKey = async (provider: string) => {
+    if (!user) return;
+    const key = adminKeyInputs[provider]?.trim();
+    if (!key) { alert('Please enter a key first.'); return; }
+    setAdminSaving(provider);
+    try {
+      await apiFetch('/admin/platform-keys', { method:'POST', body:JSON.stringify({ provider, key }) }, user.token);
+      setAdminKeyInputs(prev => ({ ...prev, [provider]: '' }));
+      await loadAdminKeys();
+    } catch (e: any) { alert(`Failed: ${e?.message || e}`); }
+    finally { setAdminSaving(''); }
+  };
+
+  const deleteAdminKey = async (provider: string) => {
+    if (!user || !confirm(`Remove platform key for ${provider}?`)) return;
+    try { await apiFetch(`/admin/platform-keys/${provider}`, { method:'DELETE' }, user.token); await loadAdminKeys(); } catch (e: any) { alert(e?.message); }
+  };
+
+  const toggleAdminModel = async (modelId: string, enabled: boolean) => {
+    if (!user) return;
+    try {
+      await apiFetch(`/admin/models/${modelId}`, { method:'PATCH', body:JSON.stringify({ enabled: enabled ? 1 : 0 }) }, user.token);
+      setAdminModels(prev => prev.map(m => m.id === modelId ? { ...m, enabled: enabled ? 1 : 0 } : m));
+    } catch (e: any) { alert(e?.message); }
+  };
+
+  const changeUserRole = async (userId: string, role: string) => {
+    if (!user) return;
+    try {
+      await apiFetch(`/admin/users/${userId}`, { method:'PATCH', body:JSON.stringify({ role }) }, user.token);
+      setAdminUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u));
+    } catch (e: any) { alert(e?.message); }
   };
 
   // ── Save a single provider's API key ──────────────────────────────────────
@@ -638,14 +687,15 @@ export default function ForgeApp() {
 
         {/* Nav tabs */}
         <div style={{ padding:'8px', borderBottom:'1px solid #1e1e2e' }}>
-          {([
+          {(([
             { id:'workspace', icon:'💬', label:'Workspace' },
             { id:'router', icon:'🔀', label:'ForgeRouter' },
             { id:'billing', icon:'💳', label:'Billing' },
             { id:'platforms', icon:'🌐', label:'Platforms' },
             { id:'settings', icon:'⚙️', label:'Settings' },
-          ] as const).map(tab => (
-            <button key={tab.id} onClick={() => setMainTab(tab.id)} title={tab.label} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:mainTab===tab.id ? '#1a1a2e' : 'transparent', border:'none', borderRadius:6, color:mainTab===tab.id ? '#a78bfa' : '#6b7280', cursor:'pointer', fontSize:13, fontWeight:mainTab===tab.id ? 600 : 400, marginBottom:2, justifyContent:sidebarExpanded ? 'flex-start' : 'center' }}>
+            ...(user.role === 'admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
+          ]) as Array<{ id: string; icon: string; label: string }>).map((tab) => (
+            <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id === 'admin') { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); } }} title={tab.label} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:mainTab===tab.id ? '#1a1a2e' : 'transparent', border:'none', borderRadius:6, color:mainTab===tab.id ? (tab.id==='admin' ? '#f59e0b' : '#a78bfa') : '#6b7280', cursor:'pointer', fontSize:13, fontWeight:mainTab===tab.id ? 600 : 400, marginBottom:2, justifyContent:sidebarExpanded ? 'flex-start' : 'center' }}>
               <span style={{ fontSize:16 }}>{tab.icon}</span>
               {sidebarExpanded && tab.label}
             </button>
@@ -1589,6 +1639,163 @@ export default function ForgeApp() {
                 <p style={{ margin:'0 0 16px', fontSize:13, color:'#6b7280' }}>{user.email}</p>
                 <button onClick={handleLogout} style={{ padding:'8px 16px', background:'transparent', border:'1px solid #DC2626', borderRadius:8, color:'#DC2626', fontSize:13, cursor:'pointer' }}>Sign Out</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ADMIN TAB ───────────────────────────────────────────────────────── */}
+        {mainTab === 'admin' && user.role === 'admin' && (
+          <div style={{ flex:1, overflowY:'auto', padding:24 }}>
+            <div style={{ maxWidth:960, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24 }}>
+                <span style={{ fontSize:24 }}>🛡️</span>
+                <div>
+                  <h2 style={{ margin:0, color:'#f59e0b', fontSize:20, fontWeight:700 }}>Admin Panel</h2>
+                  <p style={{ margin:0, color:'#6b7280', fontSize:13 }}>Platform management & moderation</p>
+                </div>
+              </div>
+
+              {/* Sub-tabs */}
+              <div style={{ display:'flex', gap:4, marginBottom:24, background:'#0a0a0f', padding:4, borderRadius:10, width:'fit-content' }}>
+                {([
+                  { id:'stats', label:'📊 Stats' },
+                  { id:'users', label:'👥 Users' },
+                  { id:'keys', label:'🔑 Platform Keys' },
+                  { id:'models', label:'🤖 Models' },
+                ] as const).map(t => (
+                  <button key={t.id} onClick={() => setAdminTab(t.id)} style={{ padding:'7px 16px', background:adminTab===t.id ? '#1a1a2e' : 'transparent', border:`1px solid ${adminTab===t.id ? '#f59e0b' : 'transparent'}`, borderRadius:7, color:adminTab===t.id ? '#f59e0b' : '#6b7280', cursor:'pointer', fontSize:13, fontWeight:adminTab===t.id ? 600 : 400, whiteSpace:'nowrap' }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── STATS ── */}
+              {adminTab === 'stats' && (
+                <div>
+                  <div style={{ display:'flex', gap:4, marginBottom:16 }}>
+                    <button onClick={() => { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); }} style={{ padding:'7px 16px', background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color:'#a78bfa', cursor:'pointer', fontSize:13 }}>↺ Refresh</button>
+                  </div>
+                  {adminStats ? (
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:16, marginBottom:24 }}>
+                      {[
+                        { label:'Total Users', value: adminStats.total_users ?? 0, color:'#7C3AED' },
+                        { label:'Active Today', value: adminStats.active_today ?? 0, color:'#2563EB' },
+                        { label:'Threads', value: adminStats.total_threads ?? 0, color:'#059669' },
+                        { label:'Messages', value: adminStats.total_messages ?? 0, color:'#D97706' },
+                        { label:'Revenue (USD)', value: `$${(adminStats.total_revenue_usd ?? 0).toFixed(2)}`, color:'#DB2777' },
+                        { label:'Tokens Used', value: (adminStats.total_tokens ?? 0).toLocaleString(), color:'#0891B2' },
+                      ].map(s => (
+                        <div key={s.label} style={{ background:'#111118', border:`1px solid ${s.color}33`, borderRadius:12, padding:'20px 20px 16px' }}>
+                          <p style={{ margin:'0 0 8px', fontSize:12, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.05em' }}>{s.label}</p>
+                          <p style={{ margin:0, fontSize:28, fontWeight:700, color:s.color }}>{s.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:12, padding:40, textAlign:'center' }}>
+                      <p style={{ color:'#4b5563', fontSize:14 }}>Loading stats… click Refresh if this takes long.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── USERS ── */}
+              {adminTab === 'users' && (
+                <div>
+                  <p style={{ color:'#6b7280', fontSize:13, marginBottom:16 }}>{adminUsers.length} users registered</p>
+                  <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:12, overflow:'hidden' }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 120px 120px 100px', gap:0, padding:'10px 16px', background:'#0a0a0f', borderBottom:'1px solid #1e1e2e' }}>
+                      {['Email','Role','Joined','Actions'].map(h => <span key={h} style={{ fontSize:11, color:'#4b5563', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{h}</span>)}
+                    </div>
+                    {adminUsers.length === 0 && <p style={{ color:'#4b5563', fontSize:13, padding:'16px' }}>No users found.</p>}
+                    {adminUsers.map((u: any) => (
+                      <div key={u.id} style={{ display:'grid', gridTemplateColumns:'1fr 120px 120px 100px', gap:0, padding:'12px 16px', borderBottom:'1px solid #1e1e2e', alignItems:'center' }}>
+                        <div>
+                          <p style={{ margin:0, fontSize:13, color:'#e2e8f0' }}>{u.email}</p>
+                          {u.first_name && <p style={{ margin:0, fontSize:11, color:'#4b5563' }}>{u.first_name} {u.last_name}</p>}
+                        </div>
+                        <select value={u.role} onChange={e => changeUserRole(u.id, e.target.value)} style={{ padding:'4px 8px', background:'#0a0a0f', border:`1px solid ${u.role==='admin' ? '#f59e0b' : '#1e1e2e'}`, borderRadius:6, color:u.role==='admin' ? '#f59e0b' : '#94a3b8', fontSize:12, cursor:'pointer' }}>
+                          <option value="user">user</option>
+                          <option value="admin">admin</option>
+                        </select>
+                        <span style={{ fontSize:11, color:'#4b5563' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</span>
+                        <span style={{ fontSize:11, color:u.verified ? '#059669' : '#DC2626' }}>{u.verified ? '✓ verified' : '✗ unverified'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── PLATFORM KEYS ── */}
+              {adminTab === 'keys' && (
+                <div>
+                  <p style={{ color:'#94a3b8', fontSize:13, marginBottom:20 }}>Platform-level API keys are used as fallback for all users who haven't saved their own key. Keys are encrypted server-side and never exposed to the frontend.</p>
+                  <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                    {[
+                      { provider:'anthropic', label:'Anthropic (Claude)', placeholder:'sk-ant-api03-...', color:'#D97706' },
+                      { provider:'openai', label:'OpenAI', placeholder:'sk-...', color:'#059669' },
+                      { provider:'gemini', label:'Google Gemini', placeholder:'AIza...', color:'#2563EB' },
+                      { provider:'groq', label:'Groq', placeholder:'gsk_...', color:'#7C3AED' },
+                      { provider:'openrouter', label:'OpenRouter', placeholder:'sk-or-v1-...', color:'#DB2777' },
+                      { provider:'mistral', label:'Mistral', placeholder:'...', color:'#0891B2' },
+                      { provider:'together', label:'Together AI', placeholder:'...', color:'#65A30D' },
+                      { provider:'perplexity', label:'Perplexity', placeholder:'pplx-...', color:'#DC2626' },
+                    ].map(({ provider, label, placeholder, color }) => {
+                      const saved = adminPlatformKeys.find((k: any) => k.provider === provider);
+                      return (
+                        <div key={provider} style={{ background:'#111118', border:`1px solid ${saved ? color+'44' : '#1e1e2e'}`, borderRadius:12, padding:16 }}>
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                            <div>
+                              <span style={{ fontSize:13, color:'#e2e8f0', fontWeight:600 }}>{label}</span>
+                              {saved && <span style={{ marginLeft:10, fontSize:11, color:color, background:color+'22', padding:'2px 8px', borderRadius:20 }}>✓ Key saved · enabled={saved.enabled ? 'yes' : 'no'}</span>}
+                              {!saved && <span style={{ marginLeft:10, fontSize:11, color:'#4b5563' }}>No platform key</span>}
+                            </div>
+                            {saved && <button onClick={() => deleteAdminKey(provider)} style={{ padding:'4px 10px', background:'transparent', border:'1px solid #DC2626', borderRadius:6, color:'#DC2626', fontSize:11, cursor:'pointer' }}>Remove</button>}
+                          </div>
+                          <div style={{ display:'flex', gap:8 }}>
+                            <input
+                              type="password"
+                              placeholder={saved ? '••••••••••• (replace)' : placeholder}
+                              value={adminKeyInputs[provider] || ''}
+                              onChange={e => setAdminKeyInputs(prev => ({ ...prev, [provider]: e.target.value }))}
+                              style={{ flex:1, padding:'9px 12px', background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13 }}
+                            />
+                            <button onClick={() => saveAdminKey(provider)} disabled={adminSaving === provider} style={{ padding:'9px 16px', background:color, border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', opacity:adminSaving===provider ? 0.6 : 1, whiteSpace:'nowrap' }}>
+                              {adminSaving===provider ? '…' : saved ? 'Replace' : 'Save'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── MODELS ── */}
+              {adminTab === 'models' && (
+                <div>
+                  <p style={{ color:'#94a3b8', fontSize:13, marginBottom:20 }}>Enable or disable models platform-wide. Disabled models won't appear in any user's model selector.</p>
+                  <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:12, overflow:'hidden' }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 80px 80px', padding:'10px 16px', background:'#0a0a0f', borderBottom:'1px solid #1e1e2e' }}>
+                      {['Model','Provider','Markup','Enabled'].map(h => <span key={h} style={{ fontSize:11, color:'#4b5563', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{h}</span>)}
+                    </div>
+                    {adminModels.length === 0 && <p style={{ color:'#4b5563', fontSize:13, padding:'16px' }}>Loading models…</p>}
+                    {adminModels.map((m: any) => (
+                      <div key={m.id} style={{ display:'grid', gridTemplateColumns:'2fr 1fr 80px 80px', padding:'10px 16px', borderBottom:'1px solid #0d0d15', alignItems:'center', background:m.enabled ? 'transparent' : '#0d0d15' }}>
+                        <div>
+                          <p style={{ margin:0, fontSize:13, color: m.enabled ? '#e2e8f0' : '#4b5563', fontWeight:500 }}>{m.label}</p>
+                          <p style={{ margin:0, fontSize:11, color:'#4b5563' }}>{m.id}{m.is_forge_model ? ' · forge' : ''}</p>
+                        </div>
+                        <span style={{ fontSize:12, color:'#6b7280', textTransform:'capitalize' }}>{m.provider}</span>
+                        <span style={{ fontSize:12, color:'#6b7280' }}>{m.markup ? `×${m.markup}` : '—'}</span>
+                        <button onClick={() => toggleAdminModel(m.id, !m.enabled)} style={{ padding:'5px 12px', background:m.enabled ? '#05966922' : '#1e1e2e', border:`1px solid ${m.enabled ? '#059669' : '#2d2d44'}`, borderRadius:20, color:m.enabled ? '#059669' : '#4b5563', cursor:'pointer', fontSize:12, fontWeight:600, transition:'all 0.15s' }}>
+                          {m.enabled ? 'ON' : 'OFF'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
