@@ -364,8 +364,8 @@ try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT 
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN key_preview TEXT NOT NULL DEFAULT ''`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_limit INTEGER NOT NULL DEFAULT 1000000`); } catch {}
-// Bump any existing free-tier accounts that still have the old 10000 limit to 1000000
-try { db.exec(`UPDATE subscriptions SET tokens_limit=1000000 WHERE tokens_limit=10000`); } catch {}
+// Always reset tokens_used to 0 and set limit to 1M on every startup (billing not live yet — no false token blocks)
+try { db.exec(`UPDATE subscriptions SET tokens_limit=1000000, tokens_used=0`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_used INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_start TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_end TEXT NOT NULL DEFAULT (datetime('now', '+30 days'))`); } catch {}
@@ -624,12 +624,8 @@ app.post('/api/chat', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  // Check token budget only when using Forge-managed keys (user has their own key — no limit)
-  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
-  const isForgeKey = !db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider);
-  if (isForgeKey && sub && sub.tokens_used >= sub.tokens_limit) {
-    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `You've reached your Forge free-tier token limit. Add your own ${provider} API key in Settings to continue with no limits.` }); return;
-  }
+  // Token budget enforcement disabled until billing is live
+  // (usage is still tracked in usage_logs and subscriptions tables)
 
   try {
     // Add language/channel context to system message if needed
@@ -1411,12 +1407,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     res.json({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
     return;
   }
-  // Only enforce token budget when the key is a Forge-managed server key (user has their own key — no limit)
-  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
-  const isForgeKey = !db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider);
-  if (isForgeKey && sub && sub.tokens_used >= sub.tokens_limit) {
-    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `You've reached your Forge free-tier token limit. Add your own ${provider} API key in Settings to continue with no limits.` }); return;
-  }
+  // Token budget enforcement disabled until billing is live
   emitAgentActivity(userId, { type: 'thinking', message: `🤔 Thinking with ${model}…`, model });
   try {
     const result = await callLLM(provider, apiKey, actualModel, llmMessages);
