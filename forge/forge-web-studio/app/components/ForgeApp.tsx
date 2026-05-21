@@ -391,6 +391,9 @@ export default function ForgeApp() {
   const [asiDepth, setAsiDepth] = useState(3);
   const [asiRunning, setAsiRunning] = useState(false);
   const [asiResult, setAsiResult] = useState<{steps:{phase:string;content:string;tokens:number}[];synthesis:string;totalTokens:number;model:string}|null>(null);
+  const [asiLivePhases, setAsiLivePhases] = useState<{phase:string;content:string;done:boolean}[]>([]);
+  const [asiCurrentPhase, setAsiCurrentPhase] = useState('');
+  const [asiWebSearch, setAsiWebSearch] = useState(false);
 
   // ForgeCo state
   const [coTab, setCoTab] = useState<'code'|'cowork'>('code');
@@ -3498,42 +3501,63 @@ export default function ForgeApp() {
             <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--fg-border)', flexShrink:0, display:'flex', alignItems:'center', gap:14 }}>
               <div style={{ fontSize:28 }}>🌌</div>
               <div>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:800, background:'linear-gradient(90deg,var(--fg-orange),#a78bfa)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', fontFamily:'var(--fg-font-display)' }}>ForgeASI</h2>
-                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Multi-phase reasoning: Deep Analysis → Solution Paths → Self-Critique → Synthesis</p>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:800, background:'linear-gradient(90deg,var(--fg-orange),#a78bfa,#06b6d4)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', fontFamily:'var(--fg-font-display)' }}>ForgeASI</h2>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Deep Analysis → Solution Paths → Self-Critique → Synthesis → Push Now</p>
               </div>
-              <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
                 <select value={asiModel} onChange={e => setAsiModel(e.target.value)} style={{ padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
                   {['forge-pro','forge-reasoning','claude-opus-4','claude-sonnet-4','gpt-4o'].map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                  <span style={{ fontSize:12, color:'var(--fg-text3)' }}>Depth</span>
-                  {[2,3,4].map(d => <button key={d} onClick={() => setAsiDepth(d)} style={{ width:28, height:28, background: asiDepth===d ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${asiDepth===d ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:6, color: asiDepth===d ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight:700 }}>{d}</button>)}
+                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                  <span style={{ fontSize:11, color:'var(--fg-text3)' }}>Depth</span>
+                  {[2,3,4].map(d => <button key={d} onClick={() => setAsiDepth(d)} style={{ width:26, height:26, background: asiDepth===d ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${asiDepth===d ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:5, color: asiDepth===d ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:700 }}>{d}</button>)}
                 </div>
+                <button onClick={() => setAsiWebSearch(w => !w)} style={{ padding:'5px 10px', background: asiWebSearch ? 'rgba(6,182,212,0.15)' : 'var(--fg-bg3)', border:`1px solid ${asiWebSearch ? '#06b6d4' : 'var(--fg-border2)'}`, borderRadius:6, color: asiWebSearch ? '#06b6d4' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600 }}>🌐 Web</button>
               </div>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:24 }}>
               <div style={{ marginBottom:16 }}>
                 <textarea value={asiPrompt} onChange={e => setAsiPrompt(e.target.value)} placeholder="Ask anything requiring deep reasoning — complex decisions, strategy, analysis, hard problems…" rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box' as any, lineHeight:1.6 }} />
               </div>
-              <button disabled={asiRunning || !asiPrompt.trim()} onClick={async () => {
-                if (!user || !asiPrompt.trim()) return;
-                setAsiRunning(true); setAsiResult(null);
-                try {
-                  const d = await apiFetch('/forgeasi/run', { method:'POST', body:JSON.stringify({ prompt:asiPrompt, model:asiModel, depth:asiDepth }) }, user.token);
-                  if (d?.success) setAsiResult(d.data);
-                } catch(e:any) { alert('ForgeASI error: '+e.message); } finally { setAsiRunning(false); }
-              }} style={{ padding:'10px 32px', background: asiRunning||!asiPrompt.trim() ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed,#06b6d4)', border:'none', borderRadius:8, color: asiRunning||!asiPrompt.trim() ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: asiRunning||!asiPrompt.trim() ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8, marginBottom:24 }}>
-                {asiRunning ? <><span style={{ animation:'forge-flash 0.5s ease-in-out infinite', display:'inline-block' }}>🌌</span> Deep reasoning ({asiDepth} phases)…</> : '🌌 Activate ForgeASI'}
-              </button>
+              <div style={{ display:'flex', gap:10, marginBottom:24, alignItems:'center', flexWrap:'wrap' }}>
+                <button disabled={asiRunning || !asiPrompt.trim()} onClick={async () => {
+                  if (!user || !asiPrompt.trim()) return;
+                  setAsiRunning(true); setAsiResult(null); setAsiLivePhases([]); setAsiCurrentPhase('Initializing…');
+                  const phaseNames = ['Deep Analysis','Solution Paths','Self-Critique','Synthesis'].slice(0, asiDepth+1);
+                  // Simulate live phase progress while waiting
+                  let phaseIdx = 0;
+                  const phaseTimer = setInterval(() => {
+                    if (phaseIdx < phaseNames.length) { setAsiCurrentPhase(phaseNames[phaseIdx]); phaseIdx++; }
+                  }, Math.max(1500, 8000/(phaseNames.length)));
+                  try {
+                    const d = await apiFetch('/forgeasi/run', { method:'POST', body:JSON.stringify({ prompt:asiPrompt, model:asiModel, depth:asiDepth, webSearch:asiWebSearch }) }, user.token);
+                    if (d?.success) { setAsiResult(d.data); setAsiLivePhases(d.data.steps.map((s: any) => ({ phase:s.phase, content:s.content, done:true }))); }
+                  } catch(e:any) { alert('ForgeASI error: '+e.message); } finally { clearInterval(phaseTimer); setAsiRunning(false); setAsiCurrentPhase(''); }
+                }} style={{ padding:'10px 28px', background: asiRunning||!asiPrompt.trim() ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed,#06b6d4)', border:'none', borderRadius:8, color: asiRunning||!asiPrompt.trim() ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: asiRunning||!asiPrompt.trim() ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
+                  {asiRunning ? <><span style={{ animation:'forge-flash 0.5s ease-in-out infinite', display:'inline-block' }}>🌌</span> {asiCurrentPhase || 'Starting…'}</> : '🌌 Activate ForgeASI'}
+                </button>
+                {asiResult && !asiRunning && (
+                  <>
+                    <button onClick={() => { setInput(asiResult.synthesis); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>💬 Push to Chat</button>
+                    <button onClick={() => { setPreviewCode(asiResult.synthesis); setSketchMode(true); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>✏️ Open in Sketch</button>
+                    <button onClick={() => { navigator.clipboard.writeText(asiResult.synthesis); }} style={{ padding:'9px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>📋 Copy</button>
+                    <button onClick={() => { setAsiResult(null); setAsiLivePhases([]); setAsiPrompt(''); }} style={{ padding:'9px 14px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>✕ Clear</button>
+                  </>
+                )}
+              </div>
 
-              {/* Phase progress while running */}
+              {/* Live phase indicators while running */}
               {asiRunning && (
                 <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
-                  {['Deep Analysis','Solution Paths','Self-Critique','Synthesis'].slice(0, asiDepth+1).map((p, i) => (
-                    <div key={p} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:20, fontSize:12, color:'var(--fg-text3)' }}>
-                      <span style={{ animation:`forge-flash ${1+i*0.3}s ease-in-out infinite`, display:'inline-block' }}>{['🔍','🗺️','⚡','🌐'][i]}</span>{p}
-                    </div>
-                  ))}
+                  {['Deep Analysis','Solution Paths','Self-Critique','Synthesis'].slice(0, asiDepth+1).map((p, i) => {
+                    const isActive = asiCurrentPhase === p;
+                    const isDone = asiLivePhases.some(lp => lp.phase === p && lp.done);
+                    return (
+                      <div key={p} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', background: isDone ? 'rgba(249,115,22,0.15)' : isActive ? 'rgba(124,58,237,0.15)' : 'var(--fg-bg3)', border: isActive ? '1px solid #a78bfa' : isDone ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border)', borderRadius:20, fontSize:12, color: isDone ? 'var(--fg-orange)' : isActive ? '#a78bfa' : 'var(--fg-text3)', transition:'all 0.3s' }}>
+                        <span style={{ animation: isActive ? `forge-flash 0.6s ease-in-out infinite` : 'none', display:'inline-block' }}>{isDone ? '✓' : ['🔍','🗺️','⚡','🌐'][i]}</span>{p}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
