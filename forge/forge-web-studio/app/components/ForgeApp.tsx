@@ -187,7 +187,7 @@ export default function ForgeApp() {
   const [customProviders, setCustomProviders] = useState<CustomProvider[]>([]);
   const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [openRouterModels, setOpenRouterModels] = useState<string[]>([]);
+  const [openRouterModels, setOpenRouterModels] = useState<{id:string;name:string;context_length?:number;pricing?:{prompt:string;completion:string}}[]>([]);
 
   // Selection
   const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -384,7 +384,7 @@ export default function ForgeApp() {
       });
     } catch {}
   };
-  const loadOpenRouterModels = async () => { if (!user) return; try { const d = await apiFetch('/keys/openrouter-models', {}, user.token); setOpenRouterModels(Array.isArray(d) ? d : []); } catch {} };
+  const loadOpenRouterModels = async () => { if (!user) return; try { const d = await apiFetch('/keys/openrouter-models', {}, user.token); setOpenRouterModels(Array.isArray(d?.data?.models) ? d.data.models : []); } catch {} };
   const loadApiKeys = async () => {
     if (!user) return;
     try {
@@ -840,7 +840,7 @@ export default function ForgeApp() {
   const taskStatusColor: Record<string, string> = { todo:'#6b7280', in_progress:'#2563EB', done:'#059669', blocked:'#DC2626' };
   const taskPriorityColor: Record<string, string> = { low:'#6b7280', medium:'#D97706', high:'#DC2626' };
   const artifactTypeIcon: Record<string, string> = { code:'💻', html:'🌐', react:'⚛️', markdown:'📝', 'live-dashboard':'📊', diff:'📋', default:'📄' };
-  const filteredOrModels = openRouterModels.filter(m => m.toLowerCase().includes(orSearch.toLowerCase()));
+  const filteredOrModels = openRouterModels.filter(m => (m.id+' '+(m.name||'')).toLowerCase().includes(orSearch.toLowerCase()));
   const usagePercent = subscription ? Math.min(100, Math.round((subscription.tokens_used / (subscription.token_limit || 1)) * 100)) : 0;
 
   if (!user) return <LoginScreen onLogin={handleLogin} />;
@@ -1361,13 +1361,14 @@ export default function ForgeApp() {
                   <input placeholder="Search models..." value={orSearch} onChange={e => setOrSearch(e.target.value)} style={{ width:'100%', padding:'10px 14px', marginBottom:16, background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13, boxSizing:'border-box' }} />
                   {openRouterModels.length === 0 && <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', padding:40 }}>Add OpenRouter API key in Settings to load models.</p>}
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:8 }}>
-                    {filteredOrModels.slice(0,50).map(m => (
-                      <div key={m} style={{ padding:'10px 12px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8 }}>
-                        <p style={{ margin:0, fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m}</p>
+                    {filteredOrModels.slice(0,100).map(m => (
+                      <div key={m.id} onClick={() => { setSelectedModel(`openrouter/${m.id}`); setActiveTab('workspace'); }} style={{ padding:'10px 12px', background:'#111118', border: selectedModel===`openrouter/${m.id}` ? '1px solid #7c3aed' : '1px solid #1e1e2e', borderRadius:8, cursor:'pointer' }}>
+                        <p style={{ margin:'0 0 2px', fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontWeight:500 }}>{m.name || m.id}</p>
+                        <p style={{ margin:0, fontSize:11, color:'#4b5563', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.id}{m.context_length ? ` · ${(m.context_length/1000).toFixed(0)}k ctx` : ''}</p>
                       </div>
                     ))}
                   </div>
-                  {filteredOrModels.length > 50 && <p style={{ color:'#4b5563', fontSize:12, textAlign:'center', marginTop:12 }}>Showing 50 of {filteredOrModels.length} results. Refine search to see more.</p>}
+                  {filteredOrModels.length > 100 && <p style={{ color:'#4b5563', fontSize:12, textAlign:'center', marginTop:12 }}>Showing 100 of {filteredOrModels.length} results. Refine search to see more.</p>}
                 </div>
               )}
 
