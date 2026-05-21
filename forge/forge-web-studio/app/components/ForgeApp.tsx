@@ -311,6 +311,7 @@ export default function ForgeApp() {
     mistral: { username:'', password:'', connected:false },
     together: { username:'', password:'', connected:false },
     perplexity: { username:'', password:'', connected:false },
+    morph: { username:'', password:'', connected:false },
   });
   const [llmExpanded, setLlmExpanded] = useState<Record<string,boolean>>({});
 
@@ -335,6 +336,7 @@ export default function ForgeApp() {
   const [superMemory, setSuperMemory] = useState<SuperMemory[]>([]);
   const [superHarvesting, setSuperHarvesting] = useState(false);
   const [superTab, setSuperTab] = useState<'chat'|'memory'>('chat');
+  const [superStats, setSuperStats] = useState<{memoryCount:number;intelligenceScore:number;threadCount:number}>({memoryCount:0,intelligenceScore:0,threadCount:0});
   const superEndRef = useRef<HTMLDivElement>(null);
 
   // ForgeRouter state
@@ -719,7 +721,7 @@ export default function ForgeApp() {
 
     try {
       const token = user.token;
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-e4d6.up.railway.app'}/api/agent/run`, {
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app'}/api/agent/run`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ prompt, model: selectedModel }),
@@ -2573,10 +2575,11 @@ export default function ForgeApp() {
                   { key:'mistral',    icon:'🌊', label:'Mistral',     color:'var(--fg-blue)', placeholder:'...',          hint:'console.mistral.ai', loginUrl:'https://console.mistral.ai' },
                   { key:'together',   icon:'🤝', label:'Together AI', color:'var(--fg-green)', placeholder:'...',          hint:'api.together.xyz', loginUrl:'https://api.together.xyz/signin' },
                   { key:'perplexity', icon:'🔭', label:'Perplexity',  color:'#8B5CF6', placeholder:'pplx-...',    hint:'perplexity.ai/settings', loginUrl:'https://www.perplexity.ai' },
+                  { key:'morph',      icon:'🔷', label:'Morph',        color:'var(--fg-blue)', placeholder:'sk-CKUd-...',  hint:'morphllm.com', loginUrl:'https://morphllm.com' },
                 ] as const).map(({ key, icon, label, color, placeholder, hint, loginUrl }) => {
                   const creds = llmCreds[key];
                   const expanded = llmExpanded[key];
-                  const hasKey = !!apiKeys[key];
+                  const hasKey = !!savedProviders[key] || !!apiKeys[key];
                   return (
                     <div key={key} style={{ marginBottom:10, background:'var(--fg-bg)', borderRadius:12, border:`1px solid ${creds.connected || hasKey ? color + '55' : 'var(--fg-border)'}`, overflow:'hidden' }}>
                       {/* Header row */}

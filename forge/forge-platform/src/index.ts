@@ -1927,6 +1927,18 @@ app.get('/api/superagent/memory', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data: mems });
 });
 
+// GET /api/superagent/history — list recent superagent chat messages
+app.get('/api/superagent/history', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  try {
+    const rows = db.prepare('SELECT role, content, created_at FROM superagent_messages WHERE user_id=? ORDER BY created_at ASC LIMIT 100').all(userId);
+    res.json({ success: true, data: rows });
+  } catch {
+    // Table may not exist yet — return empty history
+    res.json({ success: true, data: [] });
+  }
+});
+
 // ─── ForgeAgent SSE run loop ────────────────────────────────────────────────────
 const AGENT_TOOLS = [
   { name: 'web_search', description: 'Search the web for information', parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search query' } }, required: ['query'] } },
