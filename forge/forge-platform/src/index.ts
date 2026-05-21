@@ -1399,6 +1399,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     res.json({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
     return;
   }
+  emitAgentActivity(userId, { type: 'thinking', message: `🤔 Thinking with ${model}…`, model });
   try {
     const result = await callLLM(provider, apiKey, actualModel, llmMessages);
     const totalTokens = result.promptTokens + result.completionTokens;
@@ -1411,8 +1412,10 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     const asstMsgId = uuidv4();
     db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens) VALUES (?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens);
     db.prepare("UPDATE threads SET updated_at=datetime('now'),total_tokens=total_tokens+? WHERE id=?").run(totalTokens, thread.id);
+    emitAgentActivity(userId, { type: 'done', message: `✅ Response ready — ${totalTokens} tokens`, model, elapsed: 0 });
     res.json({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens } });
   } catch (err: any) {
+    emitAgentActivity(userId, { type: 'error', message: `❌ Error: ${err.message}`, model });
     console.error('Thread chat error:', err.message);
     res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });
   }
@@ -1737,12 +1740,327 @@ app.post('/api/terminal/exec', requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
-// ─── 404 ───────────────────────────────────────────────────────────────────
-app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 
-// ─── Start server ──────────────────────────────────────────────────────────
+// ─── Browser proxy ────────────────────────────────────────────────────────────
+// Fetches a URL server-side and returns cleaned text + metadata
+app.post('/api/browser/fetch', requireAuth, async (req: AuthRequest, res) => {
+  const { url, mode = 'text' } = req.body;
+  if (!url || typeof url !== 'string') { res.status(400).json({ error: 'url required' }); return; }
+  try { new URL(url); } catch { res.status(400).json({ error: 'Invalid URL' }); return; }
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; ForgeBot/1.0)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    const ct = resp.headers.get('content-type') || '';
+    const statusCode = resp.status;
+    let text = await resp.text();
+    // Strip scripts, styles, nav elements
+    text = text
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+      .replace(/<header[\s\S]*?<\/header>/gi, '')
+      .replace(/<footer[\s\S]*?<\/footer>/gi, '');
+    // Extract title
+    const titleMatch = text.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").trim() : url;
+    // Extract links
+    const links: {text:string;href:string}[] = [];
+    const linkRe = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    let lm: RegExpExecArray | null;
+    while ((lm = linkRe.exec(text)) !== null && links.length < 50) {
+      const href = lm[1];
+      const lt = lm[2].replace(/<[^>]+>/g,'').trim().slice(0,80);
+      if (href && !href.startsWith('#') && !href.startsWith('javascript:') && lt) {
+        try {
+          const abs = new URL(href, url).href;
+          links.push({ text: lt, href: abs });
+        } catch {}
+      }
+    }
+    // Strip all tags for plain text
+    const plainText = text
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'")
+      .replace(/\s{3,}/g, '\n\n')
+      .trim()
+      .slice(0, 32768);
+    const truncated = plainText.length === 32768;
+    res.json({ success: true, url, status: statusCode, contentType: ct, title, links, text: plainText, truncated });
+  } catch (err: any) {
+    res.json({ success: false, url, status: 0, error: err.message, title: url, links: [], text: '', truncated: false });
+  }
+});
+
+// ─── Thread memories (per-thread memory store) ────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS thread_memories (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+    topic TEXT NOT NULL,
+    insight TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_thread_memories_user ON thread_memories(user_id)`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_thread_memories_thread ON thread_memories(thread_id)`); } catch {}
+
+// POST /api/threads/:id/memory — save a memory entry for a thread
+app.post('/api/threads/:id/memory', requireAuth, (req: AuthRequest, res) => {
+  const thread = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub);
+  if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const { topic, insight } = req.body;
+  if (!topic?.trim() || !insight?.trim()) { res.status(400).json({ success: false, error: 'topic and insight required' }); return; }
+  const id = uuidv4();
+  db.prepare('INSERT INTO thread_memories (id,user_id,thread_id,topic,insight) VALUES (?,?,?,?,?)')
+    .run(id, req.user!.sub, req.params.id, topic.trim(), insight.trim());
+  res.json({ success: true, data: { id } });
+});
+
+// GET /api/threads/:id/memory — list memories for a thread
+app.get('/api/threads/:id/memory', requireAuth, (req: AuthRequest, res) => {
+  const thread = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub);
+  if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const mems = db.prepare('SELECT id,topic,insight,created_at FROM thread_memories WHERE thread_id=? AND user_id=? ORDER BY created_at DESC').all(req.params.id, req.user!.sub);
+  res.json({ success: true, data: mems });
+});
+
+// ─── SuperAgent memory stats ───────────────────────────────────────────────────
+// GET /api/superagent/stats — memory count + intelligence score
+app.get('/api/superagent/stats', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const forgeMemCount = (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
+  const threadMemCount = (db.prepare('SELECT COUNT(*) as c FROM thread_memories WHERE user_id=?').get(userId) as any).c;
+  const threadCount = (db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=?').get(userId) as any).c;
+  const msgCount = (db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?)').get(userId) as any).c;
+  const totalMemory = forgeMemCount + threadMemCount;
+  // Intelligence score: weighted formula
+  const intelligenceScore = Math.min(9999, Math.floor(
+    (forgeMemCount * 10) + (threadMemCount * 5) + (threadCount * 2) + (msgCount * 0.1)
+  ));
+  res.json({ success: true, data: { memoryCount: totalMemory, forgeMemCount, threadMemCount, intelligenceScore, threadCount, msgCount } });
+});
+
+// ─── SuperAgent harvest (pull thread memories into forge_memory) ───────────────
+app.post('/api/superagent/harvest', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const threadMems = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(userId) as any[];
+  let harvested = 0;
+  for (const tm of threadMems) {
+    // Upsert into forge_memory (merge by topic)
+    const existing = db.prepare('SELECT id,frequency FROM forge_memory WHERE user_id=? AND topic=?').get(userId, tm.topic) as any;
+    if (existing) {
+      db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.1,5.0),updated_at=datetime('now') WHERE id=?").run(existing.id);
+    } else {
+      db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)')
+        .run(uuidv4(), userId, tm.topic, tm.insight, tm.thread_id);
+      harvested++;
+    }
+  }
+  const newMemCount = (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
+  const threadMemCount = (db.prepare('SELECT COUNT(*) as c FROM thread_memories WHERE user_id=?').get(userId) as any).c;
+  const intelligenceScore = Math.min(9999, Math.floor((newMemCount * 10) + (threadMemCount * 5)));
+  res.json({ success: true, data: { harvested, totalMemory: newMemCount + threadMemCount, intelligenceScore, message: `Harvested ${harvested} new memories. Intelligence score: ${intelligenceScore}` } });
+});
+
+// ─── SuperAgent chat ────────────────────────────────────────────────────────────
+app.post('/api/superagent/chat', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { message, model: reqModel } = req.body;
+  if (!message?.trim()) { res.status(400).json({ success: false, error: 'message required' }); return; }
+
+  // Load forge memories as context
+  const memories = db.prepare('SELECT topic,insight FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC LIMIT 30').all(userId) as any[];
+  const threadMems = db.prepare('SELECT topic,insight FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
+  const memContext = [...memories, ...threadMems].map(m => `• ${m.topic}: ${m.insight}`).join('\n');
+
+  // Conversation history
+  const history = db.prepare('SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
+  history.reverse();
+
+  // Save user message
+  db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'user', message.trim());
+
+  // Build LLM messages
+  const systemPrompt = `You are Forge SuperAgent — a powerful AI assistant with accumulated knowledge and memory.
+${memContext ? `\n## Your Memory Bank:\n${memContext}\n` : ''}
+You have access to the user's conversation history and memories across all their chats.
+Be direct, powerful, and use your memory to give personalized, contextual responses.`;
+
+  const llmMessages = [
+    { role: 'system', content: systemPrompt },
+    ...history.map((h: any) => ({ role: h.role, content: h.content })),
+    { role: 'user', content: message.trim() }
+  ];
+
+  // Use requested model or fall back
+  const rawModel = reqModel || 'claude-sonnet-4';
+  const actualModel = resolveForgeModel(rawModel);
+  const provider = getProviderForModel(actualModel);
+  const apiKey = getUserKey(userId, provider);
+  if (!apiKey) {
+    res.json({ success: false, error: 'NO_API_KEY', provider, data: { role: 'assistant', content: `⚠️ No ${provider} API key found. Go to Settings → LLM Providers to add your key.` } });
+    return;
+  }
+
+  emitAgentActivity(userId, { type: 'start', message: `🤖 SuperAgent thinking with ${rawModel}…` });
+  try {
+    const result = await callLLM(provider, apiKey, actualModel, llmMessages);
+    db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'assistant', result.content);
+    emitAgentActivity(userId, { type: 'done', message: `✅ SuperAgent response ready` });
+    res.json({ success: true, data: { role: 'assistant', content: result.content, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens } });
+  } catch (err: any) {
+    emitAgentActivity(userId, { type: 'error', message: `❌ SuperAgent error: ${err.message}` });
+    res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });
+  }
+});
+
+// GET /api/superagent/memory — list forge memories
+app.get('/api/superagent/memory', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const mems = db.prepare('SELECT id,topic,insight,frequency,strength,created_at FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC').all(userId);
+  res.json({ success: true, data: mems });
+});
+
+// ─── ForgeAgent SSE run loop ────────────────────────────────────────────────────
+const AGENT_TOOLS = [
+  { name: 'web_search', description: 'Search the web for information', parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search query' } }, required: ['query'] } },
+  { name: 'web_fetch', description: 'Fetch and read a URL', parameters: { type: 'object', properties: { url: { type: 'string', description: 'URL to fetch' } }, required: ['url'] } },
+  { name: 'extract_data', description: 'Extract structured data from text', parameters: { type: 'object', properties: { text: { type: 'string' }, format: { type: 'string', enum: ['json','csv','list'] } }, required: ['text','format'] } },
+  { name: 'summarize', description: 'Summarize a long text', parameters: { type: 'object', properties: { text: { type: 'string' }, focus: { type: 'string' } }, required: ['text'] } },
+];
+
+async function runAgentTool(toolName: string, args: any, userId: string): Promise<string> {
+  if (toolName === 'web_fetch') {
+    try {
+      const resp = await fetch(args.url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ForgeAgent/1.0)' }, signal: AbortSignal.timeout(12000) });
+      let html = await resp.text();
+      html = html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s{3,}/g,'\n').trim().slice(0,8000);
+      return html || 'No content';
+    } catch (e: any) { return `Fetch error: ${e.message}`; }
+  }
+  if (toolName === 'web_search') {
+    try {
+      const q = encodeURIComponent(args.query);
+      const resp = await fetch(`https://html.duckduckgo.com/html/?q=${q}`, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(8000) });
+      const html = await resp.text();
+      const results: string[] = [];
+      const re = /<a class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(html)) !== null && results.length < 5) {
+        const title = m[2].replace(/<[^>]+>/g,'').trim();
+        results.push(`${title}: ${m[1]}`);
+      }
+      return results.length > 0 ? results.join('\n') : 'No results found';
+    } catch (e: any) { return `Search error: ${e.message}`; }
+  }
+  return `Tool ${toolName} called with: ${JSON.stringify(args)}`;
+}
+
+app.post('/api/agent/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { message, model: reqModel } = req.body;
+  if (!message?.trim()) { res.status(400).json({ error: 'message required' }); return; }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+
+  const emit = (type: string, data: any) => {
+    try { res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`); } catch {}
+  };
+
+  const rawModel = reqModel || 'claude-sonnet-4';
+  const actualModel = resolveForgeModel(rawModel);
+  const provider = getProviderForModel(actualModel);
+  const apiKey = getUserKey(userId, provider);
+  if (!apiKey) {
+    emit('error', { message: `No ${provider} API key. Add it in Settings.` });
+    res.end(); return;
+  }
+
+  emit('start', { message: `🤖 ForgeAgent starting with ${rawModel}…` });
+  emitAgentActivity(userId, { type: 'start', message: `🤖 ForgeAgent: ${message.slice(0,60)}…` });
+
+  const toolSchemas = AGENT_TOOLS.map(t => `Tool: ${t.name}\nDescription: ${t.description}\nParams: ${JSON.stringify(t.parameters)}`).join('\n\n');
+  const systemPrompt = `You are ForgeAgent, an autonomous AI that can use tools to accomplish tasks.
+
+Available tools:
+${toolSchemas}
+
+To use a tool, respond with ONLY a JSON object (no markdown, no extra text):
+{"tool": "tool_name", "args": {...}, "reasoning": "why you're using this tool"}
+
+When you have a final answer, respond with plain text (not JSON).
+Be efficient: use tools when needed, respond directly when you know the answer.`;
+
+  const messages: any[] = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: message.trim() }
+  ];
+
+  const MAX_ITERS = 6;
+  for (let i = 0; i < MAX_ITERS; i++) {
+    emit('thinking', { message: `🤔 Thinking… (step ${i+1})`, step: i+1 });
+    emitAgentActivity(userId, { type: 'thinking', message: `🤔 ForgeAgent thinking step ${i+1}` });
+    let llmResponse: string;
+    try {
+      const result = await callLLM(provider, apiKey, actualModel, messages.filter(m => m.role !== 'system').length > 0 ? messages : [{ role: 'user', content: message.trim() }]);
+      llmResponse = result.content;
+    } catch (e: any) {
+      emit('error', { message: `LLM error: ${e.message}` });
+      break;
+    }
+
+    // Try to parse as tool call
+    let parsed: any = null;
+    try {
+      const jsonMatch = llmResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+    } catch {}
+
+    if (parsed?.tool && AGENT_TOOLS.find(t => t.name === parsed.tool)) {
+      emit('tool_call', { tool: parsed.tool, args: parsed.args, reasoning: parsed.reasoning });
+      emitAgentActivity(userId, { type: 'tool', message: `🔧 Using tool: ${parsed.tool}` });
+      const toolResult = await runAgentTool(parsed.tool, parsed.args, userId);
+      emit('tool_result', { tool: parsed.tool, result: toolResult.slice(0, 2000) });
+      messages.push({ role: 'assistant', content: llmResponse });
+      messages.push({ role: 'user', content: `Tool result for ${parsed.tool}:\n${toolResult}\n\nContinue or provide your final answer.` });
+    } else {
+      // Final answer
+      emit('response', { content: llmResponse });
+      emitAgentActivity(userId, { type: 'done', message: `✅ ForgeAgent complete` });
+      break;
+    }
+  }
+
+  emit('done', { message: 'Agent run complete' });
+  res.end();
+});
+
+// ─── Live preview: emit SSE events during regular chat ─────────────────────────
+// Patch the POST /api/threads/:id/messages to also emit live activity events
+// (handled inline in that route via emitAgentActivity — see route above)
+// This route just provides a summary endpoint for the live tab
+app.get('/api/live/summary', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const recent = db.prepare('SELECT id,role,content,created_at FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) ORDER BY created_at DESC LIMIT 10').all(userId);
+  res.json({ success: true, data: recent });
+});
+
+// ─── 404 handler ──────────────────────────────────────────────────────────────
+app.use((req: any, res: any) => {
+  res.status(404).json({ success: false, error: 'NOT_FOUND', path: req.path });
+});
+
 const PORT = parseInt(process.env.PORT || '3001', 10);
-app.listen(PORT, () => {
-  console.log(`🚀 Forge Platform v5.6 running on port ${PORT}`);
-  console.log(`   DB: ${DB_PATH}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Forge Platform v5.9 running on port ${PORT}`);
 });

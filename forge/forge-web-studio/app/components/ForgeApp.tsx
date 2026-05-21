@@ -1,4 +1,4 @@
-// Forge AI Workspace v5.8 — Full OR model list (358 models, grouped), proxy browser (server-side fetch), ForgeAgent (web search + fetch tool loop)
+// Forge AI Workspace v5.9 — Full OR model list (358 models, grouped), proxy browser (server-side fetch), ForgeAgent (web search + fetch tool loop)
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -537,6 +537,7 @@ export default function ForgeApp() {
   const loadSuperMemory = async () => {
     if (!user) return;
     try { const d = await apiFetch('/superagent/memory', {}, user.token); setSuperMemory(Array.isArray(d?.data) ? d.data : []); } catch {}
+    try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
   };
   const loadSuperHistory = async () => {
     if (!user) return;
@@ -817,7 +818,8 @@ export default function ForgeApp() {
     try {
       const d = await apiFetch('/superagent/harvest', { method:'POST' }, user.token);
       await loadSuperMemory();
-      alert(d?.message || 'Memory harvested!');
+      try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
+      alert(d?.data?.message || `✅ Harvest complete! Intelligence: ${d?.data?.intelligenceScore || '+'}`);
     } catch (e: any) { alert(e.message); }
     finally { setSuperHarvesting(false); }
   };
@@ -826,9 +828,12 @@ export default function ForgeApp() {
     const content = superInput.trim(); setSuperInput(''); setSuperSending(true);
     setSuperMessages(prev => [...prev, { role:'user', content }]);
     try {
-      const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ content }) }, user.token);
+      const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
+      const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: content, model: cleanModel }) }, user.token);
       setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]);
       loadTotalTokens();
+      // Refresh stats after each exchange
+      try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
     } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); }
     finally { setSuperSending(false); }
   };
@@ -884,6 +889,8 @@ export default function ForgeApp() {
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
     setMultiResponses([]);
+    // Auto-open live tab so user sees thinking indicator
+    if (!rightExpanded || rightTab !== 'live') { setRightTab('live'); setRightExpanded(true); }
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
     setMessages(prev => [...prev, tempUser]);
@@ -929,6 +936,17 @@ export default function ForgeApp() {
       await loadThreads(activeProject?.id);
       loadThreadTokenStats(threadId);
       loadTotalTokens();
+      // Auto-extract memory from this exchange (fire-and-forget)
+      try {
+        const memTopic = userContent.slice(0, 80);
+        const freshForMem = await apiFetch(`/threads/${threadId}/messages`, {}, user.token);
+        const memArr = Array.isArray(freshForMem) ? freshForMem : Array.isArray(freshForMem?.data) ? freshForMem.data : [];
+        const lastAIMsg = memArr.filter((m: any) => m.role === 'assistant').pop();
+        if (lastAIMsg?.content) {
+          const insight = lastAIMsg.content.slice(0, 200).replace(/\n/g, ' ');
+          await apiFetch(`/threads/${threadId}/memory`, { method:'POST', body: JSON.stringify({ topic: memTopic, insight }) }, user.token);
+        }
+      } catch {}
       // Auto-execute model actions: [TERMINAL: cmd] and [BROWSER: url]
       try {
         const freshMsgs = await apiFetch(`/threads/${threadId}/messages`, {}, user.token);
@@ -1694,7 +1712,7 @@ export default function ForgeApp() {
                         {liveEvents.length === 0 && (
                           <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
                             <div style={{ fontSize:40 }}>📺</div>
-                            <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', margin:0 }}>Watching for agent activity…<br/>Dispatch a task to see it here.</p>
+                            <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', margin:0 }}>Send a chat message to see<br/>live AI activity here in real time.</p>
                           </div>
                         )}
                         <div style={{ flex:1, overflowY:'auto' }}>
@@ -2795,9 +2813,19 @@ export default function ForgeApp() {
                 <div style={{ width:40, height:40, borderRadius:'50%', animation:'forge-flash 2s ease-in-out infinite', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🌟</div>
                 <div>
                   <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'#fff' }}>Forge SuperAgent</h2>
-                  <p style={{ margin:0, fontSize:12, color:'#6b7280' }}>Powered by your workspace memory · {superMemory.length} memories harvested</p>
+                  <p style={{ margin:0, fontSize:12, color:'#6b7280' }}>Using: {selectedModel || 'forge-fast'}</p>
                 </div>
-                <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
+                <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8 }}>
+                  {/* Memory count badge */}
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'6px 12px', background:'#1a1a2e', borderRadius:8, border:'1px solid #2d2d44' }}>
+                    <span style={{ fontSize:16, fontWeight:700, color:'#a78bfa', lineHeight:1 }}>{superStats.memoryCount}</span>
+                    <span style={{ fontSize:9, color:'#6b7280', marginTop:2 }}>MEMORIES</span>
+                  </div>
+                  {/* Intelligence score badge */}
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'6px 12px', background: superStats.intelligenceScore > 100 ? 'linear-gradient(135deg,#7C3AED22,#2563EB22)' : '#1a1a2e', borderRadius:8, border:`1px solid ${superStats.intelligenceScore > 100 ? '#7C3AED55' : '#2d2d44'}` }}>
+                    <span style={{ fontSize:16, fontWeight:700, color: superStats.intelligenceScore > 500 ? '#fbbf24' : superStats.intelligenceScore > 100 ? '#a78bfa' : '#4b5563', lineHeight:1 }}>{superStats.intelligenceScore}</span>
+                    <span style={{ fontSize:9, color:'#6b7280', marginTop:2 }}>FORGE IQ</span>
+                  </div>
                   <button onClick={harvestMemory} disabled={superHarvesting} style={{ padding:'8px 16px', background: superHarvesting ? '#1a1a2e' : 'linear-gradient(135deg,#7C3AED,#2563EB)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, opacity: superHarvesting ? 0.6 : 1 }}>
                     {superHarvesting ? <><span style={{ animation:'forge-flash 0.8s infinite', display:'inline-block' }}>⚡</span> Harvesting…</> : '⚡ Harvest Memory'}
                   </button>
