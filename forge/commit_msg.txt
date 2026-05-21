@@ -1,12 +1,13 @@
-fix: resolve Application error crash on login
+fix: per-provider key save, correct model filtering, thread recovery
 
-Root cause: /api/billing/subscription threw INTERNAL_ERROR due to
-missing tokens_limit column in older Railway DB. Frontend then called
-.toLocaleString() on undefined which crashed the React tree.
-
-1. Backend: safe ALTER TABLE migrations for tokens_limit, tokens_used,
-   period_start, period_end, status columns so older DBs get patched.
-2. Frontend loadSubscription: normalize camelCase API response to
-   snake_case, skip state update if response has success:false.
-3. Frontend billing render: null-coalesce tokens_used/token_limit
-   before .toLocaleString() to prevent crash if values missing.
+- saveOneKey(provider, key): each Save button now saves ONLY that
+  provider's key, not the entire apiKeys state. Prevents accidentally
+  sending empty/stale keys for other providers.
+- savedProviders state: populated from loadApiKeys() backend response
+  (has_anthropic, has_openai etc) — source of truth for which providers
+  are confirmed saved.
+- Model dropdown: only shows models whose provider is in savedProviders.
+  Claude key saved → Claude models appear. OpenAI key saved → GPT models.
+- Thread recovery: if sendMessage gets THREAD_NOT_FOUND (Railway DB reset),
+  auto-creates a new thread and retries the message seamlessly.
+- loadApiKeys: no longer pollutes apiKeys state with __saved__ placeholders.

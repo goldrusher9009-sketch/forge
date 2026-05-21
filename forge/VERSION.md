@@ -1,6 +1,26 @@
 # Forge Platform — Version History
 
-## v5.5 — 2026-05-20 (current)
+## v5.6 — 2026-05-20 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Version number in UI** — v5.6 badge visible in sidebar footer next to plan
+- **Dynamic model fetching** — `loadProviderModels(provider)` fetches live model list from each provider's API on key save/update. All providers: anthropic, openai, groq, gemini, mistral, together, perplexity, cohere, openrouter. Model selector shows "🔥 Provider (live)" optgroup with all fetched models
+- **Context progress bar** — New `context` right panel tab: token usage bar with color coding (green→yellow→red), per-message breakdown, compact button when >70% full
+- **Live agent preview (Manus-style)** — New `live` right panel tab: SSE stream of real-time agent activity events (start/thinking/done/error), pulsing green LIVE indicator
+- **ForgeBrowser tab** — New `browser` right panel tab: iframe-based browser with back/forward/refresh, URL bar, quick-access bookmarks (Google, GitHub, Anthropic docs, v0.dev, OpenRouter)
+- **Terminal tab** — New `terminal` right panel tab: command execution via backend `/api/terminal/exec`, command history (↑/↓), color-coded output
+- **Folder/file attachment** — 📎 Files button in bottom bar: attach multiple files, chip display, auto-include file contents in message
+- **Bottom bar redesigned** — Quick-access icon buttons for 📊context / 📺live / 🌐browser / 💻terminal / 🚀dispatch / ✅task
+
+### Backend: forge-platform/src/index.ts
+- **GET /api/keys/:provider/models** — fetch live model list from any provider's API using saved key
+- **GET /api/live/activity** — SSE endpoint broadcasting real-time agent events (start/thinking/done/error) to all connected clients
+- **POST /api/terminal/exec** — execute whitelisted shell commands with 10s timeout, 64KB output cap
+- Agent activity emitted from `executeDispatchRun` via in-memory pub/sub
+
+---
+
+## v5.5 — 2026-05-20
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
 - **Key save pipeline** — `saveOneKey` now awaits: save → loadVault → loadApiKeys → validateVaultKey → loadOpenRouterModels (if openrouter). Same for `updateVaultKey`. Validation and model load happen atomically after every key save

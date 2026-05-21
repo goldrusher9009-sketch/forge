@@ -1,4 +1,4 @@
-// Forge AI Workspace v5.5 — Key save→validate→load pipeline, default model from active key, OR refresh fix
+// Forge AI Workspace v5.6 — Dynamic model fetch all providers, live preview, browser tab, terminal tab, context bar, folder attach
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -197,7 +197,7 @@ export default function ForgeApp() {
   const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'>('workspace');
 
   // Right panel tabs
-  const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'>('artifacts');
+  const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'>('artifacts');
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [rightExpanded, setRightExpanded] = useState(true);
 
@@ -310,6 +310,53 @@ export default function ForgeApp() {
   const [routerTestResult, setRouterTestResult] = useState('');
   const [routerTesting, setRouterTesting] = useState(false);
 
+  // Live activity feed
+  const [liveEvents, setLiveEvents] = useState<{type:string;message:string;model?:string;elapsed?:number;ts:number}[]>([]);
+  const liveSSERef = useRef<EventSource|null>(null);
+
+  // Context bar — per-thread token tracking + model context limits
+  const MODEL_CONTEXT_LIMITS: Record<string, number> = {
+    'claude-sonnet-4-6': 200000, 'claude-opus-4-6': 200000, 'claude-haiku-4-5-20251001': 200000,
+    'gpt-4o': 128000, 'gpt-4o-mini': 128000, 'o3': 200000, 'o4-mini': 200000,
+    'gemini-2.0-flash': 1048576, 'gemini-2.5-pro': 2097152,
+    'llama-3.1-8b-instant': 128000, 'mistral-small-latest': 32000,
+  };
+  const getContextLimit = (model: string) => {
+    if (MODEL_CONTEXT_LIMITS[model]) return MODEL_CONTEXT_LIMITS[model];
+    if (model.startsWith('openrouter/')) {
+      const orModel = openRouterModels.find(m => model === `openrouter/${m.id}`);
+      return orModel?.context_length || 128000;
+    }
+    return 128000;
+  };
+
+  // ForgeBrowser state
+  const [browserUrl, setBrowserUrl] = useState('https://google.com');
+  const [browserInput, setBrowserInput] = useState('https://google.com');
+  const [browserHistory, setBrowserHistory] = useState<string[]>([]);
+  const [browserHistoryIdx, setBrowserHistoryIdx] = useState(0);
+  const browserFrameRef = useRef<HTMLIFrameElement>(null);
+
+  // Terminal state
+  const [terminalLines, setTerminalLines] = useState<{text:string;type:'input'|'output'|'error'|'system'}[]>([
+    { text: '⚡ Forge Terminal — type commands below', type:'system' },
+    { text: 'Safe commands: ls, cat, echo, date, pwd, env, node, python, curl, git log/status', type:'system' },
+  ]);
+  const [terminalInput, setTerminalInput] = useState('');
+  const [terminalRunning, setTerminalRunning] = useState(false);
+  const [terminalHistory, setTerminalHistory] = useState<string[]>([]);
+  const [terminalHistoryIdx, setTerminalHistoryIdx] = useState(-1);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const terminalInputRef = useRef<HTMLInputElement>(null);
+
+  // Dynamic provider models (all providers)
+  const [providerModels, setProviderModels] = useState<Record<string, {id:string;name:string;context_length?:number;pricing?:{prompt:string;completion:string}}[]>>({});
+
+  // Attached folders/files (bottom bar)
+  const [attachedFolders, setAttachedFolders] = useState<string[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<{name:string;content:string}[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -360,6 +407,23 @@ export default function ForgeApp() {
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
   useEffect(() => { superEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [superMessages]);
+  useEffect(() => { terminalEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [terminalLines]);
+
+  // Connect live activity SSE when user logs in
+  useEffect(() => {
+    if (!user) { liveSSERef.current?.close(); liveSSERef.current = null; return; }
+    const token = user.token;
+    const es = new EventSource(`${API}/live/activity?token=${token}`);
+    es.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.type === 'connected') return;
+        setLiveEvents(prev => [{ ...data, ts: Date.now() }, ...prev].slice(0, 100));
+      } catch {}
+    };
+    liveSSERef.current = es;
+    return () => { es.close(); };
+  }, [user]);
 
 
   // ── Data loaders ───────────────────────────────────────────────────────────
@@ -409,6 +473,20 @@ export default function ForgeApp() {
     } catch {}
     setOrLoading(false);
   };
+  // Fetch models for a specific provider from its API
+  const loadProviderModels = async (provider: string) => {
+    if (!user) return;
+    try {
+      const d = await apiFetch(`/keys/${provider}/models`, {}, user.token);
+      if (d?.success && Array.isArray(d?.data?.models)) {
+        const models = d.data.models;
+        setProviderModels(prev => ({ ...prev, [provider]: models }));
+        // If provider is OpenRouter, also update the openRouterModels state (used elsewhere)
+        if (provider === 'openrouter') setOpenRouterModels(models);
+      }
+    } catch {}
+  };
+
   const loadApiKeys = async () => {
     if (!user) return;
     try {
@@ -418,6 +496,8 @@ export default function ForgeApp() {
       const confirmed: Record<string,boolean> = {};
       providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
       setSavedProviders(confirmed);
+      // Trigger model fetch for all confirmed providers (in background, don't await)
+      Object.keys(confirmed).forEach(p => { if (confirmed[p]) loadProviderModels(p); });
       // Auto-select best available model based on saved keys
       setSelectedModel(prev => {
         // Keep existing selection if it's already pointing at a valid provider
@@ -509,8 +589,8 @@ export default function ForgeApp() {
       await loadApiKeys();
       // Validate immediately — shows Active/Invalid badge right away
       await validateVaultKey(provider);
-      // If openrouter, load models immediately
-      if (provider === 'openrouter') await loadOpenRouterModels();
+      // Fetch latest models for this provider from its API
+      await loadProviderModels(provider);
     } catch (e: any) {
       alert(`Save failed: ${e?.message || String(e)}`);
     }
@@ -529,6 +609,40 @@ export default function ForgeApp() {
       setKeysSaved(true); setTimeout(() => setKeysSaved(false), 3000);
       await loadApiKeys();
     } catch (e: any) { alert(`Save failed: ${e?.message || e}`); }
+  };
+
+  // ── Terminal execution ────────────────────────────────────────────────────
+  const runTerminalCommand = async (cmd: string) => {
+    if (!user || !cmd.trim() || terminalRunning) return;
+    const trimmed = cmd.trim();
+    setTerminalLines(prev => [...prev, { text:`$ ${trimmed}`, type:'input' }]);
+    setTerminalHistory(prev => [trimmed, ...prev.filter(c => c !== trimmed)].slice(0, 50));
+    setTerminalHistoryIdx(-1);
+    setTerminalInput('');
+    setTerminalRunning(true);
+    try {
+      const d = await apiFetch('/terminal/exec', { method:'POST', body:JSON.stringify({ command:trimmed }) }, user.token);
+      if (d?.output) {
+        const lines = d.output.split('\n');
+        setTerminalLines(prev => [...prev, ...lines.map((l: string) => ({ text: l, type: d.exit_code === 0 ? 'output' as const : 'error' as const }))]);
+      } else {
+        setTerminalLines(prev => [...prev, { text:'(no output)', type:'output' }]);
+      }
+    } catch (e: any) {
+      setTerminalLines(prev => [...prev, { text:`Error: ${e.message}`, type:'error' }]);
+    }
+    setTerminalRunning(false);
+  };
+
+  // ── Browser navigation ────────────────────────────────────────────────────
+  const browserNavigate = (url: string) => {
+    let nav = url.trim();
+    if (!nav.startsWith('http://') && !nav.startsWith('https://')) {
+      nav = nav.includes('.') ? `https://${nav}` : `https://www.google.com/search?q=${encodeURIComponent(nav)}`;
+    }
+    setBrowserHistory(prev => { const next = [...prev.slice(0, browserHistoryIdx + 1), nav]; setBrowserHistoryIdx(next.length - 1); return next; });
+    setBrowserUrl(nav);
+    setBrowserInput(nav);
   };
 
   // ── Projects ───────────────────────────────────────────────────────────────
@@ -587,7 +701,8 @@ export default function ForgeApp() {
       await loadApiKeys();
       // Validate immediately after update
       await validateVaultKey(provider);
-      if (provider === 'openrouter') await loadOpenRouterModels();
+      // Fetch latest models for this provider
+      await loadProviderModels(provider);
     } catch (e: any) { alert(e.message); }
     finally { setVaultUpdating(''); }
   };
@@ -672,7 +787,13 @@ export default function ForgeApp() {
       if (!currentThread) return;
     }
 
-    const userContent = input.trim();
+    // Build content with attached files
+    let userContent = input.trim();
+    if (attachedFiles.length > 0) {
+      const fileContext = attachedFiles.map(f => `\n\n---\n📎 **${f.name}**:\n\`\`\`\n${f.content}\n\`\`\``).join('');
+      userContent += fileContext;
+      setAttachedFiles([]); // Clear after send
+    }
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
     setMultiResponses([]);
@@ -720,6 +841,18 @@ export default function ForgeApp() {
       await loadThreads(activeProject?.id);
       loadThreadTokenStats(threadId);
       loadTotalTokens();
+      // Auto-execute model actions: [TERMINAL: cmd] and [BROWSER: url]
+      try {
+        const freshMsgs = await apiFetch(`/threads/${threadId}/messages`, {}, user.token);
+        const freshArr = Array.isArray(freshMsgs) ? freshMsgs : Array.isArray(freshMsgs?.data) ? freshMsgs.data : [];
+        const lastAI = freshArr.filter((m: any) => m.role === 'assistant').pop();
+        if (lastAI?.content) {
+          const termMatch = lastAI.content.match(/\[TERMINAL:\s*([^\]]+)\]/i);
+          if (termMatch) { setRightTab('terminal'); setRightExpanded(true); runTerminalCommand(termMatch[1].trim()); }
+          const browserMatch = lastAI.content.match(/\[BROWSER:\s*([^\]]+)\]/i);
+          if (browserMatch) { setRightTab('browser'); setRightExpanded(true); browserNavigate(browserMatch[1].trim()); }
+        }
+      } catch {}
       if (sketchMode) {
         const fresh = await apiFetch('/artifacts', {}, user.token);
         const arr = Array.isArray(fresh) ? fresh : Array.isArray(fresh?.data) ? fresh.data : [];
@@ -1032,18 +1165,22 @@ export default function ForgeApp() {
           </>
         )}
 
-        {/* User profile */}
+        {/* User profile + version */}
         <div style={{ padding:'10px 12px', borderTop:'1px solid #1e1e2e', display:'flex', alignItems:'center', gap:8, marginTop:'auto' }}>
           <div style={{ width:32, height:32, background:'#1a1a2e', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>👤</div>
           {sidebarExpanded && (
             <>
               <div style={{ flex:1, overflow:'hidden' }}>
                 <p style={{ margin:0, fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
-                {subscription && <p style={{ margin:0, fontSize:11, color:'#7C3AED' }}>{subscription.plan} plan</p>}
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  {subscription && <p style={{ margin:0, fontSize:11, color:'#7C3AED' }}>{subscription.plan} plan</p>}
+                  <span style={{ fontSize:10, color:'#2d2d44', background:'#1a1a2e', padding:'1px 5px', borderRadius:4, border:'1px solid #2d2d44', fontFamily:'monospace' }}>v5.6</span>
+                </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:12 }}>↗</button>
             </>
           )}
+          {!sidebarExpanded && <span style={{ fontSize:9, color:'#2d2d44', fontFamily:'monospace' }}>5.6</span>}
         </div>
       </div>
 
@@ -1095,11 +1232,11 @@ export default function ForgeApp() {
               {/* Multi-response toggle */}
               <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? '#1e1e2e' : 'transparent', border:`1px solid ${multiResponse ? '#D97706' : '#2d2d44'}`, borderRadius:6, color:multiResponse ? '#D97706' : '#6b7280', cursor:'pointer', fontSize:12, flexShrink:0 }}>⚡ Multi</button>
 
-              {/* Model selector — only shows models whose provider key is confirmed saved */}
+              {/* Model selector — shows models from all providers with saved keys */}
               {(() => {
                 const providerForId = (id: string) => {
                   if (['forge-ultra','forge-pro','forge-flash','forge-code'].includes(id) || id.startsWith('claude')) return 'anthropic';
-                  if (['forge-gpt'].includes(id) || id.startsWith('gpt') || id.startsWith('o3')) return 'openai';
+                  if (['forge-gpt'].includes(id) || id.startsWith('gpt') || id.startsWith('o3') || id.startsWith('o4')) return 'openai';
                   if (['forge-gemini'].includes(id) || id.startsWith('gemini')) return 'gemini';
                   if (id.startsWith('llama') || id.startsWith('mixtral') || id === 'forge-fast') return 'groq';
                   if (id.startsWith('mistral')) return 'mistral';
@@ -1108,20 +1245,34 @@ export default function ForgeApp() {
                 const hasKey = (id: string) => { const p = providerForId(id); return !p || !!savedProviders[p]; };
                 const availableForge = FORGE_MODELS.filter(m => hasKey(m.id));
                 const availableDirect = DIRECT_MODELS.map(g => ({ ...g, models: g.models.filter(m => hasKey(m.id)) })).filter(g => g.models.length > 0);
-                const noKeys = availableForge.length === 0 && availableDirect.length === 0;
+                // Dynamic models from other providers (anthropic, openai, gemini, groq, mistral, etc.)
+                const dynamicGroups = Object.entries(providerModels)
+                  .filter(([p]) => p !== 'openrouter' && savedProviders[p] && providerModels[p]?.length > 0)
+                  .map(([p, models]) => ({
+                    provider: p,
+                    label: p.charAt(0).toUpperCase() + p.slice(1),
+                    models: models.slice(0, 30),
+                  }));
+                const orModels = providerModels['openrouter'] || openRouterModels;
+                const noKeys = availableForge.length === 0 && availableDirect.length === 0 && dynamicGroups.length === 0;
                 return (
-                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color: noKeys && openRouterModels.length === 0 ? '#6b7280' : '#a78bfa', padding:'6px 10px', fontSize:12, cursor:'pointer', maxWidth:220 }}>
-                    {noKeys && openRouterModels.length === 0 && <option value="">⚠ Add an API key in Settings</option>}
+                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color: noKeys && orModels.length === 0 ? '#6b7280' : '#a78bfa', padding:'6px 10px', fontSize:12, cursor:'pointer', maxWidth:240 }}>
+                    {noKeys && orModels.length === 0 && <option value="">⚠ Add an API key in Settings</option>}
                     {availableForge.length > 0 && <optgroup label="⚡ Forge Models">{availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</optgroup>}
                     {availableDirect.map(grp => (
                       <optgroup key={grp.group} label={grp.group}>
                         {grp.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
                       </optgroup>
                     ))}
-                    {openRouterModels.length > 0 && (
+                    {dynamicGroups.map(grp => (
+                      <optgroup key={grp.provider} label={`🔥 ${grp.label} (live)`}>
+                        {grp.models.map(m => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
+                      </optgroup>
+                    ))}
+                    {orModels.length > 0 && (
                       <optgroup label="🔀 OpenRouter">
-                        {openRouterModels.filter(m => m.id.includes(':free') || m.pricing?.prompt === '0').slice(0,10).map(m => <option key={`openrouter/${m.id}`} value={`openrouter/${m.id}`}>🆓 {m.name || m.id}</option>)}
-                        {openRouterModels.filter(m => !m.id.includes(':free') && m.pricing?.prompt !== '0').slice(0,20).map(m => <option key={`openrouter/${m.id}`} value={`openrouter/${m.id}`}>{m.name || m.id}</option>)}
+                        {orModels.filter(m => m.id.includes(':free') || m.pricing?.prompt === '0').slice(0,10).map(m => <option key={`openrouter/${m.id}`} value={`openrouter/${m.id}`}>🆓 {m.name || m.id}</option>)}
+                        {orModels.filter(m => !m.id.includes(':free') && m.pricing?.prompt !== '0').slice(0,20).map(m => <option key={`openrouter/${m.id}`} value={`openrouter/${m.id}`}>{m.name || m.id}</option>)}
                       </optgroup>
                     )}
                   </select>
@@ -1234,17 +1385,43 @@ export default function ForgeApp() {
                     </div>
                   )}
 
+                  {/* Attached files chips */}
+                  {attachedFiles.length > 0 && (
+                    <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:6 }}>
+                      {attachedFiles.map((f, i) => (
+                        <div key={i} style={{ display:'flex', alignItems:'center', gap:5, padding:'3px 8px', background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:16, maxWidth:200 }}>
+                          <span style={{ fontSize:11 }}>📎</span>
+                          <span style={{ fontSize:11, color:'#94a3b8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{f.name}</span>
+                          <button onClick={() => setAttachedFiles(prev => prev.filter((_,j) => j !== i))} style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontSize:12, padding:0, lineHeight:1 }}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ position:'relative', background:'#111118', border:'1px solid #2d2d44', borderRadius:12, overflow:'hidden' }}>
                     <textarea ref={textareaRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} placeholder={activeThread ? 'Message... (Shift+Enter for newline)' : 'Start a conversation...'} rows={3} style={{ width:'100%', padding:'14px 16px 44px', background:'transparent', border:'none', color:'#e2e8f0', fontSize:14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <div style={{ display:'flex', gap:6 }}>
+                      <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
                         {/* Voice button */}
-                        <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input (click to speak)'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', background:voiceActive ? '#7C3AED' : '#7C3AED22', border:`1px solid ${voiceActive ? '#a78bfa' : '#7C3AED55'}`, borderRadius:8, color:voiceActive ? '#fff' : '#a78bfa', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>🎤 {voiceActive ? '● Recording…' : 'Voice'}</button>
-                        <button onClick={() => { setRightTab('artifacts'); setRightExpanded(true); }} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>📄 Artifacts</button>
-                        <button onClick={() => { setRightTab('dispatch'); setRightExpanded(true); }} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>🚀 Dispatch</button>
-                        <button onClick={() => { setShowNewTask(true); }} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>✅ Task</button>
+                        <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background:voiceActive ? '#7C3AED' : '#7C3AED22', border:`1px solid ${voiceActive ? '#a78bfa' : '#7C3AED55'}`, borderRadius:8, color:voiceActive ? '#fff' : '#a78bfa', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>🎤 {voiceActive ? '● Rec' : 'Voice'}</button>
+                        {/* Attach file */}
+                        <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display:'none' }} onChange={async e => {
+                          const files = Array.from(e.target.files || []);
+                          for (const file of files) {
+                            const text = await file.text().catch(() => `[Binary file: ${file.name}]`);
+                            setAttachedFiles(prev => [...prev, { name: file.name, content: text.slice(0, 50000) }]);
+                          }
+                          e.target.value = '';
+                        }} />
+                        <button onClick={() => fileInputRef.current?.click()} title="Attach files" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>📎 {attachedFiles.length > 0 ? `${attachedFiles.length}` : 'Files'}</button>
+                        {/* Quick right panel buttons */}
+                        <button onClick={() => { setRightTab('context'); setRightExpanded(true); }} title="Context usage" style={{ padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>📊</button>
+                        <button onClick={() => { setRightTab('live'); setRightExpanded(true); }} title="Live activity" style={{ padding:'4px 8px', background: liveEvents.length > 0 ? '#7C3AED22' : 'transparent', border:`1px solid ${liveEvents.length > 0 ? '#7C3AED55' : '#2d2d44'}`, borderRadius:6, color: liveEvents.length > 0 ? '#a78bfa' : '#6b7280', cursor:'pointer', fontSize:11 }}>📺</button>
+                        <button onClick={() => { setRightTab('browser'); setRightExpanded(true); }} title="Browser" style={{ padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>🌐</button>
+                        <button onClick={() => { setRightTab('terminal'); setRightExpanded(true); }} title="Terminal" style={{ padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>💻</button>
+                        <button onClick={() => { setRightTab('dispatch'); setRightExpanded(true); }} title="Dispatch agents" style={{ padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>🚀</button>
+                        <button onClick={() => { setShowNewTask(true); }} title="New task" style={{ padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>✅</button>
                       </div>
-                      <button onClick={sendMessage} disabled={sending || !input.trim()} style={{ width:32, height:32, background:sending ? '#7C3AED' : input.trim() ? '#7C3AED' : '#1a1a2e', border:'none', borderRadius:8, color:'#fff', cursor:input.trim() && !sending ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', animation: sending ? 'send-pulse 0.9s ease-in-out infinite' : 'none', transition:'background 0.2s' }}>
+                      <button onClick={sendMessage} disabled={sending || !input.trim()} style={{ width:32, height:32, background:sending ? '#7C3AED' : input.trim() ? '#7C3AED' : '#1a1a2e', border:'none', borderRadius:8, color:'#fff', cursor:input.trim() && !sending ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', animation: sending ? 'send-pulse 0.9s ease-in-out infinite' : 'none', transition:'background 0.2s', flexShrink:0 }}>
                         {sending ? '⚡' : '↑'}
                       </button>
                     </div>
@@ -1254,10 +1431,14 @@ export default function ForgeApp() {
 
               {/* Right panel */}
               {rightExpanded && (
-                <div style={{ width:340, background:'#0d0d15', borderLeft:'1px solid #1e1e2e', display:'flex', flexDirection:'column', flexShrink:0 }}>
-                  <div style={{ display:'flex', borderBottom:'1px solid #1e1e2e', padding:'0 4px' }}>
-                    {(['artifacts','tasks','schedule','dispatch'] as const).map(tab => (
-                      <button key={tab} onClick={() => setRightTab(tab)} style={{ flex:1, padding:'12px 4px', background:'none', border:'none', borderBottom:rightTab===tab ? '2px solid #7C3AED' : '2px solid transparent', color:rightTab===tab ? '#a78bfa' : '#4b5563', cursor:'pointer', fontSize:11, fontWeight:500, textTransform:'capitalize' }}>{tab}</button>
+                <div style={{ width:360, background:'#0d0d15', borderLeft:'1px solid #1e1e2e', display:'flex', flexDirection:'column', flexShrink:0 }}>
+                  <div style={{ display:'flex', borderBottom:'1px solid #1e1e2e', padding:'0 2px', overflowX:'auto' }}>
+                    {([
+                      {id:'artifacts',icon:'📄'},{id:'tasks',icon:'✅'},{id:'context',icon:'📊'},
+                      {id:'live',icon:'📺'},{id:'browser',icon:'🌐'},{id:'terminal',icon:'💻'},
+                      {id:'dispatch',icon:'🚀'},{id:'schedule',icon:'⏱'},
+                    ] as const).map(tab => (
+                      <button key={tab.id} onClick={() => setRightTab(tab.id as any)} title={tab.id} style={{ flex:'0 0 auto', padding:'10px 8px', background:'none', border:'none', borderBottom:rightTab===tab.id ? '2px solid #7C3AED' : '2px solid transparent', color:rightTab===tab.id ? '#a78bfa' : '#4b5563', cursor:'pointer', fontSize:14 }}>{tab.icon}</button>
                     ))}
                   </div>
 
@@ -1325,6 +1506,155 @@ export default function ForgeApp() {
                           </div>
                         ))}
                         {schedules.length===0 && <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', marginTop:16 }}>No scheduled tasks.</p>}
+                      </div>
+                    )}
+
+                    {/* CONTEXT — Token progress bar */}
+                    {rightTab==='context' && (() => {
+                      const used = threadStats?.total_tokens || 0;
+                      const limit = getContextLimit(selectedModel);
+                      const pct = Math.min(100, (used / limit) * 100);
+                      const color = pct > 80 ? '#ef4444' : pct > 60 ? '#f59e0b' : '#7C3AED';
+                      return (
+                        <div>
+                          <p style={{ color:'#4b5563', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 12px' }}>Context Usage</p>
+                          <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:10, padding:16, marginBottom:12 }}>
+                            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                              <span style={{ fontSize:13, color:'#94a3b8', fontWeight:600 }}>{selectedModel.startsWith('openrouter/') ? selectedModel.replace('openrouter/','') : selectedModel}</span>
+                              <span style={{ fontSize:12, color:color, fontWeight:700 }}>{pct.toFixed(1)}%</span>
+                            </div>
+                            <div style={{ background:'#1a1a2e', borderRadius:6, height:12, overflow:'hidden', marginBottom:8 }}>
+                              <div style={{ height:'100%', width:`${pct}%`, background:color, borderRadius:6, transition:'width 0.5s ease', boxShadow:`0 0 8px ${color}55` }} />
+                            </div>
+                            <div style={{ display:'flex', justifyContent:'space-between' }}>
+                              <span style={{ fontSize:11, color:'#6b7280' }}>{used.toLocaleString()} tokens used</span>
+                              <span style={{ fontSize:11, color:'#4b5563' }}>{limit.toLocaleString()} limit</span>
+                            </div>
+                          </div>
+                          {pct > 70 && (
+                            <div style={{ background:'#1a0a0a', border:'1px solid #ef444488', borderRadius:8, padding:12, marginBottom:12 }}>
+                              <p style={{ margin:'0 0 8px', fontSize:12, color:'#ef4444', fontWeight:600 }}>⚠️ {pct > 90 ? 'Critical' : 'Warning'}: Context {pct > 90 ? 'nearly full' : 'filling up'}</p>
+                              <p style={{ margin:'0 0 10px', fontSize:11, color:'#9ca3af' }}>Auto-compact will summarize older messages to free up context space.</p>
+                              <button onClick={async () => {
+                                if (!user || !activeThread) return;
+                                const keepMsgs = messages.slice(-6);
+                                const summarizeContent = messages.slice(0, -6).map(m => `${m.role}: ${m.content}`).join('\n');
+                                try {
+                                  await apiFetch(`/threads/${activeThread.id}/compact`, { method:'POST', body:JSON.stringify({ keep_recent: 6, summary_hint: summarizeContent.slice(0,2000) }) }, user.token);
+                                  await loadMessages(activeThread.id);
+                                  loadThreadTokenStats(activeThread.id);
+                                } catch { alert('Compact not available yet — coming soon!'); }
+                              }} style={{ width:'100%', padding:'8px', background:'#7C3AED', border:'none', borderRadius:6, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:600 }}>⚡ Compact Now</button>
+                            </div>
+                          )}
+                          {threadStats && (
+                            <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:10, padding:14 }}>
+                              <p style={{ margin:'0 0 10px', fontSize:11, color:'#4b5563', fontWeight:600, textTransform:'uppercase' }}>Message Breakdown</p>
+                              {threadStats.token_history.slice(-10).map((h, i) => (
+                                <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                                  <div style={{ fontSize:10, color:'#6b7280', width:16 }}>#{i+1}</div>
+                                  <div style={{ flex:1, background:'#1a1a2e', borderRadius:3, height:6, overflow:'hidden' }}>
+                                    <div style={{ height:'100%', width:`${Math.min(100, (h.tokens / (threadStats.token_history.reduce((a,b) => Math.max(a,b.tokens), 1)))*100)}%`, background:'#7C3AED' }} />
+                                  </div>
+                                  <span style={{ fontSize:10, color:'#6b7280', width:50, textAlign:'right' }}>{h.tokens >= 1000 ? (h.tokens/1000).toFixed(1)+'k' : h.tokens}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {!activeThread && <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', marginTop:40 }}>Start a conversation to see context usage.</p>}
+                        </div>
+                      );
+                    })()}
+
+                    {/* LIVE — Manus-style agent activity */}
+                    {rightTab==='live' && (
+                      <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+                          <p style={{ color:'#4b5563', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0 }}>Live Agent Activity</p>
+                          <div style={{ display:'flex', alignItems:'center', gap:4, marginLeft:'auto' }}>
+                            <div style={{ width:6, height:6, borderRadius:'50%', background: liveSSERef.current?.readyState === 1 ? '#059669' : '#4b5563', animation: liveSSERef.current?.readyState === 1 ? 'pulse 1.5s infinite' : 'none' }} />
+                            <span style={{ fontSize:10, color: liveSSERef.current?.readyState === 1 ? '#059669' : '#4b5563' }}>{liveSSERef.current?.readyState === 1 ? 'LIVE' : 'Connecting...'}</span>
+                          </div>
+                          <button onClick={() => setLiveEvents([])} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:10 }}>Clear</button>
+                        </div>
+                        {liveEvents.length === 0 && (
+                          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
+                            <div style={{ fontSize:40 }}>📺</div>
+                            <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', margin:0 }}>Watching for agent activity…<br/>Dispatch a task to see it here.</p>
+                          </div>
+                        )}
+                        <div style={{ flex:1, overflowY:'auto' }}>
+                          {liveEvents.map((ev, i) => {
+                            const dot = ev.type === 'done' ? '#059669' : ev.type === 'error' ? '#ef4444' : ev.type === 'thinking' ? '#f59e0b' : '#7C3AED';
+                            return (
+                              <div key={i} style={{ display:'flex', gap:10, padding:'8px 0', borderBottom:'1px solid #111118' }}>
+                                <div style={{ width:8, height:8, borderRadius:'50%', background:dot, flexShrink:0, marginTop:4, animation: ev.type === 'thinking' ? 'pulse 1s infinite' : 'none' }} />
+                                <div style={{ flex:1 }}>
+                                  <p style={{ margin:0, fontSize:12, color:'#e2e8f0', lineHeight:1.5 }}>{ev.message}</p>
+                                  <div style={{ display:'flex', gap:8, marginTop:2 }}>
+                                    {ev.model && <span style={{ fontSize:10, color:'#7C3AED', background:'#7C3AED11', padding:'1px 5px', borderRadius:4 }}>{ev.model}</span>}
+                                    <span style={{ fontSize:10, color:'#4b5563' }}>{new Date(ev.ts).toLocaleTimeString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* BROWSER — ForgeBrowser */}
+                    {rightTab==='browser' && (
+                      <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden' }}>
+                        {/* Browser toolbar */}
+                        <div style={{ padding:'8px', background:'#0a0a0f', borderBottom:'1px solid #1e1e2e', display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
+                          <button onClick={() => {
+                            if (browserHistoryIdx > 0) { const prev = browserHistory[browserHistoryIdx - 1]; setBrowserHistoryIdx(i => i-1); setBrowserUrl(prev); setBrowserInput(prev); }
+                          }} disabled={browserHistoryIdx <= 0} style={{ padding:'4px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12 }}>◀</button>
+                          <button onClick={() => {
+                            if (browserHistoryIdx < browserHistory.length - 1) { const next = browserHistory[browserHistoryIdx + 1]; setBrowserHistoryIdx(i => i+1); setBrowserUrl(next); setBrowserInput(next); }
+                          }} disabled={browserHistoryIdx >= browserHistory.length - 1} style={{ padding:'4px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12 }}>▶</button>
+                          <button onClick={() => { if (browserFrameRef.current) browserFrameRef.current.src = browserUrl; }} style={{ padding:'4px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12 }}>⟳</button>
+                          <input value={browserInput} onChange={e => setBrowserInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') browserNavigate(browserInput); }} placeholder="Enter URL or search..." style={{ flex:1, padding:'5px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:6, color:'#e2e8f0', fontSize:12, outline:'none' }} />
+                          <button onClick={() => browserNavigate(browserInput)} style={{ padding:'4px 8px', background:'#7C3AED', border:'none', borderRadius:6, color:'#fff', cursor:'pointer', fontSize:12 }}>Go</button>
+                        </div>
+                        {/* Quick links */}
+                        <div style={{ padding:'6px 8px', background:'#0a0a0f', borderBottom:'1px solid #1e1e2e', display:'flex', gap:6, flexShrink:0, flexWrap:'wrap' }}>
+                          {[['🔍','https://google.com'],['🐙','https://github.com'],['📚','https://docs.anthropic.com'],['🎨','https://v0.dev'],['🤖','https://openrouter.ai/models']].map(([icon, url]) => (
+                            <button key={url} onClick={() => browserNavigate(url)} title={url} style={{ padding:'3px 8px', background:'#111118', border:'1px solid #2d2d44', borderRadius:4, color:'#94a3b8', cursor:'pointer', fontSize:13 }}>{icon}</button>
+                          ))}
+                        </div>
+                        {/* iFrame browser */}
+                        <iframe ref={browserFrameRef} src={browserUrl} title="ForgeBrowser" style={{ flex:1, border:'none', background:'#fff' }} sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-navigation" onLoad={e => { try { setBrowserInput((e.target as HTMLIFrameElement).contentDocument?.location?.href || browserUrl); } catch {} }} />
+                        <div style={{ padding:'4px 8px', background:'#0a0a0f', borderTop:'1px solid #1e1e2e', flexShrink:0 }}>
+                          <span style={{ fontSize:10, color:'#4b5563' }}>⚡ ForgeBrowser — some sites block embedding</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TERMINAL — Forge Terminal */}
+                    {rightTab==='terminal' && (
+                      <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden', background:'#0a0a0f', fontFamily:'ui-monospace,monospace' }}>
+                        <div style={{ padding:'6px 10px', background:'#111118', borderBottom:'1px solid #1e1e2e', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+                          <span style={{ fontSize:12, color:'#059669', fontWeight:600 }}>⚡ Forge Terminal</span>
+                          <button onClick={() => setTerminalLines([{ text:'⚡ Forge Terminal — cleared', type:'system' }])} style={{ marginLeft:'auto', padding:'2px 8px', background:'none', border:'1px solid #2d2d44', borderRadius:4, color:'#4b5563', cursor:'pointer', fontSize:10 }}>Clear</button>
+                        </div>
+                        <div style={{ flex:1, overflowY:'auto', padding:'8px 12px', display:'flex', flexDirection:'column', gap:2 }}>
+                          {terminalLines.map((line, i) => (
+                            <div key={i} style={{ fontSize:12, lineHeight:1.5, color: line.type === 'input' ? '#a78bfa' : line.type === 'error' ? '#ef4444' : line.type === 'system' ? '#f59e0b' : '#e2e8f0', whiteSpace:'pre-wrap', wordBreak:'break-all' }}>{line.text}</div>
+                          ))}
+                          {terminalRunning && <div style={{ fontSize:12, color:'#7C3AED', animation:'pulse 1s infinite' }}>⚡ Running…</div>}
+                          <div ref={terminalEndRef} />
+                        </div>
+                        <div style={{ padding:'8px 12px', borderTop:'1px solid #1e1e2e', display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
+                          <span style={{ fontSize:12, color:'#059669', fontWeight:700, flexShrink:0 }}>$</span>
+                          <input ref={terminalInputRef} value={terminalInput} onChange={e => setTerminalInput(e.target.value)} onKeyDown={e => {
+                            if (e.key === 'Enter' && terminalInput.trim()) { runTerminalCommand(terminalInput); }
+                            else if (e.key === 'ArrowUp') { const idx = Math.min(terminalHistoryIdx + 1, terminalHistory.length - 1); setTerminalHistoryIdx(idx); setTerminalInput(terminalHistory[idx] || ''); e.preventDefault(); }
+                            else if (e.key === 'ArrowDown') { const idx = Math.max(terminalHistoryIdx - 1, -1); setTerminalHistoryIdx(idx); setTerminalInput(idx === -1 ? '' : terminalHistory[idx]); e.preventDefault(); }
+                          }} placeholder="type command..." disabled={terminalRunning} style={{ flex:1, background:'transparent', border:'none', color:'#e2e8f0', fontSize:12, outline:'none', fontFamily:'ui-monospace,monospace' }} autoComplete="off" spellCheck={false} />
+                          <button onClick={() => runTerminalCommand(terminalInput)} disabled={!terminalInput.trim() || terminalRunning} style={{ padding:'4px 8px', background:'#7C3AED', border:'none', borderRadius:4, color:'#fff', cursor:'pointer', fontSize:12, opacity: terminalInput.trim() && !terminalRunning ? 1 : 0.4 }}>↵</button>
+                        </div>
                       </div>
                     )}
 
@@ -2420,9 +2750,8 @@ export default function ForgeApp() {
             ] as { icon:string; label:string; action:()=>void; danger:boolean }[]).map(item => (
               <button key={item.label} onClick={item.action}
                 style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'9px 14px', background:'transparent', border:'none', color:item.danger ? '#ef4444' : '#e2e8f0', cursor:'pointer', fontSize:13, textAlign:'left' }}
-                onMouseEnter={e => (e.currentTarget.style.background = item.danger ? '#ef444411' : '#2d2d44')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                <span style={{ fontSize:14 }}>{item.icon}</span><span>{item.label}</span>
+                <span>{item.icon}</span><span>{item.label}</span>
               </button>
             ))}
           </div>
@@ -2431,32 +2760,24 @@ export default function ForgeApp() {
 
       {/* ── RENAME THREAD MODAL ──────────────────────────────────────────────── */}
       {renamingThread && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2000 }} onClick={() => setRenamingThread(null)}>
-          <div style={{ width:380, background:'#111118', borderRadius:14, padding:24, border:'1px solid #2d2d44' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ color:'#fff', margin:'0 0 16px', fontSize:17 }}>Rename Thread</h3>
-            <input autoFocus value={renamingThread.title}
-              onChange={e => setRenamingThread(prev => prev ? { ...prev, title: e.target.value } : prev)}
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2001 }} onClick={() => setRenamingThread(null)}>
+          <div style={{ width:360, background:'#111118', borderRadius:16, padding:24, border:'1px solid #2d2d44' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'#fff', margin:'0 0 16px', fontSize:18 }}>Rename Thread</h3>
+            <input
+              value={renamingThread.title}
+              onChange={e => setRenamingThread(prev => prev ? { ...prev, title: e.target.value } : null)}
               onKeyDown={e => { if (e.key === 'Enter') renameThread(); if (e.key === 'Escape') setRenamingThread(null); }}
-              placeholder="Thread name"
-              style={{ width:'100%', padding:'11px 14px', background:'#0a0a0f', border:'1px solid #2d2d44', borderRadius:8, color:'#fff', fontSize:14, outline:'none', boxSizing:'border-box', marginBottom:16 }} />
+              style={{ width:'100%', padding:'10px 12px', background:'#0d0d15', border:'1px solid #2d2d44', borderRadius:8, color:'#e2e8f0', fontSize:14, marginBottom:16, boxSizing:'border-box' }}
+              autoFocus
+            />
             <div style={{ display:'flex', gap:10 }}>
-              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid #2d2d44', borderRadius:8, color:'#6b7280', cursor:'pointer', fontSize:14 }}>Cancel</button>
-              <button onClick={renameThread} disabled={!renamingThread.title.trim()} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:renamingThread.title.trim() ? 'pointer' : 'default', opacity:renamingThread.title.trim() ? 1 : 0.5 }}>Save</button>
+              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid #2d2d44', borderRadius:8, color:'#6b7280', cursor:'pointer' }}>Cancel</button>
+              <button onClick={renameThread} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Rename</button>
             </div>
           </div>
         </div>
       )}
 
-      <style>{`
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #2d2d44; border-radius: 2px; }
-        input::placeholder, textarea::placeholder { color: #4b5563; }
-        select option { background: #1a1a2e; }
-        @keyframes pulse { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
-        .thread-row:hover .thread-menu-btn { opacity: 1 !important; }
-      `}</style>
     </div>
   );
 }
