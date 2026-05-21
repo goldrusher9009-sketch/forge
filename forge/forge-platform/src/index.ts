@@ -2019,7 +2019,7 @@ app.post('/api/forgemulti/run', requireAuth, async (req: AuthRequest, res) => {
   try {
     const results = await Promise.allSettled(agents.map(async (agent) => {
       const start = Date.now();
-      const result = await callLLM(actualModel, provider, apiKey, [
+      const result = await callLLM(provider, apiKey, actualModel, [
         { role: 'system', content: agent.prompt },
         { role: 'user', content: prompt }
       ]);
@@ -2028,11 +2028,77 @@ app.post('/api/forgemulti/run', requireAuth, async (req: AuthRequest, res) => {
     }));
     const responses = results.map((r, i) => r.status === 'fulfilled' ? r.value : { role: agents[i].role, icon: agents[i].icon, content: `Error: ${(r as any).reason?.message}`, elapsed: 0 });
     // Synthesize a final answer combining all agent perspectives
-    const synthesis = await callLLM(actualModel, provider, apiKey, [
+    const synthesis = await callLLM(provider, apiKey, actualModel, [
       { role: 'system', content: 'You are a master synthesizer. Given multiple expert perspectives on a question, create a comprehensive, well-structured response that integrates the best insights from each. Be clear and actionable.' },
       { role: 'user', content: `Original question: "${prompt}"\n\nExpert responses:\n${responses.map(r => `**${r.icon} ${r.role}**: ${r.content}`).join('\n\n')}\n\nProvide a synthesized final answer.` }
     ]);
     emitAgentActivity(userId, { type: 'done', message: `✅ ForgeMulti synthesis complete` });
+    res.json({ success: true, data: { agents: responses, synthesis: synthesis.content } });
+  } catch (err: any) {
+    emitAgentActivity(userId, { type: 'error', message: `❌ ForgeMulti error: ${err.message}` });
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── ForgeASI: Chain-of-Thought + Self-Critique + Synthesis ──────────────────
+app.post('/api/forgeasi/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { prompt, model: modelId = 'claude-sonnet-4' } = req.body;
+  if (!prompt) { res.status(400).json({ success: false, error: 'prompt required' }); return; }
+  const actualModel = resolveForgeModel(modelId);
+  const provider = getProviderForModel(actualModel);
+  const apiKey = getUserKey(userId, provider);
+  if (!apiKey) { res.status(400).json({ success: false, error: `No ${provider} API key` }); return; }
+  emitAgentActivity(userId, { type: 'start', message: `🌌 ForgeASI initiating deep reasoning...` });
+  try {
+    // Phase 1: Initial deep analysis
+    emitAgentActivity(userId, { type: 'thinking', message: `🧠 Phase 1: Deep analysis...` });
+    const phase1 = await callLLM(provider, apiKey, actualModel, [
+      { role: 'system', content: 'You are an advanced reasoning system. Perform a deep, thorough analysis of the given problem. Consider multiple angles, identify assumptions, and explore the problem space comprehensively.' },
+      { role: 'user', content: prompt }
+    ]);
+    // Phase 2: Self-critique
+    emitAgentActivity(userId, { type: 'thinking', message: `🔍 Phase 2: Self-critique...` });
+    const phase2 = await callLLM(provider, apiKey, actualModel, [
+      { role: 'system', content: 'You are a critical evaluator. Review the provided analysis and identify weaknesses, gaps, biases, or errors. Be brutally honest and thorough.' },
+      { role: 'user', content: `Original question: "${prompt}"\n\nInitial analysis:\n${phase1.content}\n\nCritique this analysis thoroughly.` }
+    ]);
+    // Phase 3: Synthesis
+    emitAgentActivity(userId, { type: 'thinking', message: `⚡ Phase 3: Final synthesis...` });
+    const phase3 = await callLLM(provider, apiKey, actualModel, [
+      { role: 'system', content: 'You are a master synthesizer with superintelligent capabilities. Given an initial analysis and its critique, produce the definitive, comprehensive answer that addresses all weaknesses and provides maximum value.' },
+      { role: 'user', content: `Original question: "${prompt}"\n\nInitial analysis:\n${phase1.content}\n\nCritique:\n${phase2.content}\n\nNow produce the final, definitive answer that incorporates all insights and addresses all critiques.` }
+    ]);
+    const totalTokens = phase1.promptTokens + phase1.completionTokens + phase2.promptTokens + phase2.completionTokens + phase3.promptTokens + phase3.completionTokens;
+    db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
+    emitAgentActivity(userId, { type: 'done', message: `✅ ForgeASI complete — ${totalTokens.toLocaleString()} tokens used` });
+    res.json({ success: true, data: {
+      steps: [
+        { phase: 'Deep Analysis', content: phase1.content, tokens: phase1.promptTokens + phase1.completionTokens },
+        { phase: 'Self-Critique', content: phase2.content, tokens: phase2.promptTokens + phase2.completionTokens },
+        { phase: 'Final Synthesis', content: phase3.content, tokens: phase3.promptTokens + phase3.completionTokens },
+      ],
+      synthesis: phase3.content,
+      totalTokens,
+      model: actualModel,
+    }});
+  } catch (err: any) {
+    emitAgentActivity(userId, { type: 'error', message: `❌ ForgeASI error: ${err.message}` });
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── 404 handler ─────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, error: 'NOT_FOUND', message: `Route ${req.method} ${req.path} not found` });
+});
+
+// ─── Start server ─────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`🚀 Forge Platform running on port ${PORT}`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
     res.json({ success: true, data: { agents: responses, synthesis: synthesis.content } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ ForgeMulti error: ${err.message}` });
