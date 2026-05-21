@@ -1,4 +1,4 @@
-// Forge AI Workspace v5.6 — Dynamic model fetch all providers, live preview, browser tab, terminal tab, context bar, folder attach
+// Forge AI Workspace v5.7 — OpenRouter prefix fix (bare model IDs), copy buttons on messages, new thread fallback
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -77,6 +77,10 @@ const FORGE_MODELS = [
   { id:'forge-gemini', label:'Forge Gemini', desc:'Gemini 2.0 Flash + markup',      base:'gemini-2.0-flash' },
 ];
 const DIRECT_MODELS = [
+  { group:'Morph', models:[
+    { id:'morph-v3-fast', label:'Morph v3 Fast' },
+    { id:'morph-v3',      label:'Morph v3' },
+  ]},
   { group:'Anthropic', models:[
     { id:'claude-opus-4-6',         label:'Claude Opus 4.6' },
     { id:'claude-sonnet-4-6',       label:'Claude Sonnet 4.6' },
@@ -323,10 +327,8 @@ export default function ForgeApp() {
   };
   const getContextLimit = (model: string) => {
     if (MODEL_CONTEXT_LIMITS[model]) return MODEL_CONTEXT_LIMITS[model];
-    if (model.startsWith('openrouter/')) {
-      const orModel = openRouterModels.find(m => model === `openrouter/${m.id}`);
-      return orModel?.context_length || 128000;
-    }
+    const orModel = openRouterModels.find(m => m.id === model);
+    if (orModel?.context_length) return orModel.context_length;
     return 128000;
   };
 
@@ -465,7 +467,7 @@ export default function ForgeApp() {
         setSelectedModel(prev => {
           if (!prev || prev === 'claude-sonnet-4-6') {
             const freeModel = models.find((m: any) => m.id.includes(':free') || m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0');
-            return freeModel ? `openrouter/${freeModel.id}` : `openrouter/${models[0].id}`;
+            return freeModel ? freeModel.id : models[0].id;
           }
           return prev;
         });
@@ -492,7 +494,7 @@ export default function ForgeApp() {
     try {
       const d = await apiFetch('/keys', {}, user.token);
       const data = d?.data || {};
-      const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor'];
+      const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor','morph'];
       const confirmed: Record<string,boolean> = {};
       providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
       setSavedProviders(confirmed);
@@ -501,10 +503,11 @@ export default function ForgeApp() {
       // Auto-select best available model based on saved keys
       setSelectedModel(prev => {
         // Keep existing selection if it's already pointing at a valid provider
-        if (prev && prev.startsWith('openrouter/') && confirmed['openrouter']) return prev;
+        if (prev && confirmed['openrouter']) return prev;
         if (prev && prev !== 'claude-sonnet-4-6') return prev;
         // Pick best model from first available provider
         if (confirmed['openrouter']) return prev; // will be set by loadOpenRouterModels
+        if (confirmed['morph']) return 'morph-v3-fast';
         if (confirmed['anthropic']) return 'claude-sonnet-4-6';
         if (confirmed['openai']) return 'gpt-4o';
         if (confirmed['gemini']) return 'gemini-2.0-flash';
@@ -1186,7 +1189,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'#7C3AED' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'#2d2d44', background:'#1a1a2e', padding:'1px 5px', borderRadius:4, border:'1px solid #2d2d44', fontFamily:'monospace' }}>v5.6</span>
+                  <span style={{ fontSize:10, color:'#2d2d44', background:'#1a1a2e', padding:'1px 5px', borderRadius:4, border:'1px solid #2d2d44', fontFamily:'monospace' }}>v5.7</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -1283,8 +1286,8 @@ export default function ForgeApp() {
                     ))}
                     {orModels.length > 0 && (
                       <optgroup label="🔀 OpenRouter">
-                        {orModels.filter(m => m.id.includes(':free') || m.pricing?.prompt === '0').slice(0,10).map(m => <option key={`openrouter/${m.id}`} value={`openrouter/${m.id}`}>🆓 {m.name || m.id}</option>)}
-                        {orModels.filter(m => !m.id.includes(':free') && m.pricing?.prompt !== '0').slice(0,20).map(m => <option key={`openrouter/${m.id}`} value={`openrouter/${m.id}`}>{m.name || m.id}</option>)}
+                        {orModels.filter(m => m.id.includes(':free') || m.pricing?.prompt === '0').slice(0,10).map(m => <option key={`openrouter/${m.id}`} value={m.id}>🆓 {m.name || m.id}</option>)}
+                        {orModels.filter(m => !m.id.includes(':free') && m.pricing?.prompt !== '0').slice(0,20).map(m => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
                       </optgroup>
                     )}
                   </select>
@@ -1547,7 +1550,7 @@ export default function ForgeApp() {
                           <p style={{ color:'#4b5563', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 12px' }}>Context Usage</p>
                           <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:10, padding:16, marginBottom:12 }}>
                             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                              <span style={{ fontSize:13, color:'#94a3b8', fontWeight:600 }}>{selectedModel.startsWith('openrouter/') ? selectedModel.replace('openrouter/','') : selectedModel}</span>
+                              <span style={{ fontSize:13, color:'#94a3b8', fontWeight:600 }}>{selectedModel}</span>
                               <span style={{ fontSize:12, color:color, fontWeight:700 }}>{pct.toFixed(1)}%</span>
                             </div>
                             <div style={{ background:'#1a1a2e', borderRadius:6, height:12, overflow:'hidden', marginBottom:8 }}>
@@ -1834,9 +1837,9 @@ export default function ForgeApp() {
                     {filteredOrModels.slice(0,120).map(m => {
                       const isFree = m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free');
                       const pricePerM = isFree ? null : m.pricing?.prompt ? (parseFloat(m.pricing.prompt)*1_000_000).toFixed(2) : null;
-                      const isSelected = selectedModel===`openrouter/${m.id}`;
+                      const isSelected = selectedModel===m.id || selectedModel===`openrouter/${m.id}`;
                       return (
-                        <div key={m.id} onClick={() => { setSelectedModel(`openrouter/${m.id}`); setActiveTab('workspace'); }} style={{ padding:'12px', background:'#111118', border: isSelected ? '1px solid #7c3aed' : '1px solid #1e1e2e', borderRadius:10, cursor:'pointer', transition:'border-color 0.15s', position:'relative' }}>
+                        <div key={m.id} onClick={() => { setSelectedModel(m.id); setActiveTab('workspace'); }} style={{ padding:'12px', background:'#111118', border: isSelected ? '1px solid #7c3aed' : '1px solid #1e1e2e', borderRadius:10, cursor:'pointer', transition:'border-color 0.15s', position:'relative' }}>
                           {/* Free badge */}
                           {isFree && <span style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:'#059669', background:'#05966922', padding:'2px 6px', borderRadius:8 }}>FREE</span>}
                           {isSelected && <span style={{ position:'absolute', top:8, right:isFree?46:8, fontSize:9, fontWeight:700, color:'#a78bfa', background:'#7c3aed22', padding:'2px 6px', borderRadius:8 }}>✓ ACTIVE</span>}
@@ -2505,6 +2508,7 @@ export default function ForgeApp() {
                       { provider:'gemini', label:'Google Gemini', placeholder:'AIza...', color:'#2563EB' },
                       { provider:'groq', label:'Groq', placeholder:'gsk_...', color:'#7C3AED' },
                       { provider:'openrouter', label:'OpenRouter', placeholder:'sk-or-v1-...', color:'#DB2777' },
+      { provider:'morph', label:'Morph', placeholder:'sk-CKUd-...', color:'#0891B2' },
                       { provider:'mistral', label:'Mistral', placeholder:'...', color:'#0891B2' },
                       { provider:'together', label:'Together AI', placeholder:'...', color:'#65A30D' },
                       { provider:'perplexity', label:'Perplexity', placeholder:'pplx-...', color:'#DC2626' },

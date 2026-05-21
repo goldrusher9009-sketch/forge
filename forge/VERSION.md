@@ -115,3 +115,16 @@
 - Platforms/Settings tabs with connected service credentials (stored in localStorage only)
 - Per-user encrypted API key storage in SQLite
 - JWT auth with refresh tokens
+
+---
+
+## v5.7 — 2026-05-21 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **OpenRouter model IDs** — `selectedModel` state now stores bare IDs (e.g. `deepseek/deepseek-v4-flash:free`) instead of `openrouter/deepseek/deepseek-v4-flash:free`. Stripped at every `setSelectedModel` call site: loadOpenRouterModels, loadApiKeys, ForgeRouter click, navbar option values. `cleanModel` safety strip kept in sendMessage as fallback.
+- **Copy button on messages** — every message has 📋 Copy + 🔊 Read buttons that appear on hover, identical to Claude's UX
+- **New conversation fix** — `newThread` has a fallback retry path; errors swallowed silently instead of alerting raw JSON
+- **Version badge** — updated to v5.7 in sidebar footer
+
+### forge-web-studio/package.json: 5.6.0 → 5.7.0
+### forge-platform/package.json: 5.6.0 → 5.7.0

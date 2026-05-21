@@ -1,6 +1,6 @@
 {
   "name": "forge-platform",
-  "version": "5.6.0",
+  "version": "5.7.0",
   "description": "Forge - Distributed multi-agent platform",
   "main": "dist/index.js",
   "engines": {
@@ -15,7 +15,12 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
-  "keywords": ["ai", "agents", "workflow", "orchestration"],
+  "keywords": [
+    "ai",
+    "agents",
+    "workflow",
+    "orchestration"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

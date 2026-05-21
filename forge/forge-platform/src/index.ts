@@ -468,6 +468,7 @@ function resolveForgeModel(modelId: string): string {
 function getProviderForModel(modelId: string): string {
   // Strip openrouter/ prefix if present before routing
   const mid = modelId.startsWith('openrouter/') ? modelId.slice('openrouter/'.length) : modelId;
+  if (mid.startsWith('morph-')) return 'morph';
   if (mid.startsWith('claude')) return 'anthropic';
   if (mid.startsWith('gpt') || mid.startsWith('o3') || mid.startsWith('o1') || mid.startsWith('o4')) return 'openai';
   if (mid.startsWith('gemini')) return 'gemini';
@@ -485,6 +486,7 @@ const PROVIDER_ENV_KEYS: Record<string,string> = {
   groq:        process.env.GROQ_API_KEY         || '',
   mistral:     process.env.MISTRAL_API_KEY      || '',
   openrouter:  process.env.OPENROUTER_API_KEY   || '',
+  morph:       process.env.MORPH_API_KEY        || '',
 };
 
 function getUserKey(userId: string, provider: string): string | null {
@@ -557,6 +559,17 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       body: JSON.stringify({ model: mistralModel, messages, max_tokens: 2048 }),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`Mistral error: ${e.slice(0,200)}`); }
+    const d: any = await res.json();
+    return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
+  }
+  // Morph (OpenAI-compatible)
+  if (provider === 'morph') {
+    const res = await fetch('https://api.morphllm.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, max_tokens: 4096 }),
+    });
+    if (!res.ok) { const e = await res.text(); throw new Error(`Morph error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
     return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
   }
@@ -636,7 +649,7 @@ app.get('/api/keys', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
   const rows = db.prepare('SELECT provider, key_preview FROM api_keys WHERE user_id=?').all(userId) as any[];
   const keyMap: any = {};
-  const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor'];
+  const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor','morph'];
   providers.forEach(p => {
     keyMap[`has_${p}`] = false;
     keyMap[`${p}_key`] = null;
@@ -718,6 +731,16 @@ app.get('/api/keys/:provider/models', requireAuth, async (req: AuthRequest, res)
       const d: any = await r.json();
       models = (d.data || []).map((m: any) => ({ id: m.id, name: m.name || m.id, context_length: m.context_length, pricing: m.pricing }));
 
+    } else if (provider === 'morph') {
+      // Morph uses OpenAI-compatible models endpoint
+      const r = await fetch('https://api.morphllm.com/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+      if (!r.ok) throw new Error(`Morph returned ${r.status}`);
+      const d: any = await r.json();
+      models = (d.data || [
+        { id: 'morph-v3-fast', object: 'model' },
+        { id: 'morph-v3', object: 'model' },
+      ]).map((m: any) => ({ id: m.id, name: m.id, context_length: 32000 }));
+
     } else if (provider === 'anthropic') {
       const r = await fetch('https://api.anthropic.com/v1/models', { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' } });
       if (!r.ok) throw new Error(`Anthropic returned ${r.status}`);
@@ -792,6 +815,10 @@ app.post('/api/keys/:provider/validate', requireAuth, async (req: AuthRequest, r
     let error = '';
     if (provider === 'openrouter') {
       const r = await fetch('https://openrouter.ai/api/v1/auth/key', { headers: { 'Authorization': `Bearer ${key}` } });
+      valid = r.ok;
+      if (!r.ok) error = `HTTP ${r.status}`;
+    } else if (provider === 'morph') {
+      const r = await fetch('https://api.morphllm.com/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
       valid = r.ok;
       if (!r.ok) error = `HTTP ${r.status}`;
     } else if (provider === 'anthropic') {
