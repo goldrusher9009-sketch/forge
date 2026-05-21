@@ -35,7 +35,7 @@ const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://forge-production-26
 interface User { id: string; email: string; name?: string; token: string; plan?: string; role?: string; }
 interface Project { id: string; name: string; color: string; system_prompt?: string; pinned?: number; created_at: string; }
 interface Thread { id: string; project_id?: string; title: string; created_at: string; pinned?: number; archived?: number; total_tokens?: number; }
-interface VaultKey { provider: string; key_preview: string; key_status: 'active'|'inactive'; created_at: string; updated_at: string; }
+interface VaultKey { provider: string; key_preview: string; key_status: 'active'|'inactive'|'invalid'; created_at: string; updated_at: string; }
 interface SuperMemory { id: string; topic: string; insight: string; frequency: number; strength: number; updated_at: string; }
 interface Message { id: string; thread_id: string; role: 'user' | 'assistant'; content: string; model?: string; created_at: string; }
 interface Artifact { id: string; thread_id?: string; title: string; type: string; content: string; version: number; created_at: string; }
@@ -279,6 +279,7 @@ export default function ForgeApp() {
   const [vaultKeys, setVaultKeys] = useState<VaultKey[]>([]);
   const [vaultUpdateInputs, setVaultUpdateInputs] = useState<Record<string,string>>({});
   const [vaultUpdating, setVaultUpdating] = useState('');
+  const [vaultValidating, setVaultValidating] = useState<Record<string,boolean>>({});
 
   // Thread context menu
   const [threadMenu, setThreadMenu] = useState<{ threadId:string; x:number; y:number } | null>(null);
@@ -300,6 +301,8 @@ export default function ForgeApp() {
   // ForgeRouter state
   const [routerTab, setRouterTab] = useState<'forge'|'direct'|'openrouter'|'custom'>('forge');
   const [orSearch, setOrSearch] = useState('');
+  const [orSort, setOrSort] = useState<'name'|'price_asc'|'price_desc'|'context'>('name');
+  const [orFilter, setOrFilter] = useState<'all'|'free'|'paid'>('all');
   const [newProvider, setNewProvider] = useState({ name:'', base_url:'', api_key:'', markup:'1.5', models:'' });
   const [routerTestPrompt, setRouterTestPrompt] = useState('');
   const [routerTestModel, setRouterTestModel] = useState('forge-pro');
@@ -470,6 +473,8 @@ export default function ForgeApp() {
       setSavedProviders(prev => ({ ...prev, [provider]: true }));
       // Refresh vault so new key appears in Key Vault section
       loadVault();
+      // Auto-validate the key immediately after saving
+      setTimeout(() => validateVaultKey(provider), 500);
     } catch (e: any) {
       const msg = e?.message || String(e);
       alert(`Save failed: ${msg}`);
@@ -556,6 +561,16 @@ export default function ForgeApp() {
       setSavedProviders(prev => ({ ...prev, [v.provider]: next === 'active' }));
     } catch {}
   };
+  const validateVaultKey = async (provider: string) => {
+    if (!user) return;
+    setVaultValidating(prev => ({ ...prev, [provider]: true }));
+    try {
+      const d = await apiFetch(`/keys/${provider}/validate`, { method:'POST' }, user.token);
+      const status: 'active'|'inactive' = d.valid ? 'active' : 'inactive';
+      setVaultKeys(prev => prev.map(k => k.provider === provider ? { ...k, key_status: status } : k));
+    } catch {}
+    setVaultValidating(prev => ({ ...prev, [provider]: false }));
+  };
   const deleteVaultKey = async (provider: string) => {
     if (!user || !confirm(`Remove ${provider} key?`)) return;
     try {
@@ -593,14 +608,16 @@ export default function ForgeApp() {
   };
 
   // ── Threads ────────────────────────────────────────────────────────────────
-  const newThread = async () => {
-    if (!user) return;
+  const newThread = async (title?: string): Promise<Thread|null> => {
+    if (!user) return null;
     try {
-      const body: any = { title:'New conversation' };
+      const body: any = { title: title || 'New conversation' };
       if (activeProject) body.project_id = activeProject.id;
       const d = await apiFetch('/threads', { method:'POST', body:JSON.stringify(body) }, user.token);
-      await loadThreads(activeProject?.id); setActiveThread(d); setMessages([]);
-    } catch (e: any) { alert(e.message); }
+      const t: Thread = d?.data || d;
+      await loadThreads(activeProject?.id); setActiveThread(t); setMessages([]);
+      return t;
+    } catch (e: any) { alert(e.message); return null; }
   };
 
   const selectThread = async (t: Thread) => { setActiveThread(t); await loadMessages(t.id); loadThreadTokenStats(t.id); };
@@ -608,14 +625,20 @@ export default function ForgeApp() {
   // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = async () => {
     if (!user || !input.trim() || sending) return;
-    if (!activeThread) { await newThread(); return; }
+    let currentThread = activeThread;
+    if (!currentThread) {
+      // Create thread titled from first message, then immediately send
+      const title = input.trim().slice(0, 60);
+      currentThread = await newThread(title);
+      if (!currentThread) return;
+    }
 
     const userContent = input.trim();
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
     setMultiResponses([]);
 
-    const tempUser: Message = { id:'tmp-u', thread_id:activeThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
+    const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
     setMessages(prev => [...prev, tempUser]);
 
     // Multi-response mode: query 3 models in parallel
@@ -623,14 +646,14 @@ export default function ForgeApp() {
       const modelsToQuery = ['claude-sonnet-4','gpt-4o','gemini-2.0-flash'];
       try {
         const results = await Promise.allSettled(modelsToQuery.map(m =>
-          apiFetch(`/threads/${activeThread.id}/messages`, { method:'POST', body:JSON.stringify({ content:userContent, model:m, agent_ids:activeAgentIds }) }, user.token)
+          apiFetch(`/threads/${currentThread!.id}/messages`, { method:'POST', body:JSON.stringify({ content:userContent, model:m, agent_ids:activeAgentIds }) }, user.token)
         ));
         const responses = results.map((r, i) => ({
           model: modelsToQuery[i],
           content: r.status === 'fulfilled' ? (r.value?.assistant_message?.content || 'No response') : `Error: ${(r as any).reason?.message}`
         }));
         setMultiResponses(responses);
-        await loadMessages(activeThread.id);
+        await loadMessages(currentThread!.id);
         await loadArtifacts();
       } catch {}
       setSending(false); setTyping(false);
@@ -639,7 +662,7 @@ export default function ForgeApp() {
 
     try {
       const body: any = { content:userContent, model:selectedModel, agent_ids:activeAgentIds };
-      let threadId = activeThread.id;
+      let threadId = currentThread.id;
       try {
         await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
       } catch (e: any) {
@@ -670,7 +693,7 @@ export default function ForgeApp() {
         .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error:\s*/i, '')
         .replace(/^\{"type":"error".*?"message":"([^"]+)".*\}$/i, '$1')
         .trim();
-      const errMsg: Message = { id:'tmp-err', thread_id:activeThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
+      const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
     } finally { setSending(false); setTyping(false); }
   };
@@ -840,7 +863,21 @@ export default function ForgeApp() {
   const taskStatusColor: Record<string, string> = { todo:'#6b7280', in_progress:'#2563EB', done:'#059669', blocked:'#DC2626' };
   const taskPriorityColor: Record<string, string> = { low:'#6b7280', medium:'#D97706', high:'#DC2626' };
   const artifactTypeIcon: Record<string, string> = { code:'💻', html:'🌐', react:'⚛️', markdown:'📝', 'live-dashboard':'📊', diff:'📋', default:'📄' };
-  const filteredOrModels = openRouterModels.filter(m => (m.id+' '+(m.name||'')).toLowerCase().includes(orSearch.toLowerCase()));
+  const filteredOrModels = openRouterModels
+    .filter(m => {
+      const text = (m.id+' '+(m.name||'')).toLowerCase();
+      if (!text.includes(orSearch.toLowerCase())) return false;
+      const isFree = m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0' || m.id.includes(':free');
+      if (orFilter === 'free') return isFree;
+      if (orFilter === 'paid') return !isFree;
+      return true;
+    })
+    .sort((a, b) => {
+      if (orSort === 'price_asc') return parseFloat(a.pricing?.prompt||'9999') - parseFloat(b.pricing?.prompt||'9999');
+      if (orSort === 'price_desc') return parseFloat(b.pricing?.prompt||'0') - parseFloat(a.pricing?.prompt||'0');
+      if (orSort === 'context') return (b.context_length||0) - (a.context_length||0);
+      return (a.name||a.id).localeCompare(b.name||b.id);
+    });
   const usagePercent = subscription ? Math.min(100, Math.round((subscription.tokens_used / (subscription.token_limit || 1)) * 100)) : 0;
 
   if (!user) return <LoginScreen onLogin={handleLogin} />;
@@ -1005,16 +1042,14 @@ export default function ForgeApp() {
                   </span>
                 )}
               </div>
-              {/* Global token counter */}
-              {totalTokens > 0 && (
-                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'#1a1a2e', borderRadius:8, border:'1px solid #2d2d44', flexShrink:0 }}>
-                  <span style={{ fontSize:10 }}>⚡</span>
-                  <span style={{ fontSize:11, color:'#7C3AED', fontWeight:600 }}>
-                    {totalTokens >= 1000000 ? (totalTokens/1000000).toFixed(1)+'M' : totalTokens >= 1000 ? (totalTokens/1000).toFixed(0)+'k' : totalTokens}
-                  </span>
-                  <span style={{ fontSize:10, color:'#4b5563' }}>tokens</span>
-                </div>
-              )}
+              {/* Global token counter — always visible */}
+              <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'#1a1a2e', borderRadius:8, border:'1px solid #2d2d44', flexShrink:0 }}>
+                <span style={{ fontSize:10 }}>⚡</span>
+                <span style={{ fontSize:11, color: totalTokens > 0 ? '#7C3AED' : '#4b5563', fontWeight:600 }}>
+                  {totalTokens >= 1000000 ? (totalTokens/1000000).toFixed(1)+'M' : totalTokens >= 1000 ? (totalTokens/1000).toFixed(0)+'k' : totalTokens || '0'}
+                </span>
+                <span style={{ fontSize:10, color:'#4b5563' }}>tokens</span>
+              </div>
               {/* Sketch toggle */}
               <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'5px 10px', background:sketchMode ? '#1e1e2e' : 'transparent', border:`1px solid ${sketchMode ? '#7C3AED' : '#2d2d44'}`, borderRadius:6, color:sketchMode ? '#a78bfa' : '#6b7280', cursor:'pointer', fontSize:12, flexShrink:0 }}>✏️ Sketch</button>
 
@@ -1159,7 +1194,7 @@ export default function ForgeApp() {
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ display:'flex', gap:6 }}>
                         {/* Voice button */}
-                        <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input'} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:voiceActive ? '#7C3AED22' : 'transparent', border:`1px solid ${voiceActive ? '#7C3AED' : '#2d2d44'}`, borderRadius:6, color:voiceActive ? '#a78bfa' : '#6b7280', cursor:'pointer', fontSize:11 }}>🎤 {voiceActive ? 'Stop' : 'Voice'}</button>
+                        <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input (click to speak)'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', background:voiceActive ? '#7C3AED' : '#7C3AED22', border:`1px solid ${voiceActive ? '#a78bfa' : '#7C3AED55'}`, borderRadius:8, color:voiceActive ? '#fff' : '#a78bfa', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>🎤 {voiceActive ? '● Recording…' : 'Voice'}</button>
                         <button onClick={() => { setRightTab('artifacts'); setRightExpanded(true); }} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>📄 Artifacts</button>
                         <button onClick={() => { setRightTab('dispatch'); setRightExpanded(true); }} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>🚀 Dispatch</button>
                         <button onClick={() => { setShowNewTask(true); }} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>✅ Task</button>
@@ -1357,18 +1392,65 @@ export default function ForgeApp() {
               {/* OpenRouter */}
               {routerTab==='openrouter' && (
                 <div>
-                  <p style={{ color:'#6b7280', fontSize:13, margin:'0 0 12px' }}>400+ models via OpenRouter. Add your OpenRouter API key in Settings.</p>
-                  <input placeholder="Search models..." value={orSearch} onChange={e => setOrSearch(e.target.value)} style={{ width:'100%', padding:'10px 14px', marginBottom:16, background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13, boxSizing:'border-box' }} />
-                  {openRouterModels.length === 0 && <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', padding:40 }}>Add OpenRouter API key in Settings to load models.</p>}
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:8 }}>
-                    {filteredOrModels.slice(0,100).map(m => (
-                      <div key={m.id} onClick={() => { setSelectedModel(`openrouter/${m.id}`); setActiveTab('workspace'); }} style={{ padding:'10px 12px', background:'#111118', border: selectedModel===`openrouter/${m.id}` ? '1px solid #7c3aed' : '1px solid #1e1e2e', borderRadius:8, cursor:'pointer' }}>
-                        <p style={{ margin:'0 0 2px', fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontWeight:500 }}>{m.name || m.id}</p>
-                        <p style={{ margin:0, fontSize:11, color:'#4b5563', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.id}{m.context_length ? ` · ${(m.context_length/1000).toFixed(0)}k ctx` : ''}</p>
+                  {/* Key entry if not loaded */}
+                  {openRouterModels.length === 0 && (
+                    <div style={{ background:'#111118', border:'1px solid #6366f133', borderRadius:12, padding:16, marginBottom:16 }}>
+                      <p style={{ margin:'0 0 10px', fontSize:13, color:'#94a3b8', fontWeight:600 }}>🔑 Add your OpenRouter API key to unlock 400+ models</p>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <input type="password" placeholder="sk-or-v1-..." value={apiKeys['openrouter'] || ''} onChange={e => setApiKeys(prev => ({ ...prev, openrouter: e.target.value }))} style={{ flex:1, padding:'9px 12px', background:'#0a0a0f', border:'1px solid #2d2d44', borderRadius:8, color:'#e2e8f0', fontSize:13 }} />
+                        <button onClick={async () => { await saveOneKey('openrouter', apiKeys['openrouter'] || ''); loadOpenRouterModels(); }} style={{ padding:'9px 16px', background:'#6366f1', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>{savedProviders['openrouter'] ? '✓ Saved' : 'Save & Load'}</button>
+                        <button onClick={() => window.open('https://openrouter.ai/keys', '_blank')} style={{ padding:'9px 12px', background:'transparent', border:'1px solid #1e1e2e', borderRadius:8, color:'#6b7280', fontSize:12, cursor:'pointer', whiteSpace:'nowrap' }}>Get key →</button>
                       </div>
-                    ))}
+                    </div>
+                  )}
+                  {/* Stats bar */}
+                  {openRouterModels.length > 0 && (
+                    <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14, flexWrap:'wrap' }}>
+                      <span style={{ fontSize:12, color:'#6b7280' }}>{openRouterModels.length} models</span>
+                      <span style={{ fontSize:12, color:'#059669' }}>✓ {openRouterModels.filter(m => m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free')).length} free</span>
+                      <span style={{ fontSize:12, color:'#7C3AED' }}>💎 {openRouterModels.filter(m => !(m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free'))).length} paid</span>
+                      <button onClick={loadOpenRouterModels} style={{ marginLeft:'auto', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>↻ Refresh</button>
+                    </div>
+                  )}
+                  {/* Search + filter + sort */}
+                  <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap' }}>
+                    <input placeholder="Search models..." value={orSearch} onChange={e => setOrSearch(e.target.value)} style={{ flex:1, minWidth:160, padding:'9px 12px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13 }} />
+                    <select value={orFilter} onChange={e => setOrFilter(e.target.value as any)} style={{ padding:'9px 10px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:12, cursor:'pointer' }}>
+                      <option value="all">All models</option>
+                      <option value="free">Free only</option>
+                      <option value="paid">Paid only</option>
+                    </select>
+                    <select value={orSort} onChange={e => setOrSort(e.target.value as any)} style={{ padding:'9px 10px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:12, cursor:'pointer' }}>
+                      <option value="name">Sort: Name</option>
+                      <option value="price_asc">Sort: Price ↑</option>
+                      <option value="price_desc">Sort: Price ↓</option>
+                      <option value="context">Sort: Context ↓</option>
+                    </select>
                   </div>
-                  {filteredOrModels.length > 100 && <p style={{ color:'#4b5563', fontSize:12, textAlign:'center', marginTop:12 }}>Showing 100 of {filteredOrModels.length} results. Refine search to see more.</p>}
+                  {/* Model grid */}
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:8 }}>
+                    {filteredOrModels.slice(0,120).map(m => {
+                      const isFree = m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free');
+                      const pricePerM = isFree ? null : m.pricing?.prompt ? (parseFloat(m.pricing.prompt)*1_000_000).toFixed(2) : null;
+                      const isSelected = selectedModel===`openrouter/${m.id}`;
+                      return (
+                        <div key={m.id} onClick={() => { setSelectedModel(`openrouter/${m.id}`); setActiveTab('workspace'); }} style={{ padding:'12px', background:'#111118', border: isSelected ? '1px solid #7c3aed' : '1px solid #1e1e2e', borderRadius:10, cursor:'pointer', transition:'border-color 0.15s', position:'relative' }}>
+                          {/* Free badge */}
+                          {isFree && <span style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:'#059669', background:'#05966922', padding:'2px 6px', borderRadius:8 }}>FREE</span>}
+                          {isSelected && <span style={{ position:'absolute', top:8, right:isFree?46:8, fontSize:9, fontWeight:700, color:'#a78bfa', background:'#7c3aed22', padding:'2px 6px', borderRadius:8 }}>✓ ACTIVE</span>}
+                          <p style={{ margin:'0 0 3px', fontSize:13, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontWeight:600, paddingRight:isFree?36:0 }}>{m.name || m.id}</p>
+                          <p style={{ margin:'0 0 6px', fontSize:10, color:'#4b5563', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontFamily:'monospace' }}>{m.id}</p>
+                          <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+                            {m.context_length && <span style={{ fontSize:10, color:'#6b7280', background:'#1a1a2e', padding:'2px 6px', borderRadius:6 }}>{(m.context_length/1000).toFixed(0)}k ctx</span>}
+                            {pricePerM && <span style={{ fontSize:10, color:'#F59E0B' }}>${pricePerM}/1M in</span>}
+                            {!isFree && m.pricing?.completion && <span style={{ fontSize:10, color:'#6b7280' }}>${(parseFloat(m.pricing.completion)*1_000_000).toFixed(2)}/1M out</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {filteredOrModels.length > 120 && <p style={{ color:'#4b5563', fontSize:12, textAlign:'center', marginTop:12 }}>Showing 120 of {filteredOrModels.length}. Refine search to see more.</p>}
+                  {openRouterModels.length > 0 && filteredOrModels.length === 0 && <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', padding:32 }}>No models match your search.</p>}
                 </div>
               )}
 
@@ -1771,18 +1853,18 @@ export default function ForgeApp() {
                     <button onClick={loadVault} style={{ background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12, padding:'4px 10px' }}>↻ Refresh</button>
                   </div>
                   {vaultKeys.map(v => (
-                    <div key={v.provider} style={{ marginBottom:10, background:'#0a0a0f', borderRadius:12, border:`1px solid ${v.key_status==='active' ? '#05966633' : '#DC262633'}`, padding:'12px 14px' }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                    <div key={v.provider} style={{ marginBottom:10, background:'#0a0a0f', borderRadius:12, border:`1px solid ${v.key_status==='active' ? '#05966633' : v.key_status==='invalid' ? '#DC262655' : '#2d2d4433'}`, padding:'12px 14px' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8, flexWrap:'wrap' }}>
                         {/* Status dot */}
-                        <div style={{ width:8, height:8, borderRadius:'50%', background: v.key_status==='active' ? '#059669' : '#DC2626', boxShadow: v.key_status==='active' ? '0 0 6px #059669' : '0 0 6px #DC2626', flexShrink:0 }} />
+                        <div style={{ width:8, height:8, borderRadius:'50%', background: v.key_status==='active' ? '#059669' : v.key_status==='invalid' ? '#DC2626' : '#6b7280', boxShadow: v.key_status==='active' ? '0 0 6px #059669' : v.key_status==='invalid' ? '0 0 6px #DC2626' : 'none', flexShrink:0 }} />
                         <span style={{ fontSize:13, fontWeight:600, color:'#e2e8f0', flex:1, textTransform:'capitalize' }}>{v.provider}</span>
                         <span style={{ fontSize:11, color:'#6b7280', fontFamily:'monospace' }}>{v.key_preview}</span>
-                        <span style={{ fontSize:10, color: v.key_status==='active' ? '#059669' : '#DC2626', background: v.key_status==='active' ? '#05966622' : '#DC262622', padding:'2px 7px', borderRadius:10, fontWeight:600 }}>{v.key_status}</span>
-                        {/* Toggle active/inactive */}
-                        <button onClick={() => toggleVaultKeyStatus(v)} title={v.key_status==='active' ? 'Deactivate' : 'Activate'} style={{ background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>
-                          {v.key_status==='active' ? '⏸' : '▶'}
+                        <span style={{ fontSize:10, color: v.key_status==='active' ? '#059669' : v.key_status==='invalid' ? '#DC2626' : '#F59E0B', background: v.key_status==='active' ? '#05966622' : v.key_status==='invalid' ? '#DC262622' : '#F59E0B22', padding:'2px 8px', borderRadius:10, fontWeight:700 }}>{v.key_status==='active' ? '✓ Active' : v.key_status==='invalid' ? '✗ Invalid' : '● Inactive'}</span>
+                        {/* Validate button */}
+                        <button onClick={() => validateVaultKey(v.provider)} disabled={vaultValidating[v.provider]} title="Test this key against the provider API" style={{ background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#a78bfa', cursor:'pointer', fontSize:11, padding:'3px 8px', whiteSpace:'nowrap' }}>
+                          {vaultValidating[v.provider] ? '⟳ Testing…' : '⚡ Validate'}
                         </button>
-                        <button onClick={() => deleteVaultKey(v.provider)} title="Remove key" style={{ background:'transparent', border:'1px solid #DC2626', borderRadius:6, color:'#DC2626', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>✕</button>
+                        <button onClick={() => deleteVaultKey(v.provider)} title="Remove key" style={{ background:'transparent', border:'1px solid #DC2626', borderRadius:6, color:'#DC2626', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>✕ Delete</button>
                       </div>
                       {/* Update key inline */}
                       <div style={{ display:'flex', gap:8 }}>
@@ -1888,8 +1970,8 @@ export default function ForgeApp() {
                               onChange={e => setApiKeys(prev => ({ ...prev, [key]: e.target.value }))}
                               style={{ flex:1, padding:'9px 12px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:13 }}
                             />
-                            <button onClick={saveApiKeys} style={{ padding:'9px 14px', background:color, border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>
-                              {keysSaved ? '✓' : 'Save'}
+                            <button onClick={async () => { await saveOneKey(key, apiKeys[key] || ''); if (key === 'openrouter') loadOpenRouterModels(); }} style={{ padding:'9px 14px', background:color, border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>
+                              {savedProviders[key] ? '✓ Saved' : 'Save'}
                             </button>
                           </div>
                         </div>

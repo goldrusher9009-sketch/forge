@@ -1,5 +1,5 @@
 /**
- * Forge Platform v5.1 — Production-ready backend
+ * Forge Platform v5.2 — Key vault, thread actions, token tracking, SuperAgent memory
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -329,6 +329,34 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
+
+// ── v5.2 new tables ────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS forge_memory (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    topic TEXT NOT NULL,
+    insight TEXT NOT NULL,
+    source_thread_id TEXT,
+    frequency INTEGER NOT NULL DEFAULT 1,
+    strength REAL NOT NULL DEFAULT 1.0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS superagent_messages (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+// v5.2 column migrations
+try { db.exec(`ALTER TABLE api_keys ADD COLUMN key_status TEXT NOT NULL DEFAULT 'active'`); } catch {}
+try { db.exec(`ALTER TABLE threads ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE threads ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE threads ADD COLUMN total_tokens INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE messages ADD COLUMN tokens INTEGER NOT NULL DEFAULT 0`); } catch {}
 
 // ── Safe migrations (add columns that may be missing in older DBs) ──
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
@@ -666,6 +694,53 @@ app.get('/api/keys/openrouter-models', requireAuth, async (req: AuthRequest, res
     const d: any = await r.json();
     res.json({ success: true, data: { models: d.data || [] } });
   } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// ── Key validation endpoint ────────────────────────────────────
+app.post('/api/keys/:provider/validate', requireAuth, async (req: AuthRequest, res) => {
+  const { provider } = req.params;
+  const userId = req.user!.sub;
+  const key = getUserKey(userId, provider);
+  if (!key) { res.status(400).json({ valid: false, error: 'No key saved for this provider' }); return; }
+
+  try {
+    let valid = false;
+    let error = '';
+    if (provider === 'openrouter') {
+      const r = await fetch('https://openrouter.ai/api/v1/auth/key', { headers: { 'Authorization': `Bearer ${key}` } });
+      valid = r.ok;
+      if (!r.ok) error = `HTTP ${r.status}`;
+    } else if (provider === 'anthropic') {
+      const r = await fetch('https://api.anthropic.com/v1/models', { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' } });
+      valid = r.ok;
+      if (!r.ok) error = `HTTP ${r.status}`;
+    } else if (provider === 'openai') {
+      const r = await fetch('https://api.openai.com/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+      valid = r.ok;
+      if (!r.ok) error = `HTTP ${r.status}`;
+    } else if (provider === 'groq') {
+      const r = await fetch('https://api.groq.com/openai/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+      valid = r.ok;
+      if (!r.ok) error = `HTTP ${r.status}`;
+    } else if (provider === 'gemini') {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      valid = r.ok;
+      if (!r.ok) error = `HTTP ${r.status}`;
+    } else if (provider === 'mistral') {
+      const r = await fetch('https://api.mistral.ai/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+      valid = r.ok;
+      if (!r.ok) error = `HTTP ${r.status}`;
+    } else {
+      // For unknown providers, just confirm key exists
+      valid = true;
+    }
+    // Update key_status in DB
+    db.prepare("UPDATE api_keys SET key_status=? WHERE user_id=? AND provider=?").run(valid ? 'active' : 'invalid', userId, provider);
+    res.json({ valid, error });
+  } catch (err: any) {
+    db.prepare("UPDATE api_keys SET key_status='invalid' WHERE user_id=? AND provider=?").run(userId, provider);
+    res.json({ valid: false, error: err.message });
+  }
 });
 
 // ── Custom Providers ──────────────────────────────────────────
@@ -1223,8 +1298,8 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
       .run(uuidv4(), userId, model, provider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup || 1.3);
     db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
     const asstMsgId = uuidv4();
-    db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content);
-    db.prepare("UPDATE threads SET updated_at=datetime('now') WHERE id=?").run(thread.id);
+    db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens) VALUES (?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens);
+    db.prepare("UPDATE threads SET updated_at=datetime('now'),total_tokens=total_tokens+? WHERE id=?").run(totalTokens, thread.id);
     res.json({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens } });
   } catch (err: any) {
     console.error('Thread chat error:', err.message);
@@ -1233,12 +1308,22 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
 });
 
 app.patch('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
-  const { title, model, project_id } = req.body;
+  const { title, model, project_id, pinned, archived } = req.body;
   if (!db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub)) {
     res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return;
   }
-  db.prepare("UPDATE threads SET title=COALESCE(?,title),model=COALESCE(?,model),project_id=COALESCE(?,project_id),updated_at=datetime('now') WHERE id=?")
-    .run(title ?? null, model ?? null, project_id ?? null, req.params.id);
+  // Build dynamic SET clause so we only update fields explicitly provided
+  const updates: string[] = [];
+  const params: any[] = [];
+  if (title !== undefined)      { updates.push('title=?');      params.push(title); }
+  if (model !== undefined)      { updates.push('model=?');      params.push(model); }
+  if (project_id !== undefined) { updates.push('project_id=?'); params.push(project_id); }
+  if (pinned !== undefined)     { updates.push('pinned=?');     params.push(pinned ? 1 : 0); }
+  if (archived !== undefined)   { updates.push('archived=?');   params.push(archived ? 1 : 0); }
+  if (updates.length === 0) { res.status(400).json({ success: false, error: 'NOTHING_TO_UPDATE' }); return; }
+  updates.push("updated_at=datetime('now')");
+  params.push(req.params.id);
+  db.prepare(`UPDATE threads SET ${updates.join(',')} WHERE id=?`).run(...params);
   res.json({ success: true, data: db.prepare('SELECT * FROM threads WHERE id=?').get(req.params.id) });
 });
 
@@ -1718,6 +1803,194 @@ app.post('/api/dispatch/cancel/:id', requireAuth, (req: AuthRequest, res: Respon
   if (!run) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
   db.prepare("UPDATE dispatch_runs SET status='cancelled',updated_at=datetime('now') WHERE id=?").run(req.params.id);
   res.json({ success: true });
+});
+
+// ══════════════════════════════════════════════════════════════
+// ── v5.2: KEY VAULT — update key, set status active/inactive ──
+// ══════════════════════════════════════════════════════════════
+
+// PATCH /api/keys/:provider — update a single key value
+app.patch('/api/keys/:provider', requireAuth, (req: AuthRequest, res) => {
+  const { provider } = req.params;
+  const { key, status } = req.body;
+  const userId = req.user!.sub;
+  const existing = db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider);
+  if (!existing) { res.status(404).json({ success: false, error: 'KEY_NOT_FOUND' }); return; }
+  if (key && typeof key === 'string' && key.trim()) {
+    const trimmed = key.trim();
+    db.prepare("UPDATE api_keys SET key_encrypted=?,key_preview=?,key_status='active',updated_at=datetime('now') WHERE user_id=? AND provider=?")
+      .run(encryptKey(trimmed), previewKey(trimmed), userId, provider);
+  }
+  if (status === 'active' || status === 'inactive') {
+    db.prepare("UPDATE api_keys SET key_status=?,updated_at=datetime('now') WHERE user_id=? AND provider=?").run(status, userId, provider);
+  }
+  const row = db.prepare('SELECT provider,key_preview,key_status,updated_at FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider);
+  res.json({ success: true, data: row });
+});
+
+// GET /api/keys/vault — full vault listing with status + preview
+app.get('/api/keys/vault', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT provider, key_preview, key_status, created_at, updated_at FROM api_keys WHERE user_id=? ORDER BY provider ASC').all(req.user!.sub) as any[];
+  res.json({ success: true, data: rows });
+});
+
+// GET /api/user/token-total — total tokens used by this user across all time
+app.get('/api/user/token-total', requireAuth, (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT COALESCE(SUM(total_tokens),0) as total FROM usage_logs WHERE user_id=?').get(req.user!.sub) as any;
+  res.json({ success: true, total: row.total });
+});
+
+// ══════════════════════════════════════════════════════════════
+// ── v5.2: THREAD MANAGEMENT — delete, pin, archive, rename ───
+// ══════════════════════════════════════════════════════════════
+
+// DELETE /api/threads/:id
+app.delete('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
+  const r = db.prepare('DELETE FROM threads WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  if (!r.changes) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  res.json({ success: true, message: 'Thread deleted' });
+});
+
+// GET /api/threads/:id/stats — per-thread token breakdown
+app.get('/api/threads/:id/stats', requireAuth, (req: AuthRequest, res) => {
+  const t = db.prepare('SELECT id,total_tokens FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!t) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const msgs = db.prepare('SELECT role, tokens, created_at FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(req.params.id) as any[];
+  const tokenHistory = msgs.filter(m => m.tokens > 0).map(m => ({ tokens: m.tokens, created_at: m.created_at, role: m.role }));
+  const msgCount = msgs.length;
+  res.json({ success: true, data: { total_tokens: t.total_tokens || 0, message_count: msgCount, token_history: tokenHistory } });
+});
+
+// ══════════════════════════════════════════════════════════════
+// ── v5.2: FORGE SUPERAGENT — memory + chat ────────────────────
+// ══════════════════════════════════════════════════════════════
+
+// POST /api/superagent/harvest — distill recent thread content into memory
+app.post('/api/superagent/harvest', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const apiKey = getUserKey(userId, 'anthropic');
+  if (!apiKey) { res.status(400).json({ success: false, error: 'NO_API_KEY', message: 'Anthropic key required for memory harvest' }); return; }
+
+  // Gather last 50 assistant messages across all threads
+  const recentMsgs = db.prepare(`
+    SELECT m.content, t.title FROM messages m
+    JOIN threads t ON t.id = m.thread_id
+    WHERE m.user_id IS NULL AND t.user_id=? AND m.role='assistant'
+    ORDER BY m.created_at DESC LIMIT 50
+  `).all(userId) as any[];
+
+  if (recentMsgs.length === 0) {
+    // Fall back — get from messages directly (user_id not stored on messages)
+    const fallback = db.prepare(`
+      SELECT m.content, t.title FROM messages m
+      JOIN threads t ON t.id = m.thread_id
+      WHERE t.user_id=? AND m.role='assistant'
+      ORDER BY m.created_at DESC LIMIT 50
+    `).all(userId) as any[];
+    recentMsgs.push(...fallback);
+  }
+
+  if (recentMsgs.length === 0) { res.json({ success: true, message: 'No conversations to harvest yet', harvested: 0 }); return; }
+
+  const digest = recentMsgs.slice(0, 30).map((m: any, i: number) => `[${i+1}] Thread "${m.title}": ${m.content.slice(0, 300)}`).join('\n');
+  const harvestPrompt = `You are analyzing an AI assistant's conversation history to extract reusable memory/knowledge.
+
+Here are recent assistant responses:
+${digest}
+
+Extract 5-10 key insights, topics, or patterns from these conversations. For each, output JSON like:
+{"topic": "short topic name", "insight": "concise insight (1-2 sentences)", "strength": 0.0-1.0}
+
+Output ONLY a JSON array, no other text.`;
+
+  try {
+    const result = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1024, messages: [{ role: 'user', content: harvestPrompt }] }),
+    });
+    const data = await result.json() as any;
+    const text = data.content?.[0]?.text || '[]';
+    let memories: any[] = [];
+    try {
+      const match = text.match(/\[[\s\S]*\]/);
+      memories = JSON.parse(match ? match[0] : text);
+    } catch { memories = []; }
+
+    let harvested = 0;
+    for (const m of memories) {
+      if (!m.topic || !m.insight) continue;
+      // Upsert: if same topic exists, increase frequency + update insight
+      const existing = db.prepare('SELECT id FROM forge_memory WHERE user_id=? AND topic=?').get(userId, m.topic) as any;
+      if (existing) {
+        db.prepare("UPDATE forge_memory SET frequency=frequency+1,insight=?,strength=?,updated_at=datetime('now') WHERE id=?")
+          .run(m.insight, Math.min(1.0, (m.strength || 0.7)), existing.id);
+      } else {
+        db.prepare("INSERT INTO forge_memory (id,user_id,topic,insight,strength) VALUES (?,?,?,?,?)")
+          .run(uuidv4(), userId, m.topic, m.insight, Math.min(1.0, (m.strength || 0.7)));
+      }
+      harvested++;
+    }
+    res.json({ success: true, message: `Harvested ${harvested} memory entries`, harvested });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: 'HARVEST_ERROR', message: err.message });
+  }
+});
+
+// GET /api/superagent/memory — list all memory entries
+app.get('/api/superagent/memory', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM forge_memory WHERE user_id=? ORDER BY strength DESC, frequency DESC').all(req.user!.sub);
+  const total = (db.prepare('SELECT SUM(frequency) as t FROM forge_memory WHERE user_id=?').get(req.user!.sub) as any)?.t || 0;
+  res.json({ success: true, data: rows, total_strength: total });
+});
+
+// DELETE /api/superagent/memory/:id
+app.delete('/api/superagent/memory/:id', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM forge_memory WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  res.json({ success: true });
+});
+
+// POST /api/superagent/chat — memory-injected chat
+app.post('/api/superagent/chat', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { content } = req.body;
+  if (!content?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT' }); return; }
+
+  const apiKey = getUserKey(userId, 'anthropic');
+  if (!apiKey) { res.status(400).json({ success: false, error: 'NO_API_KEY', message: 'Anthropic key required for Forge Super' }); return; }
+
+  // Load memory context
+  const memories = db.prepare('SELECT topic, insight, frequency FROM forge_memory WHERE user_id=? ORDER BY strength DESC LIMIT 20').all(userId) as any[];
+  const memCtx = memories.length > 0
+    ? `\n\nYour accumulated knowledge about this user:\n${memories.map(m => `• [${m.topic}] ${m.insight} (seen ${m.frequency}x)`).join('\n')}`
+    : '';
+
+  // Load recent superagent history (last 10 exchanges)
+  const history = db.prepare('SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId).reverse() as any[];
+
+  const systemPrompt = `You are Forge SuperAgent — an AI that grows stronger with every conversation. You have been trained on this user's entire workspace history and remember their patterns, preferences, and work.${memCtx}
+
+You are more capable than a standard assistant because you have context about who this user is and what they've worked on. Be proactive, insightful, and reference your memory when relevant. You are the most powerful agent in the Forge platform.`;
+
+  const messages = [...history, { role: 'user', content: content.trim() }];
+
+  try {
+    const result = await callLLM('anthropic', apiKey, 'claude-sonnet-4-6', [{ role: 'system', content: systemPrompt }, ...messages]);
+
+    // Save exchange to superagent history
+    db.prepare("INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)").run(uuidv4(), userId, 'user', content.trim());
+    db.prepare("INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)").run(uuidv4(), userId, 'assistant', result.content);
+
+    res.json({ success: true, data: { content: result.content, tokensUsed: result.promptTokens + result.completionTokens } });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });
+  }
+});
+
+// GET /api/superagent/history
+app.get('/api/superagent/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM superagent_messages WHERE user_id=? ORDER BY created_at ASC LIMIT 100').all(req.user!.sub);
+  res.json({ success: true, data: rows });
 });
 
 // ── 404 + Error handler ───────────────────────────────────────
