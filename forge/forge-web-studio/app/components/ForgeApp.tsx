@@ -66,6 +66,26 @@ body, #__next { background: var(--fg-bg) !important; color: var(--fg-text) !impo
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://forge-production-2692.up.railway.app/api';
 
+// ─── Code preview helpers (module-level to avoid TSX parser confusion with < chars) ──
+function extractCodeBlock(content: string): { code: string; isHtml: boolean } | null {
+  const fence = '```';
+  const re = new RegExp(fence + '(?:html|jsx?|tsx?|react|svelte|vue)?\\n([\\s\\S]*?)' + fence, 'i');
+  const m = content.match(re);
+  if (!m) return null;
+  const code = m[1].trim();
+  const hasTag = code.indexOf('<') !== -1;
+  const hasFn = code.indexOf('function') !== -1 || code.indexOf('const ') !== -1;
+  const isHtml = hasTag && (code.indexOf('div') !== -1 || code.indexOf('html') !== -1 || code.indexOf('style') !== -1 || code.indexOf('DOCTYPE') !== -1);
+  const isRenderable = content.match(new RegExp(fence + '(?:html|jsx?|tsx?|react)', 'i')) || isHtml || hasFn;
+  if (!isRenderable) return null;
+  if (!hasTag && !hasFn) return null;
+  return { code, isHtml };
+}
+function wrapCodeForPreview(code: string): string {
+  const open = '\x3c';
+  return open + '!DOCTYPE html>' + open + 'html>' + open + 'head>' + open + 'meta charset="utf-8">' + open + 'style>body{margin:0;font-family:system-ui,sans-serif;background:#fff;}' + open + '/style>' + open + '/head>' + open + 'body>' + code + open + '/body>' + open + '/html>';
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface User { id: string; email: string; name?: string; token: string; plan?: string; role?: string; }
 interface Project { id: string; name: string; color: string; system_prompt?: string; pinned?: number; created_at: string; }
@@ -266,6 +286,8 @@ export default function ForgeApp() {
   const [sketchMode, setSketchMode] = useState(false);
   const [sketchArtifact, setSketchArtifact] = useState<Artifact | null>(null);
   const [previewCode, setPreviewCode] = useState('');
+  // Inline message preview state: msgId -> 'code' | 'preview'
+  const [inlinePreviews, setInlinePreviews] = useState<Record<string, 'code'|'preview'>>({});
 
   // Dispatch
   const [dispatchPrompt, setDispatchPrompt] = useState('');
@@ -1582,13 +1604,43 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
-                  {messages.map((m, i) => (
-                    <div key={m.id || i} style={{ display:'flex', gap:12, alignItems:'flex-start', flexDirection:m.role==='user' ? 'row-reverse' : 'row' }}>
+                  {messages.map((m, i) => {
+                    // Extract first code block for inline preview
+                    const extracted = m.role === 'assistant' ? extractCodeBlock(m.content) : null;
+                    const codeBlock = extracted?.code || null;
+                    const isHtml = extracted?.isHtml || false;
+                    const msgKey = m.id || String(i);
+                    const previewMode = inlinePreviews[msgKey] || 'code';
+                    return (
+                    <div key={msgKey} style={{ display:'flex', gap:12, alignItems:'flex-start', flexDirection:m.role==='user' ? 'row-reverse' : 'row' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background:m.role==='user' ? 'var(--fg-orange)' : 'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
                         {m.role==='user' ? '👤' : '⚡'}
                       </div>
-                      <div style={{ maxWidth:'75%', padding:'12px 16px', borderRadius:m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background:m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', lineHeight:1.6 }}>
+                      <div style={{ maxWidth: codeBlock ? '90%' : '75%', flex: codeBlock ? 1 : undefined, padding:'12px 16px', borderRadius:m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background:m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', lineHeight:1.6 }}>
                         <p style={{ margin:0, fontSize:14, color:'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{m.content}</p>
+                        {/* Inline live preview card */}
+                        {codeBlock && (
+                          <div style={{ marginTop:12, border:'1px solid var(--fg-border2)', borderRadius:10, overflow:'hidden' }}>
+                            {/* Preview toolbar */}
+                            <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 10px', background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)' }}>
+                              <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, marginRight:4 }}>⚡ Live Preview</span>
+                              <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'code' }))} style={{ padding:'3px 10px', background: previewMode==='code' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='code' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Code</button>
+                              <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'preview' }))} style={{ padding:'3px 10px', background: previewMode==='preview' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='preview' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Preview</button>
+                              <button onClick={() => { navigator.clipboard.writeText(codeBlock); }} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>📋 Copy</button>
+                              <button onClick={() => { setPreviewCode(codeBlock); setSketchMode(true); }} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Open in Sketch panel">↗ Expand</button>
+                            </div>
+                            {previewMode === 'code' ? (
+                              <pre style={{ margin:0, padding:'12px 14px', background:'var(--fg-bg)', color:'var(--fg-green)', fontSize:12, fontFamily:'var(--fg-font-mono)', overflowX:'auto', maxHeight:280, overflowY:'auto', whiteSpace:'pre', lineHeight:1.6 }}>{codeBlock}</pre>
+                            ) : (
+                              <iframe
+                                srcDoc={isHtml ? codeBlock : wrapCodeForPreview(codeBlock)}
+                                style={{ width:'100%', height:320, border:'none', background:'#fff' }}
+                                title="Inline Preview"
+                                sandbox="allow-scripts allow-same-origin"
+                              />
+                            )}
+                          </div>
+                        )}
                         {m.model && <p style={{ margin:'6px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{m.model}</p>}
                         <div style={{ display:'flex', gap:4, marginTop:6, opacity:0.5, transition:'opacity 0.15s' }}
                           onMouseEnter={e => (e.currentTarget.style.opacity='1')}
@@ -1610,7 +1662,8 @@ export default function ForgeApp() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   {typing && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
                       {/* Flash-cycling avatar */}
@@ -3574,8 +3627,69 @@ export default function ForgeApp() {
           <div style={{ position:'fixed', top: threadMenu.y, left: threadMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
             {[
               { icon:'✏️', label:'Rename', action:() => { setRenamingThread({ id:t.id, title:t.title }); setThreadMenu(null); } },
-              { icon: t.pinned ? '📌 Unpin' : '📌 Pin', label: t.pinned ? 'Unpin' : 'Pin', action:() => { apiFetch(`/threads/${t.id}`, { method:'PATCH', body:JSON.stringify({ pinned: t.pinned ? 0 : 1 }) }, user!.token).then(() => loadThreads(activeProject?.id)); setThreadMenu(null); } },
+              { icon: t.pinned ? '📌 Unpin' : '📌 Pin', label: t.pinned ? 'Unpin' : 'Pin', action:() => { apiFetch('/threads/' + t.id, { method:'PATCH', body:JSON.stringify({ pinned: t.pinned ? 0 : 1 }) }, user!.token).then(() => loadThreads(activeProject?.id)); setThreadMenu(null); } },
               { icon:'🗄️', label: t.archived ? 'Unarchive' : 'Archive', action:() => { archiveThread(t); setThreadMenu(null); } },
+              { icon:'🗑️', label:'Delete', action:() => { deleteThread(t.id); setThreadMenu(null); } },
+            ].map(item => (
+              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                <span>{item.icon}</span>{item.label}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Project context menu popup */}
+      {projectMenu && (() => {
+        const p = projects.find(x => x.id === projectMenu.projectId);
+        if (!p) return null;
+        return (
+          <div style={{ position:'fixed', top: projectMenu.y, left: projectMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+            {[
+              { icon:'✏️', label:'Rename', action:() => { setRenamingProject({ id:p.id, name:p.name }); setProjectMenu(null); } },
+              { icon: p.pinned ? '📌 Unpin' : '📌 Pin', label: p.pinned ? 'Unpin' : 'Pin', action:() => { togglePin(p); setProjectMenu(null); } },
+              { icon:'🗑️', label:'Delete', action:() => { deleteProject(p.id); setProjectMenu(null); } },
+            ].map(item => (
+              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                <span>{item.icon}</span>{item.label}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Rename project modal */}
+      {renamingProject && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingProject(null)}>
+          <div style={{ width:360, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'var(--fg-text)', margin:'0 0 16px', fontSize:16, fontWeight:700 }}>Rename Project</h3>
+            <input value={renamingProject.name} onChange={e => setRenamingProject(prev => prev ? { ...prev, name: e.target.value } : prev)} onKeyDown={e => { if (e.key==='Enter') renameProject(); }} autoFocus style={{ width:'100%', padding:'10px 12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={() => setRenamingProject(null)} style={{ flex:1, padding:'9px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={renameProject} style={{ flex:1, padding:'9px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontWeight:600, cursor:'pointer' }}>Rename</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renamingThread && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingThread(null)}>
+          <div style={{ width:380, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>Rename Thread</h3>
+            <input value={renamingThread.title} onChange={e => setRenamingThread(prev => prev ? { ...prev, title: e.target.value } : prev)} onKeyDown={e => { if (e.key==='Enter') renameThread(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={renameThread} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Rename</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
               { icon:'🗑️', label:'Delete', action:() => { deleteThread(t.id); setThreadMenu(null); } },
             ].map(item => (
               <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
