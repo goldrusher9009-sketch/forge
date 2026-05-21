@@ -1,13 +1,42 @@
-// Forge AI Workspace v5.1 — Admin panel, per-provider key save, model filtering, thread recovery
+// Forge AI Workspace v5.3 — Key vault, thread actions+tokens, SuperAgent memory
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
+
+// ─── CSS injected once for animations ────────────────────────────────────────
+const GLOBAL_STYLES = `
+@keyframes pulse { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1)} }
+@keyframes forge-flash {
+  0%   { background:#7C3AED; box-shadow:0 0 8px #7C3AED88; }
+  25%  { background:#2563EB; box-shadow:0 0 12px #2563EB88; }
+  50%  { background:#059669; box-shadow:0 0 8px #05966988; }
+  75%  { background:#D97706; box-shadow:0 0 12px #D9770688; }
+  100% { background:#7C3AED; box-shadow:0 0 8px #7C3AED88; }
+}
+@keyframes forge-ring {
+  0%,100% { border-color:#7C3AED44; }
+  25%     { border-color:#2563EB; }
+  50%     { border-color:#059669; }
+  75%     { border-color:#D97706; }
+}
+@keyframes forge-text-flash {
+  0%,100% { color:#a78bfa; }
+  33%     { color:#60a5fa; }
+  66%     { color:#34d399; }
+}
+@keyframes send-pulse {
+  0%,100% { background:#7C3AED; box-shadow:0 0 0 0 #7C3AED55; }
+  50%     { background:#9333ea; box-shadow:0 0 0 6px #7C3AED00; }
+}
+`;
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://forge-production-2692.up.railway.app/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface User { id: string; email: string; name?: string; token: string; plan?: string; role?: string; }
 interface Project { id: string; name: string; color: string; system_prompt?: string; pinned?: number; created_at: string; }
-interface Thread { id: string; project_id?: string; title: string; created_at: string; }
+interface Thread { id: string; project_id?: string; title: string; created_at: string; pinned?: number; archived?: number; total_tokens?: number; }
+interface VaultKey { provider: string; key_preview: string; key_status: 'active'|'inactive'; created_at: string; updated_at: string; }
+interface SuperMemory { id: string; topic: string; insight: string; frequency: number; strength: number; updated_at: string; }
 interface Message { id: string; thread_id: string; role: 'user' | 'assistant'; content: string; model?: string; created_at: string; }
 interface Artifact { id: string; thread_id?: string; title: string; type: string; content: string; version: number; created_at: string; }
 interface WorkspaceAgent { id: string; name: string; icon: string; color: string; system_prompt: string; model: string; enabled: number; built_in?: number; }
@@ -33,7 +62,7 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string): P
     }
     throw new Error(err.error || 'Session expired. Please log in again.');
   }
-  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || err.message || `HTTP ${res.status}`); }
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || err.error || `HTTP ${res.status}`); }
   return res.json().catch(() => ({}));
 }
 
@@ -164,8 +193,8 @@ export default function ForgeApp() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
-  // Main tab — 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin'
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'>('workspace');
+  // Main tab — 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin' | 'super'
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'>('workspace');
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'>('artifacts');
@@ -246,6 +275,28 @@ export default function ForgeApp() {
   });
   const [llmExpanded, setLlmExpanded] = useState<Record<string,boolean>>({});
 
+  // Key vault
+  const [vaultKeys, setVaultKeys] = useState<VaultKey[]>([]);
+  const [vaultUpdateInputs, setVaultUpdateInputs] = useState<Record<string,string>>({});
+  const [vaultUpdating, setVaultUpdating] = useState('');
+
+  // Thread context menu
+  const [threadMenu, setThreadMenu] = useState<{ threadId:string; x:number; y:number } | null>(null);
+  const [renamingThread, setRenamingThread] = useState<{ id:string; title:string }|null>(null);
+  const [threadStats, setThreadStats] = useState<{ total_tokens:number; message_count:number; token_history:{tokens:number;created_at:string}[] }|null>(null);
+
+  // Navbar token total
+  const [totalTokens, setTotalTokens] = useState(0);
+
+  // SuperAgent
+  const [superInput, setSuperInput] = useState('');
+  const [superMessages, setSuperMessages] = useState<{role:string;content:string}[]>([]);
+  const [superSending, setSuperSending] = useState(false);
+  const [superMemory, setSuperMemory] = useState<SuperMemory[]>([]);
+  const [superHarvesting, setSuperHarvesting] = useState(false);
+  const [superTab, setSuperTab] = useState<'chat'|'memory'>('chat');
+  const superEndRef = useRef<HTMLDivElement>(null);
+
   // ForgeRouter state
   const [routerTab, setRouterTab] = useState<'forge'|'direct'|'openrouter'|'custom'>('forge');
   const [orSearch, setOrSearch] = useState('');
@@ -258,6 +309,15 @@ export default function ForgeApp() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  // ── Inject global animation styles once ───────────────────────────────────
+  useEffect(() => {
+    const id = 'forge-global-styles';
+    if (!document.getElementById(id)) {
+      const s = document.createElement('style'); s.id = id; s.textContent = GLOBAL_STYLES;
+      document.head.appendChild(s);
+    }
+  }, []);
 
   // ── Auth ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -290,10 +350,12 @@ export default function ForgeApp() {
     loadProjects(); loadAgents(); loadTasks(); loadArtifacts();
     loadDispatchRuns(); loadSchedules(); loadThreads();
     loadCustomProviders(); loadUsageLogs(); loadSubscription();
-    loadOpenRouterModels(); loadApiKeys();
+    loadOpenRouterModels(); loadApiKeys(); loadVault();
+    loadTotalTokens(); loadSuperMemory(); loadSuperHistory();
   }, [user]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
+  useEffect(() => { superEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [superMessages]);
 
 
   // ── Data loaders ───────────────────────────────────────────────────────────
@@ -327,13 +389,32 @@ export default function ForgeApp() {
     if (!user) return;
     try {
       const d = await apiFetch('/keys', {}, user.token);
-      // Backend returns { success, data: { has_anthropic: true, anthropic_key: 'sk-an...preview', ... } }
       const data = d?.data || {};
       const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor'];
       const confirmed: Record<string,boolean> = {};
       providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
       setSavedProviders(confirmed);
     } catch {}
+  };
+  const loadVault = async () => {
+    if (!user) return;
+    try { const d = await apiFetch('/keys/vault', {}, user.token); setVaultKeys(Array.isArray(d?.data) ? d.data : []); } catch {}
+  };
+  const loadTotalTokens = async () => {
+    if (!user) return;
+    try { const d = await apiFetch('/user/token-total', {}, user.token); setTotalTokens(d?.total || 0); } catch {}
+  };
+  const loadSuperMemory = async () => {
+    if (!user) return;
+    try { const d = await apiFetch('/superagent/memory', {}, user.token); setSuperMemory(Array.isArray(d?.data) ? d.data : []); } catch {}
+  };
+  const loadSuperHistory = async () => {
+    if (!user) return;
+    try { const d = await apiFetch('/superagent/history', {}, user.token); setSuperMessages(Array.isArray(d?.data) ? d.data.map((m:any) => ({ role:m.role, content:m.content })) : []); } catch {}
+  };
+  const loadThreadTokenStats = async (threadId: string) => {
+    if (!user) return;
+    try { const d = await apiFetch(`/threads/${threadId}/stats`, {}, user.token); if (d?.success) setThreadStats(d.data); } catch {}
   };
 
   // ── Admin loaders ──────────────────────────────────────────────────────────
@@ -387,6 +468,8 @@ export default function ForgeApp() {
       setKeysSaved(true); setTimeout(() => setKeysSaved(false), 3000);
       // Mark this provider as saved in state
       setSavedProviders(prev => ({ ...prev, [provider]: true }));
+      // Refresh vault so new key appears in Key Vault section
+      loadVault();
     } catch (e: any) {
       const msg = e?.message || String(e);
       alert(`Save failed: ${msg}`);
@@ -425,6 +508,90 @@ export default function ForgeApp() {
 
   const selectProject = async (p: Project) => { setActiveProject(p); await loadThreads(p.id); };
 
+  // ── Thread actions ────────────────────────────────────────────────────────
+  const deleteThread = async (id: string) => {
+    if (!user || !confirm('Delete this conversation?')) return;
+    try {
+      await apiFetch(`/threads/${id}`, { method:'DELETE' }, user.token);
+      if (activeThread?.id === id) { setActiveThread(null); setMessages([]); setThreadStats(null); }
+      await loadThreads(activeProject?.id);
+    } catch (e: any) { alert(e.message); }
+  };
+  const pinThread = async (t: Thread) => {
+    if (!user) return;
+    try { await apiFetch(`/threads/${t.id}`, { method:'PATCH', body:JSON.stringify({ pinned: t.pinned ? 0 : 1 }) }, user.token); await loadThreads(activeProject?.id); } catch {}
+  };
+  const archiveThread = async (t: Thread) => {
+    if (!user) return;
+    try { await apiFetch(`/threads/${t.id}`, { method:'PATCH', body:JSON.stringify({ archived: t.archived ? 0 : 1 }) }, user.token); await loadThreads(activeProject?.id); } catch {}
+  };
+  const renameThread = async () => {
+    if (!user || !renamingThread || !renamingThread.title.trim()) return;
+    try {
+      await apiFetch(`/threads/${renamingThread.id}`, { method:'PATCH', body:JSON.stringify({ title: renamingThread.title.trim() }) }, user.token);
+      if (activeThread?.id === renamingThread.id) setActiveThread(prev => prev ? { ...prev, title: renamingThread.title.trim() } : prev);
+      setRenamingThread(null); await loadThreads(activeProject?.id);
+    } catch (e: any) { alert(e.message); }
+  };
+
+  // ── Key vault actions ─────────────────────────────────────────────────────
+  const updateVaultKey = async (provider: string) => {
+    if (!user) return;
+    const key = vaultUpdateInputs[provider]?.trim();
+    if (!key) { alert('Paste new key first'); return; }
+    setVaultUpdating(provider);
+    try {
+      await apiFetch(`/keys/${provider}`, { method:'PATCH', body:JSON.stringify({ key }) }, user.token);
+      setVaultUpdateInputs(prev => ({ ...prev, [provider]: '' }));
+      await loadVault(); await loadApiKeys();
+    } catch (e: any) { alert(e.message); }
+    finally { setVaultUpdating(''); }
+  };
+  const toggleVaultKeyStatus = async (v: VaultKey) => {
+    if (!user) return;
+    const next = v.key_status === 'active' ? 'inactive' : 'active';
+    try {
+      await apiFetch(`/keys/${v.provider}`, { method:'PATCH', body:JSON.stringify({ status: next }) }, user.token);
+      setVaultKeys(prev => prev.map(k => k.provider === v.provider ? { ...k, key_status: next } : k));
+      setSavedProviders(prev => ({ ...prev, [v.provider]: next === 'active' }));
+    } catch {}
+  };
+  const deleteVaultKey = async (provider: string) => {
+    if (!user || !confirm(`Remove ${provider} key?`)) return;
+    try {
+      await apiFetch(`/keys/${provider}`, { method:'DELETE' }, user.token);
+      setVaultKeys(prev => prev.filter(k => k.provider !== provider));
+      setSavedProviders(prev => ({ ...prev, [provider]: false }));
+    } catch (e: any) { alert(e.message); }
+  };
+
+  // ── SuperAgent actions ────────────────────────────────────────────────────
+  const harvestMemory = async () => {
+    if (!user) return;
+    setSuperHarvesting(true);
+    try {
+      const d = await apiFetch('/superagent/harvest', { method:'POST' }, user.token);
+      await loadSuperMemory();
+      alert(d?.message || 'Memory harvested!');
+    } catch (e: any) { alert(e.message); }
+    finally { setSuperHarvesting(false); }
+  };
+  const sendSuperMessage = async () => {
+    if (!user || !superInput.trim() || superSending) return;
+    const content = superInput.trim(); setSuperInput(''); setSuperSending(true);
+    setSuperMessages(prev => [...prev, { role:'user', content }]);
+    try {
+      const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ content }) }, user.token);
+      setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]);
+      loadTotalTokens();
+    } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); }
+    finally { setSuperSending(false); }
+  };
+  const deleteMemoryEntry = async (id: string) => {
+    if (!user) return;
+    try { await apiFetch(`/superagent/memory/${id}`, { method:'DELETE' }, user.token); setSuperMemory(prev => prev.filter(m => m.id !== id)); } catch {}
+  };
+
   // ── Threads ────────────────────────────────────────────────────────────────
   const newThread = async () => {
     if (!user) return;
@@ -436,7 +603,7 @@ export default function ForgeApp() {
     } catch (e: any) { alert(e.message); }
   };
 
-  const selectThread = async (t: Thread) => { setActiveThread(t); await loadMessages(t.id); };
+  const selectThread = async (t: Thread) => { setActiveThread(t); await loadMessages(t.id); loadThreadTokenStats(t.id); };
 
   // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = async () => {
@@ -489,13 +656,21 @@ export default function ForgeApp() {
       await loadMessages(threadId);
       await loadArtifacts();
       await loadThreads(activeProject?.id);
+      loadThreadTokenStats(threadId);
+      loadTotalTokens();
       if (sketchMode) {
         const fresh = await apiFetch('/artifacts', {}, user.token);
         const arr = Array.isArray(fresh) ? fresh : Array.isArray(fresh?.data) ? fresh.data : [];
         if (arr.length > 0) { setSketchArtifact(arr[0]); setPreviewCode(arr[0].content); }
       }
     } catch (e: any) {
-      const errMsg: Message = { id:'tmp-err', thread_id:activeThread.id, role:'assistant', content:`Error: ${e.message}`, created_at:new Date().toISOString() };
+      // Strip raw provider prefixes like "Anthropic error: " for clean display
+      const raw: string = e.message || 'Something went wrong';
+      const clean = raw
+        .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error:\s*/i, '')
+        .replace(/^\{"type":"error".*?"message":"([^"]+)".*\}$/i, '$1')
+        .trim();
+      const errMsg: Message = { id:'tmp-err', thread_id:activeThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
     } finally { setSending(false); setTyping(false); }
   };
@@ -672,7 +847,7 @@ export default function ForgeApp() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <div style={{ display:'flex', height:'100vh', background:'#0a0a0f', color:'#e2e8f0', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden' }}>
+    <div style={{ display:'flex', height:'100vh', background:'#0a0a0f', color:'#e2e8f0', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden' }} onClick={() => setThreadMenu(null)}>
 
       {/* ── LEFT SIDEBAR ──────────────────────────────────────────────────── */}
       <div style={{ width:sidebarExpanded ? 260 : 60, background:'#0d0d15', borderRight:'1px solid #1e1e2e', display:'flex', flexDirection:'column', flexShrink:0, transition:'width 0.2s', overflow:'hidden' }}>
@@ -693,9 +868,10 @@ export default function ForgeApp() {
             { id:'billing', icon:'💳', label:'Billing' },
             { id:'platforms', icon:'🌐', label:'Platforms' },
             { id:'settings', icon:'⚙️', label:'Settings' },
+            { id:'super', icon:'🌟', label:'Forge Super' },
             ...(user.role === 'admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
           ]) as Array<{ id: string; icon: string; label: string }>).map((tab) => (
-            <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id === 'admin') { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); } }} title={tab.label} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:mainTab===tab.id ? '#1a1a2e' : 'transparent', border:'none', borderRadius:6, color:mainTab===tab.id ? (tab.id==='admin' ? '#f59e0b' : '#a78bfa') : '#6b7280', cursor:'pointer', fontSize:13, fontWeight:mainTab===tab.id ? 600 : 400, marginBottom:2, justifyContent:sidebarExpanded ? 'flex-start' : 'center' }}>
+            <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id === 'admin') { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); } if (tab.id === 'super') { loadSuperMemory(); loadSuperHistory(); } if (tab.id === 'settings') { loadVault(); } }} title={tab.label} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:mainTab===tab.id ? '#1a1a2e' : 'transparent', border:'none', borderRadius:6, color:mainTab===tab.id ? (tab.id==='admin' ? '#f59e0b' : tab.id==='super' ? '#fbbf24' : '#a78bfa') : '#6b7280', cursor:'pointer', fontSize:13, fontWeight:mainTab===tab.id ? 600 : 400, marginBottom:2, justifyContent:sidebarExpanded ? 'flex-start' : 'center' }}>
               <span style={{ fontSize:16 }}>{tab.icon}</span>
               {sidebarExpanded && tab.label}
             </button>
@@ -727,10 +903,36 @@ export default function ForgeApp() {
             <div style={{ padding:'12px 12px 4px', flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
               <p style={{ color:'#4b5563', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 8px' }}>{activeProject ? activeProject.name : 'Recent'}</p>
               <div style={{ flex:1, overflowY:'auto' }}>
-                {threads.slice(0, 30).map(t => (
-                  <div key={t.id} onClick={() => selectThread(t)} style={{ padding:'7px 8px', borderRadius:6, cursor:'pointer', marginBottom:1, background:activeThread?.id===t.id ? '#1a1a2e' : 'transparent' }}>
-                    <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? '#a78bfa' : '#94a3b8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{t.title}</p>
-                    <p style={{ margin:0, fontSize:11, color:'#4b5563' }}>{new Date(t.created_at).toLocaleDateString()}</p>
+                {/* Pinned threads first */}
+                {threads.filter(t => t.pinned && !t.archived).map(t => (
+                  <div key={t.id} style={{ position:'relative' }}
+                    onContextMenu={e => { e.preventDefault(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }}>
+                    <div onClick={() => selectThread(t)}
+                      onMouseEnter={e => { const b = e.currentTarget.querySelector('.thread-menu-btn') as HTMLElement; if (b) b.style.opacity='1'; }}
+                      onMouseLeave={e => { const b = e.currentTarget.querySelector('.thread-menu-btn') as HTMLElement; if (b) b.style.opacity='0'; }}
+                      style={{ padding:'7px 8px 5px', borderRadius:6, cursor:'pointer', marginBottom:1, background:activeThread?.id===t.id ? '#1a1a2e' : '#0d0d18', border:'1px solid #2d2d3a' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                        <span style={{ fontSize:10 }}>📌</span>
+                        <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? '#a78bfa' : '#94a3b8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
+                        <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">•••</button>
+                      </div>
+                      {t.total_tokens ? <p style={{ margin:'2px 0 0 14px', fontSize:10, color:'#4b5563' }}>{t.total_tokens >= 1000 ? (t.total_tokens/1000).toFixed(1)+'k' : t.total_tokens} tokens</p> : null}
+                    </div>
+                  </div>
+                ))}
+                {/* Regular threads */}
+                {threads.filter(t => !t.pinned && !t.archived).slice(0, 30).map(t => (
+                  <div key={t.id} style={{ position:'relative' }}
+                    onContextMenu={e => { e.preventDefault(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }}>
+                    <div onClick={() => selectThread(t)} style={{ padding:'7px 8px 5px', borderRadius:6, cursor:'pointer', marginBottom:1, background:activeThread?.id===t.id ? '#1a1a2e' : 'transparent' }}
+                      onMouseEnter={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style && ((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity = '1'); }}
+                      onMouseLeave={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style && ((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity = '0'); }}>
+                      <div style={{ display:'flex', alignItems:'center' }}>
+                        <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? '#a78bfa' : '#94a3b8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
+                        <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">•••</button>
+                      </div>
+                      {t.total_tokens ? <p style={{ margin:'2px 0 0', fontSize:10, color:'#4b5563' }}>{t.total_tokens >= 1000 ? (t.total_tokens/1000).toFixed(1)+'k' : t.total_tokens} tokens</p> : null}
+                    </div>
                   </div>
                 ))}
                 {threads.length === 0 && <p style={{ color:'#4b5563', fontSize:12, padding:'4px 8px' }}>No conversations yet</p>}
@@ -776,18 +978,48 @@ export default function ForgeApp() {
         {mainTab === 'workspace' && (
           <>
             {/* Top bar */}
-            <div style={{ padding:'0 20px', height:52, background:'#0d0d15', borderBottom:'1px solid #1e1e2e', display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
-              <div style={{ flex:1, overflow:'hidden' }}>
+            <div style={{ padding:'0 16px', height:52, background:'#0d0d15', borderBottom:'1px solid #1e1e2e', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+              <div style={{ flex:1, overflow:'hidden', display:'flex', alignItems:'center', gap:10 }}>
                 <h2 style={{ margin:0, fontSize:15, fontWeight:600, color:'#e2e8f0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                   {activeThread ? activeThread.title : activeProject ? activeProject.name : 'Forge Workspace'}
                 </h2>
+                {/* Mini sparkline — token usage per message in current thread */}
+                {threadStats && threadStats.token_history.length > 0 && (() => {
+                  const vals = threadStats.token_history.map(h => h.tokens);
+                  const max = Math.max(...vals, 1);
+                  const w = 6; const gap = 2; const h = 20;
+                  return (
+                    <svg width={vals.length * (w + gap)} height={h} style={{ flexShrink:0, opacity:0.7 }} title={`${threadStats.total_tokens.toLocaleString()} tokens total`}>
+                      {vals.map((v, i) => {
+                        const barH = Math.max(2, Math.round((v / max) * h));
+                        const color = v === max ? '#a78bfa' : '#2d2d44';
+                        return <rect key={i} x={i*(w+gap)} y={h-barH} width={w} height={barH} rx={2} fill={color} />;
+                      })}
+                    </svg>
+                  );
+                })()}
+                {/* Thread token total pill */}
+                {threadStats && threadStats.total_tokens > 0 && (
+                  <span style={{ fontSize:10, color:'#6b7280', background:'#1a1a2e', padding:'2px 6px', borderRadius:10, whiteSpace:'nowrap', flexShrink:0 }}>
+                    {threadStats.total_tokens >= 1000 ? (threadStats.total_tokens/1000).toFixed(1)+'k' : threadStats.total_tokens}t
+                  </span>
+                )}
               </div>
-
+              {/* Global token counter */}
+              {totalTokens > 0 && (
+                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'#1a1a2e', borderRadius:8, border:'1px solid #2d2d44', flexShrink:0 }}>
+                  <span style={{ fontSize:10 }}>⚡</span>
+                  <span style={{ fontSize:11, color:'#7C3AED', fontWeight:600 }}>
+                    {totalTokens >= 1000000 ? (totalTokens/1000000).toFixed(1)+'M' : totalTokens >= 1000 ? (totalTokens/1000).toFixed(0)+'k' : totalTokens}
+                  </span>
+                  <span style={{ fontSize:10, color:'#4b5563' }}>tokens</span>
+                </div>
+              )}
               {/* Sketch toggle */}
-              <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'5px 10px', background:sketchMode ? '#1e1e2e' : 'transparent', border:`1px solid ${sketchMode ? '#7C3AED' : '#2d2d44'}`, borderRadius:6, color:sketchMode ? '#a78bfa' : '#6b7280', cursor:'pointer', fontSize:12 }}>✏️ Sketch</button>
+              <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'5px 10px', background:sketchMode ? '#1e1e2e' : 'transparent', border:`1px solid ${sketchMode ? '#7C3AED' : '#2d2d44'}`, borderRadius:6, color:sketchMode ? '#a78bfa' : '#6b7280', cursor:'pointer', fontSize:12, flexShrink:0 }}>✏️ Sketch</button>
 
               {/* Multi-response toggle */}
-              <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? '#1e1e2e' : 'transparent', border:`1px solid ${multiResponse ? '#D97706' : '#2d2d44'}`, borderRadius:6, color:multiResponse ? '#D97706' : '#6b7280', cursor:'pointer', fontSize:12 }}>⚡ Multi</button>
+              <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? '#1e1e2e' : 'transparent', border:`1px solid ${multiResponse ? '#D97706' : '#2d2d44'}`, borderRadius:6, color:multiResponse ? '#D97706' : '#6b7280', cursor:'pointer', fontSize:12, flexShrink:0 }}>⚡ Multi</button>
 
               {/* Model selector — only shows models whose provider key is confirmed saved */}
               {(() => {
@@ -874,11 +1106,14 @@ export default function ForgeApp() {
                   ))}
                   {typing && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background:'#1a1a2e', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>⚡</div>
-                      <div style={{ padding:'12px 16px', borderRadius:'4px 18px 18px 18px', background:'#111118', border:'1px solid #1e1e2e' }}>
+                      {/* Flash-cycling avatar */}
+                      <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite', flexShrink:0 }}>⚡</div>
+                      <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'#0d0d1a', border:'2px solid #7C3AED', animation:'forge-ring 1.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:10 }}>
+                        {/* Bouncing dots */}
                         <div style={{ display:'flex', gap:4, alignItems:'center' }}>
-                          {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'#4b5563', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                          {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'#7C3AED', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
                         </div>
+                        <span style={{ fontSize:11, fontWeight:600, animation:'forge-text-flash 1.8s ease-in-out infinite', letterSpacing:'0.05em' }}>thinking…</span>
                       </div>
                     </div>
                   )}
@@ -929,8 +1164,8 @@ export default function ForgeApp() {
                         <button onClick={() => { setRightTab('dispatch'); setRightExpanded(true); }} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>🚀 Dispatch</button>
                         <button onClick={() => { setShowNewTask(true); }} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11 }}>✅ Task</button>
                       </div>
-                      <button onClick={sendMessage} disabled={sending || !input.trim()} style={{ width:32, height:32, background:input.trim() && !sending ? '#7C3AED' : '#1a1a2e', border:'none', borderRadius:8, color:'#fff', cursor:input.trim() && !sending ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', transition:'background 0.2s' }}>
-                        {sending ? '⏳' : '↑'}
+                      <button onClick={sendMessage} disabled={sending || !input.trim()} style={{ width:32, height:32, background:sending ? '#7C3AED' : input.trim() ? '#7C3AED' : '#1a1a2e', border:'none', borderRadius:8, color:'#fff', cursor:input.trim() && !sending ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', animation: sending ? 'send-pulse 0.9s ease-in-out infinite' : 'none', transition:'background 0.2s' }}>
+                        {sending ? '⚡' : '↑'}
                       </button>
                     </div>
                   </div>
@@ -1524,6 +1759,53 @@ export default function ForgeApp() {
                 })}
               </div>
 
+              {/* Key Vault — all saved keys with status, update, delete */}
+              {vaultKeys.length > 0 && (
+                <div style={{ background:'#111118', border:'1px solid #2d2d44', borderRadius:16, padding:24, marginBottom:24 }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                    <div>
+                      <h3 style={{ color:'#a78bfa', fontSize:14, margin:'0 0 2px', textTransform:'uppercase', letterSpacing:'0.05em' }}>🔐 Key Vault</h3>
+                      <p style={{ color:'#4b5563', fontSize:12, margin:0 }}>Your API keys are encrypted and saved — no re-entry needed on login.</p>
+                    </div>
+                    <button onClick={loadVault} style={{ background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:12, padding:'4px 10px' }}>↻ Refresh</button>
+                  </div>
+                  {vaultKeys.map(v => (
+                    <div key={v.provider} style={{ marginBottom:10, background:'#0a0a0f', borderRadius:12, border:`1px solid ${v.key_status==='active' ? '#05966633' : '#DC262633'}`, padding:'12px 14px' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                        {/* Status dot */}
+                        <div style={{ width:8, height:8, borderRadius:'50%', background: v.key_status==='active' ? '#059669' : '#DC2626', boxShadow: v.key_status==='active' ? '0 0 6px #059669' : '0 0 6px #DC2626', flexShrink:0 }} />
+                        <span style={{ fontSize:13, fontWeight:600, color:'#e2e8f0', flex:1, textTransform:'capitalize' }}>{v.provider}</span>
+                        <span style={{ fontSize:11, color:'#6b7280', fontFamily:'monospace' }}>{v.key_preview}</span>
+                        <span style={{ fontSize:10, color: v.key_status==='active' ? '#059669' : '#DC2626', background: v.key_status==='active' ? '#05966622' : '#DC262622', padding:'2px 7px', borderRadius:10, fontWeight:600 }}>{v.key_status}</span>
+                        {/* Toggle active/inactive */}
+                        <button onClick={() => toggleVaultKeyStatus(v)} title={v.key_status==='active' ? 'Deactivate' : 'Activate'} style={{ background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>
+                          {v.key_status==='active' ? '⏸' : '▶'}
+                        </button>
+                        <button onClick={() => deleteVaultKey(v.provider)} title="Remove key" style={{ background:'transparent', border:'1px solid #DC2626', borderRadius:6, color:'#DC2626', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>✕</button>
+                      </div>
+                      {/* Update key inline */}
+                      <div style={{ display:'flex', gap:8 }}>
+                        <input
+                          type="password"
+                          placeholder="Paste new key to update…"
+                          value={vaultUpdateInputs[v.provider] || ''}
+                          onChange={e => setVaultUpdateInputs(prev => ({ ...prev, [v.provider]: e.target.value }))}
+                          style={{ flex:1, padding:'7px 10px', background:'#111118', border:'1px solid #1e1e2e', borderRadius:8, color:'#e2e8f0', fontSize:12 }}
+                        />
+                        <button
+                          onClick={() => updateVaultKey(v.provider)}
+                          disabled={vaultUpdating === v.provider || !vaultUpdateInputs[v.provider]?.trim()}
+                          style={{ padding:'7px 14px', background: vaultUpdateInputs[v.provider]?.trim() ? '#7C3AED' : '#1a1a2e', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', opacity: vaultUpdating===v.provider ? 0.6 : 1 }}
+                        >
+                          {vaultUpdating===v.provider ? '…' : 'Update'}
+                        </button>
+                      </div>
+                      <p style={{ margin:'6px 0 0', fontSize:10, color:'#4b5563' }}>Last updated {new Date(v.updated_at).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* LLM Providers — username + password + API key */}
               <div style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:16, padding:24, marginBottom:24 }}>
                 <h3 style={{ color:'#94a3b8', fontSize:14, margin:'0 0 4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>LLM Providers</h3>
@@ -1799,7 +2081,129 @@ export default function ForgeApp() {
             </div>
           </div>
         )}
-      </div>
+
+        {/* ── FORGE SUPER TAB ──────────────────────────────────────────────── */}
+        {mainTab === 'super' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'#06060e' }}>
+            {/* Super header */}
+            <div style={{ padding:'16px 24px 0', borderBottom:'1px solid #1e1e2e', flexShrink:0 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
+                <div style={{ width:40, height:40, borderRadius:'50%', animation:'forge-flash 2s ease-in-out infinite', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🌟</div>
+                <div>
+                  <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'#fff' }}>Forge SuperAgent</h2>
+                  <p style={{ margin:0, fontSize:12, color:'#6b7280' }}>Powered by your workspace memory · {superMemory.length} memories harvested</p>
+                </div>
+                <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
+                  <button onClick={harvestMemory} disabled={superHarvesting} style={{ padding:'8px 16px', background: superHarvesting ? '#1a1a2e' : 'linear-gradient(135deg,#7C3AED,#2563EB)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, opacity: superHarvesting ? 0.6 : 1 }}>
+                    {superHarvesting ? <><span style={{ animation:'forge-flash 0.8s infinite', display:'inline-block' }}>⚡</span> Harvesting…</> : '⚡ Harvest Memory'}
+                  </button>
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:0 }}>
+                {(['chat','memory'] as const).map(t => (
+                  <button key={t} onClick={() => setSuperTab(t)} style={{ padding:'8px 18px', background:'transparent', border:'none', borderBottom:`2px solid ${superTab===t ? '#7C3AED' : 'transparent'}`, color:superTab===t ? '#a78bfa' : '#6b7280', cursor:'pointer', fontSize:13, fontWeight:superTab===t ? 600 : 400, textTransform:'capitalize' }}>{t === 'chat' ? '💬 Chat' : '🧠 Memory'}</button>
+                ))}
+              </div>
+            </div>
+
+            {superTab === 'chat' && (
+              <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+                {/* Messages */}
+                <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
+                  {superMessages.length === 0 && (
+                    <div style={{ textAlign:'center', padding:'60px 0', color:'#4b5563' }}>
+                      <div style={{ fontSize:48, marginBottom:12, animation:'forge-flash 3s ease-in-out infinite', display:'inline-block' }}>🌟</div>
+                      <p style={{ fontSize:16, color:'#6b7280', margin:'0 0 8px' }}>Forge SuperAgent is ready</p>
+                      <p style={{ fontSize:13, color:'#4b5563', margin:0 }}>Start chatting — it knows your workspace history. Hit "Harvest Memory" first for best results.</p>
+                    </div>
+                  )}
+                  {superMessages.map((m, i) => (
+                    <div key={i} style={{ display:'flex', gap:12, marginBottom:20, flexDirection: m.role==='user' ? 'row-reverse' : 'row' }}>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background: m.role==='user' ? '#2d2d44' : undefined, animation: m.role==='assistant' ? 'forge-flash 2s ease-in-out infinite' : undefined, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
+                        {m.role==='user' ? '👤' : '🌟'}
+                      </div>
+                      <div style={{ maxWidth:'70%', padding:'12px 16px', borderRadius: m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background: m.role==='user' ? '#1a1a2e' : '#0d0d1a', border:`1px solid ${m.role==='user' ? '#2d2d44' : '#7C3AED44'}`, color:'#e2e8f0', fontSize:14, lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
+                        {m.content}
+                      </div>
+                    </div>
+                  ))}
+                  {superSending && (
+                    <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+                      <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite' }}>🌟</div>
+                      <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'#0d0d1a', border:'2px solid #7C3AED', animation:'forge-ring 1.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:10 }}>
+                        {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'#7C3AED', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                        <span style={{ fontSize:11, fontWeight:600, animation:'forge-text-flash 1.8s ease-in-out infinite' }}>thinking…</span>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={superEndRef} />
+                </div>
+                {/* Input */}
+                <div style={{ padding:'12px 24px 20px', borderTop:'1px solid #1e1e2e', flexShrink:0 }}>
+                  <div style={{ display:'flex', gap:10, background:'#111118', border:'1px solid #2d2d44', borderRadius:12, padding:'8px 12px', alignItems:'flex-end' }}>
+                    <textarea value={superInput} onChange={e => setSuperInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendSuperMessage(); } }} placeholder="Ask Forge SuperAgent anything… it remembers your work" rows={2} style={{ flex:1, background:'transparent', border:'none', color:'#e2e8f0', fontSize:14, resize:'none', outline:'none', lineHeight:1.6 }} />
+                    <button onClick={sendSuperMessage} disabled={superSending || !superInput.trim()} style={{ width:36, height:36, background: superSending ? '#7C3AED' : superInput.trim() ? '#7C3AED' : '#1a1a2e', border:'none', borderRadius:8, color:'#fff', cursor:superInput.trim() && !superSending ? 'pointer' : 'default', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center', animation: superSending ? 'send-pulse 0.9s ease-in-out infinite' : 'none', flexShrink:0 }}>
+                      {superSending ? '⚡' : '↑'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {superTab === 'memory' && (
+              <div style={{ flex:1, overflowY:'auto', padding:24 }}>
+                {superMemory.length === 0 ? (
+                  <div style={{ textAlign:'center', padding:'60px 0' }}>
+                    <p style={{ fontSize:32, margin:'0 0 12px' }}>🧠</p>
+                    <p style={{ color:'#6b7280', fontSize:15, margin:'0 0 8px' }}>No memory yet</p>
+                    <p style={{ color:'#4b5563', fontSize:13, margin:'0 0 20px' }}>Click "Harvest Memory" to distill your conversation history into SuperAgent knowledge.</p>
+                    <button onClick={harvestMemory} disabled={superHarvesting} style={{ padding:'10px 24px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>
+                      {superHarvesting ? '⚡ Harvesting…' : '⚡ Harvest Memory Now'}
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ maxWidth:800, margin:'0 auto' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+                      <div>
+                        <h3 style={{ color:'#fff', margin:'0 0 4px', fontSize:18 }}>🧠 SuperAgent Memory</h3>
+                        <p style={{ color:'#6b7280', margin:0, fontSize:13 }}>{superMemory.length} insights across {superMemory.reduce((a,m)=>a+m.frequency,0)} observations</p>
+                      </div>
+                      {/* Energy bar */}
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <span style={{ fontSize:12, color:'#6b7280' }}>Strength</span>
+                        <div style={{ width:120, height:8, background:'#1a1a2e', borderRadius:4, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${Math.min(100, superMemory.length * 5)}%`, background:'linear-gradient(90deg,#7C3AED,#2563EB,#059669)', borderRadius:4, animation:'forge-flash 3s ease-in-out infinite', backgroundSize:'200% 100%' }} />
+                        </div>
+                        <span style={{ fontSize:11, color:'#a78bfa', fontWeight:600 }}>{Math.min(100, superMemory.length * 5)}%</span>
+                      </div>
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                      {superMemory.map(m => (
+                        <div key={m.id} style={{ background:'#111118', border:'1px solid #1e1e2e', borderRadius:12, padding:16, position:'relative' }}>
+                          <div style={{ display:'flex', alignItems:'flex-start', gap:8, marginBottom:8 }}>
+                            <div style={{ width:6, height:6, borderRadius:'50%', background:`hsl(${(m.strength*120).toFixed(0)},70%,60%)`, marginTop:5, flexShrink:0, boxShadow:`0 0 6px hsl(${(m.strength*120).toFixed(0)},70%,60%)` }} />
+                            <p style={{ margin:0, fontSize:13, fontWeight:600, color:'#a78bfa', flex:1 }}>{m.topic}</p>
+                            <button onClick={() => deleteMemoryEntry(m.id)} style={{ background:'none', border:'none', color:'#4b5563', cursor:'pointer', fontSize:12, padding:2, lineHeight:1 }}>✕</button>
+                          </div>
+                          <p style={{ margin:'0 0 8px', fontSize:13, color:'#94a3b8', lineHeight:1.5 }}>{m.insight}</p>
+                          <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                            <span style={{ fontSize:10, color:'#4b5563' }}>Seen {m.frequency}×</span>
+                            <div style={{ flex:1, height:3, background:'#1a1a2e', borderRadius:2, overflow:'hidden' }}>
+                              <div style={{ height:'100%', width:`${Math.round(m.strength*100)}%`, background:`hsl(${(m.strength*120).toFixed(0)},70%,60%)`, borderRadius:2 }} />
+                            </div>
+                            <span style={{ fontSize:10, color:'#6b7280' }}>{Math.round(m.strength*100)}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>{/* closes main content */}
 
       {/* ── MODALS ────────────────────────────────────────────────────────────── */}
 
@@ -1816,7 +2220,10 @@ export default function ForgeApp() {
             <textarea placeholder="System prompt (optional)" value={newProjPrompt} onChange={e => setNewProjPrompt(e.target.value)} rows={3} style={{ width:'100%', padding:'12px', marginBottom:16, background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#fff', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
             <div style={{ display:'flex', gap:10 }}>
               <button onClick={() => setShowNewProject(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid #2d2d44', borderRadius:8, color:'#6b7280', cursor:'pointer' }}>Cancel</button>
-              <button onClick={createProject} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Create</button>
+              <button onClick={async () => {
+                if (!user || !newProjName.trim()) return;
+                try { await apiFetch('/projects', { method:'POST', body:JSON.stringify({ name:newProjName.trim(), color:newProjColor, system_prompt:newProjPrompt }) }, user.token); setShowNewProject(false); setNewProjName(''); setNewProjPrompt(''); await loadProjects(); } catch (e:any) { alert(e.message); }
+              }} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Create</button>
             </div>
           </div>
         </div>
@@ -1829,13 +2236,17 @@ export default function ForgeApp() {
             <h3 style={{ color:'#fff', margin:'0 0 20px', fontSize:18 }}>New Task</h3>
             <input placeholder="Task title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} style={{ width:'100%', padding:'12px', marginBottom:12, background:'#0a0a0f', border:'1px solid #1e1e2e', borderRadius:8, color:'#fff', fontSize:14, boxSizing:'border-box' }} />
             <div style={{ display:'flex', gap:6, marginBottom:16 }}>
-              {(['low','medium','high'] as const).map(p => (
-                <button key={p} onClick={() => setNewTaskPriority(p)} style={{ flex:1, padding:'8px', background:newTaskPriority===p ? taskPriorityColor[p]+'33' : 'transparent', border:`1px solid ${newTaskPriority===p ? taskPriorityColor[p] : '#2d2d44'}`, borderRadius:6, color:newTaskPriority===p ? taskPriorityColor[p] : '#6b7280', cursor:'pointer', fontSize:12, textTransform:'capitalize' }}>{p}</button>
-              ))}
+              {(['low','medium','high'] as const).map(p => {
+                const tpc: Record<string,string> = { low:'#6b7280', medium:'#D97706', high:'#DC2626' };
+                return <button key={p} onClick={() => setNewTaskPriority(p)} style={{ flex:1, padding:'8px', background:newTaskPriority===p ? tpc[p]+'33' : 'transparent', border:`1px solid ${newTaskPriority===p ? tpc[p] : '#2d2d44'}`, borderRadius:6, color:newTaskPriority===p ? tpc[p] : '#6b7280', cursor:'pointer', fontSize:12, textTransform:'capitalize' }}>{p}</button>;
+              })}
             </div>
             <div style={{ display:'flex', gap:10 }}>
               <button onClick={() => setShowNewTask(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid #2d2d44', borderRadius:8, color:'#6b7280', cursor:'pointer' }}>Cancel</button>
-              <button onClick={createTask} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Create</button>
+              <button onClick={async () => {
+                if (!user || !newTaskTitle.trim()) return;
+                try { await apiFetch('/tasks', { method:'POST', body:JSON.stringify({ title:newTaskTitle.trim(), priority:newTaskPriority, project_id:activeProject?.id }) }, user.token); setShowNewTask(false); setNewTaskTitle(''); await loadTasks(); } catch (e:any) { alert(e.message); }
+              }} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Create</button>
             </div>
           </div>
         </div>
@@ -1846,20 +2257,63 @@ export default function ForgeApp() {
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setViewArtifact(null)}>
           <div style={{ width:'80vw', maxWidth:900, height:'80vh', background:'#111118', borderRadius:16, padding:24, border:'1px solid #1e1e2e', display:'flex', flexDirection:'column' }} onClick={e => e.stopPropagation()}>
             <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
-              <span style={{ fontSize:22 }}>{artifactTypeIcon[viewArtifact.type] || artifactTypeIcon.default}</span>
+              <span style={{ fontSize:22 }}>{({ code:'💻', html:'🌐', react:'⚛️', markdown:'📝', 'live-dashboard':'📊', diff:'📋', default:'📄' } as Record<string,string>)[viewArtifact.type] || '📄'}</span>
               <h3 style={{ color:'#fff', margin:0, fontSize:18, flex:1 }}>{viewArtifact.title}</h3>
               <span style={{ fontSize:11, color:'#4b5563', background:'#1a1a2e', padding:'4px 8px', borderRadius:6 }}>v{viewArtifact.version} · {viewArtifact.type}</span>
               <button onClick={() => setViewArtifact(null)} style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontSize:18 }}>✕</button>
             </div>
             {(viewArtifact.type === 'html' || viewArtifact.type === 'react') ? (
-              <div style={{ flex:1, display:'flex', flexDirection:'column', gap:8 }}>
-                <iframe srcDoc={viewArtifact.content} style={{ flex:1, border:'1px solid #1e1e2e', borderRadius:8, background:'#fff' }} title={viewArtifact.title} />
-              </div>
+              <iframe srcDoc={viewArtifact.content} style={{ flex:1, border:'1px solid #1e1e2e', borderRadius:8, background:'#fff' }} title={viewArtifact.title} />
             ) : (
               <div style={{ flex:1, overflowY:'auto', background:'#0a0a0f', borderRadius:8, padding:16, border:'1px solid #1e1e2e' }}>
                 <pre style={{ margin:0, fontSize:13, color:'#e2e8f0', fontFamily:'ui-monospace, monospace', whiteSpace:'pre-wrap', wordBreak:'break-word', lineHeight:1.6 }}>{viewArtifact.content}</pre>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── THREAD CONTEXT MENU ─────────────────────────────────────────────── */}
+      {threadMenu && (() => {
+        const t = threads.find(x => x.id === threadMenu.threadId);
+        if (!t) return null;
+        return (
+          <div style={{ position:'fixed', left:threadMenu.x, top:threadMenu.y, background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:10, boxShadow:'0 8px 32px rgba(0,0,0,0.6)', zIndex:2000, minWidth:170, padding:'4px 0' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding:'8px 14px 6px', borderBottom:'1px solid #2d2d44', marginBottom:2 }}>
+              <p style={{ margin:0, fontSize:11, color:'#6b7280', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>Thread</p>
+              <p style={{ margin:'2px 0 0', fontSize:12, color:'#a78bfa', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:150 }}>{t.title || 'Untitled'}</p>
+            </div>
+            {([
+              { icon:'✏️', label:'Rename', action: () => { setRenamingThread({ id:t.id, title:t.title || '' }); setThreadMenu(null); }, danger:false },
+              { icon:'📌', label: t.pinned ? 'Unpin' : 'Pin to top', action: () => { pinThread(t); setThreadMenu(null); }, danger:false },
+              { icon:'📦', label: t.archived ? 'Unarchive' : 'Archive', action: () => { archiveThread(t); setThreadMenu(null); }, danger:false },
+              { icon:'🗑️', label:'Delete', action: () => { if (confirm('Delete this thread?')) { deleteThread(t.id); setThreadMenu(null); } }, danger:true },
+            ] as { icon:string; label:string; action:()=>void; danger:boolean }[]).map(item => (
+              <button key={item.label} onClick={item.action}
+                style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'9px 14px', background:'transparent', border:'none', color:item.danger ? '#ef4444' : '#e2e8f0', cursor:'pointer', fontSize:13, textAlign:'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background = item.danger ? '#ef444411' : '#2d2d44')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                <span style={{ fontSize:14 }}>{item.icon}</span><span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ── RENAME THREAD MODAL ──────────────────────────────────────────────── */}
+      {renamingThread && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2000 }} onClick={() => setRenamingThread(null)}>
+          <div style={{ width:380, background:'#111118', borderRadius:14, padding:24, border:'1px solid #2d2d44' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'#fff', margin:'0 0 16px', fontSize:17 }}>Rename Thread</h3>
+            <input autoFocus value={renamingThread.title}
+              onChange={e => setRenamingThread(prev => prev ? { ...prev, title: e.target.value } : prev)}
+              onKeyDown={e => { if (e.key === 'Enter') renameThread(); if (e.key === 'Escape') setRenamingThread(null); }}
+              placeholder="Thread name"
+              style={{ width:'100%', padding:'11px 14px', background:'#0a0a0f', border:'1px solid #2d2d44', borderRadius:8, color:'#fff', fontSize:14, outline:'none', boxSizing:'border-box', marginBottom:16 }} />
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid #2d2d44', borderRadius:8, color:'#6b7280', cursor:'pointer', fontSize:14 }}>Cancel</button>
+              <button onClick={renameThread} disabled={!renamingThread.title.trim()} style={{ flex:1, padding:'10px', background:'#7C3AED', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:renamingThread.title.trim() ? 'pointer' : 'default', opacity:renamingThread.title.trim() ? 1 : 0.5 }}>Save</button>
+            </div>
           </div>
         </div>
       )}
@@ -1872,6 +2326,7 @@ export default function ForgeApp() {
         input::placeholder, textarea::placeholder { color: #4b5563; }
         select option { background: #1a1a2e; }
         @keyframes pulse { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+        .thread-row:hover .thread-menu-btn { opacity: 1 !important; }
       `}</style>
     </div>
   );
