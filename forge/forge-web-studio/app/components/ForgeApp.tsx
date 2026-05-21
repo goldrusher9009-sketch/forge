@@ -1,4 +1,4 @@
-// Forge AI Workspace v5.0 — Full feature restore
+// Forge AI Workspace v5.1 — Admin panel, per-provider key save, model filtering, thread recovery
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 

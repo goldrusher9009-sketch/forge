@@ -1,0 +1,56 @@
+# Forge Platform — Version History
+
+## v5.1 — 2026-05-20 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx (1878 lines)
+- **Admin panel** — 🛡️ tab visible only to `role=admin` users
+  - Stats dashboard: users, threads, messages, revenue, tokens
+  - User management: list all users, change role (user ↔ admin)
+  - Platform API keys: save encrypted server-side keys for Anthropic, OpenAI, Gemini, Groq, OpenRouter, Mistral, Together, Perplexity — used as fallback for all users
+  - Model management: toggle enable/disable per model, see markup
+- **Per-provider key save** — each Save button saves ONLY that provider's key
+- **savedProviders state** — source of truth for which providers have confirmed saved keys (from backend `has_*` flags)
+- **Model dropdown gating** — only shows models whose provider key is confirmed saved
+- **Thread recovery** — auto-creates new thread if Railway DB wipe returns THREAD_NOT_FOUND
+- **role** added to User interface and populated on login
+- **Model list updated** — Claude Opus 4.6, Sonnet 4.6 added; correct model IDs (claude-sonnet-4-6 etc.)
+
+### Backend: forge-platform/src/index.ts (1750 lines)
+- **DB persistence** — DB_PATH uses `/data/forge.db` on Railway (add volume mount at /data)
+- **platform_models table** — 18 models seeded, admin can enable/disable
+- **platform_api_keys table** — encrypted platform-wide keys, fallback for all users
+- **platform_settings table** — general KV settings store
+- **Admin routes**: GET/PATCH /api/admin/users/:id, GET/POST/DELETE /api/admin/platform-keys, GET/PATCH/POST /api/admin/models, GET /api/admin/stats
+- **Public /api/models** — returns enabled models for dynamic frontend loading
+- **resolveForgeModel** — correct Anthropic model ID mapping (claude-haiku-4-5-20251001 etc.)
+- **getUserKey** — falls back to platform key (from DB) then env var, so users don't need to enter keys if admin has set platform keys
+- **Model from request body** — chat endpoint accepts model override per-message
+
+### Deployed URLs
+- Frontend: https://forge-sand-two.vercel.app
+- Backend: https://forge-production-2692.up.railway.app
+
+### Git commits (both in same repo)
+- `bebc30f` — feat: admin routes platform_models platform_api_keys DB persistence
+- `bdf6e66` — feat: admin panel with stats users platform keys model toggles
+- `0d80016` — fix: per-provider key save, correct model filtering, thread recovery
+
+---
+
+## Post-deploy checklist
+1. **Railway volume** — add volume at `/data` in Railway dashboard so DB survives redeploys
+2. **Make yourself admin** — run in Railway shell or DB console:
+   ```sql
+   UPDATE users SET role='admin' WHERE email='goldrusher9009@gmail.com';
+   ```
+3. **Enter platform API key** — log in as admin → Admin tab → Platform Keys → enter Anthropic key → all users can now chat without entering their own key
+
+---
+
+## v5.0 — previous
+- Full workspace rebuild: projects, threads, messages, artifacts, agents, tasks, dispatch, schedule
+- ForgeRouter tab with Forge models + direct models + OpenRouter + custom providers
+- Billing tab with subscription management
+- Platforms/Settings tabs with connected service credentials (stored in localStorage only)
+- Per-user encrypted API key storage in SQLite
+- JWT auth with refresh tokens

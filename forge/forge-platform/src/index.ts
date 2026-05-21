@@ -1,7 +1,7 @@
 /**
- * Forge Platform — Production-ready backend
- * SQLite + JWT + bcrypt. No external services needed.
- * export app for testing; server only started when run directly.
+ * Forge Platform v5.1 — Production-ready backend
+ * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
+ * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
 
 import 'dotenv/config';
