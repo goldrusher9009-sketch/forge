@@ -322,7 +322,7 @@ db.exec(`
     stripe_customer_id TEXT,
     stripe_subscription_id TEXT,
     tokens_used INTEGER NOT NULL DEFAULT 0,
-    tokens_limit INTEGER NOT NULL DEFAULT 10000,
+    tokens_limit INTEGER NOT NULL DEFAULT 1000000,
     period_start TEXT NOT NULL DEFAULT (datetime('now')),
     period_end TEXT NOT NULL DEFAULT (datetime('now')),
     status TEXT NOT NULL DEFAULT 'active',
@@ -363,7 +363,9 @@ try { db.exec(`ALTER TABLE messages ADD COLUMN tokens INTEGER NOT NULL DEFAULT 0
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN key_preview TEXT NOT NULL DEFAULT ''`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
-try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_limit INTEGER NOT NULL DEFAULT 10000`); } catch {}
+try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_limit INTEGER NOT NULL DEFAULT 1000000`); } catch {}
+// Bump any existing free-tier accounts that still have the old 10000 limit to 1000000
+try { db.exec(`UPDATE subscriptions SET tokens_limit=1000000 WHERE tokens_limit=10000`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_used INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_start TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_end TEXT NOT NULL DEFAULT (datetime('now', '+30 days'))`); } catch {}
@@ -395,11 +397,23 @@ try {
   }
 } catch (e) { console.error('Schema repair error:', e); }
 
-// Ensure every user has a subscription row
+// Ensure every user has a subscription row, and auto-reset monthly period
 function ensureSubscription(userId: string) {
-  const existing = db.prepare('SELECT id FROM subscriptions WHERE user_id=?').get(userId);
+  const existing = db.prepare('SELECT id, period_end, tokens_used FROM subscriptions WHERE user_id=?').get(userId) as any;
   if (!existing) {
-    db.prepare('INSERT INTO subscriptions (id,user_id,plan,tokens_limit) VALUES (?,?,?,?)').run(uuidv4(), userId, 'free', 10000);
+    const now = new Date();
+    const periodEnd = new Date(now); periodEnd.setDate(periodEnd.getDate() + 30);
+    db.prepare('INSERT INTO subscriptions (id,user_id,plan,tokens_limit,tokens_used,period_start,period_end) VALUES (?,?,?,?,?,?,?)')
+      .run(uuidv4(), userId, 'free', 1000000, 0, now.toISOString(), periodEnd.toISOString());
+  } else {
+    // Auto-reset if period has ended
+    const periodEnd = new Date(existing.period_end);
+    if (new Date() > periodEnd) {
+      const now = new Date();
+      const newEnd = new Date(now); newEnd.setDate(newEnd.getDate() + 30);
+      db.prepare("UPDATE subscriptions SET tokens_used=0, period_start=?, period_end=? WHERE user_id=?")
+        .run(now.toISOString(), newEnd.toISOString(), userId);
+    }
   }
 }
 
@@ -612,8 +626,9 @@ app.post('/api/chat', requireAuth, async (req: AuthRequest, res) => {
 
   // Check token budget only when using Forge-managed keys (user has their own key — no limit)
   const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
-  if (sub && sub.tokens_used >= sub.tokens_limit && sub.plan === 'free' && !apiKey) {
-    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `You've used all ${sub.tokens_limit.toLocaleString()} tokens on your ${sub.plan} plan. Please upgrade.` }); return;
+  const isForgeKey = !db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider);
+  if (isForgeKey && sub && sub.tokens_used >= sub.tokens_limit) {
+    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `You've reached your Forge free-tier token limit. Add your own ${provider} API key in Settings to continue with no limits.` }); return;
   }
 
   try {
@@ -1387,17 +1402,20 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   const actualModel = resolveForgeModel(model);
   const provider = getProviderForModel(actualModel);
   const apiKey = getUserKey(userId, provider);
-  // Only enforce token budget when no personal key is present (Forge-managed keys)
-  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
-  if (!apiKey && sub && sub.tokens_used >= sub.tokens_limit) {
-    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `Token limit reached. Please upgrade.` }); return;
-  }
+  // No API key at all — tell user to add one, never show token limit message
   if (!apiKey) {
+    const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
     const asstMsgId = uuidv4();
-    const errMsg = `⚠️ No ${provider} API key found. Go to Settings → LLM Providers to add your key.`;
+    const errMsg = `⚠️ No ${providerLabel} API key found. Go to Settings → LLM Providers and add your ${providerLabel} key.`;
     db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(asstMsgId, thread.id, 'assistant', errMsg);
     res.json({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
     return;
+  }
+  // Only enforce token budget when the key is a Forge-managed server key (user has their own key — no limit)
+  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
+  const isForgeKey = !db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider);
+  if (isForgeKey && sub && sub.tokens_used >= sub.tokens_limit) {
+    res.status(429).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `You've reached your Forge free-tier token limit. Add your own ${provider} API key in Settings to continue with no limits.` }); return;
   }
   emitAgentActivity(userId, { type: 'thinking', message: `🤔 Thinking with ${model}…`, model });
   try {
