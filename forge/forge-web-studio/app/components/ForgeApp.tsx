@@ -232,8 +232,8 @@ export default function ForgeApp() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
-  // Main tab -- 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin' | 'super'
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'>('workspace');
+  // Main tab -- 'workspace' | 'router' | 'billing' | 'platforms' | 'settings' | 'admin' | 'super' | 'forgeauto' | 'forgemulti'
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'>('workspace');
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'>('artifacts');
@@ -325,6 +325,9 @@ export default function ForgeApp() {
   const [threadMenu, setThreadMenu] = useState<{ threadId:string; x:number; y:number } | null>(null);
   const [renamingThread, setRenamingThread] = useState<{ id:string; title:string }|null>(null);
   const [threadStats, setThreadStats] = useState<{ total_tokens:number; message_count:number; token_history:{tokens:number;created_at:string}[] }|null>(null);
+  const [projectMenu, setProjectMenu] = useState<{ projectId:string; x:number; y:number } | null>(null);
+  const [renamingProject, setRenamingProject] = useState<{ id:string; name:string } | null>(null);
+  const [showAllThreads, setShowAllThreads] = useState(false);
 
   // Navbar token total
   const [totalTokens, setTotalTokens] = useState(0);
@@ -338,6 +341,19 @@ export default function ForgeApp() {
   const [superTab, setSuperTab] = useState<'chat'|'memory'>('chat');
   const [superStats, setSuperStats] = useState<{memoryCount:number;intelligenceScore:number;threadCount:number}>({memoryCount:0,intelligenceScore:0,threadCount:0});
   const superEndRef = useRef<HTMLDivElement>(null);
+
+  // ForgeAuto state
+  const [autoPrompt, setAutoPrompt] = useState('');
+  const [autoSelectedModels, setAutoSelectedModels] = useState<string[]>([]);
+  const [autoResults, setAutoResults] = useState<{model:string;content:string|null;error?:string;tokens?:number;elapsed?:number}[]>([]);
+  const [autoRunning, setAutoRunning] = useState(false);
+
+  // ForgeMulti state
+  const [multiPrompt, setMultiPrompt] = useState('');
+  const [multiModel, setMultiModel] = useState('claude-sonnet-4');
+  const [multiRunning, setMultiRunning] = useState(false);
+  const [multiResults, setMultiResults] = useState<{agents:{role:string;icon:string;content:string;elapsed:number}[];synthesis:string}|null>(null);
+  const [multiSelectedRoles, setMultiSelectedRoles] = useState<string[]>(['Analyst','Creative','Critic','Strategist','Researcher']);
 
   // ForgeRouter state
   const [routerTab, setRouterTab] = useState<'forge'|'direct'|'openrouter'|'custom'>('forge');
@@ -794,6 +810,24 @@ export default function ForgeApp() {
     try { await apiFetch(`/projects/${p.id}`, { method:'PATCH', body:JSON.stringify({ pinned:p.pinned ? 0 : 1 }) }, user.token); await loadProjects(); } catch {}
   };
 
+  const renameProject = async () => {
+    if (!user || !renamingProject?.name.trim()) return;
+    try {
+      await apiFetch(`/projects/${renamingProject.id}`, { method:'PATCH', body:JSON.stringify({ name: renamingProject.name }) }, user.token);
+      await loadProjects();
+      setRenamingProject(null);
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const deleteProject = async (id: string) => {
+    if (!user || !confirm('Delete this project and all its threads?')) return;
+    try {
+      await apiFetch(`/projects/${id}`, { method:'DELETE' }, user.token);
+      if (activeProject?.id === id) { setActiveProject(null); await loadThreads(); }
+      await loadProjects();
+    } catch (e: any) { alert(e.message); }
+  };
+
   const selectProject = async (p: Project) => { setActiveProject(p); await loadThreads(p.id); };
 
   // ── Thread actions ────────────────────────────────────────────────────────
@@ -1219,7 +1253,7 @@ export default function ForgeApp() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden' }} onClick={() => setThreadMenu(null)}>
+    <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden' }} onClick={() => { setThreadMenu(null); setProjectMenu(null); }}>
 
       {/* ── LEFT SIDEBAR ──────────────────────────────────────────────────── */}
       <div style={{ width:sidebarExpanded ? 260 : 60, background:'var(--fg-bg)', borderRight:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0, transition:'width 0.2s', overflow:'hidden' }}>
@@ -1241,6 +1275,8 @@ export default function ForgeApp() {
             { id:'platforms', icon:'🌐', label:'Platforms' },
             { id:'settings', icon:'⚙️', label:'Settings' },
             { id:'super', icon:'🌟', label:'Forge Super' },
+            { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
+            { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
             ...(user.role === 'admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
           ]) as Array<{ id: string; icon: string; label: string }>).map((tab) => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id === 'admin') { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); } if (tab.id === 'super') { loadSuperMemory(); loadSuperHistory(); } if (tab.id === 'settings') { loadVault(); } }} title={tab.label} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:mainTab===tab.id ? 'var(--fg-bg4)' : 'transparent', border:'none', borderRadius:6, color:mainTab===tab.id ? (tab.id==='admin' ? 'var(--fg-orange2)' : tab.id==='super' ? 'var(--fg-orange2)' : 'var(--fg-orange2)') : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:mainTab===tab.id ? 600 : 400, marginBottom:2, justifyContent:sidebarExpanded ? 'flex-start' : 'center' }}>
@@ -1292,8 +1328,8 @@ export default function ForgeApp() {
                     </div>
                   </div>
                 ))}
-                {/* Regular threads */}
-                {threads.filter(t => !t.pinned && !t.archived).slice(0, 30).map(t => (
+                {/* Regular threads — show 5, rest hidden behind View All */}
+                {threads.filter(t => !t.pinned && !t.archived).slice(0, showAllThreads ? 100 : 5).map(t => (
                   <div key={t.id} style={{ position:'relative' }}
                     onContextMenu={e => { e.preventDefault(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }}>
                     <div onClick={() => selectThread(t)} style={{ padding:'7px 8px 5px', borderRadius:6, cursor:'pointer', marginBottom:1, background:activeThread?.id===t.id ? 'var(--fg-bg4)' : 'transparent' }}
@@ -1307,6 +1343,11 @@ export default function ForgeApp() {
                     </div>
                   </div>
                 ))}
+                {threads.filter(t => !t.pinned && !t.archived).length > 5 && (
+                  <button onClick={() => setShowAllThreads(p => !p)} style={{ width:'100%', padding:'6px 8px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11, marginTop:4 }}>
+                    {showAllThreads ? '▲ Show less' : `▼ View all (${threads.filter(t => !t.pinned && !t.archived).length})`}
+                  </button>
+                )}
                 {threads.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, padding:'4px 8px' }}>No conversations yet</p>}
               </div>
             </div>
@@ -1317,10 +1358,15 @@ export default function ForgeApp() {
                 <button onClick={() => setShowNewProject(true)} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:16, lineHeight:1 }}>+</button>
               </div>
               {unpinnedProjects.slice(0, 8).map(p => (
-                <div key={p.id} onClick={() => selectProject(p)} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 8px', borderRadius:6, cursor:'pointer', background:activeProject?.id===p.id ? 'var(--fg-bg4)' : 'transparent', marginBottom:1 }}>
+                <div key={p.id}
+                  onContextMenu={e => { e.preventDefault(); setProjectMenu({ projectId:p.id, x:e.clientX, y:e.clientY }); }}
+                  onClick={() => selectProject(p)}
+                  onMouseEnter={e => { const b = e.currentTarget.querySelector('.proj-menu-btn') as HTMLElement; if (b) b.style.opacity='1'; }}
+                  onMouseLeave={e => { const b = e.currentTarget.querySelector('.proj-menu-btn') as HTMLElement; if (b) b.style.opacity='0'; }}
+                  style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 8px', borderRadius:6, cursor:'pointer', background:activeProject?.id===p.id ? 'var(--fg-bg4)' : 'transparent', marginBottom:1 }}>
                   <div style={{ width:8, height:8, borderRadius:'50%', background:p.color, flexShrink:0 }} />
                   <span style={{ fontSize:13, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.name}</span>
-                  <button onClick={e => { e.stopPropagation(); togglePin(p); }} style={{ background:'none', border:'none', color:'transparent', cursor:'pointer', fontSize:11, padding:2 }} title="Pin">📌</button>
+                  <button onClick={e => { e.stopPropagation(); setProjectMenu({ projectId:p.id, x:e.clientX, y:e.clientY }); }} className="proj-menu-btn" style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }}>•••</button>
                 </div>
               ))}
               {projects.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, padding:'2px 8px' }}>No projects yet</p>}
@@ -2992,6 +3038,188 @@ export default function ForgeApp() {
           </div>
         )}
 
+        {/* ── FORGEAUTO ─────────────────────────────────────────────────── */}
+        {mainTab === 'forgeauto' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
+            <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--fg-border)', flexShrink:0, display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ fontSize:28 }}>⚡</div>
+              <div>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeAuto</h2>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Run your prompt through 2–100 LLMs simultaneously and compare results</p>
+              </div>
+            </div>
+            <div style={{ flex:1, overflowY:'auto', padding:24 }}>
+              {/* Model selector */}
+              <div style={{ marginBottom:20 }}>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--fg-text2)', margin:'0 0 10px' }}>Select models to run in parallel:</p>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                  {[
+                    { id:'claude-sonnet-4', label:'Claude Sonnet 4', icon:'🟠' },
+                    { id:'claude-opus-4', label:'Claude Opus 4', icon:'🟣' },
+                    { id:'claude-haiku-4', label:'Claude Haiku 4', icon:'🔵' },
+                    { id:'gpt-4o', label:'GPT-4o', icon:'🟢' },
+                    { id:'gpt-4o-mini', label:'GPT-4o Mini', icon:'🟡' },
+                    { id:'gpt-4-turbo', label:'GPT-4 Turbo', icon:'⚪' },
+                    { id:'gemini-2.5-pro', label:'Gemini 2.5 Pro', icon:'💎' },
+                    { id:'gemini-2.0-flash', label:'Gemini Flash', icon:'💠' },
+                    { id:'deepseek-chat', label:'DeepSeek Chat', icon:'🌊' },
+                    { id:'mistral-large', label:'Mistral Large', icon:'🌀' },
+                    { id:'llama-3.3-70b', label:'Llama 3.3 70B', icon:'🦙' },
+                    { id:'forge-pro', label:'Forge Pro (best)', icon:'⚡' },
+                    { id:'forge-fast', label:'Forge Fast', icon:'🚀' },
+                    { id:'forge-reasoning', label:'Forge Reasoning', icon:'🧠' },
+                  ].map(m => {
+                    const sel = autoSelectedModels.includes(m.id);
+                    return (
+                      <button key={m.id} onClick={() => setAutoSelectedModels(prev => sel ? prev.filter(x=>x!==m.id) : [...prev, m.id])} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', background: sel ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg3)', border:`1px solid ${sel ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:20, color: sel ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight: sel ? 600 : 400, transition:'all 0.15s' }}>
+                        <span>{m.icon}</span>{m.label}
+                        {sel && <span style={{ fontSize:10, color:'var(--fg-orange)' }}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {autoSelectedModels.length > 0 && <p style={{ margin:'8px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{autoSelectedModels.length} model{autoSelectedModels.length!==1?'s':''} selected</p>}
+              </div>
+              {/* Prompt input */}
+              <div style={{ marginBottom:16 }}>
+                <textarea value={autoPrompt} onChange={e => setAutoPrompt(e.target.value)} placeholder="Enter your prompt — all selected models will run it in parallel..." rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box', lineHeight:1.6 }} />
+              </div>
+              <button disabled={autoRunning || !autoPrompt.trim() || autoSelectedModels.length===0} onClick={async () => {
+                if (!user || !autoPrompt.trim() || autoSelectedModels.length===0) return;
+                setAutoRunning(true); setAutoResults([]);
+                try {
+                  const d = await apiFetch('/forgeauto/run', { method:'POST', body:JSON.stringify({ prompt:autoPrompt, models:autoSelectedModels }) }, user.token);
+                  if (d?.success) setAutoResults(d.data || []);
+                } catch(e:any) { alert('ForgeAuto error: '+e.message); } finally { setAutoRunning(false); }
+              }} style={{ padding:'10px 28px', background: autoRunning||!autoPrompt.trim()||autoSelectedModels.length===0 ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color: autoRunning||!autoPrompt.trim()||autoSelectedModels.length===0 ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: autoRunning||!autoPrompt.trim()||autoSelectedModels.length===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
+                {autoRunning ? <><span style={{ animation:'forge-flash 0.6s ease-in-out infinite', display:'inline-block' }}>⚡</span> Running {autoSelectedModels.length} models…</> : `⚡ Run ${autoSelectedModels.length||''} Models`}
+              </button>
+
+              {/* Results grid */}
+              {autoResults.length > 0 && (
+                <div style={{ marginTop:24 }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+                    <h3 style={{ margin:0, fontSize:16, fontWeight:700, color:'var(--fg-text)', fontFamily:'var(--fg-font-display)' }}>Results — {autoResults.filter(r=>r.content).length}/{autoResults.length} succeeded</h3>
+                    <button onClick={() => { const best = autoResults.filter(r=>r.content).sort((a,b)=>(b.tokens||0)-(a.tokens||0))[0]; if (best) navigator.clipboard?.writeText(best.content||''); }} style={{ padding:'6px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>Copy Best</button>
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(380px,1fr))', gap:14 }}>
+                    {autoResults.map((r, i) => (
+                      <div key={i} style={{ background:'var(--fg-bg3)', border:`1px solid ${r.error ? 'var(--fg-red)' : r.content ? 'var(--fg-border2)' : 'var(--fg-border)'}`, borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:10 }}>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                          <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-orange2)' }}>{r.model}</span>
+                          <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                            {r.elapsed && <span style={{ fontSize:10, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{(r.elapsed/1000).toFixed(1)}s</span>}
+                            {r.tokens && <span style={{ fontSize:10, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{r.tokens} tok</span>}
+                            {r.content && <span style={{ fontSize:10, padding:'2px 8px', background:'rgba(74,222,128,0.15)', border:'1px solid rgba(74,222,128,0.3)', borderRadius:10, color:'var(--fg-green)' }}>✓</span>}
+                            {r.error && <span style={{ fontSize:10, padding:'2px 8px', background:'rgba(248,113,113,0.15)', border:'1px solid rgba(248,113,113,0.3)', borderRadius:10, color:'var(--fg-red)' }}>✗</span>}
+                          </div>
+                        </div>
+                        {r.error ? (
+                          <p style={{ margin:0, fontSize:12, color:'var(--fg-red)', background:'rgba(248,113,113,0.08)', padding:'8px 10px', borderRadius:6 }}>{r.error}</p>
+                        ) : (
+                          <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, maxHeight:200, overflowY:'auto', whiteSpace:'pre-wrap', wordBreak:'break-word', background:'var(--fg-bg2)', padding:'10px 12px', borderRadius:8 }}>{r.content}</div>
+                        )}
+                        {r.content && <button onClick={() => navigator.clipboard?.writeText(r.content||'')} style={{ alignSelf:'flex-end', padding:'4px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>Copy</button>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── FORGEMULTI ────────────────────────────────────────────────── */}
+        {mainTab === 'forgemulti' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
+            <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--fg-border)', flexShrink:0, display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ fontSize:28 }}>🤖</div>
+              <div>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeMulti</h2>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Swarm of AI agents — each with a unique role — attack your problem simultaneously</p>
+              </div>
+            </div>
+            <div style={{ flex:1, overflowY:'auto', padding:24 }}>
+              {/* Agent role selector */}
+              <div style={{ marginBottom:20 }}>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--fg-text2)', margin:'0 0 10px' }}>Active agent roles:</p>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                  {[
+                    { role:'Analyst', icon:'🔍', desc:'Data-driven analysis' },
+                    { role:'Creative', icon:'💡', desc:'Brainstorming & ideation' },
+                    { role:'Critic', icon:'⚡', desc:'Rigorous critique & flaws' },
+                    { role:'Strategist', icon:'🎯', desc:'Strategic planning' },
+                    { role:'Researcher', icon:'📚', desc:'Deep knowledge retrieval' },
+                    { role:'Engineer', icon:'🛠️', desc:'Technical implementation' },
+                    { role:'Ethicist', icon:'⚖️', desc:'Ethics & risk assessment' },
+                    { role:'Futurist', icon:'🚀', desc:'Long-range implications' },
+                  ].map(a => {
+                    const active = multiSelectedRoles.includes(a.role);
+                    return (
+                      <button key={a.role} title={a.desc} onClick={() => setMultiSelectedRoles(prev => active ? prev.filter(r=>r!==a.role) : [...prev, a.role])} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', background: active ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg3)', border:`1px solid ${active ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:20, color: active ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight: active ? 600 : 400, transition:'all 0.15s' }}>
+                        <span>{a.icon}</span>{a.role}
+                        {active && <span style={{ fontSize:10, color:'var(--fg-orange)' }}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {multiSelectedRoles.length > 0 && <p style={{ margin:'8px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{multiSelectedRoles.length} agent{multiSelectedRoles.length!==1?'s':''} active</p>}
+              </div>
+              {/* Model selector */}
+              <div style={{ marginBottom:16 }}>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--fg-text2)', margin:'0 0 8px' }}>Base model for all agents:</p>
+                <select value={multiModel} onChange={e => setMultiModel(e.target.value)} style={{ padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', minWidth:220 }}>
+                  {['forge-fast','forge-pro','forge-reasoning','claude-sonnet-4','claude-haiku-4','gpt-4o-mini','gpt-4o','gemini-2.0-flash','gemini-2.5-pro'].map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              {/* Prompt */}
+              <div style={{ marginBottom:16 }}>
+                <textarea value={multiPrompt} onChange={e => setMultiPrompt(e.target.value)} placeholder="Describe your task or question — all agents will tackle it from their unique perspective..." rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box', lineHeight:1.6 }} />
+              </div>
+              <button disabled={multiRunning || !multiPrompt.trim() || multiSelectedRoles.length===0} onClick={async () => {
+                if (!user || !multiPrompt.trim() || multiSelectedRoles.length===0) return;
+                setMultiRunning(true); setMultiResults(null);
+                try {
+                  const d = await apiFetch('/forgemulti/run', { method:'POST', body:JSON.stringify({ prompt:multiPrompt, model:multiModel, roles:multiSelectedRoles }) }, user.token);
+                  if (d?.success) setMultiResults(d.data);
+                } catch(e:any) { alert('ForgeMulti error: '+e.message); } finally { setMultiRunning(false); }
+              }} style={{ padding:'10px 28px', background: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-bg4)' : 'linear-gradient(135deg,#7c3aed,var(--fg-orange))', border:'none', borderRadius:8, color: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
+                {multiRunning ? <><span style={{ animation:'forge-flash 0.6s ease-in-out infinite', display:'inline-block' }}>🤖</span> Agents thinking…</> : `🤖 Dispatch ${multiSelectedRoles.length} Agents`}
+              </button>
+
+              {/* Results */}
+              {multiResults && (
+                <div style={{ marginTop:24 }}>
+                  {/* Synthesis */}
+                  <div style={{ background:'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(249,115,22,0.12))', border:'1px solid rgba(124,58,237,0.35)', borderRadius:14, padding:20, marginBottom:20 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                      <span style={{ fontSize:22 }}>🌐</span>
+                      <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>Synthesized Intelligence</h3>
+                      <button onClick={() => navigator.clipboard?.writeText(multiResults.synthesis)} style={{ marginLeft:'auto', padding:'4px 12px', background:'rgba(0,0,0,0.2)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>Copy</button>
+                    </div>
+                    <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.8, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{multiResults.synthesis}</div>
+                  </div>
+                  {/* Individual agent cards */}
+                  <h4 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text2)' }}>Individual Agent Perspectives ({multiResults.agents.length})</h4>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(360px,1fr))', gap:12 }}>
+                    {multiResults.agents.map((a, i) => (
+                      <div key={i} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, padding:16 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                          <span style={{ fontSize:20 }}>{a.icon}</span>
+                          <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-orange2)' }}>{a.role}</span>
+                          <span style={{ marginLeft:'auto', fontSize:10, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{(a.elapsed/1000).toFixed(1)}s</span>
+                          <button onClick={() => navigator.clipboard?.writeText(a.content)} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text2)', cursor:'pointer', fontSize:10 }}>Copy</button>
+                        </div>
+                        <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, maxHeight:220, overflowY:'auto', whiteSpace:'pre-wrap', wordBreak:'break-word', background:'var(--fg-bg2)', padding:'10px 12px', borderRadius:8 }}>{a.content}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* ── MODALS ────────────────────────────────────────────────────── */}
@@ -3031,6 +3259,61 @@ export default function ForgeApp() {
             <div style={{ display:'flex', gap:10 }}>
               <button onClick={() => setShowNewTask(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
               <button onClick={addTask} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Add Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Thread context menu popup */}
+      {threadMenu && (() => {
+        const t = threads.find(x => x.id === threadMenu.threadId);
+        if (!t) return null;
+        return (
+          <div style={{ position:'fixed', top: threadMenu.y, left: threadMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+            {[
+              { icon:'✏️', label:'Rename', action:() => { setRenamingThread({ id:t.id, title:t.title }); setThreadMenu(null); } },
+              { icon: t.pinned ? '📌 Unpin' : '📌 Pin', label: t.pinned ? 'Unpin' : 'Pin', action:() => { apiFetch(`/threads/${t.id}`, { method:'PATCH', body:JSON.stringify({ pinned: t.pinned ? 0 : 1 }) }, user!.token).then(() => loadThreads(activeProject?.id)); setThreadMenu(null); } },
+              { icon:'🗄️', label: t.archived ? 'Unarchive' : 'Archive', action:() => { archiveThread(t); setThreadMenu(null); } },
+              { icon:'🗑️', label:'Delete', action:() => { deleteThread(t.id); setThreadMenu(null); } },
+            ].map(item => (
+              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                <span>{item.icon}</span>{item.label}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Project context menu popup */}
+      {projectMenu && (() => {
+        const p = projects.find(x => x.id === projectMenu.projectId);
+        if (!p) return null;
+        return (
+          <div style={{ position:'fixed', top: projectMenu.y, left: projectMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+            {[
+              { icon:'✏️', label:'Rename', action:() => { setRenamingProject({ id:p.id, name:p.name }); setProjectMenu(null); } },
+              { icon: p.pinned ? '📌 Unpin' : '📌 Pin', label: p.pinned ? 'Unpin' : 'Pin', action:() => { togglePin(p); setProjectMenu(null); } },
+              { icon:'🗑️', label:'Delete', action:() => { deleteProject(p.id); setProjectMenu(null); } },
+            ].map(item => (
+              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                <span>{item.icon}</span>{item.label}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Rename project modal */}
+      {renamingProject && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingProject(null)}>
+          <div style={{ width:360, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'var(--fg-text)', margin:'0 0 16px', fontSize:16, fontWeight:700 }}>Rename Project</h3>
+            <input value={renamingProject.name} onChange={e => setRenamingProject(prev => prev ? { ...prev, name: e.target.value } : prev)} onKeyDown={e => { if (e.key==='Enter') renameProject(); }} autoFocus style={{ width:'100%', padding:'10px 12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={() => setRenamingProject(null)} style={{ flex:1, padding:'9px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={renameProject} style={{ flex:1, padding:'9px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontWeight:600, cursor:'pointer' }}>Rename</button>
             </div>
           </div>
         </div>
