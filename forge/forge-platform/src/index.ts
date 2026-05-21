@@ -1957,6 +1957,78 @@ app.get('/api/superagent/history', requireAuth, (req: AuthRequest, res) => {
   }
 });
 
+// ─── ForgeAuto: ensemble of N models in parallel ─────────────────────────────
+app.post('/api/forgeauto/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { prompt, models } = req.body;
+  if (!prompt || !Array.isArray(models) || models.length < 1) {
+    res.status(400).json({ success: false, error: 'prompt and models[] required' }); return;
+  }
+  emitAgentActivity(userId, { type: 'start', message: `🔀 ForgeAuto running ${models.length} models in parallel...` });
+  try {
+    const results = await Promise.allSettled(models.map(async (modelId: string) => {
+      const actualModel = resolveForgeModel(modelId);
+      const provider = getProviderForModel(actualModel);
+      const apiKey = getUserKey(userId, provider);
+      if (!apiKey) return { model: modelId, error: `No ${provider} key`, content: null };
+      const start = Date.now();
+      const result = await callLLM(actualModel, provider, apiKey, [{ role:'user', content: prompt }]);
+      emitAgentActivity(userId, { type: 'done', message: `✅ ${modelId} responded (${((Date.now()-start)/1000).toFixed(1)}s)`, model: modelId });
+      return { model: modelId, content: result.content, tokens: result.promptTokens + result.completionTokens, elapsed: Date.now() - start };
+    }));
+    const responses = results.map((r, i) => r.status === 'fulfilled' ? r.value : { model: models[i], error: (r as any).reason?.message || 'failed', content: null });
+    res.json({ success: true, data: responses });
+  } catch (err: any) {
+    emitAgentActivity(userId, { type: 'error', message: `❌ ForgeAuto error: ${err.message}` });
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── ForgeMulti: swarm of specialized agents on one prompt ───────────────────
+const FORGE_MULTI_AGENTS = [
+  { role: 'Analyst', icon: '🔍', prompt: 'You are a sharp analytical thinker. Break down the problem systematically, identify key facts, patterns, and data points. Be concise and precise.' },
+  { role: 'Creative', icon: '💡', prompt: 'You are a creative brainstormer. Generate bold, novel, unconventional ideas and approaches. Think outside the box.' },
+  { role: 'Critic', icon: '⚡', prompt: 'You are a rigorous critic. Find flaws, risks, edge cases, and counter-arguments. Be direct and specific about what could go wrong.' },
+  { role: 'Strategist', icon: '🎯', prompt: 'You are a strategic planner. Think long-term, identify priorities, trade-offs, and create actionable next steps.' },
+  { role: 'Researcher', icon: '📚', prompt: 'You are a knowledgeable researcher. Provide relevant context, background, examples, and references. Be thorough.' },
+];
+
+app.post('/api/forgemulti/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { prompt, model: modelId = 'claude-sonnet-4', agent_roles } = req.body;
+  if (!prompt) { res.status(400).json({ success: false, error: 'prompt required' }); return; }
+  const agents = agent_roles
+    ? FORGE_MULTI_AGENTS.filter(a => agent_roles.includes(a.role))
+    : FORGE_MULTI_AGENTS;
+  const actualModel = resolveForgeModel(modelId);
+  const provider = getProviderForModel(actualModel);
+  const apiKey = getUserKey(userId, provider);
+  if (!apiKey) { res.status(400).json({ success: false, error: `No ${provider} API key` }); return; }
+  emitAgentActivity(userId, { type: 'start', message: `🤖 ForgeMulti dispatching ${agents.length} agents...` });
+  try {
+    const results = await Promise.allSettled(agents.map(async (agent) => {
+      const start = Date.now();
+      const result = await callLLM(actualModel, provider, apiKey, [
+        { role: 'system', content: agent.prompt },
+        { role: 'user', content: prompt }
+      ]);
+      emitAgentActivity(userId, { type: 'done', message: `✅ ${agent.icon} ${agent.role} responded`, model: actualModel });
+      return { role: agent.role, icon: agent.icon, content: result.content, elapsed: Date.now() - start };
+    }));
+    const responses = results.map((r, i) => r.status === 'fulfilled' ? r.value : { role: agents[i].role, icon: agents[i].icon, content: `Error: ${(r as any).reason?.message}`, elapsed: 0 });
+    // Synthesize a final answer combining all agent perspectives
+    const synthesis = await callLLM(actualModel, provider, apiKey, [
+      { role: 'system', content: 'You are a master synthesizer. Given multiple expert perspectives on a question, create a comprehensive, well-structured response that integrates the best insights from each. Be clear and actionable.' },
+      { role: 'user', content: `Original question: "${prompt}"\n\nExpert responses:\n${responses.map(r => `**${r.icon} ${r.role}**: ${r.content}`).join('\n\n')}\n\nProvide a synthesized final answer.` }
+    ]);
+    emitAgentActivity(userId, { type: 'done', message: `✅ ForgeMulti synthesis complete` });
+    res.json({ success: true, data: { agents: responses, synthesis: synthesis.content } });
+  } catch (err: any) {
+    emitAgentActivity(userId, { type: 'error', message: `❌ ForgeMulti error: ${err.message}` });
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ─── ForgeAgent SSE run loop ────────────────────────────────────────────────────
 const AGENT_TOOLS = [
   { name: 'web_search', description: 'Search the web for information', parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search query' } }, required: ['query'] } },
