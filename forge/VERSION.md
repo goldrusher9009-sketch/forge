@@ -1,6 +1,17 @@
 # Forge Platform — Version History
 
-## v5.4 — 2026-05-20 (current)
+## v5.5 — 2026-05-20 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Key save pipeline** — `saveOneKey` now awaits: save → loadVault → loadApiKeys → validateVaultKey → loadOpenRouterModels (if openrouter). Same for `updateVaultKey`. Validation and model load happen atomically after every key save
+- **Default model from active key** — `loadApiKeys` auto-selects best model based on which provider keys exist (anthropic → claude-sonnet-4-6, openai → gpt-4o, gemini → gemini-2.0-flash, groq → llama, openrouter → first free model)
+- **OpenRouter models in navbar dropdown** — model selector now includes OpenRouter free models (top 10) and paid models (top 20) as an optgroup, so you can pick OR models without leaving workspace
+- **Refresh button fixed** — shows "⟳ Loading…" spinner while fetching, disabled during load, won't silently fail
+- **Loading state** — "⟳ Loading models from OpenRouter…" shown in model grid while fetching
+
+---
+
+## v5.4 — 2026-05-20
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
 - **OpenRouter key fix** — Save button now calls `saveOneKey` with immediate `loadOpenRouterModels()` reload. Inline key entry added directly on the OpenRouter tab so user never has to leave the model browser

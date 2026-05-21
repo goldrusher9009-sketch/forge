@@ -1,4 +1,4 @@
-// Forge AI Workspace v5.4 — OpenRouter model browser, key validation, chat/voice/token fixes
+// Forge AI Workspace v5.5 — Key save→validate→load pipeline, default model from active key, OR refresh fix
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -303,6 +303,7 @@ export default function ForgeApp() {
   const [orSearch, setOrSearch] = useState('');
   const [orSort, setOrSort] = useState<'name'|'price_asc'|'price_desc'|'context'>('name');
   const [orFilter, setOrFilter] = useState<'all'|'free'|'paid'>('all');
+  const [orLoading, setOrLoading] = useState(false);
   const [newProvider, setNewProvider] = useState({ name:'', base_url:'', api_key:'', markup:'1.5', models:'' });
   const [routerTestPrompt, setRouterTestPrompt] = useState('');
   const [routerTestModel, setRouterTestModel] = useState('forge-pro');
@@ -387,7 +388,27 @@ export default function ForgeApp() {
       });
     } catch {}
   };
-  const loadOpenRouterModels = async () => { if (!user) return; try { const d = await apiFetch('/keys/openrouter-models', {}, user.token); setOpenRouterModels(Array.isArray(d?.data?.models) ? d.data.models : []); } catch {} };
+  const loadOpenRouterModels = async () => {
+    if (!user) return;
+    setOrLoading(true);
+    try {
+      const d = await apiFetch('/keys/openrouter-models', {}, user.token);
+      if (d?.error === 'NO_OPENROUTER_KEY') { setOrLoading(false); return; }
+      const models = Array.isArray(d?.data?.models) ? d.data.models : [];
+      setOpenRouterModels(models);
+      // Auto-select first free OR model if no valid model selected
+      if (models.length > 0) {
+        setSelectedModel(prev => {
+          if (!prev || prev === 'claude-sonnet-4-6') {
+            const freeModel = models.find((m: any) => m.id.includes(':free') || m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0');
+            return freeModel ? `openrouter/${freeModel.id}` : `openrouter/${models[0].id}`;
+          }
+          return prev;
+        });
+      }
+    } catch {}
+    setOrLoading(false);
+  };
   const loadApiKeys = async () => {
     if (!user) return;
     try {
@@ -397,6 +418,20 @@ export default function ForgeApp() {
       const confirmed: Record<string,boolean> = {};
       providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
       setSavedProviders(confirmed);
+      // Auto-select best available model based on saved keys
+      setSelectedModel(prev => {
+        // Keep existing selection if it's already pointing at a valid provider
+        if (prev && prev.startsWith('openrouter/') && confirmed['openrouter']) return prev;
+        if (prev && prev !== 'claude-sonnet-4-6') return prev;
+        // Pick best model from first available provider
+        if (confirmed['openrouter']) return prev; // will be set by loadOpenRouterModels
+        if (confirmed['anthropic']) return 'claude-sonnet-4-6';
+        if (confirmed['openai']) return 'gpt-4o';
+        if (confirmed['gemini']) return 'gemini-2.0-flash';
+        if (confirmed['groq']) return 'llama-3.1-8b-instant';
+        if (confirmed['mistral']) return 'mistral-small-latest';
+        return prev;
+      });
     } catch {}
   };
   const loadVault = async () => {
@@ -466,18 +501,18 @@ export default function ForgeApp() {
     const trimmed = key.trim();
     if (!trimmed) { alert('Please paste a key first.'); return; }
     try {
-      // Backend expects flat body: { anthropic_key: 'sk-ant-...' }
       await apiFetch('/keys', { method:'POST', body:JSON.stringify({ [`${provider}_key`]: trimmed }) }, user.token);
       setKeysSaved(true); setTimeout(() => setKeysSaved(false), 3000);
-      // Mark this provider as saved in state
       setSavedProviders(prev => ({ ...prev, [provider]: true }));
-      // Refresh vault so new key appears in Key Vault section
-      loadVault();
-      // Auto-validate the key immediately after saving
-      setTimeout(() => validateVaultKey(provider), 500);
+      // Refresh vault + api key flags
+      await loadVault();
+      await loadApiKeys();
+      // Validate immediately — shows Active/Invalid badge right away
+      await validateVaultKey(provider);
+      // If openrouter, load models immediately
+      if (provider === 'openrouter') await loadOpenRouterModels();
     } catch (e: any) {
-      const msg = e?.message || String(e);
-      alert(`Save failed: ${msg}`);
+      alert(`Save failed: ${e?.message || String(e)}`);
     }
   };
   // Legacy alias used in some places
@@ -548,7 +583,11 @@ export default function ForgeApp() {
     try {
       await apiFetch(`/keys/${provider}`, { method:'PATCH', body:JSON.stringify({ key }) }, user.token);
       setVaultUpdateInputs(prev => ({ ...prev, [provider]: '' }));
-      await loadVault(); await loadApiKeys();
+      await loadVault();
+      await loadApiKeys();
+      // Validate immediately after update
+      await validateVaultKey(provider);
+      if (provider === 'openrouter') await loadOpenRouterModels();
     } catch (e: any) { alert(e.message); }
     finally { setVaultUpdating(''); }
   };
@@ -1071,14 +1110,20 @@ export default function ForgeApp() {
                 const availableDirect = DIRECT_MODELS.map(g => ({ ...g, models: g.models.filter(m => hasKey(m.id)) })).filter(g => g.models.length > 0);
                 const noKeys = availableForge.length === 0 && availableDirect.length === 0;
                 return (
-                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color: noKeys ? '#6b7280' : '#a78bfa', padding:'6px 10px', fontSize:12, cursor:'pointer' }}>
-                    {noKeys && <option value="">⚠ Add an API key in Settings</option>}
-                    {availableForge.length > 0 && <optgroup label="Forge (with markup)">{availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</optgroup>}
+                  <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'#1a1a2e', border:'1px solid #2d2d44', borderRadius:8, color: noKeys && openRouterModels.length === 0 ? '#6b7280' : '#a78bfa', padding:'6px 10px', fontSize:12, cursor:'pointer', maxWidth:220 }}>
+                    {noKeys && openRouterModels.length === 0 && <option value="">⚠ Add an API key in Settings</option>}
+                    {availableForge.length > 0 && <optgroup label="⚡ Forge Models">{availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</optgroup>}
                     {availableDirect.map(grp => (
                       <optgroup key={grp.group} label={grp.group}>
                         {grp.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
                       </optgroup>
                     ))}
+                    {openRouterModels.length > 0 && (
+                      <optgroup label="🔀 OpenRouter">
+                        {openRouterModels.filter(m => m.id.includes(':free') || m.pricing?.prompt === '0').slice(0,10).map(m => <option key={`openrouter/${m.id}`} value={`openrouter/${m.id}`}>🆓 {m.name || m.id}</option>)}
+                        {openRouterModels.filter(m => !m.id.includes(':free') && m.pricing?.prompt !== '0').slice(0,20).map(m => <option key={`openrouter/${m.id}`} value={`openrouter/${m.id}`}>{m.name || m.id}</option>)}
+                      </optgroup>
+                    )}
                   </select>
                 );
               })()}
@@ -1409,7 +1454,7 @@ export default function ForgeApp() {
                       <span style={{ fontSize:12, color:'#6b7280' }}>{openRouterModels.length} models</span>
                       <span style={{ fontSize:12, color:'#059669' }}>✓ {openRouterModels.filter(m => m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free')).length} free</span>
                       <span style={{ fontSize:12, color:'#7C3AED' }}>💎 {openRouterModels.filter(m => !(m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free'))).length} paid</span>
-                      <button onClick={loadOpenRouterModels} style={{ marginLeft:'auto', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color:'#6b7280', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>↻ Refresh</button>
+                      <button onClick={loadOpenRouterModels} disabled={orLoading} style={{ marginLeft:'auto', background:'transparent', border:'1px solid #2d2d44', borderRadius:6, color: orLoading ? '#a78bfa' : '#6b7280', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>{orLoading ? '⟳ Loading…' : '↻ Refresh'}</button>
                     </div>
                   )}
                   {/* Search + filter + sort */}
@@ -1449,8 +1494,9 @@ export default function ForgeApp() {
                       );
                     })}
                   </div>
+                  {orLoading && <p style={{ color:'#a78bfa', fontSize:13, textAlign:'center', padding:32 }}>⟳ Loading models from OpenRouter…</p>}
                   {filteredOrModels.length > 120 && <p style={{ color:'#4b5563', fontSize:12, textAlign:'center', marginTop:12 }}>Showing 120 of {filteredOrModels.length}. Refine search to see more.</p>}
-                  {openRouterModels.length > 0 && filteredOrModels.length === 0 && <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', padding:32 }}>No models match your search.</p>}
+                  {!orLoading && openRouterModels.length > 0 && filteredOrModels.length === 0 && <p style={{ color:'#4b5563', fontSize:13, textAlign:'center', padding:32 }}>No models match your search.</p>}
                 </div>
               )}
 
