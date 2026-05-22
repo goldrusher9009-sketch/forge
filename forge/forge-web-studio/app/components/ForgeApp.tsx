@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.3 -- direct reply append (no race), morph fully purged, no auto-tab on send
+﻿// Forge AI Workspace v6.4 -- morph nuked from all 5 locations incl dynamic provider models
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -636,7 +636,7 @@ export default function ForgeApp() {
   };
   // Fetch models for a specific provider from its API
   const loadProviderModels = async (provider: string) => {
-    if (!user) return;
+    if (!user || provider === 'morph') return;
     try {
       const d = await apiFetch(`/keys/${provider}/models`, {}, user.token);
       if (d?.success && Array.isArray(d?.data?.models)) {
@@ -653,7 +653,7 @@ export default function ForgeApp() {
     try {
       const d = await apiFetch('/keys', {}, user.token);
       const data = d?.data || {};
-      const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor','morph'];
+      const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor'];
       const confirmed: Record<string,boolean> = {};
       providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
       setSavedProviders(confirmed);
@@ -1540,7 +1540,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.3</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.4</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -1613,7 +1613,7 @@ export default function ForgeApp() {
                 const availableDirect = DIRECT_MODELS.map(g => ({ ...g, models: g.models.filter(m => hasKey(m.id)) })).filter(g => g.models.length > 0);
                 // Dynamic models from other providers (anthropic, openai, gemini, groq, mistral, etc.)
                 const dynamicGroups = Object.entries(providerModels)
-                  .filter(([p]) => p !== 'openrouter' && savedProviders[p] && providerModels[p]?.length > 0)
+                  .filter(([p]) => p !== 'openrouter' && p !== 'morph' && savedProviders[p] && providerModels[p]?.length > 0)
                   .map(([p, models]) => ({
                     provider: p,
                     label: p.charAt(0).toUpperCase() + p.slice(1),
@@ -2361,7 +2361,7 @@ export default function ForgeApp() {
               {routerTab==='direct' && (
                 <div>
                   <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 16px' }}>Direct access to provider models (no markup). Requires your API key in Settings.</p>
-                  {DIRECT_MODELS.filter(grp => grp.group !== 'Morph' || !!savedProviders['morph']).map(grp => (
+                  {DIRECT_MODELS.filter(grp => grp.group !== 'Morph').map(grp => (
                     <div key={grp.group} style={{ marginBottom:20 }}>
                       <p style={{ color:'var(--fg-text2)', fontSize:12, fontWeight:600, margin:'0 0 10px', textTransform:'uppercase' }}>{grp.group}</p>
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:8 }}>
