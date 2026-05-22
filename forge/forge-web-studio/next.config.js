@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */ // v6.1.0
 const nextConfig = {
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
