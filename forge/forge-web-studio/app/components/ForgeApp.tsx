@@ -117,8 +117,8 @@ let _onSessionExpired: (() => void) | null = null;
 async function apiFetch(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  // Add a 95s timeout for POST requests (LLM calls) so the UI never gets stuck
-  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(95000) : undefined);
+  // Add a 180s timeout for POST requests (LLM calls) — covers Railway cold-start (30s) + LLM latency (90s)
+  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(180000) : undefined);
   const res = await fetch(`${API}${path}`, { ...opts, headers, ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
@@ -357,6 +357,12 @@ export default function ForgeApp() {
   });
   const [llmExpanded, setLlmExpanded] = useState<Record<string,boolean>>({});
 
+  // Website credential vault -- stored ONLY in localStorage, never sent to server
+  const [webCreds, setWebCreds] = useState<{ id:string; site:string; url:string; username:string; password:string }[]>([]);
+  const [webCredForm, setWebCredForm] = useState({ site:'', url:'', username:'', password:'' });
+  const [webCredShowPassIds, setWebCredShowPassIds] = useState<Set<string>>(new Set());
+  const [webCredEditing, setWebCredEditing] = useState<string|null>(null);
+
   // Key vault
   const [vaultKeys, setVaultKeys] = useState<VaultKey[]>([]);
   const [vaultUpdateInputs, setVaultUpdateInputs] = useState<Record<string,string>>({});
@@ -433,6 +439,10 @@ export default function ForgeApp() {
   // Live activity feed
   const [liveEvents, setLiveEvents] = useState<{type:string;message:string;model?:string;elapsed?:number;ts:number}[]>([]);
   const liveSSERef = useRef<EventSource|null>(null);
+  // AbortController for current sendMessage request -- allows Stop button to cancel in-flight LLM call
+  const sendAbortRef = useRef<AbortController|null>(null);
+  // Pending message queue -- if user types while AI is thinking, queue it for immediate send after current response
+  const [pendingMessage, setPendingMessage] = useState<string>('');
 
   // Context bar -- per-thread token tracking + model context limits
   const MODEL_CONTEXT_LIMITS: Record<string, number> = {
@@ -518,12 +528,15 @@ export default function ForgeApp() {
       if (sc) setServiceCreds(prev => ({ ...prev, ...JSON.parse(sc) }));
       const lc = localStorage.getItem('forge_llm_creds');
       if (lc) setLlmCreds(prev => ({ ...prev, ...JSON.parse(lc) }));
+      const wc = localStorage.getItem('forge_web_creds');
+      if (wc) setWebCreds(JSON.parse(wc));
     } catch {}
   }, []);
 
   // Persist credentials to localStorage whenever they change (client-only)
   useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('forge_service_creds', JSON.stringify(serviceCreds)); }, [serviceCreds]);
   useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('forge_llm_creds', JSON.stringify(llmCreds)); }, [llmCreds]);
+  useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('forge_web_creds', JSON.stringify(webCreds)); }, [webCreds]);
 
   // Keep ForgeMulti model in sync with the main model picker
   useEffect(() => { setMultiModel(selectedModel); }, [selectedModel]);
@@ -1050,8 +1063,11 @@ export default function ForgeApp() {
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
     setMultiResponses([]);
-    // Hard safety timeout: always unstick UI after 100s regardless of fetch state
-    const safetyTimer = setTimeout(() => { setSending(false); setTyping(false); }, 100000);
+    // Create AbortController so Stop button can cancel this request
+    const abortCtrl = new AbortController();
+    sendAbortRef.current = abortCtrl;
+    // Hard safety timeout: always unstick UI after 180s regardless of fetch state
+    const safetyTimer = setTimeout(() => { setSending(false); setTyping(false); sendAbortRef.current = null; }, 180000);
     // Auto-open live tab so user sees thinking indicator
     if (!rightExpanded || rightTab !== 'live') { setRightTab('live'); setRightExpanded(true); }
 
@@ -1082,7 +1098,7 @@ export default function ForgeApp() {
       const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds };
       let threadId = currentThread.id;
       try {
-        await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
+        await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
       } catch (e: any) {
         // Thread was wiped (Railway redeploy) -- create a fresh one and retry
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
@@ -1136,7 +1152,17 @@ export default function ForgeApp() {
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
-    } finally { clearTimeout(safetyTimer); setSending(false); setTyping(false); }
+    } finally {
+      clearTimeout(safetyTimer);
+      setSending(false); setTyping(false);
+      sendAbortRef.current = null;
+      // If user queued a message while we were thinking, send it now
+      if (pendingMessage.trim()) {
+        const queued = pendingMessage;
+        setPendingMessage('');
+        setTimeout(() => { setInput(queued); }, 50);
+      }
+    }
   };
 
   // ── Voice Chat ─────────────────────────────────────────────────────────────
@@ -1777,7 +1803,17 @@ export default function ForgeApp() {
                     </div>
                   )}
                   <div style={{ position:'relative', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, overflow:'hidden' }}>
-                    <textarea ref={textareaRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} placeholder={activeThread ? 'Message...' : 'Start a conversation...'} rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
+                    <textarea ref={textareaRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => {
+                      if (e.key==='Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (sending) {
+                          // Queue for after current response
+                          if (input.trim()) { setPendingMessage(input.trim()); setInput(''); }
+                        } else {
+                          sendMessage();
+                        }
+                      }
+                    }} placeholder={sending ? (pendingMessage ? `Queued: "${pendingMessage.slice(0,40)}…"` : 'AI is thinking… press Enter to queue next message') : (activeThread ? 'Message...' : 'Start a conversation...')} rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
                         {/* Voice button */}
@@ -1794,15 +1830,39 @@ export default function ForgeApp() {
                         <button onClick={() => fileInputRef.current?.click()} title="Attach files" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📎 {attachedFiles.length > 0 ? `${attachedFiles.length}` : 'Files'}</button>
                         {/* Quick right panel buttons */}
                         <button onClick={() => { setRightTab('context'); setRightExpanded(true); }} title="Context usage" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📊</button>
-                        <button onClick={() => { setRightTab('live'); setRightExpanded(true); }} title="Live activity" style={{ padding:'4px 8px', background: liveEvents.length > 0 ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${liveEvents.length > 0 ? 'var(--fg-odim2)' : 'var(--fg-border2)'}`, borderRadius:6, color: liveEvents.length > 0 ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>📺</button>
+                        <button onClick={() => { setRightTab('live'); setRightExpanded(true); }} title={liveEvents[0]?.message || 'Live activity'} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: sending ? 'var(--fg-odim)' : liveEvents.length > 0 ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${sending ? 'var(--fg-orange)' : liveEvents.length > 0 ? 'var(--fg-odim2)' : 'var(--fg-border2)'}`, borderRadius:6, color: sending ? 'var(--fg-orange2)' : liveEvents.length > 0 ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, maxWidth:160, overflow:'hidden' }}>
+                          <span>📺</span>
+                          {sending && liveEvents[0] && <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:10, maxWidth:100 }}>{liveEvents[0].message.slice(0, 30)}</span>}
+                        </button>
                         <button onClick={() => { setRightTab('browser'); setRightExpanded(true); }} title="Browser" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>🌐</button>
                         <button onClick={() => { setRightTab('terminal'); setRightExpanded(true); }} title="Terminal" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>💻</button>
                         <button onClick={() => { setRightTab('dispatch'); setRightExpanded(true); }} title="Dispatch agents" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>🚀</button>
                         <button onClick={() => { setShowNewTask(true); }} title="New task" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>✅</button>
                       </div>
-                      <button onClick={sendMessage} disabled={sending || !input.trim()} style={{ width:32, height:32, background:sending ? 'var(--fg-orange)' : input.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:8, color:'#fff', cursor:input.trim() && !sending ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', animation: sending ? 'send-pulse 0.9s ease-in-out infinite' : 'none', transition:'background 0.2s', flexShrink:0 }}>
-                        {sending ? '⚡' : '↑'}
-                      </button>
+                      <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                        {sending && (
+                          <button
+                            onClick={() => { sendAbortRef.current?.abort(); setSending(false); setTyping(false); sendAbortRef.current = null; }}
+                            title="Stop generation"
+                            style={{ height:32, padding:'0 10px', background:'rgba(220,38,38,0.85)', border:'1px solid rgba(220,38,38,0.5)', borderRadius:8, color:'#fff', cursor:'pointer', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:4, whiteSpace:'nowrap' }}
+                          >
+                            ■ Stop
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (sending) {
+                              if (input.trim()) { setPendingMessage(input.trim()); setInput(''); }
+                            } else {
+                              sendMessage();
+                            }
+                          }}
+                          disabled={!input.trim() && !sending}
+                          style={{ width:32, height:32, background: input.trim() ? 'var(--fg-orange)' : sending ? 'var(--fg-bg4)' : 'var(--fg-bg4)', border:'none', borderRadius:8, color:'#fff', cursor: input.trim() ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', animation: sending && !input.trim() ? 'send-pulse 0.9s ease-in-out infinite' : 'none', transition:'background 0.2s' }}
+                        >
+                          {sending && !input.trim() ? '⚡' : input.trim() && sending ? '⏎' : '↑'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2257,7 +2317,7 @@ export default function ForgeApp() {
               {routerTab==='direct' && (
                 <div>
                   <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 16px' }}>Direct access to provider models (no markup). Requires your API key in Settings.</p>
-                  {DIRECT_MODELS.map(grp => (
+                  {DIRECT_MODELS.filter(grp => grp.group !== 'Morph' || !!savedProviders['morph']).map(grp => (
                     <div key={grp.group} style={{ marginBottom:20 }}>
                       <p style={{ color:'var(--fg-text2)', fontSize:12, fontWeight:600, margin:'0 0 10px', textTransform:'uppercase' }}>{grp.group}</p>
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:8 }}>
@@ -2726,6 +2786,68 @@ export default function ForgeApp() {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Website Credential Vault -- stored only in localStorage, never sent to server */}
+              <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:16, padding:24, marginBottom:24 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+                  <div>
+                    <h3 style={{ color:'var(--fg-orange)', fontSize:14, margin:'0 0 2px', textTransform:'uppercase', letterSpacing:'0.05em' }}>🔑 Website Credentials</h3>
+                    <p style={{ color:'var(--fg-text3)', fontSize:12, margin:0 }}>Saved locally in your browser only — never sent to any server. Add logins for any website.</p>
+                  </div>
+                </div>
+                {/* Add new entry form */}
+                <div style={{ background:'var(--fg-bg)', borderRadius:12, border:'1px solid var(--fg-border)', padding:14, marginTop:14, marginBottom:14 }}>
+                  <p style={{ color:'var(--fg-text2)', fontSize:12, fontWeight:600, margin:'0 0 10px' }}>+ Add New Credential</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                    <input type="text" placeholder="Site name (e.g. GitHub)" value={webCredForm.site} onChange={e => setWebCredForm(p => ({ ...p, site: e.target.value }))} style={{ padding:'8px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12 }} />
+                    <input type="url" placeholder="URL (e.g. https://github.com)" value={webCredForm.url} onChange={e => setWebCredForm(p => ({ ...p, url: e.target.value }))} style={{ padding:'8px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12 }} />
+                    <input type="text" placeholder="Username or email" value={webCredForm.username} onChange={e => setWebCredForm(p => ({ ...p, username: e.target.value }))} style={{ padding:'8px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12 }} />
+                    <input type="password" placeholder="Password" value={webCredForm.password} onChange={e => setWebCredForm(p => ({ ...p, password: e.target.value }))} style={{ padding:'8px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12 }} />
+                  </div>
+                  <button
+                    disabled={!webCredForm.site.trim() || !webCredForm.username.trim()}
+                    onClick={() => {
+                      if (!webCredForm.site.trim()) return;
+                      if (webCredEditing) {
+                        setWebCreds(prev => prev.map(c => c.id === webCredEditing ? { ...c, ...webCredForm } : c));
+                        setWebCredEditing(null);
+                      } else {
+                        setWebCreds(prev => [...prev, { id: Date.now().toString(), ...webCredForm }]);
+                      }
+                      setWebCredForm({ site:'', url:'', username:'', password:'' });
+                    }}
+                    style={{ padding:'8px 20px', background: webCredForm.site.trim() && webCredForm.username.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:600 }}
+                  >
+                    {webCredEditing ? '✓ Save Changes' : '+ Add'}
+                  </button>
+                  {webCredEditing && (
+                    <button onClick={() => { setWebCredEditing(null); setWebCredForm({ site:'', url:'', username:'', password:'' }); }} style={{ marginLeft:8, padding:'8px 14px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:12, cursor:'pointer' }}>Cancel</button>
+                  )}
+                </div>
+                {/* Saved entries */}
+                {webCreds.length === 0 && (
+                  <p style={{ color:'var(--fg-text3)', fontSize:12, textAlign:'center', margin:'8px 0' }}>No saved credentials yet. Add your first website login above.</p>
+                )}
+                {webCreds.map(c => (
+                  <div key={c.id} style={{ marginBottom:8, background:'var(--fg-bg)', borderRadius:10, border:'1px solid var(--fg-border)', padding:'10px 14px', display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2 }}>
+                        <span style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>{c.site}</span>
+                        {c.url && <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'var(--fg-orange)', textDecoration:'none' }}>{c.url.replace(/^https?:\/\//, '').split('/')[0]}</a>}
+                      </div>
+                      <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+                        <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'monospace' }}>👤 {c.username}</span>
+                        <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'monospace', cursor:'pointer' }} onClick={() => setWebCredShowPassIds(prev => { const n = new Set(prev); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; })}>
+                          🔒 {webCredShowPassIds.has(c.id) ? c.password : '••••••••'}
+                        </span>
+                      </div>
+                    </div>
+                    <button onClick={() => { setWebCredEditing(c.id); setWebCredForm({ site:c.site, url:c.url, username:c.username, password:c.password }); }} style={{ padding:'5px 10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-orange)', cursor:'pointer', fontSize:11 }}>✏️ Edit</button>
+                    <button onClick={() => navigator.clipboard.writeText(c.password).catch(() => {})} title="Copy password" style={{ padding:'5px 10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📋</button>
+                    <button onClick={() => setWebCreds(prev => prev.filter(x => x.id !== c.id))} style={{ padding:'5px 10px', background:'transparent', border:'1px solid var(--fg-red)', borderRadius:6, color:'var(--fg-red)', cursor:'pointer', fontSize:11 }}>✕</button>
+                  </div>
+                ))}
               </div>
 
               {/* Key Vault -- all saved keys with status, update, delete */}
