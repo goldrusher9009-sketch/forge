@@ -283,7 +283,7 @@ export default function ForgeApp() {
   // Composer
   const [input, setInput] = useState('');
   const [activeAgentIds, setActiveAgentIds] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState('forge-pro');
+  const [selectedModel, setSelectedModel] = useState(''); // auto-set by loadApiKeys once user's actual keys are known
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
@@ -663,20 +663,31 @@ export default function ForgeApp() {
       setSavedProviders(confirmed);
       // Trigger model fetch for all confirmed providers (in background, don't await)
       Object.keys(confirmed).forEach(p => { if (confirmed[p]) loadProviderModels(p); });
-      // Auto-select best available model based on saved keys
+      // Auto-select best available model based on keys user has actually saved
       setSelectedModel(prev => {
-        // Keep existing selection if it's already pointing at a valid provider
-        if (prev && confirmed['openrouter']) return prev;
-        if (prev && prev !== 'claude-sonnet-4-6') return prev;
-        // Pick best model from first available provider
-        if (confirmed['openrouter']) return prev; // will be set by loadOpenRouterModels
-        if (confirmed['morph']) return 'morph-v3-fast';
+        // Helper: which provider does a model belong to?
+        const provOf = (m: string) => {
+          if (!m) return null;
+          if (m.startsWith('forge-ultra') || m.startsWith('forge-pro') || m.startsWith('forge-flash') || m.startsWith('claude')) return 'anthropic';
+          if (m.startsWith('forge-gpt') || m.startsWith('gpt') || m.startsWith('o3') || m.startsWith('o4') || m.startsWith('o1')) return 'openai';
+          if (m.startsWith('forge-gemini') || m.startsWith('gemini')) return 'gemini';
+          if (m.startsWith('llama') || m.startsWith('mixtral') || m === 'forge-fast') return 'groq';
+          if (m.startsWith('mistral')) return 'mistral';
+          if (m.startsWith('morph')) return 'morph';
+          if (m.includes('/')) return 'openrouter';
+          return null;
+        };
+        // Keep current selection only if user has a key for that provider
+        if (prev && confirmed[provOf(prev) || '']) return prev;
+        // Pick first provider user actually has a key for (priority order — no morph)
+        if (confirmed['openrouter']) return prev || ''; // OpenRouter models loaded async via loadOpenRouterModels
         if (confirmed['anthropic']) return 'claude-sonnet-4-6';
         if (confirmed['openai']) return 'gpt-4o';
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
-        return prev;
+        // No keys at all — leave empty so UI shows the warning
+        return '';
       });
     } catch {}
   };
@@ -1095,10 +1106,27 @@ export default function ForgeApp() {
 
     try {
       const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
+      // Guard: no model selected — tell user clearly instead of silently failing
+      if (!cleanModel) {
+        const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:'⚠️ No AI model selected. Go to **Settings → LLM Providers** and add an API key, then pick a model from the dropdown.', created_at:new Date().toISOString() };
+        setMessages(prev => [...prev, errMsg]);
+        return;
+      }
       const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds };
       let threadId = currentThread.id;
+      const checkResp = async (resp: any) => {
+        // Backend returns HTTP 200 with success:false for NO_API_KEY — surface it as a visible error
+        if (resp && resp.success === false) {
+          if (resp.error === 'NO_API_KEY') {
+            const provName = resp.providerName || resp.provider || 'your LLM provider';
+            throw new Error(`No ${provName} API key found. Go to Settings → LLM Providers and add your ${provName} key.`);
+          }
+          if (resp.message) throw new Error(resp.message);
+        }
+      };
       try {
-        await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
+        const r = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
+        await checkResp(r);
       } catch (e: any) {
         // Thread was wiped (Railway redeploy) -- create a fresh one and retry
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
@@ -1106,7 +1134,8 @@ export default function ForgeApp() {
           const newT = fresh?.data || fresh;
           threadId = newT.id;
           setActiveThread(newT);
-          await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
+          const r2 = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
+          await checkResp(r2);
           await loadThreads(activeProject?.id);
         } else { throw e; }
       }
@@ -2908,7 +2937,6 @@ export default function ForgeApp() {
                   { key:'mistral',    icon:'🌊', label:'Mistral',     color:'var(--fg-blue)', placeholder:'...',          hint:'console.mistral.ai', loginUrl:'https://console.mistral.ai' },
                   { key:'together',   icon:'🤝', label:'Together AI', color:'var(--fg-green)', placeholder:'...',          hint:'api.together.xyz', loginUrl:'https://api.together.xyz/signin' },
                   { key:'perplexity', icon:'🔭', label:'Perplexity',  color:'#8B5CF6', placeholder:'pplx-...',    hint:'perplexity.ai/settings', loginUrl:'https://www.perplexity.ai' },
-                  { key:'morph',      icon:'🔷', label:'Morph',        color:'var(--fg-blue)', placeholder:'sk-CKUd-...',  hint:'morphllm.com', loginUrl:'https://morphllm.com' },
                 ] as const).map(({ key, icon, label, color, placeholder, hint, loginUrl }) => {
                   const creds = llmCreds[key];
                   const expanded = llmExpanded[key];
