@@ -2331,7 +2331,7 @@ app.use((req: any, res: any) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Forge Platform v5.9 running on port ${PORT} | DB: ${DB_PATH}`);
+  console.log(`🚀 Forge Platform v6.1 running on port ${PORT} | DB: ${DB_PATH}`);
 });
 
 process.on('uncaughtException', (err) => {
