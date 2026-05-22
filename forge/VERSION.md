@@ -1,6 +1,17 @@
 # Forge Platform — Version History
 
-## v6.2 — 2026-05-22 (current)
+## v6.3 — 2026-05-22 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+
+- **Fix: Chat shows reply directly** — AI response is now appended to the chat from the POST response body directly, eliminating the race condition where `loadMessages()` would re-fetch before the DB write completed, causing messages to vanish. `loadMessages` is still called in the background to sync but no longer blocks the UI.
+- **Fix: Morph fully purged** — Removed from `DIRECT_MODELS` array (was still rendering tabs) AND from the Admin platform keys list. Morph is now completely gone from all UI surfaces.
+- **Fix: No auto-tab hijack** — Removed the line that forced the live tab open on every message send, keeping the user in the chat view.
+- **Version badge** — Updated to v6.3 in sidebar footer.
+
+---
+
+## v6.2 — 2026-05-22
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
 

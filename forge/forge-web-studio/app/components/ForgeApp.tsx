@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.2 -- thinking-disappears fix, morph removed, stop button, message queue, credential vault
+﻿// Forge AI Workspace v6.3 -- direct reply append (no race), morph fully purged, no auto-tab on send
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -144,10 +144,6 @@ const FORGE_MODELS = [
   { id:'forge-gemini', label:'Forge Gemini', desc:'Gemini 2.0 Flash + markup',      base:'gemini-2.0-flash' },
 ];
 const DIRECT_MODELS = [
-  { group:'Morph', models:[
-    { id:'morph-v3-fast', label:'Morph v3 Fast' },
-    { id:'morph-v3',      label:'Morph v3' },
-  ]},
   { group:'Anthropic', models:[
     { id:'claude-opus-4-6',         label:'Claude Opus 4.6' },
     { id:'claude-sonnet-4-6',       label:'Claude Sonnet 4.6' },
@@ -1079,8 +1075,7 @@ export default function ForgeApp() {
     sendAbortRef.current = abortCtrl;
     // Hard safety timeout: always unstick UI after 180s regardless of fetch state
     const safetyTimer = setTimeout(() => { setSending(false); setTyping(false); sendAbortRef.current = null; }, 180000);
-    // Auto-open live tab so user sees thinking indicator
-    if (!rightExpanded || rightTab !== 'live') { setRightTab('live'); setRightExpanded(true); }
+    // Don't auto-open live tab — user stays in chat view
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
     setMessages(prev => [...prev, tempUser]);
@@ -1114,19 +1109,38 @@ export default function ForgeApp() {
       }
       const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds };
       let threadId = currentThread.id;
-      const checkResp = async (resp: any) => {
-        // Backend returns HTTP 200 with success:false for NO_API_KEY — surface it as a visible error
+
+      // Extract AI reply from response and append directly — avoids loadMessages race condition
+      const applyResp = (resp: any) => {
         if (resp && resp.success === false) {
           if (resp.error === 'NO_API_KEY') {
             const provName = resp.providerName || resp.provider || 'your LLM provider';
-            throw new Error(`No ${provName} API key found. Go to Settings → LLM Providers and add your ${provName} key.`);
+            // Backend already saved the error message in DB; also show it directly
+            const provLabel = provName.charAt(0).toUpperCase() + provName.slice(1);
+            const errContent = `⚠️ No ${provLabel} API key found. Go to **Settings → LLM Providers** and add your ${provLabel} key.`;
+            const errMsg: Message = { id: resp.data?.id || 'tmp-err', thread_id: threadId, role: 'assistant', content: errContent, created_at: new Date().toISOString() };
+            setMessages(prev => [...prev.filter(m => m.id !== 'tmp-u'), errMsg]);
+            return; // don't throw — message is shown
           }
-          if (resp.message) throw new Error(resp.message);
+          throw new Error(resp.message || resp.error || 'Unknown error from server');
+        }
+        // Success — append AI reply directly from response, no re-fetch needed
+        const aiData = resp?.data;
+        if (aiData?.content) {
+          const aiMsg: Message = { id: aiData.id || 'tmp-ai', thread_id: threadId, role: 'assistant', content: aiData.content, created_at: new Date().toISOString() };
+          setMessages(prev => {
+            const withoutTemp = prev.filter(m => m.id !== 'tmp-u');
+            // Replace temp user message with a clean copy, then add AI reply
+            const userMsg: Message = { id: aiData.id + '-u', thread_id: threadId, role: 'user', content: userContent, created_at: new Date().toISOString() };
+            const already = withoutTemp.find(m => m.role === 'user' && m.content === userContent);
+            return already ? [...withoutTemp, aiMsg] : [...withoutTemp, userMsg, aiMsg];
+          });
         }
       };
+
       try {
         const r = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
-        await checkResp(r);
+        applyResp(r);
       } catch (e: any) {
         // Thread was wiped (Railway redeploy) -- create a fresh one and retry
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
@@ -1135,11 +1149,12 @@ export default function ForgeApp() {
           threadId = newT.id;
           setActiveThread(newT);
           const r2 = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
-          await checkResp(r2);
+          applyResp(r2);
           await loadThreads(activeProject?.id);
         } else { throw e; }
       }
-      await loadMessages(threadId);
+      // Reload messages in background to sync with DB (don't await — already have the reply)
+      loadMessages(threadId);
       await loadArtifacts();
       await loadThreads(activeProject?.id);
       loadThreadTokenStats(threadId);
@@ -1525,7 +1540,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.2</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.3</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -3139,7 +3154,6 @@ export default function ForgeApp() {
                       { provider:'gemini', label:'Google Gemini', placeholder:'AIza...', color:'var(--fg-blue)' },
                       { provider:'groq', label:'Groq', placeholder:'gsk_...', color:'var(--fg-orange)' },
                       { provider:'openrouter', label:'OpenRouter', placeholder:'sk-or-v1-...', color:'var(--fg-orange)' },
-      { provider:'morph', label:'Morph', placeholder:'sk-CKUd-...', color:'var(--fg-blue)' },
                       { provider:'mistral', label:'Mistral', placeholder:'...', color:'var(--fg-blue)' },
                       { provider:'together', label:'Together AI', placeholder:'...', color:'var(--fg-green)' },
                       { provider:'perplexity', label:'Perplexity', placeholder:'pplx-...', color:'var(--fg-red)' },
