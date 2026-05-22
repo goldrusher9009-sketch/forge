@@ -117,7 +117,9 @@ let _onSessionExpired: (() => void) | null = null;
 async function apiFetch(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API}${path}`, { ...opts, headers });
+  // Add a 95s timeout for POST requests (LLM calls) so the UI never gets stuck
+  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(95000) : undefined);
+  const res = await fetch(`${API}${path}`, { ...opts, headers, ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
     if (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN') {
