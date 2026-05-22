@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.4 -- morph nuked from all 5 locations incl dynamic provider models
+﻿// Forge AI Workspace v6.5 -- remove live activity overlay, subtle typing dots in chat
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -1540,7 +1540,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.4</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.5</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -1787,34 +1787,19 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
+                  {/* Subtle typing indicator — shows only while waiting for response */}
+                  {typing && (
+                    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 16px' }}>
+                      <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>🤖</div>
+                      <div style={{ display:'flex', gap:4, alignItems:'center' }}>
+                        {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', opacity:0.7, animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                      </div>
+                    </div>
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* ── Manus-style inline live activity strip ── */}
-                {(typing || liveEvents.length > 0) && (
-                  <div style={{ padding:'6px 16px', background:'var(--fg-bg2)', borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', gap:4, maxHeight:120, overflowY:'auto', flexShrink:0 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
-                      <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', animation:'pulse 1s ease-in-out infinite' }} />
-                      <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>Live Activity</span>
-                      <button onClick={() => setLiveEvents([])} style={{ marginLeft:'auto', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>✕</button>
-                    </div>
-                    {typing && (
-                      <div style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 8px', background:'rgba(249,115,22,0.08)', borderRadius:6, border:'1px solid rgba(249,115,22,0.2)' }}>
-                        <span style={{ animation:'forge-flash 0.6s ease-in-out infinite', display:'inline-block', fontSize:12 }}>⚡</span>
-                        <span style={{ fontSize:12, color:'var(--fg-orange2)' }}>Model generating response…</span>
-                        <div style={{ marginLeft:'auto', display:'flex', gap:3 }}>{[0,1,2].map(i => <div key={i} style={{ width:4, height:4, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}</div>
-                      </div>
-                    )}
-                    {liveEvents.slice(-4).map((ev, i) => (
-                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'3px 8px', background:'var(--fg-bg3)', borderRadius:6, fontSize:11, color:'var(--fg-text2)' }}>
-                        <span style={{ color: ev.type==='error' ? 'var(--fg-red)' : ev.type==='success' ? 'var(--fg-green)' : 'var(--fg-orange2)', flexShrink:0 }}>{ev.type==='error' ? '✗' : ev.type==='success' ? '✓' : '→'}</span>
-                        <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.message}</span>
-                        {ev.model && <span style={{ color:'var(--fg-text3)', flexShrink:0, fontFamily:'var(--fg-font-mono)', fontSize:10 }}>{ev.model}</span>}
-                        {ev.elapsed && <span style={{ color:'var(--fg-text3)', flexShrink:0, fontFamily:'var(--fg-font-mono)', fontSize:10 }}>{(ev.elapsed/1000).toFixed(1)}s</span>}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* Live activity shown in 📺 toolbar button only — no inline overlay */}
 
                 {/* Composer */}
                 <div style={{ padding: isMobile ? '8px 10px 12px' : '12px 24px 16px', background:'var(--fg-bg)', borderTop:'1px solid var(--fg-border)' }}>
