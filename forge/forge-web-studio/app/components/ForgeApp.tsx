@@ -1460,7 +1460,7 @@ export default function ForgeApp() {
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
             </>
           )}
-          {!sidebarExpanded && <span style={{ fontSize:9, color:'var(--fg-border2)', fontFamily:'monospace' }}>5.6</span>}
+          {!sidebarExpanded && <span style={{ fontSize:9, color:'var(--fg-border2)', fontFamily:'monospace' }}>6.1</span>}
         </div>
       </div>
 
