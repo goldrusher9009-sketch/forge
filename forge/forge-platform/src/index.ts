@@ -1,5 +1,5 @@
 /**
- * Forge Platform v5.6 — Dynamic model fetch for all providers, live preview SSE, browser/terminal backend
+ * Forge Platform v5.7 — Dynamic model fetch for all providers, live preview SSE, browser/terminal backend
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
