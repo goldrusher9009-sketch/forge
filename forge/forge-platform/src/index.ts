@@ -1,5 +1,5 @@
 /**
- * Forge Platform v5.7 — Dynamic model fetch for all providers, live preview SSE, browser/terminal backend
+ * Forge Platform v6.1 — dispatch routes, agent fix, LLM timeouts, DB fallback, expanded SuperAgent harvest
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -532,6 +532,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       method: 'POST',
       headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({ model, messages, max_tokens: 2048 }),
+      signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`Anthropic error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -543,6 +544,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages, max_tokens: 2048 }),
+      signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenAI error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -555,6 +557,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: groqModel, messages, max_tokens: 2048 }),
+      signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`Groq error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -567,6 +570,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 2048 } }),
+      signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`Gemini error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -582,6 +586,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: mistralModel, messages, max_tokens: 2048 }),
+      signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`Mistral error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -593,6 +598,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages, max_tokens: 4096 }),
+      signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`Morph error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -605,6 +611,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://forge-sand-two.vercel.app', 'X-Title': 'Forge Studio' },
       body: JSON.stringify({ model: orModel, messages, max_tokens: 2048 }),
+      signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenRouter error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -1704,6 +1711,61 @@ async function executeDispatchRun(runId: string, userId: string) {
   }
 }
 
+// POST /api/dispatch/run — start a dispatch run (frontend alias)
+app.post('/api/dispatch/run', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt, agent_ids = [], agent_id, project_id } = req.body;
+  if (!prompt?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'prompt required' }); return; }
+  const ids = agent_id ? [agent_id] : agent_ids;
+  const id = uuidv4();
+  db.prepare('INSERT INTO dispatch_runs (id,user_id,project_id,prompt,agent_ids) VALUES (?,?,?,?,?)').run(id, req.user!.sub, project_id || null, prompt.trim(), JSON.stringify(ids));
+  res.json({ success: true, run_id: id });
+  executeDispatchRun(id, req.user!.sub).catch(err => console.error('Dispatch run error:', err));
+});
+
+// GET /api/dispatch/stream/:id — SSE stream for a dispatch run
+app.get('/api/dispatch/stream/:id', (req: any, res: any) => {
+  const tokenFromQuery = req.query.token as string | undefined;
+  const tokenFromHeader = req.headers.authorization?.replace('Bearer ', '');
+  const token = tokenFromQuery || tokenFromHeader;
+  if (!token) { res.status(401).json({ error: 'No token' }); return; }
+  try { verifyToken(token); } catch { res.status(401).json({ error: 'Invalid token' }); return; }
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  const runId = req.params.id;
+  sseClients.set(runId, res);
+  // If run is already done, send finish immediately
+  const run = db.prepare('SELECT status,output FROM dispatch_runs WHERE id=?').get(runId) as any;
+  if (run?.status === 'done') {
+    res.write(`data: ${JSON.stringify({ type: 'RUN_FINISHED', run_id: runId, output: run.output })}\n\n`);
+    res.end(); sseClients.delete(runId); return;
+  }
+  if (run?.status === 'error') {
+    res.write(`data: ${JSON.stringify({ type: 'ERROR', error: run.error || 'Run failed' })}\n\n`);
+    res.end(); sseClients.delete(runId); return;
+  }
+  req.on('close', () => { sseClients.delete(runId); });
+});
+
+// POST /api/dispatch/cancel/:id
+app.post('/api/dispatch/cancel/:id', requireAuth, (req: AuthRequest, res) => {
+  const run = db.prepare('SELECT id FROM dispatch_runs WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub);
+  if (!run) { res.status(404).json({ error: 'Not found' }); return; }
+  db.prepare("UPDATE dispatch_runs SET status='cancelled',updated_at=datetime('now') WHERE id=?").run(req.params.id);
+  const client = sseClients.get(req.params.id);
+  if (client) { try { client.write(`data: ${JSON.stringify({ type: 'RUN_FINISHED', cancelled: true })}\n\n`); (client as any).end?.(); } catch {} sseClients.delete(req.params.id); }
+  res.json({ success: true });
+});
+
+// GET /api/dispatch/runs — list runs (frontend alias)
+app.get('/api/dispatch/runs', requireAuth, (req: AuthRequest, res) => {
+  const runs = db.prepare('SELECT * FROM dispatch_runs WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user!.sub) as any[];
+  res.json(runs.map(r => ({ ...r, agent_ids: JSON.parse(r.agent_ids || '[]') })));
+});
+
+// Legacy routes
 app.post('/api/dispatch', requireAuth, async (req: AuthRequest, res) => {
   const { prompt, agent_ids = [], project_id } = req.body;
   if (!prompt?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'prompt required' }); return; }
@@ -1886,26 +1948,61 @@ app.get('/api/superagent/stats', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data: { memoryCount: totalMemory, forgeMemCount, threadMemCount, intelligenceScore, threadCount, msgCount } });
 });
 
-// ─── SuperAgent harvest (pull thread memories into forge_memory) ───────────────
+// ─── SuperAgent harvest — pulls from ALL modules into forge_memory ─────────────
 app.post('/api/superagent/harvest', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.sub;
-  const threadMems = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(userId) as any[];
   let harvested = 0;
-  for (const tm of threadMems) {
-    // Upsert into forge_memory (merge by topic)
-    const existing = db.prepare('SELECT id,frequency FROM forge_memory WHERE user_id=? AND topic=?').get(userId, tm.topic) as any;
+
+  function upsertMemory(topic: string, insight: string, sourceThreadId?: string) {
+    if (!topic?.trim() || !insight?.trim()) return;
+    const t = topic.trim().slice(0, 120);
+    const ins = insight.trim().slice(0, 500);
+    const existing = db.prepare('SELECT id FROM forge_memory WHERE user_id=? AND topic=?').get(userId, t) as any;
     if (existing) {
-      db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.1,5.0),updated_at=datetime('now') WHERE id=?").run(existing.id);
+      db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.15,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(ins, existing.id);
     } else {
       db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)')
-        .run(uuidv4(), userId, tm.topic, tm.insight, tm.thread_id);
+        .run(uuidv4(), userId, t, ins, sourceThreadId || null);
       harvested++;
     }
   }
+
+  // 1. Thread memories (explicit per-thread memory saves)
+  const threadMems = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 300').all(userId) as any[];
+  for (const tm of threadMems) upsertMemory(tm.topic, tm.insight, tm.thread_id);
+
+  // 2. Recent assistant messages from threads (auto-extract last AI reply per thread)
+  const recentThreads = db.prepare('SELECT DISTINCT thread_id FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND role="user" ORDER BY created_at DESC LIMIT 30').all(userId) as any[];
+  for (const rt of recentThreads) {
+    const pair = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at DESC LIMIT 4').all(rt.thread_id) as any[];
+    const userMsg = pair.find((m:any) => m.role === 'user');
+    const aiMsg = pair.find((m:any) => m.role === 'assistant');
+    if (userMsg && aiMsg) upsertMemory(userMsg.content.slice(0,100), aiMsg.content.slice(0,400), rt.thread_id);
+  }
+
+  // 3. Completed dispatch runs (what was done + output snippet)
+  const dispatches = db.prepare("SELECT prompt,output FROM dispatch_runs WHERE user_id=? AND status='done' ORDER BY updated_at DESC LIMIT 50").all(userId) as any[];
+  for (const d of dispatches) {
+    if (d.output?.trim()) upsertMemory(`Dispatch: ${d.prompt.slice(0,80)}`, d.output.slice(0,400));
+  }
+
+  // 4. SuperAgent own conversation history (what it was taught / told)
+  const superHistory = db.prepare("SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 60").all(userId) as any[];
+  for (let i = 0; i < superHistory.length - 1; i++) {
+    const u = superHistory[i], a = superHistory[i+1];
+    if (u.role === 'user' && a.role === 'assistant') {
+      upsertMemory(`SuperAgent: ${u.content.slice(0,80)}`, a.content.slice(0,400));
+    }
+  }
+
   const newMemCount = (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
   const threadMemCount = (db.prepare('SELECT COUNT(*) as c FROM thread_memories WHERE user_id=?').get(userId) as any).c;
-  const intelligenceScore = Math.min(9999, Math.floor((newMemCount * 10) + (threadMemCount * 5)));
-  res.json({ success: true, data: { harvested, totalMemory: newMemCount + threadMemCount, intelligenceScore, message: `Harvested ${harvested} new memories. Intelligence score: ${intelligenceScore}` } });
+  // Intelligence score: non-linear — grows faster as memory compounds
+  const intelligenceScore = Math.min(99999, Math.floor(
+    Math.pow(newMemCount, 1.3) * 8 + threadMemCount * 5 + dispatches.length * 20
+  ));
+  res.json({ success: true, data: { harvested, totalMemory: newMemCount + threadMemCount, intelligenceScore,
+    message: `🧠 Harvested ${harvested} new memories from all modules. Intelligence: ${intelligenceScore.toLocaleString()}` } });
 });
 
 // ─── SuperAgent chat ────────────────────────────────────────────────────────────
@@ -2136,8 +2233,9 @@ async function runAgentTool(toolName: string, args: any, userId: string): Promis
 
 app.post('/api/agent/run', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.sub;
-  const { message, model: reqModel } = req.body;
-  if (!message?.trim()) { res.status(400).json({ error: 'message required' }); return; }
+  const { message, prompt, model: reqModel } = req.body;
+  const msgContent = message || prompt; // accept both field names
+  if (!msgContent?.trim()) { res.status(400).json({ error: 'message required' }); return; }
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -2159,7 +2257,7 @@ app.post('/api/agent/run', requireAuth, async (req: AuthRequest, res) => {
   }
 
   emit('start', { message: `🤖 ForgeAgent starting with ${rawModel}…` });
-  emitAgentActivity(userId, { type: 'start', message: `🤖 ForgeAgent: ${message.slice(0,60)}…` });
+  emitAgentActivity(userId, { type: 'start', message: `🤖 ForgeAgent: ${msgContent.slice(0,60)}…` });
 
   const toolSchemas = AGENT_TOOLS.map(t => `Tool: ${t.name}\nDescription: ${t.description}\nParams: ${JSON.stringify(t.parameters)}`).join('\n\n');
   const systemPrompt = `You are ForgeAgent, an autonomous AI that can use tools to accomplish tasks.
@@ -2175,7 +2273,7 @@ Be efficient: use tools when needed, respond directly when you know the answer.`
 
   const messages: any[] = [
     { role: 'system', content: systemPrompt },
-    { role: 'user', content: message.trim() }
+    { role: 'user', content: msgContent.trim() }
   ];
 
   const MAX_ITERS = 6;
@@ -2184,7 +2282,7 @@ Be efficient: use tools when needed, respond directly when you know the answer.`
     emitAgentActivity(userId, { type: 'thinking', message: `🤔 ForgeAgent thinking step ${i+1}` });
     let llmResponse: string;
     try {
-      const result = await callLLM(provider, apiKey, actualModel, messages.filter(m => m.role !== 'system').length > 0 ? messages : [{ role: 'user', content: message.trim() }]);
+      const result = await callLLM(provider, apiKey, actualModel, messages.filter(m => m.role !== 'system').length > 0 ? messages : [{ role: 'user', content: msgContent.trim() }]);
       llmResponse = result.content;
     } catch (e: any) {
       emit('error', { message: `LLM error: ${e.message}` });
