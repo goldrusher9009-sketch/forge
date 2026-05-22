@@ -1,5 +1,23 @@
 # Forge Platform — Version History
 
+## v6.2 — 2026-05-22 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+
+- **Fix: "Thinking then disappears"** — Backend returns HTTP 200 with `{success:false, error:'NO_API_KEY'}`. Added `checkResp()` helper in `sendMessage` that detects this and shows a clear in-chat error: *"No [provider] API key found. Go to Settings → LLM Providers."*
+- **Fix: Default model silent fail** — Changed `selectedModel` initial state from `'forge-pro'` (no key → silent fail) to `''`. `loadApiKeys` now auto-selects the first model the user actually has a key for: Anthropic → OpenAI → Gemini → Groq → Mistral.
+- **Fix: Morph fully removed** — Filtered from model selector tabs (no Morph tab unless Morph key is saved) AND removed from the LLM Providers settings list. Morph is gone from the UI entirely unless a user explicitly adds a key.
+- **Stop button** — Red ■ Stop button appears next to Send while AI is thinking. Cancels in-flight fetch via AbortController.
+- **Message queue while thinking** — If you type and press Enter while AI is responding, the message is queued and auto-sent immediately after the current response completes.
+- **180s timeout** — `AbortSignal.timeout` raised from 95s to 180s to handle Railway cold-start + long LLM responses.
+- **Live 📺 status** — TV icon button shows real-time activity text while AI is working (e.g. "🤖 Thinking…").
+- **Website credential vault** — New section in Settings: store per-site logins (URL, email, password) in browser localStorage only — never sent to any server. Dynamic add/edit/delete per entry.
+- **Version badge** — Updated to v6.2 in sidebar footer.
+
+---
+
+
+
 ## v5.6 — 2026-05-20 (current)
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
