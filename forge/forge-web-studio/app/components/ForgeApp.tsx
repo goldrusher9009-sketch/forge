@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.0 -- ForgeASI push-now, ForgeAuto ensemble, ForgeMulti swarm, ForgeCo, mobile layout, live preview, thread memory, SuperAgent
+// Forge AI Workspace v6.1 -- dispatch routes, agent fix, LLM timeouts, multi-model sync, auto-harvest memory
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -380,7 +380,7 @@ export default function ForgeApp() {
 
   // ForgeMulti state
   const [multiPrompt, setMultiPrompt] = useState('');
-  const [multiModel, setMultiModel] = useState('claude-sonnet-4');
+  const [multiModel, setMultiModel] = useState('claude-sonnet-4-6');
   const [multiRunning, setMultiRunning] = useState(false);
   const [multiResults, setMultiResults] = useState<{agents:{role:string;icon:string;content:string;elapsed:number}[];synthesis:string}|null>(null);
   const [multiSelectedRoles, setMultiSelectedRoles] = useState<string[]>(['Analyst','Creative','Critic','Strategist','Researcher']);
@@ -510,6 +510,9 @@ export default function ForgeApp() {
   // Persist credentials to localStorage whenever they change (client-only)
   useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('forge_service_creds', JSON.stringify(serviceCreds)); }, [serviceCreds]);
   useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('forge_llm_creds', JSON.stringify(llmCreds)); }, [llmCreds]);
+
+  // Keep ForgeMulti model in sync with the main model picker
+  useEffect(() => { setMultiModel(selectedModel); }, [selectedModel]);
 
   useEffect(() => {
     if (!user) return;
@@ -844,6 +847,8 @@ export default function ForgeApp() {
       setAgentMessages(prev => [...prev, { role:'error', content: e.message }]);
     }
     setAgentRunning(false);
+    // Auto-harvest into SuperAgent memory (fire-and-forget)
+    if (user) apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
   };
 
   // ── Projects ───────────────────────────────────────────────────────────────
@@ -1449,7 +1454,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.0</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.1</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -3456,7 +3461,11 @@ export default function ForgeApp() {
                 setMultiRunning(true); setMultiResults(null);
                 try {
                   const d = await apiFetch('/forgemulti/run', { method:'POST', body:JSON.stringify({ prompt:multiPrompt, model:multiModel, agent_roles:multiSelectedRoles }) }, user.token);
-                  if (d?.success) setMultiResults(d.data);
+                  if (d?.success) {
+                    setMultiResults(d.data);
+                    // Auto-harvest into SuperAgent memory (fire-and-forget)
+                    apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
+                  }
                 } catch(e:any) { alert('ForgeMulti error: '+e.message); } finally { setMultiRunning(false); }
               }} style={{ padding:'10px 28px', background: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-bg4)' : 'linear-gradient(135deg,#7c3aed,var(--fg-orange))', border:'none', borderRadius:8, color: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
                 {multiRunning ? <><span style={{ animation:'forge-flash 0.6s ease-in-out infinite', display:'inline-block' }}>🤖</span> Agents thinking…</> : `🤖 Dispatch ${multiSelectedRoles.length} Agents`}
@@ -3531,7 +3540,12 @@ export default function ForgeApp() {
                   }, Math.max(1500, 8000/(phaseNames.length)));
                   try {
                     const d = await apiFetch('/forgeasi/run', { method:'POST', body:JSON.stringify({ prompt:asiPrompt, model:asiModel, depth:asiDepth, webSearch:asiWebSearch }) }, user.token);
-                    if (d?.success) { setAsiResult(d.data); setAsiLivePhases(d.data.steps.map((s: any) => ({ phase:s.phase, content:s.content, done:true }))); }
+                    if (d?.success) {
+                      setAsiResult(d.data);
+                      setAsiLivePhases(d.data.steps.map((s: any) => ({ phase:s.phase, content:s.content, done:true })));
+                      // Auto-harvest into SuperAgent memory (fire-and-forget)
+                      apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
+                    }
                   } catch(e:any) { alert('ForgeASI error: '+e.message); } finally { clearInterval(phaseTimer); setAsiRunning(false); setAsiCurrentPhase(''); }
                 }} style={{ padding:'10px 28px', background: asiRunning||!asiPrompt.trim() ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed,#06b6d4)', border:'none', borderRadius:8, color: asiRunning||!asiPrompt.trim() ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: asiRunning||!asiPrompt.trim() ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
                   {asiRunning ? <><span style={{ animation:'forge-flash 0.5s ease-in-out infinite', display:'inline-block' }}>🌌</span> {asiCurrentPhase || 'Starting…'}</> : '🌌 Activate ForgeASI'}
