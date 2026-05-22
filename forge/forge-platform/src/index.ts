@@ -689,6 +689,14 @@ app.get('/api/keys', requireAuth, (req: AuthRequest, res) => {
     keyMap[`has_${r.provider}`] = true;
     keyMap[`${r.provider}_key`] = r.key_preview;
   });
+  // Also mark has_X=true if a platform key or env var exists — so model dropdown populates even when user hasn't added their own key
+  providers.forEach(p => {
+    if (!keyMap[`has_${p}`]) {
+      const platformRow = db.prepare("SELECT key_encrypted FROM platform_api_keys WHERE provider=?").get(p) as any;
+      if (platformRow && decryptKey(platformRow.key_encrypted)) { keyMap[`has_${p}`] = true; keyMap[`${p}_key`] = 'platform'; }
+      else if (PROVIDER_ENV_KEYS[p]) { keyMap[`has_${p}`] = true; keyMap[`${p}_key`] = 'env'; }
+    }
+  });
   res.json({ success: true, data: keyMap });
 });
 

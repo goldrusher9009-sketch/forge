@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.5 -- remove live activity overlay, subtle typing dots in chat
+﻿// Forge AI Workspace v6.6 -- fix stuck-thinking: early-return now clears sending state; fix model auto-select: platform/env keys now populate model dropdown
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -676,12 +676,12 @@ export default function ForgeApp() {
         // Keep current selection only if user has a key for that provider
         if (prev && confirmed[provOf(prev) || '']) return prev;
         // Pick first provider user actually has a key for (priority order — no morph)
-        if (confirmed['openrouter']) return prev || ''; // OpenRouter models loaded async via loadOpenRouterModels
         if (confirmed['anthropic']) return 'claude-sonnet-4-6';
         if (confirmed['openai']) return 'gpt-4o';
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
+        if (confirmed['openrouter']) return prev || ''; // OpenRouter models loaded async via loadOpenRouterModels
         // No keys at all — leave empty so UI shows the warning
         return '';
       });
@@ -1105,6 +1105,8 @@ export default function ForgeApp() {
       if (!cleanModel) {
         const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:'⚠️ No AI model selected. Go to **Settings → LLM Providers** and add an API key, then pick a model from the dropdown.', created_at:new Date().toISOString() };
         setMessages(prev => [...prev, errMsg]);
+        clearTimeout(safetyTimer);
+        setSending(false); setTyping(false);
         return;
       }
       const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds };
@@ -1540,7 +1542,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.5</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.6</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>

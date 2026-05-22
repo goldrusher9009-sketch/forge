@@ -1,6 +1,35 @@
 # Forge Platform — Version History
 
-## v6.3 — 2026-05-22 (current)
+## v6.6 — 2026-05-22 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Fix: Stuck-thinking on no model** — Early `return` when no model selected now calls `setSending(false)/setTyping(false)` before returning, so the UI never gets permanently frozen in "Thinking…" state.
+- **Fix: OpenRouter priority ordering** — OpenRouter key check moved to end of auto-select priority list so Anthropic/OpenAI/Gemini/Groq/Mistral are tried first. Prevents empty `selectedModel` when only OpenRouter key exists but models haven't loaded yet.
+- **Version badge** — Updated to v6.6 in sidebar footer.
+
+### Backend: forge-platform/src/index.ts
+- **Fix: GET /api/keys includes platform/env keys** — `has_anthropic` (and other `has_*` flags) now return `true` when a platform API key (admin-set) or Railway env var exists for that provider, even if the user hasn't entered their own key. This means the model dropdown populates correctly for users who rely on admin-configured platform keys.
+
+---
+
+## v6.5 — 2026-05-22
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Fix: Inline live activity strip removed** — Entire "Live Activity ✕ ⚡Model generating response…" overlay removed from chat view. It was triggered by `typing` state and appeared as a full-width blocking strip on every message send.
+- **Fix: Subtle typing indicator** — Replaced the intrusive overlay with a small 🤖 icon + three pulsing dots at the bottom of the message list.
+- **Version badge** — Updated to v6.5 in sidebar footer.
+
+---
+
+## v6.4 — 2026-05-22
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Fix: Morph fully purged (all locations)** — Removed from: DIRECT_MODELS array, providers list in loadApiKeys, dynamicGroups filter (navbar model selector), loadProviderModels guard, ForgeRouter filter. Morph no longer appears anywhere unless a Morph API key is explicitly saved.
+- **Version badge** — Updated to v6.4 in sidebar footer.
+
+---
+
+## v6.3 — 2026-05-22
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
 
