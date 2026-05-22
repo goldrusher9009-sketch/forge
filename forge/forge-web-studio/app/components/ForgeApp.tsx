@@ -283,7 +283,7 @@ export default function ForgeApp() {
   // Composer
   const [input, setInput] = useState('');
   const [activeAgentIds, setActiveAgentIds] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-6');
+  const [selectedModel, setSelectedModel] = useState('forge-pro');
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
@@ -495,6 +495,8 @@ export default function ForgeApp() {
       const s = document.createElement('style'); s.id = id; s.textContent = GLOBAL_STYLES;
       document.head.appendChild(s);
     }
+    // Wake Railway backend on mount so it's warm when user sends first message
+    fetch(`${API.replace('/api', '')}/health`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
   }, []);
 
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -1048,6 +1050,8 @@ export default function ForgeApp() {
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
     setMultiResponses([]);
+    // Hard safety timeout: always unstick UI after 100s regardless of fetch state
+    const safetyTimer = setTimeout(() => { setSending(false); setTyping(false); }, 100000);
     // Auto-open live tab so user sees thinking indicator
     if (!rightExpanded || rightTab !== 'live') { setRightTab('live'); setRightExpanded(true); }
 
@@ -1132,7 +1136,7 @@ export default function ForgeApp() {
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
-    } finally { setSending(false); setTyping(false); }
+    } finally { clearTimeout(safetyTimer); setSending(false); setTyping(false); }
   };
 
   // ── Voice Chat ─────────────────────────────────────────────────────────────
