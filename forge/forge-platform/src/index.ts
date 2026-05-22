@@ -25,10 +25,21 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '30d';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://forge-sand-two.vercel.app';
 // Use /data volume on Railway (persistent), fall back to cwd for local dev
-const DB_PATH = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? '/data/forge.db' : path.join(process.cwd(), 'forge.db'));
+const DB_PATH_PRIMARY = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? '/data/forge.db' : path.join(process.cwd(), 'forge.db'));
+const DB_PATH_FALLBACK = path.join(process.cwd(), 'forge.db');
 
 // ── Database ──────────────────────────────────────────────────
-const db = new Database(DB_PATH);
+let db: Database.Database;
+let DB_PATH = DB_PATH_PRIMARY;
+try {
+  db = new Database(DB_PATH_PRIMARY);
+  console.log(`✅ Database opened at ${DB_PATH_PRIMARY}`);
+} catch (e: any) {
+  console.warn(`⚠️  Could not open DB at ${DB_PATH_PRIMARY}: ${e.message}. Falling back to ${DB_PATH_FALLBACK}`);
+  DB_PATH = DB_PATH_FALLBACK;
+  db = new Database(DB_PATH_FALLBACK);
+  console.log(`✅ Database opened at ${DB_PATH_FALLBACK}`);
+}
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
@@ -2222,5 +2233,12 @@ app.use((req: any, res: any) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Forge Platform v5.9 running on port ${PORT}`);
+  console.log(`🚀 Forge Platform v5.9 running on port ${PORT} | DB: ${DB_PATH}`);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('💥 Uncaught exception:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('💥 Unhandled rejection:', reason);
 });
