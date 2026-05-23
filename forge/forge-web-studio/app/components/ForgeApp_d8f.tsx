@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.14 -- Heartbeat keep-alive: 5s pings prevent Railway 30s timeout
+﻿// Forge AI Workspace v6.6 -- fix stuck-thinking: early-return now clears sending state; fix model auto-select: platform/env keys now populate model dropdown
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -117,8 +117,8 @@ let _onSessionExpired: (() => void) | null = null;
 async function apiFetch(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  // 28s timeout for POST requests — backend LLM timeout is 20s, Railway kills at 30s, so errors always return
-  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(60000) : undefined);
+  // Add a 180s timeout for POST requests (LLM calls) — covers Railway cold-start (30s) + LLM latency (90s)
+  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(180000) : undefined);
   const res = await fetch(`${API}${path}`, { ...opts, headers, ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
@@ -158,34 +158,20 @@ const DIRECT_MODELS = [
     { id:'gpt-4o',      label:'GPT-4o' },
     { id:'gpt-4o-mini', label:'GPT-4o Mini' },
     { id:'gpt-4.1',     label:'GPT-4.1' },
-    { id:'gpt-4.1-mini',label:'GPT-4.1 Mini' },
-    { id:'o4-mini',     label:'o4-mini' },
-    { id:'o3',          label:'o3' },
-    { id:'o3-mini',     label:'o3-mini' },
+    { id:'o3-mini',     label:'o3 Mini' },
   ]},
   { group:'Google', models:[
-    { id:'gemini-2.5-pro',   label:'Gemini 2.5 Pro' },
-    { id:'gemini-2.5-flash', label:'Gemini 2.5 Flash' },
     { id:'gemini-2.0-flash', label:'Gemini 2.0 Flash' },
     { id:'gemini-1.5-pro',   label:'Gemini 1.5 Pro' },
-    { id:'gemini-1.5-flash', label:'Gemini 1.5 Flash' },
   ]},
   { group:'Groq', models:[
-    { id:'llama-3.3-70b',        label:'Llama 3.3 70B' },
-    { id:'llama-3.1-8b-instant', label:'Llama 3.1 8B Instant' },
-    { id:'llama-3.1-8b',         label:'Llama 3.1 8B' },
-    { id:'mixtral-8x7b',         label:'Mixtral 8×7B' },
+    { id:'llama-3.3-70b',  label:'Llama 3.3 70B' },
+    { id:'llama-3.1-8b',   label:'Llama 3.1 8B' },
+    { id:'mixtral-8x7b',   label:'Mixtral 8×7B' },
   ]},
   { group:'Mistral', models:[
-    { id:'mistral-large',  label:'Mistral Large' },
-    { id:'mistral-small',  label:'Mistral Small' },
-    { id:'codestral-latest', label:'Codestral' },
-  ]},
-  { group:'Anthropic (Legacy)', models:[
-    { id:'claude-3-7-sonnet', label:'Claude 3.7 Sonnet' },
-    { id:'claude-3-5-sonnet', label:'Claude 3.5 Sonnet' },
-    { id:'claude-3-5-haiku',  label:'Claude 3.5 Haiku' },
-    { id:'claude-3-opus',     label:'Claude 3 Opus' },
+    { id:'mistral-large', label:'Mistral Large' },
+    { id:'mistral-small', label:'Mistral Small' },
   ]},
 ];
 
@@ -275,7 +261,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'>('workspace');
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'>('artifacts');
@@ -462,7 +448,7 @@ export default function ForgeApp() {
   const MODEL_CONTEXT_LIMITS: Record<string, number> = {
     'claude-sonnet-4-6': 200000, 'claude-opus-4-6': 200000, 'claude-haiku-4-5-20251001': 200000,
     'gpt-4o': 128000, 'gpt-4o-mini': 128000, 'o3': 200000, 'o4-mini': 200000,
-    'gemini-2.0-flash': 1048576, 'gemini-2.5-pro': 2097152, 'gemini-2.5-flash': 1048576, 'gemini-1.5-pro': 2097152, 'gemini-1.5-flash': 1048576,
+    'gemini-2.0-flash': 1048576, 'gemini-2.5-pro': 2097152,
     'llama-3.1-8b-instant': 128000, 'mistral-small-latest': 32000,
   };
   const getContextLimit = (model: string) => {
@@ -560,7 +546,7 @@ export default function ForgeApp() {
     loadProjects(); loadAgents(); loadTasks(); loadArtifacts();
     loadDispatchRuns(); loadSchedules(); loadThreads();
     loadCustomProviders(); loadUsageLogs(); loadSubscription();
-    loadApiKeys(); loadVault(); // loadOpenRouterModels called inside loadApiKeys only when OR key confirmed
+    loadOpenRouterModels(); loadApiKeys(); loadVault();
     loadTotalTokens(); loadSuperMemory(); loadSuperHistory();
   }, [user]);
 
@@ -635,21 +621,23 @@ export default function ForgeApp() {
     if (!user) return;
     setOrLoading(true);
     try {
-      // Only fetch OR models using the user's saved key — never fall back to public (no key = no models)
-      const d = await apiFetch('/keys/openrouter-models', {}, user.token);
-      if (d?.error === 'NO_OPENROUTER_KEY') { setOrLoading(false); return; }
+      // Try authenticated endpoint first; fall back to public (no key needed)
+      let d = await apiFetch('/keys/openrouter-models', {}, user.token);
+      if (d?.error === 'NO_OPENROUTER_KEY' || !d?.data?.models?.length) {
+        d = await apiFetch('/openrouter/models/public', {}, user.token);
+      }
       const models = Array.isArray(d?.data?.models) ? d.data.models : [];
-      if (!models.length) { setOrLoading(false); return; }
       setOpenRouterModels(models);
-      // Auto-select a reliable paid OR model if no valid model currently selected
-      setSelectedModel(prev => {
-        if (!prev || prev.endsWith(':free') || prev === '') {
-          const preferred = models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324');
-          const firstPaid = models.find((m: any) => !m.id.includes(':free') && m.pricing?.prompt !== '0' && m.pricing?.prompt !== '0.0');
-          return preferred?.id || firstPaid?.id || models[0].id;
-        }
-        return prev;
-      });
+      // Auto-select first free OR model if no valid model selected
+      if (models.length > 0) {
+        setSelectedModel(prev => {
+          if (!prev || prev === 'claude-sonnet-4-6') {
+            const freeModel = models.find((m: any) => m.id.includes(':free') || m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0');
+            return freeModel ? freeModel.id : models[0].id;
+          }
+          return prev;
+        });
+      }
     } catch {}
     setOrLoading(false);
   };
@@ -678,8 +666,6 @@ export default function ForgeApp() {
       setSavedProviders(confirmed);
       // Trigger model fetch for all confirmed providers (in background, don't await)
       Object.keys(confirmed).forEach(p => { if (confirmed[p]) loadProviderModels(p); });
-      // Only load OR models if user actually has an OR key
-      if (confirmed['openrouter']) loadOpenRouterModels();
       // Auto-select best available model based on keys user has actually saved
       setSelectedModel(prev => {
         // Helper: which provider does a model belong to?
@@ -702,7 +688,7 @@ export default function ForgeApp() {
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
-        if (confirmed['openrouter']) return (prev && !prev.endsWith(':free')) ? prev : 'deepseek/deepseek-chat-v3-0324'; // avoid slow free models
+        if (confirmed['openrouter']) return prev || ''; // OpenRouter models loaded async via loadOpenRouterModels
         // No keys at all — leave empty so UI shows the warning
         return '';
       });
@@ -1106,11 +1092,11 @@ export default function ForgeApp() {
     // Create AbortController so Stop button can cancel this request
     const abortCtrl = new AbortController();
     sendAbortRef.current = abortCtrl;
-    // Hard safety timeout: abort + unstick UI after 30s (backend LLM timeout is 20s, Railway kills at 30s)
+    // Hard safety timeout: abort + unstick UI after 65s (backend LLM timeout is 50-55s, so error arrives before this)
     const safetyTimer = setTimeout(() => {
       abortCtrl.abort(new DOMException('Request timed out — the model took too long to respond. Try a faster model.', 'TimeoutError'));
       setSending(false); setTyping(false); sendAbortRef.current = null;
-    }, 55000);
+    }, 65000);
     // Don't auto-open live tab — user stays in chat view
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
@@ -1237,8 +1223,6 @@ export default function ForgeApp() {
         .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error:\s*/i, '')
         .replace(/^\{"type":"error".*?"message":"([^"]+)".*\}$/i, '$1')
         .replace(/^signal is aborted without reason$/i, 'Request timed out — the model took too long. Try a faster model.')
-        .replace(/^Failed to fetch$/i, 'Connection timed out — the model took too long to respond. Try a faster model.')
-        .replace(/^NetworkError.*$/i, 'Network error — check your connection or try a different model.')
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
@@ -1476,7 +1460,6 @@ export default function ForgeApp() {
             { id:'platforms', icon:'🌐', label:'Platforms' },
             { id:'settings', icon:'⚙️', label:'Settings' },
             { id:'super', icon:'🌟', label:'Forge Super' },
-            { id:'skills', icon:'🧩', label:'Skills & Tools' },
             { id:'forgeco', icon:'🧑‍💻', label:'ForgeCo' },
             { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
@@ -1587,7 +1570,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.14</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.6</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -3440,166 +3423,6 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* ── SKILLS & TOOLS ────────────────────────────────────────────── */}
-        {mainTab === 'skills' && (() => {
-          const SKILLS = [
-            { id:'write', icon:'✍️', name:'Content Writer', category:'Writing', desc:'Blog posts, emails, social media, marketing copy — polished and on-brand.', prompt:'You are an expert content writer. Write clear, engaging, high-quality content. Ask for tone, audience, and length if not specified.' },
-            { id:'code', icon:'💻', name:'Code Generator', category:'Dev', desc:'Generate production-ready code in any language with tests and docs.', prompt:'You are a senior software engineer. Write clean, well-commented, production-ready code. Include error handling and tests when relevant.' },
-            { id:'research', icon:'🔬', name:'Deep Researcher', category:'Research', desc:'Research any topic with structured summaries, sources, and key insights.', prompt:'You are a research analyst. Provide thorough, balanced research with sources. Structure findings with headings, key points, and a summary.' },
-            { id:'sales', icon:'💼', name:'Sales Closer', category:'Sales', desc:'Cold emails, follow-ups, pitches, objection handling — close more deals.', prompt:'You are an expert sales strategist. Write persuasive, personalized outreach and help close deals. Focus on value and the prospect\'s pain points.' },
-            { id:'seo', icon:'📈', name:'SEO Optimizer', category:'Marketing', desc:'SEO-optimized content, keyword research, meta descriptions, and titles.', prompt:'You are an SEO expert. Optimize content for search engines. Provide keyword suggestions, meta titles, descriptions, and structural improvements.' },
-            { id:'legal', icon:'⚖️', name:'Legal Drafter', category:'Legal', desc:'Contracts, NDAs, terms of service, privacy policies — legally sound drafts.', prompt:'You are a legal document drafter. Create clear, legally sound documents. Always recommend professional legal review for critical documents.' },
-            { id:'data', icon:'📊', name:'Data Analyst', category:'Data', desc:'Analyze data, spot trends, generate insights, write SQL queries.', prompt:'You are a data analyst. Analyze data thoroughly, identify patterns, and present insights clearly. Write optimized SQL when needed.' },
-            { id:'product', icon:'🎯', name:'Product Manager', category:'Product', desc:'PRDs, user stories, roadmaps, feature specs, competitive analysis.', prompt:'You are a senior product manager. Write clear PRDs, user stories, and specs. Focus on user value, metrics, and business impact.' },
-            { id:'design', icon:'🎨', name:'UX Designer', category:'Design', desc:'UX copy, wireframe descriptions, user flows, design critiques.', prompt:'You are a UX designer. Help design intuitive, user-centered experiences. Provide clear UX copy, flows, and actionable design feedback.' },
-            { id:'hr', icon:'👥', name:'HR Assistant', category:'HR', desc:'Job descriptions, interview questions, onboarding plans, performance reviews.', prompt:'You are an HR professional. Draft job descriptions, interview guides, and HR documents. Be fair, inclusive, and legally compliant.' },
-            { id:'finance', icon:'💰', name:'Finance Advisor', category:'Finance', desc:'Financial analysis, budgeting, forecasting, investment summaries.', prompt:'You are a financial analyst. Provide clear financial analysis and summaries. Always note this is for informational purposes and not financial advice.' },
-            { id:'translate', icon:'🌐', name:'Translator', category:'Language', desc:'Translate and localize content for any language, preserving tone and context.', prompt:'You are a professional translator and localization expert. Translate accurately while preserving tone, cultural context, and intent.' },
-            { id:'social', icon:'📱', name:'Social Media', category:'Marketing', desc:'Viral posts, captions, hashtag strategies for Twitter, LinkedIn, Instagram.', prompt:'You are a social media expert. Create engaging, platform-optimized content. Match the platform\'s culture and maximize engagement.' },
-            { id:'support', icon:'🎧', name:'Customer Support', category:'Support', desc:'Support responses, help articles, escalation handling — empathetic and fast.', prompt:'You are a customer support specialist. Respond empathetically, solve problems efficiently, and turn negative experiences into positive ones.' },
-            { id:'email', icon:'📧', name:'Email Composer', category:'Communication', desc:'Professional emails for any occasion — clear, concise, and effective.', prompt:'You are an expert communicator. Write clear, professional emails that get results. Adjust tone to context: formal, friendly, or urgent.' },
-            { id:'startup', icon:'🚀', name:'Startup Advisor', category:'Business', desc:'Business plans, pitch decks, go-to-market strategies, investor memos.', prompt:'You are a startup advisor with deep experience in venture and growth. Help build compelling business cases, strategies, and pitch materials.' },
-            { id:'tutor', icon:'🎓', name:'AI Tutor', category:'Education', desc:'Explain complex topics simply. Step-by-step learning plans and quizzes.', prompt:'You are a patient, expert tutor. Explain concepts clearly at the learner\'s level. Use examples, analogies, and check understanding.' },
-            { id:'debug', icon:'🐛', name:'Bug Hunter', category:'Dev', desc:'Find bugs, explain errors, suggest fixes, and improve code quality.', prompt:'You are a debugging expert. Identify root causes of bugs, explain them clearly, and provide tested fixes with explanations.' },
-          ];
-          const CONNECTORS = [
-            { icon:'📧', name:'Gmail', desc:'Read, compose, and manage emails', status:'coming' },
-            { icon:'📅', name:'Google Calendar', desc:'Schedule meetings and manage events', status:'coming' },
-            { icon:'💬', name:'Slack', desc:'Send messages and search channels', status:'coming' },
-            { icon:'📋', name:'Notion', desc:'Read and write Notion pages and databases', status:'coming' },
-            { icon:'🐙', name:'GitHub', desc:'Create PRs, review code, manage issues', status:'coming' },
-            { icon:'🗂️', name:'Jira', desc:'Create and update tickets, sprints', status:'coming' },
-            { icon:'📊', name:'Google Sheets', desc:'Read and write spreadsheet data', status:'coming' },
-            { icon:'🛒', name:'Shopify', desc:'Manage products, orders, customers', status:'coming' },
-            { icon:'💳', name:'Stripe', desc:'Monitor payments and subscriptions', status:'coming' },
-            { icon:'📞', name:'Twilio', desc:'Send SMS and voice communications', status:'coming' },
-            { icon:'🌐', name:'Web Browser', desc:'Browse, scrape, and research any URL', status:'active' },
-            { icon:'💻', name:'Terminal', desc:'Run shell commands and scripts', status:'active' },
-            { icon:'🗄️', name:'Database', desc:'Query your connected databases', status:'active' },
-            { icon:'📁', name:'File System', desc:'Read and write local files', status:'active' },
-          ];
-          const [skillSearch, setSkillSearch] = React.useState('');
-          const [skillCat, setSkillCat] = React.useState('All');
-          const [genTopic, setGenTopic] = React.useState('');
-          const [genIndustry, setGenIndustry] = React.useState('');
-          const [genGoal, setGenGoal] = React.useState('');
-          const [genResult, setGenResult] = React.useState('');
-          const [genLoading, setGenLoading] = React.useState(false);
-          const cats = ['All', ...Array.from(new Set(SKILLS.map(s => s.category)))];
-          const filtered = SKILLS.filter(s => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
-          const launchSkill = (skill: typeof SKILLS[0]) => {
-            setMainTab('workspace');
-            setTimeout(() => {
-              setInput(`[Using skill: ${skill.name}]\n\n`);
-              textareaRef.current?.focus();
-            }, 100);
-          };
-          const generateUseCase = async () => {
-            if (!genTopic.trim()) return;
-            setGenLoading(true); setGenResult('');
-            try {
-              const prompt = `You are a business AI consultant. Generate a detailed, actionable use-case for AI automation.\n\nBusiness/Topic: ${genTopic}\nIndustry: ${genIndustry || 'General'}\nGoal: ${genGoal || 'Improve efficiency and productivity'}\n\nProvide:\n1. Use Case Title\n2. Problem It Solves (2-3 sentences)\n3. AI Workflow (step-by-step)\n4. Tools/Skills Needed\n5. Expected Outcomes & ROI\n6. Implementation Steps (quick wins first)\n7. Sample prompt to get started immediately\n\nBe specific, practical, and focus on immediate value.`;
-              const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
-              const d = await apiFetch('/forge/chat', { method:'POST', body:JSON.stringify({ message: prompt, model: cleanModel || 'forge-pro' }) }, user.token);
-              setGenResult(d?.data?.content || d?.content || 'No response');
-            } catch (e: any) { setGenResult('⚠️ ' + e.message); }
-            setGenLoading(false);
-          };
-          return (
-            <div style={{ flex:1, overflowY:'auto', padding:32, background:'var(--fg-bg)' }}>
-              <div style={{ maxWidth:960, margin:'0 auto' }}>
-                {/* Header */}
-                <div style={{ marginBottom:32 }}>
-                  <h1 style={{ margin:'0 0 6px', fontSize:28, fontWeight:900, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.5px' }}>🧩 Skills & Tools</h1>
-                  <p style={{ margin:0, color:'var(--fg-text3)', fontSize:15 }}>Prebuilt AI skills, connectors, and a use-case generator for any business or workflow.</p>
-                </div>
-
-                {/* Use-Case Generator */}
-                <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-orange)', borderRadius:16, padding:28, marginBottom:36 }}>
-                  <h2 style={{ margin:'0 0 6px', fontSize:17, fontWeight:800, color:'var(--fg-orange)' }}>⚡ AI Use-Case Generator</h2>
-                  <p style={{ margin:'0 0 20px', color:'var(--fg-text3)', fontSize:13 }}>Describe your business or challenge and get a complete AI automation blueprint instantly.</p>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
-                    <div>
-                      <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Business / Challenge *</label>
-                      <input value={genTopic} onChange={e => setGenTopic(e.target.value)} placeholder="e.g. Customer support for SaaS" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Industry</label>
-                      <input value={genIndustry} onChange={e => setGenIndustry(e.target.value)} placeholder="e.g. E-commerce, Healthcare, Finance" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
-                    </div>
-                  </div>
-                  <div style={{ marginBottom:16 }}>
-                    <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Goal / Outcome</label>
-                    <input value={genGoal} onChange={e => setGenGoal(e.target.value)} placeholder="e.g. Reduce response time, increase revenue, automate repetitive tasks" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
-                  </div>
-                  <button onClick={generateUseCase} disabled={genLoading || !genTopic.trim()} style={{ padding:'11px 28px', background: genTopic.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: genLoading ? 0.7 : 1 }}>
-                    {genLoading ? '⟳ Generating…' : '⚡ Generate Use-Case Blueprint'}
-                  </button>
-                  {genResult && (
-                    <div style={{ marginTop:20, padding:'16px 20px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:12, fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap', maxHeight:400, overflowY:'auto' }}>
-                      {genResult}
-                      <div style={{ marginTop:12, display:'flex', gap:8 }}>
-                        <button onClick={() => { setMainTab('workspace'); setTimeout(() => { setInput(genResult.slice(0,200)); textareaRef.current?.focus(); }, 100); }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer' }}>💬 Open in Chat</button>
-                        <button onClick={() => navigator.clipboard.writeText(genResult)} style={{ padding:'6px 14px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>📋 Copy</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Skills Library */}
-                <div style={{ marginBottom:36 }}>
-                  <h2 style={{ margin:'0 0 16px', fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🎯 Skills Library</h2>
-                  <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-                    <input value={skillSearch} onChange={e => setSkillSearch(e.target.value)} placeholder="Search skills…" style={{ flex:'1 1 200px', padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
-                    {cats.map(c => <button key={c} onClick={() => setSkillCat(c)} style={{ padding:'6px 14px', borderRadius:20, border: skillCat===c ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border2)', background: skillCat===c ? 'var(--fg-orange)' : 'transparent', color: skillCat===c ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: skillCat===c ? 600 : 400, flexShrink:0 }}>{c}</button>)}
-                  </div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:12 }}>
-                    {filtered.map(skill => (
-                      <div key={skill.id} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:'16px', display:'flex', flexDirection:'column', gap:8, transition:'border-color 0.15s' }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor='var(--fg-orange)')} onMouseLeave={e => (e.currentTarget.style.borderColor='var(--fg-border)')}>
-                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                          <span style={{ fontSize:24 }}>{skill.icon}</span>
-                          <div>
-                            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{skill.name}</div>
-                            <div style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:600, textTransform:'uppercase' }}>{skill.category}</div>
-                          </div>
-                        </div>
-                        <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)', lineHeight:1.5, flex:1 }}>{skill.desc}</p>
-                        <button onClick={() => launchSkill(skill)} style={{ padding:'7px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', alignSelf:'flex-start' }}>▶ Launch</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Connectors */}
-                <div>
-                  <h2 style={{ margin:'0 0 6px', fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🔌 Connectors</h2>
-                  <p style={{ margin:'0 0 16px', color:'var(--fg-text3)', fontSize:13 }}>Connect Forge to your tools and data sources.</p>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:10 }}>
-                    {CONNECTORS.map(c => (
-                      <div key={c.name} style={{ background:'var(--fg-bg3)', border:`1px solid ${c.status==='active' ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:6 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                          <span style={{ fontSize:20 }}>{c.icon}</span>
-                          <div>
-                            <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{c.name}</div>
-                            <span style={{ fontSize:10, color: c.status==='active' ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{c.status==='active' ? '● Active' : '○ Coming Soon'}</span>
-                          </div>
-                        </div>
-                        <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{c.desc}</p>
-                        {c.status==='active' ? (
-                          <button onClick={() => setMainTab('workspace')} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, alignSelf:'flex-start' }}>Use Now</button>
-                        ) : (
-                          <span style={{ fontSize:10, color:'var(--fg-text3)', fontStyle:'italic' }}>Request early access →</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-
         {/* ── FORGECO ───────────────────────────────────────────────────── */}
         {mainTab === 'forgeco' && (
           <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
@@ -3887,20 +3710,27 @@ export default function ForgeApp() {
               </div>
               {/* Prompt */}
               <div style={{ marginBottom:16 }}>
-                <textarea value={multiPrompt} onChange={e => setMultiPrompt(e.target.value)} placeholder="Describe your task or question..." rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box', lineHeight:1.6 }} />
+                <textarea value={multiPrompt} onChange={e => setMultiPrompt(e.target.value)} placeholder="Describe your task or question — all agents will tackle it from their unique perspective..." rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box', lineHeight:1.6 }} />
               </div>
               <button disabled={multiRunning || !multiPrompt.trim() || multiSelectedRoles.length===0} onClick={async () => {
                 if (!user || !multiPrompt.trim() || multiSelectedRoles.length===0) return;
                 setMultiRunning(true); setMultiResults(null);
                 try {
                   const d = await apiFetch('/forgemulti/run', { method:'POST', body:JSON.stringify({ prompt:multiPrompt, model:multiModel, agent_roles:multiSelectedRoles }) }, user.token);
-                  if (d?.success) { setMultiResults(d.data); apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {}); }
+                  if (d?.success) {
+                    setMultiResults(d.data);
+                    // Auto-harvest into SuperAgent memory (fire-and-forget)
+                    apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
+                  }
                 } catch(e:any) { alert('ForgeMulti error: '+e.message); } finally { setMultiRunning(false); }
               }} style={{ padding:'10px 28px', background: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-bg4)' : 'linear-gradient(135deg,#7c3aed,var(--fg-orange))', border:'none', borderRadius:8, color: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
                 {multiRunning ? <><span style={{ animation:'forge-flash 0.6s ease-in-out infinite', display:'inline-block' }}>🤖</span> Agents thinking…</> : `🤖 Dispatch ${multiSelectedRoles.length} Agents`}
               </button>
+
+              {/* Results */}
               {multiResults && (
                 <div style={{ marginTop:24 }}>
+                  {/* Synthesis */}
                   <div style={{ background:'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(249,115,22,0.12))', border:'1px solid rgba(124,58,237,0.35)', borderRadius:14, padding:20, marginBottom:20 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
                       <span style={{ fontSize:22 }}>🌐</span>
@@ -3909,6 +3739,7 @@ export default function ForgeApp() {
                     </div>
                     <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.8, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{multiResults.synthesis}</div>
                   </div>
+                  {/* Individual agent cards */}
                   <h4 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text2)' }}>Individual Agent Perspectives ({multiResults.agents.length})</h4>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(360px,1fr))', gap:12 }}>
                     {multiResults.agents.map((a, i) => (
@@ -3929,14 +3760,14 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* ForgeASI */}
+        {/* ── FORGEASI ──────────────────────────────────────────────────── */}
         {mainTab === 'forgeasi' && (
           <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
             <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--fg-border)', flexShrink:0, display:'flex', alignItems:'center', gap:14 }}>
               <div style={{ fontSize:28 }}>🌌</div>
               <div>
                 <h2 style={{ margin:0, fontSize:18, fontWeight:800, background:'linear-gradient(90deg,var(--fg-orange),#a78bfa,#06b6d4)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', fontFamily:'var(--fg-font-display)' }}>ForgeASI</h2>
-                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Deep Analysis to Solution Paths to Self-Critique to Synthesis</p>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Deep Analysis → Solution Paths → Self-Critique → Synthesis → Push Now</p>
               </div>
               <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
                 <select value={asiModel} onChange={e => setAsiModel(e.target.value)} style={{ padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
@@ -3951,13 +3782,14 @@ export default function ForgeApp() {
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:24 }}>
               <div style={{ marginBottom:16 }}>
-                <textarea value={asiPrompt} onChange={e => setAsiPrompt(e.target.value)} placeholder="Ask anything requiring deep reasoning..." rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box' as any, lineHeight:1.6 }} />
+                <textarea value={asiPrompt} onChange={e => setAsiPrompt(e.target.value)} placeholder="Ask anything requiring deep reasoning — complex decisions, strategy, analysis, hard problems…" rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box' as any, lineHeight:1.6 }} />
               </div>
               <div style={{ display:'flex', gap:10, marginBottom:24, alignItems:'center', flexWrap:'wrap' }}>
                 <button disabled={asiRunning || !asiPrompt.trim()} onClick={async () => {
                   if (!user || !asiPrompt.trim()) return;
-                  setAsiRunning(true); setAsiResult(null); setAsiLivePhases([]); setAsiCurrentPhase('Initializing...');
+                  setAsiRunning(true); setAsiResult(null); setAsiLivePhases([]); setAsiCurrentPhase('Initializing…');
                   const phaseNames = ['Deep Analysis','Solution Paths','Self-Critique','Synthesis'].slice(0, asiDepth+1);
+                  // Simulate live phase progress while waiting
                   let phaseIdx = 0;
                   const phaseTimer = setInterval(() => {
                     if (phaseIdx < phaseNames.length) { setAsiCurrentPhase(phaseNames[phaseIdx]); phaseIdx++; }
@@ -3967,30 +3799,53 @@ export default function ForgeApp() {
                     if (d?.success) {
                       setAsiResult(d.data);
                       setAsiLivePhases(d.data.steps.map((s: any) => ({ phase:s.phase, content:s.content, done:true })));
+                      // Auto-harvest into SuperAgent memory (fire-and-forget)
                       apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
                     }
                   } catch(e:any) { alert('ForgeASI error: '+e.message); } finally { clearInterval(phaseTimer); setAsiRunning(false); setAsiCurrentPhase(''); }
                 }} style={{ padding:'10px 28px', background: asiRunning||!asiPrompt.trim() ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed,#06b6d4)', border:'none', borderRadius:8, color: asiRunning||!asiPrompt.trim() ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: asiRunning||!asiPrompt.trim() ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
-                  {asiRunning ? <><span style={{ animation:'forge-flash 0.5s ease-in-out infinite', display:'inline-block' }}>🌌</span> {asiCurrentPhase || 'Starting...'}</> : '🌌 Activate ForgeASI'}
+                  {asiRunning ? <><span style={{ animation:'forge-flash 0.5s ease-in-out infinite', display:'inline-block' }}>🌌</span> {asiCurrentPhase || 'Starting…'}</> : '🌌 Activate ForgeASI'}
                 </button>
                 {asiResult && !asiRunning && (
                   <>
-                    <button onClick={() => { setInput(asiResult.synthesis); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>💬 Push to Chat</button>
-                    <button onClick={() => navigator.clipboard.writeText(asiResult.synthesis)} style={{ padding:'9px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>📋 Copy</button>
-                    <button onClick={() => { setAsiResult(null); setAsiLivePhases([]); setAsiPrompt(''); }} style={{ padding:'9px 14px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>Clear</button>
+                    <button onClick={() => { setInput(asiResult.synthesis); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>💬 Push to Chat</button>
+                    <button onClick={() => { setPreviewCode(asiResult.synthesis); setSketchMode(true); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>✏️ Open in Sketch</button>
+                    <button onClick={() => { navigator.clipboard.writeText(asiResult.synthesis); }} style={{ padding:'9px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>📋 Copy</button>
+                    <button onClick={() => { setAsiResult(null); setAsiLivePhases([]); setAsiPrompt(''); }} style={{ padding:'9px 14px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>✕ Clear</button>
                   </>
                 )}
               </div>
+
+              {/* Live phase indicators while running */}
+              {asiRunning && (
+                <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+                  {['Deep Analysis','Solution Paths','Self-Critique','Synthesis'].slice(0, asiDepth+1).map((p, i) => {
+                    const isActive = asiCurrentPhase === p;
+                    const isDone = asiLivePhases.some(lp => lp.phase === p && lp.done);
+                    return (
+                      <div key={p} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', background: isDone ? 'rgba(249,115,22,0.15)' : isActive ? 'rgba(124,58,237,0.15)' : 'var(--fg-bg3)', border: isActive ? '1px solid #a78bfa' : isDone ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border)', borderRadius:20, fontSize:12, color: isDone ? 'var(--fg-orange)' : isActive ? '#a78bfa' : 'var(--fg-text3)', transition:'all 0.3s' }}>
+                        <span style={{ animation: isActive ? `forge-flash 0.6s ease-in-out infinite` : 'none', display:'inline-block' }}>{isDone ? '✓' : ['🔍','🗺️','⚡','🌐'][i]}</span>{p}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Results */}
               {asiResult && (
                 <div>
+                  {/* Synthesis hero */}
                   <div style={{ background:'linear-gradient(135deg,rgba(249,115,22,0.1),rgba(124,58,237,0.1),rgba(6,182,212,0.1))', border:'1px solid rgba(124,58,237,0.4)', borderRadius:16, padding:24, marginBottom:24 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
                       <span style={{ fontSize:24 }}>🌌</span>
                       <h3 style={{ margin:0, fontSize:17, fontWeight:800, background:'linear-gradient(90deg,var(--fg-orange),#a78bfa)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', fontFamily:'var(--fg-font-display)' }}>ASI Synthesis</h3>
+                      <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)', marginLeft:8 }}>{asiResult.totalTokens.toLocaleString()} tokens · {asiResult.model}</span>
                       <button onClick={() => navigator.clipboard?.writeText(asiResult.synthesis)} style={{ marginLeft:'auto', padding:'5px 14px', background:'rgba(0,0,0,0.25)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>Copy</button>
                     </div>
                     <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.85, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{asiResult.synthesis}</div>
                   </div>
+                  {/* Reasoning steps */}
+                  <h4 style={{ margin:'0 0 14px', fontSize:14, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.05em' }}>Reasoning Chain ({asiResult.steps.length} phases)</h4>
                   <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                     {asiResult.steps.map((s, i) => {
                       const icons = ['🔍','🗺️','⚡','🌐'];
@@ -4003,7 +3858,7 @@ export default function ForgeApp() {
                             <span style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Phase {i+1}: {s.phase}</span>
                             <span style={{ marginLeft:'auto', fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{s.tokens} tok</span>
                           </summary>
-                          <div style={{ padding:'12px 16px 16px', fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{s.content}</div>
+                          <div style={{ padding:'0 16px 16px', fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, whiteSpace:'pre-wrap', wordBreak:'break-word', borderTop:`1px solid ${borders[i%4]}`, paddingTop:12, marginTop:0 }}>{s.content}</div>
                         </details>
                       );
                     })}
@@ -4015,6 +3870,8 @@ export default function ForgeApp() {
         )}
 
       </div>
+
+      {/* ── MODALS ────────────────────────────────────────────────────── */}
 
       {showNewProject && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setShowNewProject(false)}>
@@ -4056,6 +3913,7 @@ export default function ForgeApp() {
         </div>
       )}
 
+      {/* Thread context menu popup */}
       {threadMenu && (() => {
         const t = threads.find(x => x.id === threadMenu.threadId);
         if (!t) return null;
@@ -4063,9 +3921,9 @@ export default function ForgeApp() {
           <div style={{ position:'fixed', top: threadMenu.y, left: threadMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
             {[
               { icon:'✏️', label:'Rename', action:() => { setRenamingThread({ id:t.id, title:t.title }); setThreadMenu(null); } },
-              { icon: t.pinned ? 'Unpin' : 'Pin', label: t.pinned ? 'Unpin' : 'Pin', action:() => { apiFetch('/threads/' + t.id, { method:'PATCH', body:JSON.stringify({ pinned: t.pinned ? 0 : 1 }) }, user!.token).then(() => loadThreads(activeProject?.id)); setThreadMenu(null); } },
-              { icon:'Archive', label: t.archived ? 'Unarchive' : 'Archive', action:() => { archiveThread(t); setThreadMenu(null); } },
-              { icon:'Delete', label:'Delete', action:() => { deleteThread(t.id); setThreadMenu(null); } },
+              { icon: t.pinned ? '📌 Unpin' : '📌 Pin', label: t.pinned ? 'Unpin' : 'Pin', action:() => { apiFetch('/threads/' + t.id, { method:'PATCH', body:JSON.stringify({ pinned: t.pinned ? 0 : 1 }) }, user!.token).then(() => loadThreads(activeProject?.id)); setThreadMenu(null); } },
+              { icon:'🗄️', label: t.archived ? 'Unarchive' : 'Archive', action:() => { archiveThread(t); setThreadMenu(null); } },
+              { icon:'🗑️', label:'Delete', action:() => { deleteThread(t.id); setThreadMenu(null); } },
             ].map(item => (
               <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
                 onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
@@ -4076,6 +3934,7 @@ export default function ForgeApp() {
         );
       })()}
 
+      {/* Project context menu popup */}
       {projectMenu && (() => {
         const p = projects.find(x => x.id === projectMenu.projectId);
         if (!p) return null;
@@ -4083,8 +3942,8 @@ export default function ForgeApp() {
           <div style={{ position:'fixed', top: projectMenu.y, left: projectMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
             {[
               { icon:'✏️', label:'Rename', action:() => { setRenamingProject({ id:p.id, name:p.name }); setProjectMenu(null); } },
-              { icon: p.pinned ? 'Unpin' : 'Pin', label: p.pinned ? 'Unpin' : 'Pin', action:() => { togglePin(p); setProjectMenu(null); } },
-              { icon:'Delete', label:'Delete', action:() => { deleteProject(p.id); setProjectMenu(null); } },
+              { icon: p.pinned ? '📌 Unpin' : '📌 Pin', label: p.pinned ? 'Unpin' : 'Pin', action:() => { togglePin(p); setProjectMenu(null); } },
+              { icon:'🗑️', label:'Delete', action:() => { deleteProject(p.id); setProjectMenu(null); } },
             ].map(item => (
               <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
                 onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
@@ -4095,6 +3954,7 @@ export default function ForgeApp() {
         );
       })()}
 
+      {/* Rename project modal */}
       {renamingProject && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingProject(null)}>
           <div style={{ width:360, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
