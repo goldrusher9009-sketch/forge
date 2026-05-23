@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.7 -- Gemini fix: system messages via systemInstruction, alternating role fix; Gemini 2.5 support; max_tokens 4096; latest models
+﻿// Forge AI Workspace v6.8 -- Gemini fix: system messages via systemInstruction, alternating role fix; Gemini 2.5 support; max_tokens 4096; latest models
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -1237,6 +1237,8 @@ export default function ForgeApp() {
         .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error:\s*/i, '')
         .replace(/^\{"type":"error".*?"message":"([^"]+)".*\}$/i, '$1')
         .replace(/^signal is aborted without reason$/i, 'Request timed out — the model took too long. Try a faster model.')
+        .replace(/^Failed to fetch$/i, 'Connection timed out — the model took too long to respond. Try a faster model.')
+        .replace(/^NetworkError.*$/i, 'Network error — check your connection or try a different model.')
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
@@ -1585,7 +1587,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.7</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.8</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -3883,13 +3885,4 @@ export default function ForgeApp() {
                   {['forge-fast','forge-pro','forge-reasoning','claude-sonnet-4','claude-haiku-4','gpt-4o-mini','gpt-4o','gemini-2.0-flash','gemini-2.5-pro'].map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
-              {/* Prompt */}
-              <div style={{ marginBottom:16 }}>
-                <textarea value={multiPrompt} onChange={e => setMultiPrompt(e.target.value)} placeholder="Describe your task or question — all agents will tackle it from their unique perspective..." rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box', lineHeight:1.6 }} />
-              </div>
-              <button disabled={multiRunning || !multiPrompt.trim() || multiSelectedRoles.length===0} onClick={async () => {
-                if (!user || !multiPrompt.trim() || multiSelectedRoles.length===0) return;
-                setMultiRunning(true); setMultiResults(null);
-                try {
-                  const d = await apiFetch('/forgemulti/run', { method:'POST', body:JSON.stringify({ prompt:multiPrompt, model:multiModel, agent_roles:multiSelectedRoles }) }, user.token);
-                 
+              {/* Promp
