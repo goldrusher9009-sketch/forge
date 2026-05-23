@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-3' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-4' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1546,25 +1546,24 @@ app.get('/api/threads/:id/messages', requireAuth, (req: AuthRequest, res) => {
 });
 
 app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res) => {
-  const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
-  if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [], model: bodyModel } = req.body;
-  if (!content?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
-  const userId = req.user!.sub;
-  ensureSubscription(userId);
-
-  // ── SSE keep-alive (works with HTTP/2 — chunked transfer does NOT) ───────────
-  // HTTP/2 ignores Transfer-Encoding: chunked so heartbeat bytes never flush.
-  // SSE (text/event-stream) works on both HTTP/1.1 and HTTP/2 and flushes each event.
+  // ── SSE FIRST — before ANY DB work (HTTP/2 ignores chunked; SSE flushes immediately) ──
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('X-Accel-Buffering', 'no');
-  res.flushHeaders();
+  res.flushHeaders(); // bytes on wire NOW — resets Railway's 30s idle timer
   const sendEvent = (data: object) => { try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch {} };
-  sendEvent({ type: 'ping' }); // immediate first event — resets Railway idle timer
+  sendEvent({ type: 'ping' }); // first byte immediately
   const heartbeat = setInterval(() => sendEvent({ type: 'ping' }), 5000);
   const endSSE = (payload: object) => { clearInterval(heartbeat); sendEvent({ type: 'result', payload }); res.end(); };
   // ────────────────────────────────────────────────────────────────────────────
+
+  // Now safe to do DB work — connection is already alive
+  const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!thread) { endSSE({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const { content, agent_ids = [], model: bodyModel } = req.body;
+  if (!content?.trim()) { endSSE({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
+  const userId = req.user!.sub;
+  ensureSubscription(userId);
 
   // Save user message
   const userMsgId = uuidv4();
