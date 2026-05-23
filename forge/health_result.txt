@@ -1,0 +1,29 @@
+LOGIN RAW: {"success":true,"message":"Login successful","data":{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMWU4N2I2OS1lYmY0LTQ1ZTktYWMzMi03MDk5Yjc0MTNmMTIiLCJlbWFpbCI6InNzZXRlc3RAZm9yZ2UuZGV2Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3Nzk1NjYxMTIsImV4cCI6MTc3OTU2NzAxMn0.9iXGT7Jq485kf0WMAArbKHAIGYy60fYVOoIb47-qGQQ","user":{"id":"31e87b69-ebf4-45e9-ac32-7099b7413f12","email":"ssetest@forge.dev","firstName":"","lastName":"","role":"user"}}}
+TOKEN OK: eyJhbGciOiJIUzI1NiIs
+THREAD: 098877c2-5eb3-4725-8ac8-8f95b1a60204
+RESPONSE in 0.1258434s: OK | text/event-stream
+CHUNK[23]: data: {"type":"ping"}
+
+
+CHUNK[23]: data: {"type":"ping"}
+
+
+CHUNK[23]: data: {"type":"ping"}
+
+
+CHUNK[23]: data: {"type":"ping"}
+
+
+CHUNK[23]: data: {"type":"ping"}
+
+
+CHUNK[23]: data: {"type":"ping"}
+
+
+CHUNK[23]: data: {"type":"ping"}
+
+
+CHUNK[23]: data: {"type":"ping"}
+
+
+DONE

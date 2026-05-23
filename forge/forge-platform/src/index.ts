@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-4' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-5' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1554,7 +1554,17 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   const sendEvent = (data: object) => { try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch {} };
   sendEvent({ type: 'ping' }); // first byte immediately
   const heartbeat = setInterval(() => sendEvent({ type: 'ping' }), 5000);
-  const endSSE = (payload: object) => { clearInterval(heartbeat); sendEvent({ type: 'result', payload }); res.end(); };
+  let sseEnded = false;
+  const endSSE = (payload: object) => {
+    if (sseEnded) return;
+    sseEnded = true;
+    clearInterval(heartbeat);
+    clearTimeout(safetyTimer);
+    sendEvent({ type: 'result', payload });
+    res.end();
+  };
+  // Safety: never leave the connection open >25s — Railway kills at 30s regardless
+  const safetyTimer = setTimeout(() => endSSE({ success: false, error: 'TIMEOUT', message: 'Request timed out — please try again' }), 25000);
   // ────────────────────────────────────────────────────────────────────────────
 
   // Now safe to do DB work — connection is already alive
