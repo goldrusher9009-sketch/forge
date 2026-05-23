@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-2' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-3' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -153,6 +153,15 @@ app.post('/sse-test', (_req, res) => {
   res.flushHeaders();
   res.write('data: {"type":"ping"}\n\n');
   setTimeout(() => { res.write('data: {"type":"done","msg":"POST SSE works!"}\n\n'); res.end(); }, 500);
+});
+// Auth SSE test — with requireAuth but no LLM call
+app.post('/sse-auth-test', requireAuth, (req: AuthRequest, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+  res.write(`data: {"type":"ping","user":"${req.user!.sub.slice(0,8)}"}\n\n`);
+  setTimeout(() => { res.write('data: {"type":"done","msg":"Auth POST SSE works!"}\n\n'); res.end(); }, 500);
 });
 
 // ── Auth ──────────────────────────────────────────────────────
