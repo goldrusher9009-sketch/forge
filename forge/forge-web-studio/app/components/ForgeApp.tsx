@@ -1073,8 +1073,11 @@ export default function ForgeApp() {
     // Create AbortController so Stop button can cancel this request
     const abortCtrl = new AbortController();
     sendAbortRef.current = abortCtrl;
-    // Hard safety timeout: always unstick UI after 180s regardless of fetch state
-    const safetyTimer = setTimeout(() => { setSending(false); setTyping(false); sendAbortRef.current = null; }, 180000);
+    // Hard safety timeout: abort + unstick UI after 65s (backend LLM timeout is 50-55s, so error arrives before this)
+    const safetyTimer = setTimeout(() => {
+      abortCtrl.abort(new DOMException('Request timed out — the model took too long to respond. Try a faster model.', 'TimeoutError'));
+      setSending(false); setTyping(false); sendAbortRef.current = null;
+    }, 65000);
     // Don't auto-open live tab — user stays in chat view
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
@@ -1190,11 +1193,14 @@ export default function ForgeApp() {
         if (arr.length > 0) { setSketchArtifact(arr[0]); setPreviewCode(arr[0].content); }
       }
     } catch (e: any) {
+      // Use abort reason if available (set by safetyTimer or Stop button with reason)
+      const abortReason = e?.name === 'AbortError' && (e as any).cause?.message;
+      const raw: string = abortReason || e.message || 'Something went wrong';
       // Strip raw provider prefixes like "Anthropic error: " for clean display
-      const raw: string = e.message || 'Something went wrong';
       const clean = raw
         .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error:\s*/i, '')
         .replace(/^\{"type":"error".*?"message":"([^"]+)".*\}$/i, '$1')
+        .replace(/^signal is aborted without reason$/i, 'Request timed out — the model took too long. Try a faster model.')
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
