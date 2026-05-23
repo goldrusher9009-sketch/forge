@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-5' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-6' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -557,12 +557,21 @@ function getUserKey(userId: string, provider: string): string | null {
   return PROVIDER_ENV_KEYS[provider] || null;
 }
 
+// Reliable timeout helper — AbortSignal.timeout has bugs in some Node 18 builds
+function fetchWithTimeout(url: string, opts: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...opts, signal: controller.signal })
+    .then(r => { clearTimeout(timer); return r; })
+    .catch(e => { clearTimeout(timer); throw e; });
+}
+
 async function callLLM(provider: string, apiKey: string, model: string, messages: any[], _language?: string): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
   // Anthropic
   if (provider === 'anthropic') {
     let res: Response;
-    try { res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}), signal:AbortSignal.timeout(20000) }); }
-    catch (e: any) { throw new Error(e?.name==='TimeoutError' ? 'Anthropic timed out after 25s — model may be overloaded, try again' : e.message); }
+    try { res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}) }, 20000); }
+    catch (e: any) { throw new Error(e?.name==='AbortError' ? 'Anthropic timed out after 20s — model may be overloaded, try again' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`Anthropic error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
     return { content: d.content?.[0]?.text || '', promptTokens: d.usage?.input_tokens || 0, completionTokens: d.usage?.output_tokens || 0 };
@@ -570,8 +579,8 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   // OpenAI
   if (provider === 'openai') {
     let res: Response;
-    try { res = await fetch('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}), signal:AbortSignal.timeout(20000) }); }
-    catch (e: any) { throw new Error(e?.name==='TimeoutError' ? 'OpenAI timed out after 25s — model may be overloaded, try again' : e.message); }
+    try { res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}) }, 20000); }
+    catch (e: any) { throw new Error(e?.name==='AbortError' ? 'OpenAI timed out after 20s — model may be overloaded, try again' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenAI error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
     return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
@@ -586,12 +595,9 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       'gemma2-9b':        'gemma2-9b-it',
     };
     const groqModel = GROQ_MODEL_MAP[model] || model;
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: groqModel, messages, max_tokens: 4096 }),
-      signal: AbortSignal.timeout(20000),
-    });
+    const res = await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions',
+      { method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: groqModel, messages, max_tokens: 4096 }) },
+      20000);
     if (!res.ok) { const e = await res.text(); throw new Error(`Groq error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
     return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
@@ -632,11 +638,9 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
     if (systemMsgs.length > 0) {
       body.systemInstruction = { parts: [{ text: systemMsgs.map((m: any) => m.content).join('\n\n') }] };
     }
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20000),
-    });
+    const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+      20000);
     if (!res.ok) { const e = await res.text(); throw new Error(`Gemini error: ${e.slice(0,300)}`); }
     const d: any = await res.json();
     if (d.error) throw new Error(`Gemini error: ${d.error.message || JSON.stringify(d.error).slice(0,200)}`);
@@ -654,24 +658,18 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
       'codestral':      'codestral-latest',
     };
     const mistralModel = MISTRAL_MODEL_MAP[model] || model;
-    const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: mistralModel, messages, max_tokens: 4096 }),
-      signal: AbortSignal.timeout(20000),
-    });
+    const res = await fetchWithTimeout('https://api.mistral.ai/v1/chat/completions',
+      { method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: mistralModel, messages, max_tokens: 4096 }) },
+      20000);
     if (!res.ok) { const e = await res.text(); throw new Error(`Mistral error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
     return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
   }
   // Morph (OpenAI-compatible)
   if (provider === 'morph') {
-    const res = await fetch('https://api.morphllm.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, messages, max_tokens: 4096 }),
-      signal: AbortSignal.timeout(20000),
-    });
+    const res = await fetchWithTimeout('https://api.morphllm.com/v1/chat/completions',
+      { method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model, messages, max_tokens: 4096 }) },
+      20000);
     if (!res.ok) { const e = await res.text(); throw new Error(`Morph error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
     return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
@@ -680,8 +678,8 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   if (provider === 'openrouter') {
     const orModel = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
     let res: Response;
-    try { res = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}), signal:AbortSignal.timeout(26000) }); }
-    catch (e: any) { throw new Error(e?.name==='TimeoutError' ? `Model "${orModel}" timed out after 25s — try a faster model` : e.message); }
+    try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 22000); }
+    catch (e: any) { throw new Error(e?.name==='AbortError' ? `Model "${orModel}" timed out after 22s — try a faster model` : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenRouter error (${orModel}): ${e.slice(0,300)}`); }
     const d: any = await res.json();
     if (d.error) throw new Error(`OpenRouter error (${orModel}): ${JSON.stringify(d.error).slice(0,200)}`);
