@@ -503,9 +503,9 @@ function getProviderForModel(modelId: string): string {
   if (mid.startsWith('claude')) return 'anthropic';
   if (mid.startsWith('gpt') || mid.startsWith('o3') || mid.startsWith('o1') || mid.startsWith('o4') || mid === 'chatgpt-4o-latest') return 'openai';
   if (mid.startsWith('gemini') || mid.startsWith('forge-gemini')) return 'gemini';
-  if (mid.startsWith('llama') || mid.startsWith('mixtral') || mid.startsWith('deepseek') || mid.startsWith('qwen') || mid.startsWith('whisper-large') || mid === 'forge-fast') return 'groq';
+  if (mid.startsWith('llama') || mid.startsWith('mixtral') || mid === 'forge-fast') return 'groq';
   if (mid.startsWith('mistral') || mid.startsWith('codestral') || mid.startsWith('pixtral')) return 'mistral';
-  if (mid.includes('/')) return 'openrouter';
+  if (mid.includes('/')) return 'openrouter'; // must come AFTER specific provider checks — catches deepseek/*, qwen/*, etc.
   return MODEL_COSTS[mid]?.provider || 'anthropic';
 }
 
@@ -654,7 +654,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   if (provider === 'openrouter') {
     const orModel = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
     let res: Response;
-    try { res = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}), signal:AbortSignal.timeout(20000) }); }
+    try { res = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}), signal:AbortSignal.timeout(26000) }); }
     catch (e: any) { throw new Error(e?.name==='TimeoutError' ? `Model "${orModel}" timed out after 25s — try a faster model` : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenRouter error (${orModel}): ${e.slice(0,300)}`); }
     const d: any = await res.json();

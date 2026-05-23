@@ -1,6 +1,14 @@
 # Forge Platform — Version History
 
-## v6.11 — 2026-05-23 (current)
+## v6.12 — 2026-05-23 (current)
+
+### Backend: forge-platform/src/index.ts
+- **Fix: deepseek/qwen OR models routed to Groq** — `getProviderForModel` was routing `deepseek*` and `qwen*` to Groq. Removed them from Groq list; `includes('/')` catch-all now correctly routes all slash-ID models (deepseek/*, qwen/*, etc.) to OpenRouter.
+- **Fix: OR timeout increased** — OpenRouter timeout 20s→26s (just under Railway 30s kill).
+
+---
+
+## v6.11 — 2026-05-23
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
 - **Fix: OR models shown with no key** — `loadOpenRouterModels` no longer falls back to public endpoint; only loads when user has confirmed OR key.
