@@ -736,11 +736,23 @@ app.delete('/api/keys/:provider', requireAuth, (req: AuthRequest, res) => {
 
 // OpenRouter model list proxy
 app.get('/api/keys/openrouter-models', requireAuth, async (req: AuthRequest, res) => {
+  // Use user key if available, else fall back to public endpoint (no auth needed for model list)
   const key = getUserKey(req.user!.sub, 'openrouter');
-  if (!key) { res.status(400).json({ success: false, error: 'NO_OPENROUTER_KEY', message: 'Add your OpenRouter key in Settings first' }); return; }
   try {
-    const r = await fetch('https://openrouter.ai/api/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+    const headers: Record<string,string> = { 'HTTP-Referer': 'https://forge-sand-two.vercel.app', 'X-Title': 'Forge Studio' };
+    if (key) headers['Authorization'] = `Bearer ${key}`;
+    const r = await fetch('https://openrouter.ai/api/v1/models', { headers });
     if (!r.ok) throw new Error(`OpenRouter returned ${r.status}`);
+    const d: any = await r.json();
+    res.json({ success: true, data: { models: d.data || [] } });
+  } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// Public OpenRouter models (no key required — for browsing before adding key)
+app.get('/api/openrouter/models/public', async (_req, res) => {
+  try {
+    const r = await fetch('https://openrouter.ai/api/v1/models', { headers: { 'HTTP-Referer': 'https://forge-sand-two.vercel.app', 'X-Title': 'Forge Studio' } });
+    if (!r.ok) throw new Error(`OpenRouter ${r.status}`);
     const d: any = await r.json();
     res.json({ success: true, data: { models: d.data || [] } });
   } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }

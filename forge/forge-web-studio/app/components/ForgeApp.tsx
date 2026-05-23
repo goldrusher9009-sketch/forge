@@ -621,8 +621,11 @@ export default function ForgeApp() {
     if (!user) return;
     setOrLoading(true);
     try {
-      const d = await apiFetch('/keys/openrouter-models', {}, user.token);
-      if (d?.error === 'NO_OPENROUTER_KEY') { setOrLoading(false); return; }
+      // Try authenticated endpoint first; fall back to public (no key needed)
+      let d = await apiFetch('/keys/openrouter-models', {}, user.token);
+      if (d?.error === 'NO_OPENROUTER_KEY' || !d?.data?.models?.length) {
+        d = await apiFetch('/openrouter/models/public', {}, user.token);
+      }
       const models = Array.isArray(d?.data?.models) ? d.data.models : [];
       setOpenRouterModels(models);
       // Auto-select first free OR model if no valid model selected
