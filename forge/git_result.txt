@@ -1,0 +1,6 @@
+warning: in the working copy of 'forge/do_git.ps1', LF will be replaced by CRLF the next time Git touches it
+[main 4ff4b22] sse-test-endpoint-v2
+ 3 files changed, 11 insertions(+), 4 deletions(-)
+ create mode 100644 forge/git_result.txt
+To https://github.com/goldrusher9009-sketch/forge.git
+   ab1879d..4ff4b22  main -> main
