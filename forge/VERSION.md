@@ -1,6 +1,15 @@
 # Forge Platform — Version History
 
-## v6.10 — 2026-05-23 (current)
+## v6.11 — 2026-05-23 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Fix: OR models shown with no key** — `loadOpenRouterModels` no longer falls back to public endpoint; only loads when user has confirmed OR key.
+- **Fix: Stuck thinking** — `apiFetch` POST timeout 180s→28s, safety timer 65s→30s. UI unsticks within 30s max.
+- **Fix: OR load gated on key** — `loadApiKeys` only calls `loadOpenRouterModels()` when OR key confirmed.
+
+---
+
+## v6.10 — 2026-05-23
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
 - **Fix: OpenRouter auto-select prefers paid model** — When OR models load, now picks `deepseek/deepseek-chat-v3-0324` (fast, reliable) instead of first free model. Free models (Baidu CoBuddy etc.) are slow and cause stuck-thinking.

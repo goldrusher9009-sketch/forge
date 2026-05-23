@@ -117,8 +117,8 @@ let _onSessionExpired: (() => void) | null = null;
 async function apiFetch(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  // Add a 180s timeout for POST requests (LLM calls) — covers Railway cold-start (30s) + LLM latency (90s)
-  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(180000) : undefined);
+  // 28s timeout for POST requests — backend LLM timeout is 20s, Railway kills at 30s, so errors always return
+  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(28000) : undefined);
   const res = await fetch(`${API}${path}`, { ...opts, headers, ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
@@ -560,7 +560,7 @@ export default function ForgeApp() {
     loadProjects(); loadAgents(); loadTasks(); loadArtifacts();
     loadDispatchRuns(); loadSchedules(); loadThreads();
     loadCustomProviders(); loadUsageLogs(); loadSubscription();
-    loadOpenRouterModels(); loadApiKeys(); loadVault();
+    loadApiKeys(); loadVault(); // loadOpenRouterModels called inside loadApiKeys only when OR key confirmed
     loadTotalTokens(); loadSuperMemory(); loadSuperHistory();
   }, [user]);
 
@@ -635,26 +635,21 @@ export default function ForgeApp() {
     if (!user) return;
     setOrLoading(true);
     try {
-      // Try authenticated endpoint first; fall back to public (no key needed)
-      let d = await apiFetch('/keys/openrouter-models', {}, user.token);
-      if (d?.error === 'NO_OPENROUTER_KEY' || !d?.data?.models?.length) {
-        d = await apiFetch('/openrouter/models/public', {}, user.token);
-      }
+      // Only fetch OR models using the user's saved key — never fall back to public (no key = no models)
+      const d = await apiFetch('/keys/openrouter-models', {}, user.token);
+      if (d?.error === 'NO_OPENROUTER_KEY') { setOrLoading(false); return; }
       const models = Array.isArray(d?.data?.models) ? d.data.models : [];
+      if (!models.length) { setOrLoading(false); return; }
       setOpenRouterModels(models);
-      // Auto-select a reliable paid OR model if no valid model selected
-      if (models.length > 0) {
-        setSelectedModel(prev => {
-          // Only override if empty or stale free model
-          if (!prev || prev.endsWith(':free')) {
-            // Prefer deepseek-chat-v3 (fast, cheap, reliable) — fallback to first non-free model
-            const preferred = models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324');
-            const firstPaid = models.find((m: any) => !m.id.includes(':free') && m.pricing?.prompt !== '0' && m.pricing?.prompt !== '0.0');
-            return preferred?.id || firstPaid?.id || models[0].id;
-          }
-          return prev;
-        });
-      }
+      // Auto-select a reliable paid OR model if no valid model currently selected
+      setSelectedModel(prev => {
+        if (!prev || prev.endsWith(':free') || prev === '') {
+          const preferred = models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324');
+          const firstPaid = models.find((m: any) => !m.id.includes(':free') && m.pricing?.prompt !== '0' && m.pricing?.prompt !== '0.0');
+          return preferred?.id || firstPaid?.id || models[0].id;
+        }
+        return prev;
+      });
     } catch {}
     setOrLoading(false);
   };
@@ -683,6 +678,8 @@ export default function ForgeApp() {
       setSavedProviders(confirmed);
       // Trigger model fetch for all confirmed providers (in background, don't await)
       Object.keys(confirmed).forEach(p => { if (confirmed[p]) loadProviderModels(p); });
+      // Only load OR models if user actually has an OR key
+      if (confirmed['openrouter']) loadOpenRouterModels();
       // Auto-select best available model based on keys user has actually saved
       setSelectedModel(prev => {
         // Helper: which provider does a model belong to?
@@ -1109,11 +1106,11 @@ export default function ForgeApp() {
     // Create AbortController so Stop button can cancel this request
     const abortCtrl = new AbortController();
     sendAbortRef.current = abortCtrl;
-    // Hard safety timeout: abort + unstick UI after 65s (backend LLM timeout is 50-55s, so error arrives before this)
+    // Hard safety timeout: abort + unstick UI after 30s (backend LLM timeout is 20s, Railway kills at 30s)
     const safetyTimer = setTimeout(() => {
       abortCtrl.abort(new DOMException('Request timed out — the model took too long to respond. Try a faster model.', 'TimeoutError'));
       setSending(false); setTyping(false); sendAbortRef.current = null;
-    }, 65000);
+    }, 30000);
     // Don't auto-open live tab — user stays in chat view
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
