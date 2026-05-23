@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-7' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-8' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1621,7 +1621,11 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   }
   emitAgentActivity(userId, { type: 'thinking', message: `🤔 Thinking with ${model}…`, model });
   try {
-    const result = await callLLM(provider, apiKey, actualModel, llmMessages);
+    // Promise.race ensures callLLM can't hang indefinitely even if AbortController fails
+    const result = await Promise.race([
+      callLLM(provider, apiKey, actualModel, llmMessages),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out after 20s — model may be slow or key invalid`)), 20000))
+    ]);
     const totalTokens = result.promptTokens + result.completionTokens;
     const costs = MODEL_COSTS[model] || { input: 0.001, output: 0.001, markup: 1.3 };
     const providerCost = (result.promptTokens/1000)*costs.input + (result.completionTokens/1000)*costs.output;
