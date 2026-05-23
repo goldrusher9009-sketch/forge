@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.9 -- Setup endpoint, OpenRouter default model fix, password reset
+﻿// Forge AI Workspace v6.10 -- Fix OR auto-select: prefer paid model over slow free models
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -642,12 +642,15 @@ export default function ForgeApp() {
       }
       const models = Array.isArray(d?.data?.models) ? d.data.models : [];
       setOpenRouterModels(models);
-      // Auto-select first free OR model if no valid model selected
+      // Auto-select a reliable paid OR model if no valid model selected
       if (models.length > 0) {
         setSelectedModel(prev => {
-          if (!prev || prev === 'claude-sonnet-4-6') {
-            const freeModel = models.find((m: any) => m.id.includes(':free') || m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0');
-            return freeModel ? freeModel.id : models[0].id;
+          // Only override if empty or stale free model
+          if (!prev || prev.endsWith(':free')) {
+            // Prefer deepseek-chat-v3 (fast, cheap, reliable) — fallback to first non-free model
+            const preferred = models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324');
+            const firstPaid = models.find((m: any) => !m.id.includes(':free') && m.pricing?.prompt !== '0' && m.pricing?.prompt !== '0.0');
+            return preferred?.id || firstPaid?.id || models[0].id;
           }
           return prev;
         });
@@ -1587,7 +1590,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.9</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.10</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -3882,7 +3885,4 @@ export default function ForgeApp() {
               <div style={{ marginBottom:16 }}>
                 <p style={{ fontSize:13, fontWeight:600, color:'var(--fg-text2)', margin:'0 0 8px' }}>Base model for all agents:</p>
                 <select value={multiModel} onChange={e => setMultiModel(e.target.value)} style={{ padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', minWidth:220 }}>
-                  {['forge-fast','forge-pro','forge-reasoning','claude-sonnet-4','claude-haiku-4','gpt-4o-mini','gpt-4o','gemini-2.0-flash','gemini-2.5-pro'].map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              {/* Promp
+                 

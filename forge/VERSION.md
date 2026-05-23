@@ -1,6 +1,13 @@
 # Forge Platform — Version History
 
-## v6.9 — 2026-05-23 (current)
+## v6.10 — 2026-05-23 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Fix: OpenRouter auto-select prefers paid model** — When OR models load, now picks `deepseek/deepseek-chat-v3-0324` (fast, reliable) instead of first free model. Free models (Baidu CoBuddy etc.) are slow and cause stuck-thinking.
+
+---
+
+## v6.9 — 2026-05-23
 
 ### Backend: forge-platform/src/index.ts
 - **New: Setup endpoint** — `POST /api/setup/platform-key` (secret-protected) sets platform API keys without admin login. `POST /api/setup/reset-password` resets any user's password. Both protected by `SETUP_SECRET` env var (default: `forge-setup-2026`).
