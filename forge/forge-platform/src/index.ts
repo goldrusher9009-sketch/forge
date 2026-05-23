@@ -1527,16 +1527,17 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   const userId = req.user!.sub;
   ensureSubscription(userId);
 
-  // ── Railway keep-alive ──────────────────────────────────────────────────────
-  // Railway kills HTTP connections silent after 30s of no bytes sent.
-  // We use chunked JSON: send whitespace heartbeats every 5s while LLM runs,
-  // then send the real JSON payload at the end. JSON.parse ignores leading whitespace.
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Transfer-Encoding', 'chunked');
+  // ── SSE keep-alive (works with HTTP/2 — chunked transfer does NOT) ───────────
+  // HTTP/2 ignores Transfer-Encoding: chunked so heartbeat bytes never flush.
+  // SSE (text/event-stream) works on both HTTP/1.1 and HTTP/2 and flushes each event.
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('X-Accel-Buffering', 'no');
-  res.write(' '); // immediate first byte — starts the clock reset
-  const heartbeat = setInterval(() => { try { res.write(' '); } catch {} }, 5000);
-  const endRes = (payload: object) => { clearInterval(heartbeat); res.end(JSON.stringify(payload)); };
+  res.flushHeaders();
+  const sendEvent = (data: object) => { try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch {} };
+  sendEvent({ type: 'ping' }); // immediate first event — resets Railway idle timer
+  const heartbeat = setInterval(() => sendEvent({ type: 'ping' }), 5000);
+  const endSSE = (payload: object) => { clearInterval(heartbeat); sendEvent({ type: 'result', payload }); res.end(); };
   // ────────────────────────────────────────────────────────────────────────────
 
   // Save user message
@@ -1582,10 +1583,9 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     const asstMsgId = uuidv4();
     const errMsg = `⚠️ No ${providerLabel} API key found. Go to Settings → LLM Providers and add your ${providerLabel} key.`;
     db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(asstMsgId, thread.id, 'assistant', errMsg);
-    endRes({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
+    endSSE({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
     return;
   }
-  // Token budget enforcement disabled until billing is live
   emitAgentActivity(userId, { type: 'thinking', message: `🤔 Thinking with ${model}…`, model });
   try {
     const result = await callLLM(provider, apiKey, actualModel, llmMessages);
@@ -1600,11 +1600,11 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens) VALUES (?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens);
     db.prepare("UPDATE threads SET updated_at=datetime('now'),total_tokens=total_tokens+? WHERE id=?").run(totalTokens, thread.id);
     emitAgentActivity(userId, { type: 'done', message: `✅ Response ready — ${totalTokens} tokens`, model, elapsed: 0 });
-    endRes({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens } });
+    endSSE({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ Error: ${err.message}`, model });
     console.error('Thread chat error:', err.message);
-    endRes({ success: false, error: 'LLM_ERROR', message: err.message });
+    endSSE({ success: false, error: 'LLM_ERROR', message: err.message });
   }
 });
 

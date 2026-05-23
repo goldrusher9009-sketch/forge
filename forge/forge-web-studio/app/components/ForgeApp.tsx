@@ -117,13 +117,11 @@ let _onSessionExpired: (() => void) | null = null;
 async function apiFetch(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  // 28s timeout for POST requests — backend LLM timeout is 20s, Railway kills at 30s, so errors always return
   const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(60000) : undefined);
   const res = await fetch(`${API}${path}`, { ...opts, headers, ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
     if (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN') {
-      // Session expired -- clear local auth and force re-login
       localStorage.removeItem('forge_user');
       if (_onSessionExpired) _onSessionExpired();
     }
@@ -131,6 +129,44 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string): P
   }
   if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || err.error || `HTTP ${res.status}`); }
   return res.json().catch(() => ({}));
+}
+
+// SSE fetch: reads text/event-stream response, returns the payload from the last "result" event.
+// Used for /api/threads/:id/messages which uses SSE to keep Railway connection alive.
+async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const signal = opts.signal ?? AbortSignal.timeout(65000);
+  const res = await fetch(`${API}${path}`, { ...opts, headers, signal });
+  if (res.status === 401) {
+    const err = await res.json().catch(() => ({}));
+    if (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN') {
+      localStorage.removeItem('forge_user');
+      if (_onSessionExpired) _onSessionExpired();
+    }
+    throw new Error(err.error || 'Session expired. Please log in again.');
+  }
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || err.error || `HTTP ${res.status}`); }
+  // Read SSE stream — collect lines, find "data: ..." lines, parse last "result" event
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let lastResult: any = null;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop() ?? '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        const evt = JSON.parse(line.slice(6));
+        if (evt.type === 'result') lastResult = evt.payload;
+      } catch {}
+    }
+  }
+  return lastResult ?? {};
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1121,7 +1157,7 @@ export default function ForgeApp() {
       const modelsToQuery = ['claude-sonnet-4','gpt-4o','gemini-2.0-flash'];
       try {
         const results = await Promise.allSettled(modelsToQuery.map(m =>
-          apiFetch(`/threads/${currentThread!.id}/messages`, { method:'POST', body:JSON.stringify({ content:userContent, model:m, agent_ids:activeAgentIds }) }, user.token)
+          apiFetchSSE(`/threads/${currentThread!.id}/messages`, { method:'POST', body:JSON.stringify({ content:userContent, model:m, agent_ids:activeAgentIds }) }, user.token)
         ));
         const responses = results.map((r, i) => ({
           model: modelsToQuery[i],
@@ -1179,7 +1215,7 @@ export default function ForgeApp() {
       try {
         const modelLabel = cleanModel.split('/').pop() || cleanModel;
         addAgentStep('⚙️', `Sending to ${modelLabel}…`);
-        const r = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
+        const r = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
         addAgentStep('✅', 'Response received');
         applyResp(r);
       } catch (e: any) {
@@ -1189,7 +1225,7 @@ export default function ForgeApp() {
           const newT = fresh?.data || fresh;
           threadId = newT.id;
           setActiveThread(newT);
-          const r2 = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
+          const r2 = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
           applyResp(r2);
           await loadThreads(activeProject?.id);
         } else { throw e; }
