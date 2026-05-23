@@ -528,24 +528,18 @@ function getUserKey(userId: string, provider: string): string | null {
 async function callLLM(provider: string, apiKey: string, model: string, messages: any[], _language?: string): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
   // Anthropic
   if (provider === 'anthropic') {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model, messages, max_tokens: 2048 }),
-      signal: AbortSignal.timeout(55000),
-    }).catch((e: any) => { throw new Error(e?.name === 'TimeoutError' ? `Anthropic timed out after 55s` : e.message); });
+    let res: Response;
+    try { res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:2048}), signal:AbortSignal.timeout(55000) }); }
+    catch (e: any) { throw new Error(e?.name==='TimeoutError' ? 'Anthropic timed out after 55s' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`Anthropic error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
     return { content: d.content?.[0]?.text || '', promptTokens: d.usage?.input_tokens || 0, completionTokens: d.usage?.output_tokens || 0 };
   }
   // OpenAI
   if (provider === 'openai') {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, messages, max_tokens: 2048 }),
-      signal: AbortSignal.timeout(55000),
-    }).catch((e: any) => { throw new Error(e?.name === 'TimeoutError' ? `OpenAI timed out after 55s` : e.message); });
+    let res: Response;
+    try { res = await fetch('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:2048}), signal:AbortSignal.timeout(55000) }); }
+    catch (e: any) { throw new Error(e?.name==='TimeoutError' ? 'OpenAI timed out after 55s' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenAI error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
     return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
@@ -607,12 +601,9 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   // OpenRouter (passthrough for 400+ models)
   if (provider === 'openrouter') {
     const orModel = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://forge-sand-two.vercel.app', 'X-Title': 'Forge Studio' },
-      body: JSON.stringify({ model: orModel, messages, max_tokens: 2048 }),
-      signal: AbortSignal.timeout(50000),
-    }).catch((e: any) => { throw new Error(e?.name === 'TimeoutError' ? `Model "${orModel}" timed out after 50s — try a faster model` : e.message); });
+    let res: Response;
+    try { res = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}), signal:AbortSignal.timeout(50000) }); }
+    catch (e: any) { throw new Error(e?.name==='TimeoutError' ? `Model "${orModel}" timed out — try a faster model` : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenRouter error (${orModel}): ${e.slice(0,300)}`); }
     const d: any = await res.json();
     if (d.error) throw new Error(`OpenRouter error (${orModel}): ${JSON.stringify(d.error).slice(0,200)}`);
