@@ -1,0 +1,1 @@
+feat: ForgeMulti syncs to main model picker; auto-harvest memory after ForgeMulti/ASI/Agent runs

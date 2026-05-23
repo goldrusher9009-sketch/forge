@@ -1,0 +1,30 @@
+            <input placeholder="Task title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} onKeyDown={e => { if (e.key==='Enter') addTask(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <div style={{ display:'flex', gap:6, marginBottom:16 }}>
+              {(['low','medium','high'] as const).map(p => {
+                const tpc: Record<string,string> = { low:'var(--fg-text2)', medium:'var(--fg-orange)', high:'var(--fg-red)' };
+                return <button key={p} onClick={() => setNewTaskPriority(p)} style={{ flex:1, padding:'8px', background:newTaskPriority===p ? tpc[p]+'33' : 'transparent', border:`1px solid ${newTaskPriority===p ? tpc[p] : 'var(--fg-border2)'}`, borderRadius:6, color:newTaskPriority===p ? tpc[p] : 'var(--fg-text2)', cursor:'pointer', fontSize:12, textTransform:'capitalize' }}>{p}</button>;
+              })}
+            </div>
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setShowNewTask(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={addTask} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Add Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renamingThread && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingThread(null)}>
+          <div style={{ width:380, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>Rename Thread</h3>
+            <input value={renamingThread.title} onChange={e => setRenamingThread(prev => prev ? { ...prev, title: e.target.value } : prev)} onKeyDown={e => { if (e.key==='Enter') renameThread(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={renameThread} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Rename</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

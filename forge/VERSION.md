@@ -1,6 +1,23 @@
 # Forge Platform — Version History
 
-## v6.6 — 2026-05-22 (current)
+## v6.7 — 2026-05-23 (current)
+
+### Backend: forge-platform/src/index.ts
+- **Fix: Gemini system message** — System messages now passed via `systemInstruction` (proper Gemini API field) instead of being converted to user messages. Eliminates 400 errors from consecutive same-role messages.
+- **Fix: Gemini alternating roles** — Consecutive same-role messages merged before sending to Gemini API.
+- **Fix: Gemini model resolution** — Added full GEMINI_MODEL_MAP: 2.5-pro, 2.5-flash, 2.0-flash, 2.0-flash-lite, 1.5-pro, 1.5-flash all resolve to correct API model IDs.
+- **Fix: max_tokens 4096** — Anthropic, OpenAI, Groq, Mistral all now send max_tokens 4096 (was 2048).
+- **New: Gemini 2.5 Pro/Flash** — Added to platform_models seed and model resolution.
+- **New: o4-mini, o3, GPT-4.1 Mini** — Added to platform_models seed.
+- **New: Groq model map** — Proper model ID resolution for all Groq models.
+- **New: Mistral model map** — Proper model ID resolution including codestral.
+- **Fix: OpenAI models filter** — o4-* models now included in model list fetch.
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **New models in dropdown** — Gemini 2.5 Pro/Flash, o4-mini, o3, GPT-4.1 Mini, Codestral, Gemini 1.5 Flash, Claude 3.7 Sonnet, legacy Anthropic group.
+- **Context limits** — Added Gemini 2.5 Flash, 1.5 Pro, 1.5 Flash to context limit map.
+
+## v6.6 — 2026-05-22
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
 - **Fix: Stuck-thinking on no model** — Early `return` when no model selected now calls `setSending(false)/setTyping(false)` before returning, so the UI never gets permanently frozen in "Thinking…" state.

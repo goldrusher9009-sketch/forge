@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.1 — dispatch routes, agent fix, LLM timeouts, DB fallback, expanded SuperAgent harvest
+ * Forge Platform v6.7 — Gemini system message fix, model resolution update, max_tokens 4096, all latest models
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -464,14 +464,20 @@ const ANTHROPIC_MODEL_MAP: Record<string,string> = {
   'claude-opus-4-6':            'claude-opus-4-6',
   'claude-sonnet-4-6':          'claude-sonnet-4-6',
   'claude-opus-4-5':            'claude-opus-4-5',
-  'claude-opus-4':              'claude-opus-4-5',
+  'claude-opus-4':              'claude-opus-4-6',
   'claude-sonnet-4-5':          'claude-sonnet-4-5',
-  'claude-sonnet-4':            'claude-sonnet-4-5',
+  'claude-sonnet-4':            'claude-sonnet-4-6',
   'claude-haiku-4-5':           'claude-haiku-4-5-20251001',
+  'claude-haiku-4-5-20251001':  'claude-haiku-4-5-20251001',
   'claude-haiku-4':             'claude-haiku-4-5-20251001',
+  'claude-3-7-sonnet':          'claude-3-7-sonnet-20250219',
+  'claude-3-7-sonnet-20250219': 'claude-3-7-sonnet-20250219',
   'claude-3-5-sonnet':          'claude-3-5-sonnet-20241022',
+  'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022',
   'claude-3-5-haiku':           'claude-3-5-haiku-20241022',
+  'claude-3-5-haiku-20241022':  'claude-3-5-haiku-20241022',
   'claude-3-opus':              'claude-3-opus-20240229',
+  'claude-3-opus-20240229':     'claude-3-opus-20240229',
 };
 
 function resolveForgeModel(modelId: string): string {
@@ -495,10 +501,10 @@ function getProviderForModel(modelId: string): string {
   const mid = modelId.startsWith('openrouter/') ? modelId.slice('openrouter/'.length) : modelId;
   if (mid.startsWith('morph-')) return 'morph';
   if (mid.startsWith('claude')) return 'anthropic';
-  if (mid.startsWith('gpt') || mid.startsWith('o3') || mid.startsWith('o1') || mid.startsWith('o4')) return 'openai';
-  if (mid.startsWith('gemini')) return 'gemini';
-  if (mid.startsWith('llama') || mid.startsWith('mixtral')) return 'groq';
-  if (mid.startsWith('mistral')) return 'mistral';
+  if (mid.startsWith('gpt') || mid.startsWith('o3') || mid.startsWith('o1') || mid.startsWith('o4') || mid === 'chatgpt-4o-latest') return 'openai';
+  if (mid.startsWith('gemini') || mid.startsWith('forge-gemini')) return 'gemini';
+  if (mid.startsWith('llama') || mid.startsWith('mixtral') || mid.startsWith('deepseek') || mid.startsWith('qwen') || mid.startsWith('whisper-large') || mid === 'forge-fast') return 'groq';
+  if (mid.startsWith('mistral') || mid.startsWith('codestral') || mid.startsWith('pixtral')) return 'mistral';
   if (mid.includes('/')) return 'openrouter';
   return MODEL_COSTS[mid]?.provider || 'anthropic';
 }
@@ -529,7 +535,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   // Anthropic
   if (provider === 'anthropic') {
     let res: Response;
-    try { res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:2048}), signal:AbortSignal.timeout(55000) }); }
+    try { res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}), signal:AbortSignal.timeout(55000) }); }
     catch (e: any) { throw new Error(e?.name==='TimeoutError' ? 'Anthropic timed out after 55s' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`Anthropic error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -538,7 +544,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   // OpenAI
   if (provider === 'openai') {
     let res: Response;
-    try { res = await fetch('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:2048}), signal:AbortSignal.timeout(55000) }); }
+    try { res = await fetch('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}), signal:AbortSignal.timeout(55000) }); }
     catch (e: any) { throw new Error(e?.name==='TimeoutError' ? 'OpenAI timed out after 55s' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenAI error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -546,11 +552,18 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   }
   // Groq (OpenAI-compatible)
   if (provider === 'groq') {
-    const groqModel = model === 'llama-3.3-70b' ? 'llama-3.3-70b-versatile' : model === 'llama-3.1-8b' ? 'llama-3.1-8b-instant' : model === 'mixtral-8x7b' ? 'mixtral-8x7b-32768' : model;
+    const GROQ_MODEL_MAP: Record<string,string> = {
+      'llama-3.3-70b':    'llama-3.3-70b-versatile',
+      'llama-3.1-70b':    'llama-3.1-70b-versatile',
+      'llama-3.1-8b':     'llama-3.1-8b-instant',
+      'mixtral-8x7b':     'mixtral-8x7b-32768',
+      'gemma2-9b':        'gemma2-9b-it',
+    };
+    const groqModel = GROQ_MODEL_MAP[model] || model;
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: groqModel, messages, max_tokens: 2048 }),
+      body: JSON.stringify({ model: groqModel, messages, max_tokens: 4096 }),
       signal: AbortSignal.timeout(60000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`Groq error: ${e.slice(0,200)}`); }
@@ -559,15 +572,48 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   }
   // Google Gemini
   if (provider === 'gemini') {
-    const geminiModel = model === 'gemini-2.0-flash' ? 'gemini-2.0-flash' : 'gemini-1.5-pro';
-    const contents = messages.map((m: any) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+    // Resolve model ID to actual Gemini API model name
+    const GEMINI_MODEL_MAP: Record<string,string> = {
+      'gemini-2.5-pro':           'gemini-2.5-pro-preview-05-06',
+      'gemini-2.5-flash':         'gemini-2.5-flash-preview-04-17',
+      'gemini-2.0-flash':         'gemini-2.0-flash',
+      'gemini-2.0-flash-lite':    'gemini-2.0-flash-lite',
+      'gemini-1.5-pro':           'gemini-1.5-pro',
+      'gemini-1.5-flash':         'gemini-1.5-flash',
+      'forge-gemini':             'gemini-2.0-flash',
+    };
+    const geminiModel = GEMINI_MODEL_MAP[model] || model;
+    // Separate system messages from conversation messages
+    const systemMsgs = messages.filter((m: any) => m.role === 'system');
+    const chatMsgs = messages.filter((m: any) => m.role !== 'system');
+    // Build contents — Gemini requires alternating user/model roles, merge consecutive same-role messages
+    const rawContents = chatMsgs.map((m: any) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content || '' }] }));
+    // Merge consecutive same-role messages to satisfy Gemini strict alternation
+    const contents: any[] = [];
+    for (const c of rawContents) {
+      if (contents.length > 0 && contents[contents.length - 1].role === c.role) {
+        contents[contents.length - 1].parts[0].text += '\n\n' + c.parts[0].text;
+      } else {
+        contents.push({ role: c.role, parts: [{ text: c.parts[0].text }] });
+      }
+    }
+    // Gemini requires first turn to be user
+    if (contents.length > 0 && contents[0].role !== 'user') {
+      contents.unshift({ role: 'user', parts: [{ text: '.' }] });
+    }
+    const body: any = { contents, generationConfig: { maxOutputTokens: 4096 } };
+    // Pass system prompt via systemInstruction (proper Gemini way)
+    if (systemMsgs.length > 0) {
+      body.systemInstruction = { parts: [{ text: systemMsgs.map((m: any) => m.content).join('\n\n') }] };
+    }
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 2048 } }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(60000),
     });
-    if (!res.ok) { const e = await res.text(); throw new Error(`Gemini error: ${e.slice(0,200)}`); }
+    if (!res.ok) { const e = await res.text(); throw new Error(`Gemini error: ${e.slice(0,300)}`); }
     const d: any = await res.json();
+    if (d.error) throw new Error(`Gemini error: ${d.error.message || JSON.stringify(d.error).slice(0,200)}`);
     const text = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const pt = d.usageMetadata?.promptTokenCount || 0;
     const ct = d.usageMetadata?.candidatesTokenCount || 0;
@@ -575,11 +621,17 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   }
   // Mistral (OpenAI-compatible)
   if (provider === 'mistral') {
-    const mistralModel = model === 'mistral-large' ? 'mistral-large-latest' : 'mistral-small-latest';
+    const MISTRAL_MODEL_MAP: Record<string,string> = {
+      'mistral-large':  'mistral-large-latest',
+      'mistral-small':  'mistral-small-latest',
+      'mistral-medium': 'mistral-medium-latest',
+      'codestral':      'codestral-latest',
+    };
+    const mistralModel = MISTRAL_MODEL_MAP[model] || model;
     const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: mistralModel, messages, max_tokens: 2048 }),
+      body: JSON.stringify({ model: mistralModel, messages, max_tokens: 4096 }),
       signal: AbortSignal.timeout(60000),
     });
     if (!res.ok) { const e = await res.text(); throw new Error(`Mistral error: ${e.slice(0,200)}`); }
@@ -794,7 +846,7 @@ app.get('/api/keys/:provider/models', requireAuth, async (req: AuthRequest, res)
       const r = await fetch('https://api.openai.com/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
       if (!r.ok) throw new Error(`OpenAI returned ${r.status}`);
       const d: any = await r.json();
-      const gptModels = (d.data || []).filter((m: any) => m.id.startsWith('gpt') || m.id.startsWith('o1') || m.id.startsWith('o3') || m.id.startsWith('chatgpt'));
+      const gptModels = (d.data || []).filter((m: any) => m.id.startsWith('gpt') || m.id.startsWith('o1') || m.id.startsWith('o3') || m.id.startsWith('o4') || m.id.startsWith('chatgpt'));
       models = gptModels.map((m: any) => ({ id: m.id, name: m.id }));
 
     } else if (provider === 'groq') {
@@ -1191,10 +1243,17 @@ if (modelCount === 0) {
     { id:'gpt-4o',           provider:'openai',    label:'GPT-4o',                    is_forge:0, markup:1.0 },
     { id:'gpt-4o-mini',      provider:'openai',    label:'GPT-4o Mini',               is_forge:0, markup:1.0 },
     { id:'gpt-4.1',          provider:'openai',    label:'GPT-4.1',                   is_forge:0, markup:1.0 },
+    { id:'gemini-2.5-pro',   provider:'gemini',    label:'Gemini 2.5 Pro',            is_forge:0, markup:1.0 },
+    { id:'gemini-2.5-flash', provider:'gemini',    label:'Gemini 2.5 Flash',          is_forge:0, markup:1.0 },
     { id:'gemini-2.0-flash', provider:'gemini',    label:'Gemini 2.0 Flash',          is_forge:0, markup:1.0 },
     { id:'gemini-1.5-pro',   provider:'gemini',    label:'Gemini 1.5 Pro',            is_forge:0, markup:1.0 },
     { id:'llama-3.3-70b',    provider:'groq',      label:'Llama 3.3 70B',             is_forge:0, markup:1.0 },
+    { id:'llama-3.1-8b-instant', provider:'groq',  label:'Llama 3.1 8B Instant',      is_forge:0, markup:1.0 },
     { id:'mistral-large',    provider:'mistral',   label:'Mistral Large',             is_forge:0, markup:1.0 },
+    { id:'o4-mini',          provider:'openai',    label:'o4-mini',                   is_forge:0, markup:1.0 },
+    { id:'o3',               provider:'openai',    label:'o3',                        is_forge:0, markup:1.0 },
+    { id:'gpt-4.1-mini',     provider:'openai',    label:'GPT-4.1 Mini',              is_forge:0, markup:1.0 },
+    { id:'claude-3-7-sonnet',provider:'anthropic', label:'Claude 3.7 Sonnet',         is_forge:0, markup:1.0 },
   ];
   const ins = db.prepare('INSERT OR IGNORE INTO platform_models (id,provider,label,enabled,is_forge_model,markup) VALUES (?,?,?,1,?,?)');
   defaultModels.forEach(m => ins.run(m.id, m.provider, m.label, m.is_forge, m.markup));

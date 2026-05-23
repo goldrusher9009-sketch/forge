@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.7 -- Gemini fix: system messages via systemInstruction, alternating role fix; Gemini 2.5 support; max_tokens 4096; latest models
+﻿// Forge AI Workspace v6.2 -- thinking-disappears fix, morph removed, stop button, message queue, credential vault
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -144,6 +144,10 @@ const FORGE_MODELS = [
   { id:'forge-gemini', label:'Forge Gemini', desc:'Gemini 2.0 Flash + markup',      base:'gemini-2.0-flash' },
 ];
 const DIRECT_MODELS = [
+  { group:'Morph', models:[
+    { id:'morph-v3-fast', label:'Morph v3 Fast' },
+    { id:'morph-v3',      label:'Morph v3' },
+  ]},
   { group:'Anthropic', models:[
     { id:'claude-opus-4-6',         label:'Claude Opus 4.6' },
     { id:'claude-sonnet-4-6',       label:'Claude Sonnet 4.6' },
@@ -158,34 +162,20 @@ const DIRECT_MODELS = [
     { id:'gpt-4o',      label:'GPT-4o' },
     { id:'gpt-4o-mini', label:'GPT-4o Mini' },
     { id:'gpt-4.1',     label:'GPT-4.1' },
-    { id:'gpt-4.1-mini',label:'GPT-4.1 Mini' },
-    { id:'o4-mini',     label:'o4-mini' },
-    { id:'o3',          label:'o3' },
-    { id:'o3-mini',     label:'o3-mini' },
+    { id:'o3-mini',     label:'o3 Mini' },
   ]},
   { group:'Google', models:[
-    { id:'gemini-2.5-pro',   label:'Gemini 2.5 Pro' },
-    { id:'gemini-2.5-flash', label:'Gemini 2.5 Flash' },
     { id:'gemini-2.0-flash', label:'Gemini 2.0 Flash' },
     { id:'gemini-1.5-pro',   label:'Gemini 1.5 Pro' },
-    { id:'gemini-1.5-flash', label:'Gemini 1.5 Flash' },
   ]},
   { group:'Groq', models:[
-    { id:'llama-3.3-70b',        label:'Llama 3.3 70B' },
-    { id:'llama-3.1-8b-instant', label:'Llama 3.1 8B Instant' },
-    { id:'llama-3.1-8b',         label:'Llama 3.1 8B' },
-    { id:'mixtral-8x7b',         label:'Mixtral 8×7B' },
+    { id:'llama-3.3-70b',  label:'Llama 3.3 70B' },
+    { id:'llama-3.1-8b',   label:'Llama 3.1 8B' },
+    { id:'mixtral-8x7b',   label:'Mixtral 8×7B' },
   ]},
   { group:'Mistral', models:[
-    { id:'mistral-large',  label:'Mistral Large' },
-    { id:'mistral-small',  label:'Mistral Small' },
-    { id:'codestral-latest', label:'Codestral' },
-  ]},
-  { group:'Anthropic (Legacy)', models:[
-    { id:'claude-3-7-sonnet', label:'Claude 3.7 Sonnet' },
-    { id:'claude-3-5-sonnet', label:'Claude 3.5 Sonnet' },
-    { id:'claude-3-5-haiku',  label:'Claude 3.5 Haiku' },
-    { id:'claude-3-opus',     label:'Claude 3 Opus' },
+    { id:'mistral-large', label:'Mistral Large' },
+    { id:'mistral-small', label:'Mistral Small' },
   ]},
 ];
 
@@ -275,7 +265,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'>('workspace');
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'>('artifacts');
@@ -296,8 +286,6 @@ export default function ForgeApp() {
   const [selectedModel, setSelectedModel] = useState(''); // auto-set by loadApiKeys once user's actual keys are known
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
-  const [agentSteps, setAgentSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
-  const addAgentStep = (icon: string, text: string) => setAgentSteps(prev => [...prev.slice(-8), { icon, text, ts: Date.now() }]);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
 
@@ -380,8 +368,6 @@ export default function ForgeApp() {
   const [vaultUpdateInputs, setVaultUpdateInputs] = useState<Record<string,string>>({});
   const [vaultUpdating, setVaultUpdating] = useState('');
   const [vaultValidating, setVaultValidating] = useState<Record<string,boolean>>({});
-  const [keyUsageData, setKeyUsageData] = useState<Record<string,{total_tokens:number;requests:number;cost:number;byModel:{model:string;tokens:number;requests:number}[]}>>({});
-  const [keyUsageExpanded, setKeyUsageExpanded] = useState<Record<string,boolean>>({});
 
   // Thread context menu
   const [threadMenu, setThreadMenu] = useState<{ threadId:string; x:number; y:number } | null>(null);
@@ -462,7 +448,7 @@ export default function ForgeApp() {
   const MODEL_CONTEXT_LIMITS: Record<string, number> = {
     'claude-sonnet-4-6': 200000, 'claude-opus-4-6': 200000, 'claude-haiku-4-5-20251001': 200000,
     'gpt-4o': 128000, 'gpt-4o-mini': 128000, 'o3': 200000, 'o4-mini': 200000,
-    'gemini-2.0-flash': 1048576, 'gemini-2.5-pro': 2097152, 'gemini-2.5-flash': 1048576, 'gemini-1.5-pro': 2097152, 'gemini-1.5-flash': 1048576,
+    'gemini-2.0-flash': 1048576, 'gemini-2.5-pro': 2097152,
     'llama-3.1-8b-instant': 128000, 'mistral-small-latest': 32000,
   };
   const getContextLimit = (model: string) => {
@@ -635,11 +621,8 @@ export default function ForgeApp() {
     if (!user) return;
     setOrLoading(true);
     try {
-      // Try authenticated endpoint first; fall back to public (no key needed)
-      let d = await apiFetch('/keys/openrouter-models', {}, user.token);
-      if (d?.error === 'NO_OPENROUTER_KEY' || !d?.data?.models?.length) {
-        d = await apiFetch('/openrouter/models/public', {}, user.token);
-      }
+      const d = await apiFetch('/keys/openrouter-models', {}, user.token);
+      if (d?.error === 'NO_OPENROUTER_KEY') { setOrLoading(false); return; }
       const models = Array.isArray(d?.data?.models) ? d.data.models : [];
       setOpenRouterModels(models);
       // Auto-select first free OR model if no valid model selected
@@ -657,7 +640,7 @@ export default function ForgeApp() {
   };
   // Fetch models for a specific provider from its API
   const loadProviderModels = async (provider: string) => {
-    if (!user || provider === 'morph') return;
+    if (!user) return;
     try {
       const d = await apiFetch(`/keys/${provider}/models`, {}, user.token);
       if (d?.success && Array.isArray(d?.data?.models)) {
@@ -674,7 +657,7 @@ export default function ForgeApp() {
     try {
       const d = await apiFetch('/keys', {}, user.token);
       const data = d?.data || {};
-      const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor'];
+      const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere','cursor','morph'];
       const confirmed: Record<string,boolean> = {};
       providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
       setSavedProviders(confirmed);
@@ -697,12 +680,12 @@ export default function ForgeApp() {
         // Keep current selection only if user has a key for that provider
         if (prev && confirmed[provOf(prev) || '']) return prev;
         // Pick first provider user actually has a key for (priority order — no morph)
+        if (confirmed['openrouter']) return prev || ''; // OpenRouter models loaded async via loadOpenRouterModels
         if (confirmed['anthropic']) return 'claude-sonnet-4-6';
         if (confirmed['openai']) return 'gpt-4o';
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
-        if (confirmed['openrouter']) return prev || ''; // OpenRouter models loaded async via loadOpenRouterModels
         // No keys at all — leave empty so UI shows the warning
         return '';
       });
@@ -1013,16 +996,6 @@ export default function ForgeApp() {
     } catch (e: any) { alert(e.message); }
   };
 
-  const loadKeyUsage = async (provider: string) => {
-    if (!user) return;
-    try {
-      const d = await apiFetch(`/keys/${provider}/usage`, {}, user.token);
-      if (d?.data?.totals) {
-        setKeyUsageData(prev => ({ ...prev, [provider]: { total_tokens: d.data.totals.total_tokens, requests: d.data.totals.requests, cost: d.data.totals.cost, byModel: d.data.byModel || [] } }));
-      }
-    } catch {}
-  };
-
   // ── SuperAgent actions ────────────────────────────────────────────────────
   const harvestMemory = async () => {
     if (!user) return;
@@ -1100,18 +1073,14 @@ export default function ForgeApp() {
     }
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
-    setAgentSteps([]);
     setMultiResponses([]);
-    addAgentStep('🧠', 'Processing your message…');
     // Create AbortController so Stop button can cancel this request
     const abortCtrl = new AbortController();
     sendAbortRef.current = abortCtrl;
-    // Hard safety timeout: abort + unstick UI after 65s (backend LLM timeout is 50-55s, so error arrives before this)
-    const safetyTimer = setTimeout(() => {
-      abortCtrl.abort(new DOMException('Request timed out — the model took too long to respond. Try a faster model.', 'TimeoutError'));
-      setSending(false); setTyping(false); sendAbortRef.current = null;
-    }, 65000);
-    // Don't auto-open live tab — user stays in chat view
+    // Hard safety timeout: always unstick UI after 180s regardless of fetch state
+    const safetyTimer = setTimeout(() => { setSending(false); setTyping(false); sendAbortRef.current = null; }, 180000);
+    // Auto-open live tab so user sees thinking indicator
+    if (!rightExpanded || rightTab !== 'live') { setRightTab('live'); setRightExpanded(true); }
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
     setMessages(prev => [...prev, tempUser]);
@@ -1141,47 +1110,23 @@ export default function ForgeApp() {
       if (!cleanModel) {
         const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:'⚠️ No AI model selected. Go to **Settings → LLM Providers** and add an API key, then pick a model from the dropdown.', created_at:new Date().toISOString() };
         setMessages(prev => [...prev, errMsg]);
-        clearTimeout(safetyTimer);
-        setSending(false); setTyping(false);
         return;
       }
       const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds };
       let threadId = currentThread.id;
-
-      // Extract AI reply from response and append directly — avoids loadMessages race condition
-      const applyResp = (resp: any) => {
+      const checkResp = async (resp: any) => {
+        // Backend returns HTTP 200 with success:false for NO_API_KEY — surface it as a visible error
         if (resp && resp.success === false) {
           if (resp.error === 'NO_API_KEY') {
             const provName = resp.providerName || resp.provider || 'your LLM provider';
-            // Backend already saved the error message in DB; also show it directly
-            const provLabel = provName.charAt(0).toUpperCase() + provName.slice(1);
-            const errContent = `⚠️ No ${provLabel} API key found. Go to **Settings → LLM Providers** and add your ${provLabel} key.`;
-            const errMsg: Message = { id: resp.data?.id || 'tmp-err', thread_id: threadId, role: 'assistant', content: errContent, created_at: new Date().toISOString() };
-            setMessages(prev => [...prev.filter(m => m.id !== 'tmp-u'), errMsg]);
-            return; // don't throw — message is shown
+            throw new Error(`No ${provName} API key found. Go to Settings → LLM Providers and add your ${provName} key.`);
           }
-          throw new Error(resp.message || resp.error || 'Unknown error from server');
-        }
-        // Success — append AI reply directly from response, no re-fetch needed
-        const aiData = resp?.data;
-        if (aiData?.content) {
-          const aiMsg: Message = { id: aiData.id || 'tmp-ai', thread_id: threadId, role: 'assistant', content: aiData.content, created_at: new Date().toISOString() };
-          setMessages(prev => {
-            const withoutTemp = prev.filter(m => m.id !== 'tmp-u');
-            // Replace temp user message with a clean copy, then add AI reply
-            const userMsg: Message = { id: aiData.id + '-u', thread_id: threadId, role: 'user', content: userContent, created_at: new Date().toISOString() };
-            const already = withoutTemp.find(m => m.role === 'user' && m.content === userContent);
-            return already ? [...withoutTemp, aiMsg] : [...withoutTemp, userMsg, aiMsg];
-          });
+          if (resp.message) throw new Error(resp.message);
         }
       };
-
       try {
-        const modelLabel = cleanModel.split('/').pop() || cleanModel;
-        addAgentStep('⚙️', `Sending to ${modelLabel}…`);
         const r = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
-        addAgentStep('✅', 'Response received');
-        applyResp(r);
+        await checkResp(r);
       } catch (e: any) {
         // Thread was wiped (Railway redeploy) -- create a fresh one and retry
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
@@ -1190,12 +1135,11 @@ export default function ForgeApp() {
           threadId = newT.id;
           setActiveThread(newT);
           const r2 = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
-          applyResp(r2);
+          await checkResp(r2);
           await loadThreads(activeProject?.id);
         } else { throw e; }
       }
-      // Reload messages in background to sync with DB (don't await — already have the reply)
-      loadMessages(threadId);
+      await loadMessages(threadId);
       await loadArtifacts();
       await loadThreads(activeProject?.id);
       loadThreadTokenStats(threadId);
@@ -1229,14 +1173,11 @@ export default function ForgeApp() {
         if (arr.length > 0) { setSketchArtifact(arr[0]); setPreviewCode(arr[0].content); }
       }
     } catch (e: any) {
-      // Use abort reason if available (set by safetyTimer or Stop button with reason)
-      const abortReason = e?.name === 'AbortError' && (e as any).cause?.message;
-      const raw: string = abortReason || e.message || 'Something went wrong';
       // Strip raw provider prefixes like "Anthropic error: " for clean display
+      const raw: string = e.message || 'Something went wrong';
       const clean = raw
         .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error:\s*/i, '')
         .replace(/^\{"type":"error".*?"message":"([^"]+)".*\}$/i, '$1')
-        .replace(/^signal is aborted without reason$/i, 'Request timed out — the model took too long. Try a faster model.')
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
@@ -1474,7 +1415,6 @@ export default function ForgeApp() {
             { id:'platforms', icon:'🌐', label:'Platforms' },
             { id:'settings', icon:'⚙️', label:'Settings' },
             { id:'super', icon:'🌟', label:'Forge Super' },
-            { id:'skills', icon:'🧩', label:'Skills & Tools' },
             { id:'forgeco', icon:'🧑‍💻', label:'ForgeCo' },
             { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
@@ -1585,7 +1525,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.7</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.2</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -1658,7 +1598,7 @@ export default function ForgeApp() {
                 const availableDirect = DIRECT_MODELS.map(g => ({ ...g, models: g.models.filter(m => hasKey(m.id)) })).filter(g => g.models.length > 0);
                 // Dynamic models from other providers (anthropic, openai, gemini, groq, mistral, etc.)
                 const dynamicGroups = Object.entries(providerModels)
-                  .filter(([p]) => p !== 'openrouter' && p !== 'morph' && savedProviders[p] && providerModels[p]?.length > 0)
+                  .filter(([p]) => p !== 'openrouter' && savedProviders[p] && providerModels[p]?.length > 0)
                   .map(([p, models]) => ({
                     provider: p,
                     label: p.charAt(0).toUpperCase() + p.slice(1),
@@ -1703,31 +1643,6 @@ export default function ForgeApp() {
 
               {!isMobile && <button onClick={() => setRightExpanded(!rightExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{rightExpanded ? '▶' : '◀'}</button>}
             </div>
-
-            {/* ── Active Agents Navbar ─────────────────────────────────────────── */}
-            {agents.filter(a => a.enabled).length > 0 && (
-              <div style={{ padding:'4px 16px', borderBottom:'1px solid var(--fg-border)', background:'var(--fg-bg)', display:'flex', alignItems:'center', gap:6, flexShrink:0, overflowX:'auto', minHeight:34 }}>
-                <span style={{ fontSize:10, color:'var(--fg-text3)', whiteSpace:'nowrap', marginRight:4, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>Agents</span>
-                {agents.filter(a => a.enabled).map(a => {
-                  const isActive = activeAgentIds.includes(a.id);
-                  const isProcessing = sending && isActive;
-                  return (
-                    <button key={a.id} onClick={() => toggleAgent(a.id)} title={a.description || a.name} style={{ display:'flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:14, border: isActive ? `1px solid ${a.color}` : '1px solid var(--fg-border2)', background: isActive ? `${a.color}18` : 'transparent', color: isActive ? a.color : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: isActive ? 600 : 400, flexShrink:0, transition:'all 0.15s', position:'relative' }}>
-                      <span style={{ fontSize:13, animation: isProcessing ? 'forge-flash 0.8s ease-in-out infinite' : 'none' }}>{a.icon}</span>
-                      <span>{a.name}</span>
-                      {isProcessing && <span style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', display:'inline-block', animation:'pulse 0.8s ease-in-out infinite', marginLeft:2 }} />}
-                    </button>
-                  );
-                })}
-                {/* Live activity summary when sending */}
-                {sending && agentSteps.length > 0 && (
-                  <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'2px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-orange)', borderRadius:14, flexShrink:0 }}>
-                    <span style={{ fontSize:11, animation:'forge-flash 1s ease-in-out infinite' }}>{agentSteps[agentSteps.length-1]?.icon}</span>
-                    <span style={{ fontSize:11, color:'var(--fg-orange)', whiteSpace:'nowrap', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis' }}>{agentSteps[agentSteps.length-1]?.text}</span>
-                  </div>
-                )}
-              </div>
-            )}
 
             <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
               {/* Messages + sketch */}
@@ -1830,29 +1745,14 @@ export default function ForgeApp() {
                   })}
                   {typing && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+                      {/* Flash-cycling avatar */}
                       <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite', flexShrink:0 }}>⚡</div>
-                      <div style={{ padding:'10px 16px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', minWidth:180, maxWidth:360 }}>
-                        {/* Live activity steps */}
-                        {agentSteps.length > 0 ? (
-                          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-                            {agentSteps.map((s, i) => (
-                              <div key={i} style={{ display:'flex', alignItems:'center', gap:7, opacity: i === agentSteps.length - 1 ? 1 : 0.45 }}>
-                                <span style={{ fontSize:13 }}>{s.icon}</span>
-                                <span style={{ fontSize:11, color:'var(--fg-text2)', animation: i === agentSteps.length - 1 ? 'forge-text-flash 1.4s ease-in-out infinite' : 'none' }}>{s.text}</span>
-                                {i === agentSteps.length - 1 && (
-                                  <div style={{ display:'flex', gap:3, alignItems:'center', marginLeft:'auto' }}>
-                                    {[0,1,2].map(j => <div key={j} style={{ width:4, height:4, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${j*0.2}s infinite` }} />)}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                            {[0,1,2].map(i => <div key={i} style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
-                            <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:4 }}>thinking…</span>
-                          </div>
-                        )}
+                      <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'2px solid var(--fg-orange)', animation:'forge-ring 1.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:10 }}>
+                        {/* Bouncing dots */}
+                        <div style={{ display:'flex', gap:4, alignItems:'center' }}>
+                          {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                        </div>
+                        <span style={{ fontSize:11, fontWeight:600, animation:'forge-text-flash 1.8s ease-in-out infinite', letterSpacing:'0.05em' }}>thinking…</span>
                       </div>
                     </div>
                   )}
@@ -1872,19 +1772,34 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
-                  {/* Subtle typing indicator — shows only while waiting for response */}
-                  {typing && (
-                    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 16px' }}>
-                      <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>🤖</div>
-                      <div style={{ display:'flex', gap:4, alignItems:'center' }}>
-                        {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', opacity:0.7, animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
-                      </div>
-                    </div>
-                  )}
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Live activity shown in 📺 toolbar button only — no inline overlay */}
+                {/* ── Manus-style inline live activity strip ── */}
+                {(typing || liveEvents.length > 0) && (
+                  <div style={{ padding:'6px 16px', background:'var(--fg-bg2)', borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', gap:4, maxHeight:120, overflowY:'auto', flexShrink:0 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                      <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', animation:'pulse 1s ease-in-out infinite' }} />
+                      <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>Live Activity</span>
+                      <button onClick={() => setLiveEvents([])} style={{ marginLeft:'auto', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>✕</button>
+                    </div>
+                    {typing && (
+                      <div style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 8px', background:'rgba(249,115,22,0.08)', borderRadius:6, border:'1px solid rgba(249,115,22,0.2)' }}>
+                        <span style={{ animation:'forge-flash 0.6s ease-in-out infinite', display:'inline-block', fontSize:12 }}>⚡</span>
+                        <span style={{ fontSize:12, color:'var(--fg-orange2)' }}>Model generating response…</span>
+                        <div style={{ marginLeft:'auto', display:'flex', gap:3 }}>{[0,1,2].map(i => <div key={i} style={{ width:4, height:4, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}</div>
+                      </div>
+                    )}
+                    {liveEvents.slice(-4).map((ev, i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'3px 8px', background:'var(--fg-bg3)', borderRadius:6, fontSize:11, color:'var(--fg-text2)' }}>
+                        <span style={{ color: ev.type==='error' ? 'var(--fg-red)' : ev.type==='success' ? 'var(--fg-green)' : 'var(--fg-orange2)', flexShrink:0 }}>{ev.type==='error' ? '✗' : ev.type==='success' ? '✓' : '→'}</span>
+                        <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.message}</span>
+                        {ev.model && <span style={{ color:'var(--fg-text3)', flexShrink:0, fontFamily:'var(--fg-font-mono)', fontSize:10 }}>{ev.model}</span>}
+                        {ev.elapsed && <span style={{ color:'var(--fg-text3)', flexShrink:0, fontFamily:'var(--fg-font-mono)', fontSize:10 }}>{(ev.elapsed/1000).toFixed(1)}s</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Composer */}
                 <div style={{ padding: isMobile ? '8px 10px 12px' : '12px 24px 16px', background:'var(--fg-bg)', borderTop:'1px solid var(--fg-border)' }}>
@@ -2431,7 +2346,7 @@ export default function ForgeApp() {
               {routerTab==='direct' && (
                 <div>
                   <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 16px' }}>Direct access to provider models (no markup). Requires your API key in Settings.</p>
-                  {DIRECT_MODELS.filter(grp => grp.group !== 'Morph').map(grp => (
+                  {DIRECT_MODELS.filter(grp => grp.group !== 'Morph' || !!savedProviders['morph']).map(grp => (
                     <div key={grp.group} style={{ marginBottom:20 }}>
                       <p style={{ color:'var(--fg-text2)', fontSize:12, fontWeight:600, margin:'0 0 10px', textTransform:'uppercase' }}>{grp.group}</p>
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:8 }}>
@@ -2987,7 +2902,6 @@ export default function ForgeApp() {
                           {vaultValidating[v.provider] ? '⟳ Testing…' : '⚡ Validate'}
                         </button>
                         <button onClick={() => deleteVaultKey(v.provider)} title="Remove key" style={{ background:'transparent', border:'1px solid var(--fg-red)', borderRadius:6, color:'var(--fg-red)', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>✕ Delete</button>
-                        <button onClick={async () => { await loadKeyUsage(v.provider); setKeyUsageExpanded(prev => ({ ...prev, [v.provider]: !prev[v.provider] })); }} style={{ background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'3px 8px', whiteSpace:'nowrap' }}>📊 Usage</button>
                       </div>
                       {/* Update key inline */}
                       <div style={{ display:'flex', gap:8 }}>
@@ -3006,26 +2920,6 @@ export default function ForgeApp() {
                           {vaultUpdating===v.provider ? '…' : 'Update'}
                         </button>
                       </div>
-                      {/* Key Usage Analytics */}
-                      {keyUsageExpanded[v.provider] && (
-                        <div style={{ marginTop:10, padding:'10px 12px', background:'var(--fg-bg3)', borderRadius:8, border:'1px solid var(--fg-border)' }}>
-                          {keyUsageData[v.provider] ? (
-                            <>
-                              <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:8 }}>
-                                <div style={{ textAlign:'center' }}><div style={{ fontSize:16, fontWeight:700, color:'var(--fg-orange)' }}>{(keyUsageData[v.provider].total_tokens/1000).toFixed(1)}K</div><div style={{ fontSize:10, color:'var(--fg-text3)' }}>tokens</div></div>
-                                <div style={{ textAlign:'center' }}><div style={{ fontSize:16, fontWeight:700, color:'var(--fg-blue)' }}>{keyUsageData[v.provider].requests}</div><div style={{ fontSize:10, color:'var(--fg-text3)' }}>requests</div></div>
-                                <div style={{ textAlign:'center' }}><div style={{ fontSize:16, fontWeight:700, color:'var(--fg-green)' }}>${(keyUsageData[v.provider].cost||0).toFixed(4)}</div><div style={{ fontSize:10, color:'var(--fg-text3)' }}>cost</div></div>
-                              </div>
-                              {keyUsageData[v.provider].byModel.slice(0,5).map(m => (
-                                <div key={m.model} style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--fg-text2)', padding:'2px 0', borderBottom:'1px solid var(--fg-border)' }}>
-                                  <span style={{ fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:200 }}>{m.model}</span>
-                                  <span style={{ color:'var(--fg-text3)', flexShrink:0, marginLeft:8 }}>{(m.tokens/1000).toFixed(1)}K · {m.requests}×</span>
-                                </div>
-                              ))}
-                            </>
-                          ) : <span style={{ fontSize:11, color:'var(--fg-text3)' }}>No usage data yet.</span>}
-                        </div>
-                      )}
                       <p style={{ margin:'6px 0 0', fontSize:10, color:'var(--fg-text3)' }}>Last updated {new Date(v.updated_at).toLocaleString()}</p>
                     </div>
                   ))}
@@ -3245,6 +3139,7 @@ export default function ForgeApp() {
                       { provider:'gemini', label:'Google Gemini', placeholder:'AIza...', color:'var(--fg-blue)' },
                       { provider:'groq', label:'Groq', placeholder:'gsk_...', color:'var(--fg-orange)' },
                       { provider:'openrouter', label:'OpenRouter', placeholder:'sk-or-v1-...', color:'var(--fg-orange)' },
+      { provider:'morph', label:'Morph', placeholder:'sk-CKUd-...', color:'var(--fg-blue)' },
                       { provider:'mistral', label:'Mistral', placeholder:'...', color:'var(--fg-blue)' },
                       { provider:'together', label:'Together AI', placeholder:'...', color:'var(--fg-green)' },
                       { provider:'perplexity', label:'Perplexity', placeholder:'pplx-...', color:'var(--fg-red)' },
@@ -3437,166 +3332,6 @@ export default function ForgeApp() {
             )}
           </div>
         )}
-
-        {/* ── SKILLS & TOOLS ────────────────────────────────────────────── */}
-        {mainTab === 'skills' && (() => {
-          const SKILLS = [
-            { id:'write', icon:'✍️', name:'Content Writer', category:'Writing', desc:'Blog posts, emails, social media, marketing copy — polished and on-brand.', prompt:'You are an expert content writer. Write clear, engaging, high-quality content. Ask for tone, audience, and length if not specified.' },
-            { id:'code', icon:'💻', name:'Code Generator', category:'Dev', desc:'Generate production-ready code in any language with tests and docs.', prompt:'You are a senior software engineer. Write clean, well-commented, production-ready code. Include error handling and tests when relevant.' },
-            { id:'research', icon:'🔬', name:'Deep Researcher', category:'Research', desc:'Research any topic with structured summaries, sources, and key insights.', prompt:'You are a research analyst. Provide thorough, balanced research with sources. Structure findings with headings, key points, and a summary.' },
-            { id:'sales', icon:'💼', name:'Sales Closer', category:'Sales', desc:'Cold emails, follow-ups, pitches, objection handling — close more deals.', prompt:'You are an expert sales strategist. Write persuasive, personalized outreach and help close deals. Focus on value and the prospect\'s pain points.' },
-            { id:'seo', icon:'📈', name:'SEO Optimizer', category:'Marketing', desc:'SEO-optimized content, keyword research, meta descriptions, and titles.', prompt:'You are an SEO expert. Optimize content for search engines. Provide keyword suggestions, meta titles, descriptions, and structural improvements.' },
-            { id:'legal', icon:'⚖️', name:'Legal Drafter', category:'Legal', desc:'Contracts, NDAs, terms of service, privacy policies — legally sound drafts.', prompt:'You are a legal document drafter. Create clear, legally sound documents. Always recommend professional legal review for critical documents.' },
-            { id:'data', icon:'📊', name:'Data Analyst', category:'Data', desc:'Analyze data, spot trends, generate insights, write SQL queries.', prompt:'You are a data analyst. Analyze data thoroughly, identify patterns, and present insights clearly. Write optimized SQL when needed.' },
-            { id:'product', icon:'🎯', name:'Product Manager', category:'Product', desc:'PRDs, user stories, roadmaps, feature specs, competitive analysis.', prompt:'You are a senior product manager. Write clear PRDs, user stories, and specs. Focus on user value, metrics, and business impact.' },
-            { id:'design', icon:'🎨', name:'UX Designer', category:'Design', desc:'UX copy, wireframe descriptions, user flows, design critiques.', prompt:'You are a UX designer. Help design intuitive, user-centered experiences. Provide clear UX copy, flows, and actionable design feedback.' },
-            { id:'hr', icon:'👥', name:'HR Assistant', category:'HR', desc:'Job descriptions, interview questions, onboarding plans, performance reviews.', prompt:'You are an HR professional. Draft job descriptions, interview guides, and HR documents. Be fair, inclusive, and legally compliant.' },
-            { id:'finance', icon:'💰', name:'Finance Advisor', category:'Finance', desc:'Financial analysis, budgeting, forecasting, investment summaries.', prompt:'You are a financial analyst. Provide clear financial analysis and summaries. Always note this is for informational purposes and not financial advice.' },
-            { id:'translate', icon:'🌐', name:'Translator', category:'Language', desc:'Translate and localize content for any language, preserving tone and context.', prompt:'You are a professional translator and localization expert. Translate accurately while preserving tone, cultural context, and intent.' },
-            { id:'social', icon:'📱', name:'Social Media', category:'Marketing', desc:'Viral posts, captions, hashtag strategies for Twitter, LinkedIn, Instagram.', prompt:'You are a social media expert. Create engaging, platform-optimized content. Match the platform\'s culture and maximize engagement.' },
-            { id:'support', icon:'🎧', name:'Customer Support', category:'Support', desc:'Support responses, help articles, escalation handling — empathetic and fast.', prompt:'You are a customer support specialist. Respond empathetically, solve problems efficiently, and turn negative experiences into positive ones.' },
-            { id:'email', icon:'📧', name:'Email Composer', category:'Communication', desc:'Professional emails for any occasion — clear, concise, and effective.', prompt:'You are an expert communicator. Write clear, professional emails that get results. Adjust tone to context: formal, friendly, or urgent.' },
-            { id:'startup', icon:'🚀', name:'Startup Advisor', category:'Business', desc:'Business plans, pitch decks, go-to-market strategies, investor memos.', prompt:'You are a startup advisor with deep experience in venture and growth. Help build compelling business cases, strategies, and pitch materials.' },
-            { id:'tutor', icon:'🎓', name:'AI Tutor', category:'Education', desc:'Explain complex topics simply. Step-by-step learning plans and quizzes.', prompt:'You are a patient, expert tutor. Explain concepts clearly at the learner\'s level. Use examples, analogies, and check understanding.' },
-            { id:'debug', icon:'🐛', name:'Bug Hunter', category:'Dev', desc:'Find bugs, explain errors, suggest fixes, and improve code quality.', prompt:'You are a debugging expert. Identify root causes of bugs, explain them clearly, and provide tested fixes with explanations.' },
-          ];
-          const CONNECTORS = [
-            { icon:'📧', name:'Gmail', desc:'Read, compose, and manage emails', status:'coming' },
-            { icon:'📅', name:'Google Calendar', desc:'Schedule meetings and manage events', status:'coming' },
-            { icon:'💬', name:'Slack', desc:'Send messages and search channels', status:'coming' },
-            { icon:'📋', name:'Notion', desc:'Read and write Notion pages and databases', status:'coming' },
-            { icon:'🐙', name:'GitHub', desc:'Create PRs, review code, manage issues', status:'coming' },
-            { icon:'🗂️', name:'Jira', desc:'Create and update tickets, sprints', status:'coming' },
-            { icon:'📊', name:'Google Sheets', desc:'Read and write spreadsheet data', status:'coming' },
-            { icon:'🛒', name:'Shopify', desc:'Manage products, orders, customers', status:'coming' },
-            { icon:'💳', name:'Stripe', desc:'Monitor payments and subscriptions', status:'coming' },
-            { icon:'📞', name:'Twilio', desc:'Send SMS and voice communications', status:'coming' },
-            { icon:'🌐', name:'Web Browser', desc:'Browse, scrape, and research any URL', status:'active' },
-            { icon:'💻', name:'Terminal', desc:'Run shell commands and scripts', status:'active' },
-            { icon:'🗄️', name:'Database', desc:'Query your connected databases', status:'active' },
-            { icon:'📁', name:'File System', desc:'Read and write local files', status:'active' },
-          ];
-          const [skillSearch, setSkillSearch] = React.useState('');
-          const [skillCat, setSkillCat] = React.useState('All');
-          const [genTopic, setGenTopic] = React.useState('');
-          const [genIndustry, setGenIndustry] = React.useState('');
-          const [genGoal, setGenGoal] = React.useState('');
-          const [genResult, setGenResult] = React.useState('');
-          const [genLoading, setGenLoading] = React.useState(false);
-          const cats = ['All', ...Array.from(new Set(SKILLS.map(s => s.category)))];
-          const filtered = SKILLS.filter(s => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
-          const launchSkill = (skill: typeof SKILLS[0]) => {
-            setMainTab('workspace');
-            setTimeout(() => {
-              setInput(`[Using skill: ${skill.name}]\n\n`);
-              textareaRef.current?.focus();
-            }, 100);
-          };
-          const generateUseCase = async () => {
-            if (!genTopic.trim()) return;
-            setGenLoading(true); setGenResult('');
-            try {
-              const prompt = `You are a business AI consultant. Generate a detailed, actionable use-case for AI automation.\n\nBusiness/Topic: ${genTopic}\nIndustry: ${genIndustry || 'General'}\nGoal: ${genGoal || 'Improve efficiency and productivity'}\n\nProvide:\n1. Use Case Title\n2. Problem It Solves (2-3 sentences)\n3. AI Workflow (step-by-step)\n4. Tools/Skills Needed\n5. Expected Outcomes & ROI\n6. Implementation Steps (quick wins first)\n7. Sample prompt to get started immediately\n\nBe specific, practical, and focus on immediate value.`;
-              const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
-              const d = await apiFetch('/forge/chat', { method:'POST', body:JSON.stringify({ message: prompt, model: cleanModel || 'forge-pro' }) }, user.token);
-              setGenResult(d?.data?.content || d?.content || 'No response');
-            } catch (e: any) { setGenResult('⚠️ ' + e.message); }
-            setGenLoading(false);
-          };
-          return (
-            <div style={{ flex:1, overflowY:'auto', padding:32, background:'var(--fg-bg)' }}>
-              <div style={{ maxWidth:960, margin:'0 auto' }}>
-                {/* Header */}
-                <div style={{ marginBottom:32 }}>
-                  <h1 style={{ margin:'0 0 6px', fontSize:28, fontWeight:900, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.5px' }}>🧩 Skills & Tools</h1>
-                  <p style={{ margin:0, color:'var(--fg-text3)', fontSize:15 }}>Prebuilt AI skills, connectors, and a use-case generator for any business or workflow.</p>
-                </div>
-
-                {/* Use-Case Generator */}
-                <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-orange)', borderRadius:16, padding:28, marginBottom:36 }}>
-                  <h2 style={{ margin:'0 0 6px', fontSize:17, fontWeight:800, color:'var(--fg-orange)' }}>⚡ AI Use-Case Generator</h2>
-                  <p style={{ margin:'0 0 20px', color:'var(--fg-text3)', fontSize:13 }}>Describe your business or challenge and get a complete AI automation blueprint instantly.</p>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
-                    <div>
-                      <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Business / Challenge *</label>
-                      <input value={genTopic} onChange={e => setGenTopic(e.target.value)} placeholder="e.g. Customer support for SaaS" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Industry</label>
-                      <input value={genIndustry} onChange={e => setGenIndustry(e.target.value)} placeholder="e.g. E-commerce, Healthcare, Finance" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
-                    </div>
-                  </div>
-                  <div style={{ marginBottom:16 }}>
-                    <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Goal / Outcome</label>
-                    <input value={genGoal} onChange={e => setGenGoal(e.target.value)} placeholder="e.g. Reduce response time, increase revenue, automate repetitive tasks" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
-                  </div>
-                  <button onClick={generateUseCase} disabled={genLoading || !genTopic.trim()} style={{ padding:'11px 28px', background: genTopic.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: genLoading ? 0.7 : 1 }}>
-                    {genLoading ? '⟳ Generating…' : '⚡ Generate Use-Case Blueprint'}
-                  </button>
-                  {genResult && (
-                    <div style={{ marginTop:20, padding:'16px 20px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:12, fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap', maxHeight:400, overflowY:'auto' }}>
-                      {genResult}
-                      <div style={{ marginTop:12, display:'flex', gap:8 }}>
-                        <button onClick={() => { setMainTab('workspace'); setTimeout(() => { setInput(genResult.slice(0,200)); textareaRef.current?.focus(); }, 100); }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer' }}>💬 Open in Chat</button>
-                        <button onClick={() => navigator.clipboard.writeText(genResult)} style={{ padding:'6px 14px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>📋 Copy</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Skills Library */}
-                <div style={{ marginBottom:36 }}>
-                  <h2 style={{ margin:'0 0 16px', fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🎯 Skills Library</h2>
-                  <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-                    <input value={skillSearch} onChange={e => setSkillSearch(e.target.value)} placeholder="Search skills…" style={{ flex:'1 1 200px', padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
-                    {cats.map(c => <button key={c} onClick={() => setSkillCat(c)} style={{ padding:'6px 14px', borderRadius:20, border: skillCat===c ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border2)', background: skillCat===c ? 'var(--fg-orange)' : 'transparent', color: skillCat===c ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: skillCat===c ? 600 : 400, flexShrink:0 }}>{c}</button>)}
-                  </div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:12 }}>
-                    {filtered.map(skill => (
-                      <div key={skill.id} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:'16px', display:'flex', flexDirection:'column', gap:8, transition:'border-color 0.15s' }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor='var(--fg-orange)')} onMouseLeave={e => (e.currentTarget.style.borderColor='var(--fg-border)')}>
-                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                          <span style={{ fontSize:24 }}>{skill.icon}</span>
-                          <div>
-                            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{skill.name}</div>
-                            <div style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:600, textTransform:'uppercase' }}>{skill.category}</div>
-                          </div>
-                        </div>
-                        <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)', lineHeight:1.5, flex:1 }}>{skill.desc}</p>
-                        <button onClick={() => launchSkill(skill)} style={{ padding:'7px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', alignSelf:'flex-start' }}>▶ Launch</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Connectors */}
-                <div>
-                  <h2 style={{ margin:'0 0 6px', fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🔌 Connectors</h2>
-                  <p style={{ margin:'0 0 16px', color:'var(--fg-text3)', fontSize:13 }}>Connect Forge to your tools and data sources.</p>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:10 }}>
-                    {CONNECTORS.map(c => (
-                      <div key={c.name} style={{ background:'var(--fg-bg3)', border:`1px solid ${c.status==='active' ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:6 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                          <span style={{ fontSize:20 }}>{c.icon}</span>
-                          <div>
-                            <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{c.name}</div>
-                            <span style={{ fontSize:10, color: c.status==='active' ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{c.status==='active' ? '● Active' : '○ Coming Soon'}</span>
-                          </div>
-                        </div>
-                        <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{c.desc}</p>
-                        {c.status==='active' ? (
-                          <button onClick={() => setMainTab('workspace')} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, alignSelf:'flex-start' }}>Use Now</button>
-                        ) : (
-                          <span style={{ fontSize:10, color:'var(--fg-text3)', fontStyle:'italic' }}>Request early access →</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
 
         {/* ── FORGECO ───────────────────────────────────────────────────── */}
         {mainTab === 'forgeco' && (
@@ -3892,4 +3627,269 @@ export default function ForgeApp() {
                 setMultiRunning(true); setMultiResults(null);
                 try {
                   const d = await apiFetch('/forgemulti/run', { method:'POST', body:JSON.stringify({ prompt:multiPrompt, model:multiModel, agent_roles:multiSelectedRoles }) }, user.token);
-                 
+                  if (d?.success) {
+                    setMultiResults(d.data);
+                    // Auto-harvest into SuperAgent memory (fire-and-forget)
+                    apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
+                  }
+                } catch(e:any) { alert('ForgeMulti error: '+e.message); } finally { setMultiRunning(false); }
+              }} style={{ padding:'10px 28px', background: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-bg4)' : 'linear-gradient(135deg,#7c3aed,var(--fg-orange))', border:'none', borderRadius:8, color: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: multiRunning||!multiPrompt.trim()||multiSelectedRoles.length===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
+                {multiRunning ? <><span style={{ animation:'forge-flash 0.6s ease-in-out infinite', display:'inline-block' }}>🤖</span> Agents thinking…</> : `🤖 Dispatch ${multiSelectedRoles.length} Agents`}
+              </button>
+
+              {/* Results */}
+              {multiResults && (
+                <div style={{ marginTop:24 }}>
+                  {/* Synthesis */}
+                  <div style={{ background:'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(249,115,22,0.12))', border:'1px solid rgba(124,58,237,0.35)', borderRadius:14, padding:20, marginBottom:20 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                      <span style={{ fontSize:22 }}>🌐</span>
+                      <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>Synthesized Intelligence</h3>
+                      <button onClick={() => navigator.clipboard?.writeText(multiResults.synthesis)} style={{ marginLeft:'auto', padding:'4px 12px', background:'rgba(0,0,0,0.2)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>Copy</button>
+                    </div>
+                    <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.8, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{multiResults.synthesis}</div>
+                  </div>
+                  {/* Individual agent cards */}
+                  <h4 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text2)' }}>Individual Agent Perspectives ({multiResults.agents.length})</h4>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(360px,1fr))', gap:12 }}>
+                    {multiResults.agents.map((a, i) => (
+                      <div key={i} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, padding:16 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                          <span style={{ fontSize:20 }}>{a.icon}</span>
+                          <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-orange2)' }}>{a.role}</span>
+                          <span style={{ marginLeft:'auto', fontSize:10, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{(a.elapsed/1000).toFixed(1)}s</span>
+                          <button onClick={() => navigator.clipboard?.writeText(a.content)} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text2)', cursor:'pointer', fontSize:10 }}>Copy</button>
+                        </div>
+                        <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, maxHeight:220, overflowY:'auto', whiteSpace:'pre-wrap', wordBreak:'break-word', background:'var(--fg-bg2)', padding:'10px 12px', borderRadius:8 }}>{a.content}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── FORGEASI ──────────────────────────────────────────────────── */}
+        {mainTab === 'forgeasi' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
+            <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--fg-border)', flexShrink:0, display:'flex', alignItems:'center', gap:14 }}>
+              <div style={{ fontSize:28 }}>🌌</div>
+              <div>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:800, background:'linear-gradient(90deg,var(--fg-orange),#a78bfa,#06b6d4)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', fontFamily:'var(--fg-font-display)' }}>ForgeASI</h2>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Deep Analysis → Solution Paths → Self-Critique → Synthesis → Push Now</p>
+              </div>
+              <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                <select value={asiModel} onChange={e => setAsiModel(e.target.value)} style={{ padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
+                  {['forge-pro','forge-reasoning','claude-opus-4','claude-sonnet-4','gpt-4o'].map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                  <span style={{ fontSize:11, color:'var(--fg-text3)' }}>Depth</span>
+                  {[2,3,4].map(d => <button key={d} onClick={() => setAsiDepth(d)} style={{ width:26, height:26, background: asiDepth===d ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${asiDepth===d ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:5, color: asiDepth===d ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:700 }}>{d}</button>)}
+                </div>
+                <button onClick={() => setAsiWebSearch(w => !w)} style={{ padding:'5px 10px', background: asiWebSearch ? 'rgba(6,182,212,0.15)' : 'var(--fg-bg3)', border:`1px solid ${asiWebSearch ? '#06b6d4' : 'var(--fg-border2)'}`, borderRadius:6, color: asiWebSearch ? '#06b6d4' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600 }}>🌐 Web</button>
+              </div>
+            </div>
+            <div style={{ flex:1, overflowY:'auto', padding:24 }}>
+              <div style={{ marginBottom:16 }}>
+                <textarea value={asiPrompt} onChange={e => setAsiPrompt(e.target.value)} placeholder="Ask anything requiring deep reasoning — complex decisions, strategy, analysis, hard problems…" rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box' as any, lineHeight:1.6 }} />
+              </div>
+              <div style={{ display:'flex', gap:10, marginBottom:24, alignItems:'center', flexWrap:'wrap' }}>
+                <button disabled={asiRunning || !asiPrompt.trim()} onClick={async () => {
+                  if (!user || !asiPrompt.trim()) return;
+                  setAsiRunning(true); setAsiResult(null); setAsiLivePhases([]); setAsiCurrentPhase('Initializing…');
+                  const phaseNames = ['Deep Analysis','Solution Paths','Self-Critique','Synthesis'].slice(0, asiDepth+1);
+                  // Simulate live phase progress while waiting
+                  let phaseIdx = 0;
+                  const phaseTimer = setInterval(() => {
+                    if (phaseIdx < phaseNames.length) { setAsiCurrentPhase(phaseNames[phaseIdx]); phaseIdx++; }
+                  }, Math.max(1500, 8000/(phaseNames.length)));
+                  try {
+                    const d = await apiFetch('/forgeasi/run', { method:'POST', body:JSON.stringify({ prompt:asiPrompt, model:asiModel, depth:asiDepth, webSearch:asiWebSearch }) }, user.token);
+                    if (d?.success) {
+                      setAsiResult(d.data);
+                      setAsiLivePhases(d.data.steps.map((s: any) => ({ phase:s.phase, content:s.content, done:true })));
+                      // Auto-harvest into SuperAgent memory (fire-and-forget)
+                      apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
+                    }
+                  } catch(e:any) { alert('ForgeASI error: '+e.message); } finally { clearInterval(phaseTimer); setAsiRunning(false); setAsiCurrentPhase(''); }
+                }} style={{ padding:'10px 28px', background: asiRunning||!asiPrompt.trim() ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed,#06b6d4)', border:'none', borderRadius:8, color: asiRunning||!asiPrompt.trim() ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: asiRunning||!asiPrompt.trim() ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
+                  {asiRunning ? <><span style={{ animation:'forge-flash 0.5s ease-in-out infinite', display:'inline-block' }}>🌌</span> {asiCurrentPhase || 'Starting…'}</> : '🌌 Activate ForgeASI'}
+                </button>
+                {asiResult && !asiRunning && (
+                  <>
+                    <button onClick={() => { setInput(asiResult.synthesis); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>💬 Push to Chat</button>
+                    <button onClick={() => { setPreviewCode(asiResult.synthesis); setSketchMode(true); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>✏️ Open in Sketch</button>
+                    <button onClick={() => { navigator.clipboard.writeText(asiResult.synthesis); }} style={{ padding:'9px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>📋 Copy</button>
+                    <button onClick={() => { setAsiResult(null); setAsiLivePhases([]); setAsiPrompt(''); }} style={{ padding:'9px 14px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>✕ Clear</button>
+                  </>
+                )}
+              </div>
+
+              {/* Live phase indicators while running */}
+              {asiRunning && (
+                <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+                  {['Deep Analysis','Solution Paths','Self-Critique','Synthesis'].slice(0, asiDepth+1).map((p, i) => {
+                    const isActive = asiCurrentPhase === p;
+                    const isDone = asiLivePhases.some(lp => lp.phase === p && lp.done);
+                    return (
+                      <div key={p} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', background: isDone ? 'rgba(249,115,22,0.15)' : isActive ? 'rgba(124,58,237,0.15)' : 'var(--fg-bg3)', border: isActive ? '1px solid #a78bfa' : isDone ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border)', borderRadius:20, fontSize:12, color: isDone ? 'var(--fg-orange)' : isActive ? '#a78bfa' : 'var(--fg-text3)', transition:'all 0.3s' }}>
+                        <span style={{ animation: isActive ? `forge-flash 0.6s ease-in-out infinite` : 'none', display:'inline-block' }}>{isDone ? '✓' : ['🔍','🗺️','⚡','🌐'][i]}</span>{p}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Results */}
+              {asiResult && (
+                <div>
+                  {/* Synthesis hero */}
+                  <div style={{ background:'linear-gradient(135deg,rgba(249,115,22,0.1),rgba(124,58,237,0.1),rgba(6,182,212,0.1))', border:'1px solid rgba(124,58,237,0.4)', borderRadius:16, padding:24, marginBottom:24 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+                      <span style={{ fontSize:24 }}>🌌</span>
+                      <h3 style={{ margin:0, fontSize:17, fontWeight:800, background:'linear-gradient(90deg,var(--fg-orange),#a78bfa)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', fontFamily:'var(--fg-font-display)' }}>ASI Synthesis</h3>
+                      <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)', marginLeft:8 }}>{asiResult.totalTokens.toLocaleString()} tokens · {asiResult.model}</span>
+                      <button onClick={() => navigator.clipboard?.writeText(asiResult.synthesis)} style={{ marginLeft:'auto', padding:'5px 14px', background:'rgba(0,0,0,0.25)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>Copy</button>
+                    </div>
+                    <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.85, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{asiResult.synthesis}</div>
+                  </div>
+                  {/* Reasoning steps */}
+                  <h4 style={{ margin:'0 0 14px', fontSize:14, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.05em' }}>Reasoning Chain ({asiResult.steps.length} phases)</h4>
+                  <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                    {asiResult.steps.map((s, i) => {
+                      const icons = ['🔍','🗺️','⚡','🌐'];
+                      const colors = ['rgba(249,115,22,0.12)','rgba(6,182,212,0.12)','rgba(248,113,113,0.12)','rgba(124,58,237,0.12)'];
+                      const borders = ['rgba(249,115,22,0.3)','rgba(6,182,212,0.3)','rgba(248,113,113,0.3)','rgba(124,58,237,0.3)'];
+                      return (
+                        <details key={i} style={{ background:colors[i%4], border:`1px solid ${borders[i%4]}`, borderRadius:12, overflow:'hidden' }}>
+                          <summary style={{ padding:'12px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:10, listStyle:'none', userSelect:'none' }}>
+                            <span style={{ fontSize:16 }}>{icons[i%4]}</span>
+                            <span style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Phase {i+1}: {s.phase}</span>
+                            <span style={{ marginLeft:'auto', fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{s.tokens} tok</span>
+                          </summary>
+                          <div style={{ padding:'0 16px 16px', fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, whiteSpace:'pre-wrap', wordBreak:'break-word', borderTop:`1px solid ${borders[i%4]}`, paddingTop:12, marginTop:0 }}>{s.content}</div>
+                        </details>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* ── MODALS ────────────────────────────────────────────────────── */}
+
+      {showNewProject && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setShowNewProject(false)}>
+          <div style={{ width:420, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>New Project</h3>
+            <input placeholder="Project name" value={newProjName} onChange={e => setNewProjName(e.target.value)} style={{ width:'100%', padding:'12px', marginBottom:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box' }} />
+            <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 8px' }}>Color</p>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              {PROJECT_COLORS.map(c => <div key={c} onClick={() => setNewProjColor(c)} style={{ width:28, height:28, borderRadius:'50%', background:c, cursor:'pointer', border:newProjColor===c ? '3px solid #fff' : '3px solid transparent' }} />)}
+            </div>
+            <textarea placeholder="System prompt (optional)" value={newProjPrompt} onChange={e => setNewProjPrompt(e.target.value)} rows={3} style={{ width:'100%', padding:'12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setShowNewProject(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={async () => {
+                if (!user || !newProjName.trim()) return;
+                try { await apiFetch('/projects', { method:'POST', body:JSON.stringify({ name:newProjName.trim(), color:newProjColor, system_prompt:newProjPrompt }) }, user.token); setShowNewProject(false); setNewProjName(''); setNewProjPrompt(''); await loadProjects(); } catch (e:any) { alert(e.message); }
+              }} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Create</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showNewTask && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setShowNewTask(false)}>
+          <div style={{ width:380, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>New Task</h3>
+            <input placeholder="Task title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} onKeyDown={e => { if (e.key==='Enter') addTask(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <div style={{ display:'flex', gap:6, marginBottom:16 }}>
+              {(['low','medium','high'] as const).map(p => {
+                const tpc: Record<string,string> = { low:'var(--fg-text2)', medium:'var(--fg-orange)', high:'var(--fg-red)' };
+                return <button key={p} onClick={() => setNewTaskPriority(p)} style={{ flex:1, padding:'8px', background:newTaskPriority===p ? tpc[p]+'33' : 'transparent', border:`1px solid ${newTaskPriority===p ? tpc[p] : 'var(--fg-border2)'}`, borderRadius:6, color:newTaskPriority===p ? tpc[p] : 'var(--fg-text2)', cursor:'pointer', fontSize:12, textTransform:'capitalize' }}>{p}</button>;
+              })}
+            </div>
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setShowNewTask(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={addTask} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Add Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Thread context menu popup */}
+      {threadMenu && (() => {
+        const t = threads.find(x => x.id === threadMenu.threadId);
+        if (!t) return null;
+        return (
+          <div style={{ position:'fixed', top: threadMenu.y, left: threadMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+            {[
+              { icon:'✏️', label:'Rename', action:() => { setRenamingThread({ id:t.id, title:t.title }); setThreadMenu(null); } },
+              { icon: t.pinned ? '📌 Unpin' : '📌 Pin', label: t.pinned ? 'Unpin' : 'Pin', action:() => { apiFetch('/threads/' + t.id, { method:'PATCH', body:JSON.stringify({ pinned: t.pinned ? 0 : 1 }) }, user!.token).then(() => loadThreads(activeProject?.id)); setThreadMenu(null); } },
+              { icon:'🗄️', label: t.archived ? 'Unarchive' : 'Archive', action:() => { archiveThread(t); setThreadMenu(null); } },
+              { icon:'🗑️', label:'Delete', action:() => { deleteThread(t.id); setThreadMenu(null); } },
+            ].map(item => (
+              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                <span>{item.icon}</span>{item.label}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Project context menu popup */}
+      {projectMenu && (() => {
+        const p = projects.find(x => x.id === projectMenu.projectId);
+        if (!p) return null;
+        return (
+          <div style={{ position:'fixed', top: projectMenu.y, left: projectMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+            {[
+              { icon:'✏️', label:'Rename', action:() => { setRenamingProject({ id:p.id, name:p.name }); setProjectMenu(null); } },
+              { icon: p.pinned ? '📌 Unpin' : '📌 Pin', label: p.pinned ? 'Unpin' : 'Pin', action:() => { togglePin(p); setProjectMenu(null); } },
+              { icon:'🗑️', label:'Delete', action:() => { deleteProject(p.id); setProjectMenu(null); } },
+            ].map(item => (
+              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                <span>{item.icon}</span>{item.label}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Rename project modal */}
+      {renamingProject && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingProject(null)}>
+          <div style={{ width:360, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'var(--fg-text)', margin:'0 0 16px', fontSize:16, fontWeight:700 }}>Rename Project</h3>
+            <input value={renamingProject.name} onChange={e => setRenamingProject(prev => prev ? { ...prev, name: e.target.value } : prev)} onKeyDown={e => { if (e.key==='Enter') renameProject(); }} autoFocus style={{ width:'100%', padding:'10px 12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={() => setRenamingProject(null)} style={{ flex:1, padding:'9px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={renameProject} style={{ flex:1, padding:'9px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontWeight:600, cursor:'pointer' }}>Rename</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renamingThread && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingThread(null)}>
+          <div style={{ width:380, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>Rename Thread</h3>
+            <input value={renamingThread.title} onChange={e => setRenamingThread(prev => prev ? { ...prev, title: e.target.value } : prev)} onKeyDown={e => { if (e.key==='Enter') renameThread(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
+              <button onClick={renameThread} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Rename</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
