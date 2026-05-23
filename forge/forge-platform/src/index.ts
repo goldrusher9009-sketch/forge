@@ -1305,8 +1305,8 @@ app.delete('/api/admin/platform-keys/:provider', requireAuth, requireAdmin, (req
 const SETUP_SECRET = process.env.SETUP_SECRET || 'forge-setup-2026';
 app.post('/api/setup/platform-key', (req, res) => {
   const { secret, provider, key } = req.body;
-  if (secret !== SETUP_SECRET) return res.status(403).json({ success: false, error: 'Forbidden' });
-  if (!provider || !key) return res.status(400).json({ success: false, error: 'provider and key required' });
+  if (secret !== SETUP_SECRET) { res.status(403).json({ success: false, error: 'Forbidden' }); return; }
+  if (!provider || !key) { res.status(400).json({ success: false, error: 'provider and key required' }); return; }
   const enc = encryptKey(key);
   const existing = db.prepare('SELECT provider FROM platform_api_keys WHERE provider=?').get(provider);
   if (existing) {
@@ -1319,11 +1319,10 @@ app.post('/api/setup/platform-key', (req, res) => {
 
 app.post('/api/setup/reset-password', (req, res) => {
   const { secret, email, newPassword } = req.body;
-  if (secret !== SETUP_SECRET) return res.status(403).json({ success: false, error: 'Forbidden' });
-  if (!email || !newPassword) return res.status(400).json({ success: false, error: 'email and newPassword required' });
-  const user = db.prepare('SELECT id FROM users WHERE email=?').get(email) as any;
-  if (!user) return res.status(404).json({ success: false, error: 'User not found' });
-  const bcrypt = require('bcryptjs');
+  if (secret !== SETUP_SECRET) { res.status(403).json({ success: false, error: 'Forbidden' }); return; }
+  if (!email || !newPassword) { res.status(400).json({ success: false, error: 'email and newPassword required' }); return; }
+  const userRow = db.prepare('SELECT id FROM users WHERE email=?').get(email) as any;
+  if (!userRow) { res.status(404).json({ success: false, error: 'User not found' }); return; }
   const hash = bcrypt.hashSync(newPassword, 10);
   db.prepare('UPDATE users SET password_hash=? WHERE email=?').run(hash, email);
   res.json({ success: true, message: `Password reset for ${email}` });
