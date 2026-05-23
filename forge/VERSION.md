@@ -1,6 +1,13 @@
 # Forge Platform — Version History
 
-## v6.12 — 2026-05-23 (current)
+## v6.13 — 2026-05-23 (current)
+
+### Backend: forge-platform/src/index.ts
+- **Fix: Railway keep-alive complete** — `app.post('/api/threads/:id/messages')` now sends headers + `res.write(' ')` immediately on request, then uses `res.end(JSON.stringify(...))` for all response paths (NO_API_KEY, success, LLM_ERROR). Prevents Railway 30s idle timeout from killing Workspace chat.
+
+---
+
+## v6.12 — 2026-05-23
 
 ### Backend: forge-platform/src/index.ts
 - **Fix: deepseek/qwen OR models routed to Groq** — `getProviderForModel` was routing `deepseek*` and `qwen*` to Groq. Removed them from Groq list; `includes('/')` catch-all now correctly routes all slash-ID models (deepseek/*, qwen/*, etc.) to OpenRouter.
