@@ -136,7 +136,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString() }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-1' }));
+// SSE echo test — confirms SSE works through Railway proxy
+app.get('/sse-test', (_req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+  res.write('data: {"type":"ping"}\n\n');
+  setTimeout(() => { res.write('data: {"type":"done","msg":"SSE works!"}\n\n'); res.end(); }, 500);
+});
 
 // ── Auth ──────────────────────────────────────────────────────
 app.post('/api/auth/register', (req, res) => {
