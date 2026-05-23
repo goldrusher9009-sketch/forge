@@ -1,16 +1,10 @@
 warning: in the working copy of 'forge/do_git.ps1', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/forge-platform/src/index.ts', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/git_result.txt', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'forge/check_health.ps1', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'forge/check_users.ps1', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/health_result.txt', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'forge/test_sse_msg.ps1', LF will be replaced by CRLF the next time Git touches it
-[main e88cada] sse-fix-5-safety-timeout-25s
- 8 files changed, 173 insertions(+), 6 deletions(-)
- create mode 100644 forge/check_health.ps1
- create mode 100644 forge/check_users.ps1
- create mode 100644 forge/health_result.txt
- create mode 100644 forge/sse_msg_result.txt
- create mode 100644 forge/test_sse_msg.ps1
+warning: in the working copy of 'forge/poll_health.ps1', LF will be replaced by CRLF the next time Git touches it
+[main aaa21c8] sse-fix-6-proper-abort-controller-timeouts
+ 5 files changed, 53 insertions(+), 44 deletions(-)
+ create mode 100644 forge/poll_health.ps1
 To https://github.com/goldrusher9009-sketch/forge.git
-   c153ad3..e88cada  main -> main
+   e88cada..aaa21c8  main -> main

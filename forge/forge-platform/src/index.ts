@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-6' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-7' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -547,13 +547,13 @@ const PROVIDER_ENV_KEYS: Record<string,string> = {
 };
 
 function getUserKey(userId: string, provider: string): string | null {
-  // First check per-user key in DB
+  // 1. Per-user key
   const row = db.prepare('SELECT key_encrypted FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider) as any;
-  if (row) {
-    const key = decryptKey(row.key_encrypted);
-    if (key) return key;
-  }
-  // Fall back to server-level env var (so Railway deploys always work)
+  if (row) { const key = decryptKey(row.key_encrypted); if (key) return key; }
+  // 2. Platform-wide key set by admin
+  const platformRow = db.prepare('SELECT key_encrypted FROM platform_api_keys WHERE provider=? AND enabled=1').get(provider) as any;
+  if (platformRow) { const key = decryptKey(platformRow.key_encrypted); if (key) return key; }
+  // 3. Env var fallback
   return PROVIDER_ENV_KEYS[provider] || null;
 }
 
