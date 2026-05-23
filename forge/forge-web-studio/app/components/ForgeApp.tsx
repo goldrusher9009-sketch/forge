@@ -1686,6 +1686,31 @@ export default function ForgeApp() {
               {!isMobile && <button onClick={() => setRightExpanded(!rightExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{rightExpanded ? '▶' : '◀'}</button>}
             </div>
 
+            {/* ── Active Agents Navbar ─────────────────────────────────────────── */}
+            {agents.filter(a => a.enabled).length > 0 && (
+              <div style={{ padding:'4px 16px', borderBottom:'1px solid var(--fg-border)', background:'var(--fg-bg)', display:'flex', alignItems:'center', gap:6, flexShrink:0, overflowX:'auto', minHeight:34 }}>
+                <span style={{ fontSize:10, color:'var(--fg-text3)', whiteSpace:'nowrap', marginRight:4, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>Agents</span>
+                {agents.filter(a => a.enabled).map(a => {
+                  const isActive = activeAgentIds.includes(a.id);
+                  const isProcessing = sending && isActive;
+                  return (
+                    <button key={a.id} onClick={() => toggleAgent(a.id)} title={a.description || a.name} style={{ display:'flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:14, border: isActive ? `1px solid ${a.color}` : '1px solid var(--fg-border2)', background: isActive ? `${a.color}18` : 'transparent', color: isActive ? a.color : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: isActive ? 600 : 400, flexShrink:0, transition:'all 0.15s', position:'relative' }}>
+                      <span style={{ fontSize:13, animation: isProcessing ? 'forge-flash 0.8s ease-in-out infinite' : 'none' }}>{a.icon}</span>
+                      <span>{a.name}</span>
+                      {isProcessing && <span style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', display:'inline-block', animation:'pulse 0.8s ease-in-out infinite', marginLeft:2 }} />}
+                    </button>
+                  );
+                })}
+                {/* Live activity summary when sending */}
+                {sending && agentSteps.length > 0 && (
+                  <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'2px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-orange)', borderRadius:14, flexShrink:0 }}>
+                    <span style={{ fontSize:11, animation:'forge-flash 1s ease-in-out infinite' }}>{agentSteps[agentSteps.length-1]?.icon}</span>
+                    <span style={{ fontSize:11, color:'var(--fg-orange)', whiteSpace:'nowrap', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis' }}>{agentSteps[agentSteps.length-1]?.text}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
               {/* Messages + sketch */}
               <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
