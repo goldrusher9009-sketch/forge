@@ -1061,6 +1061,64 @@ app.get('/api/router/usage/history', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data: rows });
 });
 
+// ── Missing routes frontend expects ───────────────────────────
+// Vault = alias for keys list with preview format
+app.get('/api/keys/vault', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT provider, created_at, updated_at FROM api_keys WHERE user_id=?').all(req.user!.sub) as any[];
+  const data = rows.map(r => ({ provider: r.provider, key_preview: '••••••••', key_status: 'active', created_at: r.created_at, updated_at: r.updated_at }));
+  res.json({ success: true, data });
+});
+
+// Billing usage
+app.get('/api/billing/usage', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const rows = db.prepare('SELECT model, provider, total_tokens, provider_cost, forge_revenue, created_at FROM usage_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(userId) as any[];
+  const sub = db.prepare('SELECT tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
+  res.json({ success: true, data: rows, tokensUsed: sub?.tokens_used || 0, tokenLimit: sub?.tokens_limit || 100000 });
+});
+
+// User total tokens
+app.get('/api/user/token-total', requireAuth, (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT COALESCE(SUM(total_tokens),0) as total FROM usage_logs WHERE user_id=?').get(req.user!.sub) as any;
+  res.json({ success: true, total: row.total });
+});
+
+// Schedules
+app.get('/api/schedules', requireAuth, (_req: AuthRequest, res) => { res.json({ success: true, data: [] }); });
+app.post('/api/schedules', requireAuth, (_req: AuthRequest, res) => { res.json({ success: true, data: { id: 'unsupported', message: 'Schedules not yet implemented' } }); });
+
+// Custom providers alias
+app.get('/api/providers/custom', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM custom_providers WHERE user_id=?').all(req.user!.sub);
+  res.json({ success: true, data: rows });
+});
+
+// Forge chat alias — same logic as /api/chat
+app.post('/api/forge/chat', requireAuth, async (req: AuthRequest, res) => {
+  const { messages, model = 'forge-pro' } = req.body;
+  if (!messages?.length) { res.status(400).json({ success: false, error: 'INVALID_INPUT' }); return; }
+  const userId = req.user!.sub;
+  const cleaned = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
+  const actualModel = resolveForgeModel(cleaned);
+  const provider = getProviderForModel(actualModel);
+  const apiKey = getUserKey(userId, provider);
+  if (!apiKey) { res.json({ success: false, error: 'NO_API_KEY', provider }); return; }
+  try {
+    const result = await callLLM(provider, apiKey, actualModel, messages);
+    res.json({ success: true, content: result.content, usage: { prompt_tokens: result.promptTokens, completion_tokens: result.completionTokens } });
+  } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// Workspace agents/tasks with slash path aliases
+app.get('/api/workspace/agents', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM workspace_agents WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub);
+  res.json({ success: true, data: rows });
+});
+app.get('/api/workspace/tasks', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM workspace_tasks WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub);
+  res.json({ success: true, data: rows });
+});
+
 // ── Admin ─────────────────────────────────────────────────────
 // ── Platform settings table ──────────────────────────────────
 db.exec(`
