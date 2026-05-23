@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.8 -- Gemini fix: system messages via systemInstruction, alternating role fix; Gemini 2.5 support; max_tokens 4096; latest models
+﻿// Forge AI Workspace v6.9 -- Setup endpoint, OpenRouter default model fix, password reset
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -702,7 +702,7 @@ export default function ForgeApp() {
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
-        if (confirmed['openrouter']) return prev || ''; // OpenRouter models loaded async via loadOpenRouterModels
+        if (confirmed['openrouter']) return (prev && !prev.endsWith(':free')) ? prev : 'deepseek/deepseek-chat-v3-0324'; // avoid slow free models
         // No keys at all — leave empty so UI shows the warning
         return '';
       });
@@ -1587,7 +1587,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.8</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.9</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>

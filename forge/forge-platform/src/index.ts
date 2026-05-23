@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.8 — Fix: all LLM timeouts reduced to 25s to beat Railway 30s HTTP limit; eliminates stuck-thinking bug
+ * Forge Platform v6.9 — Setup endpoint for platform keys + password reset; OpenRouter default model fix
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -1301,6 +1301,34 @@ app.delete('/api/admin/platform-keys/:provider', requireAuth, requireAdmin, (req
   res.json({ success: true });
 });
 
+// ── Setup endpoint (secret-protected, no auth required) ─────────
+const SETUP_SECRET = process.env.SETUP_SECRET || 'forge-setup-2026';
+app.post('/api/setup/platform-key', (req, res) => {
+  const { secret, provider, key } = req.body;
+  if (secret !== SETUP_SECRET) return res.status(403).json({ success: false, error: 'Forbidden' });
+  if (!provider || !key) return res.status(400).json({ success: false, error: 'provider and key required' });
+  const enc = encryptKey(key);
+  const existing = db.prepare('SELECT provider FROM platform_api_keys WHERE provider=?').get(provider);
+  if (existing) {
+    db.prepare("UPDATE platform_api_keys SET key_encrypted=?,enabled=1,updated_at=datetime('now') WHERE provider=?").run(enc, provider);
+  } else {
+    db.prepare('INSERT INTO platform_api_keys (provider,key_encrypted,enabled) VALUES (?,?,1)').run(provider, enc);
+  }
+  res.json({ success: true, message: `Platform key for ${provider} saved` });
+});
+
+app.post('/api/setup/reset-password', (req, res) => {
+  const { secret, email, newPassword } = req.body;
+  if (secret !== SETUP_SECRET) return res.status(403).json({ success: false, error: 'Forbidden' });
+  if (!email || !newPassword) return res.status(400).json({ success: false, error: 'email and newPassword required' });
+  const user = db.prepare('SELECT id FROM users WHERE email=?').get(email) as any;
+  if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+  const bcrypt = require('bcryptjs');
+  const hash = bcrypt.hashSync(newPassword, 10);
+  db.prepare('UPDATE users SET password_hash=? WHERE email=?').run(hash, email);
+  res.json({ success: true, message: `Password reset for ${email}` });
+});
+
 // Model management
 app.get('/api/admin/models', requireAuth, requireAdmin, (_req, res) => {
   res.json({ success: true, data: db.prepare('SELECT * FROM platform_models ORDER BY provider, id').all() });
@@ -2287,202 +2315,4 @@ app.post('/api/forgemulti/run', requireAuth, async (req: AuthRequest, res) => {
       { role: 'user', content: `Original question: "${prompt}"\n\nExpert responses:\n${responses.map(r => `**${r.icon} ${r.role}**: ${r.content}`).join('\n\n')}\n\nProvide a synthesized final answer.` }
     ]);
     emitAgentActivity(userId, { type: 'done', message: `✅ ForgeMulti synthesis complete` });
-    res.json({ success: true, data: { agents: responses, synthesis: synthesis.content } });
-  } catch (err: any) {
-    emitAgentActivity(userId, { type: 'error', message: `❌ ForgeMulti error: ${err.message}` });
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ─── ForgeASI: Chain-of-Thought + Self-Critique + Synthesis ──────────────────
-app.post('/api/forgeasi/run', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const { prompt, model: modelId = 'claude-sonnet-4' } = req.body;
-  if (!prompt) { res.status(400).json({ success: false, error: 'prompt required' }); return; }
-  const actualModel = resolveForgeModel(modelId);
-  const provider = getProviderForModel(actualModel);
-  const apiKey = getUserKey(userId, provider);
-  if (!apiKey) { res.status(400).json({ success: false, error: `No ${provider} API key` }); return; }
-  emitAgentActivity(userId, { type: 'start', message: `🌌 ForgeASI initiating deep reasoning...` });
-  try {
-    // Phase 1: Initial deep analysis
-    emitAgentActivity(userId, { type: 'thinking', message: `🧠 Phase 1: Deep analysis...` });
-    const phase1 = await callLLM(provider, apiKey, actualModel, [
-      { role: 'system', content: 'You are an advanced reasoning system. Perform a deep, thorough analysis of the given problem. Consider multiple angles, identify assumptions, and explore the problem space comprehensively.' },
-      { role: 'user', content: prompt }
-    ]);
-    // Phase 2: Self-critique
-    emitAgentActivity(userId, { type: 'thinking', message: `🔍 Phase 2: Self-critique...` });
-    const phase2 = await callLLM(provider, apiKey, actualModel, [
-      { role: 'system', content: 'You are a critical evaluator. Review the provided analysis and identify weaknesses, gaps, biases, or errors. Be brutally honest and thorough.' },
-      { role: 'user', content: `Original question: "${prompt}"\n\nInitial analysis:\n${phase1.content}\n\nCritique this analysis thoroughly.` }
-    ]);
-    // Phase 3: Synthesis
-    emitAgentActivity(userId, { type: 'thinking', message: `⚡ Phase 3: Final synthesis...` });
-    const phase3 = await callLLM(provider, apiKey, actualModel, [
-      { role: 'system', content: 'You are a master synthesizer with superintelligent capabilities. Given an initial analysis and its critique, produce the definitive, comprehensive answer that addresses all weaknesses and provides maximum value.' },
-      { role: 'user', content: `Original question: "${prompt}"\n\nInitial analysis:\n${phase1.content}\n\nCritique:\n${phase2.content}\n\nNow produce the final, definitive answer that incorporates all insights and addresses all critiques.` }
-    ]);
-    const totalTokens = phase1.promptTokens + phase1.completionTokens + phase2.promptTokens + phase2.completionTokens + phase3.promptTokens + phase3.completionTokens;
-    db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
-    emitAgentActivity(userId, { type: 'done', message: `✅ ForgeASI complete — ${totalTokens.toLocaleString()} tokens used` });
-    res.json({ success: true, data: {
-      steps: [
-        { phase: 'Deep Analysis', content: phase1.content, tokens: phase1.promptTokens + phase1.completionTokens },
-        { phase: 'Self-Critique', content: phase2.content, tokens: phase2.promptTokens + phase2.completionTokens },
-        { phase: 'Final Synthesis', content: phase3.content, tokens: phase3.promptTokens + phase3.completionTokens },
-      ],
-      synthesis: phase3.content,
-      totalTokens,
-      model: actualModel,
-    }});
-  } catch (err: any) {
-    emitAgentActivity(userId, { type: 'error', message: `❌ ForgeASI error: ${err.message}` });
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ─── ForgeAgent SSE run loop ────────────────────────────────────────────────────
-const AGENT_TOOLS = [
-  { name: 'web_search', description: 'Search the web for information', parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search query' } }, required: ['query'] } },
-  { name: 'web_fetch', description: 'Fetch and read a URL', parameters: { type: 'object', properties: { url: { type: 'string', description: 'URL to fetch' } }, required: ['url'] } },
-  { name: 'extract_data', description: 'Extract structured data from text', parameters: { type: 'object', properties: { text: { type: 'string' }, format: { type: 'string', enum: ['json','csv','list'] } }, required: ['text','format'] } },
-  { name: 'summarize', description: 'Summarize a long text', parameters: { type: 'object', properties: { text: { type: 'string' }, focus: { type: 'string' } }, required: ['text'] } },
-];
-
-async function runAgentTool(toolName: string, args: any, userId: string): Promise<string> {
-  if (toolName === 'web_fetch') {
-    try {
-      const resp = await fetch(args.url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ForgeAgent/1.0)' }, signal: AbortSignal.timeout(12000) });
-      let html = await resp.text();
-      html = html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s{3,}/g,'\n').trim().slice(0,8000);
-      return html || 'No content';
-    } catch (e: any) { return `Fetch error: ${e.message}`; }
-  }
-  if (toolName === 'web_search') {
-    try {
-      const q = encodeURIComponent(args.query);
-      const resp = await fetch(`https://html.duckduckgo.com/html/?q=${q}`, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(8000) });
-      const html = await resp.text();
-      const results: string[] = [];
-      const re = /<a class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(html)) !== null && results.length < 5) {
-        const title = m[2].replace(/<[^>]+>/g,'').trim();
-        results.push(`${title}: ${m[1]}`);
-      }
-      return results.length > 0 ? results.join('\n') : 'No results found';
-    } catch (e: any) { return `Search error: ${e.message}`; }
-  }
-  return `Tool ${toolName} called with: ${JSON.stringify(args)}`;
-}
-
-app.post('/api/agent/run', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const { message, prompt, model: reqModel } = req.body;
-  const msgContent = message || prompt; // accept both field names
-  if (!msgContent?.trim()) { res.status(400).json({ error: 'message required' }); return; }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.flushHeaders();
-
-  const emit = (type: string, data: any) => {
-    try { res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`); } catch {}
-  };
-
-  const rawModel = reqModel || 'claude-sonnet-4';
-  const actualModel = resolveForgeModel(rawModel);
-  const provider = getProviderForModel(actualModel);
-  const apiKey = getUserKey(userId, provider);
-  if (!apiKey) {
-    emit('error', { message: `No ${provider} API key. Add it in Settings.` });
-    res.end(); return;
-  }
-
-  emit('start', { message: `🤖 ForgeAgent starting with ${rawModel}…` });
-  emitAgentActivity(userId, { type: 'start', message: `🤖 ForgeAgent: ${msgContent.slice(0,60)}…` });
-
-  const toolSchemas = AGENT_TOOLS.map(t => `Tool: ${t.name}\nDescription: ${t.description}\nParams: ${JSON.stringify(t.parameters)}`).join('\n\n');
-  const systemPrompt = `You are ForgeAgent, an autonomous AI that can use tools to accomplish tasks.
-
-Available tools:
-${toolSchemas}
-
-To use a tool, respond with ONLY a JSON object (no markdown, no extra text):
-{"tool": "tool_name", "args": {...}, "reasoning": "why you're using this tool"}
-
-When you have a final answer, respond with plain text (not JSON).
-Be efficient: use tools when needed, respond directly when you know the answer.`;
-
-  const messages: any[] = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: msgContent.trim() }
-  ];
-
-  const MAX_ITERS = 6;
-  for (let i = 0; i < MAX_ITERS; i++) {
-    emit('thinking', { message: `🤔 Thinking… (step ${i+1})`, step: i+1 });
-    emitAgentActivity(userId, { type: 'thinking', message: `🤔 ForgeAgent thinking step ${i+1}` });
-    let llmResponse: string;
-    try {
-      const result = await callLLM(provider, apiKey, actualModel, messages.filter(m => m.role !== 'system').length > 0 ? messages : [{ role: 'user', content: msgContent.trim() }]);
-      llmResponse = result.content;
-    } catch (e: any) {
-      emit('error', { message: `LLM error: ${e.message}` });
-      break;
-    }
-
-    // Try to parse as tool call
-    let parsed: any = null;
-    try {
-      const jsonMatch = llmResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
-    } catch {}
-
-    if (parsed?.tool && AGENT_TOOLS.find(t => t.name === parsed.tool)) {
-      emit('tool_call', { tool: parsed.tool, args: parsed.args, reasoning: parsed.reasoning });
-      emitAgentActivity(userId, { type: 'tool', message: `🔧 Using tool: ${parsed.tool}` });
-      const toolResult = await runAgentTool(parsed.tool, parsed.args, userId);
-      emit('tool_result', { tool: parsed.tool, result: toolResult.slice(0, 2000) });
-      messages.push({ role: 'assistant', content: llmResponse });
-      messages.push({ role: 'user', content: `Tool result for ${parsed.tool}:\n${toolResult}\n\nContinue or provide your final answer.` });
-    } else {
-      // Final answer
-      emit('response', { content: llmResponse });
-      emitAgentActivity(userId, { type: 'done', message: `✅ ForgeAgent complete` });
-      break;
-    }
-  }
-
-  emit('done', { message: 'Agent run complete' });
-  res.end();
-});
-
-// ─── Live preview: emit SSE events during regular chat ─────────────────────────
-// Patch the POST /api/threads/:id/messages to also emit live activity events
-// (handled inline in that route via emitAgentActivity — see route above)
-// This route just provides a summary endpoint for the live tab
-app.get('/api/live/summary', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const recent = db.prepare('SELECT id,role,content,created_at FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) ORDER BY created_at DESC LIMIT 10').all(userId);
-  res.json({ success: true, data: recent });
-});
-
-// ─── 404 handler ──────────────────────────────────────────────────────────────
-app.use((req: any, res: any) => {
-  res.status(404).json({ success: false, error: 'NOT_FOUND', path: req.path });
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Forge Platform v6.1 running on port ${PORT} | DB: ${DB_PATH}`);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('💥 Uncaught exception:', err);
-});
-process.on('unhandledRejection', (reason) => {
-  console.error('💥 Unhandled rejection:', reason);
-});
+    res.json({ success: true, data: { agents: responses

@@ -1,6 +1,16 @@
 # Forge Platform — Version History
 
-## v6.8 — 2026-05-23 (current)
+## v6.9 — 2026-05-23 (current)
+
+### Backend: forge-platform/src/index.ts
+- **New: Setup endpoint** — `POST /api/setup/platform-key` (secret-protected) sets platform API keys without admin login. `POST /api/setup/reset-password` resets any user's password. Both protected by `SETUP_SECRET` env var (default: `forge-setup-2026`).
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Fix: OpenRouter default model** — When user only has OpenRouter key, default to `deepseek/deepseek-chat-v3-0324` (reliable paid model) instead of keeping a stale `:free` model that causes stuck-thinking.
+
+---
+
+## v6.8 — 2026-05-23
 
 ### Backend: forge-platform/src/index.ts
 - **Fix: Stuck-thinking root cause** — Railway has a 30s HTTP response timeout. All backend LLM call timeouts were 50-60s, causing Railway to kill connections before errors returned, leaving frontend permanently stuck. All LLM timeouts reduced to 25s (Anthropic, OpenAI, Groq, Gemini, Mistral, Morph, OpenRouter) so errors always return before Railway drops the connection.
