@@ -261,7 +261,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'>('workspace');
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'>('artifacts');
@@ -1460,6 +1460,7 @@ export default function ForgeApp() {
             { id:'platforms', icon:'🌐', label:'Platforms' },
             { id:'settings', icon:'⚙️', label:'Settings' },
             { id:'super', icon:'🌟', label:'Forge Super' },
+            { id:'skills', icon:'🧩', label:'Skills & Tools' },
             { id:'forgeco', icon:'🧑‍💻', label:'ForgeCo' },
             { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
@@ -3422,6 +3423,166 @@ export default function ForgeApp() {
             )}
           </div>
         )}
+
+        {/* ── SKILLS & TOOLS ────────────────────────────────────────────── */}
+        {mainTab === 'skills' && (() => {
+          const SKILLS = [
+            { id:'write', icon:'✍️', name:'Content Writer', category:'Writing', desc:'Blog posts, emails, social media, marketing copy — polished and on-brand.', prompt:'You are an expert content writer. Write clear, engaging, high-quality content. Ask for tone, audience, and length if not specified.' },
+            { id:'code', icon:'💻', name:'Code Generator', category:'Dev', desc:'Generate production-ready code in any language with tests and docs.', prompt:'You are a senior software engineer. Write clean, well-commented, production-ready code. Include error handling and tests when relevant.' },
+            { id:'research', icon:'🔬', name:'Deep Researcher', category:'Research', desc:'Research any topic with structured summaries, sources, and key insights.', prompt:'You are a research analyst. Provide thorough, balanced research with sources. Structure findings with headings, key points, and a summary.' },
+            { id:'sales', icon:'💼', name:'Sales Closer', category:'Sales', desc:'Cold emails, follow-ups, pitches, objection handling — close more deals.', prompt:'You are an expert sales strategist. Write persuasive, personalized outreach and help close deals. Focus on value and the prospect\'s pain points.' },
+            { id:'seo', icon:'📈', name:'SEO Optimizer', category:'Marketing', desc:'SEO-optimized content, keyword research, meta descriptions, and titles.', prompt:'You are an SEO expert. Optimize content for search engines. Provide keyword suggestions, meta titles, descriptions, and structural improvements.' },
+            { id:'legal', icon:'⚖️', name:'Legal Drafter', category:'Legal', desc:'Contracts, NDAs, terms of service, privacy policies — legally sound drafts.', prompt:'You are a legal document drafter. Create clear, legally sound documents. Always recommend professional legal review for critical documents.' },
+            { id:'data', icon:'📊', name:'Data Analyst', category:'Data', desc:'Analyze data, spot trends, generate insights, write SQL queries.', prompt:'You are a data analyst. Analyze data thoroughly, identify patterns, and present insights clearly. Write optimized SQL when needed.' },
+            { id:'product', icon:'🎯', name:'Product Manager', category:'Product', desc:'PRDs, user stories, roadmaps, feature specs, competitive analysis.', prompt:'You are a senior product manager. Write clear PRDs, user stories, and specs. Focus on user value, metrics, and business impact.' },
+            { id:'design', icon:'🎨', name:'UX Designer', category:'Design', desc:'UX copy, wireframe descriptions, user flows, design critiques.', prompt:'You are a UX designer. Help design intuitive, user-centered experiences. Provide clear UX copy, flows, and actionable design feedback.' },
+            { id:'hr', icon:'👥', name:'HR Assistant', category:'HR', desc:'Job descriptions, interview questions, onboarding plans, performance reviews.', prompt:'You are an HR professional. Draft job descriptions, interview guides, and HR documents. Be fair, inclusive, and legally compliant.' },
+            { id:'finance', icon:'💰', name:'Finance Advisor', category:'Finance', desc:'Financial analysis, budgeting, forecasting, investment summaries.', prompt:'You are a financial analyst. Provide clear financial analysis and summaries. Always note this is for informational purposes and not financial advice.' },
+            { id:'translate', icon:'🌐', name:'Translator', category:'Language', desc:'Translate and localize content for any language, preserving tone and context.', prompt:'You are a professional translator and localization expert. Translate accurately while preserving tone, cultural context, and intent.' },
+            { id:'social', icon:'📱', name:'Social Media', category:'Marketing', desc:'Viral posts, captions, hashtag strategies for Twitter, LinkedIn, Instagram.', prompt:'You are a social media expert. Create engaging, platform-optimized content. Match the platform\'s culture and maximize engagement.' },
+            { id:'support', icon:'🎧', name:'Customer Support', category:'Support', desc:'Support responses, help articles, escalation handling — empathetic and fast.', prompt:'You are a customer support specialist. Respond empathetically, solve problems efficiently, and turn negative experiences into positive ones.' },
+            { id:'email', icon:'📧', name:'Email Composer', category:'Communication', desc:'Professional emails for any occasion — clear, concise, and effective.', prompt:'You are an expert communicator. Write clear, professional emails that get results. Adjust tone to context: formal, friendly, or urgent.' },
+            { id:'startup', icon:'🚀', name:'Startup Advisor', category:'Business', desc:'Business plans, pitch decks, go-to-market strategies, investor memos.', prompt:'You are a startup advisor with deep experience in venture and growth. Help build compelling business cases, strategies, and pitch materials.' },
+            { id:'tutor', icon:'🎓', name:'AI Tutor', category:'Education', desc:'Explain complex topics simply. Step-by-step learning plans and quizzes.', prompt:'You are a patient, expert tutor. Explain concepts clearly at the learner\'s level. Use examples, analogies, and check understanding.' },
+            { id:'debug', icon:'🐛', name:'Bug Hunter', category:'Dev', desc:'Find bugs, explain errors, suggest fixes, and improve code quality.', prompt:'You are a debugging expert. Identify root causes of bugs, explain them clearly, and provide tested fixes with explanations.' },
+          ];
+          const CONNECTORS = [
+            { icon:'📧', name:'Gmail', desc:'Read, compose, and manage emails', status:'coming' },
+            { icon:'📅', name:'Google Calendar', desc:'Schedule meetings and manage events', status:'coming' },
+            { icon:'💬', name:'Slack', desc:'Send messages and search channels', status:'coming' },
+            { icon:'📋', name:'Notion', desc:'Read and write Notion pages and databases', status:'coming' },
+            { icon:'🐙', name:'GitHub', desc:'Create PRs, review code, manage issues', status:'coming' },
+            { icon:'🗂️', name:'Jira', desc:'Create and update tickets, sprints', status:'coming' },
+            { icon:'📊', name:'Google Sheets', desc:'Read and write spreadsheet data', status:'coming' },
+            { icon:'🛒', name:'Shopify', desc:'Manage products, orders, customers', status:'coming' },
+            { icon:'💳', name:'Stripe', desc:'Monitor payments and subscriptions', status:'coming' },
+            { icon:'📞', name:'Twilio', desc:'Send SMS and voice communications', status:'coming' },
+            { icon:'🌐', name:'Web Browser', desc:'Browse, scrape, and research any URL', status:'active' },
+            { icon:'💻', name:'Terminal', desc:'Run shell commands and scripts', status:'active' },
+            { icon:'🗄️', name:'Database', desc:'Query your connected databases', status:'active' },
+            { icon:'📁', name:'File System', desc:'Read and write local files', status:'active' },
+          ];
+          const [skillSearch, setSkillSearch] = React.useState('');
+          const [skillCat, setSkillCat] = React.useState('All');
+          const [genTopic, setGenTopic] = React.useState('');
+          const [genIndustry, setGenIndustry] = React.useState('');
+          const [genGoal, setGenGoal] = React.useState('');
+          const [genResult, setGenResult] = React.useState('');
+          const [genLoading, setGenLoading] = React.useState(false);
+          const cats = ['All', ...Array.from(new Set(SKILLS.map(s => s.category)))];
+          const filtered = SKILLS.filter(s => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
+          const launchSkill = (skill: typeof SKILLS[0]) => {
+            setMainTab('workspace');
+            setTimeout(() => {
+              setInput(`[Using skill: ${skill.name}]\n\n`);
+              textareaRef.current?.focus();
+            }, 100);
+          };
+          const generateUseCase = async () => {
+            if (!genTopic.trim()) return;
+            setGenLoading(true); setGenResult('');
+            try {
+              const prompt = `You are a business AI consultant. Generate a detailed, actionable use-case for AI automation.\n\nBusiness/Topic: ${genTopic}\nIndustry: ${genIndustry || 'General'}\nGoal: ${genGoal || 'Improve efficiency and productivity'}\n\nProvide:\n1. Use Case Title\n2. Problem It Solves (2-3 sentences)\n3. AI Workflow (step-by-step)\n4. Tools/Skills Needed\n5. Expected Outcomes & ROI\n6. Implementation Steps (quick wins first)\n7. Sample prompt to get started immediately\n\nBe specific, practical, and focus on immediate value.`;
+              const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
+              const d = await apiFetch('/forge/chat', { method:'POST', body:JSON.stringify({ message: prompt, model: cleanModel || 'forge-pro' }) }, user.token);
+              setGenResult(d?.data?.content || d?.content || 'No response');
+            } catch (e: any) { setGenResult('⚠️ ' + e.message); }
+            setGenLoading(false);
+          };
+          return (
+            <div style={{ flex:1, overflowY:'auto', padding:32, background:'var(--fg-bg)' }}>
+              <div style={{ maxWidth:960, margin:'0 auto' }}>
+                {/* Header */}
+                <div style={{ marginBottom:32 }}>
+                  <h1 style={{ margin:'0 0 6px', fontSize:28, fontWeight:900, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.5px' }}>🧩 Skills & Tools</h1>
+                  <p style={{ margin:0, color:'var(--fg-text3)', fontSize:15 }}>Prebuilt AI skills, connectors, and a use-case generator for any business or workflow.</p>
+                </div>
+
+                {/* Use-Case Generator */}
+                <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-orange)', borderRadius:16, padding:28, marginBottom:36 }}>
+                  <h2 style={{ margin:'0 0 6px', fontSize:17, fontWeight:800, color:'var(--fg-orange)' }}>⚡ AI Use-Case Generator</h2>
+                  <p style={{ margin:'0 0 20px', color:'var(--fg-text3)', fontSize:13 }}>Describe your business or challenge and get a complete AI automation blueprint instantly.</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+                    <div>
+                      <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Business / Challenge *</label>
+                      <input value={genTopic} onChange={e => setGenTopic(e.target.value)} placeholder="e.g. Customer support for SaaS" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Industry</label>
+                      <input value={genIndustry} onChange={e => setGenIndustry(e.target.value)} placeholder="e.g. E-commerce, Healthcare, Finance" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom:16 }}>
+                    <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Goal / Outcome</label>
+                    <input value={genGoal} onChange={e => setGenGoal(e.target.value)} placeholder="e.g. Reduce response time, increase revenue, automate repetitive tasks" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                  </div>
+                  <button onClick={generateUseCase} disabled={genLoading || !genTopic.trim()} style={{ padding:'11px 28px', background: genTopic.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: genLoading ? 0.7 : 1 }}>
+                    {genLoading ? '⟳ Generating…' : '⚡ Generate Use-Case Blueprint'}
+                  </button>
+                  {genResult && (
+                    <div style={{ marginTop:20, padding:'16px 20px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:12, fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap', maxHeight:400, overflowY:'auto' }}>
+                      {genResult}
+                      <div style={{ marginTop:12, display:'flex', gap:8 }}>
+                        <button onClick={() => { setMainTab('workspace'); setTimeout(() => { setInput(genResult.slice(0,200)); textareaRef.current?.focus(); }, 100); }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer' }}>💬 Open in Chat</button>
+                        <button onClick={() => navigator.clipboard.writeText(genResult)} style={{ padding:'6px 14px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>📋 Copy</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Skills Library */}
+                <div style={{ marginBottom:36 }}>
+                  <h2 style={{ margin:'0 0 16px', fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🎯 Skills Library</h2>
+                  <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+                    <input value={skillSearch} onChange={e => setSkillSearch(e.target.value)} placeholder="Search skills…" style={{ flex:'1 1 200px', padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+                    {cats.map(c => <button key={c} onClick={() => setSkillCat(c)} style={{ padding:'6px 14px', borderRadius:20, border: skillCat===c ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border2)', background: skillCat===c ? 'var(--fg-orange)' : 'transparent', color: skillCat===c ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: skillCat===c ? 600 : 400, flexShrink:0 }}>{c}</button>)}
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:12 }}>
+                    {filtered.map(skill => (
+                      <div key={skill.id} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:'16px', display:'flex', flexDirection:'column', gap:8, transition:'border-color 0.15s' }}
+                        onMouseEnter={e => (e.currentTarget.style.borderColor='var(--fg-orange)')} onMouseLeave={e => (e.currentTarget.style.borderColor='var(--fg-border)')}>
+                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                          <span style={{ fontSize:24 }}>{skill.icon}</span>
+                          <div>
+                            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{skill.name}</div>
+                            <div style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:600, textTransform:'uppercase' }}>{skill.category}</div>
+                          </div>
+                        </div>
+                        <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)', lineHeight:1.5, flex:1 }}>{skill.desc}</p>
+                        <button onClick={() => launchSkill(skill)} style={{ padding:'7px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', alignSelf:'flex-start' }}>▶ Launch</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Connectors */}
+                <div>
+                  <h2 style={{ margin:'0 0 6px', fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🔌 Connectors</h2>
+                  <p style={{ margin:'0 0 16px', color:'var(--fg-text3)', fontSize:13 }}>Connect Forge to your tools and data sources.</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:10 }}>
+                    {CONNECTORS.map(c => (
+                      <div key={c.name} style={{ background:'var(--fg-bg3)', border:`1px solid ${c.status==='active' ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:6 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                          <span style={{ fontSize:20 }}>{c.icon}</span>
+                          <div>
+                            <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{c.name}</div>
+                            <span style={{ fontSize:10, color: c.status==='active' ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{c.status==='active' ? '● Active' : '○ Coming Soon'}</span>
+                          </div>
+                        </div>
+                        <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{c.desc}</p>
+                        {c.status==='active' ? (
+                          <button onClick={() => setMainTab('workspace')} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, alignSelf:'flex-start' }}>Use Now</button>
+                        ) : (
+                          <span style={{ fontSize:10, color:'var(--fg-text3)', fontStyle:'italic' }}>Request early access →</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── FORGECO ───────────────────────────────────────────────────── */}
         {mainTab === 'forgeco' && (
