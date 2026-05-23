@@ -1,6 +1,13 @@
 # Forge Platform — Version History
 
-## v6.7 — 2026-05-23 (current)
+## v6.8 — 2026-05-23 (current)
+
+### Backend: forge-platform/src/index.ts
+- **Fix: Stuck-thinking root cause** — Railway has a 30s HTTP response timeout. All backend LLM call timeouts were 50-60s, causing Railway to kill connections before errors returned, leaving frontend permanently stuck. All LLM timeouts reduced to 25s (Anthropic, OpenAI, Groq, Gemini, Mistral, Morph, OpenRouter) so errors always return before Railway drops the connection.
+
+---
+
+## v6.7 — 2026-05-23
 
 ### Backend: forge-platform/src/index.ts
 - **Fix: Gemini system message** — System messages now passed via `systemInstruction` (proper Gemini API field) instead of being converted to user messages. Eliminates 400 errors from consecutive same-role messages.
