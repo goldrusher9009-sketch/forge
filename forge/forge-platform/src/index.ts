@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.9 — Setup endpoint for platform keys + password reset; OpenRouter default model fix
+ * Forge Platform v6.10 — Fix OR auto-select: prefer paid model; fix timeout error messages
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -1301,33 +1301,6 @@ app.delete('/api/admin/platform-keys/:provider', requireAuth, requireAdmin, (req
   res.json({ success: true });
 });
 
-// ── Setup endpoint (secret-protected, no auth required) ─────────
-const SETUP_SECRET = process.env.SETUP_SECRET || 'forge-setup-2026';
-app.post('/api/setup/platform-key', (req, res) => {
-  const { secret, provider, key } = req.body;
-  if (secret !== SETUP_SECRET) { res.status(403).json({ success: false, error: 'Forbidden' }); return; }
-  if (!provider || !key) { res.status(400).json({ success: false, error: 'provider and key required' }); return; }
-  const enc = encryptKey(key);
-  const existing = db.prepare('SELECT provider FROM platform_api_keys WHERE provider=?').get(provider);
-  if (existing) {
-    db.prepare("UPDATE platform_api_keys SET key_encrypted=?,enabled=1,updated_at=datetime('now') WHERE provider=?").run(enc, provider);
-  } else {
-    db.prepare('INSERT INTO platform_api_keys (provider,key_encrypted,enabled) VALUES (?,?,1)').run(provider, enc);
-  }
-  res.json({ success: true, message: `Platform key for ${provider} saved` });
-});
-
-app.post('/api/setup/reset-password', (req, res) => {
-  const { secret, email, newPassword } = req.body;
-  if (secret !== SETUP_SECRET) { res.status(403).json({ success: false, error: 'Forbidden' }); return; }
-  if (!email || !newPassword) { res.status(400).json({ success: false, error: 'email and newPassword required' }); return; }
-  const userRow = db.prepare('SELECT id FROM users WHERE email=?').get(email) as any;
-  if (!userRow) { res.status(404).json({ success: false, error: 'User not found' }); return; }
-  const hash = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE users SET password_hash=? WHERE email=?').run(hash, email);
-  res.json({ success: true, message: `Password reset for ${email}` });
-});
-
 // Model management
 app.get('/api/admin/models', requireAuth, requireAdmin, (_req, res) => {
   res.json({ success: true, data: db.prepare('SELECT * FROM platform_models ORDER BY provider, id').all() });
@@ -2314,4 +2287,4 @@ app.post('/api/forgemulti/run', requireAuth, async (req: AuthRequest, res) => {
       { role: 'user', content: `Original question: "${prompt}"\n\nExpert responses:\n${responses.map(r => `**${r.icon} ${r.role}**: ${r.content}`).join('\n\n')}\n\nProvide a synthesized final answer.` }
     ]);
     emitAgentActivity(userId, { type: 'done', message: `✅ ForgeMulti synthesis complete` });
-    res.json({ success: true, data: { agents: responses
+    res.json({ success: true, data: { agents: responses                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
