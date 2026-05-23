@@ -1062,11 +1062,28 @@ app.get('/api/router/usage/history', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ── Missing routes frontend expects ───────────────────────────
-// Vault = alias for keys list with preview format
+// Vault = alias for keys list with preview format + real key_status
 app.get('/api/keys/vault', requireAuth, (req: AuthRequest, res) => {
-  const rows = db.prepare('SELECT provider, created_at, updated_at FROM api_keys WHERE user_id=?').all(req.user!.sub) as any[];
-  const data = rows.map(r => ({ provider: r.provider, key_preview: '••••••••', key_status: 'active', created_at: r.created_at, updated_at: r.updated_at }));
+  const rows = db.prepare('SELECT provider, key_status, key_encrypted, created_at, updated_at FROM api_keys WHERE user_id=?').all(req.user!.sub) as any[];
+  const data = rows.map(r => {
+    let preview = '••••••••';
+    try {
+      const dec = decryptKey(r.key_encrypted);
+      if (dec && dec.length > 8) preview = dec.slice(0, 4) + '••••' + dec.slice(-4);
+    } catch {}
+    return { provider: r.provider, key_preview: preview, key_status: r.key_status || 'active', created_at: r.created_at, updated_at: r.updated_at };
+  });
   res.json({ success: true, data });
+});
+
+// Per-provider usage analytics
+app.get('/api/keys/:provider/usage', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const provider = req.params.provider;
+  const rows = db.prepare('SELECT model, total_tokens, prompt_tokens, completion_tokens, provider_cost, created_at FROM usage_logs WHERE user_id=? AND provider=? ORDER BY created_at DESC LIMIT 500').all(userId, provider) as any[];
+  const totals = db.prepare('SELECT COALESCE(SUM(total_tokens),0) as total_tokens, COALESCE(SUM(prompt_tokens),0) as prompt_tokens, COALESCE(SUM(completion_tokens),0) as completion_tokens, COALESCE(SUM(provider_cost),0) as cost, COUNT(*) as requests FROM usage_logs WHERE user_id=? AND provider=?').get(userId, provider) as any;
+  const byModel = db.prepare('SELECT model, COALESCE(SUM(total_tokens),0) as tokens, COUNT(*) as requests FROM usage_logs WHERE user_id=? AND provider=? GROUP BY model ORDER BY tokens DESC').all(userId, provider) as any[];
+  res.json({ success: true, data: { rows, totals, byModel } });
 });
 
 // Billing usage

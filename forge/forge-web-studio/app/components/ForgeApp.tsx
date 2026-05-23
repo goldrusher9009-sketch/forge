@@ -282,6 +282,8 @@ export default function ForgeApp() {
   const [selectedModel, setSelectedModel] = useState(''); // auto-set by loadApiKeys once user's actual keys are known
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
+  const [agentSteps, setAgentSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
+  const addAgentStep = (icon: string, text: string) => setAgentSteps(prev => [...prev.slice(-8), { icon, text, ts: Date.now() }]);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
 
@@ -364,6 +366,8 @@ export default function ForgeApp() {
   const [vaultUpdateInputs, setVaultUpdateInputs] = useState<Record<string,string>>({});
   const [vaultUpdating, setVaultUpdating] = useState('');
   const [vaultValidating, setVaultValidating] = useState<Record<string,boolean>>({});
+  const [keyUsageData, setKeyUsageData] = useState<Record<string,{total_tokens:number;requests:number;cost:number;byModel:{model:string;tokens:number;requests:number}[]}>>({});
+  const [keyUsageExpanded, setKeyUsageExpanded] = useState<Record<string,boolean>>({});
 
   // Thread context menu
   const [threadMenu, setThreadMenu] = useState<{ threadId:string; x:number; y:number } | null>(null);
@@ -992,6 +996,16 @@ export default function ForgeApp() {
     } catch (e: any) { alert(e.message); }
   };
 
+  const loadKeyUsage = async (provider: string) => {
+    if (!user) return;
+    try {
+      const d = await apiFetch(`/keys/${provider}/usage`, {}, user.token);
+      if (d?.data?.totals) {
+        setKeyUsageData(prev => ({ ...prev, [provider]: { total_tokens: d.data.totals.total_tokens, requests: d.data.totals.requests, cost: d.data.totals.cost, byModel: d.data.byModel || [] } }));
+      }
+    } catch {}
+  };
+
   // ── SuperAgent actions ────────────────────────────────────────────────────
   const harvestMemory = async () => {
     if (!user) return;
@@ -1069,7 +1083,9 @@ export default function ForgeApp() {
     }
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
+    setAgentSteps([]);
     setMultiResponses([]);
+    addAgentStep('🧠', 'Processing your message…');
     // Create AbortController so Stop button can cancel this request
     const abortCtrl = new AbortController();
     sendAbortRef.current = abortCtrl;
@@ -1144,7 +1160,10 @@ export default function ForgeApp() {
       };
 
       try {
+        const modelLabel = cleanModel.split('/').pop() || cleanModel;
+        addAgentStep('⚙️', `Sending to ${modelLabel}…`);
         const r = await apiFetch(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
+        addAgentStep('✅', 'Response received');
         applyResp(r);
       } catch (e: any) {
         // Thread was wiped (Railway redeploy) -- create a fresh one and retry
@@ -1768,14 +1787,29 @@ export default function ForgeApp() {
                   })}
                   {typing && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-                      {/* Flash-cycling avatar */}
                       <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite', flexShrink:0 }}>⚡</div>
-                      <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'2px solid var(--fg-orange)', animation:'forge-ring 1.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:10 }}>
-                        {/* Bouncing dots */}
-                        <div style={{ display:'flex', gap:4, alignItems:'center' }}>
-                          {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
-                        </div>
-                        <span style={{ fontSize:11, fontWeight:600, animation:'forge-text-flash 1.8s ease-in-out infinite', letterSpacing:'0.05em' }}>thinking…</span>
+                      <div style={{ padding:'10px 16px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', minWidth:180, maxWidth:360 }}>
+                        {/* Live activity steps */}
+                        {agentSteps.length > 0 ? (
+                          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                            {agentSteps.map((s, i) => (
+                              <div key={i} style={{ display:'flex', alignItems:'center', gap:7, opacity: i === agentSteps.length - 1 ? 1 : 0.45 }}>
+                                <span style={{ fontSize:13 }}>{s.icon}</span>
+                                <span style={{ fontSize:11, color:'var(--fg-text2)', animation: i === agentSteps.length - 1 ? 'forge-text-flash 1.4s ease-in-out infinite' : 'none' }}>{s.text}</span>
+                                {i === agentSteps.length - 1 && (
+                                  <div style={{ display:'flex', gap:3, alignItems:'center', marginLeft:'auto' }}>
+                                    {[0,1,2].map(j => <div key={j} style={{ width:4, height:4, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${j*0.2}s infinite` }} />)}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                            {[0,1,2].map(i => <div key={i} style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                            <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:4 }}>thinking…</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -2910,6 +2944,7 @@ export default function ForgeApp() {
                           {vaultValidating[v.provider] ? '⟳ Testing…' : '⚡ Validate'}
                         </button>
                         <button onClick={() => deleteVaultKey(v.provider)} title="Remove key" style={{ background:'transparent', border:'1px solid var(--fg-red)', borderRadius:6, color:'var(--fg-red)', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>✕ Delete</button>
+                        <button onClick={async () => { await loadKeyUsage(v.provider); setKeyUsageExpanded(prev => ({ ...prev, [v.provider]: !prev[v.provider] })); }} style={{ background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'3px 8px', whiteSpace:'nowrap' }}>📊 Usage</button>
                       </div>
                       {/* Update key inline */}
                       <div style={{ display:'flex', gap:8 }}>
@@ -2928,6 +2963,26 @@ export default function ForgeApp() {
                           {vaultUpdating===v.provider ? '…' : 'Update'}
                         </button>
                       </div>
+                      {/* Key Usage Analytics */}
+                      {keyUsageExpanded[v.provider] && (
+                        <div style={{ marginTop:10, padding:'10px 12px', background:'var(--fg-bg3)', borderRadius:8, border:'1px solid var(--fg-border)' }}>
+                          {keyUsageData[v.provider] ? (
+                            <>
+                              <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:8 }}>
+                                <div style={{ textAlign:'center' }}><div style={{ fontSize:16, fontWeight:700, color:'var(--fg-orange)' }}>{(keyUsageData[v.provider].total_tokens/1000).toFixed(1)}K</div><div style={{ fontSize:10, color:'var(--fg-text3)' }}>tokens</div></div>
+                                <div style={{ textAlign:'center' }}><div style={{ fontSize:16, fontWeight:700, color:'var(--fg-blue)' }}>{keyUsageData[v.provider].requests}</div><div style={{ fontSize:10, color:'var(--fg-text3)' }}>requests</div></div>
+                                <div style={{ textAlign:'center' }}><div style={{ fontSize:16, fontWeight:700, color:'var(--fg-green)' }}>${(keyUsageData[v.provider].cost||0).toFixed(4)}</div><div style={{ fontSize:10, color:'var(--fg-text3)' }}>cost</div></div>
+                              </div>
+                              {keyUsageData[v.provider].byModel.slice(0,5).map(m => (
+                                <div key={m.model} style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--fg-text2)', padding:'2px 0', borderBottom:'1px solid var(--fg-border)' }}>
+                                  <span style={{ fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:200 }}>{m.model}</span>
+                                  <span style={{ color:'var(--fg-text3)', flexShrink:0, marginLeft:8 }}>{(m.tokens/1000).toFixed(1)}K · {m.requests}×</span>
+                                </div>
+                              ))}
+                            </>
+                          ) : <span style={{ fontSize:11, color:'var(--fg-text3)' }}>No usage data yet.</span>}
+                        </div>
+                      )}
                       <p style={{ margin:'6px 0 0', fontSize:10, color:'var(--fg-text3)' }}>Last updated {new Date(v.updated_at).toLocaleString()}</p>
                     </div>
                   ))}
