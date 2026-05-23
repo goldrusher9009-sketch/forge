@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.10 -- Fix OR auto-select: prefer paid model over slow free models
+﻿// Forge AI Workspace v6.14 -- Heartbeat keep-alive: 5s pings prevent Railway 30s timeout
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -118,7 +118,7 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string): P
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   // 28s timeout for POST requests — backend LLM timeout is 20s, Railway kills at 30s, so errors always return
-  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(28000) : undefined);
+  const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(60000) : undefined);
   const res = await fetch(`${API}${path}`, { ...opts, headers, ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
@@ -1110,7 +1110,7 @@ export default function ForgeApp() {
     const safetyTimer = setTimeout(() => {
       abortCtrl.abort(new DOMException('Request timed out — the model took too long to respond. Try a faster model.', 'TimeoutError'));
       setSending(false); setTyping(false); sendAbortRef.current = null;
-    }, 30000);
+    }, 55000);
     // Don't auto-open live tab — user stays in chat view
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
@@ -1587,7 +1587,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.10</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.14</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -3882,4 +3882,4 @@ export default function ForgeApp() {
               <div style={{ marginBottom:16 }}>
                 <p style={{ fontSize:13, fontWeight:600, color:'var(--fg-text2)', margin:'0 0 8px' }}>Base model for all agents:</p>
                 <select value={multiModel} onChange={e => setMultiModel(e.target.value)} style={{ padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', minWidth:220 }}>
-                 
+                            

@@ -1526,13 +1526,18 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   if (!content?.trim()) { res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
   const userId = req.user!.sub;
   ensureSubscription(userId);
-  // Keep-alive: send response headers immediately so Railway 30s idle timeout never fires
+
+  // ── Railway keep-alive ──────────────────────────────────────────────────────
+  // Railway kills HTTP connections silent after 30s of no bytes sent.
+  // We use chunked JSON: send whitespace heartbeats every 5s while LLM runs,
+  // then send the real JSON payload at the end. JSON.parse ignores leading whitespace.
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Transfer-Encoding', 'chunked');
   res.setHeader('X-Accel-Buffering', 'no');
-  // Send a single space immediately — keeps the connection alive while LLM runs
-  // Frontend JSON.parse ignores leading whitespace
-  res.write(' ');
+  res.write(' '); // immediate first byte — starts the clock reset
+  const heartbeat = setInterval(() => { try { res.write(' '); } catch {} }, 5000);
+  const endRes = (payload: object) => { clearInterval(heartbeat); res.end(JSON.stringify(payload)); };
+  // ────────────────────────────────────────────────────────────────────────────
 
   // Save user message
   const userMsgId = uuidv4();
@@ -1571,13 +1576,13 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   const actualModel = resolveForgeModel(model);
   const provider = getProviderForModel(actualModel);
   const apiKey = getUserKey(userId, provider);
-  // No API key at all — tell user to add one, never show token limit message
+  // No API key — tell user to add one
   if (!apiKey) {
     const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
     const asstMsgId = uuidv4();
     const errMsg = `⚠️ No ${providerLabel} API key found. Go to Settings → LLM Providers and add your ${providerLabel} key.`;
     db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(asstMsgId, thread.id, 'assistant', errMsg);
-    res.end(JSON.stringify({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } }));
+    endRes({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
     return;
   }
   // Token budget enforcement disabled until billing is live
@@ -1595,11 +1600,11 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens) VALUES (?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens);
     db.prepare("UPDATE threads SET updated_at=datetime('now'),total_tokens=total_tokens+? WHERE id=?").run(totalTokens, thread.id);
     emitAgentActivity(userId, { type: 'done', message: `✅ Response ready — ${totalTokens} tokens`, model, elapsed: 0 });
-    res.end(JSON.stringify({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens } }));
+    endRes({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ Error: ${err.message}`, model });
     console.error('Thread chat error:', err.message);
-    res.statusCode = 500; res.end(JSON.stringify({ success: false, error: 'LLM_ERROR', message: err.message }));
+    endRes({ success: false, error: 'LLM_ERROR', message: err.message });
   }
 });
 

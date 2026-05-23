@@ -1,6 +1,18 @@
 # Forge Platform — Version History
 
-## v6.13 — 2026-05-23 (current)
+## v6.14 — 2026-05-23 (current)
+
+### Backend: forge-platform/src/index.ts
+- **Fix: Heartbeat keep-alive** — `app.post('/api/threads/:id/messages')` now sends a `setInterval` heartbeat every 5s (`res.write(' ')`) while the LLM runs. Railway 30s idle timeout can never fire because bytes are sent continuously. `endRes()` helper clears the interval and flushes the real JSON payload.
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **Fix: apiFetch POST timeout** — raised 28s → 60s (backend heartbeats keep connection alive, so longer timeouts are safe now)
+- **Fix: safetyTimer** — raised 30s → 55s (gives LLM up to 55s before UI auto-unsticks; backend will have responded well before that)
+- **Version badge** — v6.10 → v6.14
+
+---
+
+## v6.13 — 2026-05-23
 
 ### Backend: forge-platform/src/index.ts
 - **Fix: Railway keep-alive complete** — `app.post('/api/threads/:id/messages')` now sends headers + `res.write(' ')` immediately on request, then uses `res.end(JSON.stringify(...))` for all response paths (NO_API_KEY, success, LLM_ERROR). Prevents Railway 30s idle timeout from killing Workspace chat.
