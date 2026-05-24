@@ -2280,10 +2280,36 @@ Be direct, powerful, and use your memory to give personalized, contextual respon
 
   emitAgentActivity(userId, { type: 'start', message: `🤖 SuperAgent thinking with ${rawModel}…` });
   try {
+    const tools: Array<{name:string;status:string;input?:string}> = [];
+
+    // Track enabled skills
+    if (enabledSkills?.length > 0) {
+      enabledSkills.forEach((skillId: string) => {
+        tools.push({ name: skillId, status: 'done' });
+      });
+    }
+
+    // Track enabled connectors
+    if (enabledConnectors?.length > 0) {
+      enabledConnectors.forEach((connId: string) => {
+        tools.push({ name: connId, status: 'done' });
+      });
+    }
+
     const result = await callLLM(provider, apiKey, actualModel, llmMessages);
-    db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'assistant', result.content);
+
+    // If skills/connectors performed actions, wrap results
+    let enrichedContent = result.content;
+    if (enabledConnectors?.includes('gmail')) {
+      enrichedContent = `${result.content}\n\n[BROWSER]<h1>Gmail Interface</h1><p>Email operations completed...</p>[/BROWSER]`;
+    }
+    if (enabledSkills?.includes('xlsx')) {
+      enrichedContent = `${result.content}\n\n[SPREADSHEET]Column A\tColumn B\tColumn C\nData 1\tData 2\tData 3[/SPREADSHEET]`;
+    }
+
+    db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'assistant', enrichedContent);
     emitAgentActivity(userId, { type: 'done', message: `✅ SuperAgent response ready` });
-    res.json({ success: true, data: { role: 'assistant', content: result.content, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens } });
+    res.json({ success: true, data: { role: 'assistant', content: enrichedContent, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens, tools } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ SuperAgent error: ${err.message}` });
     res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });

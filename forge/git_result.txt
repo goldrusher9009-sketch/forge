@@ -1,5 +1,10 @@
-[main d7e72c9] ui-fix-3-remove-duplicate-closing-junk
- 4 files changed, 4 insertions(+), 15 deletions(-)
- create mode 100644 forge/git_status.txt
+warning: in the working copy of 'forge/do_git.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'forge/forge-platform/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'forge/forge-web-studio/app/components/ForgeApp.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'forge/git_result.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'forge/do_git.bat', LF will be replaced by CRLF the next time Git touches it
+[main 5051915] ui-fix-4-dynamic-models-skills-live
+ 5 files changed, 82 insertions(+), 34 deletions(-)
+ create mode 100644 forge/do_git.bat
 To https://github.com/goldrusher9009-sketch/forge.git
-   4514042..d7e72c9  main -> main
+   d7e72c9..5051915  main -> main

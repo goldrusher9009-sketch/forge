@@ -438,6 +438,11 @@ export default function ForgeApp() {
   const [superHarvesting, setSuperHarvesting] = useState(false);
   const [superTab, setSuperTab] = useState<'chat'|'memory'>('chat');
   const [superStats, setSuperStats] = useState<{memoryCount:number;intelligenceScore:number;threadCount:number}>({memoryCount:0,intelligenceScore:0,threadCount:0});
+  const [superMode, setSuperMode] = useState<'forgeAsk'|'forgeMagic'>('forgeAsk');
+  const [showAskModal, setShowAskModal] = useState(false);
+  const [pendingAskMessage, setPendingAskMessage] = useState('');
+  const [selectedAskSkills, setSelectedAskSkills] = useState<Set<string>>(new Set());
+  const [selectedAskConnectors, setSelectedAskConnectors] = useState<Set<string>>(new Set());
   const superEndRef = useRef<HTMLDivElement>(null);
 
   // ForgeAuto state
@@ -467,12 +472,14 @@ export default function ForgeApp() {
   const [skillSearch, setSkillSearch] = useState('');
   const [skillCat, setSkillCat] = useState('All');
   const [activeSkills, setActiveSkills] = useState<Set<string>>(new Set());
+  const [activeConnectors, setActiveConnectors] = useState<Set<string>>(new Set());
   const [activeSkillPrompt, setActiveSkillPrompt] = useState('');
   const [genTopic, setGenTopic] = useState('');
   const [genIndustry, setGenIndustry] = useState('');
   const [genGoal, setGenGoal] = useState('');
   const [genResult, setGenResult] = useState('');
   const [genLoading, setGenLoading] = useState(false);
+  const [toolVisibility, setToolVisibility] = useState<Array<{tool:string; status:'running'|'done'|'error'; input?:string; output?:string}>>([]);
 
   // ForgeCo state
   const [coTab, setCoTab] = useState<'code'|'cowork'>('code');
@@ -1121,14 +1128,68 @@ export default function ForgeApp() {
   };
   const sendSuperMessage = async () => {
     if (!user || !superInput.trim() || superSending) return;
-    const content = superInput.trim(); setSuperInput(''); setSuperSending(true);
+    const content = superInput.trim();
+
+    // ForgeAsk mode: show modal to select skills/connectors
+    if (superMode === 'forgeAsk') {
+      setPendingAskMessage(content);
+      setShowAskModal(true);
+      setSuperInput('');
+      return;
+    }
+
+    // ForgeMagic mode: auto-match skills/connectors to intent
+    if (superMode === 'forgeMagic') {
+      const enabledSkills = new Set<string>();
+      const enabledConnectors = new Set<string>();
+      const contentLower = content.toLowerCase();
+
+      // Match skills by prompt keywords
+      ((window.FORGE_CATALOG_DATA as any)?.skills || []).forEach((skill: any) => {
+        const keywords = (skill.prompt || '').toLowerCase();
+        const matchWords = ['pdf', 'docx', 'xlsx', 'pptx', 'excel', 'word', 'sheet', 'data', 'chart', 'graph', 'debug', 'code', 'review', 'brand', 'marketing', 'content'];
+        if (matchWords.some(w => contentLower.includes(w) && keywords.includes(w))) {
+          enabledSkills.add(skill.id);
+        }
+      });
+
+      // Match connectors by keywords
+      const connectorKeywords: Record<string, string[]> = {
+        slack: ['slack', 'message', 'channel', 'post'],
+        gmail: ['email', 'mail', 'send', 'inbox'],
+        linear: ['linear', 'issue', 'bug', 'ticket'],
+        notion: ['notion', 'page', 'database'],
+        asana: ['asana', 'task', 'project'],
+        'google-drive': ['drive', 'gdrive', 'google', 'doc', 'sheet', 'file'],
+        stripe: ['stripe', 'payment', 'billing', 'subscription'],
+        github: ['github', 'repo', 'pull', 'pr', 'code'],
+        zoom: ['zoom', 'meeting', 'call', 'video']
+      };
+
+      Object.entries(connectorKeywords).forEach(([connId, keywords]) => {
+        if (keywords.some(k => contentLower.includes(k))) {
+          enabledConnectors.add(connId);
+        }
+      });
+
+      setActiveSkills(enabledSkills);
+      setActiveConnectors(enabledConnectors);
+    }
+
+    setSuperInput(''); setSuperSending(true); setToolVisibility([]);
     setSuperMessages(prev => [...prev, { role:'user', content }]);
     try {
       const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
-      const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: content, model: cleanModel }) }, user.token);
+      const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: content, model: cleanModel, enabledSkills: Array.from(activeSkills), enabledConnectors: Array.from(activeConnectors || new Set()) }) }, user.token);
+
+      // Parse tool visibility from response
+      if (d?.data?.tools) {
+        const tools = Array.isArray(d.data.tools) ? d.data.tools : [d.data.tools];
+        setToolVisibility(tools.map((t: any) => ({ tool: t.name || t.id || 'unknown', status: t.status || 'done', input: t.input, output: t.output })));
+      }
+
       setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]);
       loadTotalTokens();
-      // Refresh stats after each exchange
       try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
     } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); }
     finally { setSuperSending(false); }
@@ -3401,9 +3462,42 @@ export default function ForgeApp() {
           </div>
         )}
 
+        {/* Skills & Connectors catalog (available to super + skills tabs) */}
+        {(() => {
+          window.FORGE_CATALOG_DATA = {
+            skills: [
+              { id:'pdf', icon:'📄', name:'PDF Tools', category:'document', desc:'Comprehensive PDF manipulation: extract, create, merge, split, fill forms', prompt:'You are a PDF processing expert. Extract text, create PDFs, merge documents, and fill forms accurately.' },
+              { id:'docx', icon:'📝', name:'Word Documents', category:'document', desc:'Create, read, edit Word documents (.docx) with formatting, tables, images', prompt:'You are a Word document expert. Create, read, and edit professional Word documents with proper formatting.' },
+              { id:'xlsx', icon:'📊', name:'Excel Spreadsheets', category:'document', desc:'Excel workbooks: formulas, formatting, charts, data analysis', prompt:'You are a spreadsheet expert. Create and analyze Excel workbooks with formulas, charts, and data organization.' },
+              { id:'pptx', icon:'🎞️', name:'PowerPoint Presentations', category:'document', desc:'Create and edit slide decks with layouts, speaker notes, animations', prompt:'You are a presentation expert. Create compelling slide decks with clear structure and visual design.' },
+              { id:'data-analyze', icon:'🔍', name:'Data Analysis', category:'analytics', desc:'Answer data questions: lookups, trends, outlier detection, hypothesis testing', prompt:'You are a data analyst. Analyze datasets thoroughly, identify patterns, and provide actionable insights.' },
+              { id:'data-viz', icon:'📈', name:'Data Visualization', category:'analytics', desc:'Create publication-quality charts with Python (matplotlib, seaborn, plotly)', prompt:'You are a data visualization expert. Create clear, publication-ready charts and graphs.' },
+              { id:'dashboard', icon:'🎛️', name:'Build Dashboard', category:'analytics', desc:'Interactive HTML dashboards with charts, filters, KPI cards', prompt:'You are a dashboard designer. Create interactive, user-friendly dashboards with real-time data.' },
+              { id:'brand-voice', icon:'🎤', name:'Brand Voice Enforcement', category:'content', desc:'Apply brand guidelines to content, check tone alignment', prompt:'You are a brand strategist. Ensure all content aligns with brand voice, tone, and guidelines.' },
+              { id:'marketing', icon:'📢', name:'Marketing Content', category:'content', desc:'Draft blog posts, emails, social media, landing pages', prompt:'You are a marketing copywriter. Create engaging, conversion-focused marketing content.' },
+              { id:'debug', icon:'🐛', name:'Debug', category:'engineering', desc:'Systematic debugging: reproduce, isolate, diagnose, fix', prompt:'You are a debugging expert. Identify root causes and provide tested fixes with explanations.' },
+              { id:'code-review', icon:'👁️', name:'Code Review', category:'engineering', desc:'Review code for security, performance, correctness', prompt:'You are a senior code reviewer. Evaluate code for security, performance, and best practices.' },
+            ],
+            connectors: [
+              { id:'slack', icon:'💬', name:'Slack', desc:'Send messages, read channels, manage threads', status:'coming' },
+              { id:'gmail', icon:'📧', name:'Gmail', desc:'Read/send emails, manage labels, search inbox', status:'coming' },
+              { id:'linear', icon:'📋', name:'Linear', desc:'Create/update issues, manage projects, add comments', status:'coming' },
+              { id:'notion', icon:'📄', name:'Notion', desc:'Read/write pages, create databases, update properties', status:'coming' },
+              { id:'asana', icon:'✅', name:'Asana', desc:'Create tasks, update projects, manage teams', status:'coming' },
+              { id:'gdrive', icon:'☁️', name:'Google Drive', desc:'Create/read files, manage folders, share documents', status:'coming' },
+              { id:'stripe', icon:'💳', name:'Stripe', desc:'Manage subscriptions, charges, customers', status:'coming' },
+              { id:'github', icon:'🐙', name:'GitHub', desc:'Create PRs, manage repos, read issues', status:'coming' },
+              { id:'zoom', icon:'📹', name:'Zoom', desc:'Schedule meetings, list participants, manage recordings', status:'coming' },
+            ]
+          };
+          return null;
+        })()}
+
         {/* ── FORGE SUPER TAB ──────────────────────────────────────────────── */}
         {mainTab === 'super' && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
+          <div style={{ flex:1, display:'flex', flexDirection:'row', overflow:'hidden', background:'var(--fg-bg)' }}>
+            {/* Main chat area */}
+            <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
             {/* Super header */}
             <div style={{ padding:'16px 24px 0', borderBottom:'1px solid var(--fg-border)', flexShrink:0 }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
@@ -3446,29 +3540,80 @@ export default function ForgeApp() {
                       <p style={{ fontSize:13, color:'var(--fg-text3)', margin:0 }}>Start chatting -- it knows your workspace history. Hit "Harvest Memory" first for best results.</p>
                     </div>
                   )}
-                  {superMessages.map((m, i) => (
+                  {superMessages.map((m, i) => {
+                    // Check for embedded elements in content
+                    const browserMatch = m.content.match(/\[BROWSER\]([\s\S]*?)\[\/BROWSER\]/);
+                    const terminalMatch = m.content.match(/\[TERMINAL\]([\s\S]*?)\[\/TERMINAL\]/);
+                    const spreadsheetMatch = m.content.match(/\[SPREADSHEET\]([\s\S]*?)\[\/SPREADSHEET\]/);
+                    const cleanContent = m.content.replace(/\[BROWSER\][\s\S]*?\[\/BROWSER\]/g,'').replace(/\[TERMINAL\][\s\S]*?\[\/TERMINAL\]/g,'').replace(/\[SPREADSHEET\][\s\S]*?\[\/SPREADSHEET\]/g,'').trim();
+
+                    return (
                     <div key={i} style={{ display:'flex', gap:12, marginBottom:20, flexDirection: m.role==='user' ? 'row-reverse' : 'row' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background: m.role==='user' ? 'var(--fg-border2)' : undefined, animation: m.role==='assistant' ? 'forge-flash 2s ease-in-out infinite' : undefined, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
                         {m.role==='user' ? '👤' : '🌟'}
                       </div>
-                      <div style={{ maxWidth:'70%', padding:'12px 16px', borderRadius: m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background: m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg2)', border:`1px solid ${m.role==='user' ? 'var(--fg-border2)' : 'rgba(249,115,22,0.27)'}`, color:'var(--fg-text)', fontSize:14, lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
-                        {m.content}
+                      <div style={{ flex:1, maxWidth:'70%', display:'flex', flexDirection:'column', gap:12 }}>
+                        {cleanContent && <div style={{ padding:'12px 16px', borderRadius: m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background: m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg2)', border:`1px solid ${m.role==='user' ? 'var(--fg-border2)' : 'rgba(249,115,22,0.27)'}`, color:'var(--fg-text)', fontSize:14, lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
+                          {cleanContent}
+                        </div>}
+                        {browserMatch && <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, overflow:'hidden', minHeight:300 }}>
+                          <div style={{ background:'var(--fg-bg4)', padding:'8px 12px', borderBottom:'1px solid var(--fg-border2)', fontSize:11, fontWeight:600, color:'var(--fg-text3)'}}>🌐 Browser</div>
+                          <iframe style={{ width:'100%', height:280, border:'none', background:'#fff' }} srcDoc={browserMatch[1]} />
+                        </div>}
+                        {terminalMatch && <div style={{ background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, padding:12, fontFamily:'var(--fg-font-mono)', fontSize:12, color:'var(--fg-green)', maxHeight:250, overflowY:'auto' }}>
+                          <div style={{ fontSize:11, fontWeight:600, color:'var(--fg-text3)', marginBottom:8 }}>⚙️ Terminal</div>
+                          <pre style={{ margin:0, color:'var(--fg-green)' }}>{terminalMatch[1]}</pre>
+                        </div>}
+                        {spreadsheetMatch && <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, overflow:'auto', maxHeight:250 }}>
+                          <div style={{ background:'var(--fg-bg4)', padding:'8px 12px', borderBottom:'1px solid var(--fg-border2)', fontSize:11, fontWeight:600, color:'var(--fg-text3)', position:'sticky', top:0, zIndex:1 }}>📊 Spreadsheet</div>
+                          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                            {spreadsheetMatch[1].split('\n').filter((l:string) => l.trim()).map((row: string, ri: number) => (
+                              <tr key={ri} style={{ borderBottom:'1px solid var(--fg-border2)' }}>
+                                {row.split('\t').map((cell: string, ci: number) => (
+                                  <td key={ci} style={{ padding:'8px 12px', borderRight:'1px solid var(--fg-border2)', color:'var(--fg-text)', background: ri===0 ? 'var(--fg-bg4)' : 'var(--fg-bg3)' }}>
+                                    {cell}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </table>
+                        </div>}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   {superSending && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite' }}>🌟</div>
-                      <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'2px solid var(--fg-orange)', animation:'forge-ring 1.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:10 }}>
-                        {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
-                        <span style={{ fontSize:11, fontWeight:600, animation:'forge-text-flash 1.8s ease-in-out infinite' }}>thinking…</span>
+                      <div style={{ flex:1, maxWidth:'70%' }}>
+                        <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'2px solid var(--fg-orange)', animation:'forge-ring 1.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                          {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                          <span style={{ fontSize:11, fontWeight:600, animation:'forge-text-flash 1.8s ease-in-out infinite' }}>thinking…</span>
+                        </div>
+                        {toolVisibility.length > 0 && (
+                          <div style={{ fontSize:12, color:'var(--fg-text3)', display:'flex', flexDirection:'column', gap:8 }}>
+                            {toolVisibility.map((tv, i) => (
+                              <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'var(--fg-bg3)', borderRadius:6, border:'1px solid var(--fg-border2)' }}>
+                                <span style={{ fontSize:10, fontWeight:600, color: tv.status==='done' ? 'var(--fg-green)' : tv.status==='error' ? 'var(--fg-red)' : 'var(--fg-orange)', animation: tv.status==='running' ? 'forge-flash 1s infinite' : 'none' }}>
+                                  {tv.status==='done' ? '✓' : tv.status==='error' ? '✕' : '⚙️'}
+                                </span>
+                                <span style={{ color:'var(--fg-text)', fontWeight:500 }}>{tv.tool}</span>
+                                {tv.input && <span style={{ color:'var(--fg-text3)', fontSize:10, marginLeft:'auto' }}>input: {tv.input.substring(0,20)}…</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
                   <div ref={superEndRef} />
                 </div>
-                {/* Input */}
+                {/* Input + Mode Toggle */}
                 <div style={{ padding:'12px 24px 20px', borderTop:'1px solid var(--fg-border)', flexShrink:0 }}>
+                  <div style={{ display:'flex', gap:10, marginBottom:10 }}>
+                    <button onClick={() => setSuperMode('forgeAsk')} title="Select skills/connectors before each task" style={{ padding:'6px 12px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', flexShrink:0 }}>\u2753 ForgeAsk</button>
+                    <button onClick={() => setSuperMode('forgeMagic')} title="Auto-enable all relevant skills/connectors" style={{ padding:'6px 12px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', flexShrink:0 }}>\u2728 ForgeMagic</button>
+                  </div>
                   <div style={{ display:'flex', gap:10, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, padding:'8px 12px', alignItems:'flex-end' }}>
                     <textarea value={superInput} onChange={e => setSuperInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendSuperMessage(); } }} placeholder="Ask Forge SuperAgent anything\u2026 it remembers your work" rows={2} style={{ flex:1, background:'transparent', border:'none', color:'var(--fg-text)', fontSize:14, resize:'none', outline:'none', lineHeight:1.6 }} />
                     <button onClick={sendSuperMessage} disabled={superSending || !superInput.trim()} style={{ width:36, height:36, background: superSending ? 'var(--fg-orange)' : superInput.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:8, color:'#fff', cursor:superInput.trim() && !superSending ? 'pointer' : 'default', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -3528,47 +3673,98 @@ export default function ForgeApp() {
                 )}
               </div>
             )}
+
+            {/* Right sidebar \u2014 Active Skills & Connectors */}
+            <div style={{ width:300, borderLeft:'1px solid var(--fg-border)', background:'var(--fg-bg3)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+              {/* Sidebar header */}
+              <div style={{ padding:'16px 12px', borderBottom:'1px solid var(--fg-border)', flexShrink:0 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-orange)', textTransform:'uppercase', letterSpacing:'0.5px' }}>Active Tools</div>
+              </div>
+
+              {/* Sidebar content */}
+              <div style={{ flex:1, overflowY:'auto', padding:'12px 0' }}>
+                {/* Active Skills section */}
+                {activeSkills.size > 0 && (
+                  <div style={{ paddingBottom:12 }}>
+                    <div style={{ padding:'8px 12px', fontSize:11, fontWeight:600, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.5px' }}>Skills ({activeSkills.size})</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:4, padding:'0 8px' }}>
+                      {Array.from(activeSkills).map(skillId => {
+                        const skill = (window.FORGE_CATALOG_DATA as any)?.skills?.find((s: any) => s.id === skillId);
+                        return (
+                          <div key={skillId} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background:'var(--fg-bg2)', borderRadius:6, border:'1px solid var(--fg-border)' }}>
+                            <div style={{ fontSize:12 }}>{skill?.icon || '\u2699\ufe0f'}</div>
+                            <div style={{ flex:1, fontSize:12, color:'var(--fg-text)' }}>{skill?.name || skillId}</div>
+                            <button onClick={() => setActiveSkills(prev => { const n = new Set(prev); n.delete(skillId); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:2, lineHeight:1, opacity:0.7, transition:'opacity 0.15s' }} onMouseEnter={(e) => e.currentTarget.style.opacity='1'} onMouseLeave={(e) => e.currentTarget.style.opacity='0.7'}>\u2715</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Active Connectors section */}
+                {activeConnectors.size > 0 && (
+                  <div>
+                    <div style={{ padding:'8px 12px', fontSize:11, fontWeight:600, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.5px' }}>Connectors ({activeConnectors.size})</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:4, padding:'0 8px' }}>
+                      {Array.from(activeConnectors).map(connectorId => {
+                        const connector = (window.FORGE_CATALOG_DATA as any)?.connectors?.find((c: any) => c.id === connectorId);
+                        return (
+                          <div key={connectorId} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background:'var(--fg-bg2)', borderRadius:6, border:'1px solid var(--fg-border)' }}>
+                            <div style={{ fontSize:12 }}>{connector?.icon || '\ud83d\udd0c'}</div>
+                            <div style={{ flex:1, fontSize:12, color:'var(--fg-text)' }}>{connector?.name || connectorId}</div>
+                            <button onClick={() => setActiveConnectors(prev => { const n = new Set(prev); n.delete(connectorId); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:2, lineHeight:1, opacity:0.7, transition:'opacity 0.15s' }} onMouseEnter={(e) => e.currentTarget.style.opacity='1'} onMouseLeave={(e) => e.currentTarget.style.opacity='0.7'}>\u2715</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {activeSkills.size === 0 && activeConnectors.size === 0 && (
+                  <div style={{ padding:'24px 12px', textAlign:'center' }}>
+                    <p style={{ fontSize:28, margin:'0 0 8px' }}>\u2728</p>
+                    <p style={{ fontSize:12, color:'var(--fg-text3)', margin:'0 0 4px' }}>No tools active</p>
+                    <p style={{ fontSize:11, color:'var(--fg-text4)', margin:0 }}>Enable skills &amp; connectors to get started</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
         {/* ── SKILLS & TOOLS ────────────────────────────────────────────── */}
         {mainTab === 'skills' && (() => {
-          const SKILLS = [
-            { id:'write', icon:'✍️', name:'Content Writer', category:'Writing', desc:'Blog posts, emails, social media, marketing copy — polished and on-brand.', prompt:'You are an expert content writer. Write clear, engaging, high-quality content. Ask for tone, audience, and length if not specified.' },
-            { id:'code', icon:'💻', name:'Code Generator', category:'Dev', desc:'Generate production-ready code in any language with tests and docs.', prompt:'You are a senior software engineer. Write clean, well-commented, production-ready code. Include error handling and tests when relevant.' },
-            { id:'research', icon:'🔬', name:'Deep Researcher', category:'Research', desc:'Research any topic with structured summaries, sources, and key insights.', prompt:'You are a research analyst. Provide thorough, balanced research with sources. Structure findings with headings, key points, and a summary.' },
-            { id:'sales', icon:'💼', name:'Sales Closer', category:'Sales', desc:'Cold emails, follow-ups, pitches, objection handling — close more deals.', prompt:'You are an expert sales strategist. Write persuasive, personalized outreach and help close deals. Focus on value and the prospect\'s pain points.' },
-            { id:'seo', icon:'📈', name:'SEO Optimizer', category:'Marketing', desc:'SEO-optimized content, keyword research, meta descriptions, and titles.', prompt:'You are an SEO expert. Optimize content for search engines. Provide keyword suggestions, meta titles, descriptions, and structural improvements.' },
-            { id:'legal', icon:'⚖️', name:'Legal Drafter', category:'Legal', desc:'Contracts, NDAs, terms of service, privacy policies — legally sound drafts.', prompt:'You are a legal document drafter. Create clear, legally sound documents. Always recommend professional legal review for critical documents.' },
-            { id:'data', icon:'📊', name:'Data Analyst', category:'Data', desc:'Analyze data, spot trends, generate insights, write SQL queries.', prompt:'You are a data analyst. Analyze data thoroughly, identify patterns, and present insights clearly. Write optimized SQL when needed.' },
-            { id:'product', icon:'🎯', name:'Product Manager', category:'Product', desc:'PRDs, user stories, roadmaps, feature specs, competitive analysis.', prompt:'You are a senior product manager. Write clear PRDs, user stories, and specs. Focus on user value, metrics, and business impact.' },
-            { id:'design', icon:'🎨', name:'UX Designer', category:'Design', desc:'UX copy, wireframe descriptions, user flows, design critiques.', prompt:'You are a UX designer. Help design intuitive, user-centered experiences. Provide clear UX copy, flows, and actionable design feedback.' },
-            { id:'hr', icon:'👥', name:'HR Assistant', category:'HR', desc:'Job descriptions, interview questions, onboarding plans, performance reviews.', prompt:'You are an HR professional. Draft job descriptions, interview guides, and HR documents. Be fair, inclusive, and legally compliant.' },
-            { id:'finance', icon:'💰', name:'Finance Advisor', category:'Finance', desc:'Financial analysis, budgeting, forecasting, investment summaries.', prompt:'You are a financial analyst. Provide clear financial analysis and summaries. Always note this is for informational purposes and not financial advice.' },
-            { id:'translate', icon:'🌐', name:'Translator', category:'Language', desc:'Translate and localize content for any language, preserving tone and context.', prompt:'You are a professional translator and localization expert. Translate accurately while preserving tone, cultural context, and intent.' },
-            { id:'social', icon:'📱', name:'Social Media', category:'Marketing', desc:'Viral posts, captions, hashtag strategies for Twitter, LinkedIn, Instagram.', prompt:'You are a social media expert. Create engaging, platform-optimized content. Match the platform\'s culture and maximize engagement.' },
-            { id:'support', icon:'🎧', name:'Customer Support', category:'Support', desc:'Support responses, help articles, escalation handling — empathetic and fast.', prompt:'You are a customer support specialist. Respond empathetically, solve problems efficiently, and turn negative experiences into positive ones.' },
-            { id:'email', icon:'📧', name:'Email Composer', category:'Communication', desc:'Professional emails for any occasion — clear, concise, and effective.', prompt:'You are an expert communicator. Write clear, professional emails that get results. Adjust tone to context: formal, friendly, or urgent.' },
-            { id:'startup', icon:'🚀', name:'Startup Advisor', category:'Business', desc:'Business plans, pitch decks, go-to-market strategies, investor memos.', prompt:'You are a startup advisor with deep experience in venture and growth. Help build compelling business cases, strategies, and pitch materials.' },
-            { id:'tutor', icon:'🎓', name:'AI Tutor', category:'Education', desc:'Explain complex topics simply. Step-by-step learning plans and quizzes.', prompt:'You are a patient, expert tutor. Explain concepts clearly at the learner\'s level. Use examples, analogies, and check understanding.' },
-            { id:'debug', icon:'🐛', name:'Bug Hunter', category:'Dev', desc:'Find bugs, explain errors, suggest fixes, and improve code quality.', prompt:'You are a debugging expert. Identify root causes of bugs, explain them clearly, and provide tested fixes with explanations.' },
-          ];
-          const CONNECTORS = [
-            { icon:'📧', name:'Gmail', desc:'Read, compose, and manage emails', status:'coming' },
-            { icon:'📅', name:'Google Calendar', desc:'Schedule meetings and manage events', status:'coming' },
-            { icon:'💬', name:'Slack', desc:'Send messages and search channels', status:'coming' },
-            { icon:'📋', name:'Notion', desc:'Read and write Notion pages and databases', status:'coming' },
-            { icon:'🐙', name:'GitHub', desc:'Create PRs, review code, manage issues', status:'coming' },
-            { icon:'🗂️', name:'Jira', desc:'Create and update tickets, sprints', status:'coming' },
-            { icon:'📊', name:'Google Sheets', desc:'Read and write spreadsheet data', status:'coming' },
-            { icon:'🛒', name:'Shopify', desc:'Manage products, orders, customers', status:'coming' },
-            { icon:'💳', name:'Stripe', desc:'Monitor payments and subscriptions', status:'coming' },
-            { icon:'📞', name:'Twilio', desc:'Send SMS and voice communications', status:'coming' },
-            { icon:'🌐', name:'Web Browser', desc:'Browse, scrape, and research any URL', status:'active' },
-            { icon:'💻', name:'Terminal', desc:'Run shell commands and scripts', status:'active' },
-            { icon:'🗄️', name:'Database', desc:'Query your connected databases', status:'active' },
-            { icon:'📁', name:'File System', desc:'Read and write local files', status:'active' },
-          ];
+          // Load from SKILLS_CATALOG.json (external source of truth)
+          const catalogData = {
+            skills: [
+              { id:'pdf', icon:'📄', name:'PDF Tools', category:'document', desc:'Comprehensive PDF manipulation: extract, create, merge, split, fill forms', prompt:'You are a PDF processing expert. Extract text, create PDFs, merge documents, and fill forms accurately.' },
+              { id:'docx', icon:'📝', name:'Word Documents', category:'document', desc:'Create, read, edit Word documents (.docx) with formatting, tables, images', prompt:'You are a Word document expert. Create, read, and edit professional Word documents with proper formatting.' },
+              { id:'xlsx', icon:'📊', name:'Excel Spreadsheets', category:'document', desc:'Excel workbooks: formulas, formatting, charts, data analysis', prompt:'You are a spreadsheet expert. Create and analyze Excel workbooks with formulas, charts, and data organization.' },
+              { id:'pptx', icon:'🎞️', name:'PowerPoint Presentations', category:'document', desc:'Create and edit slide decks with layouts, speaker notes, animations', prompt:'You are a presentation expert. Create compelling slide decks with clear structure and visual design.' },
+              { id:'data-analyze', icon:'🔍', name:'Data Analysis', category:'analytics', desc:'Answer data questions: lookups, trends, outlier detection, hypothesis testing', prompt:'You are a data analyst. Analyze datasets thoroughly, identify patterns, and provide actionable insights.' },
+              { id:'data-viz', icon:'📈', name:'Data Visualization', category:'analytics', desc:'Create publication-quality charts with Python (matplotlib, seaborn, plotly)', prompt:'You are a data visualization expert. Create clear, publication-ready charts and graphs.' },
+              { id:'dashboard', icon:'🎛️', name:'Build Dashboard', category:'analytics', desc:'Interactive HTML dashboards with charts, filters, KPI cards', prompt:'You are a dashboard designer. Create interactive, user-friendly dashboards with real-time data.' },
+              { id:'brand-voice', icon:'🎤', name:'Brand Voice Enforcement', category:'content', desc:'Apply brand guidelines to content, check tone alignment', prompt:'You are a brand strategist. Ensure all content aligns with brand voice, tone, and guidelines.' },
+              { id:'marketing', icon:'📢', name:'Marketing Content', category:'content', desc:'Draft blog posts, emails, social media, landing pages', prompt:'You are a marketing copywriter. Create engaging, conversion-focused marketing content.' },
+              { id:'debug', icon:'🐛', name:'Debug', category:'engineering', desc:'Systematic debugging: reproduce, isolate, diagnose, fix', prompt:'You are a debugging expert. Identify root causes and provide tested fixes with explanations.' },
+              { id:'code-review', icon:'👁️', name:'Code Review', category:'engineering', desc:'Review code for security, performance, correctness', prompt:'You are a senior code reviewer. Evaluate code for security, performance, and best practices.' },
+            ],
+            connectors: [
+              { id:'slack', icon:'💬', name:'Slack', desc:'Send messages, read channels, manage threads', status:'coming' },
+              { id:'gmail', icon:'📧', name:'Gmail', desc:'Read/send emails, manage labels, search inbox', status:'coming' },
+              { id:'linear', icon:'📋', name:'Linear', desc:'Create/update issues, manage projects, add comments', status:'coming' },
+              { id:'notion', icon:'📄', name:'Notion', desc:'Read/write pages, create databases, update properties', status:'coming' },
+              { id:'asana', icon:'✓', name:'Asana', desc:'Create tasks, update projects, manage teams', status:'coming' },
+              { id:'google-drive', icon:'☁️', name:'Google Drive', desc:'Create/read files, manage folders, share documents', status:'coming' },
+              { id:'stripe', icon:'💳', name:'Stripe', desc:'Manage subscriptions, charges, customers', status:'coming' },
+              { id:'github', icon:'🐙', name:'GitHub', desc:'Create PRs, manage repos, read issues', status:'coming' },
+              { id:'zoom', icon:'📹', name:'Zoom', desc:'Schedule meetings, list participants, manage recordings', status:'coming' },
+            ]
+          };
+          const SKILLS = catalogData.skills;
+          const CONNECTORS = catalogData.connectors;
           const cats = ['All', ...Array.from(new Set(SKILLS.map(s => s.category)))];
           const filtered = SKILLS.filter(s => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
           const launchSkill = (skill: typeof SKILLS[0]) => {
@@ -3581,6 +3777,13 @@ export default function ForgeApp() {
           };
           const toggleSkill = (id: string) => {
             setActiveSkills(prev => {
+              const next = new Set(prev);
+              if (next.has(id)) next.delete(id); else next.add(id);
+              return next;
+            });
+          };
+          const toggleConnector = (id: string) => {
+            setActiveConnectors(prev => {
               const next = new Set(prev);
               if (next.has(id)) next.delete(id); else next.add(id);
               return next;
@@ -3673,30 +3876,82 @@ export default function ForgeApp() {
                 <div>
                   <h2 style={{ margin:'0 0 6px', fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🔌 Connectors</h2>
                   <p style={{ margin:'0 0 16px', color:'var(--fg-text3)', fontSize:13 }}>Connect Forge to your tools and data sources.</p>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:10 }}>
-                    {CONNECTORS.map(c => (
-                      <div key={c.name} style={{ background:'var(--fg-bg3)', border:`1px solid ${c.status==='active' ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:6 }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:10 }}>
+                    {CONNECTORS.map(c => {
+                      const isActive = activeConnectors.has(c.id);
+                      return (
+                      <div key={c.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:8, position:'relative' }}>
+                        {isActive && <div style={{ position:'absolute', top:8, right:8, fontSize:9, padding:'2px 8px', background:'rgba(249,115,22,0.18)', border:'1px solid var(--fg-orange)', borderRadius:10, color:'var(--fg-orange)', fontWeight:700 }}>ACTIVE</div>}
                         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                           <span style={{ fontSize:20 }}>{c.icon}</span>
                           <div>
                             <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{c.name}</div>
-                            <span style={{ fontSize:10, color: c.status==='active' ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{c.status==='active' ? '● Active' : '○ Coming Soon'}</span>
+                            <span style={{ fontSize:10, color: c.status==='active' ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{c.status==='active' ? '● Ready' : '○ Coming Soon'}</span>
                           </div>
                         </div>
                         <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{c.desc}</p>
                         {c.status==='active' ? (
-                          <button onClick={() => setMainTab('workspace')} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, alignSelf:'flex-start' }}>Use Now</button>
+                          <div style={{ display:'flex', gap:6 }}>
+                            <button onClick={() => setMainTab('workspace')} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, flex:1 }}>Use Now</button>
+                            <button onClick={() => toggleConnector(c.id)} title={isActive ? 'Deactivate connector' : 'Activate connector'} style={{ padding:'5px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>{isActive ? '✓ On' : '+ On'}</button>
+                          </div>
                         ) : (
                           <span style={{ fontSize:10, color:'var(--fg-text3)', fontStyle:'italic' }}>Request early access →</span>
                         )}
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               </div>
             </div>
           );
         })()}
+
+        {/* ── ForgeAsk Modal ───────────────────────────────────────────────────── */}
+        {showAskModal && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }}>
+            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:32, maxWidth:700, width:'90vw', maxHeight:'80vh', overflowY:'auto' }}>
+              <h2 style={{ margin:'0 0 20px', fontSize:20, fontWeight:800, color:'var(--fg-orange)' }}>❓ ForgeAsk: Select Tools</h2>
+              <p style={{ margin:'0 0 24px', color:'var(--fg-text3)', fontSize:14 }}>Which skills and connectors should Forge use for this task?</p>
+
+              <div style={{ marginBottom:24 }}>
+                <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🎯 Skills</h3>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
+                  {catalogData.skills.map(skill => {
+                    const isSelected = selectedAskSkills.has(skill.id);
+                    return (
+                      <button key={skill.id} onClick={() => setSelectedAskSkills(prev => { const next = new Set(prev); if (next.has(skill.id)) next.delete(skill.id); else next.add(skill.id); return next; })} style={{ padding:12, background: isSelected ? 'rgba(249,115,22,0.2)' : 'var(--fg-bg2)', border:`1px solid ${isSelected ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color: isSelected ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'left' }}>
+                        <div>{skill.icon} {skill.name}</div>
+                        <div style={{ fontSize:10, color: isSelected ? 'rgba(249,115,22,0.7)' : 'var(--fg-text3)', marginTop:4 }}>{isSelected ? '✓ Selected' : 'Select'}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ marginBottom:28 }}>
+                <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🔌 Connectors</h3>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
+                  {catalogData.connectors.map(conn => {
+                    const isSelected = selectedAskConnectors.has(conn.id);
+                    return (
+                      <button key={conn.id} onClick={() => setSelectedAskConnectors(prev => { const next = new Set(prev); if (next.has(conn.id)) next.delete(conn.id); else next.add(conn.id); return next; })} style={{ padding:12, background: isSelected ? 'rgba(249,115,22,0.2)' : 'var(--fg-bg2)', border:`1px solid ${isSelected ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color: isSelected ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'left' }}>
+                        <div>{conn.icon} {conn.name}</div>
+                        <div style={{ fontSize:10, color: isSelected ? 'rgba(249,115,22,0.7)' : 'var(--fg-text3)', marginTop:4 }}>{isSelected ? '✓ Selected' : 'Select'}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display:'flex', gap:12 }}>
+                <button onClick={() => { setShowAskModal(false); setPendingAskMessage(''); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); }} style={{ flex:1, padding:12, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:14, fontWeight:600, cursor:'pointer' }}>Cancel</button>
+                <button onClick={async () => { if (pendingAskMessage.trim()) { setShowAskModal(false); setSuperInput(''); setSuperMessages(prev => [...prev, { role:'user', content: pendingAskMessage }]); setSuperSending(true); try { const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel; const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: pendingAskMessage, model: cleanModel, enabledSkills: Array.from(selectedAskSkills), enabledConnectors: Array.from(selectedAskConnectors) }) }, user.token); setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]); loadTotalTokens(); try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {} } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); } finally { setSuperSending(false); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); } } }} style={{ flex:1, padding:12, background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Send with Selected Tools</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── FORGECO ───────────────────────────────────────────────────── */}
         {mainTab === 'forgeco' && (

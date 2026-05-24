@@ -1,0 +1,137 @@
+{
+  "skills": [
+    {
+      "id": "pdf",
+      "name": "PDF Tools",
+      "description": "Comprehensive PDF manipulation: extract, create, merge, split, fill forms",
+      "category": "document",
+      "triggers": ["PDF", ".pdf", "form", "extract", "merge", "split"]
+    },
+    {
+      "id": "docx",
+      "name": "Word Documents",
+      "description": "Create, read, edit Word documents (.docx) with formatting, tables, images",
+      "category": "document",
+      "triggers": ["Word doc", ".docx", "document"]
+    },
+    {
+      "id": "xlsx",
+      "name": "Excel Spreadsheets",
+      "description": "Excel workbooks: formulas, formatting, charts, data analysis",
+      "category": "document",
+      "triggers": ["Excel", "spreadsheet", ".xlsx", "data table", "budget"]
+    },
+    {
+      "id": "pptx",
+      "name": "PowerPoint Presentations",
+      "description": "Create and edit slide decks with layouts, speaker notes, animations",
+      "category": "document",
+      "triggers": ["deck", "slides", "presentation", ".pptx"]
+    },
+    {
+      "id": "data-analyze",
+      "name": "Data Analysis",
+      "description": "Answer data questions: lookups, trends, outlier detection, hypothesis testing",
+      "category": "analytics",
+      "triggers": ["data", "metric", "trend", "analysis"]
+    },
+    {
+      "id": "data-create-viz",
+      "name": "Data Visualization",
+      "description": "Create publication-quality charts with Python (matplotlib, seaborn, plotly)",
+      "category": "analytics",
+      "triggers": ["chart", "graph", "visualization", "plot"]
+    },
+    {
+      "id": "data-build-dashboard",
+      "name": "Build Dashboard",
+      "description": "Interactive HTML dashboards with charts, filters, KPI cards",
+      "category": "analytics",
+      "triggers": ["dashboard", "monitor", "overview"]
+    },
+    {
+      "id": "brand-voice-enforce",
+      "name": "Brand Voice Enforcement",
+      "description": "Apply brand guidelines to content, check tone alignment",
+      "category": "content",
+      "triggers": ["brand voice", "on-brand", "tone"]
+    },
+    {
+      "id": "marketing-content",
+      "name": "Marketing Content",
+      "description": "Draft blog posts, emails, social media, landing pages",
+      "category": "content",
+      "triggers": ["blog", "email", "social", "content"]
+    },
+    {
+      "id": "engineering-debug",
+      "name": "Debug",
+      "description": "Systematic debugging: reproduce, isolate, diagnose, fix",
+      "category": "engineering",
+      "triggers": ["bug", "error", "debug"]
+    },
+    {
+      "id": "engineering-code-review",
+      "name": "Code Review",
+      "description": "Review code for security, performance, correctness",
+      "category": "engineering",
+      "triggers": ["review", "PR", "code review"]
+    }
+  ],
+  "connectors": [
+    {
+      "id": "slack",
+      "name": "Slack",
+      "description": "Send messages, read channels, manage threads",
+      "tools": ["send_message", "read_channel", "post_thread"]
+    },
+    {
+      "id": "gmail",
+      "name": "Gmail",
+      "description": "Read/send emails, manage labels, search inbox",
+      "tools": ["send_email", "read_thread", "search_emails"]
+    },
+    {
+      "id": "linear",
+      "name": "Linear",
+      "description": "Create/update issues, manage projects, add comments",
+      "tools": ["create_issue", "update_issue", "search_issues"]
+    },
+    {
+      "id": "notion",
+      "name": "Notion",
+      "description": "Read/write pages, create databases, update properties",
+      "tools": ["read_page", "create_page", "update_page"]
+    },
+    {
+      "id": "asana",
+      "name": "Asana",
+      "description": "Create tasks, update projects, manage teams",
+      "tools": ["create_task", "update_task", "add_comment"]
+    },
+    {
+      "id": "google-drive",
+      "name": "Google Drive",
+      "description": "Create/read files, manage folders, share documents",
+      "tools": ["create_file", "read_file", "move_file"]
+    },
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "description": "Manage subscriptions, charges, customers",
+      "tools": ["list_charges", "create_subscription", "update_customer"]
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "description": "Create PRs, manage repos, read issues",
+      "tools": ["create_pull_request", "merge_pull_request", "list_issues"]
+    },
+    {
+      "id": "zoom",
+      "name": "Zoom",
+      "description": "Schedule meetings, list participants, manage recordings",
+      "tools": ["create_meeting", "list_meetings", "get_recording"]
+    }
+  ]
+}
