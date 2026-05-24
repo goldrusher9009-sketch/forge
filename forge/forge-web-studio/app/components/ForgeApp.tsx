@@ -466,6 +466,8 @@ export default function ForgeApp() {
   // Skills & Tools state (must be top-level — not inside render IIFE)
   const [skillSearch, setSkillSearch] = useState('');
   const [skillCat, setSkillCat] = useState('All');
+  const [activeSkills, setActiveSkills] = useState<Set<string>>(new Set());
+  const [activeSkillPrompt, setActiveSkillPrompt] = useState('');
   const [genTopic, setGenTopic] = useState('');
   const [genIndustry, setGenIndustry] = useState('');
   const [genGoal, setGenGoal] = useState('');
@@ -602,6 +604,40 @@ export default function ForgeApp() {
   useEffect(() => { if (selectedModel) setAsiModel(selectedModel); }, [selectedModel]);
   // Pre-select active model in ForgeAuto when selectedModel changes
   useEffect(() => { if (selectedModel) setAutoSelectedModels(prev => prev.includes(selectedModel) ? prev : [selectedModel, ...prev]); }, [selectedModel]);
+
+  // Build flat list of active models for ForgeASI/Multi/Auto selectors
+  const getActiveModels = (): {id:string; label:string}[] => {
+    const out: {id:string; label:string}[] = [];
+    // Forge-aliased models (require anthropic key)
+    if (savedProviders['anthropic']) {
+      out.push({ id:'forge-pro', label:'⚡ Forge Pro' }, { id:'forge-flash', label:'⚡ Forge Flash' });
+    }
+    // Direct provider models
+    const DIRECT_MAP: Record<string, {id:string;label:string}[]> = {
+      anthropic: [{ id:'claude-sonnet-4-6', label:'Claude Sonnet 4.6' }, { id:'claude-opus-4', label:'Claude Opus 4' }, { id:'claude-haiku-4-5', label:'Claude Haiku 4.5' }],
+      openai:    [{ id:'gpt-4o', label:'GPT-4o' }, { id:'gpt-4o-mini', label:'GPT-4o Mini' }, { id:'o3', label:'o3' }],
+      gemini:    [{ id:'gemini-2.5-pro', label:'Gemini 2.5 Pro' }, { id:'gemini-2.0-flash', label:'Gemini 2.0 Flash' }],
+      groq:      [{ id:'llama-3.3-70b-versatile', label:'Llama 3.3 70B' }, { id:'llama-3.1-8b-instant', label:'Llama 3.1 8B' }],
+      mistral:   [{ id:'mistral-large-latest', label:'Mistral Large' }, { id:'mistral-small-latest', label:'Mistral Small' }],
+    };
+    Object.entries(DIRECT_MAP).forEach(([p, models]) => {
+      if (savedProviders[p]) models.forEach(m => out.push(m));
+    });
+    // Dynamic provider models
+    Object.entries(providerModels).forEach(([p, models]) => {
+      if (p === 'openrouter' || !savedProviders[p]) return;
+      models.slice(0, 5).forEach(m => {
+        if (!out.find(x => x.id === m.id)) out.push({ id: m.id, label: m.name || m.id });
+      });
+    });
+    // OpenRouter top models
+    if (savedProviders['openrouter'] && openRouterModels.length > 0) {
+      openRouterModels.slice(0, 8).forEach(m => out.push({ id: m.id, label: m.name || m.id }));
+    }
+    // Fallback if nothing is configured
+    if (out.length === 0) out.push({ id:'forge-pro', label:'Forge Pro (add API key in Settings)' });
+    return out;
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -1194,6 +1230,7 @@ export default function ForgeApp() {
         return;
       }
       const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds };
+      if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
       let threadId = currentThread.id;
 
       // Extract AI reply from response and append directly — avoids loadMessages race condition
@@ -1679,6 +1716,14 @@ export default function ForgeApp() {
                   </span>
                 )}
               </div>
+              {/* Active skill indicator */}
+              {activeSkillPrompt && (
+                <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', background:'rgba(255,140,0,0.12)', border:'1px solid var(--fg-orange)', borderRadius:8, flexShrink:0, maxWidth:200 }}>
+                  <span style={{ fontSize:11 }}>🧩</span>
+                  <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>Skill active</span>
+                  <button onClick={() => setActiveSkillPrompt('')} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', padding:0, fontSize:13, lineHeight:1, flexShrink:0 }}>✕</button>
+                </div>
+              )}
               {/* Global token counter -- always visible */}
               <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'var(--fg-bg4)', borderRadius:8, border:'1px solid var(--fg-border2)', flexShrink:0 }}>
                 <span style={{ fontSize:10 }}>⚡</span>
@@ -3527,11 +3572,19 @@ export default function ForgeApp() {
           const cats = ['All', ...Array.from(new Set(SKILLS.map(s => s.category)))];
           const filtered = SKILLS.filter(s => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
           const launchSkill = (skill: typeof SKILLS[0]) => {
+            setActiveSkillPrompt(skill.prompt);
             setMainTab('workspace');
             setTimeout(() => {
-              setInput(`[Using skill: ${skill.name}]\n\n`);
+              setInput('');
               textareaRef.current?.focus();
             }, 100);
+          };
+          const toggleSkill = (id: string) => {
+            setActiveSkills(prev => {
+              const next = new Set(prev);
+              if (next.has(id)) next.delete(id); else next.add(id);
+              return next;
+            });
           };
           const generateUseCase = async () => {
             if (!genTopic.trim()) return;
@@ -3593,9 +3646,11 @@ export default function ForgeApp() {
                     {cats.map(c => <button key={c} onClick={() => setSkillCat(c)} style={{ padding:'6px 14px', borderRadius:20, border: skillCat===c ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border2)', background: skillCat===c ? 'var(--fg-orange)' : 'transparent', color: skillCat===c ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: skillCat===c ? 600 : 400, flexShrink:0 }}>{c}</button>)}
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:12 }}>
-                    {filtered.map(skill => (
-                      <div key={skill.id} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:'16px', display:'flex', flexDirection:'column', gap:8, transition:'border-color 0.15s' }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor='var(--fg-orange)')} onMouseLeave={e => (e.currentTarget.style.borderColor='var(--fg-border)')}>
+                    {filtered.map(skill => {
+                      const isActive = activeSkills.has(skill.id);
+                      return (
+                      <div key={skill.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:12, padding:'16px', display:'flex', flexDirection:'column', gap:8, transition:'border-color 0.15s', position:'relative' }}>
+                        {isActive && <div style={{ position:'absolute', top:10, right:10, fontSize:10, padding:'2px 8px', background:'rgba(249,115,22,0.18)', border:'1px solid var(--fg-orange)', borderRadius:10, color:'var(--fg-orange)', fontWeight:700 }}>ACTIVE</div>}
                         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                           <span style={{ fontSize:24 }}>{skill.icon}</span>
                           <div>
@@ -3604,9 +3659,13 @@ export default function ForgeApp() {
                           </div>
                         </div>
                         <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)', lineHeight:1.5, flex:1 }}>{skill.desc}</p>
-                        <button onClick={() => launchSkill(skill)} style={{ padding:'7px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', alignSelf:'flex-start' }}>▶ Launch</button>
+                        <div style={{ display:'flex', gap:6 }}>
+                          <button onClick={() => launchSkill(skill)} style={{ padding:'7px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', flex:1 }}>▶ Launch in Chat</button>
+                          <button onClick={() => toggleSkill(skill.id)} title={isActive ? 'Deactivate skill' : 'Activate skill (applies system prompt to all chats)'} style={{ padding:'7px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:12, cursor:'pointer', fontWeight:600 }}>{isActive ? '✓ On' : '+ On'}</button>
+                        </div>
                       </div>
-                    ))}
+                    );})}
+
                   </div>
                 </div>
 
@@ -3808,30 +3867,16 @@ export default function ForgeApp() {
               <div style={{ marginBottom:20 }}>
                 <p style={{ fontSize:13, fontWeight:600, color:'var(--fg-text2)', margin:'0 0 10px' }}>Select models to run in parallel:</p>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-                  {[
-                    { id:'claude-sonnet-4', label:'Claude Sonnet 4', icon:'🟠' },
-                    { id:'claude-opus-4', label:'Claude Opus 4', icon:'🟣' },
-                    { id:'claude-haiku-4', label:'Claude Haiku 4', icon:'🔵' },
-                    { id:'gpt-4o', label:'GPT-4o', icon:'🟢' },
-                    { id:'gpt-4o-mini', label:'GPT-4o Mini', icon:'🟡' },
-                    { id:'gpt-4-turbo', label:'GPT-4 Turbo', icon:'⚪' },
-                    { id:'gemini-2.5-pro', label:'Gemini 2.5 Pro', icon:'💎' },
-                    { id:'gemini-2.0-flash', label:'Gemini Flash', icon:'💠' },
-                    { id:'deepseek-chat', label:'DeepSeek Chat', icon:'🌊' },
-                    { id:'mistral-large', label:'Mistral Large', icon:'🌀' },
-                    { id:'llama-3.3-70b', label:'Llama 3.3 70B', icon:'🦙' },
-                    { id:'forge-pro', label:'Forge Pro (best)', icon:'⚡' },
-                    { id:'forge-fast', label:'Forge Fast', icon:'🚀' },
-                    { id:'forge-reasoning', label:'Forge Reasoning', icon:'🧠' },
-                  ].map(m => {
+                  {getActiveModels().map(m => {
                     const sel = autoSelectedModels.includes(m.id);
                     return (
                       <button key={m.id} onClick={() => setAutoSelectedModels(prev => sel ? prev.filter(x=>x!==m.id) : [...prev, m.id])} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', background: sel ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg3)', border:`1px solid ${sel ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:20, color: sel ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight: sel ? 600 : 400, transition:'all 0.15s' }}>
-                        <span>{m.icon}</span>{m.label}
+                        {m.label}
                         {sel && <span style={{ fontSize:10, color:'var(--fg-orange)' }}>✓</span>}
                       </button>
                     );
                   })}
+                  {getActiveModels().length === 0 && <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>No models available — add an API key in Settings.</p>}
                 </div>
                 {autoSelectedModels.length > 0 && <p style={{ margin:'8px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{autoSelectedModels.length} model{autoSelectedModels.length!==1?'s':''} selected</p>}
               </div>
@@ -3924,7 +3969,7 @@ export default function ForgeApp() {
               <div style={{ marginBottom:16 }}>
                 <p style={{ fontSize:13, fontWeight:600, color:'var(--fg-text2)', margin:'0 0 8px' }}>Base model for all agents:</p>
                 <select value={multiModel} onChange={e => setMultiModel(e.target.value)} style={{ padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', minWidth:220 }}>
-                  {['forge-fast','forge-pro','forge-reasoning','claude-sonnet-4','claude-haiku-4','gpt-4o-mini','gpt-4o','gemini-2.0-flash','gemini-2.5-pro'].map(m => <option key={m} value={m}>{m}</option>)}
+                  {getActiveModels().map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
                 </select>
               </div>
               {/* Prompt */}
@@ -3982,7 +4027,7 @@ export default function ForgeApp() {
               </div>
               <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
                 <select value={asiModel} onChange={e => setAsiModel(e.target.value)} style={{ padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
-                  {['forge-pro','forge-reasoning','claude-opus-4','claude-sonnet-4','gpt-4o'].map(m => <option key={m} value={m}>{m}</option>)}
+                  {getActiveModels().map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
                 </select>
                 <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                   <span style={{ fontSize:11, color:'var(--fg-text3)' }}>Depth</span>

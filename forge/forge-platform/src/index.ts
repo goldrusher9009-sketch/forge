@@ -1605,7 +1605,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   // Now safe to do DB work — connection is already alive
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!thread) { endSSE({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [], model: bodyModel } = req.body;
+  const { content, agent_ids = [], model: bodyModel, skill_prompt } = req.body;
   if (!content?.trim()) { endSSE({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
   const userId = req.user!.sub;
   ensureSubscription(userId);
@@ -1620,8 +1620,9 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     db.prepare("UPDATE threads SET title=?,updated_at=datetime('now') WHERE id=?").run(autoTitle, thread.id);
   }
 
-  // Build system prompt from project + active agents
+  // Build system prompt from skill + project + active agents
   const systemParts: string[] = [];
+  if (skill_prompt) systemParts.push(skill_prompt);
   if (thread.project_id) {
     const proj = db.prepare('SELECT system_prompt FROM projects WHERE id=?').get(thread.project_id) as any;
     if (proj?.system_prompt) systemParts.push(proj.system_prompt);
