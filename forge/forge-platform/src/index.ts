@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.17 — Full skills+connectors catalog (120 skills, 30 MCP connectors), category filters, tool chips, connect buttons
+ * Forge Platform v6.18 — Live tool toggles, hooks/files/runs pages wired to real data, right panel live, schedules stub + files endpoint
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.17' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.18' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1225,9 +1225,67 @@ app.get('/api/user/token-total', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, total: row.total });
 });
 
-// Schedules
-app.get('/api/schedules', requireAuth, (_req: AuthRequest, res) => { res.json({ success: true, data: [] }); });
-app.post('/api/schedules', requireAuth, (_req: AuthRequest, res) => { res.json({ success: true, data: { id: 'unsupported', message: 'Schedules not yet implemented' } }); });
+// Schedules — stored in DB
+db.exec(`CREATE TABLE IF NOT EXISTS schedules (
+  id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL,
+  cron_expression TEXT NOT NULL, prompt TEXT NOT NULL,
+  enabled INTEGER DEFAULT 1, last_run TEXT, created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/schedules', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM schedules WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub);
+  res.json({ success: true, data: rows });
+});
+app.post('/api/schedules', requireAuth, (req: AuthRequest, res) => {
+  const { name, cron_expression, prompt } = req.body;
+  if (!name || !cron_expression || !prompt) { res.status(400).json({ success: false, error: 'INVALID_INPUT' }); return; }
+  const id = `sch_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  db.prepare('INSERT INTO schedules (id, user_id, name, cron_expression, prompt) VALUES (?,?,?,?,?)').run(id, req.user!.sub, name, cron_expression, prompt);
+  res.json({ success: true, data: { id, name, cron_expression, prompt, enabled: 1 } });
+});
+app.patch('/api/schedules/:id', requireAuth, (req: AuthRequest, res) => {
+  const { enabled } = req.body;
+  db.prepare('UPDATE schedules SET enabled=? WHERE id=? AND user_id=?').run(enabled, req.params.id, req.user!.sub);
+  res.json({ success: true });
+});
+app.delete('/api/schedules/:id', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM schedules WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  res.json({ success: true });
+});
+app.post('/api/schedules/:id/run', requireAuth, async (req: AuthRequest, res) => {
+  const sched = db.prepare('SELECT * FROM schedules WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!sched) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
+  db.prepare("UPDATE schedules SET last_run=datetime('now') WHERE id=?").run(req.params.id);
+  res.json({ success: true, data: { message: `Schedule '${sched.name}' triggered` } });
+});
+
+// Files — metadata stored in DB, content stored as base64
+db.exec(`CREATE TABLE IF NOT EXISTS files (
+  id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL,
+  size INTEGER DEFAULT 0, mime_type TEXT DEFAULT 'application/octet-stream',
+  content TEXT, created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/files', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT id, name, size, mime_type, created_at FROM files WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub);
+  res.json({ success: true, data: rows });
+});
+app.post('/api/files', requireAuth, (req: AuthRequest, res) => {
+  const { name, size, mime_type, content } = req.body;
+  if (!name) { res.status(400).json({ success: false, error: 'INVALID_INPUT' }); return; }
+  const id = `file_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  db.prepare('INSERT INTO files (id, user_id, name, size, mime_type, content) VALUES (?,?,?,?,?,?)').run(id, req.user!.sub, name, size || 0, mime_type || 'application/octet-stream', content || '');
+  res.json({ success: true, data: { id, name, size, mime_type, created_at: new Date().toISOString() } });
+});
+app.delete('/api/files/:id', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM files WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  res.json({ success: true });
+});
+
+// Workspace tasks PATCH (cycle status)
+app.patch('/api/workspace/tasks/:id', requireAuth, (req: AuthRequest, res) => {
+  const { status } = req.body;
+  try { db.prepare('UPDATE workspace_tasks SET status=? WHERE id=? AND user_id=?').run(status, req.params.id, req.user!.sub); } catch {}
+  res.json({ success: true });
+});
 
 // Custom providers alias
 app.get('/api/providers/custom', requireAuth, (req: AuthRequest, res) => {

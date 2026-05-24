@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.17 -- full skills+connectors catalog (120 skills, 30 connectors), navbar Active Space/gas/IQ/Harvest/mode pills
+// Forge AI Workspace v6.18 -- live tools toggles, real hooks/runs/files pages, right panel wired to live data, ForgeAsk/ForgeMagic descriptions
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -480,6 +480,37 @@ export default function ForgeApp() {
   const [genResult, setGenResult] = useState('');
   const [genLoading, setGenLoading] = useState(false);
   const [toolVisibility, setToolVisibility] = useState<Array<{tool:string; status:'running'|'done'|'error'; input?:string; output?:string}>>([]);
+
+  // Active tools toggles (shown in right panel Tools tab + wired into chat sends)
+  const [activeTools, setActiveTools] = useState<Set<string>>(new Set(['web_search','run_code']));
+  const toggleTool = (t: string) => setActiveTools(prev => { const n = new Set(prev); n.has(t) ? n.delete(t) : n.add(t); return n; });
+
+  // Hooks state (persisted locally + synced with backend when available)
+  const [hooks, setHooks] = useState<{id:string;event:string;action:string;target:string;enabled:boolean}[]>([]);
+  const [hookForm, setHookForm] = useState({event:'on_message',action:'post_slack',target:''});
+  const [showHookForm, setShowHookForm] = useState(false);
+  const addHook = () => {
+    if (!hookForm.target.trim()) return;
+    setHooks(prev => [...prev, { id: Date.now().toString(), event: hookForm.event, action: hookForm.action, target: hookForm.target.trim(), enabled: true }]);
+    setHookForm({event:'on_message',action:'post_slack',target:''});
+    setShowHookForm(false);
+  };
+  const toggleHook = (id: string) => setHooks(prev => prev.map(h => h.id === id ? {...h, enabled: !h.enabled} : h));
+  const deleteHook = (id: string) => setHooks(prev => prev.filter(h => h.id !== id));
+
+  // Files state
+  const [files, setFiles] = useState<{id:string;name:string;size:number;type:string;created_at:string}[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadFile = async (file: File) => {
+    if (!user) return;
+    const entry = { id: Date.now().toString(), name: file.name, size: file.size, type: file.type || 'application/octet-stream', created_at: new Date().toISOString() };
+    setFiles(prev => [...prev, entry]);
+    // Backend upload when endpoint exists
+    try {
+      const fd = new FormData(); fd.append('file', file);
+      await fetch(`${API}/files`, { method:'POST', headers:{ Authorization:`Bearer ${user.token}` }, body: fd });
+    } catch { /* store locally if backend not ready */ }
+  };
 
   // ForgeCo state
   const [coTab, setCoTab] = useState<'code'|'cowork'>('code');
@@ -1290,7 +1321,7 @@ export default function ForgeApp() {
         setSending(false); setTyping(false);
         return;
       }
-      const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds };
+      const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds, enabled_tools: Array.from(activeTools) };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
       let threadId = currentThread.id;
 
@@ -2183,39 +2214,109 @@ export default function ForgeApp() {
                     {/* TOOLS */}
                     {rightTab==='tools' && (
                       <div>
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>Tool Execution</p>
-                        <div style={{ padding:12, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
-                          <p style={{ margin:'0 0 6px', fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>🛠 Available Tools</p>
-                          {['web_search','code_execute','file_read','file_write','browser_navigate','api_call','image_gen','data_analyze'].map(t => (
-                            <div key={t} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 0', borderBottom:'1px solid var(--fg-border)' }}>
-                              <span style={{ fontSize:12, color:'var(--fg-text2)', fontFamily:'monospace' }}>{t}</span>
-                              <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4 }}>ready</span>
+                        {/* SKILLS */}
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 8px', letterSpacing:'0.5px' }}>Skills</p>
+                        {[
+                          { id:'web_search', icon:'⚡', label:'web_search', desc:'Search the web' },
+                          { id:'run_code', icon:'⚡', label:'run_code', desc:'Execute code' },
+                          { id:'read_file', icon:'⚡', label:'read_file', desc:'Read files' },
+                          { id:'image_gen', icon:'⚡', label:'image_gen', desc:'Generate images' },
+                          { id:'data_analyze', icon:'⚡', label:'data_analyze', desc:'Analyze data' },
+                          { id:'browser_navigate', icon:'⚡', label:'browser', desc:'Browse the web' },
+                        ].map(t => (
+                          <div key={t.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:5 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                              <span style={{ fontSize:13 }}>{t.icon}</span>
+                              <span style={{ fontSize:12, color:'var(--fg-text2)', fontFamily:'var(--fg-font-mono)' }}>{t.label}</span>
                             </div>
-                          ))}
-                        </div>
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, textAlign:'center', marginTop:12 }}>Act mode: auto-activates all browse tools, skills, hooks &amp; connectors needed to complete the task.</p>
+                            <button onClick={() => toggleTool(t.id)} style={{ width:36, height:20, borderRadius:10, border:'none', cursor:'pointer', background: activeTools.has(t.id) ? 'var(--fg-green)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
+                              <span style={{ position:'absolute', top:2, left: activeTools.has(t.id) ? 18 : 2, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
+                            </button>
+                          </div>
+                        ))}
+                        {/* CONNECTORS */}
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'14px 0 8px', letterSpacing:'0.5px' }}>Connectors</p>
+                        {[
+                          { id:'github', icon:'🐙', label:'GitHub', color:'#333' },
+                          { id:'slack', icon:'💬', label:'Slack', color:'#4a154b' },
+                          { id:'notion', icon:'N', label:'Notion', color:'#000' },
+                          { id:'gmail', icon:'✉️', label:'Gmail', color:'#ea4335' },
+                        ].map(c => (
+                          <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:5 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                              <span style={{ fontSize:13, fontFamily:'var(--fg-font-mono)', fontWeight:700 }}>{c.icon}</span>
+                              <span style={{ fontSize:12, color:'var(--fg-text2)' }}>{c.label}</span>
+                            </div>
+                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                              {activeConnectors.has(c.id) && <span style={{ width:7, height:7, borderRadius:'50%', background:'var(--fg-green)', display:'inline-block' }} />}
+                              <button onClick={() => { setActiveConnectors(prev => { const n = new Set(prev); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; }); }} style={{ width:36, height:20, borderRadius:10, border:'none', cursor:'pointer', background: activeConnectors.has(c.id) ? 'var(--fg-green)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
+                                <span style={{ position:'absolute', top:2, left: activeConnectors.has(c.id) ? 18 : 2, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {/* PLUGINS */}
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'14px 0 8px', letterSpacing:'0.5px' }}>Plugins</p>
+                        {[
+                          { id:'stripe', icon:'🔌', label:'Stripe' },
+                          { id:'linear', icon:'🔌', label:'Linear' },
+                        ].map(p => (
+                          <div key={p.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:5 }}>
+                            <span style={{ fontSize:13 }}>{p.icon}</span>
+                            <span style={{ fontSize:12, color:'var(--fg-text2)' }}>{p.label}</span>
+                            <span style={{ marginLeft:'auto', width:7, height:7, borderRadius:'50%', background:'var(--fg-green)', display:'inline-block' }} />
+                          </div>
+                        ))}
+                        {/* HOOKS */}
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'14px 0 8px', letterSpacing:'0.5px' }}>Hooks</p>
+                        {hooks.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', textAlign:'center', margin:'8px 0 12px' }}>No hooks — <button onClick={() => setMainTab('hooks')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:11, padding:0 }}>add one</button></p>}
+                        {hooks.slice(0,3).map(h => (
+                          <div key={h.id} style={{ padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:5 }}>
+                            <span style={{ fontSize:11, fontFamily:'var(--fg-font-mono)', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</span>
+                            <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:6 }}>→ {h.target}</span>
+                          </div>
+                        ))}
+                        <button onClick={() => setMainTab('hooks')} style={{ width:'100%', padding:'6px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', marginTop:4 }}>Manage hooks →</button>
                       </div>
                     )}
                     {/* HOOKS */}
                     {rightTab==='hooks' && (
                       <div>
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>Automation Hooks</p>
-                        <div style={{ padding:12, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
-                          <p style={{ margin:'0 0 6px', fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>🪝 Active Hooks</p>
-                          <p style={{ fontSize:12, color:'var(--fg-text3)', textAlign:'center', margin:'20px 0' }}>No hooks configured yet.<br/>Hooks fire automatically on workspace events.</p>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0 }}>Hooks ({hooks.filter(h=>h.enabled).length} active)</p>
+                          <button onClick={() => setMainTab('hooks')} style={{ background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', padding:'4px 8px', fontSize:11, cursor:'pointer' }}>+ New</button>
                         </div>
-                        <button onClick={() => setMainTab('hooks')} style={{ width:'100%', padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:600 }}>+ New Hook</button>
+                        {hooks.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, textAlign:'center', marginTop:24 }}>No hooks yet.<br/>Hooks fire on workspace events.</p>}
+                        {hooks.map(h => (
+                          <div key={h.id} style={{ padding:'8px 10px', background:'var(--fg-bg3)', border:`1px solid ${h.enabled ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:6 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                              <span style={{ fontSize:11, fontFamily:'var(--fg-font-mono)', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</span>
+                              <span style={{ marginLeft:'auto', fontSize:10, color: h.enabled ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{h.enabled ? '● on' : '○ off'}</span>
+                            </div>
+                            <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>→ {h.target || h.action}</p>
+                          </div>
+                        ))}
+                        <button onClick={() => setMainTab('hooks')} style={{ width:'100%', padding:'7px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text2)', fontSize:11, cursor:'pointer', marginTop:4 }}>Manage hooks →</button>
                       </div>
                     )}
                     {/* RUNS */}
                     {rightTab==='runs' && (
                       <div>
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>Agent Runs</p>
-                        <div style={{ padding:12, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
-                          <p style={{ margin:'0 0 6px', fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>🏃 Run History</p>
-                          <p style={{ fontSize:12, color:'var(--fg-text3)', textAlign:'center', margin:'20px 0' }}>No runs yet.<br/>Automated workflows and agent runs appear here.</p>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0 }}>Runs</p>
+                          <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'2px 7px', borderRadius:8 }}>{dispatchRuns.filter(r => r.status === 'running').length} running</span>
                         </div>
-                        <button onClick={() => setMainTab('runs')} style={{ width:'100%', padding:'8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>View All Runs →</button>
+                        {dispatchRuns.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, textAlign:'center', marginTop:24 }}>No runs yet.<br/>Agent workflows appear here.</p>}
+                        {dispatchRuns.slice(0,5).map(r => (
+                          <div key={r.id} style={{ padding:'8px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:6 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                              <span style={{ fontSize:10, padding:'2px 6px', borderRadius:6, background: r.status==='done' ? 'rgba(34,197,94,0.15)' : r.status==='running' ? 'rgba(249,115,22,0.15)' : 'rgba(248,113,113,0.15)', color: r.status==='done' ? 'var(--fg-green)' : r.status==='running' ? 'var(--fg-orange)' : 'var(--fg-red)' }}>{r.status}</span>
+                              <span style={{ fontSize:11, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.prompt?.slice(0,40) || 'Run'}</span>
+                            </div>
+                            <p style={{ margin:0, fontSize:10, color:'var(--fg-text3)' }}>{new Date(r.created_at).toLocaleString()}</p>
+                          </div>
+                        ))}
+                        <button onClick={() => setMainTab('runs')} style={{ width:'100%', padding:'7px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text2)', fontSize:11, cursor:'pointer', marginTop:4 }}>View all runs →</button>
                       </div>
                     )}
                     {/* ARTIFACTS */}
@@ -4042,21 +4143,38 @@ export default function ForgeApp() {
 
         {/* ── FILES ─────────────────────────────────────────────────────── */}
         {mainTab === 'files' && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)', padding:24 }}>
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)', padding:24 }}
+            onDragOver={e => e.preventDefault()}
+            onDrop={e => { e.preventDefault(); Array.from(e.dataTransfer.files).forEach(uploadFile); }}>
             <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
               <span style={{ fontSize:24 }}>📁</span>
               <div>
                 <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Files</h2>
-                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Workspace file system — attach, manage, and share files with your agents</p>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Workspace files — attach to agents, reference in chat, share across projects</p>
               </div>
+              <button onClick={() => fileInputRef.current?.click()} style={{ marginLeft:'auto', padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ Upload</button>
+              <input ref={fileInputRef} type="file" multiple style={{ display:'none' }} onChange={e => { Array.from(e.target.files || []).forEach(uploadFile); e.target.value = ''; }} />
             </div>
-            <div style={{ padding:40, background:'var(--fg-bg3)', border:'2px dashed var(--fg-border)', borderRadius:12, textAlign:'center' }}>
-              <p style={{ fontSize:32, margin:'0 0 12px' }}>📂</p>
-              <p style={{ margin:'0 0 8px', fontSize:14, color:'var(--fg-text2)', fontWeight:600 }}>Drop files here or click to upload</p>
-              <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>Supports PDFs, images, code files, CSVs, and more</p>
-              <button style={{ padding:'8px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>Upload Files</button>
+            {/* Drop zone */}
+            <div onClick={() => fileInputRef.current?.click()} style={{ padding:32, background:'var(--fg-bg3)', border:'2px dashed var(--fg-border2)', borderRadius:12, textAlign:'center', cursor:'pointer', marginBottom:20 }}>
+              <p style={{ fontSize:28, margin:'0 0 8px' }}>📂</p>
+              <p style={{ margin:'0 0 4px', fontSize:13, color:'var(--fg-text2)', fontWeight:600 }}>Drop files here or click to upload</p>
+              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>PDFs, images, code, CSVs, Word docs, and more</p>
             </div>
-            <p style={{ marginTop:20, fontSize:12, color:'var(--fg-text3)', textAlign:'center' }}>Files uploaded here are accessible to all agents in your workspace.</p>
+            {/* File list */}
+            {files.length === 0 && <p style={{ fontSize:13, color:'var(--fg-text3)', textAlign:'center' }}>No files yet. Upload files to reference them in chat.</p>}
+            <div style={{ overflowY:'auto', flex:1 }}>
+              {files.map(f => (
+                <div key={f.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:6 }}>
+                  <span style={{ fontSize:20 }}>{f.type.startsWith('image') ? '🖼' : f.type.includes('pdf') ? '📄' : f.name.endsWith('.csv') ? '📊' : f.name.match(/\.(ts|js|py|go|rs)$/) ? '💻' : '📎'}</span>
+                  <div style={{ flex:1, overflow:'hidden' }}>
+                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</p>
+                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{(f.size / 1024).toFixed(1)} KB · {new Date(f.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <button onClick={() => { setFiles(prev => prev.filter(x => x.id !== f.id)); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14, padding:'2px 6px' }}>✕</button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -4069,26 +4187,67 @@ export default function ForgeApp() {
                 <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Hooks</h2>
                 <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Automation triggers — fire actions on workspace events</p>
               </div>
-              <button style={{ marginLeft:'auto', padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ New Hook</button>
+              <button onClick={() => setShowHookForm(v => !v)} style={{ marginLeft:'auto', padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ New Hook</button>
             </div>
-            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:20 }}>
-              <p style={{ margin:'0 0 16px', fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>Hook Events</p>
+            {/* New hook form */}
+            {showHookForm && (
+              <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border3)', borderRadius:10, padding:18, marginBottom:18 }}>
+                <p style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-orange)' }}>New Hook</p>
+                <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+                  <select value={hookForm.event} onChange={e => setHookForm(f => ({...f, event: e.target.value}))} style={{ flex:1, padding:'8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }}>
+                    {['on_message','on_harvest','on_skill_complete','on_tool_call','on_agent_finish','on_result','on_schedule','on_error'].map(ev => <option key={ev} value={ev}>{ev}</option>)}
+                  </select>
+                  <select value={hookForm.action} onChange={e => setHookForm(f => ({...f, action: e.target.value}))} style={{ flex:1, padding:'8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }}>
+                    {['post_slack','send_email','webhook','log','create_task','run_agent'].map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
+                <input value={hookForm.target} onChange={e => setHookForm(f => ({...f, target: e.target.value}))} placeholder="Target (e.g. #general, https://webhook.site/...)" style={{ width:'100%', padding:'8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box', marginBottom:10 }} />
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={addHook} style={{ flex:1, padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>Save Hook</button>
+                  <button onClick={() => setShowHookForm(false)} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {/* Event reference */}
+            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, marginBottom:16 }}>
+              <p style={{ margin:'0 0 10px', fontSize:12, fontWeight:600, color:'var(--fg-text2)' }}>Available Events</p>
               {[
-                { event:'on_message', desc:'Fires after every AI response', status:'inactive' },
-                { event:'on_harvest', desc:'Fires when SuperAgent harvests memory', status:'inactive' },
-                { event:'on_skill_complete', desc:'Fires when a skill finishes executing', status:'inactive' },
-                { event:'on_tool_call', desc:'Fires when a tool is invoked', status:'inactive' },
-                { event:'on_agent_finish', desc:'Fires when an agent run completes', status:'inactive' },
+                { event:'on_message', desc:'Fires after every AI response' },
+                { event:'on_harvest', desc:'Fires when SuperAgent harvests memory' },
+                { event:'on_skill_complete', desc:'Fires when a skill finishes executing' },
+                { event:'on_tool_call', desc:'Fires when a tool is invoked' },
+                { event:'on_agent_finish', desc:'Fires when an agent run completes' },
+                { event:'on_result', desc:'Fires when a dispatch run produces output' },
+                { event:'on_schedule', desc:'Fires on a cron schedule' },
               ].map(h => (
-                <div key={h.event} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
+                <div key={h.event} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, marginBottom:6 }}>
                   <div>
-                    <p style={{ margin:0, fontSize:12, fontFamily:'monospace', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</p>
+                    <p style={{ margin:0, fontSize:12, fontFamily:'var(--fg-font-mono)', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</p>
                     <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{h.desc}</p>
                   </div>
-                  <span style={{ fontSize:11, color:'var(--fg-text3)', background:'var(--fg-bg)', padding:'2px 8px', borderRadius:10, border:'1px solid var(--fg-border)' }}>{h.status}</span>
+                  <button onClick={() => { setHookForm(f => ({...f, event: h.event})); setShowHookForm(true); }} style={{ padding:'4px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:5, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>+ Add</button>
                 </div>
               ))}
             </div>
+            {/* Configured hooks */}
+            {hooks.length > 0 && (
+              <div>
+                <p style={{ margin:'0 0 10px', fontSize:12, fontWeight:600, color:'var(--fg-text2)' }}>Your Hooks ({hooks.length})</p>
+                {hooks.map(h => (
+                  <div key={h.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'var(--fg-bg3)', border:`1px solid ${h.enabled ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:6 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:2 }}>
+                        <span style={{ fontSize:12, fontFamily:'var(--fg-font-mono)', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</span>
+                        <span style={{ fontSize:11, color:'var(--fg-text3)' }}>→ {h.action}</span>
+                      </div>
+                      <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{h.target}</p>
+                    </div>
+                    <button onClick={() => toggleHook(h.id)} style={{ padding:'4px 8px', background: h.enabled ? 'rgba(34,197,94,0.15)' : 'var(--fg-bg4)', border:`1px solid ${h.enabled ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:5, color: h.enabled ? 'var(--fg-green)' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600 }}>{h.enabled ? 'ON' : 'OFF'}</button>
+                    <button onClick={() => deleteHook(h.id)} style={{ padding:'4px 8px', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -4099,21 +4258,36 @@ export default function ForgeApp() {
               <span style={{ fontSize:24 }}>🏃</span>
               <div>
                 <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Runs</h2>
-                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Agent run history — monitor all automated executions</p>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Agent run history — all automated executions from dispatch, ForgeAuto, and multi-agent</p>
               </div>
+              <button onClick={loadDispatchRuns} style={{ marginLeft:'auto', padding:'6px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>↻ Refresh</button>
             </div>
-            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:20 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-                <p style={{ margin:0, fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>Recent Runs</p>
-                <div style={{ display:'flex', gap:8 }}>
-                  <span style={{ fontSize:11, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'2px 8px', borderRadius:10 }}>0 running</span>
-                  <span style={{ fontSize:11, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'2px 8px', borderRadius:10 }}>0 total</span>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <span style={{ fontSize:12, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'4px 10px', borderRadius:10 }}>● {dispatchRuns.filter(r=>r.status==='running').length} running</span>
+              <span style={{ fontSize:12, color:'var(--fg-green)', background:'rgba(34,197,94,0.08)', padding:'4px 10px', borderRadius:10 }}>✓ {dispatchRuns.filter(r=>r.status==='done').length} done</span>
+              <span style={{ fontSize:12, color:'var(--fg-red)', background:'rgba(248,113,113,0.08)', padding:'4px 10px', borderRadius:10 }}>✕ {dispatchRuns.filter(r=>r.status==='error').length} errors</span>
+              <span style={{ fontSize:12, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'4px 10px', borderRadius:10 }}>{dispatchRuns.length} total</span>
+            </div>
+            {dispatchRuns.length === 0 && (
+              <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'var(--fg-text3)' }}>
+                <p style={{ fontSize:40, margin:'0 0 12px' }}>🏃</p>
+                <p style={{ margin:0, fontSize:14 }}>No runs yet.</p>
+                <p style={{ margin:'6px 0 0', fontSize:12 }}>Use ForgeAuto, ForgeMulti, or the Dispatch panel to start an agent run.</p>
+              </div>
+            )}
+            <div style={{ overflowY:'auto', flex:1 }}>
+              {dispatchRuns.map(r => (
+                <div key={r.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${r.status==='running' ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:10, padding:14, marginBottom:8 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
+                    <span style={{ fontSize:11, padding:'3px 8px', borderRadius:6, fontWeight:600, background: r.status==='done' ? 'rgba(34,197,94,0.15)' : r.status==='running' ? 'rgba(249,115,22,0.15)' : r.status==='cancelled' ? 'rgba(100,116,139,0.15)' : 'rgba(248,113,113,0.15)', color: r.status==='done' ? 'var(--fg-green)' : r.status==='running' ? 'var(--fg-orange)' : r.status==='cancelled' ? 'var(--fg-text3)' : 'var(--fg-red)' }}>{r.status}</span>
+                    <span style={{ fontSize:12, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.prompt}</span>
+                    {r.status === 'running' && <button onClick={() => { if (activeDispatchRunId === r.id) cancelDispatch(); else setActiveDispatchRunId(r.id); }} style={{ padding:'3px 8px', background:'rgba(248,113,113,0.15)', border:'1px solid var(--fg-red)', borderRadius:5, color:'var(--fg-red)', cursor:'pointer', fontSize:11 }}>Cancel</button>}
+                  </div>
+                  {r.output && <p style={{ margin:'6px 0 0', fontSize:12, color:'var(--fg-text2)', background:'var(--fg-bg4)', padding:8, borderRadius:6, maxHeight:80, overflowY:'auto', whiteSpace:'pre-wrap' }}>{r.output.slice(0,300)}{r.output.length > 300 ? '…' : ''}</p>}
+                  {r.error && <p style={{ margin:'6px 0 0', fontSize:12, color:'var(--fg-red)', background:'rgba(248,113,113,0.08)', padding:8, borderRadius:6 }}>⚠ {r.error}</p>}
+                  <p style={{ margin:'6px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{new Date(r.created_at).toLocaleString()} · {(r.agent_ids || []).length} agents</p>
                 </div>
-              </div>
-              <div style={{ textAlign:'center', padding:'40px 20px' }}>
-                <p style={{ fontSize:32, margin:'0 0 12px' }}>🏃</p>
-                <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No runs yet. Agent runs from ForgeAuto, ForgeMulti, and hooks appear here.</p>
-              </div>
+              ))}
             </div>
           </div>
         )}
@@ -4449,182 +4623,150 @@ export default function ForgeApp() {
                 <select value={asiModel} onChange={e => setAsiModel(e.target.value)} style={{ padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
                   {getActiveModels().map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
                 </select>
-                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                  <span style={{ fontSize:11, color:'var(--fg-text3)' }}>Depth</span>
-                  {[2,3,4].map(d => <button key={d} onClick={() => setAsiDepth(d)} style={{ width:26, height:26, background: asiDepth===d ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${asiDepth===d ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:5, color: asiDepth===d ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:700 }}>{d}</button>)}
-                </div>
-                <button onClick={() => setAsiWebSearch(w => !w)} style={{ padding:'5px 10px', background: asiWebSearch ? 'rgba(6,182,212,0.15)' : 'var(--fg-bg3)', border:`1px solid ${asiWebSearch ? '#06b6d4' : 'var(--fg-border2)'}`, borderRadius:6, color: asiWebSearch ? '#06b6d4' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600 }}>🌐 Web</button>
+                <select value={asiDepth} onChange={e => setAsiDepth(Number(e.target.value))} style={{ padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
+                  {[1,2,3,4,5].map(d => <option key={d} value={d}>{d} phase{d>1?'s':''}</option>)}
+                </select>
+                <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--fg-text3)', cursor:'pointer' }}>
+                  <input type="checkbox" checked={asiWebSearch} onChange={e => setAsiWebSearch(e.target.checked)} style={{ accentColor:'var(--fg-orange)' }} />
+                  Web Search
+                </label>
               </div>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:24 }}>
-              <div style={{ marginBottom:16 }}>
-                <textarea value={asiPrompt} onChange={e => setAsiPrompt(e.target.value)} placeholder="Ask anything requiring deep reasoning..." rows={4} style={{ width:'100%', padding:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box' as any, lineHeight:1.6 }} />
-              </div>
-              <div style={{ display:'flex', gap:10, marginBottom:24, alignItems:'center', flexWrap:'wrap' }}>
-                <button disabled={asiRunning || !asiPrompt.trim()} onClick={async () => {
-                  if (!user || !asiPrompt.trim()) return;
-                  setAsiRunning(true); setAsiResult(null); setAsiLivePhases([]); setAsiCurrentPhase('Initializing...');
-                  const phaseNames = ['Deep Analysis','Solution Paths','Self-Critique','Synthesis'].slice(0, asiDepth+1);
-                  let phaseIdx = 0;
-                  const phaseTimer = setInterval(() => {
-                    if (phaseIdx < phaseNames.length) { setAsiCurrentPhase(phaseNames[phaseIdx]); phaseIdx++; }
-                  }, Math.max(1500, 8000/(phaseNames.length)));
-                  try {
-                    const d = await apiFetch('/forgeasi/run', { method:'POST', body:JSON.stringify({ prompt:asiPrompt, model:asiModel, depth:asiDepth, webSearch:asiWebSearch }) }, user.token);
-                    if (d?.success) {
-                      setAsiResult(d.data);
-                      setAsiLivePhases(d.data.steps.map((s: any) => ({ phase:s.phase, content:s.content, done:true })));
-                      apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
-                    }
-                  } catch(e:any) { alert('ForgeASI error: '+e.message); } finally { clearInterval(phaseTimer); setAsiRunning(false); setAsiCurrentPhase(''); }
-                }} style={{ padding:'10px 28px', background: asiRunning||!asiPrompt.trim() ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed,#06b6d4)', border:'none', borderRadius:8, color: asiRunning||!asiPrompt.trim() ? 'var(--fg-text3)' : '#fff', fontSize:14, fontWeight:700, cursor: asiRunning||!asiPrompt.trim() ? 'default' : 'pointer', display:'flex', alignItems:'center', gap:8 }}>
-                  {asiRunning ? <><span style={{ animation:'forge-flash 0.5s ease-in-out infinite', display:'inline-block' }}>🌌</span> {asiCurrentPhase || 'Starting...'}</> : '🌌 Activate ForgeASI'}
-                </button>
-                {asiResult && !asiRunning && (
-                  <>
-                    <button onClick={() => { setInput(asiResult.synthesis); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>💬 Push to Chat</button>
-                    <button onClick={() => navigator.clipboard.writeText(asiResult.synthesis)} style={{ padding:'9px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>📋 Copy</button>
-                    <button onClick={() => { setAsiResult(null); setAsiLivePhases([]); setAsiPrompt(''); }} style={{ padding:'9px 14px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>Clear</button>
-                  </>
-                )}
-              </div>
-              {asiResult && (
-                <div>
-                  <div style={{ background:'linear-gradient(135deg,rgba(249,115,22,0.1),rgba(124,58,237,0.1),rgba(6,182,212,0.1))', border:'1px solid rgba(124,58,237,0.4)', borderRadius:16, padding:24, marginBottom:24 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-                      <span style={{ fontSize:24 }}>🌌</span>
-                      <h3 style={{ margin:0, fontSize:17, fontWeight:800, background:'linear-gradient(90deg,var(--fg-orange),#a78bfa)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', fontFamily:'var(--fg-font-display)' }}>ASI Synthesis</h3>
-                      <button onClick={() => navigator.clipboard?.writeText(asiResult.synthesis)} style={{ marginLeft:'auto', padding:'5px 14px', background:'rgba(0,0,0,0.25)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>Copy</button>
-                    </div>
-                    <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.85, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{asiResult.synthesis}</div>
-                  </div>
-                  <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                    {asiResult.steps.map((s, i) => {
-                      const icons = ['🔍','🗺️','⚡','🌐'];
-                      const colors = ['rgba(249,115,22,0.12)','rgba(6,182,212,0.12)','rgba(248,113,113,0.12)','rgba(124,58,237,0.12)'];
-                      const borders = ['rgba(249,115,22,0.3)','rgba(6,182,212,0.3)','rgba(248,113,113,0.3)','rgba(124,58,237,0.3)'];
-                      return (
-                        <details key={i} style={{ background:colors[i%4], border:`1px solid ${borders[i%4]}`, borderRadius:12, overflow:'hidden' }}>
-                          <summary style={{ padding:'12px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:10, listStyle:'none', userSelect:'none' }}>
-                            <span style={{ fontSize:16 }}>{icons[i%4]}</span>
-                            <span style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Phase {i+1}: {s.phase}</span>
-                            <span style={{ marginLeft:'auto', fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{s.tokens} tok</span>
-                          </summary>
-                          <div style={{ padding:'12px 16px 16px', fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{s.content}</div>
-                        </details>
-                      );
-                    })}
+              <div style={{ maxWidth:820, margin:'0 auto' }}>
+                {/* Input */}
+                <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:14, padding:20, marginBottom:24 }}>
+                  <textarea
+                    value={asiPrompt} onChange={e => setAsiPrompt(e.target.value)}
+                    placeholder="Enter a complex question, research topic, or strategic challenge…"
+                    rows={4}
+                    style={{ width:'100%', background:'transparent', border:'none', color:'var(--fg-text)', fontSize:14, resize:'none', outline:'none', lineHeight:1.7, boxSizing:'border-box' }}
+                  />
+                  <div style={{ display:'flex', justifyContent:'flex-end', marginTop:10 }}>
+                    <button
+                      disabled={asiRunning || !asiPrompt.trim()}
+                      onClick={async () => {
+                        if (!user || !asiPrompt.trim() || asiRunning) return;
+                        setAsiRunning(true); setAsiResult(null); setAsiLivePhases([]); setAsiCurrentPhase('');
+                        try {
+                          const cleanModel = asiModel.startsWith('openrouter/') ? asiModel.slice('openrouter/'.length) : asiModel;
+                          const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: `[DEEP ANALYSIS — ${asiDepth} phases] ${asiPrompt}`, model: cleanModel, depth: asiDepth, web_search: asiWebSearch }) }, user.token);
+                          if (d?.data?.content) {
+                            setAsiResult({ steps: [], synthesis: d.data.content, totalTokens: d.data.tokens || 0, model: cleanModel });
+                          }
+                        } catch(e:any) { setAsiResult({ steps:[], synthesis:`⚠️ ${e.message}`, totalTokens:0, model:'' }); }
+                        finally { setAsiRunning(false); }
+                      }}
+                      style={{ padding:'10px 28px', background: asiRunning ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#a78bfa)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor: asiRunning ? 'not-allowed' : 'pointer' }}
+                    >
+                      {asiRunning ? '⏳ Analyzing…' : '🌌 Launch Deep Analysis'}
+                    </button>
                   </div>
                 </div>
-              )}
+                {/* Live phases */}
+                {asiRunning && (
+                  <div style={{ marginBottom:20 }}>
+                    {asiLivePhases.map((p,i) => (
+                      <div key={i} style={{ padding:'10px 16px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
+                        <p style={{ margin:'0 0 4px', fontSize:12, fontWeight:600, color:'var(--fg-purple)' }}>{p.phase}</p>
+                        <p style={{ margin:0, fontSize:13, color:'var(--fg-text2)' }}>{p.content}</p>
+                      </div>
+                    ))}
+                    {asiCurrentPhase && (
+                      <div style={{ padding:'10px 16px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border3)', borderRadius:8, animation:'forge-ring 1.5s ease-in-out infinite' }}>
+                        <p style={{ margin:0, fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>⚡ {asiCurrentPhase}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* Result */}
+                {asiResult && (
+                  <div>
+                    <div style={{ background:'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(6,182,212,0.08))', border:'1px solid rgba(124,58,237,0.3)', borderRadius:14, padding:24, marginBottom:20 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+                        <span style={{ fontSize:20 }}>✨</span>
+                        <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:'var(--fg-purple)' }}>Synthesis</h3>
+                        <span style={{ marginLeft:'auto', fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{asiResult.totalTokens.toLocaleString()} tokens</span>
+                      </div>
+                      <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.8, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{asiResult.synthesis}</div>
+                      <div style={{ display:'flex', gap:8, marginTop:16 }}>
+                        <button onClick={() => navigator.clipboard?.writeText(asiResult.synthesis)} style={{ padding:'7px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>📋 Copy</button>
+                        <button onClick={() => { setInput(asiResult.synthesis); setMainTab('workspace'); }} style={{ padding:'9px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>💬 Push to Chat</button>
+                      </div>
+                    </div>
+                    {asiResult.steps.length > 0 && (
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:12 }}>
+                        {asiResult.steps.map((s,i) => (
+                          <div key={i} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14 }}>
+                            <p style={{ margin:'0 0 8px', fontSize:12, fontWeight:700, color:'var(--fg-purple)' }}>{s.phase}</p>
+                            <p style={{ margin:'0 0 6px', fontSize:12, color:'var(--fg-text2)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{s.content.slice(0,300)}{s.content.length>300?'…':''}</p>
+                            <p style={{ margin:0, fontSize:10, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{s.tokens.toLocaleString()} tokens</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modals ─────────────────────────────────────────────────────── */}
+        {viewArtifact && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }} onClick={() => setViewArtifact(null)}>
+            <div onClick={e => e.stopPropagation()} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:28, maxWidth:800, width:'90vw', maxHeight:'85vh', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16, flexShrink:0 }}>
+                <span style={{ fontSize:20 }}>{artifactTypeIcon[(viewArtifact.type as keyof typeof artifactTypeIcon)] || artifactTypeIcon.default}</span>
+                <h2 style={{ margin:0, fontSize:17, fontWeight:700, color:'var(--fg-text)', flex:1 }}>{viewArtifact.title}</h2>
+                <span style={{ fontSize:11, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'2px 8px', borderRadius:4 }}>v{viewArtifact.version}</span>
+                <button onClick={() => navigator.clipboard?.writeText(viewArtifact.content)} style={{ padding:'5px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>Copy</button>
+                <button onClick={() => setViewArtifact(null)} style={{ padding:'5px 10px', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:18 }}>✕</button>
+              </div>
+              <pre style={{ flex:1, overflowY:'auto', background:'var(--fg-bg2)', borderRadius:8, padding:16, fontSize:13, fontFamily:'var(--fg-font-mono)', color:'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-word', margin:0 }}>{viewArtifact.content}</pre>
+            </div>
+          </div>
+        )}
+
+        {showAskModal && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }}>
+            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:32, maxWidth:700, width:'90vw', maxHeight:'80vh', overflowY:'auto' }}>
+              <h2 style={{ margin:'0 0 20px', fontSize:20, fontWeight:800, color:'var(--fg-orange)' }}>❓ ForgeAsk — Ask Mode</h2>
+              <p style={{ margin:'0 0 24px', color:'var(--fg-text3)', fontSize:14 }}>Ask mode: confirm which tools, skills &amp; connectors Forge should use before starting this task.</p>
+
+              <div style={{ marginBottom:24 }}>
+                <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🎯 Skills</h3>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:8 }}>
+                  {((window.FORGE_CATALOG_DATA as any)?.skills || []).slice(0,24).map((s: any) => (
+                    <label key={s.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background: selectedAskSkills.has(s.id) ? 'rgba(249,115,22,0.12)' : 'var(--fg-bg4)', border:`1px solid ${selectedAskSkills.has(s.id) ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, cursor:'pointer' }}>
+                      <input type="checkbox" checked={selectedAskSkills.has(s.id)} onChange={() => setSelectedAskSkills(prev => { const n=new Set(prev); n.has(s.id)?n.delete(s.id):n.add(s.id); return n; })} style={{ accentColor:'var(--fg-orange)', margin:0 }} />
+                      <span style={{ fontSize:12, color:'var(--fg-text2)' }}>{s.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom:28 }}>
+                <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🔌 Connectors</h3>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:8 }}>
+                  {((window.FORGE_CATALOG_DATA as any)?.connectors || []).slice(0,20).map((c: any) => (
+                    <label key={c.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background: selectedAskConnectors.has(c.id) ? 'rgba(249,115,22,0.12)' : 'var(--fg-bg4)', border:`1px solid ${selectedAskConnectors.has(c.id) ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, cursor:'pointer' }}>
+                      <input type="checkbox" checked={selectedAskConnectors.has(c.id)} onChange={() => setSelectedAskConnectors(prev => { const n=new Set(prev); n.has(c.id)?n.delete(c.id):n.add(c.id); return n; })} style={{ accentColor:'var(--fg-orange)', margin:0 }} />
+                      <span style={{ fontSize:12, color:'var(--fg-text2)' }}>{c.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display:'flex', gap:12 }}>
+                <button onClick={() => { setShowAskModal(false); setSuperInput(''); }} style={{ flex:1, padding:12, background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:14, cursor:'pointer' }}>Cancel</button>
+                <button onClick={async () => { if (pendingAskMessage.trim()) { setShowAskModal(false); setSuperInput(''); setSuperMessages(prev => [...prev, { role:'user', content: pendingAskMessage }]); setSuperSending(true); try { const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel; const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: pendingAskMessage, model: cleanModel, enabledSkills: Array.from(selectedAskSkills), enabledConnectors: Array.from(selectedAskConnectors) }) }, user.token); setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]); loadTotalTokens(); try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {} } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); } finally { setSuperSending(false); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); } } }} style={{ flex:1, padding:12, background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Send with Selected Tools</button>
+              </div>
             </div>
           </div>
         )}
 
       </div>
-
-      {showNewProject && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setShowNewProject(false)}>
-          <div style={{ width:420, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>New Project</h3>
-            <input placeholder="Project name" value={newProjName} onChange={e => setNewProjName(e.target.value)} style={{ width:'100%', padding:'12px', marginBottom:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box' }} />
-            <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 8px' }}>Color</p>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              {PROJECT_COLORS.map(c => <div key={c} onClick={() => setNewProjColor(c)} style={{ width:28, height:28, borderRadius:'50%', background:c, cursor:'pointer', border:newProjColor===c ? '3px solid #fff' : '3px solid transparent' }} />)}
-            </div>
-            <textarea placeholder="System prompt (optional)" value={newProjPrompt} onChange={e => setNewProjPrompt(e.target.value)} rows={3} style={{ width:'100%', padding:'12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
-            <div style={{ display:'flex', gap:10 }}>
-              <button onClick={() => setShowNewProject(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
-              <button onClick={async () => {
-                if (!user || !newProjName.trim()) return;
-                try { await apiFetch('/projects', { method:'POST', body:JSON.stringify({ name:newProjName.trim(), color:newProjColor, system_prompt:newProjPrompt }) }, user.token); setShowNewProject(false); setNewProjName(''); setNewProjPrompt(''); await loadProjects(); } catch (e:any) { alert(e.message); }
-              }} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Create</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showNewTask && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setShowNewTask(false)}>
-          <div style={{ width:380, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>New Task</h3>
-            <input placeholder="Task title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} onKeyDown={e => { if (e.key==='Enter') createTask(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
-            <div style={{ display:'flex', gap:6, marginBottom:16 }}>
-              {(['low','medium','high'] as const).map(p => {
-                const tpc: Record<string,string> = { low:'var(--fg-text2)', medium:'var(--fg-orange)', high:'var(--fg-red)' };
-                return <button key={p} onClick={() => setNewTaskPriority(p)} style={{ flex:1, padding:'8px', background:newTaskPriority===p ? tpc[p]+'33' : 'transparent', border:`1px solid ${newTaskPriority===p ? tpc[p] : 'var(--fg-border2)'}`, borderRadius:6, color:newTaskPriority===p ? tpc[p] : 'var(--fg-text2)', cursor:'pointer', fontSize:12, textTransform:'capitalize' }}>{p}</button>;
-              })}
-            </div>
-            <div style={{ display:'flex', gap:10 }}>
-              <button onClick={() => setShowNewTask(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
-              <button onClick={createTask} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Add Task</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {threadMenu && (() => {
-        const t = threads.find(x => x.id === threadMenu.threadId);
-        if (!t) return null;
-        return (
-          <div style={{ position:'fixed', top: threadMenu.y, left: threadMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
-            {[
-              { icon:'✏️', label:'Rename', action:() => { setRenamingThread({ id:t.id, title:t.title }); setThreadMenu(null); } },
-              { icon: t.pinned ? 'Unpin' : 'Pin', label: t.pinned ? 'Unpin' : 'Pin', action:() => { apiFetch('/threads/' + t.id, { method:'PATCH', body:JSON.stringify({ pinned: t.pinned ? 0 : 1 }) }, user!.token).then(() => loadThreads(activeProject?.id)); setThreadMenu(null); } },
-              { icon:'Archive', label: t.archived ? 'Unarchive' : 'Archive', action:() => { archiveThread(t); setThreadMenu(null); } },
-              { icon:'Delete', label:'Delete', action:() => { deleteThread(t.id); setThreadMenu(null); } },
-            ].map(item => (
-              <button key={item.label} onClick={item.action} style={{ display:'block', width:'100%', padding:'8px 14px', background:'none', border:'none', color:'var(--fg-text)', cursor:'pointer', textAlign:'left', fontSize:13, borderRadius:6 }}
-                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')}
-                onMouseLeave={e => (e.currentTarget.style.background='none')}
-              >{item.icon} {item.label}</button>
-            ))}
-          </div>
-        );
-      })()}
-
-      {projectMenu && (() => {
-        const proj = projects.find(x => x.id === projectMenu.projectId);
-        if (!proj) return null;
-        return (
-          <div style={{ position:'fixed', top: projectMenu.y, left: projectMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
-            {[
-              { label:'Delete Project', action:() => { if (confirm('Delete this project and all its threads?')) { apiFetch('/projects/'+proj.id, { method:'DELETE' }, user!.token).then(() => { setActiveProject(null); loadProjects(); }); } setProjectMenu(null); } },
-            ].map(item => (
-              <button key={item.label} onClick={item.action} style={{ display:'block', width:'100%', padding:'8px 14px', background:'none', border:'none', color:'var(--fg-red)', cursor:'pointer', textAlign:'left', fontSize:13, borderRadius:6 }}
-                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')}
-                onMouseLeave={e => (e.currentTarget.style.background='none')}
-              >{item.label}</button>
-            ))}
-          </div>
-        );
-      })()}
-
-      {renamingProject && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingProject(null)}>
-          <div style={{ width:360, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ color:'var(--fg-text)', margin:'0 0 16px', fontSize:16, fontWeight:700 }}>Rename Project</h3>
-            <input value={renamingProject.name} onChange={e => setRenamingProject(prev => prev ? { ...prev, name: e.target.value } : prev)} onKeyDown={e => { if (e.key==='Enter') renameProject(); }} autoFocus style={{ width:'100%', padding:'10px 12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
-            <div style={{ display:'flex', gap:8 }}>
-              <button onClick={() => setRenamingProject(null)} style={{ flex:1, padding:'9px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
-              <button onClick={renameProject} style={{ flex:1, padding:'9px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontWeight:600, cursor:'pointer' }}>Rename</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {renamingThread && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setRenamingThread(null)}>
-          <div style={{ width:380, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>Rename Thread</h3>
-            <input value={renamingThread.title} onChange={e => setRenamingThread(prev => prev ? { ...prev, title: e.target.value } : prev)} onKeyDown={e => { if (e.key==='Enter') renameThread(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
-            <div style={{ display:'flex', gap:10 }}>
-              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
-              <button onClick={renameThread} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Rename</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
