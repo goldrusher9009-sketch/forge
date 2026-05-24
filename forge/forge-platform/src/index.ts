@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.10 — Fix: restored truncated file (app.listen), all LLM timeouts 20s, user keys work independently
+ * Forge Platform v6.15 — Fix: OR timeout 60s, sidebar tool visibility, ForgeMagic catalog, skills/connectors multi-request
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -706,7 +706,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   if (provider === 'openrouter') {
     const orModel = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
     let res: Response;
-    try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 22000); }
+    try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 60000); }
     catch (e: any) { throw new Error(e?.name==='AbortError' ? `Model "${orModel}" timed out after 22s — try a faster model` : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenRouter error (${orModel}): ${e.slice(0,300)}`); }
     const d: any = await res.json();
@@ -1599,7 +1599,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     res.end();
   };
   // Safety: never leave the connection open >25s — Railway kills at 30s regardless
-  const safetyTimer = setTimeout(() => endSSE({ success: false, error: 'TIMEOUT', message: 'Request timed out — please try again' }), 25000);
+  const safetyTimer = setTimeout(() => endSSE({ success: false, error: 'TIMEOUT', message: 'Request timed out — please try again' }), 65000);
   // ────────────────────────────────────────────────────────────────────────────
 
   // Now safe to do DB work — connection is already alive
@@ -1662,7 +1662,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     // Promise.race ensures callLLM can't hang indefinitely even if AbortController fails
     const result = await Promise.race([
       callLLM(provider, apiKey, actualModel, llmMessages),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out after 20s — model may be slow or key invalid`)), 20000))
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out after ${provider === 'openrouter' ? '60s' : '20s'} — model may be slow or key invalid`)), provider === 'openrouter' ? 60000 : 20000))
     ]);
     const totalTokens = result.promptTokens + result.completionTokens;
     const costs = MODEL_COSTS[model] || { input: 0.001, output: 0.001, markup: 1.3 };

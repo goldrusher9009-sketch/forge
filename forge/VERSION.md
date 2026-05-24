@@ -1,6 +1,23 @@
 # Forge Platform — Version History
 
-## v6.14 — 2026-05-23 (current)
+## v6.15 — 2026-05-24 (current)
+
+### Backend: forge-platform/src/index.ts
+- **Fix: OpenRouter timeout 60s** — OR `fetchWithTimeout` 22s→60s, Promise.race outer guard 20s→60s (OR only), safety timer 25s→65s. Slow OR models (large context, high load) no longer time out prematurely
+- **Fix: Stream tool visibility** — backend `/superagent/chat` now accepts `enabledSkills` + `enabledConnectors` arrays per request
+- **New: SKILLS_CATALOG.json** — skills + connectors catalog served/referenced by frontend
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **New: Sidebar tool visibility** — right sidebar shows active skills (with icons + close ✕) and active connectors in real-time as they're enabled
+- **New: ForgeMagic auto-matching** — `superMode='forgeMagic'` auto-enables skills/connectors from `window.FORGE_CATALOG_DATA` based on message keywords; sidebar updates live
+- **New: window.FORGE_CATALOG_DATA global** — catalog data hoisted to window scope so both super tab and skills tab share same data without prop drilling
+- **New: Multiple skills/connectors in single request** — `sendMessage` passes `enabledSkills`/`enabledConnectors` arrays to superagent endpoint
+- **New: Interactive chat elements** — tool activity, skill/connector chips rendered inline in chat
+- **Fix: Catalog scope bug** — sidebar skill/connector lookup was referencing undefined local `catalogData`; fixed to use `window.FORGE_CATALOG_DATA`
+
+---
+
+## v6.14 — 2026-05-23
 
 ### Backend: forge-platform/src/index.ts
 - **Fix: Heartbeat keep-alive** — `app.post('/api/threads/:id/messages')` now sends a `setInterval` heartbeat every 5s (`res.write(' ')`) while the LLM runs. Railway 30s idle timeout can never fire because bytes are sent continuously. `endRes()` helper clears the interval and flushes the real JSON payload.
