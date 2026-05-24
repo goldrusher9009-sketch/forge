@@ -1662,7 +1662,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     // Promise.race ensures callLLM can't hang indefinitely even if AbortController fails
     const result = await Promise.race([
       callLLM(provider, apiKey, actualModel, llmMessages),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out after ${provider === 'openrouter' ? '60s' : '20s'} — model may be slow or key invalid`)), provider === 'openrouter' ? 60000 : 20000))
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out — model may be slow or key invalid`)), provider === 'openrouter' ? 60000 : 20000))
     ]);
     const totalTokens = result.promptTokens + result.completionTokens;
     const costs = MODEL_COSTS[model] || { input: 0.001, output: 0.001, markup: 1.3 };
