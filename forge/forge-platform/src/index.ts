@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'billing-fix-3' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'billing-fix-4' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -405,34 +405,33 @@ try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_limit INTEGER NOT NUL
 try { db.exec(`UPDATE subscriptions SET tokens_limit=1000000, tokens_used=0`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_used INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_start TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
-// Rebuild subscriptions if period_end column is missing (can't be added via ALTER when DEFAULT datetime('now','+30 days') was tried previously)
+// Rebuild subscriptions if period_end column is missing
 try {
   const subCols = (db.prepare(`PRAGMA table_info(subscriptions)`).all() as any[]).map((c: any) => c.name);
   if (!subCols.includes('period_end')) {
-    db.exec(`
-      ALTER TABLE subscriptions RENAME TO subscriptions_old;
-      CREATE TABLE subscriptions (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-        plan TEXT NOT NULL DEFAULT 'free',
-        stripe_customer_id TEXT,
-        stripe_subscription_id TEXT,
-        tokens_used INTEGER NOT NULL DEFAULT 0,
-        tokens_limit INTEGER NOT NULL DEFAULT 1000000,
-        period_start TEXT NOT NULL DEFAULT (datetime('now')),
-        period_end TEXT NOT NULL DEFAULT (datetime('now')),
-        status TEXT NOT NULL DEFAULT 'active',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      );
-      INSERT INTO subscriptions (id,user_id,plan,stripe_customer_id,stripe_subscription_id,tokens_used,tokens_limit,period_start,period_end,status,created_at,updated_at)
-        SELECT id,user_id,plan,stripe_customer_id,stripe_subscription_id,
-               COALESCE(tokens_used,0),COALESCE(tokens_limit,1000000),
-               COALESCE(period_start,datetime('now')),datetime('now','+30 days'),
-               COALESCE(status,'active'),COALESCE(created_at,datetime('now')),COALESCE(updated_at,datetime('now'))
-        FROM subscriptions_old;
-      DROP TABLE subscriptions_old;
-    `);
+    db.exec(`ALTER TABLE subscriptions RENAME TO subscriptions_old`);
+    db.exec(`CREATE TABLE subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT UNIQUE NOT NULL,
+      plan TEXT NOT NULL DEFAULT 'free',
+      stripe_customer_id TEXT,
+      stripe_subscription_id TEXT,
+      tokens_used INTEGER NOT NULL DEFAULT 0,
+      tokens_limit INTEGER NOT NULL DEFAULT 1000000,
+      period_start TEXT NOT NULL DEFAULT (datetime('now')),
+      period_end TEXT NOT NULL DEFAULT (datetime('now')),
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
+    db.exec(`INSERT INTO subscriptions (id,user_id,plan,stripe_customer_id,stripe_subscription_id,tokens_used,tokens_limit,period_start,period_end,status,created_at,updated_at)
+      SELECT id,user_id,plan,stripe_customer_id,stripe_subscription_id,
+             COALESCE(tokens_used,0),COALESCE(tokens_limit,1000000),
+             COALESCE(period_start,datetime('now')),datetime('now','+30 days'),
+             COALESCE(status,'active'),COALESCE(created_at,datetime('now')),COALESCE(updated_at,datetime('now'))
+      FROM subscriptions_old`);
+    db.exec(`DROP TABLE subscriptions_old`);
+    console.log('subscriptions table rebuilt with period_end column');
   }
 } catch (e: any) { console.error('subscriptions rebuild error:', e.message); }
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN status TEXT NOT NULL DEFAULT 'active'`); } catch {}
