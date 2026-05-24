@@ -3,135 +3,1194 @@
     {
       "id": "pdf",
       "name": "PDF Tools",
-      "description": "Comprehensive PDF manipulation: extract, create, merge, split, fill forms",
+      "description": "Comprehensive PDF manipulation: extract text, create, merge, split, fill forms, sign",
       "category": "document",
-      "triggers": ["PDF", ".pdf", "form", "extract", "merge", "split"]
+      "icon": "📄",
+      "triggers": ["PDF", ".pdf", "form", "extract", "merge", "split", "sign"]
     },
     {
       "id": "docx",
       "name": "Word Documents",
-      "description": "Create, read, edit Word documents (.docx) with formatting, tables, images",
+      "description": "Create, read, edit Word documents (.docx) with formatting, tables, images, TOC",
       "category": "document",
-      "triggers": ["Word doc", ".docx", "document"]
+      "icon": "📝",
+      "triggers": ["Word doc", ".docx", "document", "report", "memo", "letter"]
     },
     {
       "id": "xlsx",
       "name": "Excel Spreadsheets",
-      "description": "Excel workbooks: formulas, formatting, charts, data analysis",
+      "description": "Excel workbooks: formulas, formatting, charts, data analysis, financial models",
       "category": "document",
-      "triggers": ["Excel", "spreadsheet", ".xlsx", "data table", "budget"]
+      "icon": "📊",
+      "triggers": ["Excel", "spreadsheet", ".xlsx", "data table", "budget", "financial model"]
     },
     {
       "id": "pptx",
       "name": "PowerPoint Presentations",
       "description": "Create and edit slide decks with layouts, speaker notes, animations",
       "category": "document",
-      "triggers": ["deck", "slides", "presentation", ".pptx"]
+      "icon": "📽",
+      "triggers": ["deck", "slides", "presentation", ".pptx", "pitch deck"]
+    },
+    {
+      "id": "canvas-design",
+      "name": "Canvas Design",
+      "description": "Create beautiful visual art and designs as .png and .pdf using design philosophy",
+      "category": "design",
+      "icon": "🎨",
+      "triggers": ["poster", "art", "design", "graphic", "visual", "banner"]
     },
     {
       "id": "data-analyze",
       "name": "Data Analysis",
-      "description": "Answer data questions: lookups, trends, outlier detection, hypothesis testing",
+      "description": "Answer data questions: lookups, trends, comparisons, outlier detection, reports",
       "category": "analytics",
-      "triggers": ["data", "metric", "trend", "analysis"]
+      "icon": "📈",
+      "triggers": ["data", "metric", "trend", "analysis", "numbers", "stats"]
     },
     {
       "id": "data-create-viz",
       "name": "Data Visualization",
       "description": "Create publication-quality charts with Python (matplotlib, seaborn, plotly)",
       "category": "analytics",
-      "triggers": ["chart", "graph", "visualization", "plot"]
+      "icon": "📉",
+      "triggers": ["chart", "graph", "visualization", "plot", "histogram"]
     },
     {
       "id": "data-build-dashboard",
       "name": "Build Dashboard",
-      "description": "Interactive HTML dashboards with charts, filters, KPI cards",
+      "description": "Interactive HTML dashboards with charts, filters, KPI cards, tables",
       "category": "analytics",
-      "triggers": ["dashboard", "monitor", "overview"]
+      "icon": "🖥",
+      "triggers": ["dashboard", "monitor", "overview", "KPI"]
     },
     {
-      "id": "brand-voice-enforce",
-      "name": "Brand Voice Enforcement",
-      "description": "Apply brand guidelines to content, check tone alignment",
+      "id": "data-sql-queries",
+      "name": "SQL Queries",
+      "description": "Write optimized SQL for Snowflake, BigQuery, Postgres, Databricks and more",
+      "category": "analytics",
+      "icon": "🗄",
+      "triggers": ["SQL", "query", "database", "SELECT", "JOIN"]
+    },
+    {
+      "id": "data-statistical-analysis",
+      "name": "Statistical Analysis",
+      "description": "Descriptive stats, trend analysis, outlier detection, hypothesis testing",
+      "category": "analytics",
+      "icon": "🔢",
+      "triggers": ["statistics", "regression", "correlation", "significance", "p-value"]
+    },
+    {
+      "id": "data-explore-data",
+      "name": "Explore Data",
+      "description": "Profile a dataset: shape, quality, null rates, distributions, data issues",
+      "category": "analytics",
+      "icon": "🔍",
+      "triggers": ["explore", "profile", "EDA", "data quality", "null rates"]
+    },
+    {
+      "id": "data-validate-data",
+      "name": "Validate Data",
+      "description": "QA an analysis: methodology, accuracy, bias checks before sharing",
+      "category": "analytics",
+      "icon": "✅",
+      "triggers": ["validate", "QA", "verify analysis", "accuracy check"]
+    },
+    {
+      "id": "data-write-query",
+      "name": "Write Query",
+      "description": "Translate natural language to optimized SQL with CTEs, window functions",
+      "category": "analytics",
+      "icon": "✍",
+      "triggers": ["write query", "generate SQL", "SQL from description"]
+    },
+    {
+      "id": "brand-voice-enforcement",
+      "name": "Brand Voice",
+      "description": "Apply brand guidelines to content, check tone and messaging alignment",
       "category": "content",
-      "triggers": ["brand voice", "on-brand", "tone"]
+      "icon": "🎯",
+      "triggers": ["brand voice", "on-brand", "tone", "brand guidelines", "style guide"]
     },
     {
-      "id": "marketing-content",
+      "id": "brand-voice-discover",
+      "name": "Discover Brand",
+      "description": "Search enterprise platforms to find all brand-related materials and documents",
+      "category": "content",
+      "icon": "🔎",
+      "triggers": ["discover brand", "brand audit", "find brand materials", "brand content"]
+    },
+    {
+      "id": "brand-voice-guidelines",
+      "name": "Generate Guidelines",
+      "description": "Generate brand voice guidelines from documents, transcripts, and materials",
+      "category": "content",
+      "icon": "📋",
+      "triggers": ["brand guidelines", "style guide", "voice guide", "brand playbook"]
+    },
+    {
+      "id": "marketing-content-creation",
       "name": "Marketing Content",
-      "description": "Draft blog posts, emails, social media, landing pages",
+      "description": "Draft blog posts, social media, email newsletters, landing pages, press releases",
       "category": "content",
-      "triggers": ["blog", "email", "social", "content"]
+      "icon": "✏",
+      "triggers": ["blog", "email", "social", "content", "newsletter", "landing page"]
+    },
+    {
+      "id": "marketing-email-sequence",
+      "name": "Email Sequence",
+      "description": "Multi-email drip sequences with timing, branching logic, A/B suggestions",
+      "category": "content",
+      "icon": "📧",
+      "triggers": ["email sequence", "drip campaign", "nurture", "onboarding emails"]
+    },
+    {
+      "id": "marketing-campaign-plan",
+      "name": "Campaign Plan",
+      "description": "Full campaign brief: objectives, audience, messaging, calendar, metrics",
+      "category": "content",
+      "icon": "🗓",
+      "triggers": ["campaign", "launch plan", "marketing plan", "campaign brief"]
+    },
+    {
+      "id": "marketing-competitive-brief",
+      "name": "Competitive Brief",
+      "description": "Competitor research, positioning comparison, content gaps, battle cards",
+      "category": "content",
+      "icon": "⚔",
+      "triggers": ["competitor", "competitive analysis", "battle card", "positioning"]
+    },
+    {
+      "id": "marketing-seo-audit",
+      "name": "SEO Audit",
+      "description": "Full SEO audit: keywords, on-page, content gaps, technical, competitor comparison",
+      "category": "content",
+      "icon": "🔍",
+      "triggers": ["SEO", "search optimization", "keyword", "ranking", "audit"]
+    },
+    {
+      "id": "marketing-performance-report",
+      "name": "Performance Report",
+      "description": "Marketing performance with trend analysis, wins, misses, optimization",
+      "category": "content",
+      "icon": "📊",
+      "triggers": ["performance report", "marketing metrics", "campaign results"]
+    },
+    {
+      "id": "marketing-brand-review",
+      "name": "Brand Review",
+      "description": "Review content against brand voice, style guide, flag deviations with fixes",
+      "category": "content",
+      "icon": "🔬",
+      "triggers": ["brand review", "brand check", "voice check", "tone review"]
     },
     {
       "id": "engineering-debug",
       "name": "Debug",
-      "description": "Systematic debugging: reproduce, isolate, diagnose, fix",
+      "description": "Structured debugging: reproduce, isolate, diagnose, fix with stack traces",
       "category": "engineering",
-      "triggers": ["bug", "error", "debug"]
+      "icon": "🐛",
+      "triggers": ["bug", "error", "debug", "stack trace", "exception"]
     },
     {
       "id": "engineering-code-review",
       "name": "Code Review",
-      "description": "Review code for security, performance, correctness",
+      "description": "Review code for security, performance, correctness, N+1 queries, edge cases",
       "category": "engineering",
-      "triggers": ["review", "PR", "code review"]
+      "icon": "👀",
+      "triggers": ["review", "PR", "code review", "pull request", "diff"]
+    },
+    {
+      "id": "engineering-architecture",
+      "name": "Architecture",
+      "description": "Create ADRs, evaluate tech choices, document design decisions with trade-offs",
+      "category": "engineering",
+      "icon": "🏗",
+      "triggers": ["architecture", "ADR", "system design", "tech decision", "trade-offs"]
+    },
+    {
+      "id": "engineering-documentation",
+      "name": "Documentation",
+      "description": "Write READMEs, API docs, runbooks, architecture docs, onboarding guides",
+      "category": "engineering",
+      "icon": "📚",
+      "triggers": ["documentation", "README", "runbook", "API docs", "onboarding"]
+    },
+    {
+      "id": "engineering-system-design",
+      "name": "System Design",
+      "description": "Design systems, services, APIs, data models, service boundaries",
+      "category": "engineering",
+      "icon": "⚙",
+      "triggers": ["system design", "API design", "data model", "service design"]
+    },
+    {
+      "id": "engineering-testing-strategy",
+      "name": "Testing Strategy",
+      "description": "Design test strategies, test plans, coverage analysis, test architecture",
+      "category": "engineering",
+      "icon": "🧪",
+      "triggers": ["testing", "test strategy", "unit tests", "integration tests", "coverage"]
+    },
+    {
+      "id": "engineering-incident-response",
+      "name": "Incident Response",
+      "description": "Triage incidents, communicate status, write blameless postmortems",
+      "category": "engineering",
+      "icon": "🚨",
+      "triggers": ["incident", "outage", "production down", "postmortem", "on-call"]
+    },
+    {
+      "id": "engineering-deploy-checklist",
+      "name": "Deploy Checklist",
+      "description": "Pre-deployment verification: CI, approvals, migrations, rollback triggers",
+      "category": "engineering",
+      "icon": "🚀",
+      "triggers": ["deploy", "release", "deployment checklist", "ship"]
+    },
+    {
+      "id": "engineering-tech-debt",
+      "name": "Tech Debt",
+      "description": "Identify, categorize, prioritize technical debt and refactoring backlog",
+      "category": "engineering",
+      "icon": "💳",
+      "triggers": ["tech debt", "refactor", "code quality", "code health"]
+    },
+    {
+      "id": "engineering-standup",
+      "name": "Standup",
+      "description": "Generate standup from recent commits, PRs, tickets in yesterday/today/blockers format",
+      "category": "engineering",
+      "icon": "📣",
+      "triggers": ["standup", "daily update", "yesterday today blockers"]
+    },
+    {
+      "id": "sales-account-research",
+      "name": "Account Research",
+      "description": "Research a company or person for actionable sales intel via web + CRM",
+      "category": "sales",
+      "icon": "🏢",
+      "triggers": ["research company", "account research", "intel on", "prospect research"]
+    },
+    {
+      "id": "sales-call-prep",
+      "name": "Call Prep",
+      "description": "Prep for sales calls: account context, attendee research, suggested agenda",
+      "category": "sales",
+      "icon": "📞",
+      "triggers": ["call prep", "prep for meeting", "meeting prep", "sales call"]
+    },
+    {
+      "id": "sales-call-summary",
+      "name": "Call Summary",
+      "description": "Process notes or transcript: action items, follow-up email, CRM log",
+      "category": "sales",
+      "icon": "📝",
+      "triggers": ["call summary", "meeting notes", "transcript", "follow-up email"]
+    },
+    {
+      "id": "sales-draft-outreach",
+      "name": "Draft Outreach",
+      "description": "Research prospect and draft personalized cold outreach emails",
+      "category": "sales",
+      "icon": "✉",
+      "triggers": ["cold email", "outreach", "draft email to", "prospect email"]
+    },
+    {
+      "id": "sales-pipeline-review",
+      "name": "Pipeline Review",
+      "description": "Analyze pipeline health, prioritize deals, flag risks, weekly action plan",
+      "category": "sales",
+      "icon": "🔀",
+      "triggers": ["pipeline", "deals", "opportunities", "pipeline review"]
+    },
+    {
+      "id": "sales-forecast",
+      "name": "Sales Forecast",
+      "description": "Weighted forecast with best/likely/worst scenarios, gap-to-quota analysis",
+      "category": "sales",
+      "icon": "📈",
+      "triggers": ["forecast", "quota", "revenue forecast", "pipeline forecast"]
+    },
+    {
+      "id": "sales-competitive-intelligence",
+      "name": "Competitive Intel",
+      "description": "Research competitors, build battlecards with comparison matrix",
+      "category": "sales",
+      "icon": "🥊",
+      "triggers": ["competitor", "battlecard", "competitive intel", "vs competitor"]
+    },
+    {
+      "id": "sales-daily-briefing",
+      "name": "Daily Briefing",
+      "description": "Start-of-day prioritized sales briefing from calendar, CRM, email",
+      "category": "sales",
+      "icon": "☀",
+      "triggers": ["daily brief", "morning brief", "day prep", "what's on my plate"]
+    },
+    {
+      "id": "sales-create-asset",
+      "name": "Create Sales Asset",
+      "description": "Generate tailored sales assets: landing pages, decks, one-pagers, demos",
+      "category": "sales",
+      "icon": "🗂",
+      "triggers": ["sales asset", "one-pager", "leave-behind", "sales deck"]
+    },
+    {
+      "id": "product-write-spec",
+      "name": "Write Spec / PRD",
+      "description": "Write feature specs from ideas: goals, non-goals, metrics, acceptance criteria",
+      "category": "product",
+      "icon": "📋",
+      "triggers": ["spec", "PRD", "feature spec", "product requirements", "product doc"]
+    },
+    {
+      "id": "product-brainstorm",
+      "name": "Product Brainstorm",
+      "description": "Brainstorm ideas, explore problem spaces, stress-test assumptions",
+      "category": "product",
+      "icon": "💡",
+      "triggers": ["brainstorm", "ideate", "product ideas", "explore problem"]
+    },
+    {
+      "id": "product-sprint-planning",
+      "name": "Sprint Planning",
+      "description": "Plan sprint: scope work, estimate capacity, set goals, handle carryover",
+      "category": "product",
+      "icon": "🏃",
+      "triggers": ["sprint", "sprint planning", "backlog grooming", "capacity planning"]
+    },
+    {
+      "id": "product-roadmap-update",
+      "name": "Roadmap Update",
+      "description": "Update, create, or reprioritize product roadmap with Now/Next/Later view",
+      "category": "product",
+      "icon": "🗺",
+      "triggers": ["roadmap", "prioritization", "product roadmap", "now next later"]
+    },
+    {
+      "id": "product-metrics-review",
+      "name": "Metrics Review",
+      "description": "Review product metrics with trend analysis and actionable insights",
+      "category": "product",
+      "icon": "📊",
+      "triggers": ["product metrics", "KPIs", "metrics review", "product analytics"]
+    },
+    {
+      "id": "product-stakeholder-update",
+      "name": "Stakeholder Update",
+      "description": "Generate stakeholder updates tailored to exec, engineering, or customer audiences",
+      "category": "product",
+      "icon": "📣",
+      "triggers": ["stakeholder update", "status update", "exec update", "progress report"]
+    },
+    {
+      "id": "product-competitive-brief",
+      "name": "Competitive Brief",
+      "description": "Competitive analysis for product strategy, sales battle cards, investor materials",
+      "category": "product",
+      "icon": "⚔",
+      "triggers": ["competitive brief", "competitor analysis", "market analysis"]
+    },
+    {
+      "id": "product-synthesize-research",
+      "name": "Synthesize Research",
+      "description": "Synthesize user research: interviews, surveys, feedback into structured insights",
+      "category": "product",
+      "icon": "🔬",
+      "triggers": ["user research", "synthesize feedback", "interview analysis", "survey results"]
+    },
+    {
+      "id": "design-design-critique",
+      "name": "Design Critique",
+      "description": "Structured feedback on usability, hierarchy, consistency from mockups/screenshots",
+      "category": "design",
+      "icon": "🖼",
+      "triggers": ["design review", "design critique", "UI feedback", "mockup review"]
+    },
+    {
+      "id": "design-accessibility-review",
+      "name": "Accessibility Review",
+      "description": "WCAG 2.1 AA audit: color contrast, keyboard nav, touch targets, screen readers",
+      "category": "design",
+      "icon": "♿",
+      "triggers": ["accessibility", "a11y", "WCAG", "color contrast", "screen reader"]
+    },
+    {
+      "id": "design-ux-copy",
+      "name": "UX Copy",
+      "description": "Write or review UX copy: microcopy, error messages, empty states, CTAs",
+      "category": "design",
+      "icon": "✍",
+      "triggers": ["UX copy", "microcopy", "button text", "error message", "empty state"]
+    },
+    {
+      "id": "design-user-research",
+      "name": "User Research",
+      "description": "Plan, conduct, and synthesize user research: interviews, usability tests, surveys",
+      "category": "design",
+      "icon": "👥",
+      "triggers": ["user research", "interview guide", "usability test", "survey design"]
+    },
+    {
+      "id": "design-design-handoff",
+      "name": "Design Handoff",
+      "description": "Generate developer handoff specs: layout, tokens, components, interactions",
+      "category": "design",
+      "icon": "🤝",
+      "triggers": ["design handoff", "dev spec", "design tokens", "component spec"]
+    },
+    {
+      "id": "design-design-system",
+      "name": "Design System",
+      "description": "Audit, document, or extend design system components, naming, variants",
+      "category": "design",
+      "icon": "🧩",
+      "triggers": ["design system", "component library", "design tokens", "style guide"]
+    },
+    {
+      "id": "design-research-synthesis",
+      "name": "Research Synthesis",
+      "description": "Synthesize interviews, surveys, usability notes into themes and recommendations",
+      "category": "design",
+      "icon": "🔗",
+      "triggers": ["research synthesis", "user insights", "theme analysis", "affinity map"]
+    },
+    {
+      "id": "legal-review-contract",
+      "name": "Review Contract",
+      "description": "Review contracts against negotiation playbook, flag deviations, generate redlines",
+      "category": "legal",
+      "icon": "📜",
+      "triggers": ["contract review", "NDA", "agreement", "redlines", "legal review"]
+    },
+    {
+      "id": "legal-triage-nda",
+      "name": "Triage NDA",
+      "description": "Rapid NDA triage: classify GREEN/YELLOW/RED with risk assessment",
+      "category": "legal",
+      "icon": "🔴",
+      "triggers": ["NDA", "non-disclosure", "triage contract", "quick contract review"]
+    },
+    {
+      "id": "legal-compliance-check",
+      "name": "Compliance Check",
+      "description": "Run compliance check on actions, features, initiatives for regulatory risk",
+      "category": "legal",
+      "icon": "✅",
+      "triggers": ["compliance", "regulatory", "GDPR", "SOC 2", "legal check"]
+    },
+    {
+      "id": "legal-risk-assessment",
+      "name": "Legal Risk Assessment",
+      "description": "Assess and classify legal risks with severity/likelihood framework",
+      "category": "legal",
+      "icon": "⚖",
+      "triggers": ["legal risk", "risk assessment", "liability", "exposure"]
+    },
+    {
+      "id": "legal-brief",
+      "name": "Legal Brief",
+      "description": "Daily legal briefing, topic research, incident response across email and contracts",
+      "category": "legal",
+      "icon": "📰",
+      "triggers": ["legal brief", "legal research", "case summary", "legal update"]
+    },
+    {
+      "id": "legal-vendor-check",
+      "name": "Vendor Check",
+      "description": "Check existing agreements with a vendor across all systems — gaps, expirations",
+      "category": "legal",
+      "icon": "🏢",
+      "triggers": ["vendor check", "vendor contract", "supplier agreement"]
+    },
+    {
+      "id": "legal-signature-request",
+      "name": "Signature Request",
+      "description": "Prepare and route documents for e-signature with signing order configuration",
+      "category": "legal",
+      "icon": "✍",
+      "triggers": ["signature", "e-sign", "DocuSign", "signing order", "execute agreement"]
+    },
+    {
+      "id": "finance-financial-statements",
+      "name": "Financial Statements",
+      "description": "Generate P&L, balance sheet, cash flow with variance analysis",
+      "category": "finance",
+      "icon": "💰",
+      "triggers": ["P&L", "income statement", "balance sheet", "financial statements", "cash flow"]
+    },
+    {
+      "id": "finance-journal-entry",
+      "name": "Journal Entry",
+      "description": "Prepare journal entries with debits, credits, accruals, depreciation",
+      "category": "finance",
+      "icon": "📒",
+      "triggers": ["journal entry", "accrual", "depreciation", "bookkeeping", "debit credit"]
+    },
+    {
+      "id": "finance-reconciliation",
+      "name": "Reconciliation",
+      "description": "Reconcile GL vs subledgers, bank statements, intercompany, identify items",
+      "category": "finance",
+      "icon": "⚖",
+      "triggers": ["reconcile", "bank reconciliation", "GL reconciliation", "month-end rec"]
+    },
+    {
+      "id": "finance-variance-analysis",
+      "name": "Variance Analysis",
+      "description": "Decompose financial variances: budget vs actual, waterfall, narrative commentary",
+      "category": "finance",
+      "icon": "📊",
+      "triggers": ["variance", "budget vs actual", "variance analysis", "financial commentary"]
+    },
+    {
+      "id": "finance-close-management",
+      "name": "Close Management",
+      "description": "Manage month-end close: sequencing, dependencies, status tracking, calendar",
+      "category": "finance",
+      "icon": "📅",
+      "triggers": ["close", "month-end", "close calendar", "close checklist"]
+    },
+    {
+      "id": "finance-sox-testing",
+      "name": "SOX Testing",
+      "description": "SOX 404 sample selections, testing workpapers, control assessments",
+      "category": "finance",
+      "icon": "🔐",
+      "triggers": ["SOX", "SOX 404", "audit testing", "control testing", "ITGC"]
+    },
+    {
+      "id": "finance-audit-support",
+      "name": "Audit Support",
+      "description": "SOX compliance: control testing, sample selection, documentation standards",
+      "category": "finance",
+      "icon": "📋",
+      "triggers": ["audit", "audit support", "audit prep", "internal audit", "external audit"]
+    },
+    {
+      "id": "operations-process-doc",
+      "name": "Process Documentation",
+      "description": "Document business processes: flowcharts, RACI, SOPs, edge cases",
+      "category": "operations",
+      "icon": "📄",
+      "triggers": ["process doc", "SOP", "RACI", "flowchart", "process map"]
+    },
+    {
+      "id": "operations-status-report",
+      "name": "Status Report",
+      "description": "Generate status reports with KPIs, risks, action items for leadership",
+      "category": "operations",
+      "icon": "📊",
+      "triggers": ["status report", "weekly update", "project status", "RAG status"]
+    },
+    {
+      "id": "operations-risk-assessment",
+      "name": "Risk Assessment",
+      "description": "Identify, assess, and mitigate operational risks with risk register",
+      "category": "operations",
+      "icon": "⚠",
+      "triggers": ["risk", "risk assessment", "risk register", "what could go wrong"]
+    },
+    {
+      "id": "operations-vendor-review",
+      "name": "Vendor Review",
+      "description": "Evaluate vendors: cost analysis, risk, TCO, negotiation points, recommendation",
+      "category": "operations",
+      "icon": "🤝",
+      "triggers": ["vendor review", "supplier evaluation", "vendor comparison", "TCO"]
+    },
+    {
+      "id": "operations-runbook",
+      "name": "Runbook",
+      "description": "Create operational runbooks: step-by-step commands, troubleshooting, rollback",
+      "category": "operations",
+      "icon": "📖",
+      "triggers": ["runbook", "ops runbook", "procedure", "step-by-step guide"]
+    },
+    {
+      "id": "operations-change-request",
+      "name": "Change Request",
+      "description": "Change management: impact analysis, rollback plan, stakeholder comms",
+      "category": "operations",
+      "icon": "🔄",
+      "triggers": ["change request", "change management", "CAB", "change record"]
+    },
+    {
+      "id": "operations-capacity-plan",
+      "name": "Capacity Plan",
+      "description": "Resource capacity planning: workload analysis, utilization forecasting",
+      "category": "operations",
+      "icon": "📦",
+      "triggers": ["capacity planning", "resource planning", "headcount", "utilization"]
+    },
+    {
+      "id": "operations-compliance-tracking",
+      "name": "Compliance Tracking",
+      "description": "Track compliance requirements: SOC 2, ISO 27001, GDPR, audit readiness",
+      "category": "operations",
+      "icon": "✅",
+      "triggers": ["compliance tracking", "SOC 2", "ISO 27001", "GDPR", "compliance audit"]
+    },
+    {
+      "id": "operations-process-optimization",
+      "name": "Process Optimization",
+      "description": "Analyze and improve business processes: bottlenecks, waste, efficiency gains",
+      "category": "operations",
+      "icon": "⚡",
+      "triggers": ["process improvement", "bottleneck", "efficiency", "optimize process"]
+    },
+    {
+      "id": "customer-support-ticket-triage",
+      "name": "Ticket Triage",
+      "description": "Triage support tickets: P1-P4 priority, team routing, duplicate detection",
+      "category": "support",
+      "icon": "🎫",
+      "triggers": ["ticket triage", "support ticket", "priority", "route ticket"]
+    },
+    {
+      "id": "customer-support-draft-response",
+      "name": "Draft Response",
+      "description": "Draft professional customer-facing responses tailored to situation and relationship",
+      "category": "support",
+      "icon": "✉",
+      "triggers": ["customer response", "support response", "reply to customer", "customer email"]
+    },
+    {
+      "id": "customer-support-customer-research",
+      "name": "Customer Research",
+      "description": "Multi-source research on customer questions with source attribution",
+      "category": "support",
+      "icon": "🔍",
+      "triggers": ["customer research", "look up customer", "account history", "bug research"]
+    },
+    {
+      "id": "customer-support-kb-article",
+      "name": "KB Article",
+      "description": "Draft knowledge base articles from resolved issues for self-service",
+      "category": "support",
+      "icon": "📚",
+      "triggers": ["KB article", "knowledge base", "help article", "support doc", "FAQ"]
+    },
+    {
+      "id": "customer-support-escalation",
+      "name": "Escalation",
+      "description": "Package escalations for engineering/leadership with full context",
+      "category": "support",
+      "icon": "🚨",
+      "triggers": ["escalation", "escalate", "churn risk", "critical issue", "P1 customer"]
+    },
+    {
+      "id": "enterprise-search",
+      "name": "Enterprise Search",
+      "description": "Search across all connected sources (Slack, Notion, Drive, email) in one query",
+      "category": "enterprise",
+      "icon": "🔎",
+      "triggers": ["search across", "find doc about", "where was the conversation", "enterprise search"]
+    },
+    {
+      "id": "enterprise-digest",
+      "name": "Activity Digest",
+      "description": "Daily/weekly digest of activity across all connected sources",
+      "category": "enterprise",
+      "icon": "📰",
+      "triggers": ["digest", "catch up", "weekly summary", "activity digest"]
+    },
+    {
+      "id": "searchfit-seo-audit",
+      "name": "SEO Audit",
+      "description": "Comprehensive SEO audit: technical, on-page, content gaps, competitor comparison",
+      "category": "seo",
+      "icon": "🔍",
+      "triggers": ["SEO audit", "site audit", "SEO health", "technical SEO"]
+    },
+    {
+      "id": "searchfit-content-strategy",
+      "name": "Content Strategy",
+      "description": "Full content strategy: keyword research, content calendar, roadmap",
+      "category": "seo",
+      "icon": "🗺",
+      "triggers": ["content strategy", "content plan", "editorial calendar", "content roadmap"]
+    },
+    {
+      "id": "searchfit-content-brief",
+      "name": "Content Brief",
+      "description": "Detailed content brief for a specific article or page with keyword mapping",
+      "category": "seo",
+      "icon": "📋",
+      "triggers": ["content brief", "article brief", "writing brief", "blog brief"]
+    },
+    {
+      "id": "searchfit-create-content",
+      "name": "Create SEO Content",
+      "description": "Full SEO-optimized article with title, meta, headings, schema markup",
+      "category": "seo",
+      "icon": "✍",
+      "triggers": ["write article", "create blog post", "SEO content", "write page"]
+    },
+    {
+      "id": "searchfit-keyword-clustering",
+      "name": "Keyword Clustering",
+      "description": "Cluster keywords into topical groups mapped to content pages",
+      "category": "seo",
+      "icon": "🗂",
+      "triggers": ["keyword cluster", "keyword grouping", "topic clusters", "keyword mapping"]
+    },
+    {
+      "id": "searchfit-on-page-seo",
+      "name": "On-Page SEO",
+      "description": "Optimize a specific page: title, meta, headings, images, internal links",
+      "category": "seo",
+      "icon": "📄",
+      "triggers": ["on-page SEO", "optimize page", "meta tags", "page optimization"]
+    },
+    {
+      "id": "searchfit-schema-markup",
+      "name": "Schema Markup",
+      "description": "Generate JSON-LD structured data for rich snippets in search results",
+      "category": "seo",
+      "icon": "🏷",
+      "triggers": ["schema markup", "JSON-LD", "structured data", "rich snippets"]
+    },
+    {
+      "id": "searchfit-technical-seo",
+      "name": "Technical SEO",
+      "description": "Technical SEO: Core Web Vitals, crawlability, sitemap, robots.txt, speed",
+      "category": "seo",
+      "icon": "⚙",
+      "triggers": ["technical SEO", "Core Web Vitals", "page speed", "crawl budget", "sitemap"]
+    },
+    {
+      "id": "searchfit-ai-visibility",
+      "name": "AI Visibility (GEO)",
+      "description": "Analyze brand in AI responses (ChatGPT, Claude, Gemini) — generative engine optimization",
+      "category": "seo",
+      "icon": "🤖",
+      "triggers": ["AI visibility", "GEO", "answer engine", "AI mentions", "LLM visibility"]
+    },
+    {
+      "id": "searchfit-broken-links",
+      "name": "Broken Links",
+      "description": "Find and fix broken links, dead URLs, 404 errors on a website",
+      "category": "seo",
+      "icon": "🔗",
+      "triggers": ["broken links", "dead links", "404", "link checker"]
+    },
+    {
+      "id": "searchfit-internal-linking",
+      "name": "Internal Linking",
+      "description": "Analyze internal linking strategy, orphan pages, link equity distribution",
+      "category": "seo",
+      "icon": "🕸",
+      "triggers": ["internal links", "link structure", "orphan pages", "link equity"]
+    },
+    {
+      "id": "zoom-integration",
+      "name": "Zoom Integration",
+      "description": "Build Zoom apps, bots, Meeting SDK, Video SDK, REST API, webhooks, RTMS",
+      "category": "integrations",
+      "icon": "📹",
+      "triggers": ["Zoom", "video meeting", "Zoom bot", "Zoom integration", "Zoom SDK"]
+    },
+    {
+      "id": "mcp-builder",
+      "name": "MCP Builder",
+      "description": "Build MCP servers to integrate external APIs — Python (FastMCP) or Node/TypeScript",
+      "category": "integrations",
+      "icon": "🔌",
+      "triggers": ["MCP server", "build connector", "API integration", "FastMCP"]
+    },
+    {
+      "id": "doc-coauthoring",
+      "name": "Doc Co-authoring",
+      "description": "Structured workflow for co-authoring documentation, proposals, specs",
+      "category": "productivity",
+      "icon": "🤝",
+      "triggers": ["co-author", "write documentation", "proposal", "spec writing"]
+    },
+    {
+      "id": "web-artifacts-builder",
+      "name": "Web Artifacts",
+      "description": "Build elaborate multi-component HTML artifacts with React, Tailwind, shadcn/ui",
+      "category": "productivity",
+      "icon": "🌐",
+      "triggers": ["web app", "React component", "interactive UI", "shadcn", "tailwind"]
+    },
+    {
+      "id": "skill-creator",
+      "name": "Skill Creator",
+      "description": "Create new skills, modify existing skills, run evals, benchmark performance",
+      "category": "productivity",
+      "icon": "⚡",
+      "triggers": ["create skill", "build skill", "edit skill", "optimize skill"]
+    },
+    {
+      "id": "product-tracking-model-product",
+      "name": "Model Product",
+      "description": "Build structured product model: what product does, users, entities, value flow",
+      "category": "analytics",
+      "icon": "🗺",
+      "triggers": ["product model", "model this product", "what does product do", "telemetry setup"]
+    },
+    {
+      "id": "product-tracking-design-plan",
+      "name": "Design Tracking Plan",
+      "description": "Design target tracking plan: events, properties, entities, group hierarchies",
+      "category": "analytics",
+      "icon": "📐",
+      "triggers": ["tracking plan", "analytics plan", "what to track", "event tracking"]
+    },
+    {
+      "id": "product-tracking-implement",
+      "name": "Implement Tracking",
+      "description": "Generate real instrumentation code: typed SDK wrappers, identity management",
+      "category": "analytics",
+      "icon": "💻",
+      "triggers": ["implement tracking", "analytics code", "SDK wrapper", "instrument events"]
+    },
+    {
+      "id": "product-tracking-audit",
+      "name": "Audit Tracking",
+      "description": "Reverse-engineer current analytics tracking from codebase — inventory report",
+      "category": "analytics",
+      "icon": "🔍",
+      "triggers": ["audit tracking", "what is tracked", "analytics inventory", "tracking audit"]
+    },
+    {
+      "id": "small-business-pulse",
+      "name": "Business Pulse",
+      "description": "One-page cross-functional snapshot: cash, sales, pipeline, commitments, watch-list",
+      "category": "smallbiz",
+      "icon": "💼",
+      "triggers": ["business pulse", "business snapshot", "how is business", "weekly brief"]
+    },
+    {
+      "id": "small-business-cash-flow",
+      "name": "Cash Flow Forecast",
+      "description": "30/60/90-day cash flow forecast with confidence bands and risk flags",
+      "category": "smallbiz",
+      "icon": "💸",
+      "triggers": ["cash flow", "runway", "will I make payroll", "cash forecast"]
+    },
+    {
+      "id": "small-business-invoice-chase",
+      "name": "Invoice Chase",
+      "description": "Draft overdue invoice reminders matched to customer payment history and tone",
+      "category": "smallbiz",
+      "icon": "💳",
+      "triggers": ["invoice", "overdue", "who owes me", "unpaid invoice", "collect payment"]
+    },
+    {
+      "id": "small-business-job-post",
+      "name": "Job Post Builder",
+      "description": "End-to-end hiring packets: job post, interview guide, scoring rubric, offer letter",
+      "category": "smallbiz",
+      "icon": "👔",
+      "triggers": ["hire", "job post", "job description", "interview guide", "offer letter"]
+    },
+    {
+      "id": "small-business-margin",
+      "name": "Margin Analyzer",
+      "description": "Unit economics by product, pricing scenarios, cost vs inflation analysis",
+      "category": "smallbiz",
+      "icon": "📊",
+      "triggers": ["margin", "pricing", "raise prices", "unit economics", "profit margin"]
+    },
+    {
+      "id": "small-business-contract-review",
+      "name": "SMB Contract Review",
+      "description": "Lightweight NDA/MSA/vendor contract review in plain English with redlines",
+      "category": "smallbiz",
+      "icon": "📜",
+      "triggers": ["review contract", "what am I signing", "flag concerns", "contract"]
+    },
+    {
+      "id": "small-business-month-end",
+      "name": "Month-End Prep",
+      "description": "Month-end close: reconcile QB vs payment processors, P&L narrative, close packet",
+      "category": "smallbiz",
+      "icon": "📅",
+      "triggers": ["month-end", "close the month", "reconcile", "P&L narrative"]
+    },
+    {
+      "id": "small-business-tax-prep",
+      "name": "Tax Prep",
+      "description": "Quarterly estimated tax calculation, year-end 1099 prep, accountant handoff packet",
+      "category": "smallbiz",
+      "icon": "🧾",
+      "triggers": ["tax", "quarterly tax", "1099", "estimated tax", "year-end tax"]
     }
   ],
   "connectors": [
     {
-      "id": "slack",
-      "name": "Slack",
-      "description": "Send messages, read channels, manage threads",
-      "tools": ["send_message", "read_channel", "post_thread"]
-    },
-    {
       "id": "gmail",
       "name": "Gmail",
-      "description": "Read/send emails, manage labels, search inbox",
-      "tools": ["send_email", "read_thread", "search_emails"]
+      "description": "Read/send emails, manage labels, search inbox, create drafts, manage threads",
+      "icon": "📧",
+      "category": "communication",
+      "status": "available",
+      "tools": ["send_email", "search_threads", "get_thread", "create_draft", "label_message", "list_labels", "unlabel_message"]
     },
     {
-      "id": "linear",
-      "name": "Linear",
-      "description": "Create/update issues, manage projects, add comments",
-      "tools": ["create_issue", "update_issue", "search_issues"]
+      "id": "slack",
+      "name": "Slack",
+      "description": "Send messages, read channels, search conversations, manage threads",
+      "icon": "💬",
+      "category": "communication",
+      "status": "connect",
+      "tools": ["send_message", "read_channel", "search_messages", "post_thread", "list_channels"]
     },
     {
       "id": "notion",
       "name": "Notion",
-      "description": "Read/write pages, create databases, update properties",
-      "tools": ["read_page", "create_page", "update_page"]
-    },
-    {
-      "id": "asana",
-      "name": "Asana",
-      "description": "Create tasks, update projects, manage teams",
-      "tools": ["create_task", "update_task", "add_comment"]
+      "description": "Read/write pages, search workspace, create databases, update properties",
+      "icon": "📓",
+      "category": "knowledge",
+      "status": "connect",
+      "tools": ["read_page", "create_page", "update_page", "search_pages", "create_database"]
     },
     {
       "id": "google-drive",
       "name": "Google Drive",
-      "description": "Create/read files, manage folders, share documents",
-      "tools": ["create_file", "read_file", "move_file"]
-    },
-    {
-      "id": "stripe",
-      "name": "Stripe",
-      "description": "Manage subscriptions, charges, customers",
-      "tools": ["list_charges", "create_subscription", "update_customer"]
+      "description": "Create/read files, manage folders, share documents, search Drive",
+      "icon": "🗂",
+      "category": "storage",
+      "status": "connect",
+      "tools": ["create_file", "read_file", "move_file", "share_file", "search_files"]
     },
     {
       "id": "github",
       "name": "GitHub",
-      "description": "Create PRs, manage repos, read issues",
-      "tools": ["create_pull_request", "merge_pull_request", "list_issues"]
+      "description": "Create PRs, manage repos, read issues, commit code, manage branches",
+      "icon": "🐙",
+      "category": "engineering",
+      "status": "connect",
+      "tools": ["create_pull_request", "merge_pull_request", "list_issues", "create_issue", "push_commit"]
+    },
+    {
+      "id": "linear",
+      "name": "Linear",
+      "description": "Create/update issues, manage projects, sprints, add comments",
+      "icon": "📐",
+      "category": "engineering",
+      "status": "connect",
+      "tools": ["create_issue", "update_issue", "search_issues", "list_projects", "add_comment"]
+    },
+    {
+      "id": "jira",
+      "name": "Jira",
+      "description": "Create/update tickets, manage sprints, query JQL, manage boards",
+      "icon": "🔷",
+      "category": "engineering",
+      "status": "connect",
+      "tools": ["create_issue", "update_issue", "search_jql", "list_sprints", "add_comment"]
+    },
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "description": "Manage subscriptions, charges, customers, invoices, refunds",
+      "icon": "💳",
+      "category": "finance",
+      "status": "connect",
+      "tools": ["list_charges", "create_subscription", "update_customer", "create_invoice", "issue_refund"]
+    },
+    {
+      "id": "hubspot",
+      "name": "HubSpot",
+      "description": "CRM: contacts, deals, companies, sequences, marketing automation",
+      "icon": "🧡",
+      "category": "sales",
+      "status": "connect",
+      "tools": ["create_contact", "update_deal", "list_contacts", "add_note", "enroll_sequence"]
+    },
+    {
+      "id": "salesforce",
+      "name": "Salesforce",
+      "description": "CRM: leads, opportunities, accounts, contacts, reports",
+      "icon": "☁",
+      "category": "sales",
+      "status": "connect",
+      "tools": ["create_lead", "update_opportunity", "search_records", "create_task", "get_report"]
     },
     {
       "id": "zoom",
       "name": "Zoom",
-      "description": "Schedule meetings, list participants, manage recordings",
-      "tools": ["create_meeting", "list_meetings", "get_recording"]
+      "description": "Schedule meetings, list participants, manage recordings, transcripts",
+      "icon": "📹",
+      "category": "communication",
+      "status": "connect",
+      "tools": ["create_meeting", "list_meetings", "get_recording", "get_transcript", "update_meeting"]
+    },
+    {
+      "id": "asana",
+      "name": "Asana",
+      "description": "Create tasks, update projects, manage teams, track milestones",
+      "icon": "🎯",
+      "category": "productivity",
+      "status": "connect",
+      "tools": ["create_task", "update_task", "add_comment", "list_projects", "assign_task"]
+    },
+    {
+      "id": "confluence",
+      "name": "Confluence",
+      "description": "Read/write pages, manage spaces, search wiki, create templates",
+      "icon": "📖",
+      "category": "knowledge",
+      "status": "connect",
+      "tools": ["read_page", "create_page", "update_page", "search_content", "list_spaces"]
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "description": "Query databases, inspect schemas, run migrations, manage tables",
+      "icon": "🐘",
+      "category": "data",
+      "status": "connect",
+      "tools": ["run_query", "inspect_schema", "list_tables", "run_migration", "explain_query"]
+    },
+    {
+      "id": "snowflake",
+      "name": "Snowflake",
+      "description": "Run SQL queries, inspect warehouses, manage databases, analyze costs",
+      "icon": "❄",
+      "category": "data",
+      "status": "connect",
+      "tools": ["run_query", "inspect_schema", "list_warehouses", "describe_table"]
+    },
+    {
+      "id": "bigquery",
+      "name": "BigQuery",
+      "description": "Run SQL queries, manage datasets, inspect tables, analyze usage",
+      "icon": "🔷",
+      "category": "data",
+      "status": "connect",
+      "tools": ["run_query", "list_datasets", "describe_table", "create_dataset"]
+    },
+    {
+      "id": "pagerduty",
+      "name": "PagerDuty",
+      "description": "Manage incidents, on-call schedules, escalation policies, alerts",
+      "icon": "🚨",
+      "category": "engineering",
+      "status": "connect",
+      "tools": ["create_incident", "list_incidents", "get_oncall", "acknowledge_alert", "resolve_incident"]
+    },
+    {
+      "id": "figma",
+      "name": "Figma",
+      "description": "Read designs, inspect components, access design tokens and assets",
+      "icon": "🎨",
+      "category": "design",
+      "status": "connect",
+      "tools": ["get_file", "list_components", "get_styles", "export_asset", "get_comments"]
+    },
+    {
+      "id": "airtable",
+      "name": "Airtable",
+      "description": "Read/write records, manage bases, run automations, filter views",
+      "icon": "🗃",
+      "category": "data",
+      "status": "connect",
+      "tools": ["list_records", "create_record", "update_record", "search_records", "run_automation"]
+    },
+    {
+      "id": "quickbooks",
+      "name": "QuickBooks",
+      "description": "P&L, invoices, expenses, customers, vendors, tax reports",
+      "icon": "💰",
+      "category": "finance",
+      "status": "connect",
+      "tools": ["get_pnl", "list_invoices", "list_expenses", "get_customer", "create_invoice"]
+    },
+    {
+      "id": "box",
+      "name": "Box",
+      "description": "Read/write files, manage folders, share content, search enterprise files",
+      "icon": "📦",
+      "category": "storage",
+      "status": "connect",
+      "tools": ["read_file", "create_file", "share_file", "search_files", "list_folder"]
+    },
+    {
+      "id": "sharepoint",
+      "name": "SharePoint",
+      "description": "Read/write documents, manage sites, search enterprise content",
+      "icon": "🏢",
+      "category": "knowledge",
+      "status": "connect",
+      "tools": ["read_document", "create_document", "search_content", "list_sites"]
+    },
+    {
+      "id": "twilio",
+      "name": "Twilio",
+      "description": "Send SMS, make calls, manage phone numbers, WhatsApp messaging",
+      "icon": "📱",
+      "category": "communication",
+      "status": "connect",
+      "tools": ["send_sms", "make_call", "send_whatsapp", "list_numbers"]
+    },
+    {
+      "id": "sendgrid",
+      "name": "SendGrid",
+      "description": "Send transactional emails, manage templates, track analytics",
+      "icon": "📨",
+      "category": "communication",
+      "status": "connect",
+      "tools": ["send_email", "create_template", "get_stats", "manage_lists"]
+    },
+    {
+      "id": "anthropic-claude",
+      "name": "Claude API",
+      "description": "Direct Claude API: completions, vision, tool use, embeddings, count tokens",
+      "icon": "🤖",
+      "category": "ai",
+      "status": "available",
+      "tools": ["complete", "vision", "tool_use", "embed", "count_tokens"]
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "description": "GPT-4o, o3, Whisper, DALL-E, embeddings, fine-tuning",
+      "icon": "🧠",
+      "category": "ai",
+      "status": "connect",
+      "tools": ["complete", "embed", "transcribe", "generate_image", "fine_tune"]
+    },
+    {
+      "id": "web-search",
+      "name": "Web Search",
+      "description": "Search the web, fetch URLs, get real-time information",
+      "icon": "🌐",
+      "category": "research",
+      "status": "available",
+      "tools": ["search", "fetch_url", "news_search", "image_search"]
+    },
+    {
+      "id": "browser",
+      "name": "Browser Automation",
+      "description": "Navigate web pages, fill forms, click elements, extract content, screenshots",
+      "icon": "🌍",
+      "category": "research",
+      "status": "available",
+      "tools": ["navigate", "click", "type", "get_text", "screenshot", "scroll"]
+    },
+    {
+      "id": "file-system",
+      "name": "File System",
+      "description": "Read, write, edit files on the connected workspace folder",
+      "icon": "📁",
+      "category": "storage",
+      "status": "available",
+      "tools": ["read_file", "write_file", "edit_file", "list_directory", "search_files"]
+    },
+    {
+      "id": "terminal",
+      "name": "Terminal / Shell",
+      "description": "Run shell commands, execute scripts, manage processes, install packages",
+      "icon": "💻",
+      "category": "engineering",
+      "status": "available",
+      "tools": ["run_command", "start_process", "read_output", "kill_process"]
     }
   ]
 }

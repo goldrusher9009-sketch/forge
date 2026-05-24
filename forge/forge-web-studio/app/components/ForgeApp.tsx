@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.16 -- navbar: Active Space, gas token counter, IQ, Harvest, mode pills; Files/Hooks/Runs tabs
+﻿// Forge AI Workspace v6.17 -- full skills+connectors catalog (120 skills, 30 connectors), navbar Active Space/gas/IQ/Harvest/mode pills
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -1736,7 +1736,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.16</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.17</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -3804,37 +3804,33 @@ export default function ForgeApp() {
 
         {/* ── SKILLS & TOOLS ────────────────────────────────────────────── */}
         {mainTab === 'skills' && (() => {
-          // Load from SKILLS_CATALOG.json (external source of truth)
+          // Load from window.FORGE_CATALOG_DATA (populated from SKILLS_CATALOG.json)
+          const wcd = (window.FORGE_CATALOG_DATA as any) || { skills: [], connectors: [] };
           const catalogData = {
-            skills: [
-              { id:'pdf', icon:'📄', name:'PDF Tools', category:'document', desc:'Comprehensive PDF manipulation: extract, create, merge, split, fill forms', prompt:'You are a PDF processing expert. Extract text, create PDFs, merge documents, and fill forms accurately.' },
-              { id:'docx', icon:'📝', name:'Word Documents', category:'document', desc:'Create, read, edit Word documents (.docx) with formatting, tables, images', prompt:'You are a Word document expert. Create, read, and edit professional Word documents with proper formatting.' },
-              { id:'xlsx', icon:'📊', name:'Excel Spreadsheets', category:'document', desc:'Excel workbooks: formulas, formatting, charts, data analysis', prompt:'You are a spreadsheet expert. Create and analyze Excel workbooks with formulas, charts, and data organization.' },
-              { id:'pptx', icon:'🎞️', name:'PowerPoint Presentations', category:'document', desc:'Create and edit slide decks with layouts, speaker notes, animations', prompt:'You are a presentation expert. Create compelling slide decks with clear structure and visual design.' },
-              { id:'data-analyze', icon:'🔍', name:'Data Analysis', category:'analytics', desc:'Answer data questions: lookups, trends, outlier detection, hypothesis testing', prompt:'You are a data analyst. Analyze datasets thoroughly, identify patterns, and provide actionable insights.' },
-              { id:'data-viz', icon:'📈', name:'Data Visualization', category:'analytics', desc:'Create publication-quality charts with Python (matplotlib, seaborn, plotly)', prompt:'You are a data visualization expert. Create clear, publication-ready charts and graphs.' },
-              { id:'dashboard', icon:'🎛️', name:'Build Dashboard', category:'analytics', desc:'Interactive HTML dashboards with charts, filters, KPI cards', prompt:'You are a dashboard designer. Create interactive, user-friendly dashboards with real-time data.' },
-              { id:'brand-voice', icon:'🎤', name:'Brand Voice Enforcement', category:'content', desc:'Apply brand guidelines to content, check tone alignment', prompt:'You are a brand strategist. Ensure all content aligns with brand voice, tone, and guidelines.' },
-              { id:'marketing', icon:'📢', name:'Marketing Content', category:'content', desc:'Draft blog posts, emails, social media, landing pages', prompt:'You are a marketing copywriter. Create engaging, conversion-focused marketing content.' },
-              { id:'debug', icon:'🐛', name:'Debug', category:'engineering', desc:'Systematic debugging: reproduce, isolate, diagnose, fix', prompt:'You are a debugging expert. Identify root causes and provide tested fixes with explanations.' },
-              { id:'code-review', icon:'👁️', name:'Code Review', category:'engineering', desc:'Review code for security, performance, correctness', prompt:'You are a senior code reviewer. Evaluate code for security, performance, and best practices.' },
-            ],
-            connectors: [
-              { id:'slack', icon:'💬', name:'Slack', desc:'Send messages, read channels, manage threads', status:'coming' },
-              { id:'gmail', icon:'📧', name:'Gmail', desc:'Read/send emails, manage labels, search inbox', status:'coming' },
-              { id:'linear', icon:'📋', name:'Linear', desc:'Create/update issues, manage projects, add comments', status:'coming' },
-              { id:'notion', icon:'📄', name:'Notion', desc:'Read/write pages, create databases, update properties', status:'coming' },
-              { id:'asana', icon:'✓', name:'Asana', desc:'Create tasks, update projects, manage teams', status:'coming' },
-              { id:'google-drive', icon:'☁️', name:'Google Drive', desc:'Create/read files, manage folders, share documents', status:'coming' },
-              { id:'stripe', icon:'💳', name:'Stripe', desc:'Manage subscriptions, charges, customers', status:'coming' },
-              { id:'github', icon:'🐙', name:'GitHub', desc:'Create PRs, manage repos, read issues', status:'coming' },
-              { id:'zoom', icon:'📹', name:'Zoom', desc:'Schedule meetings, list participants, manage recordings', status:'coming' },
-            ]
+            skills: (wcd.skills || []).map((s: any) => ({
+              id: s.id,
+              icon: s.icon || '🧩',
+              name: s.name,
+              category: s.category || 'general',
+              desc: s.description || '',
+              prompt: `You are a ${s.name} expert. ${s.description}`,
+            })),
+            connectors: (wcd.connectors || []).map((c: any) => ({
+              id: c.id,
+              icon: c.icon || '🔌',
+              name: c.name,
+              desc: c.description || '',
+              status: c.status === 'available' ? 'active' : 'coming',
+              tools: c.tools || [],
+              category: c.category || 'general',
+            })),
           };
           const SKILLS = catalogData.skills;
           const CONNECTORS = catalogData.connectors;
-          const cats = ['All', ...Array.from(new Set(SKILLS.map(s => s.category)))];
-          const filtered = SKILLS.filter(s => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
+          const catIcons: Record<string,string> = { document:'📄', analytics:'📊', content:'✏', engineering:'⚙', design:'🎨', sales:'💼', product:'🗺', legal:'⚖', finance:'💰', operations:'🔧', support:'🎫', enterprise:'🏢', seo:'🔍', integrations:'🔌', productivity:'⚡', smallbiz:'🏪', ai:'🤖', general:'🧩' };
+          const cats = ['All', ...Array.from(new Set(SKILLS.map((s:any) => s.category)))];
+          const connCats = ['All', ...Array.from(new Set(CONNECTORS.map((c:any) => c.category)))];
+          const filtered = SKILLS.filter((s:any) => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
           const launchSkill = (skill: typeof SKILLS[0]) => {
             setActiveSkillPrompt(skill.prompt);
             setMainTab('workspace');
@@ -3942,30 +3938,52 @@ export default function ForgeApp() {
 
                 {/* Connectors */}
                 <div>
-                  <h2 style={{ margin:'0 0 6px', fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🔌 Connectors</h2>
-                  <p style={{ margin:'0 0 16px', color:'var(--fg-text3)', fontSize:13 }}>Connect Forge to your tools and data sources.</p>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:10 }}>
-                    {CONNECTORS.map(c => {
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                    <h2 style={{ margin:0, fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🔌 Connectors ({CONNECTORS.length} MCP tools)</h2>
+                    <span style={{ fontSize:11, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'2px 10px', borderRadius:10 }}>{CONNECTORS.filter((c:any) => c.status==='active').length} ready</span>
+                  </div>
+                  <p style={{ margin:'0 0 12px', color:'var(--fg-text3)', fontSize:13 }}>Connect Forge to your tools and data sources via MCP. Active connectors are available immediately.</p>
+                  <div style={{ display:'flex', gap:6, marginBottom:14, flexWrap:'wrap' }}>
+                    {connCats.map((cat:string) => (
+                      <button key={cat} onClick={() => setSkillCat('conn_'+cat)} style={{ padding:'4px 12px', borderRadius:20, border: skillCat==='conn_'+cat ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border2)', background: skillCat==='conn_'+cat ? 'var(--fg-orange)' : 'transparent', color: skillCat==='conn_'+cat ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: skillCat==='conn_'+cat ? 600 : 400 }}>{catIcons[cat]||'🔌'} {cat}</button>
+                    ))}
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:10 }}>
+                    {CONNECTORS.filter((c:any) => skillCat === 'All' || skillCat === 'conn_All' || skillCat === 'conn_'+c.category || (!skillCat.startsWith('conn_') && skillCat === 'All')).map((c:any) => {
                       const isActive = activeConnectors.has(c.id);
+                      const isReady = c.status === 'active';
                       return (
-                      <div key={c.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:8, position:'relative' }}>
+                      <div key={c.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${isActive ? 'var(--fg-orange)' : isReady ? 'rgba(34,197,94,0.3)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:8, position:'relative' }}>
                         {isActive && <div style={{ position:'absolute', top:8, right:8, fontSize:9, padding:'2px 8px', background:'rgba(249,115,22,0.18)', border:'1px solid var(--fg-orange)', borderRadius:10, color:'var(--fg-orange)', fontWeight:700 }}>ACTIVE</div>}
                         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                          <span style={{ fontSize:20 }}>{c.icon}</span>
-                          <div>
+                          <span style={{ fontSize:22 }}>{c.icon}</span>
+                          <div style={{ flex:1, overflow:'hidden' }}>
                             <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{c.name}</div>
-                            <span style={{ fontSize:10, color: c.status==='active' ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{c.status==='active' ? '● Ready' : '○ Coming Soon'}</span>
+                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                              <span style={{ fontSize:10, color: isReady ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{isReady ? '● Ready' : '○ Connect'}</span>
+                              <span style={{ fontSize:9, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'0 5px', borderRadius:4 }}>{c.category}</span>
+                            </div>
                           </div>
                         </div>
                         <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{c.desc}</p>
-                        {c.status==='active' ? (
-                          <div style={{ display:'flex', gap:6 }}>
-                            <button onClick={() => setMainTab('workspace')} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, flex:1 }}>Use Now</button>
-                            <button onClick={() => toggleConnector(c.id)} title={isActive ? 'Deactivate connector' : 'Activate connector'} style={{ padding:'5px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>{isActive ? '✓ On' : '+ On'}</button>
+                        {c.tools && c.tools.length > 0 && (
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:3 }}>
+                            {c.tools.slice(0,4).map((t:string) => (
+                              <span key={t} style={{ fontSize:9, color:'var(--fg-orange)', background:'rgba(249,115,22,0.1)', padding:'1px 6px', borderRadius:4, fontFamily:'monospace' }}>{t}</span>
+                            ))}
+                            {c.tools.length > 4 && <span style={{ fontSize:9, color:'var(--fg-text3)' }}>+{c.tools.length-4} more</span>}
                           </div>
-                        ) : (
-                          <span style={{ fontSize:10, color:'var(--fg-text3)', fontStyle:'italic' }}>Request early access →</span>
                         )}
+                        <div style={{ display:'flex', gap:6 }}>
+                          {isReady ? (
+                            <>
+                              <button onClick={() => { toggleConnector(c.id); setMainTab('workspace'); }} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, flex:1 }}>Use Now</button>
+                              <button onClick={() => toggleConnector(c.id)} style={{ padding:'5px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>{isActive ? '✓ On' : '+ On'}</button>
+                            </>
+                          ) : (
+                            <button onClick={() => setMainTab('platforms')} style={{ padding:'5px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', flex:1 }}>🔌 Connect via Platforms →</button>
+                          )}
+                        </div>
                       </div>
                     );
                     })}

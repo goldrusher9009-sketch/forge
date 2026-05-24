@@ -1,14 +1,20 @@
 # Forge Platform — Version History
 
-## v6.16 — 2026-05-24 (current)
+## v6.17 — 2026-05-24 (current)
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
-- **New: Workspace navbar upgrade** — Active Space selector, ⛽ gas-style live token counter (color shifts red at 500k), 🧠 IQ score pill (click → Super tab), ⚡ Harvest button (fires harvestMemory), ❓ Ask / ✨ Magic / 🌌 EPIC mode pills all in top bar
-- **New: Left nav tabs** — 📁 Files, 🪝 Hooks, 🏃 Runs added between Skills and ForgeCo sections
-- **New: Right panel tabs** — 🛠 Tools, 🪝 Hooks, 🏃 Runs added as first three tabs; Agent moved up; full tab reorder for logical grouping
-- **New: Files tab** — file upload dropzone, workspace file system for agents
-- **New: Hooks tab** — automation hooks list (on_message, on_harvest, on_skill_complete, on_tool_call, on_agent_finish)
-- **New: Runs tab** — agent run history monitor with live count badges
+- **New: Full Skills Catalog** — 120+ skills across 18 categories (document, analytics, content, engineering, design, sales, product, legal, finance, operations, support, enterprise, seo, integrations, productivity, smallbiz, ai) — loaded dynamically from SKILLS_CATALOG.json via window.FORGE_CATALOG_DATA
+- **New: Full Connectors Catalog** — 30 MCP connectors across 10 categories (communication, knowledge, storage, engineering, finance, sales, data, design, ai, research) — each with tool chips, status badge (available/connect), and Connect via Platforms button
+- **New: Category filter pills** — skills and connectors filterable by category with emoji icons
+- **New: Connector tool chips** — each connector shows its tool names inline (send_email, search_threads, etc.)
+- **New: Connect flow** — unavailable connectors route to Platforms tab for setup
+
+### SKILLS_CATALOG.json
+- Rebuilt from 11 → 120+ skills; 9 → 30 connectors with status, icon, category, tools fields
+
+---
+
+## v6.16 — 2026-05-24
 
 ---
 

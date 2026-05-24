@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.16 — Workspace: Files/Hooks/Runs tabs, navbar Active Space + gas token counter + IQ + Harvest + mode pills
+ * Forge Platform v6.17 — Full skills+connectors catalog (120 skills, 30 MCP connectors), category filters, tool chips, connect buttons
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
