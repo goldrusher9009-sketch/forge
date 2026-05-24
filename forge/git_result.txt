@@ -1,7 +1,7 @@
 warning: in the working copy of 'forge/do_git.ps1', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/forge-platform/src/index.ts', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/git_result.txt', LF will be replaced by CRLF the next time Git touches it
-[main f684a80] billing-fix-3-rebuild-subscriptions-table
- 3 files changed, 35 insertions(+), 7 deletions(-)
+[main da82e7f] billing-fix-4-split-exec-statements
+ 3 files changed, 29 insertions(+), 30 deletions(-)
 To https://github.com/goldrusher9009-sketch/forge.git
-   bc3a743..f684a80  main -> main
+   f684a80..da82e7f  main -> main

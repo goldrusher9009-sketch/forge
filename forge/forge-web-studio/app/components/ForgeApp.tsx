@@ -463,6 +463,15 @@ export default function ForgeApp() {
   const [asiCurrentPhase, setAsiCurrentPhase] = useState('');
   const [asiWebSearch, setAsiWebSearch] = useState(false);
 
+  // Skills & Tools state (must be top-level — not inside render IIFE)
+  const [skillSearch, setSkillSearch] = useState('');
+  const [skillCat, setSkillCat] = useState('All');
+  const [genTopic, setGenTopic] = useState('');
+  const [genIndustry, setGenIndustry] = useState('');
+  const [genGoal, setGenGoal] = useState('');
+  const [genResult, setGenResult] = useState('');
+  const [genLoading, setGenLoading] = useState(false);
+
   // ForgeCo state
   const [coTab, setCoTab] = useState<'code'|'cowork'>('code');
   const [coCode, setCoCode] = useState('// Start coding here...\n');
@@ -588,8 +597,11 @@ export default function ForgeApp() {
   useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('forge_llm_creds', JSON.stringify(llmCreds)); }, [llmCreds]);
   useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('forge_web_creds', JSON.stringify(webCreds)); }, [webCreds]);
 
-  // Keep ForgeMulti model in sync with the main model picker
+  // Keep ForgeMulti and ForgeASI models in sync with the main model picker
   useEffect(() => { setMultiModel(selectedModel); }, [selectedModel]);
+  useEffect(() => { if (selectedModel) setAsiModel(selectedModel); }, [selectedModel]);
+  // Pre-select active model in ForgeAuto when selectedModel changes
+  useEffect(() => { if (selectedModel) setAutoSelectedModels(prev => prev.includes(selectedModel) ? prev : [selectedModel, ...prev]); }, [selectedModel]);
 
   useEffect(() => {
     if (!user) return;
@@ -1942,16 +1954,14 @@ export default function ForgeApp() {
                     </div>
                   )}
 
-                  {/* Attached files chips */}
+                  {/* Attached files compact badge */}
                   {attachedFiles.length > 0 && (
-                    <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:6 }}>
-                      {attachedFiles.map((f, i) => (
-                        <div key={i} style={{ display:'flex', alignItems:'center', gap:5, padding:'3px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:16, maxWidth:200 }}>
-                          <span style={{ fontSize:11 }}>📎</span>
-                          <span style={{ fontSize:11, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{f.name}</span>
-                          <button onClick={() => setAttachedFiles(prev => prev.filter((_,j) => j !== i))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0, lineHeight:1 }}>✕</button>
-                        </div>
-                      ))}
+                    <div style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:5, padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:16 }}>
+                        <span style={{ fontSize:11 }}>📎</span>
+                        <span style={{ fontSize:11, color:'var(--fg-text2)' }}>{attachedFiles.length} file{attachedFiles.length!==1?'s':''} attached</span>
+                        <button onClick={() => setAttachedFiles([])} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0, lineHeight:1, marginLeft:2 }} title="Remove all">✕</button>
+                      </div>
                     </div>
                   )}
                   <div style={{ position:'relative', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, overflow:'hidden' }}>
@@ -3514,13 +3524,6 @@ export default function ForgeApp() {
             { icon:'🗄️', name:'Database', desc:'Query your connected databases', status:'active' },
             { icon:'📁', name:'File System', desc:'Read and write local files', status:'active' },
           ];
-          const [skillSearch, setSkillSearch] = React.useState('');
-          const [skillCat, setSkillCat] = React.useState('All');
-          const [genTopic, setGenTopic] = React.useState('');
-          const [genIndustry, setGenIndustry] = React.useState('');
-          const [genGoal, setGenGoal] = React.useState('');
-          const [genResult, setGenResult] = React.useState('');
-          const [genLoading, setGenLoading] = React.useState(false);
           const cats = ['All', ...Array.from(new Set(SKILLS.map(s => s.category)))];
           const filtered = SKILLS.filter(s => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
           const launchSkill = (skill: typeof SKILLS[0]) => {
@@ -3646,10 +3649,13 @@ export default function ForgeApp() {
                 <h2 style={{ margin:0, fontSize:17, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeCo</h2>
                 <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Code + Cowork — AI-assisted development and collaboration</p>
               </div>
-              <div style={{ marginLeft:'auto', display:'flex', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, padding:3, gap:2 }}>
-                {(['code','cowork'] as const).map(t => (
-                  <button key={t} onClick={() => setCoTab(t)} style={{ padding:'5px 16px', background:coTab===t ? 'var(--fg-orange)' : 'transparent', border:'none', borderRadius:6, color:coTab===t ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:13, fontWeight:coTab===t ? 600 : 400, textTransform:'capitalize' }}>{t === 'code' ? '💻 Code' : '🤝 Cowork'}</button>
-                ))}
+              <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8 }}>
+                {selectedModel && <span style={{ fontSize:11, padding:'3px 8px', background:'rgba(249,115,22,0.12)', border:'1px solid var(--fg-orange)', borderRadius:12, color:'var(--fg-orange)', fontWeight:600 }}>⚡ {selectedModel}</span>}
+                <div style={{ display:'flex', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, padding:3, gap:2 }}>
+                  {(['code','cowork'] as const).map(t => (
+                    <button key={t} onClick={() => setCoTab(t)} style={{ padding:'5px 16px', background:coTab===t ? 'var(--fg-orange)' : 'transparent', border:'none', borderRadius:6, color:coTab===t ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:13, fontWeight:coTab===t ? 600 : 400, textTransform:'capitalize' }}>{t === 'code' ? '💻 Code' : '🤝 Cowork'}</button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -4077,7 +4083,7 @@ export default function ForgeApp() {
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={() => setShowNewTask(false)}>
           <div style={{ width:380, background:'var(--fg-bg3)', borderRadius:16, padding:24, border:'1px solid var(--fg-border)' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ color:'var(--fg-text)', margin:'0 0 20px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>New Task</h3>
-            <input placeholder="Task title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} onKeyDown={e => { if (e.key==='Enter') addTask(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
+            <input placeholder="Task title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} onKeyDown={e => { if (e.key==='Enter') createTask(); }} autoFocus style={{ width:'100%', padding:'12px', marginBottom:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', outline:'none' }} />
             <div style={{ display:'flex', gap:6, marginBottom:16 }}>
               {(['low','medium','high'] as const).map(p => {
                 const tpc: Record<string,string> = { low:'var(--fg-text2)', medium:'var(--fg-orange)', high:'var(--fg-red)' };
@@ -4086,7 +4092,7 @@ export default function ForgeApp() {
             </div>
             <div style={{ display:'flex', gap:10 }}>
               <button onClick={() => setShowNewTask(false)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
-              <button onClick={addTask} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Add Task</button>
+              <button onClick={createTask} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Add Task</button>
             </div>
           </div>
         </div>
