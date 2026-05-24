@@ -2,6 +2,6 @@ $git = 'C:\Program Files\Git\cmd\git.exe'
 $repo = 'C:\Users\teste\OneDrive\Documents\Claude\Projects\forge'
 $out = @()
 $out += (& $git -C $repo add -A 2>&1)
-$out += (& $git -C $repo commit -m 'ui-fix-1-skills-crash-task-button-asi-multi-auto-co-files' 2>&1)
+$out += (& $git -C $repo commit -m 'ui-fix-2-restore-truncated-forgeco-file' 2>&1)
 $out += (& $git -C $repo push origin main 2>&1)
 $out -join "`n" | Set-Content ($repo + '\git_result.txt')
