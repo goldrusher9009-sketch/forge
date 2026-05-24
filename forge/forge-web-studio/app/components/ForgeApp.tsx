@@ -4165,13 +4165,3 @@ export default function ForgeApp() {
     </div>
   );
 }
- gap:10 }}>
-              <button onClick={() => setRenamingThread(null)} style={{ flex:1, padding:'10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', cursor:'pointer' }}>Cancel</button>
-              <button onClick={renameThread} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer' }}>Rename</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

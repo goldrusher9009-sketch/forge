@@ -1,8 +1,7 @@
 warning: in the working copy of 'forge/do_git.ps1', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'forge/forge-platform/src/index.ts', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/forge-web-studio/app/components/ForgeApp.tsx', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/git_result.txt', LF will be replaced by CRLF the next time Git touches it
-[main 33a0291] ui-fix-1-skills-crash-task-button-asi-multi-auto-co-files
- 4 files changed, 34 insertions(+), 28 deletions(-)
+[main 4514042] ui-fix-2-restore-truncated-forgeco-file
+ 4 files changed, 16 insertions(+), 5 deletions(-)
 To https://github.com/goldrusher9009-sketch/forge.git
-   da82e7f..33a0291  main -> main
+   33a0291..4514042  main -> main
