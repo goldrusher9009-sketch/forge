@@ -1817,8 +1817,8 @@ export default function ForgeApp() {
               {/* Mode pills: ForgeAsk | ForgeMagic | EPIC */}
               {!isMobile && (
                 <div style={{ display:'flex', gap:4, flexShrink:0 }}>
-                  <button onClick={() => setSuperMode('forgeAsk')} title="ForgeAsk: select skills/connectors before each task" style={{ padding:'4px 8px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>❓ Ask</button>
-                  <button onClick={() => setSuperMode('forgeMagic')} title="ForgeMagic: auto-activate relevant skills/connectors" style={{ padding:'4px 8px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>✨ Magic</button>
+                  <button onClick={() => setSuperMode('forgeAsk')} title="ForgeAsk: Ask mode — confirms which tools, skills &amp; connectors to use before each task" style={{ padding:'4px 8px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>❓ Ask</button>
+                  <button onClick={() => setSuperMode('forgeMagic')} title="ForgeMagic: Act mode — autonomously loads all browse tools, skills, hooks &amp; connectors to achieve the result" style={{ padding:'4px 8px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>✨ Magic</button>
                   <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>🌌 EPIC</button>
                 </div>
               )}
@@ -2193,7 +2193,7 @@ export default function ForgeApp() {
                             </div>
                           ))}
                         </div>
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, textAlign:'center', marginTop:12 }}>Tools auto-activate when AI detects a task requiring them.</p>
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, textAlign:'center', marginTop:12 }}>Act mode: auto-activates all browse tools, skills, hooks &amp; connectors needed to complete the task.</p>
                       </div>
                     )}
                     {/* HOOKS */}
@@ -3679,8 +3679,8 @@ export default function ForgeApp() {
                 {/* Input + Mode Toggle */}
                 <div style={{ padding:'12px 24px 20px', borderTop:'1px solid var(--fg-border)', flexShrink:0 }}>
                   <div style={{ display:'flex', gap:10, marginBottom:10 }}>
-                    <button onClick={() => setSuperMode('forgeAsk')} title="Select skills/connectors before each task" style={{ padding:'6px 12px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', flexShrink:0 }}>\u2753 ForgeAsk</button>
-                    <button onClick={() => setSuperMode('forgeMagic')} title="Auto-enable all relevant skills/connectors" style={{ padding:'6px 12px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', flexShrink:0 }}>\u2728 ForgeMagic</button>
+                    <button onClick={() => setSuperMode('forgeAsk')} title="Ask mode — confirms which tools, skills &amp; connectors to use before each task" style={{ padding:'6px 12px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', flexShrink:0 }}>\u2753 ForgeAsk</button>
+                    <button onClick={() => setSuperMode('forgeMagic')} title="Act mode — autonomously loads all browse tools, skills, hooks &amp; connectors to achieve the result" style={{ padding:'6px 12px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', flexShrink:0 }}>\u2728 ForgeMagic</button>
                   </div>
                   <div style={{ display:'flex', gap:10, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, padding:'8px 12px', alignItems:'flex-end' }}>
                     <textarea value={superInput} onChange={e => setSuperInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendSuperMessage(); } }} placeholder="Ask Forge SuperAgent anything\u2026 it remembers your work" rows={2} style={{ flex:1, background:'transparent', border:'none', color:'var(--fg-text)', fontSize:14, resize:'none', outline:'none', lineHeight:1.6 }} />
@@ -3999,8 +3999,8 @@ export default function ForgeApp() {
         {showAskModal && (
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }}>
             <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:32, maxWidth:700, width:'90vw', maxHeight:'80vh', overflowY:'auto' }}>
-              <h2 style={{ margin:'0 0 20px', fontSize:20, fontWeight:800, color:'var(--fg-orange)' }}>❓ ForgeAsk: Select Tools</h2>
-              <p style={{ margin:'0 0 24px', color:'var(--fg-text3)', fontSize:14 }}>Which skills and connectors should Forge use for this task?</p>
+              <h2 style={{ margin:'0 0 20px', fontSize:20, fontWeight:800, color:'var(--fg-orange)' }}>❓ ForgeAsk — Ask Mode</h2>
+              <p style={{ margin:'0 0 24px', color:'var(--fg-text3)', fontSize:14 }}>Ask mode: confirm which tools, skills &amp; connectors Forge should use before starting this task.</p>
 
               <div style={{ marginBottom:24 }}>
                 <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🎯 Skills</h3>
