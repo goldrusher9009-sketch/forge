@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'sse-fix-8' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'billing-fix-1' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1027,10 +1027,19 @@ app.post('/api/providers/:id/test', requireAuth, async (req: AuthRequest, res) =
 
 // ── Billing ───────────────────────────────────────────────────
 app.get('/api/billing/subscription', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  ensureSubscription(userId);
-  const sub = db.prepare('SELECT * FROM subscriptions WHERE user_id=?').get(userId) as any;
-  res.json({ success: true, plan: sub.plan, tokensUsed: sub.tokens_used, tokenLimit: sub.tokens_limit, status: sub.status, periodEnd: sub.period_end });
+  try {
+    const userId = req.user!.sub;
+    ensureSubscription(userId);
+    const sub = db.prepare('SELECT * FROM subscriptions WHERE user_id=?').get(userId) as any;
+    if (!sub) {
+      res.json({ success: true, plan: 'free', tokensUsed: 0, tokenLimit: 1000000, status: 'active', periodEnd: null });
+      return;
+    }
+    res.json({ success: true, plan: sub.plan, tokensUsed: sub.tokens_used, tokenLimit: sub.tokens_limit, status: sub.status, periodEnd: sub.period_end });
+  } catch (err: any) {
+    console.error('billing/subscription error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY || '';

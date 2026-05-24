@@ -2,7 +2,7 @@ warning: in the working copy of 'forge/do_git.ps1', LF will be replaced by CRLF 
 warning: in the working copy of 'forge/forge-platform/src/index.ts', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/git_result.txt', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'forge/poll_health.ps1', LF will be replaced by CRLF the next time Git touches it
-[main 6efbcd6] sse-fix-7-platform-key-in-getUserKey
- 5 files changed, 16 insertions(+), 45 deletions(-)
+[main 55025e7] sse-fix-8-promise-race-timeout
+ 5 files changed, 12 insertions(+), 10 deletions(-)
 To https://github.com/goldrusher9009-sketch/forge.git
-   aaa21c8..6efbcd6  main -> main
+   6efbcd6..55025e7  main -> main
