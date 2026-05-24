@@ -1,6 +1,18 @@
 # Forge Platform — Version History
 
-## v6.15 — 2026-05-24 (current)
+## v6.16 — 2026-05-24 (current)
+
+### Frontend: forge-web-studio/app/components/ForgeApp.tsx
+- **New: Workspace navbar upgrade** — Active Space selector, ⛽ gas-style live token counter (color shifts red at 500k), 🧠 IQ score pill (click → Super tab), ⚡ Harvest button (fires harvestMemory), ❓ Ask / ✨ Magic / 🌌 EPIC mode pills all in top bar
+- **New: Left nav tabs** — 📁 Files, 🪝 Hooks, 🏃 Runs added between Skills and ForgeCo sections
+- **New: Right panel tabs** — 🛠 Tools, 🪝 Hooks, 🏃 Runs added as first three tabs; Agent moved up; full tab reorder for logical grouping
+- **New: Files tab** — file upload dropzone, workspace file system for agents
+- **New: Hooks tab** — automation hooks list (on_message, on_harvest, on_skill_complete, on_tool_call, on_agent_finish)
+- **New: Runs tab** — agent run history monitor with live count badges
+
+---
+
+## v6.15 — 2026-05-24
 
 ### Backend: forge-platform/src/index.ts
 - **Fix: OpenRouter timeout 60s** — OR `fetchWithTimeout` 22s→60s, Promise.race outer guard 20s→60s (OR only), safety timer 25s→65s. Slow OR models (large context, high load) no longer time out prematurely

@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.15 — Fix: OR timeout 60s, sidebar tool visibility, ForgeMagic catalog, skills/connectors multi-request
+ * Forge Platform v6.16 — Workspace: Files/Hooks/Runs tabs, navbar Active Space + gas token counter + IQ + Harvest + mode pills
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */

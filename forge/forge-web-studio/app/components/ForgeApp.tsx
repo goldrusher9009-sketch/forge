@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.15 -- OR timeout 60s, sidebar tool visibility, ForgeMagic, multi-skill/connector
+﻿// Forge AI Workspace v6.16 -- navbar: Active Space, gas token counter, IQ, Harvest, mode pills; Files/Hooks/Runs tabs
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -311,10 +311,10 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'>('workspace');
 
   // Right panel tabs
-  const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'>('artifacts');
+  const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>('artifacts');
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -1623,6 +1623,9 @@ export default function ForgeApp() {
             { id:'settings', icon:'⚙️', label:'Settings' },
             { id:'super', icon:'🌟', label:'Forge Super' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
+            { id:'files', icon:'📁', label:'Files' },
+            { id:'hooks', icon:'🪝', label:'Hooks' },
+            { id:'runs', icon:'🏃', label:'Runs' },
             { id:'forgeco', icon:'🧑‍💻', label:'ForgeCo' },
             { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
@@ -1733,7 +1736,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.15</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.16</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -1750,16 +1753,27 @@ export default function ForgeApp() {
         {mainTab === 'workspace' && (
           <>
             {/* Top bar */}
-            <div style={{ padding:'0 16px', height:52, background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
-              <div style={{ flex:1, overflow:'hidden', display:'flex', alignItems:'center', gap:10 }}>
-                <h2 style={{ margin:0, fontSize:15, fontWeight:600, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+            <div style={{ padding:'0 10px', height:52, background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+              {/* Active Space selector */}
+              {!isMobile && (
+                <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', background:'var(--fg-bg4)', borderRadius:8, border:'1px solid var(--fg-border2)', flexShrink:0, cursor:'pointer' }} title="Active Space">
+                  <span style={{ fontSize:11 }}>🌐</span>
+                  <span style={{ fontSize:11, color:'var(--fg-orange2)', fontWeight:600, maxWidth:100, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {activeProject ? activeProject.name : 'Default Space'}
+                  </span>
+                  <span style={{ fontSize:9, color:'var(--fg-text3)' }}>▼</span>
+                </div>
+              )}
+              {/* Title */}
+              <div style={{ flex:1, overflow:'hidden', display:'flex', alignItems:'center', gap:8 }}>
+                <h2 style={{ margin:0, fontSize:14, fontWeight:600, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                   {activeThread ? activeThread.title : activeProject ? activeProject.name : 'Forge Workspace'}
                 </h2>
-                {/* Mini sparkline -- token usage per message in current thread */}
+                {/* Mini sparkline */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
                   const vals = threadStats.token_history.map(h => h.tokens);
                   const max = Math.max(...vals, 1);
-                  const w = 6; const gap = 2; const h = 20;
+                  const w = 5; const gap = 2; const h = 18;
                   return (
                     <svg width={vals.length * (w + gap)} height={h} style={{ flexShrink:0, opacity:0.7 }} title={`${threadStats.total_tokens.toLocaleString()} tokens total`}>
                       {vals.map((v, i) => {
@@ -1770,31 +1784,46 @@ export default function ForgeApp() {
                     </svg>
                   );
                 })()}
-                {/* Thread token total pill */}
-                {threadStats && threadStats.total_tokens > 0 && (
-                  <span style={{ fontSize:10, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'2px 6px', borderRadius:10, whiteSpace:'nowrap', flexShrink:0 }}>
-                    {threadStats.total_tokens >= 1000 ? (threadStats.total_tokens/1000).toFixed(1)+'k' : threadStats.total_tokens}t
-                  </span>
-                )}
               </div>
               {/* Active skill indicator */}
               {activeSkillPrompt && (
-                <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', background:'rgba(255,140,0,0.12)', border:'1px solid var(--fg-orange)', borderRadius:8, flexShrink:0, maxWidth:200 }}>
-                  <span style={{ fontSize:11 }}>🧩</span>
-                  <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>Skill active</span>
-                  <button onClick={() => setActiveSkillPrompt('')} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', padding:0, fontSize:13, lineHeight:1, flexShrink:0 }}>✕</button>
+                <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 8px', background:'rgba(255,140,0,0.12)', border:'1px solid var(--fg-orange)', borderRadius:8, flexShrink:0 }}>
+                  <span style={{ fontSize:10 }}>🧩</span>
+                  <span style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:600 }}>Skill</span>
+                  <button onClick={() => setActiveSkillPrompt('')} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', padding:0, fontSize:12, lineHeight:1, flexShrink:0 }}>✕</button>
                 </div>
               )}
-              {/* Global token counter -- always visible */}
-              <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background:'var(--fg-bg4)', borderRadius:8, border:'1px solid var(--fg-border2)', flexShrink:0 }}>
-                <span style={{ fontSize:10 }}>⚡</span>
-                <span style={{ fontSize:11, color: totalTokens > 0 ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:600 }}>
-                  {totalTokens >= 1000000 ? (totalTokens/1000000).toFixed(1)+'M' : totalTokens >= 1000 ? (totalTokens/1000).toFixed(0)+'k' : totalTokens || '0'}
+              {/* ⛽ Gas-style live token counter */}
+              <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: totalTokens > 500000 ? 'rgba(239,68,68,0.12)' : totalTokens > 100000 ? 'rgba(255,140,0,0.1)' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${totalTokens > 500000 ? 'rgba(239,68,68,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, minWidth:72, justifyContent:'center' }}>
+                <span style={{ fontSize:10 }}>⛽</span>
+                <span style={{ fontSize:11, color: totalTokens > 500000 ? '#ef4444' : totalTokens > 0 ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:700, fontFamily:'monospace', letterSpacing:'-0.5px' }}>
+                  {totalTokens >= 1000000 ? (totalTokens/1000000).toFixed(2)+'M' : totalTokens >= 1000 ? (totalTokens/1000).toFixed(1)+'k' : totalTokens || '0'}
                 </span>
-                <span style={{ fontSize:10, color:'var(--fg-text3)' }}>tokens</span>
               </div>
+              {/* 🧠 IQ score */}
+              {!isMobile && (
+                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: superStats.intelligenceScore > 100 ? 'linear-gradient(135deg,rgba(139,92,246,0.15),rgba(56,189,248,0.1))' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${superStats.intelligenceScore > 100 ? 'rgba(139,92,246,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, cursor:'pointer' }} onClick={() => setMainTab('super')} title="SuperAgent IQ — click to open">
+                  <span style={{ fontSize:10 }}>🧠</span>
+                  <span style={{ fontSize:11, fontWeight:700, color: superStats.intelligenceScore > 500 ? 'var(--fg-orange2)' : superStats.intelligenceScore > 100 ? '#a78bfa' : 'var(--fg-text3)', fontFamily:'monospace' }}>IQ {superStats.intelligenceScore}</span>
+                </div>
+              )}
+              {/* ⚡ Harvest button */}
+              {!isMobile && (
+                <button onClick={harvestMemory} disabled={superHarvesting} title="Harvest memory → boost SuperAgent IQ" style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 10px', background: superHarvesting ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0, opacity: superHarvesting ? 0.5 : 1 }}>
+                  <span>{superHarvesting ? '⏳' : '⚡'}</span>
+                  <span>Harvest</span>
+                </button>
+              )}
+              {/* Mode pills: ForgeAsk | ForgeMagic | EPIC */}
+              {!isMobile && (
+                <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                  <button onClick={() => setSuperMode('forgeAsk')} title="ForgeAsk: select skills/connectors before each task" style={{ padding:'4px 8px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>❓ Ask</button>
+                  <button onClick={() => setSuperMode('forgeMagic')} title="ForgeMagic: auto-activate relevant skills/connectors" style={{ padding:'4px 8px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>✨ Magic</button>
+                  <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>🌌 EPIC</button>
+                </div>
+              )}
               {/* Sketch toggle */}
-              {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'5px 10px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>✏️ Sketch</button>}
+              {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'4px 8px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, flexShrink:0 }}>✏️</button>}
 
               {/* Multi-response toggle */}
               {!isMobile && <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? 'var(--fg-border)' : 'transparent', border:`1px solid ${multiResponse ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:multiResponse ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>⚡ Multi</button>}
@@ -2141,15 +2170,54 @@ export default function ForgeApp() {
                 <div style={{ width:360, background:'var(--fg-bg)', borderLeft:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0 }}>
                   <div style={{ display:'flex', borderBottom:'1px solid var(--fg-border)', padding:'0 2px', overflowX:'auto' }}>
                     {([
-                      {id:'artifacts',icon:'📄'},{id:'tasks',icon:'✅'},{id:'context',icon:'📊'},
-                      {id:'live',icon:'📺'},{id:'browser',icon:'🌐'},{id:'terminal',icon:'💻'},
-                      {id:'agent',icon:'🤖'},{id:'dispatch',icon:'🚀'},{id:'schedule',icon:'⏱'},
+                      {id:'tools',icon:'🛠'},{id:'hooks',icon:'🪝'},{id:'runs',icon:'🏃'},
+                      {id:'agent',icon:'🤖'},{id:'artifacts',icon:'📄'},{id:'tasks',icon:'✅'},
+                      {id:'live',icon:'📺'},{id:'schedule',icon:'⏱'},{id:'context',icon:'📊'},
+                      {id:'browser',icon:'🌐'},{id:'terminal',icon:'💻'},{id:'dispatch',icon:'🚀'},
                     ] as const).map(tab => (
                       <button key={tab.id} onClick={() => setRightTab(tab.id as any)} title={tab.id} style={{ flex:'0 0 auto', padding:'10px 8px', background:'none', border:'none', borderBottom:rightTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', color:rightTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{tab.icon}</button>
                     ))}
                   </div>
 
                   <div style={{ flex:1, overflowY:'auto', padding:12 }}>
+                    {/* TOOLS */}
+                    {rightTab==='tools' && (
+                      <div>
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>Tool Execution</p>
+                        <div style={{ padding:12, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
+                          <p style={{ margin:'0 0 6px', fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>🛠 Available Tools</p>
+                          {['web_search','code_execute','file_read','file_write','browser_navigate','api_call','image_gen','data_analyze'].map(t => (
+                            <div key={t} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 0', borderBottom:'1px solid var(--fg-border)' }}>
+                              <span style={{ fontSize:12, color:'var(--fg-text2)', fontFamily:'monospace' }}>{t}</span>
+                              <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4 }}>ready</span>
+                            </div>
+                          ))}
+                        </div>
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, textAlign:'center', marginTop:12 }}>Tools auto-activate when AI detects a task requiring them.</p>
+                      </div>
+                    )}
+                    {/* HOOKS */}
+                    {rightTab==='hooks' && (
+                      <div>
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>Automation Hooks</p>
+                        <div style={{ padding:12, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
+                          <p style={{ margin:'0 0 6px', fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>🪝 Active Hooks</p>
+                          <p style={{ fontSize:12, color:'var(--fg-text3)', textAlign:'center', margin:'20px 0' }}>No hooks configured yet.<br/>Hooks fire automatically on workspace events.</p>
+                        </div>
+                        <button onClick={() => setMainTab('hooks')} style={{ width:'100%', padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:600 }}>+ New Hook</button>
+                      </div>
+                    )}
+                    {/* RUNS */}
+                    {rightTab==='runs' && (
+                      <div>
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>Agent Runs</p>
+                        <div style={{ padding:12, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
+                          <p style={{ margin:'0 0 6px', fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>🏃 Run History</p>
+                          <p style={{ fontSize:12, color:'var(--fg-text3)', textAlign:'center', margin:'20px 0' }}>No runs yet.<br/>Automated workflows and agent runs appear here.</p>
+                        </div>
+                        <button onClick={() => setMainTab('runs')} style={{ width:'100%', padding:'8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>View All Runs →</button>
+                      </div>
+                    )}
                     {/* ARTIFACTS */}
                     {rightTab==='artifacts' && (
                       <div>
@@ -3948,6 +4016,84 @@ export default function ForgeApp() {
               <div style={{ display:'flex', gap:12 }}>
                 <button onClick={() => { setShowAskModal(false); setPendingAskMessage(''); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); }} style={{ flex:1, padding:12, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:14, fontWeight:600, cursor:'pointer' }}>Cancel</button>
                 <button onClick={async () => { if (pendingAskMessage.trim()) { setShowAskModal(false); setSuperInput(''); setSuperMessages(prev => [...prev, { role:'user', content: pendingAskMessage }]); setSuperSending(true); try { const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel; const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: pendingAskMessage, model: cleanModel, enabledSkills: Array.from(selectedAskSkills), enabledConnectors: Array.from(selectedAskConnectors) }) }, user.token); setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]); loadTotalTokens(); try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {} } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); } finally { setSuperSending(false); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); } } }} style={{ flex:1, padding:12, background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Send with Selected Tools</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── FILES ─────────────────────────────────────────────────────── */}
+        {mainTab === 'files' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)', padding:24 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+              <span style={{ fontSize:24 }}>📁</span>
+              <div>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Files</h2>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Workspace file system — attach, manage, and share files with your agents</p>
+              </div>
+            </div>
+            <div style={{ padding:40, background:'var(--fg-bg3)', border:'2px dashed var(--fg-border)', borderRadius:12, textAlign:'center' }}>
+              <p style={{ fontSize:32, margin:'0 0 12px' }}>📂</p>
+              <p style={{ margin:'0 0 8px', fontSize:14, color:'var(--fg-text2)', fontWeight:600 }}>Drop files here or click to upload</p>
+              <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>Supports PDFs, images, code files, CSVs, and more</p>
+              <button style={{ padding:'8px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>Upload Files</button>
+            </div>
+            <p style={{ marginTop:20, fontSize:12, color:'var(--fg-text3)', textAlign:'center' }}>Files uploaded here are accessible to all agents in your workspace.</p>
+          </div>
+        )}
+
+        {/* ── HOOKS ─────────────────────────────────────────────────────── */}
+        {mainTab === 'hooks' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)', padding:24 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+              <span style={{ fontSize:24 }}>🪝</span>
+              <div>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Hooks</h2>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Automation triggers — fire actions on workspace events</p>
+              </div>
+              <button style={{ marginLeft:'auto', padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ New Hook</button>
+            </div>
+            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:20 }}>
+              <p style={{ margin:'0 0 16px', fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>Hook Events</p>
+              {[
+                { event:'on_message', desc:'Fires after every AI response', status:'inactive' },
+                { event:'on_harvest', desc:'Fires when SuperAgent harvests memory', status:'inactive' },
+                { event:'on_skill_complete', desc:'Fires when a skill finishes executing', status:'inactive' },
+                { event:'on_tool_call', desc:'Fires when a tool is invoked', status:'inactive' },
+                { event:'on_agent_finish', desc:'Fires when an agent run completes', status:'inactive' },
+              ].map(h => (
+                <div key={h.event} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:8 }}>
+                  <div>
+                    <p style={{ margin:0, fontSize:12, fontFamily:'monospace', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</p>
+                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{h.desc}</p>
+                  </div>
+                  <span style={{ fontSize:11, color:'var(--fg-text3)', background:'var(--fg-bg)', padding:'2px 8px', borderRadius:10, border:'1px solid var(--fg-border)' }}>{h.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── RUNS ──────────────────────────────────────────────────────── */}
+        {mainTab === 'runs' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)', padding:24 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+              <span style={{ fontSize:24 }}>🏃</span>
+              <div>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Runs</h2>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Agent run history — monitor all automated executions</p>
+              </div>
+            </div>
+            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:20 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+                <p style={{ margin:0, fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>Recent Runs</p>
+                <div style={{ display:'flex', gap:8 }}>
+                  <span style={{ fontSize:11, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'2px 8px', borderRadius:10 }}>0 running</span>
+                  <span style={{ fontSize:11, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'2px 8px', borderRadius:10 }}>0 total</span>
+                </div>
+              </div>
+              <div style={{ textAlign:'center', padding:'40px 20px' }}>
+                <p style={{ fontSize:32, margin:'0 0 12px' }}>🏃</p>
+                <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No runs yet. Agent runs from ForgeAuto, ForgeMulti, and hooks appear here.</p>
               </div>
             </div>
           </div>
