@@ -3800,6 +3800,7 @@ export default function ForgeApp() {
               </div>
             </div>
           </div>
+          </div>
         )}
 
         {/* ── SKILLS & TOOLS ────────────────────────────────────────────── */}
@@ -4573,29 +4574,27 @@ export default function ForgeApp() {
               { icon:'Archive', label: t.archived ? 'Unarchive' : 'Archive', action:() => { archiveThread(t); setThreadMenu(null); } },
               { icon:'Delete', label:'Delete', action:() => { deleteThread(t.id); setThreadMenu(null); } },
             ].map(item => (
-              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
-                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
-                <span>{item.icon}</span>{item.label}
-              </button>
+              <button key={item.label} onClick={item.action} style={{ display:'block', width:'100%', padding:'8px 14px', background:'none', border:'none', color:'var(--fg-text)', cursor:'pointer', textAlign:'left', fontSize:13, borderRadius:6 }}
+                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')}
+                onMouseLeave={e => (e.currentTarget.style.background='none')}
+              >{item.icon} {item.label}</button>
             ))}
           </div>
         );
       })()}
 
       {projectMenu && (() => {
-        const p = projects.find(x => x.id === projectMenu.projectId);
-        if (!p) return null;
+        const proj = projects.find(x => x.id === projectMenu.projectId);
+        if (!proj) return null;
         return (
           <div style={{ position:'fixed', top: projectMenu.y, left: projectMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:4, zIndex:2000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
             {[
-              { icon:'✏️', label:'Rename', action:() => { setRenamingProject({ id:p.id, name:p.name }); setProjectMenu(null); } },
-              { icon: p.pinned ? 'Unpin' : 'Pin', label: p.pinned ? 'Unpin' : 'Pin', action:() => { togglePin(p); setProjectMenu(null); } },
-              { icon:'Delete', label:'Delete', action:() => { deleteProject(p.id); setProjectMenu(null); } },
+              { label:'Delete Project', action:() => { if (confirm('Delete this project and all its threads?')) { apiFetch('/projects/'+proj.id, { method:'DELETE' }, user!.token).then(() => { setActiveProject(null); loadProjects(); }); } setProjectMenu(null); } },
             ].map(item => (
-              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: item.label === 'Delete' ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:7, textAlign:'left' }}
-                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')} onMouseLeave={e => (e.currentTarget.style.background='none')}>
-                <span>{item.icon}</span>{item.label}
-              </button>
+              <button key={item.label} onClick={item.action} style={{ display:'block', width:'100%', padding:'8px 14px', background:'none', border:'none', color:'var(--fg-red)', cursor:'pointer', textAlign:'left', fontSize:13, borderRadius:6 }}
+                onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')}
+                onMouseLeave={e => (e.currentTarget.style.background='none')}
+              >{item.label}</button>
             ))}
           </div>
         );
