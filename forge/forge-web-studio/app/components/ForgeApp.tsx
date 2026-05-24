@@ -4766,6 +4766,18 @@ export default function ForgeApp() {
           </div>
         )}
 
+        {/* Artifact view modal */}
+        {artifactView && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setArtifactView(null)}>
+            <div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, maxWidth:800, width:'90%', maxHeight:'80vh', overflow:'auto' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                <h3 style={{ margin:0, color:'var(--fg-text)', fontSize:16, fontWeight:700 }}>Artifact</h3>
+                <button onClick={() => setArtifactView(null)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:20 }}>✕</button>
+              </div>
+              <pre style={{ margin:0, color:'var(--fg-text2)', fontSize:13, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{artifactView}</pre>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
