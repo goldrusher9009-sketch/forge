@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.18 — Live tool toggles, hooks/files/runs pages wired to real data, right panel live, schedules stub + files endpoint
+ * Forge Platform v6.18e — Live tool toggles, hooks/files/runs pages wired to real data, right panel live, schedules stub + files endpoint
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
