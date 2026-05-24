@@ -500,7 +500,7 @@ export default function ForgeApp() {
 
   // Files state
   const [files, setFiles] = useState<{id:string;name:string;size:number;type:string;created_at:string}[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const filesInputRef = useRef<HTMLInputElement>(null);
   const uploadFile = async (file: File) => {
     if (!user) return;
     const entry = { id: Date.now().toString(), name: file.name, size: file.size, type: file.type || 'application/octet-stream', created_at: new Date().toISOString() };
@@ -4152,11 +4152,11 @@ export default function ForgeApp() {
                 <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Files</h2>
                 <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Workspace files — attach to agents, reference in chat, share across projects</p>
               </div>
-              <button onClick={() => fileInputRef.current?.click()} style={{ marginLeft:'auto', padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ Upload</button>
-              <input ref={fileInputRef} type="file" multiple style={{ display:'none' }} onChange={e => { Array.from(e.target.files || []).forEach(uploadFile); e.target.value = ''; }} />
+              <button onClick={() => filesInputRef.current?.click()} style={{ marginLeft:'auto', padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ Upload</button>
+              <input ref={filesInputRef} type="file" multiple style={{ display:'none' }} onChange={e => { Array.from(e.target.files || []).forEach(uploadFile); e.target.value = ''; }} />
             </div>
             {/* Drop zone */}
-            <div onClick={() => fileInputRef.current?.click()} style={{ padding:32, background:'var(--fg-bg3)', border:'2px dashed var(--fg-border2)', borderRadius:12, textAlign:'center', cursor:'pointer', marginBottom:20 }}>
+            <div onClick={() => filesInputRef.current?.click()} style={{ padding:32, background:'var(--fg-bg3)', border:'2px dashed var(--fg-border2)', borderRadius:12, textAlign:'center', cursor:'pointer', marginBottom:20 }}>
               <p style={{ fontSize:28, margin:'0 0 8px' }}>📂</p>
               <p style={{ margin:'0 0 4px', fontSize:13, color:'var(--fg-text2)', fontWeight:600 }}>Drop files here or click to upload</p>
               <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>PDFs, images, code, CSVs, Word docs, and more</p>
