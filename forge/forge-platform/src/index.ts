@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'billing-fix-1' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'billing-fix-2' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -405,7 +405,8 @@ try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_limit INTEGER NOT NUL
 try { db.exec(`UPDATE subscriptions SET tokens_limit=1000000, tokens_used=0`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_used INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_start TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
-try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_end TEXT NOT NULL DEFAULT (datetime('now', '+30 days'))`); } catch {}
+try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_end TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
+try { db.exec(`UPDATE subscriptions SET period_end=datetime('now', '+30 days') WHERE period_end IS NULL OR period_end=''`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN status TEXT NOT NULL DEFAULT 'active'`); } catch {}
 
 // ── Schema repair: rebuild api_keys if it has a broken DEFAULT from old schema ──
