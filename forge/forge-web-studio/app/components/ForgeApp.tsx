@@ -2317,81 +2317,132 @@ export default function ForgeApp() {
 
                   <div style={{ flex:1, overflowY:'auto', padding:12 }}>
                     {/* TOOLS */}
-                    {rightTab==='tools' && (
+                    {rightTab==='tools' && (() => {
+                      const catalog = (window as any).FORGE_CATALOG_DATA;
+                      const allSkills: any[] = catalog?.skills || [];
+                      const allConnectors: any[] = catalog?.connectors || [];
+                      const activeSkillsList = allSkills.filter((s:any) => activeSkills.has(s.id));
+                      const activeConnectorsList = allConnectors.filter((c:any) => activeConnectors.has(c.id));
+                      const enabledHooks = hooks.filter(h => h.enabled);
+                      return (
                       <div>
-                    {/* Active summary */}
-                    {(activeSkills.size > 0 || activeConnectors.size > 0) && (
-                      <div style={{ marginBottom:12, padding:'8px 10px', background:'var(--fg-odim)', border:'1px solid var(--fg-border3)', borderRadius:8 }}>
-                        <p style={{ margin:'0 0 6px', fontSize:10, color:'var(--fg-orange)', fontWeight:700, textTransform:'uppercase' }}>Active in this chat</p>
-                        {activeSkills.size > 0 && <p style={{ margin:'0 0 3px', fontSize:11, color:'var(--fg-text2)' }}>🧩 {Array.from(activeSkills).join(', ')}</p>}
-                        {activeConnectors.size > 0 && <p style={{ margin:0, fontSize:11, color:'var(--fg-text2)' }}>🔌 {Array.from(activeConnectors).join(', ')}</p>}
-                      </div>
-                    )}
-                        {/* SKILLS */}
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 8px', letterSpacing:'0.5px' }}>Skills</p>
-                        {[
-                          { id:'web_search', icon:'⚡', label:'web_search', desc:'Search the web' },
-                          { id:'run_code', icon:'⚡', label:'run_code', desc:'Execute code' },
-                          { id:'read_file', icon:'⚡', label:'read_file', desc:'Read files' },
-                          { id:'image_gen', icon:'⚡', label:'image_gen', desc:'Generate images' },
-                          { id:'data_analyze', icon:'⚡', label:'data_analyze', desc:'Analyze data' },
-                          { id:'browser_navigate', icon:'⚡', label:'browser', desc:'Browse the web' },
-                        ].map(t => (
-                          <div key={t.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:5 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                              <span style={{ fontSize:13 }}>{t.icon}</span>
-                              <span style={{ fontSize:12, color:'var(--fg-text2)', fontFamily:'var(--fg-font-mono)' }}>{t.label}</span>
+                        {/* Active summary banner */}
+                        {(activeSkills.size > 0 || activeConnectors.size > 0 || enabledHooks.length > 0) ? (
+                          <div style={{ marginBottom:12, padding:'10px 12px', background:'var(--fg-odim)', border:'1px solid var(--fg-border3)', borderRadius:10 }}>
+                            <p style={{ margin:'0 0 8px', fontSize:10, color:'var(--fg-orange)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' }}>⚡ Active in this chat</p>
+                            {activeSkillsList.map((s:any) => (
+                              <div key={s.id} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                                <span style={{ fontSize:14 }}>{s.icon || '🧩'}</span>
+                                <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{s.name}</span>
+                                <button onClick={() => setActiveSkills(prev => { const n=new Set(prev); n.delete(s.id); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0 }}>✕</button>
+                              </div>
+                            ))}
+                            {activeConnectorsList.map((c:any) => (
+                              <div key={c.id} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                                <span style={{ fontSize:14 }}>{c.icon || '🔌'}</span>
+                                <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{c.name}</span>
+                                <button onClick={() => setActiveConnectors(prev => { const n=new Set(prev); n.delete(c.id); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0 }}>✕</button>
+                              </div>
+                            ))}
+                            {enabledHooks.map(h => (
+                              <div key={h.id} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                                <span style={{ fontSize:14 }}>🪝</span>
+                                <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{h.event} → {h.target}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ marginBottom:12, padding:'8px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, textAlign:'center' }}>
+                            <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>No skills or connectors active</p>
+                          </div>
+                        )}
+
+                        {/* SKILLS from catalog */}
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>Skills ({activeSkills.size} active)</p>
+                          <button onClick={() => setMainTab('skills')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Browse all →</button>
+                        </div>
+                        {allSkills.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 10px' }}>No skills loaded</p>}
+                        {allSkills.slice(0, 12).map((s:any) => (
+                          <div key={s.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeSkills.has(s.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeSkills.has(s.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
+                              <span style={{ fontSize:14, flexShrink:0 }}>{s.icon || '🧩'}</span>
+                              <span style={{ fontSize:11, color: activeSkills.has(s.id) ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.name}</span>
                             </div>
-                            <button onClick={() => toggleTool(t.id)} style={{ width:36, height:20, borderRadius:10, border:'none', cursor:'pointer', background: activeTools.has(t.id) ? 'var(--fg-green)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
-                              <span style={{ position:'absolute', top:2, left: activeTools.has(t.id) ? 18 : 2, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
+                            <button onClick={() => setActiveSkills(prev => { const n=new Set(prev); n.has(s.id)?n.delete(s.id):n.add(s.id); return n; })} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeSkills.has(s.id) ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
+                              <span style={{ position:'absolute', top:2, left: activeSkills.has(s.id) ? 16 : 2, width:14, height:14, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
                             </button>
                           </div>
                         ))}
-                        {/* CONNECTORS */}
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'14px 0 8px', letterSpacing:'0.5px' }}>Connectors</p>
-                        {[
-                          { id:'github', icon:'🐙', label:'GitHub', color:'#333' },
-                          { id:'slack', icon:'💬', label:'Slack', color:'#4a154b' },
-                          { id:'notion', icon:'N', label:'Notion', color:'#000' },
-                          { id:'gmail', icon:'✉️', label:'Gmail', color:'#ea4335' },
-                        ].map(c => (
-                          <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:5 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                              <span style={{ fontSize:13, fontFamily:'var(--fg-font-mono)', fontWeight:700 }}>{c.icon}</span>
-                              <span style={{ fontSize:12, color:'var(--fg-text2)' }}>{c.label}</span>
+                        {allSkills.length > 12 && (
+                          <button onClick={() => setMainTab('skills')} style={{ width:'100%', padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', marginBottom:10 }}>+{allSkills.length - 12} more skills →</button>
+                        )}
+
+                        {/* CONNECTORS from catalog */}
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', margin:'12px 0 6px' }}>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>Connectors ({activeConnectors.size} active)</p>
+                          <button onClick={() => setMainTab('skills')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Browse all →</button>
+                        </div>
+                        {allConnectors.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 10px' }}>No connectors loaded</p>}
+                        {allConnectors.slice(0, 12).map((c:any) => (
+                          <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeConnectors.has(c.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeConnectors.has(c.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
+                              <span style={{ fontSize:14, flexShrink:0 }}>{c.icon || '🔌'}</span>
+                              <span style={{ fontSize:11, color: activeConnectors.has(c.id) ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.name}</span>
                             </div>
-                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                              {activeConnectors.has(c.id) && <span style={{ width:7, height:7, borderRadius:'50%', background:'var(--fg-green)', display:'inline-block' }} />}
-                              <button onClick={() => { setActiveConnectors(prev => { const n = new Set(prev); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; }); }} style={{ width:36, height:20, borderRadius:10, border:'none', cursor:'pointer', background: activeConnectors.has(c.id) ? 'var(--fg-green)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
-                                <span style={{ position:'absolute', top:2, left: activeConnectors.has(c.id) ? 18 : 2, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
+                            <button onClick={() => setActiveConnectors(prev => { const n=new Set(prev); n.has(c.id)?n.delete(c.id):n.add(c.id); return n; })} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeConnectors.has(c.id) ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
+                              <span style={{ position:'absolute', top:2, left: activeConnectors.has(c.id) ? 16 : 2, width:14, height:14, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
+                            </button>
+                          </div>
+                        ))}
+                        {allConnectors.length > 12 && (
+                          <button onClick={() => setMainTab('skills')} style={{ width:'100%', padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', marginBottom:10 }}>+{allConnectors.length - 12} more connectors →</button>
+                        )}
+
+                        {/* BUILT-IN TOOLS */}
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'12px 0 6px', letterSpacing:'0.5px' }}>Built-in Tools</p>
+                        {[
+                          { id:'web_search', icon:'🔍', label:'Web Search' },
+                          { id:'run_code', icon:'⚙️', label:'Run Code' },
+                          { id:'read_file', icon:'📄', label:'Read Files' },
+                          { id:'image_gen', icon:'🎨', label:'Image Gen' },
+                          { id:'data_analyze', icon:'📊', label:'Data Analyze' },
+                          { id:'browser_navigate', icon:'🌐', label:'Browser' },
+                        ].map(t => (
+                          <div key={t.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:4 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                              <span style={{ fontSize:13 }}>{t.icon}</span>
+                              <span style={{ fontSize:11, color:'var(--fg-text2)' }}>{t.label}</span>
+                            </div>
+                            <button onClick={() => toggleTool(t.id)} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeTools.has(t.id) ? 'var(--fg-green)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
+                              <span style={{ position:'absolute', top:2, left: activeTools.has(t.id) ? 16 : 2, width:14, height:14, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* HOOKS */}
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', margin:'12px 0 6px' }}>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>Hooks ({enabledHooks.length} active)</p>
+                          <button onClick={() => setMainTab('hooks')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Manage →</button>
+                        </div>
+                        {hooks.length === 0 ? (
+                          <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 8px' }}>No hooks — <button onClick={() => setMainTab('hooks')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:11, padding:0 }}>add one</button></p>
+                        ) : (
+                          hooks.map(h => (
+                            <div key={h.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: h.enabled ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${h.enabled ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
+                              <div style={{ minWidth:0 }}>
+                                <span style={{ fontSize:11, fontFamily:'var(--fg-font-mono)', color: h.enabled ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:600 }}>{h.event}</span>
+                                <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:5 }}>→ {h.target}</span>
+                              </div>
+                              <button onClick={() => setHooks(prev => prev.map(x => x.id===h.id ? {...x, enabled:!x.enabled} : x))} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: h.enabled ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
+                                <span style={{ position:'absolute', top:2, left: h.enabled ? 16 : 2, width:14, height:14, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
                               </button>
                             </div>
-                          </div>
-                        ))}
-                        {/* PLUGINS */}
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'14px 0 8px', letterSpacing:'0.5px' }}>Plugins</p>
-                        {[
-                          { id:'stripe', icon:'🔌', label:'Stripe' },
-                          { id:'linear', icon:'🔌', label:'Linear' },
-                        ].map(p => (
-                          <div key={p.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:5 }}>
-                            <span style={{ fontSize:13 }}>{p.icon}</span>
-                            <span style={{ fontSize:12, color:'var(--fg-text2)' }}>{p.label}</span>
-                            <span style={{ marginLeft:'auto', width:7, height:7, borderRadius:'50%', background:'var(--fg-green)', display:'inline-block' }} />
-                          </div>
-                        ))}
-                        {/* HOOKS */}
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'14px 0 8px', letterSpacing:'0.5px' }}>Hooks</p>
-                        {hooks.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', textAlign:'center', margin:'8px 0 12px' }}>No hooks — <button onClick={() => setMainTab('hooks')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:11, padding:0 }}>add one</button></p>}
-                        {hooks.slice(0,3).map(h => (
-                          <div key={h.id} style={{ padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:5 }}>
-                            <span style={{ fontSize:11, fontFamily:'var(--fg-font-mono)', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</span>
-                            <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:6 }}>→ {h.target}</span>
-                          </div>
-                        ))}
-                        <button onClick={() => setMainTab('hooks')} style={{ width:'100%', padding:'6px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', marginTop:4 }}>Manage hooks →</button>
+                          ))
+                        )}
                       </div>
-                    )}
+                      );
+                    })()}
                     {/* HOOKS */}
                     {rightTab==='hooks' && (
                       <div>
