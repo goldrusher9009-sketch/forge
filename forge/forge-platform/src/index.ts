@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.18e — Live tool toggles, hooks/files/runs pages wired to real data, right panel live, schedules stub + files endpoint
+ * Forge Platform v6.19 — Skills/connectors/hooks injected into system prompt; Manus-style agent step streaming; parallel message spawning
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -1663,7 +1663,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   // Now safe to do DB work — connection is already alive
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!thread) { endSSE({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [], model: bodyModel, skill_prompt } = req.body;
+  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_connectors = [], enabled_hooks = [] } = req.body;
   if (!content?.trim()) { endSSE({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
   const userId = req.user!.sub;
   ensureSubscription(userId);
@@ -1678,7 +1678,10 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     db.prepare("UPDATE threads SET title=?,updated_at=datetime('now') WHERE id=?").run(autoTitle, thread.id);
   }
 
-  // Build system prompt from skill + project + active agents
+  // Helper to emit detailed step events shown as Manus-style thinking steps
+  const emitStep = (icon: string, label: string) => emitAgentActivity(userId, { type: 'thinking', message: `${icon} ${label}`, model: bodyModel || 'forge' });
+
+  // Build system prompt from skill + project + active agents + skills + connectors + hooks
   const systemParts: string[] = [];
   if (skill_prompt) systemParts.push(skill_prompt);
   if (thread.project_id) {
@@ -1689,10 +1692,29 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     const agentRows = db.prepare(`SELECT system_prompt FROM workspace_agents WHERE id IN (${agent_ids.map(()=>'?').join(',')}) AND user_id=?`).all(...agent_ids, userId) as any[];
     agentRows.forEach(a => { if (a.system_prompt) systemParts.push(a.system_prompt); });
   }
+  // Inject active skills into system prompt and emit activity
+  if (active_skills.length > 0) {
+    emitStep('🧩', `Loading ${active_skills.length} skill${active_skills.length > 1 ? 's' : ''}: ${(active_skills as string[]).slice(0,3).join(', ')}${active_skills.length > 3 ? '…' : ''}`);
+    const skillLines = (active_skills as string[]).map((s: string) => `- ${s}`).join('\n');
+    systemParts.push(`## Active Skills\nYou have the following skills enabled. Apply their expertise to every response:\n${skillLines}`);
+  }
+  // Inject active connectors into system prompt and emit activity
+  if (active_connectors.length > 0) {
+    emitStep('🔌', `Connecting: ${(active_connectors as string[]).slice(0,3).join(', ')}${active_connectors.length > 3 ? '…' : ''}`);
+    const connLines = (active_connectors as string[]).map((c: string) => `- ${c}`).join('\n');
+    systemParts.push(`## Connected Integrations\nThe following connectors are active. Reference them when relevant to the user's request:\n${connLines}`);
+  }
+  // Inject enabled hooks into system prompt and emit activity
+  if (enabled_hooks.length > 0) {
+    emitStep('🪝', `Applying ${enabled_hooks.length} hook${enabled_hooks.length > 1 ? 's' : ''}`);
+    const hookLines = (enabled_hooks as any[]).map((h: any) => `- On "${h.event}": ${h.action}`).join('\n');
+    systemParts.push(`## Active Automation Hooks\nThese hooks are enabled and should influence your behaviour:\n${hookLines}`);
+  }
 
   // Build message history
   const history = (db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(thread.id) as any[])
     .filter(m => m.role !== 'system');
+  emitStep('📚', `Reading context — ${history.length} message${history.length !== 1 ? 's' : ''} in thread`);
   const llmMessages = systemParts.length > 0
     ? [{ role: 'system', content: systemParts.join('\n\n---\n\n') }, ...history]
     : history;
@@ -1715,7 +1737,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     endSSE({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
     return;
   }
-  emitAgentActivity(userId, { type: 'thinking', message: `🤔 Thinking with ${model}…`, model });
+  emitStep('🤖', `Invoking ${model} via ${provider}`);
   try {
     // Promise.race ensures callLLM can't hang indefinitely even if AbortController fails
     const result = await Promise.race([

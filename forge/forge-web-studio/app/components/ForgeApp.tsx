@@ -699,6 +699,11 @@ export default function ForgeApp() {
       try {
         const data = JSON.parse(ev.data);
         if (data.type === 'connected') return;
+        // Feed thinking/tool events directly into the Manus agent steps panel
+        if (data.type === 'thinking' || data.type === 'tool' || data.type === 'start') {
+          const icon = data.type === 'start' ? '🚀' : data.type === 'tool' ? '🔧' : '💭';
+          addAgentStep(icon, data.message || '');
+        }
         setLiveEvents(prev => {
           const exists = prev.some(e => e.ts === data.ts);
           if (exists) return prev;
@@ -713,13 +718,21 @@ export default function ForgeApp() {
       try {
         const d = await apiFetch(`/live/events?since=${lastTs}`, {}, token);
         if (d?.data?.length) {
-          setLiveEvents(prev => {
-            const newEvs = (d.data as any[]).filter(e => !prev.some(p => p.ts === e.ts));
-            if (!newEvs.length) return prev;
-            if (newEvs.length > 0) lastTs = Math.max(...newEvs.map((e:any) => e.ts));
-            return [...newEvs, ...prev].slice(0, 100);
-          });
-          lastTs = Math.max(lastTs, ...d.data.map((e:any) => e.ts));
+          const newEvs = (d.data as any[]).filter((e: any) => e.ts > lastTs);
+          if (newEvs.length) {
+            // Feed new thinking/tool steps into the Manus panel
+            newEvs.forEach((e: any) => {
+              if (e.type === 'thinking' || e.type === 'tool' || e.type === 'start') {
+                const icon = e.type === 'start' ? '🚀' : e.type === 'tool' ? '🔧' : '💭';
+                addAgentStep(icon, e.message || '');
+              }
+            });
+            setLiveEvents(prev => {
+              const merged = [...newEvs, ...prev].filter((e,i,a) => a.findIndex(x => x.ts === e.ts) === i);
+              return merged.slice(0, 100);
+            });
+            lastTs = Math.max(...newEvs.map((e:any) => e.ts));
+          }
         }
       } catch {}
     }, 3000);
@@ -1258,8 +1271,32 @@ export default function ForgeApp() {
 
   // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = async () => {
-    if (!user || !input.trim() || sending) return;
+    if (!user || !input.trim()) return;
     let currentThread = activeThread;
+
+    // If already sending, spawn a NEW thread for this message so both run in parallel
+    if (sending) {
+      const title = input.trim().slice(0, 60);
+      const spawnThread = await newThread(title);
+      if (!spawnThread) return;
+      setInput('');
+      // Fire the new thread request independently — no await so current send keeps going
+      const spawnContent = input.trim();
+      const spawnModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
+      const spawnBody: any = {
+        content: spawnContent, model: spawnModel, agent_ids: activeAgentIds,
+        enabled_tools: Array.from(activeTools), active_skills: Array.from(activeSkills),
+        active_connectors: Array.from(activeConnectors),
+        enabled_hooks: hooks.filter(h => h.enabled).map(h => ({ event: h.event, action: h.action, target: h.target })),
+      };
+      if (activeSkillPrompt) spawnBody.skill_prompt = activeSkillPrompt;
+      addAgentStep('⚡', `Spawning parallel agent for: ${spawnContent.slice(0,40)}…`);
+      apiFetchSSE(`/threads/${spawnThread.id}/messages`, { method:'POST', body:JSON.stringify(spawnBody) }, user.token)
+        .then(() => { loadThreads(activeProject?.id); })
+        .catch(() => {});
+      return;
+    }
+
     if (!currentThread) {
       // Create thread titled from first message, then immediately send
       const title = input.trim().slice(0, 60);
@@ -1321,8 +1358,20 @@ export default function ForgeApp() {
         setSending(false); setTyping(false);
         return;
       }
-      const body: any = { content:userContent, model:cleanModel, agent_ids:activeAgentIds, enabled_tools: Array.from(activeTools) };
+      const body: any = {
+        content: userContent,
+        model: cleanModel,
+        agent_ids: activeAgentIds,
+        enabled_tools: Array.from(activeTools),
+        active_skills: Array.from(activeSkills),
+        active_connectors: Array.from(activeConnectors),
+        enabled_hooks: hooks.filter(h => h.enabled).map(h => ({ event: h.event, action: h.action, target: h.target })),
+      };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
+      // Emit local thinking steps for skills/connectors/hooks
+      if (activeSkills.size > 0) addAgentStep('🧩', `Skills active: ${Array.from(activeSkills).slice(0,3).join(', ')}`);
+      if (activeConnectors.size > 0) addAgentStep('🔌', `Connectors: ${Array.from(activeConnectors).slice(0,3).join(', ')}`);
+      if (hooks.filter(h => h.enabled).length > 0) addAgentStep('🪝', `${hooks.filter(h => h.enabled).length} hook(s) applied`);
       let threadId = currentThread.id;
 
       // Extract AI reply from response and append directly — avoids loadMessages race condition
@@ -2047,26 +2096,28 @@ export default function ForgeApp() {
                   {typing && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite', flexShrink:0 }}>⚡</div>
-                      <div style={{ padding:'10px 16px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', minWidth:180, maxWidth:360 }}>
-                        {/* Live activity steps */}
-                        {agentSteps.length > 0 ? (
-                          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-                            {agentSteps.map((s, i) => (
-                              <div key={i} style={{ display:'flex', alignItems:'center', gap:7, opacity: i === agentSteps.length - 1 ? 1 : 0.45 }}>
-                                <span style={{ fontSize:13 }}>{s.icon}</span>
-                                <span style={{ fontSize:11, color:'var(--fg-text2)', animation: i === agentSteps.length - 1 ? 'forge-text-flash 1.4s ease-in-out infinite' : 'none' }}>{s.text}</span>
-                                {i === agentSteps.length - 1 && (
-                                  <div style={{ display:'flex', gap:3, alignItems:'center', marginLeft:'auto' }}>
-                                    {[0,1,2].map(j => <div key={j} style={{ width:4, height:4, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${j*0.2}s infinite` }} />)}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                      {/* Manus-style agent thinking panel */}
+                      <div style={{ padding:'12px 16px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', minWidth:240, maxWidth:420 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: agentSteps.length > 0 ? 10 : 0 }}>
+                          <div style={{ display:'flex', gap:3 }}>
                             {[0,1,2].map(i => <div key={i} style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
-                            <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:4 }}>thinking…</span>
+                          </div>
+                          <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.3px', fontFamily:'var(--fg-font-mono)' }}>FORGE AGENT</span>
+                        </div>
+                        {agentSteps.length > 0 && (
+                          <div style={{ display:'flex', flexDirection:'column', gap:6, borderLeft:'2px solid var(--fg-border)', paddingLeft:10 }}>
+                            {agentSteps.slice(-6).map((s, i, arr) => {
+                              const isLast = i === arr.length - 1;
+                              return (
+                                <div key={i} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                                  {/* Step status dot */}
+                                  <div style={{ width:7, height:7, borderRadius:'50%', flexShrink:0, background: isLast ? 'var(--fg-orange)' : 'var(--fg-green)', boxShadow: isLast ? '0 0 6px var(--fg-orange)' : 'none', animation: isLast ? 'pulse 1s ease-in-out infinite' : 'none' }} />
+                                  <span style={{ fontSize:12 }}>{s.icon}</span>
+                                  <span style={{ fontSize:12, color: isLast ? 'var(--fg-text)' : 'var(--fg-text3)', flex:1, animation: isLast ? 'forge-text-flash 2s ease-in-out infinite' : 'none', fontWeight: isLast ? 500 : 400 }}>{s.text}</span>
+                                  {!isLast && <span style={{ fontSize:10, color:'var(--fg-green)', flexShrink:0 }}>✓</span>}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
