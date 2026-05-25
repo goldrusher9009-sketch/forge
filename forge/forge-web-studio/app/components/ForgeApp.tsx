@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.18 -- live tools toggles, real hooks/runs/files pages, right panel wired to live data, ForgeAsk/ForgeMagic descriptions
+// Forge AI Workspace v6.19 -- live tools toggles, real hooks/runs/files pages, right panel wired to live data, ForgeAsk/ForgeMagic descriptions
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -2544,7 +2544,7 @@ export default function ForgeApp() {
                                 {/* Copy button */}
                                 <div style={{ marginTop:12, paddingTop:12, borderTop:'1px solid var(--fg-border)', display:'flex', gap:8 }}>
                                   <button onClick={() => navigator.clipboard.writeText(browserPage.text)} style={{ padding:'6px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-orange)', cursor:'pointer', fontSize:12 }}>📋 Copy text</button>
-                                  <button onClick={() => { const q = `Content from ${browserPage.url}:\n\n${browserPage.text.slice(0,4000)}`; setInput(prev => prev + (prev ? '\n\n' : '') + q); setActiveTab('workspace'); }} style={{ padding:'6px 12px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', cursor:'pointer', fontSize:12 }}>💬 Send to chat</button>
+                                  <button onClick={() => { const q = `Content from ${browserPage.url}:\n\n${browserPage.text.slice(0,4000)}`; setInput(prev => prev + (prev ? '\n\n' : '') + q); setMainTab('workspace'); }} style={{ padding:'6px 12px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', cursor:'pointer', fontSize:12 }}>💬 Send to chat</button>
                                 </div>
                               </div>
                             )}
@@ -2636,7 +2636,7 @@ export default function ForgeApp() {
                               {msg.role === 'agent' && (
                                 <div style={{ marginTop:4, display:'flex', gap:4 }}>
                                   <button onClick={() => navigator.clipboard.writeText(msg.content)} style={{ padding:'2px 6px', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>📋 Copy</button>
-                                  <button onClick={() => { setInput(prev => prev + (prev ? '\n\n' : '') + msg.content); setActiveTab('workspace'); }} style={{ padding:'2px 6px', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>💬 To chat</button>
+                                  <button onClick={() => { setInput(prev => prev + (prev ? '\n\n' : '') + msg.content); setMainTab('workspace'); }} style={{ padding:'2px 6px', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>💬 To chat</button>
                                 </div>
                               )}
                             </div>
@@ -2815,7 +2815,7 @@ export default function ForgeApp() {
                       const pricePerM = isFree ? null : m.pricing?.prompt ? (parseFloat(m.pricing.prompt)*1_000_000).toFixed(2) : null;
                       const isSelected = selectedModel===m.id || selectedModel===`openrouter/${m.id}`;
                       return (
-                        <div key={m.id} onClick={() => { setSelectedModel(m.id); setActiveTab('workspace'); }} style={{ padding:'12px', background:'var(--fg-bg3)', border: isSelected ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border)', borderRadius:10, cursor:'pointer', transition:'border-color 0.15s', position:'relative' }}>
+                        <div key={m.id} onClick={() => { setSelectedModel(m.id); setMainTab('workspace'); }} style={{ padding:'12px', background:'var(--fg-bg3)', border: isSelected ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border)', borderRadius:10, cursor:'pointer', transition:'border-color 0.15s', position:'relative' }}>
                           {/* Free badge */}
                           {isFree && <span style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:'var(--fg-green)', background:'rgba(34,197,94,0.13)', padding:'2px 6px', borderRadius:8 }}>FREE</span>}
                           {isSelected && <span style={{ position:'absolute', top:8, right:isFree?46:8, fontSize:9, fontWeight:700, color:'var(--fg-orange)', background:'rgba(249,115,22,0.13)', padding:'2px 6px', borderRadius:8 }}>✓ ACTIVE</span>}
@@ -4106,11 +4106,11 @@ export default function ForgeApp() {
               <div style={{ marginBottom:24 }}>
                 <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🎯 Skills</h3>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
-                  {catalogData.skills.map(skill => {
+                  {((window.FORGE_CATALOG_DATA as any)?.skills || []).map((skill: any) => {
                     const isSelected = selectedAskSkills.has(skill.id);
                     return (
                       <button key={skill.id} onClick={() => setSelectedAskSkills(prev => { const next = new Set(prev); if (next.has(skill.id)) next.delete(skill.id); else next.add(skill.id); return next; })} style={{ padding:12, background: isSelected ? 'rgba(249,115,22,0.2)' : 'var(--fg-bg2)', border:`1px solid ${isSelected ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color: isSelected ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'left' }}>
-                        <div>{skill.icon} {skill.name}</div>
+                        <div>{skill.icon || '🧩'} {skill.name}</div>
                         <div style={{ fontSize:10, color: isSelected ? 'rgba(249,115,22,0.7)' : 'var(--fg-text3)', marginTop:4 }}>{isSelected ? '✓ Selected' : 'Select'}</div>
                       </button>
                     );
@@ -4121,11 +4121,11 @@ export default function ForgeApp() {
               <div style={{ marginBottom:28 }}>
                 <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🔌 Connectors</h3>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
-                  {catalogData.connectors.map(conn => {
+                  {((window.FORGE_CATALOG_DATA as any)?.connectors || []).map((conn: any) => {
                     const isSelected = selectedAskConnectors.has(conn.id);
                     return (
                       <button key={conn.id} onClick={() => setSelectedAskConnectors(prev => { const next = new Set(prev); if (next.has(conn.id)) next.delete(conn.id); else next.add(conn.id); return next; })} style={{ padding:12, background: isSelected ? 'rgba(249,115,22,0.2)' : 'var(--fg-bg2)', border:`1px solid ${isSelected ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color: isSelected ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'left' }}>
-                        <div>{conn.icon} {conn.name}</div>
+                        <div>{conn.icon || '🔌'} {conn.name}</div>
                         <div style={{ fontSize:10, color: isSelected ? 'rgba(249,115,22,0.7)' : 'var(--fg-text3)', marginTop:4 }}>{isSelected ? '✓ Selected' : 'Select'}</div>
                       </button>
                     );
@@ -4766,19 +4766,7 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* Artifact view modal */}
-        {artifactView && (
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setArtifactView(null)}>
-            <div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, maxWidth:800, width:'90%', maxHeight:'80vh', overflow:'auto' }} onClick={e => e.stopPropagation()}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-                <h3 style={{ margin:0, color:'var(--fg-text)', fontSize:16, fontWeight:700 }}>Artifact</h3>
-                <button onClick={() => setArtifactView(null)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:20 }}>✕</button>
-              </div>
-              <pre style={{ margin:0, color:'var(--fg-text2)', fontSize:13, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{artifactView}</pre>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
-}
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
