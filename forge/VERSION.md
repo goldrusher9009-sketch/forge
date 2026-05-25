@@ -1,6 +1,27 @@
 # Forge Platform — Version History
 
-## v6.20 — 2026-05-25 (current)
+## v6.21 — 2026-05-25 (current)
+
+### Full Autonomous Tool Suite
+- **8 real tools** wired into backend: `web_search`, `web_scrape`, `run_code`, `shell_exec`, `read_file`, `write_file`, `list_directory`, `http_request`
+- **`web_search`** — DuckDuckGo instant answers API + HTML fallback; returns titles, snippets, URLs
+- **`web_scrape`** — fetches any URL, extracts headings/links/code blocks/tables, returns clean text (up to 32KB)
+- **`run_code`** — sandboxed Node.js `vm` (JavaScript) + `python3` child_process (Python); timeout-safe
+- **`shell_exec`** — unrestricted shell: any command, any cwd, up to 60s timeout; no allowlist
+- **`read_file` / `write_file`** — filesystem I/O with auto-mkdir, append mode, truncation at configurable byte limit
+- **`list_directory`** — directory listing with sizes and types
+- **`http_request`** — arbitrary HTTP (GET/POST/PUT/DELETE/PATCH) with headers and body; JSON auto-pretty
+- **`/api/tools/run`** endpoint — frontend can call any tool directly
+- **`/api/tools/list`** endpoint — returns full tool schemas
+- **`/api/terminal/exec`** now unrestricted (removed command allowlist)
+- **Anthropic native `tool_use`** — chat handler uses Anthropic's built-in tool loop (up to 8 iterations per message) instead of text-parsing JSON hacks; tools execute reliably
+- **Tool call SSE events** — `tool_call` events emitted mid-stream with tool name, args, and result preview
+- **Inline tool call cards** — frontend renders collapsible tool call cards above each response showing icon, args, and output
+- **`apiFetchSSE` upgraded** — now accepts optional `onEvent` callback for mid-stream event handling
+
+---
+
+## v6.20 — 2026-05-25
 
 ### Frontend + Backend
 - **Skills/connectors/hooks** injected into LLM system prompt on every chat request

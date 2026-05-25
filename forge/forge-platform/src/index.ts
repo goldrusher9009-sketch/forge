@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.20 — Skills/connectors/hooks in system prompt; Manus agent streaming; parallel spawning; chat nav actions; mode pills; language selector
+ * Forge Platform v6.21 — Full autonomous tool suite: web search, scraping, code exec, shell, file I/O; native Anthropic tool_use in chat agentic loop
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -14,8 +14,13 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { execFile } from 'child_process';
+import fs from 'fs';
+import vm from 'vm';
+import { execFile, exec } from 'child_process';
+import { promisify } from 'util';
 import Database from 'better-sqlite3';
+
+const execAsync = promisify(exec);
 
 // ── Config ────────────────────────────────────────────────────
 const PORT = Number(process.env.PORT) || 3000;
@@ -1739,11 +1744,33 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   }
   emitStep('🤖', `Invoking ${model} via ${provider}`);
   try {
-    // Promise.race ensures callLLM can't hang indefinitely even if AbortController fails
-    const result = await Promise.race([
-      callLLM(provider, apiKey, actualModel, llmMessages),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out — model may be slow or key invalid`)), provider === 'openrouter' ? 60000 : 20000))
-    ]);
+    let result: { content: string; promptTokens: number; completionTokens: number; toolCalls?: Array<{name:string;args:any;result:string}> };
+
+    // For Anthropic models: use native tool_use agentic loop
+    if (provider === 'anthropic') {
+      const agentResult = await Promise.race([
+        callAnthropicWithTools(
+          apiKey, actualModel, llmMessages,
+          (toolName, toolArgs, toolResult) => {
+            // Emit each tool call as a live step
+            const argsPreview = JSON.stringify(toolArgs).slice(0, 80);
+            emitStep('🔧', `Tool: ${toolName}(${argsPreview})`);
+            emitAgentActivity(userId, { type: 'tool', message: `🔧 ${toolName}: ${argsPreview}`, model });
+            // Also emit a tool_call event so frontend can render inline
+            try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500) })}\n\n`); } catch {}
+          }
+        ),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Anthropic agent timed out after 60s')), 60000))
+      ]);
+      result = agentResult;
+    } else {
+      // Other providers: standard single-turn call
+      result = await Promise.race([
+        callLLM(provider, apiKey, actualModel, llmMessages),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out — model may be slow or key invalid`)), provider === 'openrouter' ? 60000 : 25000))
+      ]);
+    }
+
     const totalTokens = result.promptTokens + result.completionTokens;
     const costs = MODEL_COSTS[model] || { input: 0.001, output: 0.001, markup: 1.3 };
     const providerCost = (result.promptTokens/1000)*costs.input + (result.completionTokens/1000)*costs.output;
@@ -1754,8 +1781,9 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     const asstMsgId = uuidv4();
     db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens) VALUES (?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens);
     db.prepare("UPDATE threads SET updated_at=datetime('now'),total_tokens=total_tokens+? WHERE id=?").run(totalTokens, thread.id);
-    emitAgentActivity(userId, { type: 'done', message: `✅ Response ready — ${totalTokens} tokens`, model, elapsed: 0 });
-    endSSE({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens } });
+    const toolSummary = result.toolCalls?.length ? ` — ${result.toolCalls.length} tool${result.toolCalls.length > 1 ? 's' : ''} used` : '';
+    emitAgentActivity(userId, { type: 'done', message: `✅ Response ready — ${totalTokens} tokens${toolSummary}`, model, elapsed: 0 });
+    endSSE({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens, toolCalls: result.toolCalls || [] } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ Error: ${err.message}`, model });
     console.error('Thread chat error:', err.message);
@@ -2129,32 +2157,34 @@ app.get('/api/live/activity', (req: any, res: any) => {
   });
 });
 
-// ─── Terminal exec ─────────────────────────────────────────────────────────────
-const ALLOWED_COMMANDS = /^(echo|ls|pwd|cat|head|tail|grep|find|date|whoami|uname|df|du|node|npm|python|python3|curl|ping|env|printenv|which|type|wc|sort|uniq|tr|cut|awk|sed|jq|git\s+(log|status|diff|branch|show))/;
-
+// ─── Terminal exec — unrestricted shell ────────────────────────────────────────
 app.post('/api/terminal/exec', requireAuth, async (req: AuthRequest, res) => {
-  const { command } = req.body;
+  const { command, cwd, timeout: reqTimeout } = req.body;
   if (!command || typeof command !== 'string') { res.status(400).json({ error: 'command required' }); return; }
-  const trimmed = command.trim();
-  if (!ALLOWED_COMMANDS.test(trimmed)) {
-    res.json({ output: `❌ Command not allowed: "${trimmed.split(' ')[0]}". Allowed: ls, cat, echo, grep, find, git log/status/diff, node, npm, python, curl, date, etc.`, exitCode: 1 });
-    return;
-  }
+  const output = await toolShellExec(command.trim(), cwd, reqTimeout || 15000);
+  res.json({ output, exitCode: 0 });
+});
+
+
+// ─── Direct tool execution endpoint ──────────────────────────────────────────
+// POST /api/tools/run — run any Forge tool directly from the frontend
+app.post('/api/tools/run', requireAuth, async (req: AuthRequest, res) => {
+  const { tool, args } = req.body;
+  if (!tool || typeof tool !== 'string') { res.status(400).json({ error: 'tool name required' }); return; }
+  const validTools = FORGE_TOOLS_ANTHROPIC.map(t => t.name);
+  if (!validTools.includes(tool)) { res.status(400).json({ error: `Unknown tool: ${tool}. Valid: ${validTools.join(', ')}` }); return; }
   try {
-    const output = await new Promise<string>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Command timed out after 10s')), 10000);
-      execFile('sh', ['-c', trimmed], { maxBuffer: 65536, timeout: 10000 }, (err, stdout, stderr) => {
-        clearTimeout(timeout);
-        const out = (stdout || '') + (stderr ? `\nSTDERR: ${stderr}` : '');
-        resolve(out.slice(0, 65536) || (err ? `Exit code ${err.code}` : '(no output)'));
-      });
-    });
-    res.json({ output, exitCode: 0 });
-  } catch (err: any) {
-    res.json({ output: `❌ ${err.message}`, exitCode: 1 });
+    const result = await runForgeTool(tool, args || {});
+    res.json({ success: true, tool, result });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 
+// GET /api/tools/list — list all available tools with schemas
+app.get('/api/tools/list', requireAuth, (_req, res) => {
+  res.json({ success: true, data: FORGE_TOOLS_ANTHROPIC });
+});
 
 // ─── Browser proxy ────────────────────────────────────────────────────────────
 // Fetches a URL server-side and returns cleaned text + metadata
@@ -2535,40 +2565,412 @@ app.post('/api/forgeasi/run', requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
-// ─── ForgeAgent SSE run loop ────────────────────────────────────────────────────
-const AGENT_TOOLS = [
-  { name: 'web_search', description: 'Search the web for information', parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search query' } }, required: ['query'] } },
-  { name: 'web_fetch', description: 'Fetch and read a URL', parameters: { type: 'object', properties: { url: { type: 'string', description: 'URL to fetch' } }, required: ['url'] } },
-  { name: 'extract_data', description: 'Extract structured data from text', parameters: { type: 'object', properties: { text: { type: 'string' }, format: { type: 'string', enum: ['json','csv','list'] } }, required: ['text','format'] } },
-  { name: 'summarize', description: 'Summarize a long text', parameters: { type: 'object', properties: { text: { type: 'string' }, focus: { type: 'string' } }, required: ['text'] } },
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── FORGE AUTONOMOUS TOOL SUITE ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Anthropic-format tool definitions for native tool_use API
+const FORGE_TOOLS_ANTHROPIC = [
+  {
+    name: 'web_search',
+    description: 'Search the web for current information, news, facts, prices, people, companies, code examples, or anything that may have changed recently. Returns titles, URLs, and snippets from top results.',
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Search query — be specific for better results' }, num_results: { type: 'number', description: 'Number of results (1-10, default 5)' } }, required: ['query'] }
+  },
+  {
+    name: 'web_scrape',
+    description: 'Fetch and read the full content of any webpage. Extracts clean text, tables, links, headings, and code blocks. Use after web_search to read an article, docs page, GitHub repo, or any URL.',
+    input_schema: { type: 'object', properties: { url: { type: 'string', description: 'Full URL to fetch and read' }, selector: { type: 'string', description: 'Optional CSS selector to extract specific section (e.g. "article", ".content", "#main")' } }, required: ['url'] }
+  },
+  {
+    name: 'run_code',
+    description: 'Execute JavaScript or Python code and return the output. Use for calculations, data processing, string manipulation, algorithms, API testing, JSON parsing, or any computation. Sandbox is isolated — no file system access unless read_file/write_file tools are used.',
+    input_schema: { type: 'object', properties: { language: { type: 'string', enum: ['javascript', 'python'], description: 'Language to run' }, code: { type: 'string', description: 'Code to execute' }, timeout: { type: 'number', description: 'Timeout in milliseconds (default 10000, max 30000)' } }, required: ['language', 'code'] }
+  },
+  {
+    name: 'shell_exec',
+    description: 'Run any shell command on the server. Use for: git operations, npm/pip installs, file operations, curl requests, system info, process management, grep/find, database queries, etc. Full unrestricted access — no command allowlist.',
+    input_schema: { type: 'object', properties: { command: { type: 'string', description: 'Shell command to execute' }, cwd: { type: 'string', description: 'Working directory (optional)' }, timeout: { type: 'number', description: 'Timeout in ms (default 15000)' } }, required: ['command'] }
+  },
+  {
+    name: 'read_file',
+    description: 'Read a file from the filesystem. Returns file content as text. Use for reading config files, source code, logs, CSVs, or any text file on the server.',
+    input_schema: { type: 'object', properties: { path: { type: 'string', description: 'Absolute or relative file path' }, encoding: { type: 'string', description: 'Encoding (default utf8)' }, max_bytes: { type: 'number', description: 'Max bytes to read (default 65536)' } }, required: ['path'] }
+  },
+  {
+    name: 'write_file',
+    description: 'Write content to a file. Creates directories as needed. Use for saving code, configs, data exports, reports, or any file output.',
+    input_schema: { type: 'object', properties: { path: { type: 'string', description: 'File path to write' }, content: { type: 'string', description: 'Content to write' }, append: { type: 'boolean', description: 'Append to file instead of overwriting (default false)' } }, required: ['path', 'content'] }
+  },
+  {
+    name: 'list_directory',
+    description: 'List files and directories at a path. Returns names, sizes, types, and modification dates.',
+    input_schema: { type: 'object', properties: { path: { type: 'string', description: 'Directory path to list (default: current directory)' }, recursive: { type: 'boolean', description: 'List recursively (default false)' } }, required: [] }
+  },
+  {
+    name: 'http_request',
+    description: 'Make any HTTP request (GET, POST, PUT, DELETE, PATCH). Use for calling APIs, webhooks, testing endpoints, fetching JSON data, or any HTTP interaction.',
+    input_schema: { type: 'object', properties: { url: { type: 'string' }, method: { type: 'string', enum: ['GET','POST','PUT','DELETE','PATCH','HEAD'], description: 'HTTP method (default GET)' }, headers: { type: 'object', description: 'Request headers as key/value object' }, body: { type: 'string', description: 'Request body (JSON string or plain text)' }, timeout: { type: 'number', description: 'Timeout in ms (default 15000)' } }, required: ['url'] }
+  },
 ];
 
-async function runAgentTool(toolName: string, args: any, userId: string): Promise<string> {
-  if (toolName === 'web_fetch') {
-    try {
-      const resp = await fetch(args.url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ForgeAgent/1.0)' }, signal: AbortSignal.timeout(12000) });
-      let html = await resp.text();
-      html = html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s{3,}/g,'\n').trim().slice(0,8000);
-      return html || 'No content';
-    } catch (e: any) { return `Fetch error: ${e.message}`; }
-  }
-  if (toolName === 'web_search') {
-    try {
-      const q = encodeURIComponent(args.query);
-      const resp = await fetch(`https://html.duckduckgo.com/html/?q=${q}`, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(8000) });
-      const html = await resp.text();
-      const results: string[] = [];
-      const re = /<a class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(html)) !== null && results.length < 5) {
-        const title = m[2].replace(/<[^>]+>/g,'').trim();
-        results.push(`${title}: ${m[1]}`);
+// OpenAI-format tool definitions (functions)
+const FORGE_TOOLS_OPENAI = FORGE_TOOLS_ANTHROPIC.map(t => ({
+  type: 'function',
+  function: { name: t.name, description: t.description, parameters: (t as any).input_schema }
+}));
+
+// ─── Tool implementations ─────────────────────────────────────────────────────
+
+async function toolWebSearch(query: string, numResults: number = 5): Promise<string> {
+  // Try DuckDuckGo instant answer API first
+  try {
+    const q = encodeURIComponent(query);
+    const ddgResp = await fetchWithTimeout(`https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ForgeBot/1.0; +https://forge-sand-two.vercel.app)' }
+    }, 8000);
+    if (ddgResp.ok) {
+      const ddg: any = await ddgResp.json();
+      const parts: string[] = [];
+      if (ddg.AbstractText) parts.push(`**Summary:** ${ddg.AbstractText}\n**Source:** ${ddg.AbstractURL || ddg.AbstractSource}`);
+      if (ddg.Answer) parts.push(`**Answer:** ${ddg.Answer}`);
+      if (ddg.RelatedTopics?.length > 0) {
+        const topics = ddg.RelatedTopics.slice(0, numResults).map((t: any) => t.Text ? `- ${t.Text}${t.FirstURL ? ` (${t.FirstURL})` : ''}` : '').filter(Boolean);
+        if (topics.length) parts.push(`**Related:**\n${topics.join('\n')}`);
       }
-      return results.length > 0 ? results.join('\n') : 'No results found';
-    } catch (e: any) { return `Search error: ${e.message}`; }
+      if (parts.length > 0) {
+        // Also get HTML results as backup
+        try {
+          const htmlResp = await fetchWithTimeout(`https://html.duckduckgo.com/html/?q=${q}`, { headers: { 'User-Agent': 'Mozilla/5.0' } }, 8000);
+          if (htmlResp.ok) {
+            const html = await htmlResp.text();
+            const results: string[] = [];
+            const titleRe = /<a class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+            const snippetRe = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+            const titles: Array<{url:string;title:string}> = [];
+            const snippets: string[] = [];
+            let m: RegExpExecArray|null;
+            while ((m = titleRe.exec(html)) !== null && titles.length < numResults) {
+              titles.push({ url: m[1], title: m[2].replace(/<[^>]+>/g,'').trim() });
+            }
+            while ((m = snippetRe.exec(html)) !== null && snippets.length < numResults) {
+              snippets.push(m[1].replace(/<[^>]+>/g,'').trim());
+            }
+            titles.forEach((t, i) => { if (t.title) results.push(`${i+1}. **${t.title}**\n   ${snippets[i] || ''}\n   URL: ${t.url}`); });
+            if (results.length) parts.push(`**Search Results:**\n${results.join('\n\n')}`);
+          }
+        } catch {}
+        return parts.join('\n\n');
+      }
+    }
+  } catch {}
+
+  // Fallback: scrape DuckDuckGo HTML
+  try {
+    const q = encodeURIComponent(query);
+    const resp = await fetchWithTimeout(`https://html.duckduckgo.com/html/?q=${q}`, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }, 10000);
+    const html = await resp.text();
+    const results: string[] = [];
+    const titleRe = /<a class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+    const snippetRe = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+    const titles: Array<{url:string;title:string}> = [];
+    const snippets: string[] = [];
+    let m: RegExpExecArray|null;
+    while ((m = titleRe.exec(html)) !== null && titles.length < numResults) {
+      titles.push({ url: m[1], title: m[2].replace(/<[^>]+>/g,'').trim() });
+    }
+    while ((m = snippetRe.exec(html)) !== null && snippets.length < numResults) {
+      snippets.push(m[1].replace(/<[^>]+>/g,'').trim());
+    }
+    titles.forEach((t, i) => { if (t.title) results.push(`${i+1}. **${t.title}**\n   ${snippets[i] || ''}\n   URL: ${t.url}`); });
+    return results.length > 0 ? results.join('\n\n') : `No results found for: "${query}"`;
+  } catch (e: any) {
+    return `Search error: ${e.message}`;
   }
-  return `Tool ${toolName} called with: ${JSON.stringify(args)}`;
 }
+
+async function toolWebScrape(url: string, selector?: string): Promise<string> {
+  try {
+    const resp = await fetchWithTimeout(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      }
+    }, 20000);
+    if (!resp.ok) return `HTTP ${resp.status}: ${resp.statusText} — ${url}`;
+    const ct = resp.headers.get('content-type') || '';
+    if (ct.includes('json')) {
+      const json = await resp.json();
+      return JSON.stringify(json, null, 2).slice(0, 32000);
+    }
+    let html = await resp.text();
+    // Extract title
+    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].replace(/&amp;/g,'&').trim() : '';
+    // Remove noise elements
+    html = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+    // Extract headings
+    const headings: string[] = [];
+    const hRe = /<h([1-3])[^>]*>([\s\S]*?)<\/h[1-3]>/gi;
+    let hm: RegExpExecArray|null;
+    while ((hm = hRe.exec(html)) !== null && headings.length < 20) {
+      const text = hm[2].replace(/<[^>]+>/g,'').trim();
+      if (text) headings.push(`${'#'.repeat(Number(hm[1]))} ${text}`);
+    }
+    // Extract links
+    const links: string[] = [];
+    const aRe = /<a[^>]+href=["']([^"'#javascript][^"']*?)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    let am: RegExpExecArray|null;
+    while ((am = aRe.exec(html)) !== null && links.length < 30) {
+      const href = am[1]; const text = am[2].replace(/<[^>]+>/g,'').trim().slice(0,80);
+      if (href && text) { try { links.push(`[${text}](${new URL(href,url).href})`); } catch {} }
+    }
+    // Extract code blocks
+    const codeBlocks: string[] = [];
+    const codeRe = /<(?:pre|code)[^>]*>([\s\S]*?)<\/(?:pre|code)>/gi;
+    let cm: RegExpExecArray|null;
+    while ((cm = codeRe.exec(html)) !== null && codeBlocks.length < 5) {
+      const code = cm[1].replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"').trim();
+      if (code.length > 30) codeBlocks.push('```\n' + code.slice(0,2000) + '\n```');
+    }
+    // Strip all HTML tags for main text
+    const text = html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'")
+      .replace(/\s{3,}/g, '\n\n').trim().slice(0, 24000);
+    const parts: string[] = [];
+    if (title) parts.push(`**Page:** ${title}\n**URL:** ${url}`);
+    if (headings.length) parts.push(`**Structure:**\n${headings.join('\n')}`);
+    parts.push(`**Content:**\n${text}`);
+    if (codeBlocks.length) parts.push(`**Code Examples:**\n${codeBlocks.join('\n\n')}`);
+    if (links.length) parts.push(`**Links:**\n${links.slice(0,15).join('\n')}`);
+    return parts.join('\n\n---\n\n').slice(0, 32000);
+  } catch (e: any) {
+    return `Scrape error: ${e.message}`;
+  }
+}
+
+async function toolRunCode(language: string, code: string, timeout: number = 10000): Promise<string> {
+  const safeTimeout = Math.min(timeout, 30000);
+  if (language === 'javascript') {
+    try {
+      const logs: string[] = [];
+      const ctx = vm.createContext({
+        console: { log: (...a: any[]) => logs.push(a.map(String).join(' ')), error: (...a: any[]) => logs.push('[ERR] ' + a.map(String).join(' ')), warn: (...a: any[]) => logs.push('[WARN] ' + a.map(String).join(' ')), info: (...a: any[]) => logs.push('[INFO] ' + a.map(String).join(' ')) },
+        JSON, Math, Date, parseInt, parseFloat, Number, String, Boolean, Array, Object, Promise, setTimeout: (fn: Function, ms: number) => { /* noop */ },
+        Buffer, process: { env: {}, argv: [] },
+        require: (mod: string) => { throw new Error(`require('${mod}') not available in sandbox — use http_request tool for external APIs`); },
+        __result: undefined,
+      });
+      const wrapped = `(async () => { ${code} })().then(r => { if(r !== undefined) console.log(JSON.stringify(r)); }).catch(e => console.error(e.message));`;
+      await vm.runInContext(wrapped, ctx, { timeout: safeTimeout, filename: 'forge-code.js' });
+      const output = logs.join('\n');
+      return output || '(no output — add console.log() to see results)';
+    } catch (e: any) {
+      return `JavaScript error: ${e.message}`;
+    }
+  }
+  if (language === 'python') {
+    try {
+      const result = await new Promise<string>((resolve) => {
+        const timer = setTimeout(() => resolve('Python timeout: exceeded ' + safeTimeout + 'ms'), safeTimeout);
+        execFile('python3', ['-c', code], { maxBuffer: 131072, timeout: safeTimeout }, (err, stdout, stderr) => {
+          clearTimeout(timer);
+          const out = (stdout || '') + (stderr ? '\nSTDERR: ' + stderr : '');
+          resolve(out.slice(0, 16000) || (err ? `Exit ${err.code}: ${err.message}` : '(no output)'));
+        });
+      });
+      return result;
+    } catch (e: any) {
+      // python3 not available, try python
+      try {
+        const result = await new Promise<string>((resolve) => {
+          const timer = setTimeout(() => resolve('Python timeout'), safeTimeout);
+          execFile('python', ['-c', code], { maxBuffer: 131072, timeout: safeTimeout }, (err, stdout, stderr) => {
+            clearTimeout(timer);
+            resolve(((stdout||'') + (stderr?'\n'+stderr:'')).slice(0,16000) || '(no output)');
+          });
+        });
+        return result;
+      } catch { return `Python not available: ${e.message}`; }
+    }
+  }
+  return `Unsupported language: ${language}`;
+}
+
+async function toolShellExec(command: string, cwd?: string, timeout: number = 15000): Promise<string> {
+  const safeTimeout = Math.min(timeout, 60000);
+  try {
+    const { stdout, stderr } = await execAsync(command, {
+      cwd: cwd || process.cwd(),
+      maxBuffer: 262144,
+      timeout: safeTimeout,
+      shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
+    });
+    const out = (stdout || '') + (stderr ? '\nSTDERR:\n' + stderr : '');
+    return out.slice(0, 32000) || '(command completed with no output)';
+  } catch (e: any) {
+    const out = (e.stdout || '') + (e.stderr ? '\nSTDERR:\n' + e.stderr : '');
+    if (out.trim()) return out.slice(0, 32000);
+    return `Error (exit ${e.code}): ${e.message}`.slice(0, 2000);
+  }
+}
+
+function toolReadFile(filePath: string, encoding: string = 'utf8', maxBytes: number = 65536): string {
+  try {
+    const resolved = path.resolve(filePath);
+    const stat = fs.statSync(resolved);
+    if (stat.size > maxBytes) {
+      const fd = fs.openSync(resolved, 'r');
+      const buf = Buffer.alloc(maxBytes);
+      fs.readSync(fd, buf, 0, maxBytes, 0);
+      fs.closeSync(fd);
+      return buf.toString(encoding as BufferEncoding) + `\n\n[... file truncated at ${maxBytes} bytes — ${stat.size} total]`;
+    }
+    return fs.readFileSync(resolved, { encoding: encoding as BufferEncoding });
+  } catch (e: any) {
+    return `Read error: ${e.message}`;
+  }
+}
+
+function toolWriteFile(filePath: string, content: string, append: boolean = false): string {
+  try {
+    const resolved = path.resolve(filePath);
+    fs.mkdirSync(path.dirname(resolved), { recursive: true });
+    if (append) {
+      fs.appendFileSync(resolved, content, 'utf8');
+    } else {
+      fs.writeFileSync(resolved, content, 'utf8');
+    }
+    return `✅ ${append ? 'Appended' : 'Written'} ${content.length} chars to ${resolved}`;
+  } catch (e: any) {
+    return `Write error: ${e.message}`;
+  }
+}
+
+function toolListDirectory(dirPath: string = '.', recursive: boolean = false): string {
+  try {
+    const resolved = path.resolve(dirPath);
+    const entries = fs.readdirSync(resolved, { withFileTypes: true });
+    const items = entries.map(e => {
+      try {
+        const fullPath = path.join(resolved, e.name);
+        const stat = fs.statSync(fullPath);
+        const size = e.isFile() ? ` (${(stat.size/1024).toFixed(1)}KB)` : '/';
+        return `${e.isDirectory() ? '📁' : '📄'} ${e.name}${size}`;
+      } catch { return `  ${e.name}`; }
+    });
+    return `📂 ${resolved}\n${items.join('\n')}`;
+  } catch (e: any) {
+    return `Directory error: ${e.message}`;
+  }
+}
+
+async function toolHttpRequest(url: string, method: string = 'GET', headers: Record<string,string> = {}, body?: string, timeout: number = 15000): Promise<string> {
+  try {
+    const opts: RequestInit = {
+      method,
+      headers: { 'User-Agent': 'ForgeAgent/1.0', 'Content-Type': 'application/json', ...headers },
+    };
+    if (body && ['POST','PUT','PATCH'].includes(method)) opts.body = body;
+    const resp = await fetchWithTimeout(url, opts, Math.min(timeout, 30000));
+    const ct = resp.headers.get('content-type') || '';
+    const text = await resp.text();
+    const headersOut = Object.fromEntries(resp.headers.entries());
+    const preview = ct.includes('json') ? (() => { try { return JSON.stringify(JSON.parse(text), null, 2).slice(0,8000); } catch { return text.slice(0,8000); } })() : text.slice(0,8000);
+    return `HTTP ${resp.status} ${resp.statusText}\nContent-Type: ${ct}\n\n${preview}${text.length > 8000 ? `\n\n[... ${text.length - 8000} more bytes truncated]` : ''}`;
+  } catch (e: any) {
+    return `HTTP error: ${e.message}`;
+  }
+}
+
+// Master tool dispatcher
+async function runForgeTool(toolName: string, args: any): Promise<string> {
+  try {
+    switch (toolName) {
+      case 'web_search':     return await toolWebSearch(args.query, args.num_results);
+      case 'web_scrape':     return await toolWebScrape(args.url, args.selector);
+      case 'run_code':       return await toolRunCode(args.language, args.code, args.timeout);
+      case 'shell_exec':     return await toolShellExec(args.command, args.cwd, args.timeout);
+      case 'read_file':      return toolReadFile(args.path, args.encoding, args.max_bytes);
+      case 'write_file':     return toolWriteFile(args.path, args.content, args.append);
+      case 'list_directory': return toolListDirectory(args.path, args.recursive);
+      case 'http_request':   return await toolHttpRequest(args.url, args.method, args.headers || {}, args.body, args.timeout);
+      // Legacy compat
+      case 'web_fetch':      return await toolWebScrape(args.url);
+      case 'extract_data':   return `Extracted: ${args.text?.slice(0,500)}`;
+      case 'summarize':      return `[summarize tool — pass text directly to the model instead]`;
+      default:               return `Unknown tool: ${toolName}`;
+    }
+  } catch (e: any) {
+    return `Tool ${toolName} error: ${e.message}`;
+  }
+}
+
+// ─── Anthropic agentic loop with native tool_use ──────────────────────────────
+async function callAnthropicWithTools(
+  apiKey: string, model: string, messages: any[],
+  onToolCall: (name: string, args: any, result: string) => void,
+  maxIters: number = 8
+): Promise<{ content: string; promptTokens: number; completionTokens: number; toolCalls: Array<{name:string;args:any;result:string}> }> {
+  let promptTokens = 0, completionTokens = 0;
+  const toolCalls: Array<{name:string;args:any;result:string}> = [];
+  const msgs = [...messages];
+  // Separate system from conversation
+  const systemMsgs = msgs.filter(m => m.role === 'system');
+  const convMsgs = msgs.filter(m => m.role !== 'system');
+  const systemContent = systemMsgs.map(m => m.content).join('\n\n');
+
+  for (let iter = 0; iter < maxIters; iter++) {
+    const body: any = {
+      model,
+      max_tokens: 4096,
+      tools: FORGE_TOOLS_ANTHROPIC,
+      messages: convMsgs,
+    };
+    if (systemContent) body.system = systemContent;
+
+    const resp = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    }, 45000);
+    if (!resp.ok) { const e = await resp.text(); throw new Error(`Anthropic error: ${e.slice(0,300)}`); }
+    const data: any = await resp.json();
+    promptTokens += data.usage?.input_tokens || 0;
+    completionTokens += data.usage?.output_tokens || 0;
+
+    if (data.stop_reason === 'end_turn' || !data.content?.some((b: any) => b.type === 'tool_use')) {
+      // Final text response
+      const textBlocks = data.content?.filter((b: any) => b.type === 'text') || [];
+      const finalText = textBlocks.map((b: any) => b.text).join('');
+      return { content: finalText, promptTokens, completionTokens, toolCalls };
+    }
+
+    // Process tool_use blocks
+    const toolUseBlocks = data.content.filter((b: any) => b.type === 'tool_use');
+    const toolResults: any[] = [];
+
+    for (const block of toolUseBlocks) {
+      const result = await runForgeTool(block.name, block.input || {});
+      toolCalls.push({ name: block.name, args: block.input, result });
+      onToolCall(block.name, block.input, result);
+      toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result.slice(0, 20000) });
+    }
+
+    // Add assistant message with tool_use + tool results to conversation
+    convMsgs.push({ role: 'assistant', content: data.content });
+    convMsgs.push({ role: 'user', content: toolResults });
+  }
+
+  return { content: 'Max tool iterations reached.', promptTokens, completionTokens, toolCalls };
+}
+
+// ─── ForgeAgent SSE run loop (legacy endpoint — still works) ──────────────────
 
 app.post('/api/agent/run', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.sub;

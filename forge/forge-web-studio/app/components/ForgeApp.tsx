@@ -133,7 +133,7 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string): P
 
 // SSE fetch: reads text/event-stream response, returns the payload from the last "result" event.
 // Used for /api/threads/:id/messages which uses SSE to keep Railway connection alive.
-async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
+async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string, onEvent?: (evt: any) => void): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const signal = opts.signal ?? AbortSignal.timeout(65000);
@@ -147,7 +147,7 @@ async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string)
     throw new Error(err.error || 'Session expired. Please log in again.');
   }
   if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || err.error || `HTTP ${res.status}`); }
-  // Read SSE stream — collect lines, find "data: ..." lines, parse last "result" event
+  // Read SSE stream — collect lines, fire callbacks for mid-stream events, return last result
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
   let buf = '';
@@ -163,6 +163,7 @@ async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string)
       try {
         const evt = JSON.parse(line.slice(6));
         if (evt.type === 'result') lastResult = evt.payload;
+        if (onEvent) onEvent(evt);
       } catch {}
     }
   }
@@ -336,6 +337,9 @@ export default function ForgeApp() {
   const addAgentStep = (icon: string, text: string) => setAgentSteps(prev => [...prev.slice(-8), { icon, text, ts: Date.now() }]);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
+  // Tool calls captured during the current SSE stream — map of msgId -> tool call list
+  const [liveToolCalls, setLiveToolCalls] = useState<Array<{tool:string;args:any;result:string;ts:number}>>([]);
+  const [expandedTools, setExpandedTools] = useState<Record<number,boolean>>({});
 
   // Voice chat
   const [voiceActive, setVoiceActive] = useState(false);
@@ -1413,7 +1417,15 @@ export default function ForgeApp() {
       try {
         const modelLabel = cleanModel.split('/').pop() || cleanModel;
         addAgentStep('⚙️', `Sending to ${modelLabel}…`);
-        const r = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token);
+        setLiveToolCalls([]);
+        setExpandedTools({});
+        const r = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token, (evt) => {
+          if (evt.type === 'tool_call') {
+            const tc = { tool: evt.tool, args: evt.args, result: evt.result || '', ts: Date.now() };
+            setLiveToolCalls(prev => [...prev, tc]);
+            addAgentStep('🔧', `${evt.tool}(${JSON.stringify(evt.args||{}).slice(0,60)})`);
+          }
+        });
         addAgentStep('✅', 'Response received');
         applyResp(r);
       } catch (e: any) {
@@ -2082,6 +2094,43 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
+                  {/* Live tool call cards — shown while/after agentic tools ran */}
+                  {liveToolCalls.length > 0 && (
+                    <div style={{ display:'flex', flexDirection:'column', gap:6, padding:'10px 14px', background:'rgba(255,107,53,0.06)', border:'1px solid rgba(255,107,53,0.2)', borderRadius:12, marginBottom:4 }}>
+                      <div style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>⚡ TOOLS USED ({liveToolCalls.length})</div>
+                      {liveToolCalls.map((tc, idx) => (
+                        <div key={idx} style={{ borderRadius:8, border:'1px solid var(--fg-border2)', overflow:'hidden', background:'var(--fg-bg3)' }}>
+                          <div
+                            onClick={() => setExpandedTools(p => ({ ...p, [idx]: !p[idx] }))}
+                            style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', cursor:'pointer', userSelect:'none' }}>
+                            <span style={{ fontSize:13 }}>
+                              {tc.tool === 'web_search' ? '🔍' : tc.tool === 'web_scrape' ? '🌐' : tc.tool === 'run_code' ? '💻' : tc.tool === 'shell_exec' ? '🖥️' : tc.tool === 'read_file' ? '📄' : tc.tool === 'write_file' ? '💾' : tc.tool === 'http_request' ? '📡' : tc.tool === 'list_directory' ? '📁' : '🔧'}
+                            </span>
+                            <span style={{ fontSize:12, color:'var(--fg-text)', fontFamily:'var(--fg-font-mono)', fontWeight:600 }}>{tc.tool}</span>
+                            <span style={{ fontSize:11, color:'var(--fg-text3)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                              {tc.tool === 'web_search' ? tc.args?.query : tc.tool === 'web_scrape' ? tc.args?.url : tc.tool === 'run_code' ? `${tc.args?.language}: ${(tc.args?.code||'').slice(0,50)}` : tc.tool === 'shell_exec' ? (tc.args?.command||'').slice(0,60) : tc.tool === 'http_request' ? `${tc.args?.method||'GET'} ${tc.args?.url}` : JSON.stringify(tc.args||{}).slice(0,60)}
+                            </span>
+                            <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto', flexShrink:0 }}>{expandedTools[idx] ? '▲' : '▼'}</span>
+                          </div>
+                          {expandedTools[idx] && (
+                            <div style={{ borderTop:'1px solid var(--fg-border)', padding:'8px 10px', display:'flex', flexDirection:'column', gap:6 }}>
+                              <div>
+                                <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:3, fontWeight:600 }}>INPUT</div>
+                                <pre style={{ margin:0, fontSize:11, color:'var(--fg-text2)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'6px 8px', borderRadius:6, maxHeight:120, overflowY:'auto' }}>{JSON.stringify(tc.args, null, 2)}</pre>
+                              </div>
+                              {tc.result && (
+                                <div>
+                                  <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:3, fontWeight:600 }}>OUTPUT</div>
+                                  <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'6px 8px', borderRadius:6, maxHeight:200, overflowY:'auto' }}>{tc.result.slice(0, 800)}{tc.result.length > 800 ? '\n…(truncated)' : ''}</pre>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {messages.map((m, i) => {
                     // Extract first code block for inline preview
                     const extracted = m.role === 'assistant' ? extractCodeBlock(m.content) : null;
