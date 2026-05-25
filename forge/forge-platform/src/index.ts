@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.19 — Skills/connectors/hooks injected into system prompt; Manus-style agent step streaming; parallel message spawning
+ * Forge Platform v6.20 — Skills/connectors/hooks in system prompt; Manus agent streaming; parallel spawning; chat nav actions; mode pills; language selector
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */

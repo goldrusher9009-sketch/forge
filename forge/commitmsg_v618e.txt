@@ -1,0 +1,1 @@
+fix: close React component function - add missing semicolon and closing brace v6.18e

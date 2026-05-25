@@ -1,0 +1,1 @@
+v6.18c - fix JSX truncation in ForgeApp tail, sidebar nav scrollable, all features now build correctly

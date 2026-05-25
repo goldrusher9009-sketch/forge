@@ -1,0 +1,1 @@
+v6.18b - fix left sidebar nav overflow so workspace/recent/pinned/projects visible below tabs

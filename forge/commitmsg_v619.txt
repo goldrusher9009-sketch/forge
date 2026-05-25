@@ -1,0 +1,1 @@
+fix: resolve post-login crash - remove undeclared artifactView modal, fix catalogData scope, fix setActiveTab v6.19

@@ -5,3 +5,5 @@ out/
 .env
 coverage/
 *.log
+
+.vercel

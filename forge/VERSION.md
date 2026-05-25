@@ -1,6 +1,22 @@
 # Forge Platform — Version History
 
-## v6.17 — 2026-05-24 (current)
+## v6.20 — 2026-05-25 (current)
+
+### Frontend + Backend
+- **Skills/connectors/hooks** injected into LLM system prompt on every chat request
+- **Manus-style thinking panel** — step-by-step agent activity (📚 context → 🧩 skills → 🤖 model → ✅ done)
+- **Parallel message spawning** — second message while AI is thinking opens a new thread instead of queuing
+- **Post-login crash fixed** — removed undeclared `artifactView` reference
+- **Thread context menu** — Rename (inline edit), Pin/Unpin, Archive/Unarchive, Copy title, Delete
+- **Runs tab scheduler** — create cron-scheduled AI tasks with preset schedules and custom cron syntax
+- **Mode pills moved** to chat input toolbar (❓ Ask / ✨ Magic)
+- **Language selector** in navbar (12 languages: EN/ES/FR/DE/PT/IT/ZH/JA/KO/AR/HI/RU)
+- **Active skills/connectors summary** in right panel Tools tab
+- **Language sent** in chat API body for non-English responses
+
+---
+
+## v6.17 — 2026-05-24
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx
 - **New: Full Skills Catalog** — 120+ skills across 18 categories (document, analytics, content, engineering, design, sales, product, legal, finance, operations, support, enterprise, seo, integrations, productivity, smallbiz, ai) — loaded dynamically from SKILLS_CATALOG.json via window.FORGE_CATALOG_DATA

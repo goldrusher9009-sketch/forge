@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.19 -- live tools toggles, real hooks/runs/files pages, right panel wired to live data, ForgeAsk/ForgeMagic descriptions
+// Forge AI Workspace v6.20 -- skills catalog download, chat nav actions (rename/pin/delete/archive), mode pills in input, language selector
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -439,6 +439,13 @@ export default function ForgeApp() {
   const [superTab, setSuperTab] = useState<'chat'|'memory'>('chat');
   const [superStats, setSuperStats] = useState<{memoryCount:number;intelligenceScore:number;threadCount:number}>({memoryCount:0,intelligenceScore:0,threadCount:0});
   const [superMode, setSuperMode] = useState<'forgeAsk'|'forgeMagic'>('forgeAsk');
+  const [language, setLanguage] = useState('en');
+  const [renamingThreadInput, setRenamingThreadInput] = useState('');
+  const [showRunsScheduler, setShowRunsScheduler] = useState(false);
+  const [runsSchedule, setRunsSchedule] = useState<{id:string;name:string;prompt:string;cron:string;enabled:boolean;lastRun?:string}[]>([]);
+  const [newRunName, setNewRunName] = useState('');
+  const [newRunPrompt, setNewRunPrompt] = useState('');
+  const [newRunCron, setNewRunCron] = useState('0 9 * * 1-5');
   const [showAskModal, setShowAskModal] = useState(false);
   const [pendingAskMessage, setPendingAskMessage] = useState('');
   const [selectedAskSkills, setSelectedAskSkills] = useState<Set<string>>(new Set());
@@ -1362,6 +1369,7 @@ export default function ForgeApp() {
         content: userContent,
         model: cleanModel,
         agent_ids: activeAgentIds,
+        language: language !== 'en' ? language : undefined,
         enabled_tools: Array.from(activeTools),
         active_skills: Array.from(activeSkills),
         active_connectors: Array.from(activeConnectors),
@@ -1754,7 +1762,21 @@ export default function ForgeApp() {
                       style={{ padding:'7px 8px 5px', borderRadius:6, cursor:'pointer', marginBottom:1, background:activeThread?.id===t.id ? 'var(--fg-bg4)' : 'var(--fg-bg)', border:'1px solid var(--fg-border2)' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                         <span style={{ fontSize:10 }}>📌</span>
-                        <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
+                        {renamingThread?.id === t.id ? (
+                          <input autoFocus value={renamingThreadInput} onChange={e => setRenamingThreadInput(e.target.value)}
+                            onKeyDown={async e => {
+                              if (e.key === 'Enter') {
+                                await apiFetch(`/threads/${t.id}`, { method:'PATCH', body:JSON.stringify({ title: renamingThreadInput }) }, user?.token||'');
+                                setThreads(prev => prev.map(th => th.id===t.id ? {...th, title:renamingThreadInput} : th));
+                                setRenamingThread(null);
+                              }
+                              if (e.key === 'Escape') setRenamingThread(null);
+                            }}
+                            onBlur={() => setRenamingThread(null)}
+                            style={{ flex:1, background:'var(--fg-bg3)', border:'1px solid var(--fg-orange)', borderRadius:4, color:'var(--fg-text)', fontSize:12, padding:'1px 6px', outline:'none' }} />
+                        ) : (
+                          <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
+                        )}
                         <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">•••</button>
                       </div>
                       {t.total_tokens ? <p style={{ margin:'2px 0 0 14px', fontSize:10, color:'var(--fg-text3)' }}>{t.total_tokens >= 1000 ? (t.total_tokens/1000).toFixed(1)+'k' : t.total_tokens} tokens</p> : null}
@@ -1769,7 +1791,21 @@ export default function ForgeApp() {
                       onMouseEnter={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style && ((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity = '1'); }}
                       onMouseLeave={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style && ((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity = '0'); }}>
                       <div style={{ display:'flex', alignItems:'center' }}>
-                        <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
+                        {renamingThread?.id === t.id ? (
+                          <input autoFocus value={renamingThreadInput} onChange={e => setRenamingThreadInput(e.target.value)}
+                            onKeyDown={async e => {
+                              if (e.key === 'Enter') {
+                                await apiFetch(`/threads/${t.id}`, { method:'PATCH', body:JSON.stringify({ title: renamingThreadInput }) }, user?.token||'');
+                                setThreads(prev => prev.map(th => th.id===t.id ? {...th, title:renamingThreadInput} : th));
+                                setRenamingThread(null);
+                              }
+                              if (e.key === 'Escape') setRenamingThread(null);
+                            }}
+                            onBlur={() => setRenamingThread(null)}
+                            style={{ flex:1, background:'var(--fg-bg3)', border:'1px solid var(--fg-orange)', borderRadius:4, color:'var(--fg-text)', fontSize:12, padding:'1px 6px', outline:'none' }} />
+                        ) : (
+                          <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
+                        )}
                         <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">•••</button>
                       </div>
                       {t.total_tokens ? <p style={{ margin:'2px 0 0', fontSize:10, color:'var(--fg-text3)' }}>{t.total_tokens >= 1000 ? (t.total_tokens/1000).toFixed(1)+'k' : t.total_tokens} tokens</p> : null}
@@ -1894,13 +1930,26 @@ export default function ForgeApp() {
                   <span>Harvest</span>
                 </button>
               )}
-              {/* Mode pills: ForgeAsk | ForgeMagic | EPIC */}
+              {/* Language selector */}
               {!isMobile && (
-                <div style={{ display:'flex', gap:4, flexShrink:0 }}>
-                  <button onClick={() => setSuperMode('forgeAsk')} title="ForgeAsk: Ask mode — confirms which tools, skills &amp; connectors to use before each task" style={{ padding:'4px 8px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>❓ Ask</button>
-                  <button onClick={() => setSuperMode('forgeMagic')} title="ForgeMagic: Act mode — autonomously loads all browse tools, skills, hooks &amp; connectors to achieve the result" style={{ padding:'4px 8px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>✨ Magic</button>
-                  <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>🌌 EPIC</button>
-                </div>
+                <select value={language} onChange={e => setLanguage(e.target.value)} style={{ background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text2)', padding:'4px 8px', fontSize:11, cursor:'pointer' }} title="Response language">
+                  <option value="en">🇬🇧 EN</option>
+                  <option value="es">🇪🇸 ES</option>
+                  <option value="fr">🇫🇷 FR</option>
+                  <option value="de">🇩🇪 DE</option>
+                  <option value="pt">🇧🇷 PT</option>
+                  <option value="it">🇮🇹 IT</option>
+                  <option value="zh">🇨🇳 ZH</option>
+                  <option value="ja">🇯🇵 JA</option>
+                  <option value="ko">🇰🇷 KO</option>
+                  <option value="ar">🇸🇦 AR</option>
+                  <option value="hi">🇮🇳 HI</option>
+                  <option value="ru">🇷🇺 RU</option>
+                </select>
+              )}
+              {/* EPIC button */}
+              {!isMobile && (
+                <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>🌌 EPIC</button>
               )}
               {/* Sketch toggle */}
               {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'4px 8px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, flexShrink:0 }}>✏️</button>}
@@ -2217,6 +2266,11 @@ export default function ForgeApp() {
                         <button onClick={() => { setRightTab('terminal'); setRightExpanded(true); }} title="Terminal" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>💻</button>
                         <button onClick={() => { setRightTab('dispatch'); setRightExpanded(true); }} title="Dispatch agents" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>🚀</button>
                         <button onClick={() => { setShowNewTask(true); }} title="New task" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>✅</button>
+                        {/* Mode pills in input bar */}
+                        <div style={{ display:'flex', gap:3, marginLeft:4 }}>
+                          <button onClick={() => setSuperMode('forgeAsk')} title="Ask mode — confirms skills/connectors before task" style={{ padding:'3px 8px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>❓ Ask</button>
+                          <button onClick={() => setSuperMode('forgeMagic')} title="Magic mode — auto-loads all tools, skills, hooks & connectors" style={{ padding:'3px 8px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>✨ Magic</button>
+                        </div>
                       </div>
                       <div style={{ display:'flex', gap:4, flexShrink:0 }}>
                         {sending && (
@@ -2265,6 +2319,14 @@ export default function ForgeApp() {
                     {/* TOOLS */}
                     {rightTab==='tools' && (
                       <div>
+                    {/* Active summary */}
+                    {(activeSkills.size > 0 || activeConnectors.size > 0) && (
+                      <div style={{ marginBottom:12, padding:'8px 10px', background:'var(--fg-odim)', border:'1px solid var(--fg-border3)', borderRadius:8 }}>
+                        <p style={{ margin:'0 0 6px', fontSize:10, color:'var(--fg-orange)', fontWeight:700, textTransform:'uppercase' }}>Active in this chat</p>
+                        {activeSkills.size > 0 && <p style={{ margin:'0 0 3px', fontSize:11, color:'var(--fg-text2)' }}>🧩 {Array.from(activeSkills).join(', ')}</p>}
+                        {activeConnectors.size > 0 && <p style={{ margin:0, fontSize:11, color:'var(--fg-text2)' }}>🔌 {Array.from(activeConnectors).join(', ')}</p>}
+                      </div>
+                    )}
                         {/* SKILLS */}
                         <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 8px', letterSpacing:'0.5px' }}>Skills</p>
                         {[
@@ -4318,7 +4380,28 @@ export default function ForgeApp() {
               <span style={{ fontSize:12, color:'var(--fg-green)', background:'rgba(34,197,94,0.08)', padding:'4px 10px', borderRadius:10 }}>✓ {dispatchRuns.filter(r=>r.status==='done').length} done</span>
               <span style={{ fontSize:12, color:'var(--fg-red)', background:'rgba(248,113,113,0.08)', padding:'4px 10px', borderRadius:10 }}>✕ {dispatchRuns.filter(r=>r.status==='error').length} errors</span>
               <span style={{ fontSize:12, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'4px 10px', borderRadius:10 }}>{dispatchRuns.length} total</span>
+              <button onClick={() => setShowRunsScheduler(true)} style={{ marginLeft:'auto', padding:'4px 12px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>+ Schedule Run</button>
             </div>
+
+            {/* Scheduled Runs section */}
+            {runsSchedule.length > 0 && (
+              <div style={{ marginBottom:16 }}>
+                <p style={{ margin:'0 0 8px', fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.5px' }}>⏱ Scheduled</p>
+                <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                  {runsSchedule.map(run => (
+                    <div key={run.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${run.enabled ? 'rgba(74,222,128,0.3)' : 'var(--fg-border)'}`, borderRadius:10, padding:'10px 14px', display:'flex', alignItems:'center', gap:10 }}>
+                      <div style={{ width:8, height:8, borderRadius:'50%', background: run.enabled ? 'var(--fg-green)' : 'var(--fg-text3)', flexShrink:0 }} />
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{run.name}</div>
+                        <div style={{ fontSize:10, color:'var(--fg-text3)', fontFamily:'monospace' }}>{run.cron}</div>
+                      </div>
+                      <button onClick={() => setRunsSchedule(prev => prev.map(r => r.id===run.id ? {...r, enabled:!r.enabled} : r))} style={{ padding:'3px 8px', background: run.enabled ? 'rgba(74,222,128,0.15)' : 'var(--fg-bg4)', border:`1px solid ${run.enabled ? 'var(--fg-green)' : 'var(--fg-border2)'}`, borderRadius:5, color: run.enabled ? 'var(--fg-green)' : 'var(--fg-text3)', fontSize:10, cursor:'pointer' }}>{run.enabled ? 'On' : 'Off'}</button>
+                      <button onClick={() => setRunsSchedule(prev => prev.filter(r => r.id !== run.id))} style={{ padding:'3px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:5, color:'var(--fg-text3)', fontSize:10, cursor:'pointer' }}>🗑</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {dispatchRuns.length === 0 && (
               <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'var(--fg-text3)' }}>
                 <p style={{ fontSize:40, margin:'0 0 12px' }}>🏃</p>
@@ -4339,6 +4422,47 @@ export default function ForgeApp() {
                   <p style={{ margin:'6px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{new Date(r.created_at).toLocaleString()} · {(r.agent_ids || []).length} agents</p>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* New Run Modal */}
+        {showRunsScheduler && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:10000, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowRunsScheduler(false)}>
+            <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:16, padding:28, width:480, maxWidth:'95vw' }} onClick={e => e.stopPropagation()}>
+              <h3 style={{ margin:'0 0 20px', fontSize:18, fontWeight:800, color:'var(--fg-orange)' }}>⏱ New Scheduled Run</h3>
+              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                <div>
+                  <label style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:4, display:'block' }}>Run Name</label>
+                  <input value={newRunName} onChange={e => setNewRunName(e.target.value)} placeholder="e.g. Daily Morning Brief" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:4, display:'block' }}>Prompt / Task</label>
+                  <textarea value={newRunPrompt} onChange={e => setNewRunPrompt(e.target.value)} placeholder="What should the AI do each time this runs?" rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', outline:'none', boxSizing:'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:4, display:'block' }}>Schedule (Cron)</label>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:8 }}>
+                    {[
+                      {label:'Every day 9am', cron:'0 9 * * *'},
+                      {label:'Weekdays 9am', cron:'0 9 * * 1-5'},
+                      {label:'Every hour', cron:'0 * * * *'},
+                      {label:'Every Monday', cron:'0 9 * * 1'},
+                    ].map(p => (
+                      <button key={p.cron} onClick={() => setNewRunCron(p.cron)} style={{ padding:'4px 10px', background: newRunCron===p.cron ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${newRunCron===p.cron ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: newRunCron===p.cron ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>{p.label}</button>
+                    ))}
+                  </div>
+                  <input value={newRunCron} onChange={e => setNewRunCron(e.target.value)} placeholder="0 9 * * 1-5" style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', fontSize:13, fontFamily:'monospace', boxSizing:'border-box' }} />
+                </div>
+                <div style={{ display:'flex', gap:10, marginTop:4 }}>
+                  <button onClick={() => {
+                    if (!newRunName.trim() || !newRunPrompt.trim()) return;
+                    setRunsSchedule(prev => [...prev, { id: Date.now().toString(), name:newRunName.trim(), prompt:newRunPrompt.trim(), cron:newRunCron, enabled:true }]);
+                    setNewRunName(''); setNewRunPrompt(''); setNewRunCron('0 9 * * 1-5'); setShowRunsScheduler(false);
+                  }} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>✓ Create Run</button>
+                  <button onClick={() => setShowRunsScheduler(false)} style={{ padding:'10px 20px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer' }}>Cancel</button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -4776,6 +4900,24 @@ export default function ForgeApp() {
               </div>
               <pre style={{ flex:1, overflowY:'auto', background:'var(--fg-bg2)', borderRadius:8, padding:16, fontSize:13, fontFamily:'var(--fg-font-mono)', color:'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-word', margin:0 }}>{viewArtifact.content}</pre>
             </div>
+          </div>
+        )}
+
+        {threadMenu && (
+          <div style={{ position:'fixed', left:threadMenu.x, top:threadMenu.y, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:6, zIndex:9999, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+            {[
+              { icon:'✏️', label:'Rename', action: () => { const t = threads.find(x=>x.id===threadMenu.threadId); if(t){ setRenamingThread({id:t.id,title:t.title}); setRenamingThreadInput(t.title); } setThreadMenu(null); }},
+              { icon:'📌', label: threads.find(t=>t.id===threadMenu.threadId)?.pinned ? 'Unpin' : 'Pin', action: async () => { const t = threads.find(x=>x.id===threadMenu.threadId); if(!t||!user) return; await apiFetch(`/threads/${t.id}`, {method:'PATCH',body:JSON.stringify({pinned:!t.pinned})}, user.token); setThreads(prev=>prev.map(th=>th.id===t.id?{...th,pinned:!th.pinned}:th)); setThreadMenu(null); }},
+              { icon:'🗄️', label: threads.find(t=>t.id===threadMenu.threadId)?.archived ? 'Unarchive' : 'Archive', action: async () => { const t = threads.find(x=>x.id===threadMenu.threadId); if(!t||!user) return; await apiFetch(`/threads/${t.id}`, {method:'PATCH',body:JSON.stringify({archived:!t.archived})}, user.token); setThreads(prev=>prev.map(th=>th.id===t.id?{...th,archived:!th.archived}:th)); setThreadMenu(null); }},
+              { icon:'📋', label:'Copy title', action: () => { const t = threads.find(x=>x.id===threadMenu.threadId); if(t) navigator.clipboard?.writeText(t.title); setThreadMenu(null); }},
+              { icon:'🗑️', label:'Delete', action: async () => { if(!user||!window.confirm('Delete this conversation?')) return; await apiFetch(`/threads/${threadMenu.threadId}`, {method:'DELETE'}, user.token); setThreads(prev=>prev.filter(t=>t.id!==threadMenu.threadId)); if(activeThread?.id===threadMenu.threadId){setActiveThread(null);setMessages([]);} setThreadMenu(null); }, danger: true },
+            ].map(item => (
+              <button key={item.label} onClick={item.action} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', background:'none', border:'none', color: (item as any).danger ? 'var(--fg-red)' : 'var(--fg-text)', cursor:'pointer', fontSize:13, borderRadius:6, textAlign:'left' }}
+                onMouseEnter={e=>(e.currentTarget.style.background='var(--fg-bg4)')}
+                onMouseLeave={e=>(e.currentTarget.style.background='none')}>
+                <span>{item.icon}</span><span>{item.label}</span>
+              </button>
+            ))}
           </div>
         )}
 
