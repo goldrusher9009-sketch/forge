@@ -1,6 +1,17 @@
 # Forge Platform — Version History
 
-## v6.29 — 2026-05-25 (current)
+## v6.30 — 2026-05-25 (current)
+
+### Autonomy Layer + Bug Fixes
+
+- **Autonomy layer** — full backend routes for goals (with LLM auto-decomposition), file storage, webhook triggers (public endpoint, async execution), self-reflection scoring, multi-agent handoff, ForgeAuto (parallel models), ForgeMulti (specialist swarm), progress tracker API
+- **getUserLLMKey helper** — intelligently selects best available provider (anthropic → openrouter → openai → gemini → groq) for internal tasks like compact and reflection
+- **BodyStreamBuffer fix** — reduced `apiFetchSSE` timeout from 65s to 28s to match Railway's 30s idle kill; prevents `BodyStreamBuffer was aborted` crash on long responses
+- **File truncation recovery** — restored truncated `index.ts` (missing `app.listen` and all autonomy routes); clean rebuild from line 2722 forward
+
+---
+
+## v6.29 — 2026-05-25
 
 ### Syntax Highlighting + Auto-Compact + Auto-Preview + Autonomy Improvements
 
