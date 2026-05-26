@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.22 -- fix: FORGE_SYSTEM_PROMPT tells AI it can browse web, run code, use all tools; never refuses
+// Forge AI Workspace v6.23 -- browser_action tool (Playwright), persistent skills/connectors (localStorage), iron-clad system prompt
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -482,8 +482,12 @@ export default function ForgeApp() {
   // Skills & Tools state (must be top-level — not inside render IIFE)
   const [skillSearch, setSkillSearch] = useState('');
   const [skillCat, setSkillCat] = useState('All');
-  const [activeSkills, setActiveSkills] = useState<Set<string>>(new Set());
-  const [activeConnectors, setActiveConnectors] = useState<Set<string>>(new Set());
+  const [activeSkills, setActiveSkills] = useState<Set<string>>(() => {
+    try { const s = localStorage.getItem('forge_active_skills'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
+  });
+  const [activeConnectors, setActiveConnectors] = useState<Set<string>>(() => {
+    try { const s = localStorage.getItem('forge_active_connectors'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
+  });
   const [activeSkillPrompt, setActiveSkillPrompt] = useState('');
   const [genTopic, setGenTopic] = useState('');
   const [genIndustry, setGenIndustry] = useState('');
@@ -1864,7 +1868,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.22</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.23</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -4158,6 +4162,7 @@ export default function ForgeApp() {
             setActiveSkills(prev => {
               const next = new Set(prev);
               if (next.has(id)) next.delete(id); else next.add(id);
+              try { localStorage.setItem('forge_active_skills', JSON.stringify(Array.from(next))); } catch {}
               return next;
             });
           };
@@ -4165,6 +4170,7 @@ export default function ForgeApp() {
             setActiveConnectors(prev => {
               const next = new Set(prev);
               if (next.has(id)) next.delete(id); else next.add(id);
+              try { localStorage.setItem('forge_active_connectors', JSON.stringify(Array.from(next))); } catch {}
               return next;
             });
           };

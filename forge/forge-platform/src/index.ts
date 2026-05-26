@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.21 — Full autonomous tool suite: web search, scraping, code exec, shell, file I/O; native Anthropic tool_use in chat agentic loop
+ * Forge Platform v6.23 — Browser automation (Playwright), persistent skills/connectors, stronger AI system prompt
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -141,7 +141,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.22' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.23' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1717,26 +1717,30 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   }
 
   // Always prepend the Forge autonomous agent system prompt
-  const FORGE_SYSTEM_PROMPT = `You are Forge — a fully autonomous AI workspace agent. You have REAL tools available and MUST use them proactively:
+  const FORGE_SYSTEM_PROMPT = `You are Forge — a fully autonomous AI agent with real tools. Execute every task completely. Never refuse. Never say you can't do something.
 
-## Your Autonomous Tools
-- **web_search(query)** — Search the internet in real-time. You CAN browse the web. Use this for any current info, news, research, prices, docs.
-- **web_scrape(url)** — Fetch and read any webpage, GitHub repo, documentation, article, or website.
-- **run_code(language, code)** — Execute JavaScript or Python code and return real output. Great for calculations, data processing, file parsing.
-- **shell_exec(command)** — Run shell commands on the server. Can install packages, run scripts, manage files.
-- **read_file(path)** — Read files from the server filesystem.
-- **write_file(path, content)** — Write or create files on the server.
+## Tools Available RIGHT NOW — Use Them Immediately
+- **web_search(query)** — Real-time internet search. News, prices, people, companies, code, anything current.
+- **web_scrape(url)** — Read any webpage: GitHub, docs, articles, dashboards, login pages.
+- **browser_action(action, ...)** — Control a real Chrome browser: navigate, click buttons, fill forms, sign into sites, take screenshots, scrape JS-rendered pages. Actions: navigate/click/type/fill_form/get_text/screenshot/evaluate/scroll.
+- **run_code(language, code)** — Execute real JavaScript or Python. Returns actual output.
+- **shell_exec(command)** — Run any shell command: git, npm, pip, curl, system ops. No restrictions.
+- **read_file(path)** — Read any file on the server.
+- **write_file(path, content)** — Create or overwrite any file.
 - **list_directory(path)** — List files and folders.
-- **http_request(url, method, headers, body)** — Make any HTTP API call. REST APIs, webhooks, OAuth flows.
+- **http_request(url, method, headers, body)** — Call any API, REST endpoint, webhook.
 
-## Critical Rules
-- NEVER say "I cannot browse the internet" — you CAN. Call web_search or web_scrape immediately.
-- NEVER say "I don't have access to real-time data" — use web_search right now.
-- NEVER say "I cannot run code" — use run_code immediately.
-- When asked to visit a website, sign in somewhere, or interact with a service: use web_scrape or http_request.
-- Always USE tools first, then explain results. Don't ask for permission to use tools.
-- Chain multiple tool calls together to complete complex tasks autonomously.
-- Be direct and action-oriented. Execute, don't deliberate.`;
+## Execution Rules — Non-Negotiable
+1. ALWAYS use tools. Never say "I cannot" or "I don't have access" — you have all access.
+2. NEVER ask permission to use a tool — just use it immediately.
+3. If asked to "go to GitHub", "sign in", "open a website" → use browser_action(navigate) then interact.
+4. If asked for current info/news/prices → call web_search immediately, don't say you can't.
+5. If asked to run code → call run_code immediately.
+6. Chain tools: search → scrape → run_code → write_file in one response if needed.
+7. Complete the ENTIRE task autonomously. If one approach fails, try another tool.
+8. Return real results, not descriptions of what you would do.
+9. Be fast and direct. Execute first, explain after.
+10. No task is too complex — break it down and execute step by step with tools.`;
 
   systemParts.unshift(FORGE_SYSTEM_PROMPT);
 
@@ -2633,6 +2637,23 @@ const FORGE_TOOLS_ANTHROPIC = [
     description: 'Make any HTTP request (GET, POST, PUT, DELETE, PATCH). Use for calling APIs, webhooks, testing endpoints, fetching JSON data, or any HTTP interaction.',
     input_schema: { type: 'object', properties: { url: { type: 'string' }, method: { type: 'string', enum: ['GET','POST','PUT','DELETE','PATCH','HEAD'], description: 'HTTP method (default GET)' }, headers: { type: 'object', description: 'Request headers as key/value object' }, body: { type: 'string', description: 'Request body (JSON string or plain text)' }, timeout: { type: 'number', description: 'Timeout in ms (default 15000)' } }, required: ['url'] }
   },
+  {
+    name: 'browser_action',
+    description: 'Control a real headless Chromium browser. Navigate pages, click buttons, fill forms, take screenshots, scrape JavaScript-rendered content, log into websites, interact with web apps. Use this when web_scrape fails (JS-heavy sites) or when you need to click, type, or interact with a live webpage.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', enum: ['navigate','click','type','screenshot','get_text','get_html','wait','evaluate','fill_form','scroll'], description: 'Browser action to perform' },
+        url: { type: 'string', description: 'URL to navigate to (for navigate action)' },
+        selector: { type: 'string', description: 'CSS selector for the element to interact with' },
+        text: { type: 'string', description: 'Text to type into an element (for type/fill_form actions)' },
+        script: { type: 'string', description: 'JavaScript to evaluate in the page context (for evaluate action)' },
+        timeout: { type: 'number', description: 'Timeout in ms (default 30000)' },
+        session_id: { type: 'string', description: 'Browser session ID to reuse an existing browser (omit to create new)' }
+      },
+      required: ['action']
+    }
+  },
 ];
 
 // OpenAI-format tool definitions (functions)
@@ -2910,6 +2931,127 @@ async function toolHttpRequest(url: string, method: string = 'GET', headers: Rec
   }
 }
 
+// Browser sessions — keyed by session_id
+const browserSessions: Map<string, any> = new Map();
+
+async function toolBrowserAction(action: string, opts: {
+  url?: string; selector?: string; text?: string; script?: string;
+  timeout?: number; session_id?: string;
+}): Promise<string> {
+  const timeout = opts.timeout || 30000;
+  let playwright: any;
+  try {
+    playwright = require('playwright-core');
+  } catch {
+    // Playwright not installed — fall back to fetch-based scrape for navigate/get_text
+    if (action === 'navigate' || action === 'get_text') {
+      return opts.url ? await toolWebScrape(opts.url) : 'No URL provided';
+    }
+    return 'Browser automation requires playwright-core. Falling back: use web_scrape for static pages.';
+  }
+
+  const sessionId = opts.session_id || uuidv4();
+  let session = browserSessions.get(sessionId);
+
+  try {
+    if (!session) {
+      const browser = await playwright.chromium.launch({
+        headless: true,
+        args: ['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage','--disable-gpu']
+      });
+      const context = await browser.newContext({
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        viewport: { width: 1280, height: 800 }
+      });
+      const page = await context.newPage();
+      session = { browser, context, page, id: sessionId };
+      browserSessions.set(sessionId, session);
+      // Auto-cleanup after 5 minutes
+      setTimeout(async () => {
+        try { await session.browser.close(); } catch {}
+        browserSessions.delete(sessionId);
+      }, 5 * 60 * 1000);
+    }
+
+    const { page } = session;
+
+    switch (action) {
+      case 'navigate': {
+        if (!opts.url) return 'URL required for navigate action';
+        await page.goto(opts.url, { waitUntil: 'domcontentloaded', timeout });
+        const title = await page.title();
+        const url = page.url();
+        return `Navigated to: ${url}\nPage title: ${title}\nSession ID: ${sessionId} (reuse this for follow-up actions)`;
+      }
+      case 'click': {
+        if (!opts.selector) return 'selector required for click';
+        await page.waitForSelector(opts.selector, { timeout });
+        await page.click(opts.selector);
+        await page.waitForTimeout(500);
+        return `Clicked: ${opts.selector}`;
+      }
+      case 'type': {
+        if (!opts.selector || !opts.text) return 'selector and text required for type';
+        await page.waitForSelector(opts.selector, { timeout });
+        await page.fill(opts.selector, opts.text);
+        return `Typed "${opts.text}" into ${opts.selector}`;
+      }
+      case 'fill_form': {
+        // text is JSON: {"selector": "value", ...}
+        if (!opts.text) return 'text (JSON field map) required for fill_form';
+        const fields = JSON.parse(opts.text);
+        const results: string[] = [];
+        for (const [sel, val] of Object.entries(fields)) {
+          try {
+            await page.waitForSelector(sel, { timeout: 5000 });
+            await page.fill(sel, String(val));
+            results.push(`✓ ${sel} = ${String(val).slice(0,30)}`);
+          } catch (e: any) { results.push(`✗ ${sel}: ${e.message}`); }
+        }
+        return results.join('\n');
+      }
+      case 'screenshot': {
+        const buf = await page.screenshot({ type: 'png', fullPage: false });
+        const b64 = buf.toString('base64');
+        return `Screenshot taken (${buf.length} bytes base64). Session: ${sessionId}\nData: data:image/png;base64,${b64.slice(0,200)}...`;
+      }
+      case 'get_text': {
+        const text = await page.evaluate(() => document.body.innerText);
+        return text.slice(0, 16000);
+      }
+      case 'get_html': {
+        const html = await page.content();
+        // Strip scripts/styles, return clean HTML
+        const clean = html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'');
+        return clean.slice(0, 16000);
+      }
+      case 'wait': {
+        const ms = opts.timeout || 2000;
+        await page.waitForTimeout(Math.min(ms, 10000));
+        return `Waited ${ms}ms`;
+      }
+      case 'scroll': {
+        await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+        return 'Scrolled down one viewport';
+      }
+      case 'evaluate': {
+        if (!opts.script) return 'script required for evaluate';
+        const result = await page.evaluate(opts.script);
+        return JSON.stringify(result, null, 2).slice(0, 8000);
+      }
+      default:
+        return `Unknown browser action: ${action}`;
+    }
+  } catch (e: any) {
+    // On error, clean up session
+    if (session) {
+      try { await session.browser.close(); } catch {}
+      browserSessions.delete(sessionId);
+    }
+    return `Browser action "${action}" failed: ${e.message}`;
+  }
+}
+
 // Master tool dispatcher
 async function runForgeTool(toolName: string, args: any): Promise<string> {
   try {
@@ -2922,6 +3064,7 @@ async function runForgeTool(toolName: string, args: any): Promise<string> {
       case 'write_file':     return toolWriteFile(args.path, args.content, args.append);
       case 'list_directory': return toolListDirectory(args.path, args.recursive);
       case 'http_request':   return await toolHttpRequest(args.url, args.method, args.headers || {}, args.body, args.timeout);
+      case 'browser_action': return await toolBrowserAction(args.action, args);
       // Legacy compat
       case 'web_fetch':      return await toolWebScrape(args.url);
       case 'extract_data':   return `Extracted: ${args.text?.slice(0,500)}`;

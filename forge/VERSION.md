@@ -1,6 +1,15 @@
 # Forge Platform — Version History
 
-## v6.22 — 2026-05-25 (current)
+## v6.23 — 2026-05-25 (current)
+
+### Browser Automation + Persistent State + Iron-Clad Execution
+- **`browser_action` tool** — Real headless Chromium via Playwright: navigate/click/type/fill_form/screenshot/get_text/evaluate/scroll. Persistent sessions (reuse session_id across calls). Auto-cleanup after 5 min.
+- **Skills/Connectors persist** — Active skills & connectors saved to localStorage; survive page refresh
+- **Strengthened system prompt** — 10 non-negotiable execution rules; AI MUST use tools, NEVER refuses, chains tools autonomously
+
+---
+
+## v6.22 — 2026-05-25
 
 ### Critical Fix: AI Now Uses Tools (Never Refuses)
 - **`FORGE_SYSTEM_PROMPT`** — injected on every chat request; tells AI it CAN browse web, run code, scrape URLs
