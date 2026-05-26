@@ -3003,7 +3003,6 @@ app.post('/api/forgemulti/run', requireAuth, async (req: AuthRequest, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Start server
 // ─────────────────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`Forge backend v6.30 running on port ${PORT}`);
 });
