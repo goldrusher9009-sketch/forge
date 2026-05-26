@@ -1,0 +1,3 @@
+953ff6c v6.30 autonomy layer: goals/files/webhooks/reflect/handoff, getUserLLMKey, BodyStreamBuffer fix
+ff5abb0 v6.30 autonomy layer: goals/files/webhooks/reflect/handoff, getUserLLMKey, BodyStreamBuffer fix
+a549ca4 v6.29 syntax highlighting, auto-compact, auto-open sketch, sandbox link fix, renderContent

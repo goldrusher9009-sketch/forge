@@ -399,7 +399,7 @@ export default function ForgeApp() {
   const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'>('workspace');
 
   // Right panel tabs
-  const [rightTab, setRightTab] = useState<'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>('artifacts');
+  const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>('tracker');
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -602,6 +602,37 @@ export default function ForgeApp() {
   };
   const toggleHook = (id: string) => setHooks(prev => prev.map(h => h.id === id ? {...h, enabled: !h.enabled} : h));
   const deleteHook = (id: string) => setHooks(prev => prev.filter(h => h.id !== id));
+
+  // Progress Tracker state
+  const [trackerItems, setTrackerItems] = useState<{id:string;text:string;done:boolean;priority:'high'|'medium'|'low';createdAt:number}[]>(() => {
+    try { return JSON.parse(localStorage.getItem('forge_tracker') || '[]'); } catch { return []; }
+  });
+  const [trackerInput, setTrackerInput] = useState('');
+  const [trackerEditId, setTrackerEditId] = useState<string|null>(null);
+  const [trackerEditText, setTrackerEditText] = useState('');
+  const saveTracker = (items: typeof trackerItems) => { setTrackerItems(items); try { localStorage.setItem('forge_tracker', JSON.stringify(items)); } catch {} };
+  const addTrackerItem = () => {
+    if (!trackerInput.trim()) return;
+    const item = { id: Date.now().toString(), text: trackerInput.trim(), done: false, priority: 'medium' as const, createdAt: Date.now() };
+    saveTracker([...trackerItems, item]);
+    setTrackerInput('');
+  };
+
+  // Chat inactivity tracking for 6h warning / 24h delete
+  const chatLastActiveRef = useRef<Record<string, number>>({});
+  const [inactiveWarnings, setInactiveWarnings] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const newWarnings = new Set<string>();
+      Object.entries(chatLastActiveRef.current).forEach(([threadId, lastActive]) => {
+        const hoursInactive = (now - lastActive) / (1000 * 60 * 60);
+        if (hoursInactive >= 6) newWarnings.add(threadId);
+      });
+      setInactiveWarnings(newWarnings);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Files state
   const [files, setFiles] = useState<{id:string;name:string;size:number;type:string;created_at:string}[]>([]);
@@ -2273,37 +2304,50 @@ export default function ForgeApp() {
                   {/* Live tool call cards — shown while/after agentic tools ran */}
                   {liveToolCalls.length > 0 && !sending && (
                     <div style={{ display:'flex', flexDirection:'column', gap:6, padding:'10px 14px', background:'rgba(255,107,53,0.06)', border:'1px solid rgba(255,107,53,0.2)', borderRadius:12, marginBottom:4 }}>
-                      <div style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>⚡ TOOLS USED ({liveToolCalls.length})</div>
-                      {liveToolCalls.map((tc, idx) => (
-                        <div key={idx} style={{ borderRadius:8, border:'1px solid var(--fg-border2)', overflow:'hidden', background:'var(--fg-bg3)' }}>
-                          <div
-                            onClick={() => setExpandedTools(p => ({ ...p, [idx]: !p[idx] }))}
-                            style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', cursor:'pointer', userSelect:'none' }}>
-                            <span style={{ fontSize:13 }}>
-                              {tc.tool === 'web_search' ? '🔍' : tc.tool === 'web_scrape' ? '🌐' : tc.tool === 'run_code' ? '💻' : tc.tool === 'shell_exec' ? '🖥️' : tc.tool === 'browser_action' ? '🖱️' : tc.tool === 'read_file' ? '📄' : tc.tool === 'write_file' ? '💾' : tc.tool === 'http_request' ? '📡' : tc.tool === 'list_directory' ? '📁' : '🔧'}
-                            </span>
-                            <span style={{ fontSize:12, color:'var(--fg-text)', fontFamily:'var(--fg-font-mono)', fontWeight:600 }}>{tc.tool}</span>
-                            <span style={{ fontSize:11, color:'var(--fg-text3)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                              {tc.tool === 'web_search' ? tc.args?.query : tc.tool === 'web_scrape' ? tc.args?.url : tc.tool === 'run_code' ? `${tc.args?.language}: ${(tc.args?.code||'').slice(0,50)}` : tc.tool === 'shell_exec' ? (tc.args?.command||'').slice(0,60) : tc.tool === 'http_request' ? `${tc.args?.method||'GET'} ${tc.args?.url}` : JSON.stringify(tc.args||{}).slice(0,60)}
-                            </span>
-                            <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto', flexShrink:0 }}>{expandedTools[idx] ? '▲' : '▼'}</span>
-                          </div>
-                          {expandedTools[idx] && (
-                            <div style={{ borderTop:'1px solid var(--fg-border)', padding:'8px 10px', display:'flex', flexDirection:'column', gap:6 }}>
-                              <div>
-                                <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:3, fontWeight:600 }}>INPUT</div>
-                                <pre style={{ margin:0, fontSize:11, color:'var(--fg-text2)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'6px 8px', borderRadius:6, maxHeight:120, overflowY:'auto' }}>{JSON.stringify(tc.args, null, 2)}</pre>
-                              </div>
-                              {tc.result && (
-                                <div>
-                                  <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:3, fontWeight:600 }}>OUTPUT</div>
-                                  <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'6px 8px', borderRadius:6, maxHeight:200, overflowY:'auto' }}>{tc.result.slice(0, 800)}{tc.result.length > 800 ? '\n…(truncated)' : ''}</pre>
-                                </div>
-                              )}
+                      <div style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>⚡ I used {liveToolCalls.length} tool{liveToolCalls.length>1?'s':''} to get this done</div>
+                      {liveToolCalls.map((tc, idx) => {
+                        const toolMeta: {[k:string]:{icon:string;narrate:(a:any)=>string}} = {
+                          web_search: { icon:'🔍', narrate: a => `Searched the web for "${a?.query||'...'}"` },
+                          web_scrape: { icon:'🌐', narrate: a => `Read the page at ${a?.url||'...'}` },
+                          run_code: { icon:'💻', narrate: a => `Ran ${a?.language||'code'} to compute the result` },
+                          shell_exec: { icon:'🖥️', narrate: a => `Executed shell command: ${(a?.command||'').slice(0,60)}` },
+                          browser_action: { icon:'🖱️', narrate: a => `Interacted with browser — ${a?.action||'click'}` },
+                          read_file: { icon:'📄', narrate: a => `Read file: ${a?.path||a?.file||'...'}` },
+                          write_file: { icon:'💾', narrate: a => `Wrote file: ${a?.path||a?.file||'...'}` },
+                          http_request: { icon:'📡', narrate: a => `Made ${a?.method||'GET'} request to ${a?.url||'...'}` },
+                          list_directory: { icon:'📁', narrate: a => `Listed files in ${a?.path||'...'}` },
+                          screenshot: { icon:'📸', narrate: _a => 'Took a screenshot' },
+                          image_gen: { icon:'🎨', narrate: a => `Generated image: "${(a?.prompt||'').slice(0,50)}"` },
+                        };
+                        const meta = toolMeta[tc.tool] || { icon:'🔧', narrate: _a => `Used ${tc.tool}` };
+                        return (
+                          <div key={idx} style={{ borderRadius:8, border:'1px solid var(--fg-border2)', overflow:'hidden', background:'var(--fg-bg3)' }}>
+                            <div
+                              onClick={() => setExpandedTools(p => ({ ...p, [idx]: !p[idx] }))}
+                              style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', cursor:'pointer', userSelect:'none' }}>
+                              <span style={{ fontSize:15, flexShrink:0 }}>{meta.icon}</span>
+                              <span style={{ fontSize:12, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                                {meta.narrate(tc.args)}
+                              </span>
+                              <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:'auto', flexShrink:0 }}>{expandedTools[idx] ? '▲' : '▼'}</span>
                             </div>
-                          )}
-                        </div>
-                      ))}
+                            {expandedTools[idx] && (
+                              <div style={{ borderTop:'1px solid var(--fg-border)', padding:'8px 10px', display:'flex', flexDirection:'column', gap:6 }}>
+                                <div>
+                                  <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:3, fontWeight:600 }}>INPUT</div>
+                                  <pre style={{ margin:0, fontSize:11, color:'var(--fg-text2)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'6px 8px', borderRadius:6, maxHeight:120, overflowY:'auto' }}>{JSON.stringify(tc.args, null, 2)}</pre>
+                                </div>
+                                {tc.result && (
+                                  <div>
+                                    <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:3, fontWeight:600 }}>OUTPUT</div>
+                                    <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'6px 8px', borderRadius:6, maxHeight:200, overflowY:'auto' }}>{tc.result.slice(0, 800)}{tc.result.length > 800 ? '\n…(truncated)' : ''}</pre>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
@@ -2607,6 +2651,7 @@ export default function ForgeApp() {
                 <div style={{ width:360, background:'var(--fg-bg)', borderLeft:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0 }}>
                   <div style={{ display:'flex', borderBottom:'1px solid var(--fg-border)', padding:'0 2px', overflowX:'auto' }}>
                     {([
+                      {id:'tracker',icon:'📌'},{id:'agents',icon:'🧠'},
                       {id:'tools',icon:'🛠'},{id:'hooks',icon:'🪝'},{id:'runs',icon:'🏃'},
                       {id:'agent',icon:'🤖'},{id:'artifacts',icon:'📄'},{id:'tasks',icon:'✅'},
                       {id:'live',icon:'📺'},{id:'schedule',icon:'⏱'},{id:'context',icon:'📊'},
@@ -2617,6 +2662,182 @@ export default function ForgeApp() {
                   </div>
 
                   <div style={{ flex:1, overflowY:'auto', padding:12 }}>
+                    {/* PROGRESS TRACKER */}
+                    {rightTab==='tracker' && (
+                      <div>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                          <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>📌 Progress Tracker</p>
+                          <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{trackerItems.filter(i=>i.done).length}/{trackerItems.length} done</span>
+                        </div>
+
+                        {/* Progress bar */}
+                        {trackerItems.length > 0 && (
+                          <div style={{ marginBottom:12, height:6, background:'var(--fg-bg3)', borderRadius:3, overflow:'hidden' }}>
+                            <div style={{ height:'100%', background:'var(--fg-orange)', borderRadius:3, width:`${(trackerItems.filter(i=>i.done).length/trackerItems.length)*100}%`, transition:'width 0.3s' }} />
+                          </div>
+                        )}
+
+                        {/* Add item input */}
+                        <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+                          <input
+                            value={trackerInput}
+                            onChange={e => setTrackerInput(e.target.value)}
+                            onKeyDown={e => e.key==='Enter' && addTrackerItem()}
+                            placeholder="Add a goal or task..."
+                            style={{ flex:1, padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:12, outline:'none' }}
+                          />
+                          <button onClick={addTrackerItem} style={{ padding:'7px 12px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>+</button>
+                        </div>
+
+                        {/* Tracker items */}
+                        {trackerItems.length === 0 && (
+                          <div style={{ textAlign:'center', padding:'24px 12px', color:'var(--fg-text3)', fontSize:12 }}>
+                            <div style={{ fontSize:28, marginBottom:8 }}>📋</div>
+                            <p style={{ margin:0 }}>No goals yet. Add your first goal above.</p>
+                            <p style={{ margin:'8px 0 0', fontSize:11 }}>Track MVPs, project milestones, and deliverables here.</p>
+                          </div>
+                        )}
+
+                        {['high','medium','low'].map(priority => {
+                          const items = trackerItems.filter(i => i.priority === priority);
+                          if (items.length === 0) return null;
+                          const colors: Record<string,string> = { high:'var(--fg-red,#ef4444)', medium:'var(--fg-orange)', low:'var(--fg-text3)' };
+                          return (
+                            <div key={priority} style={{ marginBottom:10 }}>
+                              <p style={{ fontSize:10, color:colors[priority], fontWeight:700, textTransform:'uppercase', margin:'0 0 5px', letterSpacing:'0.5px' }}>{priority === 'high' ? '🔴' : priority === 'medium' ? '🟡' : '🟢'} {priority}</p>
+                              {items.map(item => (
+                                <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background: item.done ? 'var(--fg-bg3)' : 'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:4, opacity: item.done ? 0.6 : 1 }}>
+                                  <button onClick={() => saveTracker(trackerItems.map(i => i.id===item.id ? {...i,done:!i.done} : i))}
+                                    style={{ width:16, height:16, borderRadius:'50%', border:`2px solid ${item.done ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, background: item.done ? 'var(--fg-orange)' : 'transparent', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', padding:0 }}>
+                                    {item.done && <span style={{ fontSize:9, color:'#fff' }}>✓</span>}
+                                  </button>
+                                  {trackerEditId === item.id ? (
+                                    <input autoFocus value={trackerEditText} onChange={e => setTrackerEditText(e.target.value)}
+                                      onKeyDown={e => { if(e.key==='Enter') { saveTracker(trackerItems.map(i=>i.id===item.id?{...i,text:trackerEditText}:i)); setTrackerEditId(null); } if(e.key==='Escape') setTrackerEditId(null); }}
+                                      onBlur={() => { saveTracker(trackerItems.map(i=>i.id===item.id?{...i,text:trackerEditText}:i)); setTrackerEditId(null); }}
+                                      style={{ flex:1, background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:5, color:'var(--fg-text)', fontSize:12, padding:'2px 6px', outline:'none' }}
+                                    />
+                                  ) : (
+                                    <span onClick={() => { setTrackerEditId(item.id); setTrackerEditText(item.text); }}
+                                      style={{ flex:1, fontSize:12, color: item.done ? 'var(--fg-text3)' : 'var(--fg-text)', textDecoration: item.done ? 'line-through' : 'none', cursor:'text', wordBreak:'break-word' }}>
+                                      {item.text}
+                                    </span>
+                                  )}
+                                  <div style={{ display:'flex', gap:2, flexShrink:0 }}>
+                                    <select value={item.priority} onChange={e => saveTracker(trackerItems.map(i=>i.id===item.id?{...i,priority:e.target.value as any}:i))}
+                                      style={{ fontSize:10, background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:4, color:'var(--fg-text3)', padding:'1px 3px', cursor:'pointer' }}>
+                                      <option value="high">🔴</option><option value="medium">🟡</option><option value="low">🟢</option>
+                                    </select>
+                                    <button onClick={() => saveTracker(trackerItems.filter(i=>i.id!==item.id))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'0 2px' }}>✕</button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+
+                        {trackerItems.length > 0 && (
+                          <div style={{ display:'flex', gap:6, marginTop:8 }}>
+                            <button onClick={() => saveTracker(trackerItems.filter(i=>!i.done))} style={{ flex:1, padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Clear done</button>
+                            <button onClick={() => saveTracker([])} style={{ flex:1, padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Clear all</button>
+                          </div>
+                        )}
+
+                        {/* Chat Files section */}
+                        <div style={{ marginTop:16, paddingTop:12, borderTop:'1px solid var(--fg-border)' }}>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 8px', letterSpacing:'0.5px' }}>💬 Chat Folders</p>
+                          {threads.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', textAlign:'center', margin:'12px 0' }}>No chats yet</p>}
+                          {threads.slice(0, 8).map(t => {
+                            const lastActive = chatLastActiveRef.current[t.id];
+                            const hoursAgo = lastActive ? (Date.now() - lastActive) / (1000*60*60) : 0;
+                            const isWarning = inactiveWarnings.has(t.id);
+                            return (
+                              <div key={t.id} onClick={() => { setActiveThread(t); setMainTab('workspace'); }} style={{ padding:'7px 10px', background: isWarning ? 'rgba(249,115,22,0.08)' : 'var(--fg-bg3)', border:`1px solid ${isWarning ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4, cursor:'pointer' }}>
+                                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                                  <span style={{ fontSize:12, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title || 'Untitled'}</span>
+                                  {isWarning && <span style={{ fontSize:10, color:'var(--fg-orange)', flexShrink:0, marginLeft:4 }}>⚠ idle</span>}
+                                </div>
+                                {isWarning && <p style={{ margin:'3px 0 0', fontSize:10, color:'var(--fg-orange)' }}>⏰ Deletes after 24h of inactivity</p>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* READY-MADE AGENTS */}
+                    {rightTab==='agents' && (() => {
+                      const agentGroups = [
+                        { group:'💼 Business', agents:[
+                          { id:'ceo_advisor', icon:'👔', name:'CEO Advisor', desc:'Strategic decisions, company direction, investor updates' },
+                          { id:'marketer', icon:'📢', name:'Marketing Pro', desc:'Campaigns, copy, brand voice, social media strategy' },
+                          { id:'sales_coach', icon:'🤝', name:'Sales Coach', desc:'Outreach, objection handling, closing techniques, CRM' },
+                          { id:'finance_analyst', icon:'💰', name:'Finance Analyst', desc:'P&L, budgets, cash flow, financial modeling, forecasts' },
+                          { id:'legal_advisor', icon:'⚖️', name:'Legal Advisor', desc:'Contracts, compliance, IP, NDAs, business terms' },
+                          { id:'hr_manager', icon:'👥', name:'HR Manager', desc:'Hiring, onboarding, culture, performance reviews' },
+                          { id:'product_manager', icon:'🎯', name:'Product Manager', desc:'PRDs, roadmaps, user stories, prioritization frameworks' },
+                          { id:'data_scientist', icon:'📊', name:'Data Scientist', desc:'Analysis, visualization, ML models, insights' },
+                          { id:'customer_support', icon:'🎧', name:'Customer Support', desc:'Ticket triage, responses, escalation, knowledge base' },
+                          { id:'operations', icon:'⚙️', name:'Operations Lead', desc:'Process optimization, SOPs, workflows, logistics' },
+                        ]},
+                        { group:'🧑 Individual', agents:[
+                          { id:'personal_coach', icon:'🏋️', name:'Life Coach', desc:'Goals, habits, productivity, mindset, accountability' },
+                          { id:'writer', icon:'✍️', name:'Writer', desc:'Essays, stories, scripts, emails, any written content' },
+                          { id:'researcher', icon:'🔬', name:'Researcher', desc:'Deep research, fact-checking, summarizing papers' },
+                          { id:'tutor', icon:'📚', name:'Tutor', desc:'Explain concepts, teach skills, quizzes, study plans' },
+                          { id:'developer', icon:'💻', name:'Software Developer', desc:'Code, debug, architecture, code review, deploy' },
+                          { id:'designer', icon:'🎨', name:'Designer', desc:'UI/UX, visual design, prototypes, design critique' },
+                          { id:'therapist', icon:'🧘', name:'Wellness Guide', desc:'Mental wellness tips, stress management, reflection' },
+                          { id:'travel_planner', icon:'✈️', name:'Travel Planner', desc:'Itineraries, bookings, visa info, travel tips' },
+                          { id:'chef', icon:'🍳', name:'Chef', desc:'Recipes, meal plans, nutrition, cooking techniques' },
+                          { id:'financial_planner', icon:'💳', name:'Financial Planner', desc:'Budgeting, savings, investments, debt payoff plans' },
+                        ]},
+                        { group:'🚀 Builder', agents:[
+                          { id:'mvp_builder', icon:'🏗️', name:'MVP Builder', desc:'Scope, spec, build and ship a working MVP fast' },
+                          { id:'project_manager', icon:'📋', name:'Project Manager', desc:'Plans, timelines, milestones, team coordination' },
+                          { id:'pitch_deck', icon:'🎞️', name:'Pitch Deck Creator', desc:'Investor decks, storytelling, traction slides' },
+                          { id:'seo_expert', icon:'🔍', name:'SEO Expert', desc:'Keywords, on-page SEO, backlinks, content strategy' },
+                          { id:'automation', icon:'🤖', name:'Automation Builder', desc:'Workflows, Zapier/Make logic, API integrations' },
+                        ]},
+                      ];
+                      const [activeAgentId, setActiveAgentId] = React.useState<string|null>(null);
+                      return (
+                        <div>
+                          <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:'0 0 4px', letterSpacing:'0.5px' }}>🧠 Ready-made Agents</p>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, margin:'0 0 12px' }}>Activate an agent to load its expertise into your workspace chat.</p>
+                          {agentGroups.map(group => (
+                            <div key={group.group} style={{ marginBottom:14 }}>
+                              <p style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:700, margin:'0 0 6px', letterSpacing:'0.3px' }}>{group.group}</p>
+                              {group.agents.map(a => {
+                                const isActive = activeAgentId === a.id || activeSkills.has(a.id);
+                                return (
+                                  <div key={a.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background: isActive ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${isActive ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4, cursor:'pointer' }}
+                                    onClick={() => {
+                                      if (isActive) {
+                                        setActiveSkills(prev => { const n=new Set(prev); n.delete(a.id); return n; });
+                                        setActiveAgentId(null);
+                                      } else {
+                                        setActiveSkills(prev => { const n=new Set(prev); n.add(a.id); return n; });
+                                        setActiveAgentId(a.id);
+                                        setActiveSkillPrompt(`You are a ${a.name}. ${a.desc}. Always provide expert, actionable advice. Be direct, confident, and thorough.`);
+                                        setMainTab('workspace');
+                                      }
+                                    }}>
+                                    <span style={{ fontSize:16, flexShrink:0 }}>{a.icon}</span>
+                                    <div style={{ flex:1, minWidth:0 }}>
+                                      <p style={{ margin:0, fontSize:12, color: isActive ? 'var(--fg-orange2)' : 'var(--fg-text)', fontWeight: isActive ? 600 : 400 }}>{a.name}</p>
+                                      <p style={{ margin:0, fontSize:10, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.desc}</p>
+                                    </div>
+                                    {isActive && <span style={{ fontSize:10, color:'var(--fg-orange)', flexShrink:0, fontWeight:700 }}>ON</span>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
                     {/* TOOLS */}
                     {rightTab==='tools' && (() => {
                       const catalog = (window as any).FORGE_CATALOG_DATA;
@@ -2701,21 +2922,41 @@ export default function ForgeApp() {
                         )}
 
                         {/* BUILT-IN TOOLS */}
-                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'12px 0 6px', letterSpacing:'0.5px' }}>Built-in Tools</p>
+                        <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'12px 0 6px', letterSpacing:'0.5px' }}>Built-in Tools ({activeTools.size} active)</p>
                         {[
-                          { id:'web_search', icon:'🔍', label:'Web Search' },
-                          { id:'run_code', icon:'⚙️', label:'Run Code' },
-                          { id:'read_file', icon:'📄', label:'Read Files' },
-                          { id:'image_gen', icon:'🎨', label:'Image Gen' },
-                          { id:'data_analyze', icon:'📊', label:'Data Analyze' },
-                          { id:'browser_navigate', icon:'🌐', label:'Browser' },
-                        ].map(t => (
-                          <div key={t.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:4 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-                              <span style={{ fontSize:13 }}>{t.icon}</span>
-                              <span style={{ fontSize:11, color:'var(--fg-text2)' }}>{t.label}</span>
+                          { id:'web_search', icon:'🔍', label:'Web Search', desc:'Search Google, Bing, DuckDuckGo' },
+                          { id:'browser_navigate', icon:'🌐', label:'Browse Web', desc:'Navigate URLs, read pages' },
+                          { id:'browser_batch', icon:'🖥️', label:'Browser Batch', desc:'Multi-tab parallel browsing' },
+                          { id:'run_code', icon:'⚙️', label:'Run Code', desc:'Execute Python, JS, shell scripts' },
+                          { id:'start_process', icon:'▶️', label:'Start Process', desc:'Launch and manage processes' },
+                          { id:'read_file', icon:'📄', label:'Read Files', desc:'Read any file type' },
+                          { id:'write_file', icon:'💾', label:'Write Files', desc:'Create and save files' },
+                          { id:'list_directory', icon:'📁', label:'List Directory', desc:'Browse filesystem' },
+                          { id:'execute_js', icon:'⚡', label:'Execute JS', desc:'Run JavaScript in browser context' },
+                          { id:'screenshot', icon:'📸', label:'Screenshot', desc:'Capture screen or webpage' },
+                          { id:'click', icon:'🖱️', label:'Click / Interact', desc:'Click buttons, fill forms' },
+                          { id:'press_key', icon:'⌨️', label:'Press Key', desc:'Keyboard shortcuts and input' },
+                          { id:'webhooks', icon:'🪝', label:'Webhooks', desc:'Send/receive webhook events' },
+                          { id:'image_gen', icon:'🎨', label:'Image Gen', desc:'Generate images with AI' },
+                          { id:'data_analyze', icon:'📊', label:'Data Analyze', desc:'Analyze CSV, JSON, datasets' },
+                          { id:'desktop_commander', icon:'🖥️', label:'Desktop Commander', desc:'Control desktop apps' },
+                          { id:'computer_use', icon:'🤖', label:'Computer Use', desc:'Full computer automation' },
+                          { id:'send_request', icon:'📡', label:'HTTP Request', desc:'GET/POST/PUT to any API' },
+                          { id:'read_process', icon:'📟', label:'Read Process Output', desc:'Capture process stdout/stderr' },
+                          { id:'commit_deploy', icon:'🚀', label:'Commit & Deploy', desc:'Git commit, push, deploy' },
+                          { id:'tool_search', icon:'🔧', label:'Tool Search', desc:'Find and load tools dynamically' },
+                          { id:'wait', icon:'⏳', label:'Wait / Delay', desc:'Pause execution, wait for events' },
+                          { id:'action', icon:'🎬', label:'Action', desc:'Trigger any automation action' },
+                        ].map((t: {id:string;icon:string;label:string;desc:string}) => (
+                          <div key={t.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeTools.has(t.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeTools.has(t.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
+                              <span style={{ fontSize:13, flexShrink:0 }}>{t.icon}</span>
+                              <div style={{ minWidth:0 }}>
+                                <p style={{ margin:0, fontSize:11, color: activeTools.has(t.id) ? 'var(--fg-orange2)' : 'var(--fg-text2)', fontWeight: activeTools.has(t.id) ? 600 : 400 }}>{t.label}</p>
+                                <p style={{ margin:0, fontSize:10, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{t.desc}</p>
+                              </div>
                             </div>
-                            <button onClick={() => toggleTool(t.id)} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeTools.has(t.id) ? 'var(--fg-green)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
+                            <button onClick={() => toggleTool(t.id)} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeTools.has(t.id) ? 'var(--fg-green,#22c55e)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
                               <span style={{ position:'absolute', top:2, left: activeTools.has(t.id) ? 16 : 2, width:14, height:14, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
                             </button>
                           </div>
@@ -4145,28 +4386,102 @@ export default function ForgeApp() {
         {(() => {
           window.FORGE_CATALOG_DATA = {
             skills: [
-              { id:'pdf', icon:'📄', name:'PDF Tools', category:'document', desc:'Comprehensive PDF manipulation: extract, create, merge, split, fill forms', prompt:'You are a PDF processing expert. Extract text, create PDFs, merge documents, and fill forms accurately.' },
-              { id:'docx', icon:'📝', name:'Word Documents', category:'document', desc:'Create, read, edit Word documents (.docx) with formatting, tables, images', prompt:'You are a Word document expert. Create, read, and edit professional Word documents with proper formatting.' },
-              { id:'xlsx', icon:'📊', name:'Excel Spreadsheets', category:'document', desc:'Excel workbooks: formulas, formatting, charts, data analysis', prompt:'You are a spreadsheet expert. Create and analyze Excel workbooks with formulas, charts, and data organization.' },
-              { id:'pptx', icon:'🎞️', name:'PowerPoint Presentations', category:'document', desc:'Create and edit slide decks with layouts, speaker notes, animations', prompt:'You are a presentation expert. Create compelling slide decks with clear structure and visual design.' },
-              { id:'data-analyze', icon:'🔍', name:'Data Analysis', category:'analytics', desc:'Answer data questions: lookups, trends, outlier detection, hypothesis testing', prompt:'You are a data analyst. Analyze datasets thoroughly, identify patterns, and provide actionable insights.' },
-              { id:'data-viz', icon:'📈', name:'Data Visualization', category:'analytics', desc:'Create publication-quality charts with Python (matplotlib, seaborn, plotly)', prompt:'You are a data visualization expert. Create clear, publication-ready charts and graphs.' },
-              { id:'dashboard', icon:'🎛️', name:'Build Dashboard', category:'analytics', desc:'Interactive HTML dashboards with charts, filters, KPI cards', prompt:'You are a dashboard designer. Create interactive, user-friendly dashboards with real-time data.' },
-              { id:'brand-voice', icon:'🎤', name:'Brand Voice Enforcement', category:'content', desc:'Apply brand guidelines to content, check tone alignment', prompt:'You are a brand strategist. Ensure all content aligns with brand voice, tone, and guidelines.' },
-              { id:'marketing', icon:'📢', name:'Marketing Content', category:'content', desc:'Draft blog posts, emails, social media, landing pages', prompt:'You are a marketing copywriter. Create engaging, conversion-focused marketing content.' },
-              { id:'debug', icon:'🐛', name:'Debug', category:'engineering', desc:'Systematic debugging: reproduce, isolate, diagnose, fix', prompt:'You are a debugging expert. Identify root causes and provide tested fixes with explanations.' },
-              { id:'code-review', icon:'👁️', name:'Code Review', category:'engineering', desc:'Review code for security, performance, correctness', prompt:'You are a senior code reviewer. Evaluate code for security, performance, and best practices.' },
+              // Documents
+              { id:'pdf', icon:'📄', name:'PDF Tools', category:'document', desc:'Extract, create, merge, split, fill PDF forms', prompt:'You are a PDF processing expert. Handle all PDF operations: extract text, merge documents, fill forms, and create new PDFs.' },
+              { id:'docx', icon:'📝', name:'Word Documents', category:'document', desc:'Create, read, edit .docx with formatting, tables, images', prompt:'You are a Word document expert. Create and edit professional Word documents with proper formatting, tables, and styles.' },
+              { id:'xlsx', icon:'📊', name:'Excel Spreadsheets', category:'document', desc:'Excel workbooks: formulas, charts, pivot tables, data analysis', prompt:'You are a spreadsheet expert. Create Excel workbooks with formulas, charts, pivot tables, and data analysis.' },
+              { id:'pptx', icon:'🎞️', name:'PowerPoint', category:'document', desc:'Create slide decks with layouts, animations, speaker notes', prompt:'You are a presentation expert. Create compelling slide decks with clear structure, visuals, and narrative flow.' },
+              { id:'csv', icon:'🗂️', name:'CSV / Data Files', category:'document', desc:'Parse, transform, analyze and export CSV/TSV data', prompt:'You are a data file expert. Parse, clean, transform, and analyze CSV and structured data files.' },
+              { id:'markdown', icon:'✍️', name:'Markdown Writer', category:'document', desc:'Write, format and publish Markdown documents', prompt:'You are a technical writer. Create clear, well-structured Markdown documents, READMEs, and documentation.' },
+              // Finance
+              { id:'financial-model', icon:'💰', name:'Financial Modeling', category:'finance', desc:'Build P&L, cash flow forecasts, valuation models', prompt:'You are a financial modeling expert. Build detailed financial models, P&L statements, cash flow forecasts, and valuations.' },
+              { id:'invoice', icon:'🧾', name:'Invoice & Billing', category:'finance', desc:'Create invoices, track payments, billing automation', prompt:'You are a billing expert. Create professional invoices, track payments, and automate billing workflows.' },
+              { id:'budget', icon:'📉', name:'Budget Planning', category:'finance', desc:'Annual budgets, variance analysis, forecasting', prompt:'You are a budget analyst. Build and analyze budgets, perform variance analysis, and create financial forecasts.' },
+              { id:'tax', icon:'🏦', name:'Tax Preparation', category:'finance', desc:'Tax calculations, deductions, 1099s, quarterly estimates', prompt:'You are a tax advisor. Help with tax calculations, identify deductions, prepare 1099s and quarterly estimates.' },
+              { id:'accounting', icon:'🔢', name:'Accounting', category:'finance', desc:'Journal entries, reconciliation, bookkeeping', prompt:'You are an accounting expert. Handle bookkeeping, journal entries, account reconciliation, and financial statements.' },
+              { id:'investment', icon:'📈', name:'Investment Analysis', category:'finance', desc:'Stock analysis, portfolio review, ROI calculations', prompt:'You are an investment analyst. Analyze investments, calculate ROI, review portfolios, and model returns.' },
+              // Analytics
+              { id:'data-analyze', icon:'🔍', name:'Data Analysis', category:'analytics', desc:'Trends, patterns, outlier detection, hypothesis testing', prompt:'You are a data analyst. Analyze datasets, identify patterns, test hypotheses, and provide actionable insights.' },
+              { id:'data-viz', icon:'📈', name:'Data Visualization', category:'analytics', desc:'Charts, graphs, infographics with matplotlib/plotly', prompt:'You are a data visualization expert. Create publication-ready charts and interactive visualizations.' },
+              { id:'dashboard', icon:'🎛️', name:'Dashboard Builder', category:'analytics', desc:'Interactive HTML dashboards with filters and KPIs', prompt:'You are a dashboard designer. Build interactive dashboards with charts, filters, KPI cards, and drill-downs.' },
+              { id:'sql', icon:'🗄️', name:'SQL Queries', category:'analytics', desc:'Write optimized SQL for Snowflake, BigQuery, Postgres', prompt:'You are a SQL expert. Write efficient, optimized queries for any SQL dialect including window functions and CTEs.' },
+              { id:'statistics', icon:'📐', name:'Statistical Analysis', category:'analytics', desc:'Regression, correlation, A/B testing, significance', prompt:'You are a statistician. Apply statistical methods, run A/B tests, calculate significance, and interpret results.' },
+              // Engineering
+              { id:'debug', icon:'🐛', name:'Debug', category:'engineering', desc:'Systematic debugging: reproduce, isolate, fix', prompt:'You are a debugging expert. Systematically identify root causes, isolate issues, and provide tested fixes.' },
+              { id:'code-review', icon:'👁️', name:'Code Review', category:'engineering', desc:'Security, performance, correctness review', prompt:'You are a senior code reviewer. Evaluate code for security vulnerabilities, performance bottlenecks, and correctness.' },
+              { id:'architecture', icon:'🏗️', name:'System Architecture', category:'engineering', desc:'ADRs, system design, microservices, APIs', prompt:'You are a software architect. Design scalable systems, write ADRs, and make technology decisions.' },
+              { id:'devops', icon:'🔧', name:'DevOps & CI/CD', category:'engineering', desc:'Docker, Kubernetes, GitHub Actions, deployment pipelines', prompt:'You are a DevOps expert. Build CI/CD pipelines, containerize apps, and manage cloud infrastructure.' },
+              { id:'api-design', icon:'🔌', name:'API Design', category:'engineering', desc:'REST, GraphQL, OpenAPI specs, authentication', prompt:'You are an API architect. Design clean REST and GraphQL APIs with proper auth, versioning, and documentation.' },
+              { id:'testing', icon:'🧪', name:'Testing Strategy', category:'engineering', desc:'Unit, integration, E2E test plans and implementation', prompt:'You are a QA engineer. Design comprehensive test strategies and write unit, integration, and E2E tests.' },
+              { id:'incident', icon:'🚨', name:'Incident Response', category:'engineering', desc:'On-call triage, postmortems, runbooks', prompt:'You are an SRE. Triage incidents, write blameless postmortems, and create runbooks for operational reliability.' },
+              // Content
+              { id:'brand-voice', icon:'🎤', name:'Brand Voice', category:'content', desc:'Apply brand guidelines, tone alignment, messaging', prompt:'You are a brand strategist. Ensure all content aligns with brand voice, tone, and messaging guidelines.' },
+              { id:'marketing', icon:'📢', name:'Marketing Content', category:'content', desc:'Blog posts, emails, social media, landing pages', prompt:'You are a marketing copywriter. Create engaging, conversion-focused content across all channels.' },
+              { id:'email-seq', icon:'📬', name:'Email Sequences', category:'content', desc:'Drip campaigns, onboarding flows, nurture sequences', prompt:'You are an email marketing specialist. Write compelling email sequences with strong subject lines and CTAs.' },
+              { id:'seo', icon:'🔎', name:'SEO Content', category:'content', desc:'Keyword research, meta tags, SEO-optimized articles', prompt:'You are an SEO expert. Research keywords and write content that ranks while providing genuine value.' },
+              { id:'copywriting', icon:'✒️', name:'Copywriting', category:'content', desc:'Ad copy, headlines, CTAs, persuasive writing', prompt:'You are a direct-response copywriter. Write compelling copy that drives action and converts readers.' },
+              { id:'social-media', icon:'📱', name:'Social Media', category:'content', desc:'Posts, captions, hashtags for all platforms', prompt:'You are a social media expert. Create engaging platform-specific content for Twitter, LinkedIn, Instagram, TikTok.' },
+              // Design
+              { id:'ux-design', icon:'🎨', name:'UX Design', category:'design', desc:'User research, wireframes, prototypes, usability', prompt:'You are a UX designer. Create user-centered designs, conduct research, and build intuitive experiences.' },
+              { id:'ui-design', icon:'🖌️', name:'UI Design', category:'design', desc:'Visual design, components, design systems, Figma', prompt:'You are a UI designer. Create beautiful, consistent interfaces with proper spacing, typography, and color.' },
+              { id:'design-critique', icon:'🔬', name:'Design Critique', category:'design', desc:'Review designs for usability, hierarchy, accessibility', prompt:'You are a design critic. Provide constructive feedback on visual hierarchy, usability, and aesthetic consistency.' },
+              // Legal
+              { id:'contract-review', icon:'⚖️', name:'Contract Review', category:'legal', desc:'Review contracts, flag risks, suggest redlines', prompt:'You are a contract analyst. Review agreements, identify risks, and suggest protective language changes.' },
+              { id:'nda', icon:'🔒', name:'NDA Triage', category:'legal', desc:'Triage NDAs as green/yellow/red risk', prompt:'You are a legal analyst. Triage NDAs, classify risk levels, and flag non-standard clauses.' },
+              { id:'compliance', icon:'📋', name:'Compliance Check', category:'legal', desc:'GDPR, SOC2, HIPAA, regulatory requirements', prompt:'You are a compliance specialist. Check processes for regulatory compliance and identify gaps.' },
+              // Product
+              { id:'prd', icon:'🎯', name:'Product Spec', category:'product', desc:'PRDs, user stories, acceptance criteria', prompt:'You are a product manager. Write detailed PRDs, user stories, and acceptance criteria from requirements.' },
+              { id:'roadmap', icon:'🗺️', name:'Roadmap Planning', category:'product', desc:'Now/Next/Later roadmaps, prioritization', prompt:'You are a product strategist. Build product roadmaps, prioritize features, and align stakeholders.' },
+              { id:'competitive', icon:'⚔️', name:'Competitive Analysis', category:'product', desc:'Competitor research, battlecards, positioning', prompt:'You are a competitive analyst. Research competitors, build battlecards, and identify market opportunities.' },
+              // Research
+              { id:'research', icon:'🔭', name:'Deep Research', category:'research', desc:'Multi-source research, fact-checking, synthesis', prompt:'You are a research analyst. Conduct deep research, verify facts, synthesize sources, and produce clear reports.' },
+              { id:'summarize', icon:'📋', name:'Summarizer', category:'research', desc:'Summarize documents, papers, meetings, threads', prompt:'You are a summarization expert. Extract key insights and create concise, accurate summaries of any content.' },
+              { id:'translation', icon:'🌍', name:'Translation', category:'research', desc:'Translate and localize content for any language', prompt:'You are a professional translator. Translate content accurately while preserving tone and cultural context.' },
             ],
             connectors: [
-              { id:'slack', icon:'💬', name:'Slack', desc:'Send messages, read channels, manage threads', status:'coming' },
-              { id:'gmail', icon:'📧', name:'Gmail', desc:'Read/send emails, manage labels, search inbox', status:'coming' },
-              { id:'linear', icon:'📋', name:'Linear', desc:'Create/update issues, manage projects, add comments', status:'coming' },
-              { id:'notion', icon:'📄', name:'Notion', desc:'Read/write pages, create databases, update properties', status:'coming' },
-              { id:'asana', icon:'✅', name:'Asana', desc:'Create tasks, update projects, manage teams', status:'coming' },
-              { id:'gdrive', icon:'☁️', name:'Google Drive', desc:'Create/read files, manage folders, share documents', status:'coming' },
-              { id:'stripe', icon:'💳', name:'Stripe', desc:'Manage subscriptions, charges, customers', status:'coming' },
-              { id:'github', icon:'🐙', name:'GitHub', desc:'Create PRs, manage repos, read issues', status:'coming' },
-              { id:'zoom', icon:'📹', name:'Zoom', desc:'Schedule meetings, list participants, manage recordings', status:'coming' },
+              // Communication
+              { id:'slack', icon:'💬', name:'Slack', desc:'Send messages, read channels, manage threads', status:'coming', category:'communication' },
+              { id:'gmail', icon:'📧', name:'Gmail', desc:'Read/send emails, manage labels, search inbox', status:'coming', category:'communication' },
+              { id:'teams', icon:'💼', name:'Microsoft Teams', desc:'Messages, channels, meetings, files', status:'coming', category:'communication' },
+              { id:'discord', icon:'🎮', name:'Discord', desc:'Send messages, manage servers, read channels', status:'coming', category:'communication' },
+              { id:'whatsapp', icon:'💚', name:'WhatsApp Business', desc:'Send messages, manage contacts, templates', status:'coming', category:'communication' },
+              // Project Management
+              { id:'linear', icon:'📋', name:'Linear', desc:'Create/update issues, manage sprints', status:'coming', category:'project' },
+              { id:'asana', icon:'✅', name:'Asana', desc:'Tasks, projects, teams, timelines', status:'coming', category:'project' },
+              { id:'jira', icon:'🔷', name:'Jira', desc:'Tickets, sprints, epics, bug tracking', status:'coming', category:'project' },
+              { id:'notion', icon:'📄', name:'Notion', desc:'Pages, databases, wikis, docs', status:'coming', category:'project' },
+              { id:'trello', icon:'📌', name:'Trello', desc:'Boards, cards, lists, automations', status:'coming', category:'project' },
+              { id:'monday', icon:'🌈', name:'Monday.com', desc:'Workspaces, boards, automations', status:'coming', category:'project' },
+              // Storage & Files
+              { id:'gdrive', icon:'☁️', name:'Google Drive', desc:'Files, folders, sharing, collaboration', status:'coming', category:'storage' },
+              { id:'dropbox', icon:'📦', name:'Dropbox', desc:'Files, folders, sharing, sync', status:'coming', category:'storage' },
+              { id:'box', icon:'📫', name:'Box', desc:'Enterprise file storage and sharing', status:'coming', category:'storage' },
+              { id:'onedrive', icon:'🔵', name:'OneDrive', desc:'Microsoft file storage, SharePoint integration', status:'coming', category:'storage' },
+              { id:'s3', icon:'🪣', name:'AWS S3', desc:'Object storage, buckets, file operations', status:'coming', category:'storage' },
+              // Dev Tools
+              { id:'github', icon:'🐙', name:'GitHub', desc:'PRs, repos, issues, CI/CD, code review', status:'coming', category:'devtools' },
+              { id:'gitlab', icon:'🦊', name:'GitLab', desc:'Repos, MRs, pipelines, issues', status:'coming', category:'devtools' },
+              { id:'vercel', icon:'▲', name:'Vercel', desc:'Deployments, domains, environment variables', status:'coming', category:'devtools' },
+              { id:'railway', icon:'🚂', name:'Railway', desc:'Deploy services, manage environments', status:'coming', category:'devtools' },
+              { id:'supabase', icon:'⚡', name:'Supabase', desc:'Database, auth, storage, edge functions', status:'coming', category:'devtools' },
+              { id:'firebase', icon:'🔥', name:'Firebase', desc:'Realtime DB, auth, hosting, functions', status:'coming', category:'devtools' },
+              // CRM & Sales
+              { id:'hubspot', icon:'🧡', name:'HubSpot', desc:'Contacts, deals, emails, pipelines', status:'coming', category:'crm' },
+              { id:'salesforce', icon:'☁️', name:'Salesforce', desc:'Leads, opportunities, accounts, reports', status:'coming', category:'crm' },
+              { id:'stripe', icon:'💳', name:'Stripe', desc:'Payments, subscriptions, customers, invoices', status:'coming', category:'crm' },
+              { id:'calendly', icon:'📅', name:'Calendly', desc:'Scheduling, meetings, availability', status:'coming', category:'crm' },
+              // Productivity
+              { id:'gcal', icon:'📆', name:'Google Calendar', desc:'Events, availability, scheduling', status:'coming', category:'productivity' },
+              { id:'zoom', icon:'📹', name:'Zoom', desc:'Meetings, recordings, transcripts', status:'coming', category:'productivity' },
+              { id:'airtable', icon:'🗃️', name:'Airtable', desc:'Bases, tables, views, automations', status:'coming', category:'productivity' },
+              { id:'zapier', icon:'⚡', name:'Zapier', desc:'Connect 5000+ apps with no-code automations', status:'coming', category:'productivity' },
+              { id:'make', icon:'🔄', name:'Make (Integromat)', desc:'Visual workflow automation platform', status:'coming', category:'productivity' },
+              // AI & Data
+              { id:'openai', icon:'🤖', name:'OpenAI API', desc:'GPT-4, DALL-E, Whisper, embeddings', status:'coming', category:'ai' },
+              { id:'anthropic', icon:'🌟', name:'Anthropic API', desc:'Claude models, direct API access', status:'coming', category:'ai' },
+              { id:'pinecone', icon:'🌲', name:'Pinecone', desc:'Vector database for semantic search', status:'coming', category:'ai' },
+              { id:'snowflake', icon:'❄️', name:'Snowflake', desc:'Cloud data warehouse, SQL queries', status:'coming', category:'ai' },
+              { id:'bigquery', icon:'🔍', name:'BigQuery', desc:'Google analytics data warehouse', status:'coming', category:'ai' },
             ]
           };
           return null;
@@ -4270,16 +4585,40 @@ export default function ForgeApp() {
                           <span style={{ fontSize:11, fontWeight:600, animation:'forge-text-flash 1.8s ease-in-out infinite' }}>thinking…</span>
                         </div>
                         {toolVisibility.length > 0 && (
-                          <div style={{ fontSize:12, color:'var(--fg-text3)', display:'flex', flexDirection:'column', gap:8 }}>
-                            {toolVisibility.map((tv, i) => (
-                              <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'var(--fg-bg3)', borderRadius:6, border:'1px solid var(--fg-border2)' }}>
-                                <span style={{ fontSize:10, fontWeight:600, color: tv.status==='done' ? 'var(--fg-green)' : tv.status==='error' ? 'var(--fg-red)' : 'var(--fg-orange)', animation: tv.status==='running' ? 'forge-flash 1s infinite' : 'none' }}>
-                                  {tv.status==='done' ? '✓' : tv.status==='error' ? '✕' : '⚙️'}
-                                </span>
-                                <span style={{ color:'var(--fg-text)', fontWeight:500 }}>{tv.tool}</span>
-                                {tv.input && <span style={{ color:'var(--fg-text3)', fontSize:10, marginLeft:'auto' }}>input: {tv.input.substring(0,20)}…</span>}
-                              </div>
-                            ))}
+                          <div style={{ fontSize:12, color:'var(--fg-text3)', display:'flex', flexDirection:'column', gap:6, marginTop:8 }}>
+                            {toolVisibility.map((tv, i) => {
+                              const toolMeta: Record<string,{icon:string;verb:string}> = {
+                                web_search:{icon:'🔍',verb:'Searching the web'},
+                                browser_navigate:{icon:'🌐',verb:'Opening browser'},
+                                browser_batch:{icon:'🖥️',verb:'Browsing multiple pages'},
+                                run_code:{icon:'⚙️',verb:'Running code'},
+                                read_file:{icon:'📄',verb:'Reading file'},
+                                write_file:{icon:'💾',verb:'Writing file'},
+                                list_directory:{icon:'📁',verb:'Browsing files'},
+                                execute_js:{icon:'⚡',verb:'Running JavaScript'},
+                                screenshot:{icon:'📸',verb:'Taking screenshot'},
+                                click:{icon:'🖱️',verb:'Clicking element'},
+                                send_request:{icon:'📡',verb:'Making API request'},
+                                image_gen:{icon:'🎨',verb:'Generating image'},
+                                data_analyze:{icon:'📊',verb:'Analyzing data'},
+                                commit_deploy:{icon:'🚀',verb:'Deploying changes'},
+                              };
+                              const meta = toolMeta[tv.tool] || { icon:'🔧', verb:`Using ${tv.tool}` };
+                              return (
+                                <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'8px 12px', background:'var(--fg-bg3)', borderRadius:8, border:`1px solid ${tv.status==='done' ? 'var(--fg-border2)' : tv.status==='error' ? 'rgba(239,68,68,0.3)' : 'var(--fg-border3)'}` }}>
+                                  <span style={{ fontSize:14, flexShrink:0, lineHeight:1.3 }}>{meta.icon}</span>
+                                  <div style={{ flex:1, minWidth:0 }}>
+                                    <p style={{ margin:0, fontSize:12, color: tv.status==='running' ? 'var(--fg-orange)' : tv.status==='error' ? 'var(--fg-red,#ef4444)' : 'var(--fg-text2)', fontWeight:500, animation: tv.status==='running' ? 'forge-text-flash 1.5s ease-in-out infinite' : 'none' }}>
+                                      {tv.status==='running' ? `${meta.verb}…` : tv.status==='done' ? `${meta.verb} ✓` : `${meta.verb} failed`}
+                                    </p>
+                                    {tv.input && <p style={{ margin:'2px 0 0', fontSize:10, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tv.input.substring(0,60)}</p>}
+                                  </div>
+                                  <span style={{ fontSize:10, fontWeight:700, color: tv.status==='done' ? 'var(--fg-green,#22c55e)' : tv.status==='error' ? 'var(--fg-red,#ef4444)' : 'var(--fg-orange)', flexShrink:0 }}>
+                                    {tv.status==='done' ? '✓' : tv.status==='error' ? '✕' : '●'}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -4687,368 +5026,12 @@ export default function ForgeApp() {
                 Forge will inject {showConnectModal.name} capabilities into the AI when this connector is active.
                 Full OAuth integration coming soon.
               </p>
-              <button onClick={() => setShowConnectModal(null)} style={{ position:'absolute', top:12, right:12, background:'none', border:'none', color:'var(--fg-text3)', fontSize:18, cursor:'pointer', padding:4 }}>✕</button>
+              <button onClick={() => setShowConnectModal(null)} style={{ position:'absolute', top:12, right:12, background:'none', border:'none', color:'var(--fg-text3)', fontSize:20, cursor:'pointer', padding:'4px 8px' }}>✕</button>
             </div>
           </div>
         )}
 
-        {/* ── FILES ─────────────────────────────────────────────────────── */}
-        {mainTab === 'files' && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)', padding:24 }}
-            onDragOver={e => e.preventDefault()}
-            onDrop={e => { e.preventDefault(); Array.from(e.dataTransfer.files).forEach(uploadFile); }}>
-            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
-              <span style={{ fontSize:24 }}>📁</span>
-              <div>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Files</h2>
-                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Workspace files — attach to agents, reference in chat, share across projects</p>
-              </div>
-              <button onClick={() => filesInputRef.current?.click()} style={{ marginLeft:'auto', padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ Upload</button>
-              <input ref={filesInputRef} type="file" multiple style={{ display:'none' }} onChange={e => { Array.from(e.target.files || []).forEach(uploadFile); e.target.value = ''; }} />
-            </div>
-            {/* Drop zone */}
-            <div onClick={() => filesInputRef.current?.click()} style={{ padding:32, background:'var(--fg-bg3)', border:'2px dashed var(--fg-border2)', borderRadius:12, textAlign:'center', cursor:'pointer', marginBottom:20 }}>
-              <p style={{ fontSize:28, margin:'0 0 8px' }}>📂</p>
-              <p style={{ margin:'0 0 4px', fontSize:13, color:'var(--fg-text2)', fontWeight:600 }}>Drop files here or click to upload</p>
-              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>PDFs, images, code, CSVs, Word docs, and more</p>
-            </div>
-            {/* File list */}
-            {files.length === 0 && <p style={{ fontSize:13, color:'var(--fg-text3)', textAlign:'center' }}>No files yet. Upload files to reference them in chat.</p>}
-            <div style={{ overflowY:'auto', flex:1 }}>
-              {files.map(f => (
-                <div key={f.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:6 }}>
-                  <span style={{ fontSize:20 }}>{f.type.startsWith('image') ? '🖼' : f.type.includes('pdf') ? '📄' : f.name.endsWith('.csv') ? '📊' : f.name.match(/\.(ts|js|py|go|rs)$/) ? '💻' : '📎'}</span>
-                  <div style={{ flex:1, overflow:'hidden' }}>
-                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</p>
-                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{(f.size / 1024).toFixed(1)} KB · {new Date(f.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <button onClick={() => { setFiles(prev => prev.filter(x => x.id !== f.id)); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14, padding:'2px 6px' }}>✕</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── HOOKS ─────────────────────────────────────────────────────── */}
-        {mainTab === 'hooks' && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)', padding:24 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
-              <span style={{ fontSize:24 }}>🪝</span>
-              <div>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Hooks</h2>
-                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Automation triggers — fire actions on workspace events</p>
-              </div>
-              <button onClick={() => setShowHookForm(v => !v)} style={{ marginLeft:'auto', padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ New Hook</button>
-            </div>
-            {/* New hook form */}
-            {showHookForm && (
-              <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border3)', borderRadius:10, padding:18, marginBottom:18 }}>
-                <p style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-orange)' }}>New Hook</p>
-                <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-                  <select value={hookForm.event} onChange={e => setHookForm(f => ({...f, event: e.target.value}))} style={{ flex:1, padding:'8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }}>
-                    {['on_message','on_harvest','on_skill_complete','on_tool_call','on_agent_finish','on_result','on_schedule','on_error'].map(ev => <option key={ev} value={ev}>{ev}</option>)}
-                  </select>
-                  <select value={hookForm.action} onChange={e => setHookForm(f => ({...f, action: e.target.value}))} style={{ flex:1, padding:'8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }}>
-                    {['post_slack','send_email','webhook','log','create_task','run_agent'].map(a => <option key={a} value={a}>{a}</option>)}
-                  </select>
-                </div>
-                <input value={hookForm.target} onChange={e => setHookForm(f => ({...f, target: e.target.value}))} placeholder="Target (e.g. #general, https://webhook.site/...)" style={{ width:'100%', padding:'8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box', marginBottom:10 }} />
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={addHook} style={{ flex:1, padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>Save Hook</button>
-                  <button onClick={() => setShowHookForm(false)} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>Cancel</button>
-                </div>
-              </div>
-            )}
-            {/* Event reference */}
-            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, marginBottom:16 }}>
-              <p style={{ margin:'0 0 10px', fontSize:12, fontWeight:600, color:'var(--fg-text2)' }}>Available Events</p>
-              {[
-                { event:'on_message', desc:'Fires after every AI response' },
-                { event:'on_harvest', desc:'Fires when SuperAgent harvests memory' },
-                { event:'on_skill_complete', desc:'Fires when a skill finishes executing' },
-                { event:'on_tool_call', desc:'Fires when a tool is invoked' },
-                { event:'on_agent_finish', desc:'Fires when an agent run completes' },
-                { event:'on_result', desc:'Fires when a dispatch run produces output' },
-                { event:'on_schedule', desc:'Fires on a cron schedule' },
-              ].map(h => (
-                <div key={h.event} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, marginBottom:6 }}>
-                  <div>
-                    <p style={{ margin:0, fontSize:12, fontFamily:'var(--fg-font-mono)', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</p>
-                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{h.desc}</p>
-                  </div>
-                  <button onClick={() => { setHookForm(f => ({...f, event: h.event})); setShowHookForm(true); }} style={{ padding:'4px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:5, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>+ Add</button>
-                </div>
-              ))}
-            </div>
-            {/* Configured hooks */}
-            {hooks.length > 0 && (
-              <div>
-                <p style={{ margin:'0 0 10px', fontSize:12, fontWeight:600, color:'var(--fg-text2)' }}>Your Hooks ({hooks.length})</p>
-                {hooks.map(h => (
-                  <div key={h.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'var(--fg-bg3)', border:`1px solid ${h.enabled ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:6 }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:2 }}>
-                        <span style={{ fontSize:12, fontFamily:'var(--fg-font-mono)', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</span>
-                        <span style={{ fontSize:11, color:'var(--fg-text3)' }}>→ {h.action}</span>
-                      </div>
-                      <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{h.target}</p>
-                    </div>
-                    <button onClick={() => toggleHook(h.id)} style={{ padding:'4px 8px', background: h.enabled ? 'rgba(34,197,94,0.15)' : 'var(--fg-bg4)', border:`1px solid ${h.enabled ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:5, color: h.enabled ? 'var(--fg-green)' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600 }}>{h.enabled ? 'ON' : 'OFF'}</button>
-                    <button onClick={() => deleteHook(h.id)} style={{ padding:'4px 8px', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── RUNS ──────────────────────────────────────────────────────── */}
-        {mainTab === 'runs' && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)', padding:24 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
-              <span style={{ fontSize:24 }}>🏃</span>
-              <div>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>Runs</h2>
-                <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Agent run history — all automated executions from dispatch, ForgeAuto, and multi-agent</p>
-              </div>
-              <button onClick={loadDispatchRuns} style={{ marginLeft:'auto', padding:'6px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>↻ Refresh</button>
-            </div>
-            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-              <span style={{ fontSize:12, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'4px 10px', borderRadius:10 }}>● {dispatchRuns.filter(r=>r.status==='running').length} running</span>
-              <span style={{ fontSize:12, color:'var(--fg-green)', background:'rgba(34,197,94,0.08)', padding:'4px 10px', borderRadius:10 }}>✓ {dispatchRuns.filter(r=>r.status==='done').length} done</span>
-              <span style={{ fontSize:12, color:'var(--fg-red)', background:'rgba(248,113,113,0.08)', padding:'4px 10px', borderRadius:10 }}>✕ {dispatchRuns.filter(r=>r.status==='error').length} errors</span>
-              <span style={{ fontSize:12, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'4px 10px', borderRadius:10 }}>{dispatchRuns.length} total</span>
-              <button onClick={() => setShowRunsScheduler(true)} style={{ marginLeft:'auto', padding:'4px 12px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>+ Schedule Run</button>
-            </div>
-
-            {/* Scheduled Runs section */}
-            {runsSchedule.length > 0 && (
-              <div style={{ marginBottom:16 }}>
-                <p style={{ margin:'0 0 8px', fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.5px' }}>⏱ Scheduled</p>
-                <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                  {runsSchedule.map(run => (
-                    <div key={run.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${run.enabled ? 'rgba(74,222,128,0.3)' : 'var(--fg-border)'}`, borderRadius:10, padding:'10px 14px', display:'flex', alignItems:'center', gap:10 }}>
-                      <div style={{ width:8, height:8, borderRadius:'50%', background: run.enabled ? 'var(--fg-green)' : 'var(--fg-text3)', flexShrink:0 }} />
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{run.name}</div>
-                        <div style={{ fontSize:10, color:'var(--fg-text3)', fontFamily:'monospace' }}>{run.cron}</div>
-                      </div>
-                      <button onClick={() => setRunsSchedule(prev => prev.map(r => r.id===run.id ? {...r, enabled:!r.enabled} : r))} style={{ padding:'3px 8px', background: run.enabled ? 'rgba(74,222,128,0.15)' : 'var(--fg-bg4)', border:`1px solid ${run.enabled ? 'var(--fg-green)' : 'var(--fg-border2)'}`, borderRadius:5, color: run.enabled ? 'var(--fg-green)' : 'var(--fg-text3)', fontSize:10, cursor:'pointer' }}>{run.enabled ? 'On' : 'Off'}</button>
-                      <button onClick={() => setRunsSchedule(prev => prev.filter(r => r.id !== run.id))} style={{ padding:'3px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:5, color:'var(--fg-text3)', fontSize:10, cursor:'pointer' }}>🗑</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {dispatchRuns.length === 0 && (
-              <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'var(--fg-text3)' }}>
-                <p style={{ fontSize:40, margin:'0 0 12px' }}>🏃</p>
-                <p style={{ margin:0, fontSize:14 }}>No runs yet.</p>
-                <p style={{ margin:'6px 0 0', fontSize:12 }}>Use ForgeAuto, ForgeMulti, or the Dispatch panel to start an agent run.</p>
-              </div>
-            )}
-            <div style={{ overflowY:'auto', flex:1 }}>
-              {dispatchRuns.map(r => (
-                <div key={r.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${r.status==='running' ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:10, padding:14, marginBottom:8 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
-                    <span style={{ fontSize:11, padding:'3px 8px', borderRadius:6, fontWeight:600, background: r.status==='done' ? 'rgba(34,197,94,0.15)' : r.status==='running' ? 'rgba(249,115,22,0.15)' : r.status==='cancelled' ? 'rgba(100,116,139,0.15)' : 'rgba(248,113,113,0.15)', color: r.status==='done' ? 'var(--fg-green)' : r.status==='running' ? 'var(--fg-orange)' : r.status==='cancelled' ? 'var(--fg-text3)' : 'var(--fg-red)' }}>{r.status}</span>
-                    <span style={{ fontSize:12, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.prompt}</span>
-                    {r.status === 'running' && <button onClick={() => { if (activeDispatchRunId === r.id) cancelDispatch(); else setActiveDispatchRunId(r.id); }} style={{ padding:'3px 8px', background:'rgba(248,113,113,0.15)', border:'1px solid var(--fg-red)', borderRadius:5, color:'var(--fg-red)', cursor:'pointer', fontSize:11 }}>Cancel</button>}
-                  </div>
-                  {r.output && <p style={{ margin:'6px 0 0', fontSize:12, color:'var(--fg-text2)', background:'var(--fg-bg4)', padding:8, borderRadius:6, maxHeight:80, overflowY:'auto', whiteSpace:'pre-wrap' }}>{r.output.slice(0,300)}{r.output.length > 300 ? '…' : ''}</p>}
-                  {r.error && <p style={{ margin:'6px 0 0', fontSize:12, color:'var(--fg-red)', background:'rgba(248,113,113,0.08)', padding:8, borderRadius:6 }}>⚠ {r.error}</p>}
-                  <p style={{ margin:'6px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{new Date(r.created_at).toLocaleString()} · {(r.agent_ids || []).length} agents</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* New Run Modal */}
-        {showRunsScheduler && (
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:10000, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowRunsScheduler(false)}>
-            <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:16, padding:28, width:480, maxWidth:'95vw' }} onClick={e => e.stopPropagation()}>
-              <h3 style={{ margin:'0 0 20px', fontSize:18, fontWeight:800, color:'var(--fg-orange)' }}>⏱ New Scheduled Run</h3>
-              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-                <div>
-                  <label style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:4, display:'block' }}>Run Name</label>
-                  <input value={newRunName} onChange={e => setNewRunName(e.target.value)} placeholder="e.g. Daily Morning Brief" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:4, display:'block' }}>Prompt / Task</label>
-                  <textarea value={newRunPrompt} onChange={e => setNewRunPrompt(e.target.value)} placeholder="What should the AI do each time this runs?" rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', outline:'none', boxSizing:'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:4, display:'block' }}>Schedule (Cron)</label>
-                  <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:8 }}>
-                    {[
-                      {label:'Every day 9am', cron:'0 9 * * *'},
-                      {label:'Weekdays 9am', cron:'0 9 * * 1-5'},
-                      {label:'Every hour', cron:'0 * * * *'},
-                      {label:'Every Monday', cron:'0 9 * * 1'},
-                    ].map(p => (
-                      <button key={p.cron} onClick={() => setNewRunCron(p.cron)} style={{ padding:'4px 10px', background: newRunCron===p.cron ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${newRunCron===p.cron ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: newRunCron===p.cron ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>{p.label}</button>
-                    ))}
-                  </div>
-                  <input value={newRunCron} onChange={e => setNewRunCron(e.target.value)} placeholder="0 9 * * 1-5" style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', fontSize:13, fontFamily:'monospace', boxSizing:'border-box' }} />
-                </div>
-                <div style={{ display:'flex', gap:10, marginTop:4 }}>
-                  <button onClick={() => {
-                    if (!newRunName.trim() || !newRunPrompt.trim()) return;
-                    setRunsSchedule(prev => [...prev, { id: Date.now().toString(), name:newRunName.trim(), prompt:newRunPrompt.trim(), cron:newRunCron, enabled:true }]);
-                    setNewRunName(''); setNewRunPrompt(''); setNewRunCron('0 9 * * 1-5'); setShowRunsScheduler(false);
-                  }} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>✓ Create Run</button>
-                  <button onClick={() => setShowRunsScheduler(false)} style={{ padding:'10px 20px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer' }}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── FORGECO ───────────────────────────────────────────────────── */}
-        {mainTab === 'forgeco' && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)' }}>
-            {/* Header */}
-            <div style={{ padding:'12px 24px', borderBottom:'1px solid var(--fg-border)', flexShrink:0, display:'flex', alignItems:'center', gap:12 }}>
-              <span style={{ fontSize:22 }}>🧑‍💻</span>
-              <div>
-                <h2 style={{ margin:0, fontSize:17, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeCo</h2>
-                <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Code + Cowork — AI-assisted development and collaboration</p>
-              </div>
-              <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8 }}>
-                {selectedModel && <span style={{ fontSize:11, padding:'3px 8px', background:'rgba(249,115,22,0.12)', border:'1px solid var(--fg-orange)', borderRadius:12, color:'var(--fg-orange)', fontWeight:600 }}>⚡ {selectedModel}</span>}
-                <div style={{ display:'flex', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, padding:3, gap:2 }}>
-                  {(['code','cowork'] as const).map(t => (
-                    <button key={t} onClick={() => setCoTab(t)} style={{ padding:'5px 16px', background:coTab===t ? 'var(--fg-orange)' : 'transparent', border:'none', borderRadius:6, color:coTab===t ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:13, fontWeight:coTab===t ? 600 : 400, textTransform:'capitalize' }}>{t === 'code' ? '💻 Code' : '🤝 Cowork'}</button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Code tab */}
-            {coTab === 'code' && (
-              <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
-                {/* Editor pane */}
-                <div style={{ flex:1, display:'flex', flexDirection:'column', borderRight:'1px solid var(--fg-border)' }}>
-                  <div style={{ padding:'8px 12px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-                    <span style={{ fontSize:12, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>editor</span>
-                    <select value={coCodeLang} onChange={e => setCoCodeLang(e.target.value)} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text2)', fontSize:11, cursor:'pointer' }}>
-                      {['typescript','javascript','python','rust','go','html','css','json','bash','sql'].map(l => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                  <textarea
-                    value={coCode}
-                    onChange={e => setCoCode(e.target.value)}
-                    spellCheck={false}
-                    style={{ flex:1, padding:16, background:'var(--fg-bg2)', border:'none', color:'var(--fg-text)', fontSize:13, fontFamily:'var(--fg-font-mono)', lineHeight:1.7, resize:'none', outline:'none', tabSize:2 }}
-                  />
-                  {/* AI prompt bar */}
-                  <div style={{ padding:'10px 12px', borderTop:'1px solid var(--fg-border)', background:'var(--fg-bg3)', display:'flex', gap:8, flexShrink:0 }}>
-                    <input
-                      value={coCodePrompt}
-                      onChange={e => setCoCodePrompt(e.target.value)}
-                      onKeyDown={async e => {
-                        if (e.key !== 'Enter' || !coCodePrompt.trim() || !user) return;
-                        e.preventDefault();
-                        setCoCodeRunning(true);
-                        try {
-                          const d = await apiFetch('/chat/completions', { method:'POST', body:JSON.stringify({ model: selectedModel||'forge-fast', messages:[{role:'system',content:`You are an expert ${coCodeLang} developer. Current code:\n\`\`\`${coCodeLang}\n${coCode}\n\`\`\`\nRespond with ONLY the updated code, no markdown fences.`},{role:'user',content:coCodePrompt}] }) }, user.token);
-                          if (d?.choices?.[0]?.message?.content) { setCoCode(d.choices[0].message.content); setCoCodePrompt(''); }
-                        } catch(err:any) { setCoCodeOutput('Error: '+err.message); } finally { setCoCodeRunning(false); }
-                      }}
-                      placeholder="Ask AI to edit this code… (Enter to apply)"
-                      style={{ flex:1, padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, outline:'none' }}
-                    />
-                    <button onClick={() => { navigator.clipboard?.writeText(coCode); }} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>Copy</button>
-                    {coCodeRunning && <span style={{ fontSize:12, color:'var(--fg-orange)', alignSelf:'center', animation:'forge-flash 0.8s ease-in-out infinite' }}>✦</span>}
-                  </div>
-                </div>
-                {/* Output pane */}
-                <div style={{ width:340, display:'flex', flexDirection:'column', background:'var(--fg-bg2)' }}>
-                  <div style={{ padding:'8px 12px', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-                    <span style={{ fontSize:12, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>output</span>
-                    <button onClick={() => setCoCodeOutput('')} style={{ marginLeft:'auto', padding:'2px 8px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:4, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>Clear</button>
-                  </div>
-                  <div style={{ flex:1, padding:14, fontFamily:'var(--fg-font-mono)', fontSize:12, color:'var(--fg-green)', lineHeight:1.7, overflowY:'auto', whiteSpace:'pre-wrap', wordBreak:'break-all' }}>
-                    {coCodeOutput || <span style={{ color:'var(--fg-text3)' }}>// output will appear here\n// use the AI prompt bar to edit code\n// or paste your code and ask questions</span>}
-                  </div>
-                  {/* Quick actions */}
-                  <div style={{ padding:'10px 12px', borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
-                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', fontWeight:600, textTransform:'uppercase' }}>Quick Actions</p>
-                    {['Explain this code','Add TypeScript types','Write unit tests','Find bugs','Optimize performance','Add error handling'].map(action => (
-                      <button key={action} onClick={async () => {
-                        if (!user || !coCode.trim()) return;
-                        setCoCodeRunning(true); setCoCodePrompt(action);
-                        try {
-                          const d = await apiFetch('/chat/completions', { method:'POST', body:JSON.stringify({ model: selectedModel||'forge-fast', messages:[{role:'system',content:`You are an expert ${coCodeLang} developer.`},{role:'user',content:`${action}:\n\`\`\`${coCodeLang}\n${coCode}\n\`\`\``}] }) }, user.token);
-                          if (d?.choices?.[0]?.message?.content) setCoCodeOutput(d.choices[0].message.content);
-                        } catch(err:any) { setCoCodeOutput('Error: '+err.message); } finally { setCoCodeRunning(false); setCoCodePrompt(''); }
-                      }} style={{ padding:'5px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:11, textAlign:'left' }}>{action}</button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Cowork tab */}
-            {coTab === 'cowork' && (
-              <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-                <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
-                  {coCoworkMessages.length === 0 && (
-                    <div style={{ textAlign:'center', padding:'60px 0', color:'var(--fg-text3)' }}>
-                      <div style={{ fontSize:48, marginBottom:16 }}>🤝</div>
-                      <p style={{ fontSize:16, margin:'0 0 8px', color:'var(--fg-text2)' }}>ForgeCo Cowork</p>
-                      <p style={{ fontSize:13, margin:'0 0 28px', color:'var(--fg-text3)', maxWidth:460, marginLeft:'auto', marginRight:'auto', lineHeight:1.6 }}>Your AI collaboration partner. Plan projects, write docs, review code, brainstorm ideas, draft proposals — all in a shared workspace.</p>
-                      <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center' }}>
-                        {['Plan a new product feature','Review and improve this document','Help me write a technical spec','Brainstorm solutions for this problem','Create a project roadmap'].map(s => (
-                          <button key={s} onClick={() => setCoCoworkInput(s)} style={{ padding:'8px 16px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:20, color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>{s}</button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {coCoworkMessages.map((m, i) => (
-                    <div key={i} style={{ display:'flex', gap:12, marginBottom:20, flexDirection: m.role==='user' ? 'row-reverse' : 'row' }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background: m.role==='user' ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
-                        {m.role==='user' ? '👤' : '🤝'}
-                      </div>
-                      <div style={{ maxWidth:'72%', padding:'12px 16px', borderRadius: m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background: m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg2)', border:`1px solid ${m.role==='user' ? 'var(--fg-border2)' : 'rgba(124,58,237,0.3)'}`, color:'var(--fg-text)', fontSize:14, lineHeight:1.7, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
-                        {m.content}
-                      </div>
-                    </div>
-                  ))}
-                  {coCoworkRunning && (
-                    <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,var(--fg-orange),#7c3aed)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>🤝</div>
-                      <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid rgba(124,58,237,0.3)', display:'flex', gap:6, alignItems:'center' }}>
-                        {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'#7c3aed', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div style={{ padding:'12px 24px 20px', borderTop:'1px solid var(--fg-border)', flexShrink:0 }}>
-                  <div style={{ display:'flex', gap:10, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, padding:'8px 12px', alignItems:'flex-end' }}>
-                    <textarea value={coCoworkInput} onChange={e => setCoCoworkInput(e.target.value)} onKeyDown={async e => {
-                      if (e.key !== 'Enter' || e.shiftKey || !coCoworkInput.trim() || !user) return;
-                      e.preventDefault();
-                      const msg = coCoworkInput.trim();
-                      setCoCoworkInput('');
-                      const newMsgs = [...coCoworkMessages, {role:'user', content:msg}];
-                      setCoCoworkMessages(newMsgs);
-                      setCoCoworkRunning(true);
-                      try {
-                        const d = await apiFetch('/chat/completions', { method:'POST', body:JSON.stringify({ model: selectedModel||'forge-pro', messages:[{role:'system',content:'You are ForgeCo, an expert AI collaboration partner. Help with planning, writing, coding, brainstorming, and all knowledge work. Be thorough, practical, and insightful.'}, ...newMsgs.map(m=>({role:m.role,content:m.content}))] }) }, user.token);
-                        if (d?.choices?.[0]?.message?.content) setCoCoworkMessages(prev => [...prev, {role:'assistant', content:d.choices[0].message.content}]);
-                      } catch(err:any) { setCoCoworkMessages(prev => [...prev, {role:'assistant', content:'Error: '+err.message}]); } finally { setCoCoworkRunning(false); }
-                    }} placeholder="Collaborate with AI — plan, write, code, brainstorm… (Enter to send)" rows={2} style={{ flex:1, background:'transparent', border:'none', color:'var(--fg-text)', fontSize:14, resize:'none', outline:'none', lineHeight:1.6 }} />
-                    <button onClick={async () => {
-                      if (!coCoworkInput.trim() || !user) return;
-                      const msg = coCoworkInput.trim();
-                      setCoCoworkInput('');
-                      const newMsgs = [...coCoworkMessages, {role:'user', content:msg}];
-                      setCoCoworkMessages(newMsgs);
-                      setCoCoworkRunning(true);
-                      try {
-                        const d = await apiFetch('/chat/completions', { method:'POST', body:JSON.stringify({ model: selectedModel||'forge-pro', messages:[{role:'system',content:'You are ForgeCo, an expert AI collaboration partner.'}, ...newMsgs.map(m=>({role:m.role,content:m.content}))] }) }, user.token);
-                        if (d?.choices?.[0]?.message?.content) setCoCoworkMessages(prev => [...prev, {role:'assistant', content:d.choices[0].message.content}]);
-                      } catch(err:any) { setCoCoworkMessages(prev => [...prev, {role:'assistant', content:'Error: '+err.message}]); } finally { setCoCoworkRunning(false); }
-                    }} disabled={coCoworkRunning||!coCoworkInput.trim()} style={{ width:36, height:36, background: coCoworkRunning||!coCoworkInput.trim() ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#7c3aed)', border:'none', borderRadius:8, color:'#fff', cursor:coCoworkInput.trim()&&!coCoworkRunning
+      </div>
+    </div>
+  );
+};

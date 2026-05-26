@@ -1,5 +1,19 @@
 # Forge Platform — Version History
 
+## v6.31 — 2026-05-26 (current)
+
+### Progress Tracker + Ready-made Agents + Expanded Tools + Human Narration
+
+- **Progress Tracker tab** — first tab in right panel (📌). Dynamic goal tracker with priority levels (high/medium/low), progress bar, inline editing, clear-done/clear-all. Persisted to localStorage. Chat folder section shows 6h inactivity warning and 24h delete countdown
+- **Ready-made Agents tab** — second tab in right panel (🧠). 25 pre-built agents across Business, Individual, and Builder categories. One-click activate loads expert system prompt into workspace chat. CEO Advisor, Marketing Pro, Sales Coach, Finance Analyst, MVP Builder, and 20 more
+- **Expanded built-in tools** — 23 tools now shown in the Tools tab with descriptions: web_search, browse_web, browser_batch, run_code, start_process, read_file, write_file, list_directory, execute_js, screenshot, click/interact, press_key, webhooks, image_gen, data_analyze, desktop_commander, computer_use, HTTP request, read_process_output, commit_deploy, tool_search, wait, action
+- **Human-like tool narration** — tool calls in chat now show plain-English descriptions ("Searched the web for X", "Read file at Y", "Ran Python to compute the result") instead of raw tool names. Active tools show animated progress with icons
+- **Massive skills catalog expansion** — 40+ skills across 8 categories: Documents (PDF, Word, Excel, PowerPoint, CSV, Markdown), Finance (Financial Modeling, Invoice, Budget, Tax, Accounting, Investment), Analytics (Data Analysis, Visualization, Dashboard, SQL, Statistics), Engineering (Debug, Code Review, Architecture, DevOps, API Design, Testing, Incident Response), Content (Brand Voice, Marketing, Email Sequences, SEO, Copywriting, Social Media), Design (UX, UI, Design Critique), Legal (Contract Review, NDA Triage, Compliance), Product (PRD, Roadmap, Competitive Analysis), Research (Deep Research, Summarizer, Translation)
+- **Expanded connectors catalog** — 35+ connectors across Communication (Slack, Gmail, Teams, Discord, WhatsApp), Project Management (Linear, Asana, Jira, Notion, Trello, Monday), Storage (Google Drive, Dropbox, Box, OneDrive, S3), Dev Tools (GitHub, GitLab, Vercel, Railway, Supabase, Firebase), CRM (HubSpot, Salesforce, Stripe, Calendly), Productivity (Google Calendar, Zoom, Airtable, Zapier, Make), AI & Data (OpenAI, Anthropic, Pinecone, Snowflake, BigQuery)
+- **Fixed file truncation** — restored missing end of ForgeApp.tsx (connector modal close button + component export)
+
+---
+
 ## v6.30 — 2026-05-25 (current)
 
 ### Autonomy Layer + Bug Fixes
@@ -388,50 +402,4 @@
 - **platform_models table** — 18 models seeded, admin can enable/disable
 - **platform_api_keys table** — encrypted platform-wide keys, fallback for all users
 - **platform_settings table** — general KV settings store
-- **Admin routes**: GET/PATCH /api/admin/users/:id, GET/POST/DELETE /api/admin/platform-keys, GET/PATCH/POST /api/admin/models, GET /api/admin/stats
-- **Public /api/models** — returns enabled models for dynamic frontend loading
-- **resolveForgeModel** — correct Anthropic model ID mapping (claude-haiku-4-5-20251001 etc.)
-- **getUserKey** — falls back to platform key (from DB) then env var, so users don't need to enter keys if admin has set platform keys
-- **Model from request body** — chat endpoint accepts model override per-message
-
-### Deployed URLs
-- Frontend: https://forge-sand-two.vercel.app
-- Backend: https://forge-production-2692.up.railway.app
-
-### Git commits (both in same repo)
-- `bebc30f` — feat: admin routes platform_models platform_api_keys DB persistence
-- `bdf6e66` — feat: admin panel with stats users platform keys model toggles
-- `0d80016` — fix: per-provider key save, correct model filtering, thread recovery
-
----
-
-## Post-deploy checklist
-1. **Railway volume** — add volume at `/data` in Railway dashboard so DB survives redeploys
-2. **Make yourself admin** — run in Railway shell or DB console:
-   ```sql
-   UPDATE users SET role='admin' WHERE email='goldrusher9009@gmail.com';
-   ```
-3. **Enter platform API key** — log in as admin → Admin tab → Platform Keys → enter Anthropic key → all users can now chat without entering their own key
-
----
-
-## v5.0 — previous
-- Full workspace rebuild: projects, threads, messages, artifacts, agents, tasks, dispatch, schedule
-- ForgeRouter tab with Forge models + direct models + OpenRouter + custom providers
-- Billing tab with subscription management
-- Platforms/Settings tabs with connected service credentials (stored in localStorage only)
-- Per-user encrypted API key storage in SQLite
-- JWT auth with refresh tokens
-
----
-
-## v5.7 — 2026-05-21 (current)
-
-### Frontend: forge-web-studio/app/components/ForgeApp.tsx
-- **OpenRouter model IDs** — `selectedModel` state now stores bare IDs (e.g. `deepseek/deepseek-v4-flash:free`) instead of `openrouter/deepseek/deepseek-v4-flash:free`. Stripped at every `setSelectedModel` call site: loadOpenRouterModels, loadApiKeys, ForgeRouter click, navbar option values. `cleanModel` safety strip kept in sendMessage as fallback.
-- **Copy button on messages** — every message has 📋 Copy + 🔊 Read buttons that appear on hover, identical to Claude's UX
-- **New conversation fix** — `newThread` has a fallback retry path; errors swallowed silently instead of alerting raw JSON
-- **Version badge** — updated to v5.7 in sidebar footer
-
-### forge-web-studio/package.json: 5.6.0 → 5.7.0
-### forge-platform/package.json: 5.6.0 → 5.7.0
+- **Admin routes**: GET/PATCH /api/adm
