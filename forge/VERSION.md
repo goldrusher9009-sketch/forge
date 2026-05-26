@@ -1,6 +1,17 @@
 # Forge Platform — Version History
 
-## v6.23 — 2026-05-25 (current)
+## v6.24 — 2026-05-25 (current)
+
+### Tools for All Providers + Manus Live Feed + Clarification UI
+- **`callOpenAICompatWithTools`** — full tool_use loop for OpenRouter, OpenAI, Groq, Mistral. DeepSeek and any OpenRouter model now calls web_search, browser_action, run_code etc.
+- **Manus-style live activity feed** — expanded panel shows every step with timeline dots, tool detail rows (query/URL/command), live tool call cards with expand/collapse during thinking
+- **Clarification question UI** — when AI asks a numbered question, frontend renders clickable option buttons; clicking sends that option immediately
+- **Clarification instructions in system prompt** — AI told exactly how to format numbered option questions
+- **`browser_action` icon** 🖱️ added to tool icon map
+
+---
+
+## v6.23 — 2026-05-25
 
 ### Browser Automation + Persistent State + Iron-Clad Execution
 - **`browser_action` tool** — Real headless Chromium via Playwright: navigate/click/type/fill_form/screenshot/get_text/evaluate/scroll. Persistent sessions (reuse session_id across calls). Auto-cleanup after 5 min.

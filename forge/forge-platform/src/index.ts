@@ -141,7 +141,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.23' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.24' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1740,7 +1740,17 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
 7. Complete the ENTIRE task autonomously. If one approach fails, try another tool.
 8. Return real results, not descriptions of what you would do.
 9. Be fast and direct. Execute first, explain after.
-10. No task is too complex — break it down and execute step by step with tools.`;
+10. No task is too complex — break it down and execute step by step with tools.
+
+## Asking Clarification (when genuinely needed)
+If a request has multiple very different valid interpretations, ask ONE concise question with 2-4 numbered options like this:
+
+**Which approach do you prefer?**
+1. Option A — brief description
+2. Option B — brief description
+3. Something else
+
+Only ask when truly needed. For most tasks, make a reasonable assumption and execute.`;
 
   systemParts.unshift(FORGE_SYSTEM_PROMPT);
 
@@ -1790,11 +1800,36 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
       ]);
       result = agentResult;
     } else {
-      // Other providers: standard single-turn call
-      result = await Promise.race([
-        callLLM(provider, apiKey, actualModel, llmMessages),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out — model may be slow or key invalid`)), provider === 'openrouter' ? 60000 : 25000))
-      ]);
+      // OpenAI-compatible providers: use function calling tool loop
+      const onToolCall = (toolName: string, toolArgs: any, toolResult: string) => {
+        const argsPreview = JSON.stringify(toolArgs).slice(0, 80);
+        emitStep('🔧', `Tool: ${toolName}(${argsPreview})`);
+        emitAgentActivity(userId, { type: 'tool', message: `🔧 ${toolName}: ${argsPreview}`, model });
+        try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500) })}\n\n`); } catch {}
+      };
+
+      const openAICompatProviders: Record<string, { url: string; headers: Record<string,string>; modelResolver?: (m:string)=>string }> = {
+        openai:     { url: 'https://api.openai.com/v1/chat/completions', headers: {} },
+        groq:       { url: 'https://api.groq.com/openai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'llama-3.3-70b':'llama-3.3-70b-versatile','llama-3.1-70b':'llama-3.1-70b-versatile','llama-3.1-8b':'llama-3.1-8b-instant','mixtral-8x7b':'mixtral-8x7b-32768','gemma2-9b':'gemma2-9b-it' })[m] || m },
+        mistral:    { url: 'https://api.mistral.ai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'mistral-large':'mistral-large-latest','mistral-small':'mistral-small-latest','mistral-medium':'mistral-medium-latest','codestral':'codestral-latest' })[m] || m },
+        openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', headers: { 'HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio' }, modelResolver: (m) => m.startsWith('openrouter/') ? m.slice('openrouter/'.length) : m },
+        morph:      { url: 'https://api.morphllm.com/v1/chat/completions', headers: {} },
+      };
+
+      const pc = openAICompatProviders[provider];
+      if (pc) {
+        const resolvedModel = pc.modelResolver ? pc.modelResolver(actualModel) : actualModel;
+        result = await Promise.race([
+          callOpenAICompatWithTools(pc.url, apiKey, resolvedModel, llmMessages, pc.headers, onToolCall),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out`)), provider === 'openrouter' ? 90000 : 30000))
+        ]);
+      } else {
+        // Fallback: plain call for Gemini and others without tool support
+        result = await Promise.race([
+          callLLM(provider, apiKey, actualModel, llmMessages),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out`)), 30000))
+        ]);
+      }
     }
 
     const totalTokens = result.promptTokens + result.completionTokens;
@@ -3133,6 +3168,63 @@ async function callAnthropicWithTools(
   }
 
   return { content: 'Max tool iterations reached.', promptTokens, completionTokens, toolCalls };
+}
+
+// ─── OpenAI-compatible tool_use loop (OpenRouter, OpenAI, Groq, Mistral) ────────
+async function callOpenAICompatWithTools(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  messages: any[],
+  extraHeaders: Record<string,string> = {},
+  onToolCall: (name: string, args: any, result: string) => void,
+  maxIters: number = 8
+): Promise<{ content: string; promptTokens: number; completionTokens: number; toolCalls: Array<{name:string;args:any;result:string}> }> {
+  let promptTokens = 0, completionTokens = 0;
+  const allToolCalls: Array<{name:string;args:any;result:string}> = [];
+  const msgs = [...messages];
+
+  for (let iter = 0; iter < maxIters; iter++) {
+    const body: any = { model, messages: msgs, max_tokens: 4096, tools: FORGE_TOOLS_OPENAI, tool_choice: 'auto' };
+    const headers: any = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...extraHeaders };
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(baseUrl, { method: 'POST', headers, body: JSON.stringify(body) }, 60000);
+    } catch (e: any) {
+      throw new Error(`${baseUrl} timed out: ${e.message}`);
+    }
+    if (!res.ok) { const e = await res.text(); throw new Error(`API error: ${e.slice(0,300)}`); }
+    const data: any = await res.json();
+    if (data.error) throw new Error(`API error: ${JSON.stringify(data.error).slice(0,200)}`);
+
+    const choice = data.choices?.[0];
+    promptTokens += data.usage?.prompt_tokens || 0;
+    completionTokens += data.usage?.completion_tokens || 0;
+
+    const assistantMsg = choice?.message;
+    if (!assistantMsg) break;
+
+    // No tool calls — we have final answer
+    if (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0 || choice.finish_reason === 'stop') {
+      return { content: assistantMsg.content || '', promptTokens, completionTokens, toolCalls: allToolCalls };
+    }
+
+    // Push assistant message with tool_calls
+    msgs.push(assistantMsg);
+
+    // Execute all tool calls
+    for (const tc of assistantMsg.tool_calls) {
+      const toolName = tc.function?.name || tc.name;
+      let toolArgs: any = {};
+      try { toolArgs = JSON.parse(tc.function?.arguments || tc.arguments || '{}'); } catch {}
+      const toolResult = await runForgeTool(toolName, toolArgs);
+      allToolCalls.push({ name: toolName, args: toolArgs, result: toolResult });
+      onToolCall(toolName, toolArgs, toolResult);
+      // Push tool result message
+      msgs.push({ role: 'tool', tool_call_id: tc.id, name: toolName, content: toolResult.slice(0, 8000) });
+    }
+  }
+  return { content: 'Max iterations reached.', promptTokens, completionTokens, toolCalls: allToolCalls };
 }
 
 // ─── ForgeAgent SSE run loop (legacy endpoint — still works) ──────────────────

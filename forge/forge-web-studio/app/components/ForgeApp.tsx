@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.23 -- browser_action tool (Playwright), persistent skills/connectors (localStorage), iron-clad system prompt
+// Forge AI Workspace v6.24 -- tools wired for ALL providers (OpenRouter/OpenAI/Groq/Mistral), Manus live feed, clarification question UI
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -334,12 +334,14 @@ export default function ForgeApp() {
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
   const [agentSteps, setAgentSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
-  const addAgentStep = (icon: string, text: string) => setAgentSteps(prev => [...prev.slice(-8), { icon, text, ts: Date.now() }]);
+  const addAgentStep = (icon: string, text: string) => setAgentSteps(prev => [...prev.slice(-20), { icon, text, ts: Date.now() }]);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
   // Tool calls captured during the current SSE stream — map of msgId -> tool call list
   const [liveToolCalls, setLiveToolCalls] = useState<Array<{tool:string;args:any;result:string;ts:number}>>([]);
   const [expandedTools, setExpandedTools] = useState<Record<number,boolean>>({});
+  // Clarification question from AI
+  const [clarifyQuestion, setClarifyQuestion] = useState<{question:string; options:string[]} | null>(null);
 
   // Voice chat
   const [voiceActive, setVoiceActive] = useState(false);
@@ -1432,6 +1434,21 @@ export default function ForgeApp() {
         });
         addAgentStep('✅', 'Response received');
         applyResp(r);
+        // Detect clarification request in AI response
+        const aiContent: string = r?.data?.content || '';
+        const clarifyMatch = aiContent.match(/\[CLARIFY\]([\s\S]*?)\[\/CLARIFY\]/i) ||
+          aiContent.match(/\*\*What do you mean\?\*\*|I need a bit more info|Could you clarify|To help you better|Before I (proceed|start|do that)/i);
+        if (clarifyMatch) {
+          // Try to extract numbered/bulleted options from the AI response
+          const optionMatches = aiContent.match(/(?:\d+[\.\)]\s*|\-\s*|\*\s*)([^\n]+)/g);
+          const options = optionMatches ? optionMatches.slice(0, 5).map(o => o.replace(/^[\d\.\)\-\*\s]+/, '').trim()).filter(o => o.length > 2 && o.length < 100) : [];
+          if (options.length >= 2) {
+            const questionMatch = aiContent.match(/^([^\n?]+\?)/m);
+            setClarifyQuestion({ question: questionMatch?.[1] || 'How would you like to proceed?', options });
+          }
+        } else {
+          setClarifyQuestion(null);
+        }
       } catch (e: any) {
         // Thread was wiped (Railway redeploy) -- create a fresh one and retry
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
@@ -1868,7 +1885,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.23</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.24</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -2098,8 +2115,32 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
+                  {/* Clarification question card */}
+                  {clarifyQuestion && !sending && (
+                    <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:560 }}>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>🤔</div>
+                      <div style={{ flex:1, padding:'12px 16px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)' }}>
+                        <p style={{ margin:'0 0 10px', fontSize:13, color:'var(--fg-text)', fontWeight:500 }}>{clarifyQuestion.question}</p>
+                        <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                          {clarifyQuestion.options.map((opt, i) => (
+                            <button key={i} onClick={() => {
+                              setClarifyQuestion(null);
+                              setInput(opt);
+                              setTimeout(() => sendMessage(), 50);
+                            }} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:12, cursor:'pointer', textAlign:'left', transition:'all 0.15s', display:'flex', alignItems:'center', gap:8 }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--fg-orange)'; (e.currentTarget as HTMLElement).style.background = 'var(--fg-odim)'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--fg-border2)'; (e.currentTarget as HTMLElement).style.background = 'var(--fg-bg4)'; }}>
+                              <span style={{ width:20, height:20, borderRadius:'50%', background:'var(--fg-bg5)', border:'1px solid var(--fg-border2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, flexShrink:0 }}>{i+1}</span>
+                              <span>{opt}</span>
+                            </button>
+                          ))}
+                          <button onClick={() => setClarifyQuestion(null)} style={{ padding:'4px 10px', background:'none', border:'none', color:'var(--fg-text3)', fontSize:11, cursor:'pointer', textAlign:'left' }}>✕ dismiss</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {/* Live tool call cards — shown while/after agentic tools ran */}
-                  {liveToolCalls.length > 0 && (
+                  {liveToolCalls.length > 0 && !sending && (
                     <div style={{ display:'flex', flexDirection:'column', gap:6, padding:'10px 14px', background:'rgba(255,107,53,0.06)', border:'1px solid rgba(255,107,53,0.2)', borderRadius:12, marginBottom:4 }}>
                       <div style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>⚡ TOOLS USED ({liveToolCalls.length})</div>
                       {liveToolCalls.map((tc, idx) => (
@@ -2108,7 +2149,7 @@ export default function ForgeApp() {
                             onClick={() => setExpandedTools(p => ({ ...p, [idx]: !p[idx] }))}
                             style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', cursor:'pointer', userSelect:'none' }}>
                             <span style={{ fontSize:13 }}>
-                              {tc.tool === 'web_search' ? '🔍' : tc.tool === 'web_scrape' ? '🌐' : tc.tool === 'run_code' ? '💻' : tc.tool === 'shell_exec' ? '🖥️' : tc.tool === 'read_file' ? '📄' : tc.tool === 'write_file' ? '💾' : tc.tool === 'http_request' ? '📡' : tc.tool === 'list_directory' ? '📁' : '🔧'}
+                              {tc.tool === 'web_search' ? '🔍' : tc.tool === 'web_scrape' ? '🌐' : tc.tool === 'run_code' ? '💻' : tc.tool === 'shell_exec' ? '🖥️' : tc.tool === 'browser_action' ? '🖱️' : tc.tool === 'read_file' ? '📄' : tc.tool === 'write_file' ? '💾' : tc.tool === 'http_request' ? '📡' : tc.tool === 'list_directory' ? '📁' : '🔧'}
                             </span>
                             <span style={{ fontSize:12, color:'var(--fg-text)', fontFamily:'var(--fg-font-mono)', fontWeight:600 }}>{tc.tool}</span>
                             <span style={{ fontSize:11, color:'var(--fg-text3)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
@@ -2196,30 +2237,82 @@ export default function ForgeApp() {
                     );
                   })}
                   {typing && (
-                    <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite', flexShrink:0 }}>⚡</div>
-                      {/* Manus-style agent thinking panel */}
-                      <div style={{ padding:'12px 16px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', minWidth:240, maxWidth:420 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: agentSteps.length > 0 ? 10 : 0 }}>
+                    <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:680 }}>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-orange)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0, boxShadow:'0 0 12px rgba(249,115,22,0.4)' }}>⚡</div>
+                      {/* Manus-style full activity feed */}
+                      <div style={{ flex:1, borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', overflow:'hidden' }}>
+                        {/* Header */}
+                        <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderBottom: agentSteps.length > 0 ? '1px solid var(--fg-border)' : 'none', background:'var(--fg-bg3)' }}>
                           <div style={{ display:'flex', gap:3 }}>
                             {[0,1,2].map(i => <div key={i} style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
                           </div>
-                          <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.3px', fontFamily:'var(--fg-font-mono)' }}>FORGE AGENT</span>
+                          <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', fontFamily:'var(--fg-font-mono)' }}>FORGE AGENT — WORKING</span>
                         </div>
+                        {/* Live steps — each one shown in full */}
                         {agentSteps.length > 0 && (
-                          <div style={{ display:'flex', flexDirection:'column', gap:6, borderLeft:'2px solid var(--fg-border)', paddingLeft:10 }}>
-                            {agentSteps.slice(-6).map((s, i, arr) => {
+                          <div style={{ display:'flex', flexDirection:'column' }}>
+                            {agentSteps.slice(-12).map((s, i, arr) => {
                               const isLast = i === arr.length - 1;
+                              // Parse tool details out of step text
+                              const isToolStep = s.text.startsWith('Tool:');
+                              const isSearchStep = s.icon === '🔍' || (isToolStep && s.text.includes('web_search'));
+                              const isScrapeStep = s.icon === '🌐' || (isToolStep && s.text.includes('web_scrape'));
+                              const isBrowserStep = s.icon === '🖥️' || (isToolStep && s.text.includes('browser'));
+                              const isCodeStep = isToolStep && s.text.includes('run_code');
+                              const isShellStep = isToolStep && s.text.includes('shell_exec');
+
                               return (
-                                <div key={i} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                                  {/* Step status dot */}
-                                  <div style={{ width:7, height:7, borderRadius:'50%', flexShrink:0, background: isLast ? 'var(--fg-orange)' : 'var(--fg-green)', boxShadow: isLast ? '0 0 6px var(--fg-orange)' : 'none', animation: isLast ? 'pulse 1s ease-in-out infinite' : 'none' }} />
-                                  <span style={{ fontSize:12 }}>{s.icon}</span>
-                                  <span style={{ fontSize:12, color: isLast ? 'var(--fg-text)' : 'var(--fg-text3)', flex:1, animation: isLast ? 'forge-text-flash 2s ease-in-out infinite' : 'none', fontWeight: isLast ? 500 : 400 }}>{s.text}</span>
-                                  {!isLast && <span style={{ fontSize:10, color:'var(--fg-green)', flexShrink:0 }}>✓</span>}
+                                <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 14px', borderBottom: i < arr.length-1 ? '1px solid var(--fg-border)' : 'none', background: isLast ? 'rgba(249,115,22,0.04)' : 'transparent', transition:'background 0.2s' }}>
+                                  {/* Timeline dot */}
+                                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingTop:3, flexShrink:0 }}>
+                                    <div style={{ width:8, height:8, borderRadius:'50%', background: isLast ? 'var(--fg-orange)' : 'var(--fg-green)', boxShadow: isLast ? '0 0 8px var(--fg-orange)' : 'none', animation: isLast ? 'pulse 1s ease-in-out infinite' : 'none' }} />
+                                    {i < arr.length-1 && <div style={{ width:1, height:16, background:'var(--fg-border)', marginTop:3 }} />}
+                                  </div>
+                                  <div style={{ flex:1, minWidth:0 }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                      <span style={{ fontSize:13 }}>{s.icon}</span>
+                                      <span style={{ fontSize:12, color: isLast ? 'var(--fg-text)' : 'var(--fg-text3)', fontWeight: isLast ? 600 : 400, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', animation: isLast ? 'forge-text-flash 2s ease-in-out infinite' : 'none' }}>{s.text}</span>
+                                      {!isLast && <span style={{ fontSize:10, color:'var(--fg-green)', flexShrink:0, fontWeight:700 }}>✓</span>}
+                                    </div>
+                                    {/* Show extracted detail for tool steps */}
+                                    {isToolStep && (
+                                      <div style={{ marginTop:4, fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)', background:'var(--fg-bg)', padding:'4px 8px', borderRadius:6, wordBreak:'break-all' }}>
+                                        {isSearchStep && <span>🔍 Searching: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_search(','').replace(')','').replace(/[{}"query:]/g,'').slice(0,80)}</span></span>}
+                                        {isScrapeStep && <span>🌐 Reading: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_scrape(','').replace(')','').replace(/[{}"url:]/g,'').slice(0,80)}</span></span>}
+                                        {isBrowserStep && <span>🖥️ Browser: <span style={{ color:'var(--fg-orange2)' }}>{s.text.slice(0,80)}</span></span>}
+                                        {isCodeStep && <span>💻 Executing code…</span>}
+                                        {isShellStep && <span>🖥️ Shell: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: shell_exec(','').replace(')','').replace(/[{}"command:]/g,'').slice(0,80)}</span></span>}
+                                        {!isSearchStep && !isScrapeStep && !isBrowserStep && !isCodeStep && !isShellStep && <span>{s.text.slice(0,100)}</span>}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}
+                          </div>
+                        )}
+                        {/* Live tool calls inline during thinking */}
+                        {liveToolCalls.length > 0 && (
+                          <div style={{ padding:'8px 14px', borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', gap:4 }}>
+                            <div style={{ fontSize:10, color:'var(--fg-text3)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>⚡ TOOLS ACTIVE ({liveToolCalls.length})</div>
+                            {liveToolCalls.map((tc, idx) => (
+                              <div key={idx} style={{ borderRadius:6, border:'1px solid var(--fg-border2)', overflow:'hidden', background:'var(--fg-bg3)' }}>
+                                <div onClick={() => setExpandedTools(p => ({ ...p, [idx]: !p[idx] }))} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', cursor:'pointer' }}>
+                                  <span style={{ fontSize:12 }}>{tc.tool==='web_search'?'🔍':tc.tool==='web_scrape'?'🌐':tc.tool==='run_code'?'💻':tc.tool==='shell_exec'?'🖥️':tc.tool==='browser_action'?'🖱️':tc.tool==='http_request'?'📡':'🔧'}</span>
+                                  <span style={{ fontSize:11, color:'var(--fg-text)', fontFamily:'var(--fg-font-mono)', fontWeight:600 }}>{tc.tool}</span>
+                                  <span style={{ fontSize:11, color:'var(--fg-orange2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                                    {tc.tool==='web_search' ? `"${tc.args?.query}"` : tc.tool==='web_scrape'||tc.tool==='browser_action' ? (tc.args?.url||tc.args?.action||'') : tc.tool==='run_code' ? `${tc.args?.language}` : tc.tool==='shell_exec' ? tc.args?.command?.slice(0,60) : tc.tool==='http_request' ? `${tc.args?.method||'GET'} ${tc.args?.url}` : JSON.stringify(tc.args||{}).slice(0,50)}
+                                  </span>
+                                  <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{expandedTools[idx]?'▲':'▼'}</span>
+                                </div>
+                                {expandedTools[idx] && (
+                                  <div style={{ borderTop:'1px solid var(--fg-border)', padding:'6px 8px', display:'flex', flexDirection:'column', gap:4 }}>
+                                    <pre style={{ margin:0, fontSize:11, color:'var(--fg-text2)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'4px 6px', borderRadius:4, maxHeight:80, overflowY:'auto' }}>{JSON.stringify(tc.args,null,2)}</pre>
+                                    {tc.result && <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'4px 6px', borderRadius:4, maxHeight:120, overflowY:'auto' }}>{tc.result.slice(0,600)}{tc.result.length>600?'\n…':''}</pre>}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
