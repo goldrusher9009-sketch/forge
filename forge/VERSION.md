@@ -1,6 +1,14 @@
 # Forge Platform — Version History
 
-## v6.26 — 2026-05-25 (current)
+## v6.27 — 2026-05-25 (current)
+
+### Superagent Skills/Connectors Wiring Fix
+
+- **Fix `enabledSkills`/`enabledConnectors` undefined in `/api/superagent/chat`** — these variables were used but never destructured from `req.body`; superagent chat now correctly receives and applies active skills/connectors sent from the frontend
+
+---
+
+## v6.26 — 2026-05-25
 
 ### Agentic Engineer Persona + Magic/Ask Modes + Visual Output + Connector Fix + Context Usage Fix
 

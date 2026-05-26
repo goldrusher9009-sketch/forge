@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.26 — Agentic engineer persona, magic/ask modes, stats endpoint, model column, context fix
+ * Forge Platform v6.27 — Fix enabledSkills/enabledConnectors undefined in superagent/chat
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -141,7 +141,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.26' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.27' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -2503,7 +2503,7 @@ app.post('/api/superagent/harvest', requireAuth, async (req: AuthRequest, res) =
 // ─── SuperAgent chat ────────────────────────────────────────────────────────────
 app.post('/api/superagent/chat', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.sub;
-  const { message, model: reqModel } = req.body;
+  const { message, model: reqModel, enabledSkills = [], enabledConnectors = [] } = req.body;
   if (!message?.trim()) { res.status(400).json({ success: false, error: 'message required' }); return; }
 
   // Load forge memories as context
