@@ -1,6 +1,18 @@
 # Forge Platform — Version History
 
-## v6.28 — 2026-05-25 (current)
+## v6.29 — 2026-05-25 (current)
+
+### Syntax Highlighting + Auto-Compact + Auto-Preview + Autonomy Improvements
+
+- **Syntax highlighting** — code blocks in chat now color-highlight keywords (purple), strings (green), numbers (amber), comments (gray), function calls (blue) for JS/TS/Python/SQL/bash/JSON. No external deps — inline tokenizer
+- **Auto-compact** — when thread context hits 85% of model limit, backend `/compact` endpoint fires automatically: LLM summarizes old messages, keeps 8 recent, resets token count
+- **Auto-open sketch panel** — when AI produces a code/HTML artifact, the right-side live preview panel opens automatically
+- **Sandbox link fix** — `sandbox:/` links in AI responses (e.g. "Download PDF") now render as `⬇ use the 💾 Download button above` instead of broken links
+- **`renderContent()`** — new rich renderer: inline code highlighting, bold/italic markdown, syntax-highlighted fenced blocks replacing plain `<p>` text
+
+---
+
+## v6.28 — 2026-05-25
 
 ### Persistent Thinking Steps Panel
 

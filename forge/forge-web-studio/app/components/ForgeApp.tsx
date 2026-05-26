@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.28 -- persistent thinking steps panel after response
+// Forge AI Workspace v6.29 -- syntax highlighting, auto-compact, auto-open sketch, sandbox link fix
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -111,6 +111,73 @@ function downloadCode(code: string, filename: string) {
 function wrapCodeForPreview(code: string): string {
   const open = '\x3c';
   return open + '!DOCTYPE html>' + open + 'html>' + open + 'head>' + open + 'meta charset="utf-8">' + open + 'style>body{margin:0;font-family:system-ui,sans-serif;background:#fff;padding:16px;}' + open + '/style>' + open + '/head>' + open + 'body>' + code + open + '/body>' + open + '/html>';
+}
+
+// ─── Syntax highlighter (no deps — inline tokenizer) ─────────────────────────
+function syntaxHighlight(code: string, lang: string): string {
+  const e = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let c = e(code);
+  const kw = lang === 'python' ? /\b(def|class|import|from|return|if|elif|else|for|while|in|not|and|or|True|False|None|with|as|try|except|finally|raise|pass|break|continue|lambda|yield|async|await|self)\b/g
+    : lang === 'sql' ? /\b(SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|GROUP BY|ORDER BY|HAVING|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|INDEX|DROP|ALTER|ADD|COLUMN|PRIMARY KEY|FOREIGN KEY|REFERENCES|NOT NULL|DEFAULT|DISTINCT|COUNT|SUM|AVG|MAX|MIN|AS|AND|OR|NOT|IN|LIKE|BETWEEN|NULL|IS|EXISTS|UNION|ALL|LIMIT|OFFSET)\b/gi
+    : /\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|class|extends|import|export|default|from|async|await|try|catch|finally|throw|new|this|typeof|instanceof|void|null|undefined|true|false|in|of|type|interface|enum|implements|abstract|readonly|public|private|protected|static|override|declare|namespace|module|require|super|yield|delete|as|is)\b/g;
+  c = c.replace(kw, '<span style="color:#c084fc;font-weight:600">$&</span>');
+  // Strings
+  c = c.replace(/(&#39;[^&#39;]*&#39;|&quot;[^&quot;]*&quot;|`[^`]*`)/g, '<span style="color:#86efac">$&</span>');
+  // Numbers
+  c = c.replace(/\b(\d+\.?\d*)\b/g, '<span style="color:#fbbf24">$&</span>');
+  // Comments
+  c = c.replace(/(\/\/[^\n]*|#[^\n]*)/g, '<span style="color:#6b7280;font-style:italic">$&</span>');
+  // Function calls
+  c = c.replace(/([a-zA-Z_$][a-zA-Z0-9_$]*)(\s*\()/g, '<span style="color:#60a5fa">$1</span>$2');
+  return c;
+}
+
+// ─── Render message content — markdown-lite with syntax-highlighted code blocks ─
+function renderContent(content: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  // Detect sandbox:/ links and replace with download notice
+  const sandboxFixed = content.replace(/\[([^\]]+)\]\(sandbox:\/[^)]*\)/g, (_, label) =>
+    `**[⬇ ${label} — use the 💾 Download button above]**`
+  );
+  const segments = sandboxFixed.split(/(```[\s\S]*?```)/g);
+  segments.forEach((seg, si) => {
+    if (seg.startsWith('```')) {
+      const firstLine = seg.slice(3).split('\n')[0].trim();
+      const lang = firstLine.replace(/[^a-zA-Z0-9]/, '') || 'text';
+      const code = seg.slice(3 + firstLine.length + 1, -3).trim();
+      const highlighted = syntaxHighlight(code, lang.toLowerCase());
+      parts.push(
+        <div key={`cb-${si}`} style={{ margin:'10px 0', borderRadius:8, overflow:'hidden', border:'1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 10px', background:'rgba(0,0,0,0.4)', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+            <span style={{ fontSize:10, color:'#6b7280', fontFamily:'monospace' }}>{lang}</span>
+            <button onClick={() => navigator.clipboard.writeText(code)} style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontSize:10, padding:'1px 4px' }}>copy</button>
+          </div>
+          <pre style={{ margin:0, padding:'12px 14px', background:'rgba(0,0,0,0.35)', fontSize:12, fontFamily:'monospace', overflowX:'auto', lineHeight:1.6, color:'#e2e8f0' }}
+            dangerouslySetInnerHTML={{ __html: highlighted }} />
+        </div>
+      );
+      return;
+    }
+    // Inline markdown: bold, inline code, links
+    const lines = seg.split('\n');
+    lines.forEach((line, li) => {
+      const nodes: React.ReactNode[] = [];
+      // Split on inline code, bold, italic
+      const inlineRe = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+      let last = 0; let m;
+      while ((m = inlineRe.exec(line)) !== null) {
+        if (m.index > last) nodes.push(line.slice(last, m.index));
+        const tok = m[0];
+        if (tok.startsWith('`')) nodes.push(<code key={`ic-${li}-${m.index}`} style={{ background:'rgba(255,255,255,0.1)', padding:'1px 5px', borderRadius:4, fontSize:'0.9em', fontFamily:'monospace', color:'#86efac' }}>{tok.slice(1,-1)}</code>);
+        else if (tok.startsWith('**')) nodes.push(<strong key={`b-${li}-${m.index}`}>{tok.slice(2,-2)}</strong>);
+        else nodes.push(<em key={`i-${li}-${m.index}`}>{tok.slice(1,-1)}</em>);
+        last = m.index + tok.length;
+      }
+      if (last < line.length) nodes.push(line.slice(last));
+      parts.push(<span key={`ln-${si}-${li}`}>{nodes}{li < lines.length - 1 ? '\n' : ''}</span>);
+    });
+  });
+  return parts;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1480,8 +1547,25 @@ export default function ForgeApp() {
         });
         addAgentStep('✅', 'Response received');
         applyResp(r);
-        // Detect clarification request in AI response
+        // Auto-open sketch panel when AI produces code/HTML artifact
         const aiContent: string = r?.data?.content || '';
+        if (aiContent) {
+          const ex = extractCodeBlock(aiContent);
+          if (ex?.code && !sketchMode) { setPreviewCode(ex.code); setSketchMode(true); }
+        }
+        // Auto-compact: if thread context > 85% of model limit, trigger compact
+        try {
+          const stats = await apiFetch(`/threads/${threadId}/stats`, {}, user.token);
+          const used = stats?.data?.total_tokens || 0;
+          const limit = getContextLimit(cleanModel);
+          if (used > 0 && limit > 0 && used / limit > 0.85) {
+            addAgentStep('🗜️', 'Context full — auto-compacting…');
+            await apiFetch(`/threads/${threadId}/compact`, { method:'POST', body:JSON.stringify({ keep_recent: 8 }) }, user.token);
+            addAgentStep('✅', 'Context compacted');
+            loadThreadTokenStats(threadId);
+          }
+        } catch {}
+        // Detect clarification request in AI response
         const clarifyMatch = aiContent.match(/\[CLARIFY\]([\s\S]*?)\[\/CLARIFY\]/i) ||
           aiContent.match(/\*\*What do you mean\?\*\*|I need a bit more info|Could you clarify|To help you better|Before I (proceed|start|do that)/i);
         if (clarifyMatch) {
@@ -1932,7 +2016,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.28</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.29</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -2236,7 +2320,7 @@ export default function ForgeApp() {
                         {m.role==='user' ? '👤' : '⚡'}
                       </div>
                       <div style={{ maxWidth: codeBlock ? '90%' : '75%', flex: codeBlock ? 1 : undefined, padding:'12px 16px', borderRadius:m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background:m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', lineHeight:1.6 }}>
-                        <p style={{ margin:0, fontSize:14, color:'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{m.content}</p>
+                        <div style={{ margin:0, fontSize:14, color:'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-word', lineHeight:1.7 }}>{renderContent(m.content)}</div>
                         {/* Inline live preview card */}
                         {codeBlock && (
                           <div style={{ marginTop:12, border:'1px solid var(--fg-border2)', borderRadius:10, overflow:'hidden' }}>

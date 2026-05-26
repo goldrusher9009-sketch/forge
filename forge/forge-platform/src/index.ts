@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.27 — Fix enabledSkills/enabledConnectors undefined in superagent/chat
+ * Forge Platform v6.29 — Auto-compact endpoint, syntax highlighting, auto-open sketch panel
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -141,7 +141,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.27' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.29' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1892,6 +1892,62 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
     console.error('Thread chat error:', err.message);
     endSSE({ success: false, error: 'LLM_ERROR', message: err.message });
   }
+});
+
+// ─── Auto-compact thread ────────────────────────────────────────────────────
+app.post('/api/threads/:id/compact', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, userId) as any;
+  if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const { keep_recent = 6 } = req.body;
+
+  // Get all messages ordered by time
+  const allMsgs = db.prepare('SELECT id,role,content,created_at FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(thread.id) as any[];
+  if (allMsgs.length <= keep_recent + 2) {
+    res.json({ success: true, message: 'Thread too short to compact', compacted: 0 }); return;
+  }
+
+  // Messages to summarize = everything except the last keep_recent
+  const toSummarize = allMsgs.slice(0, -keep_recent);
+  const recent = allMsgs.slice(-keep_recent);
+
+  // Build summary using LLM
+  const summaryPrompt = toSummarize.map((m: any) => `${m.role.toUpperCase()}: ${m.content.slice(0,500)}`).join('\n\n');
+  let summaryText = '';
+  try {
+    const { model, provider, apiKey } = await (async () => {
+      const antKey = db.prepare("SELECT api_key FROM user_api_keys WHERE user_id=? AND provider='anthropic'").get(userId) as any;
+      if (antKey?.api_key) return { model: 'claude-haiku-4-5-20251001', provider: 'anthropic', apiKey: antKey.api_key };
+      const orKey = db.prepare("SELECT api_key FROM user_api_keys WHERE user_id=? AND provider='openrouter'").get(userId) as any;
+      if (orKey?.api_key) return { model: 'google/gemini-flash-1.5', provider: 'openrouter', apiKey: orKey.api_key };
+      const platKey = db.prepare("SELECT key_value FROM platform_api_keys WHERE provider='anthropic' LIMIT 1").get() as any;
+      return { model: 'claude-haiku-4-5-20251001', provider: 'anthropic', apiKey: platKey?.key_value || '' };
+    })();
+    if (!apiKey) throw new Error('no key');
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'system', content: 'You are a conversation summarizer. Create a dense, useful summary that preserves actionable context.' },
+      { role: 'user', content: `Summarize this conversation history concisely (2-4 sentences per topic). Preserve key decisions, code written, and important context:\n\n${summaryPrompt.slice(0, 8000)}` }
+    ]);
+    summaryText = result.content;
+  } catch {
+    summaryText = `[Compacted: ${toSummarize.length} earlier messages summarized to save context space.]`;
+  }
+
+  // Delete summarized messages, insert summary as system message
+  const compactedCount = toSummarize.length;
+  const summaryMsgId = uuidv4();
+  db.prepare('DELETE FROM messages WHERE id IN (' + toSummarize.map(() => '?').join(',') + ')').run(...toSummarize.map((m: any) => m.id));
+  db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens,model) VALUES (?,?,?,?,?,?)").run(
+    summaryMsgId, thread.id, 'system',
+    `[CONTEXT SUMMARY — ${compactedCount} messages compacted]\n${summaryText}`,
+    Math.round(summaryText.length / 4), 'compact'
+  );
+
+  // Recalculate total tokens for thread
+  const tokenSum = db.prepare('SELECT COALESCE(SUM(tokens),0) as t FROM messages WHERE thread_id=?').get(thread.id) as any;
+  db.prepare("UPDATE threads SET total_tokens=? WHERE id=?").run(tokenSum.t, thread.id);
+
+  res.json({ success: true, message: `Compacted ${compactedCount} messages into summary`, compacted: compactedCount, kept: recent.length, summary: summaryText.slice(0, 200) });
 });
 
 app.patch('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
