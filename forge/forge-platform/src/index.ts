@@ -3001,8 +3001,18 @@ app.post('/api/forgemulti/run', requireAuth, async (req: AuthRequest, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Global error handlers — prevent unhandled rejections from crashing the process
+// ─────────────────────────────────────────────────────────────────────────────
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION (keeping process alive):', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION (keeping process alive):', reason);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Start server
 // ─────────────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`Forge backend v6.30 running on port ${PORT}`);
+  console.log(`Forge backend v6.32 running on port ${PORT}`);
 });
