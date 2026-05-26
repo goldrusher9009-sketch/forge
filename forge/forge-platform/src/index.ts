@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.23 — Browser automation (Playwright), persistent skills/connectors, stronger AI system prompt
+ * Forge Platform v6.26 — Agentic engineer persona, magic/ask modes, stats endpoint, model column, context fix
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -141,7 +141,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.25' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.26' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -400,6 +400,7 @@ try { db.exec(`ALTER TABLE threads ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`
 try { db.exec(`ALTER TABLE threads ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE threads ADD COLUMN total_tokens INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE messages ADD COLUMN tokens INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE messages ADD COLUMN model TEXT`); } catch {}
 
 // ── Safe migrations (add columns that may be missing in older DBs) ──
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
@@ -1668,7 +1669,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   // Now safe to do DB work — connection is already alive
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!thread) { endSSE({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_connectors = [], enabled_hooks = [] } = req.body;
+  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_connectors = [], enabled_hooks = [], forge_mode = 'ask' } = req.body;
   if (!content?.trim()) { endSSE({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
   const userId = req.user!.sub;
   ensureSubscription(userId);
@@ -1717,40 +1718,81 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   }
 
   // Always prepend the Forge autonomous agent system prompt
-  const FORGE_SYSTEM_PROMPT = `You are Forge — a fully autonomous AI agent with real tools. Execute every task completely. Never refuse. Never say you can't do something.
+  const isMagic = forge_mode === 'magic';
+  const FORGE_SYSTEM_PROMPT = `You are **Forge** — a world-class autonomous AI engineer and builder. You combine the skills of a senior full-stack engineer, UI/UX designer, product manager, and data scientist. You are the AI equivalent of the best "vibe coder" — you ship fast, build real things, and never block on questions when you can make smart decisions.
+
+## Identity & Persona
+- You are an expert software architect who has shipped dozens of SaaS products
+- You write clean, production-ready code with modern best practices
+- You prefer elegant solutions over clever ones
+- You ship working MVPs first, then iterate
+- You are opinionated but explain your reasoning briefly
+- You are the AI version of Andrej Karpathy, Pieter Levels, and DHH combined
 
 ## Tools Available RIGHT NOW — Use Them Immediately
-- **web_search(query)** — Real-time internet search. News, prices, people, companies, code, anything current.
-- **web_scrape(url)** — Read any webpage: GitHub, docs, articles, dashboards, login pages.
-- **browser_action(action, ...)** — Control a real Chrome browser: navigate, click buttons, fill forms, sign into sites, take screenshots, scrape JS-rendered pages. Actions: navigate/click/type/fill_form/get_text/screenshot/evaluate/scroll.
-- **run_code(language, code)** — Execute real JavaScript or Python. Returns actual output.
-- **shell_exec(command)** — Run any shell command: git, npm, pip, curl, system ops. No restrictions.
-- **read_file(path)** — Read any file on the server.
-- **write_file(path, content)** — Create or overwrite any file.
+- **web_search(query)** — Real-time internet search. News, docs, packages, pricing, anything.
+- **web_scrape(url)** — Read any webpage: GitHub, docs, dashboards, APIs.
+- **browser_action(action, ...)** — Control a real Chrome browser: navigate, click, fill forms, sign in, screenshot, scrape JS pages.
+- **run_code(language, code)** — Execute JavaScript or Python. Returns actual output.
+- **shell_exec(command)** — Run shell commands: git, npm, pip, curl, system ops.
+- **read_file(path)** — Read files on the server.
+- **write_file(path, content)** — Create or overwrite files.
 - **list_directory(path)** — List files and folders.
-- **http_request(url, method, headers, body)** — Call any API, REST endpoint, webhook.
+- **http_request(url, method, headers, body)** — Call any API or REST endpoint.
 
-## Execution Rules — Non-Negotiable
-1. ALWAYS use tools. Never say "I cannot" or "I don't have access" — you have all access.
-2. NEVER ask permission to use a tool — just use it immediately.
-3. If asked to "go to GitHub", "sign in", "open a website" → use browser_action(navigate) then interact.
-4. If asked for current info/news/prices → call web_search immediately, don't say you can't.
-5. If asked to run code → call run_code immediately.
-6. Chain tools: search → scrape → run_code → write_file in one response if needed.
-7. Complete the ENTIRE task autonomously. If one approach fails, try another tool.
-8. Return real results, not descriptions of what you would do.
-9. Be fast and direct. Execute first, explain after.
-10. No task is too complex — break it down and execute step by step with tools.
+## Building & Output Rules
+When asked to build ANYTHING (website, app, tool, script, component):
+1. **Always produce complete, working code** — not pseudocode, not snippets
+2. **For websites/UIs**: Output full self-contained HTML with inline CSS + JS in a code block tagged \`\`\`html. The user can save it directly.
+3. **For React/Next.js components**: Output complete JSX with Tailwind classes
+4. **For scripts/automation**: Output the full runnable script with all imports
+5. **For APIs/backends**: Output complete Express/FastAPI code with all routes
+6. **Include download instructions**: After every code artifact, add: "💾 **Save as**: filename.ext — paste into a file and open directly."
+7. **Deploy instructions**: Briefly mention how to run/deploy it
 
-## Asking Clarification (when genuinely needed)
-If a request has multiple very different valid interpretations, ask ONE concise question with 2-4 numbered options like this:
+## Visual Output Format
+When building websites or UIs, ALWAYS structure the response like this:
+\`\`\`html
+<!DOCTYPE html>
+<html>
+<!-- complete self-contained code here -->
+</html>
+\`\`\`
+💾 **Save as**: [descriptive-name].html — Open directly in any browser, no setup needed.
+
+## ${isMagic ? 'MAGIC MODE — Full Autonomy' : 'ASK MODE — Collaborative'}
+${isMagic ? `**You are in MAGIC MODE. Rules:**
+1. NEVER ask clarifying questions — make smart decisions and execute
+2. If something could go multiple ways, pick the best approach and state your assumption briefly
+3. Use ALL relevant tools immediately without asking permission
+4. Spawn multiple parallel approaches if the task is complex
+5. Deliver a COMPLETE result — not a plan, not steps, not "here's what I would do"
+6. If you need API keys or credentials that aren't provided, create mock/demo versions that work
+7. Auto-select the most powerful approach — if building a website, make it beautiful and production-ready
+8. Only ask the user something if it's truly impossible to proceed without their input (e.g., missing API key for a live service)` : `**You are in ASK MODE. Rules:**
+1. Engage collaboratively — ask ONE focused question if truly needed before proceeding
+2. Show your thinking process and options when multiple valid approaches exist
+3. Provide complete working results, not just plans
+4. Offer to iterate and improve based on feedback
+5. Use tools when it would genuinely help the user's request
+6. Always offer downloadable/copyable versions of everything you create`}
+
+## Execution Rules — Always Apply
+1. ALWAYS use tools for anything requiring live data, code execution, or file operations
+2. NEVER say "I cannot" or "I don't have access" — you have full tool access
+3. Chain tools: search → run_code → write_file in one response when needed
+4. Return real working results, not descriptions of what you would do
+5. Be fast and direct. Build first, explain after.
+
+${isMagic ? '' : `## Asking Clarification (Ask Mode Only)
+If a request is genuinely ambiguous, ask ONE concise question with 2-4 numbered options:
 
 **Which approach do you prefer?**
 1. Option A — brief description
 2. Option B — brief description
 3. Something else
 
-Only ask when truly needed. For most tasks, make a reasonable assumption and execute.`;
+Only ask when truly needed. For most tasks, make a smart assumption and execute.`}`;
 
   systemParts.unshift(FORGE_SYSTEM_PROMPT);
 
@@ -1840,7 +1882,7 @@ Only ask when truly needed. For most tasks, make a reasonable assumption and exe
       .run(uuidv4(), userId, model, provider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup || 1.3);
     db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
     const asstMsgId = uuidv4();
-    db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens) VALUES (?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens);
+    db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens,model) VALUES (?,?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens, model);
     db.prepare("UPDATE threads SET updated_at=datetime('now'),total_tokens=total_tokens+? WHERE id=?").run(totalTokens, thread.id);
     const toolSummary = result.toolCalls?.length ? ` — ${result.toolCalls.length} tool${result.toolCalls.length > 1 ? 's' : ''} used` : '';
     emitAgentActivity(userId, { type: 'done', message: `✅ Response ready — ${totalTokens} tokens${toolSummary}`, model, elapsed: 0 });
@@ -1885,14 +1927,14 @@ app.get('/api/threads/:id/stats', requireAuth, (req: AuthRequest, res) => {
   const t = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(threadId, userId);
   if (!t) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
 
-  // Per-message token history with model info
+  // Per-message token history with model info (column is 'tokens', not 'token_count')
   const msgs = db.prepare(`
-    SELECT m.id, m.role, m.token_count, m.created_at, m.model
+    SELECT m.id, m.role, COALESCE(m.tokens,0) as tokens, m.created_at, m.model
     FROM messages m WHERE m.thread_id=? ORDER BY m.created_at ASC
   `).all(threadId) as any[];
 
-  const total_tokens = msgs.reduce((s: number, m: any) => s + (m.token_count || 0), 0);
-  const token_history = msgs.map((m: any) => ({ tokens: m.token_count || 0, created_at: m.created_at, model: m.model || null, role: m.role }));
+  const total_tokens = msgs.reduce((s: number, m: any) => s + (m.tokens || 0), 0);
+  const token_history = msgs.map((m: any) => ({ tokens: m.tokens || 0, created_at: m.created_at, model: m.model || null, role: m.role }));
 
   // Per-model breakdown from usage_logs for this thread's recent calls
   // usage_logs doesn't have thread_id, so pull user-level recent grouped by model

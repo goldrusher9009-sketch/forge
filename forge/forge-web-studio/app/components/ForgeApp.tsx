@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.25 -- context usage panel with per-model LLM breakdown, provider color coding, token split
+// Forge AI Workspace v6.26 -- agentic engineer persona, magic/ask modes, HTML download, connector modal, context usage fix
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -77,23 +77,40 @@ body, #__next { background: var(--fg-bg) !important; color: var(--fg-text) !impo
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://forge-production-2692.up.railway.app/api';
 
 // ─── Code preview helpers (module-level to avoid TSX parser confusion with < chars) ──
-function extractCodeBlock(content: string): { code: string; isHtml: boolean } | null {
+function extractCodeBlock(content: string): { code: string; isHtml: boolean; lang: string; suggestedFilename: string } | null {
   const fence = '```';
-  const re = new RegExp(fence + '(?:html|jsx?|tsx?|react|svelte|vue)?\\n([\\s\\S]*?)' + fence, 'i');
+  // Match fenced code block with optional language
+  const re = new RegExp(fence + '([a-zA-Z0-9]*)?\\n([\\s\\S]*?)' + fence, 'i');
   const m = content.match(re);
   if (!m) return null;
-  const code = m[1].trim();
-  const hasTag = code.indexOf('<') !== -1;
-  const hasFn = code.indexOf('function') !== -1 || code.indexOf('const ') !== -1;
-  const isHtml = hasTag && (code.indexOf('div') !== -1 || code.indexOf('html') !== -1 || code.indexOf('style') !== -1 || code.indexOf('DOCTYPE') !== -1);
-  const isRenderable = content.match(new RegExp(fence + '(?:html|jsx?|tsx?|react)', 'i')) || isHtml || hasFn;
-  if (!isRenderable) return null;
-  if (!hasTag && !hasFn) return null;
-  return { code, isHtml };
+  const lang = (m[1] || '').toLowerCase().trim();
+  const code = m[2].trim();
+  if (!code) return null;
+  const hasTag = code.includes('<');
+  const hasFn = code.includes('function') || code.includes('const ') || code.includes('def ') || code.includes('class ');
+  const isHtmlLang = lang === 'html' || lang === 'htm';
+  const isHtmlContent = hasTag && (code.includes('DOCTYPE') || code.includes('<html') || code.includes('<div') || code.includes('<body'));
+  const isHtml = isHtmlLang || isHtmlContent;
+  const isRenderable = isHtml || ['jsx','tsx','react','vue','svelte'].includes(lang) || (hasTag && hasFn);
+  if (!isRenderable && !['html','css','js','ts','jsx','tsx','python','py','bash','sh','json','yaml','sql','rust','go','java','cpp','c'].includes(lang)) {
+    if (!hasTag && !hasFn) return null;
+  }
+  // Try to extract suggested filename from "Save as:" hint in message
+  const filenameMatch = content.match(/[Ss]ave as[:\s]+[`"]?([^\s`"'\n]+\.[a-z]{2,6})[`"]?/);
+  const ext = isHtml ? 'html' : lang === 'python' || lang === 'py' ? 'py' : lang === 'jsx' || lang === 'tsx' ? 'tsx' : lang === 'css' ? 'css' : lang === 'js' || lang === 'ts' ? 'ts' : lang || 'txt';
+  const suggestedFilename = filenameMatch ? filenameMatch[1] : `forge-output.${ext}`;
+  return { code, isHtml, lang, suggestedFilename };
+}
+function downloadCode(code: string, filename: string) {
+  const blob = new Blob([code], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
 }
 function wrapCodeForPreview(code: string): string {
   const open = '\x3c';
-  return open + '!DOCTYPE html>' + open + 'html>' + open + 'head>' + open + 'meta charset="utf-8">' + open + 'style>body{margin:0;font-family:system-ui,sans-serif;background:#fff;}' + open + '/style>' + open + '/head>' + open + 'body>' + code + open + '/body>' + open + '/html>';
+  return open + '!DOCTYPE html>' + open + 'html>' + open + 'head>' + open + 'meta charset="utf-8">' + open + 'style>body{margin:0;font-family:system-ui,sans-serif;background:#fff;padding:16px;}' + open + '/style>' + open + '/head>' + open + 'body>' + code + open + '/body>' + open + '/html>';
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -454,6 +471,7 @@ export default function ForgeApp() {
   const [newRunCron, setNewRunCron] = useState('0 9 * * 1-5');
   const [showAskModal, setShowAskModal] = useState(false);
   const [pendingAskMessage, setPendingAskMessage] = useState('');
+  const [showConnectModal, setShowConnectModal] = useState<{id:string;name:string;icon:string;desc:string;setupUrl?:string;envKey?:string} | null>(null);
   const [selectedAskSkills, setSelectedAskSkills] = useState<Set<string>>(new Set());
   const [selectedAskConnectors, setSelectedAskConnectors] = useState<Set<string>>(new Set());
   const superEndRef = useRef<HTMLDivElement>(null);
@@ -563,14 +581,37 @@ export default function ForgeApp() {
   // Context bar -- per-thread token tracking + model context limits
   const MODEL_CONTEXT_LIMITS: Record<string, number> = {
     'claude-sonnet-4-6': 200000, 'claude-opus-4-6': 200000, 'claude-haiku-4-5-20251001': 200000,
-    'gpt-4o': 128000, 'gpt-4o-mini': 128000, 'o3': 200000, 'o4-mini': 200000,
+    'claude-sonnet-4': 200000, 'claude-opus-4': 200000, 'claude-haiku-4': 200000,
+    'gpt-4o': 128000, 'gpt-4o-mini': 128000, 'o3': 200000, 'o4-mini': 200000, 'gpt-4-turbo': 128000,
     'gemini-2.0-flash': 1048576, 'gemini-2.5-pro': 2097152, 'gemini-2.5-flash': 1048576, 'gemini-1.5-pro': 2097152, 'gemini-1.5-flash': 1048576,
-    'llama-3.1-8b-instant': 128000, 'mistral-small-latest': 32000,
+    'llama-3.1-8b-instant': 128000, 'llama-3.3-70b-versatile': 128000, 'mistral-small-latest': 32000, 'mistral-large-latest': 128000,
+    // Common OpenRouter models
+    'deepseek/deepseek-chat-v3-0324': 64000, 'deepseek/deepseek-r1': 64000, 'deepseek/deepseek-r1-distill-llama-70b': 128000,
+    'meta-llama/llama-3.1-8b-instruct': 128000, 'meta-llama/llama-3.3-70b-instruct': 128000,
+    'qwen/qwen-2.5-72b-instruct': 128000, 'mistralai/mistral-small-3.1-24b-instruct': 128000,
+    'google/gemini-2.0-flash-001': 1048576, 'google/gemini-2.5-pro-preview-05-06': 2097152,
+    'anthropic/claude-sonnet-4-5': 200000, 'anthropic/claude-opus-4-5': 200000,
+    'openai/gpt-4o': 128000, 'openai/gpt-4o-mini': 128000,
   };
   const getContextLimit = (model: string) => {
+    if (!model) return 128000;
+    // Direct lookup
     if (MODEL_CONTEXT_LIMITS[model]) return MODEL_CONTEXT_LIMITS[model];
-    const orModel = openRouterModels.find(m => m.id === model);
-    if (orModel?.context_length) return orModel.context_length;
+    // Strip openrouter/ prefix and try again
+    const stripped = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
+    if (MODEL_CONTEXT_LIMITS[stripped]) return MODEL_CONTEXT_LIMITS[stripped];
+    // Try openRouterModels list (has live context_length from API)
+    const orModel = openRouterModels.find(m => m.id === stripped || m.id === model);
+    if (orModel?.context_length && orModel.context_length > 0) return orModel.context_length;
+    // Pattern-based fallback
+    if (stripped.includes('deepseek')) return 64000;
+    if (stripped.includes('gemini-2.5-pro')) return 2097152;
+    if (stripped.includes('gemini')) return 1048576;
+    if (stripped.includes('claude')) return 200000;
+    if (stripped.includes('gpt-4')) return 128000;
+    if (stripped.includes('llama-3')) return 128000;
+    if (stripped.includes('qwen')) return 128000;
+    if (stripped.includes('mistral')) return 32000;
     return 128000;
   };
 
@@ -1384,6 +1425,7 @@ export default function ForgeApp() {
         active_skills: Array.from(activeSkills),
         active_connectors: Array.from(activeConnectors),
         enabled_hooks: hooks.filter(h => h.enabled).map(h => ({ event: h.event, action: h.action, target: h.target })),
+        forge_mode: superMode === 'forgeMagic' ? 'magic' : 'ask',
       };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
       // Emit local thinking steps for skills/connectors/hooks
@@ -1885,7 +1927,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.25</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.26</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -2182,7 +2224,7 @@ export default function ForgeApp() {
                     const codeBlock = extracted?.code || null;
                     const isHtml = extracted?.isHtml || false;
                     const msgKey = m.id || String(i);
-                    const previewMode = inlinePreviews[msgKey] || 'code';
+                    const previewMode = inlinePreviews[msgKey] || (isHtml ? 'preview' : 'code');
                     return (
                     <div key={msgKey} style={{ display:'flex', gap:12, alignItems:'flex-start', flexDirection:m.role==='user' ? 'row-reverse' : 'row' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background:m.role==='user' ? 'var(--fg-orange)' : 'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
@@ -2199,6 +2241,7 @@ export default function ForgeApp() {
                               <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'code' }))} style={{ padding:'3px 10px', background: previewMode==='code' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='code' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Code</button>
                               <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'preview' }))} style={{ padding:'3px 10px', background: previewMode==='preview' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='preview' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Preview</button>
                               <button onClick={() => { navigator.clipboard.writeText(codeBlock); }} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>📋 Copy</button>
+                              <button onClick={() => downloadCode(codeBlock, extracted?.suggestedFilename || (isHtml ? 'output.html' : 'output.txt'))} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Download file">💾 Download</button>
                               <button onClick={() => { setPreviewCode(codeBlock); setSketchMode(true); }} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Open in Sketch panel">↗ Expand</button>
                             </div>
                             {previewMode === 'code' ? (
@@ -4440,7 +4483,7 @@ export default function ForgeApp() {
                               <button onClick={() => toggleConnector(c.id)} style={{ padding:'5px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>{isActive ? '✓ On' : '+ On'}</button>
                             </>
                           ) : (
-                            <button onClick={() => setMainTab('platforms')} style={{ padding:'5px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', flex:1 }}>🔌 Connect via Platforms →</button>
+                            <button onClick={() => setShowConnectModal({ id:c.id, name:c.name, icon:c.icon, desc:c.desc, setupUrl: c.setupUrl, envKey: c.envKey })} style={{ padding:'5px 10px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', flex:1, fontWeight:600 }}>🔌 Connect →</button>
                           )}
                         </div>
                       </div>
@@ -4494,6 +4537,45 @@ export default function ForgeApp() {
                 <button onClick={() => { setShowAskModal(false); setPendingAskMessage(''); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); }} style={{ flex:1, padding:12, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:14, fontWeight:600, cursor:'pointer' }}>Cancel</button>
                 <button onClick={async () => { if (pendingAskMessage.trim()) { setShowAskModal(false); setSuperInput(''); setSuperMessages(prev => [...prev, { role:'user', content: pendingAskMessage }]); setSuperSending(true); try { const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel; const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: pendingAskMessage, model: cleanModel, enabledSkills: Array.from(selectedAskSkills), enabledConnectors: Array.from(selectedAskConnectors) }) }, user.token); setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]); loadTotalTokens(); try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {} } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); } finally { setSuperSending(false); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); } } }} style={{ flex:1, padding:12, background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Send with Selected Tools</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Connector Setup Modal ────────────────────────────────────── */}
+        {showConnectModal && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => setShowConnectModal(null)}>
+            <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:16, padding:28, maxWidth:480, width:'100%', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+                <span style={{ fontSize:32 }}>{showConnectModal.icon}</span>
+                <div>
+                  <h3 style={{ margin:0, fontSize:18, fontWeight:800, color:'var(--fg-text)' }}>Connect {showConnectModal.name}</h3>
+                  <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>{showConnectModal.desc}</p>
+                </div>
+              </div>
+              <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16, marginBottom:16, fontSize:13, color:'var(--fg-text2)', lineHeight:1.6 }}>
+                <p style={{ margin:'0 0 10px', fontWeight:600, color:'var(--fg-orange)' }}>🔌 How to Connect</p>
+                <p style={{ margin:'0 0 8px' }}>1. Get your API key or OAuth credentials from {showConnectModal.name}</p>
+                <p style={{ margin:'0 0 8px' }}>2. Add it to your backend environment as <code style={{ background:'var(--fg-bg)', padding:'1px 6px', borderRadius:4, fontFamily:'monospace', fontSize:12 }}>{showConnectModal.envKey || showConnectModal.id.toUpperCase() + '_API_KEY'}</code></p>
+                <p style={{ margin:'0 0 8px' }}>3. Click "Activate" below — Forge will use it automatically in chat when {showConnectModal.name} is relevant</p>
+                <p style={{ margin:0, color:'var(--fg-text3)', fontSize:11 }}>Once active, just say "send email via Gmail" or "post to Slack" in chat and Forge will handle it.</p>
+              </div>
+              <div style={{ display:'flex', gap:8, marginBottom:12 }}>
+                {showConnectModal.setupUrl && (
+                  <button onClick={() => window.open(showConnectModal.setupUrl, '_blank')} style={{ flex:1, padding:'10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer', fontWeight:600 }}>📖 Get API Key →</button>
+                )}
+                <button onClick={() => {
+                  toggleConnector(showConnectModal.id);
+                  setShowConnectModal(null);
+                  addAgentStep('🔌', `${showConnectModal.name} connector activated`);
+                }} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:700 }}>
+                  {activeConnectors.has(showConnectModal.id) ? '✓ Deactivate' : '⚡ Activate Now'}
+                </button>
+              </div>
+              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', textAlign:'center' }}>
+                Forge will inject {showConnectModal.name} capabilities into the AI when this connector is active.
+                Full OAuth integration coming soon.
+              </p>
+              <button onClick={() => setShowConnectModal(null)} style={{ position:'absolute', top:12, right:12, background:'none', border:'none', color:'var(--fg-text3)', fontSize:18, cursor:'pointer', padding:4 }}>✕</button>
             </div>
           </div>
         )}

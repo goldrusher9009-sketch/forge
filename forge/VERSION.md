@@ -1,6 +1,25 @@
 # Forge Platform — Version History
 
-## v6.25 — 2026-05-25 (current)
+## v6.26 — 2026-05-25 (current)
+
+### Agentic Engineer Persona + Magic/Ask Modes + Visual Output + Connector Fix + Context Usage Fix
+
+- **Vibe-coder system prompt** — Forge AI now embeds a world-class agentic engineer persona (Karpathy + Pieter Levels + DHH) injected into every request
+- **Magic mode** — `forge_mode=magic` in request body; AI never asks questions, picks best approach autonomously, delivers complete working result
+- **Ask mode** — `forge_mode=ask`; collaborative, asks one focused question if needed, shows thinking, offers downloads
+- **`forge_mode` wired end-to-end** — frontend maps `superMode` ('forgeMagic'/'forgeAsk') → backend system prompt injection
+- **Visual output / HTML artifacts** — HTML code blocks auto-show in Preview mode; `💾 Download` button added to inline preview toolbar; `extractCodeBlock` parses "Save as:" hint for filename
+- **`downloadCode` helper** — Blob URL download for any code artifact with correct filename + extension
+- **Auto-preview for HTML** — `previewMode` defaults to `'preview'` when `isHtml` is true
+- **MCP Connector modal** — "Connect via Platforms →" now opens setup modal with instructions, env key name, "Get API Key →" link, "⚡ Activate Now" button
+- **Context Usage fix** — `getContextLimit()` strips `openrouter/` prefix, checks live `openRouterModels` context_length, falls back to pattern matching (deepseek/gemini/claude/gpt/llama/mistral/qwen)
+- **Stats endpoint** — `GET /api/threads/:id/stats` added (was missing); returns total_tokens, token_history, model_breakdown, recent_calls
+- **Column fix** — stats query uses `COALESCE(m.tokens,0)` (correct column name); `model` column migration added
+- **Assistant messages now store model** — INSERT includes model field; shows under each message bubble
+
+---
+
+## v6.25 — 2026-05-25
 
 ### Context Usage Panel — Per-Model LLM Breakdown
 - **New backend endpoint** `GET /api/threads/:id/stats` — returns total_tokens, token_history (with model/role per message), per-model breakdown from usage_logs, recent calls
