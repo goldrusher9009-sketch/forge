@@ -14,6 +14,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
+import crypto from 'crypto';
 import fs from 'fs';
 import vm from 'vm';
 import { execFile, exec } from 'child_process';
@@ -2843,7 +2844,7 @@ app.post('/api/webhooks', requireAuth, (req: AuthRequest, res) => {
   const { name, event_type = 'generic', prompt } = req.body;
   if (!name || !prompt) { res.status(400).json({ success: false, error: 'name and prompt required' }); return; }
   const id = uuidv4();
-  const secret = require('crypto').randomBytes(16).toString('hex');
+  const secret = crypto.randomBytes(16).toString('hex');
   db.prepare('INSERT INTO webhook_triggers (id,user_id,name,event_type,prompt,secret) VALUES (?,?,?,?,?,?)').run(id, userId, name, event_type, prompt, secret);
   res.status(201).json({ success: true, data: { id, name, event_type, secret, webhook_url: `/api/webhooks/trigger/${id}/${secret}` } });
 });
