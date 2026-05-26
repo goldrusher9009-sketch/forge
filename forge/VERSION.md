@@ -1,6 +1,16 @@
 # Forge Platform — Version History
 
-## v6.21 — 2026-05-25 (current)
+## v6.22 — 2026-05-25 (current)
+
+### Critical Fix: AI Now Uses Tools (Never Refuses)
+- **`FORGE_SYSTEM_PROMPT`** — injected on every chat request; tells AI it CAN browse web, run code, scrape URLs
+- AI will no longer say "I cannot browse the internet" or "I don't have real-time access"
+- Explicit instructions: call `web_search` for any current info, `web_scrape` for any URL, `run_code` for any computation
+- System prompt prepended before all user/skill/project prompts on every Anthropic call
+
+---
+
+## v6.21 — 2026-05-25
 
 ### Full Autonomous Tool Suite
 - **8 real tools** wired into backend: `web_search`, `web_scrape`, `run_code`, `shell_exec`, `read_file`, `write_file`, `list_directory`, `http_request`

@@ -141,7 +141,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.21' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.22' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1716,13 +1716,35 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     systemParts.push(`## Active Automation Hooks\nThese hooks are enabled and should influence your behaviour:\n${hookLines}`);
   }
 
+  // Always prepend the Forge autonomous agent system prompt
+  const FORGE_SYSTEM_PROMPT = `You are Forge — a fully autonomous AI workspace agent. You have REAL tools available and MUST use them proactively:
+
+## Your Autonomous Tools
+- **web_search(query)** — Search the internet in real-time. You CAN browse the web. Use this for any current info, news, research, prices, docs.
+- **web_scrape(url)** — Fetch and read any webpage, GitHub repo, documentation, article, or website.
+- **run_code(language, code)** — Execute JavaScript or Python code and return real output. Great for calculations, data processing, file parsing.
+- **shell_exec(command)** — Run shell commands on the server. Can install packages, run scripts, manage files.
+- **read_file(path)** — Read files from the server filesystem.
+- **write_file(path, content)** — Write or create files on the server.
+- **list_directory(path)** — List files and folders.
+- **http_request(url, method, headers, body)** — Make any HTTP API call. REST APIs, webhooks, OAuth flows.
+
+## Critical Rules
+- NEVER say "I cannot browse the internet" — you CAN. Call web_search or web_scrape immediately.
+- NEVER say "I don't have access to real-time data" — use web_search right now.
+- NEVER say "I cannot run code" — use run_code immediately.
+- When asked to visit a website, sign in somewhere, or interact with a service: use web_scrape or http_request.
+- Always USE tools first, then explain results. Don't ask for permission to use tools.
+- Chain multiple tool calls together to complete complex tasks autonomously.
+- Be direct and action-oriented. Execute, don't deliberate.`;
+
+  systemParts.unshift(FORGE_SYSTEM_PROMPT);
+
   // Build message history
   const history = (db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(thread.id) as any[])
     .filter(m => m.role !== 'system');
   emitStep('📚', `Reading context — ${history.length} message${history.length !== 1 ? 's' : ''} in thread`);
-  const llmMessages = systemParts.length > 0
-    ? [{ role: 'system', content: systemParts.join('\n\n---\n\n') }, ...history]
-    : history;
+  const llmMessages = [{ role: 'system', content: systemParts.join('\n\n---\n\n') }, ...history];
 
   // Use model from request body if provided, fall back to thread's saved model
   const model = bodyModel || thread.model || 'claude-sonnet-4';
