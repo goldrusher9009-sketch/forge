@@ -1,6 +1,16 @@
 # Forge Platform — Version History
 
-## v6.24 — 2026-05-25 (current)
+## v6.25 — 2026-05-25 (current)
+
+### Context Usage Panel — Per-Model LLM Breakdown
+- **New backend endpoint** `GET /api/threads/:id/stats` — returns total_tokens, token_history (with model/role per message), per-model breakdown from usage_logs, recent calls
+- **Context Usage panel** now shows per-model usage: provider color dots, model name, requests, total tokens (k), input/output token split, cost
+- **Message breakdown** updated: 👤/🤖 role icons, color-coded bars (user vs AI), filters out zero-token entries
+- **Model colors** per provider: Anthropic=amber, OpenAI=green, OpenRouter=purple, Groq=red, Mistral=blue, Gemini=yellow, Morph=cyan
+
+---
+
+## v6.24 — 2026-05-25
 
 ### Tools for All Providers + Manus Live Feed + Clarification UI
 - **`callOpenAICompatWithTools`** — full tool_use loop for OpenRouter, OpenAI, Groq, Mistral. DeepSeek and any OpenRouter model now calls web_search, browser_action, run_code etc.

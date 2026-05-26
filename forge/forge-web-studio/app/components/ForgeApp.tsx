@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.24 -- tools wired for ALL providers (OpenRouter/OpenAI/Groq/Mistral), Manus live feed, clarification question UI
+// Forge AI Workspace v6.25 -- context usage panel with per-model LLM breakdown, provider color coding, token split
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -428,7 +428,7 @@ export default function ForgeApp() {
   // Thread context menu
   const [threadMenu, setThreadMenu] = useState<{ threadId:string; x:number; y:number } | null>(null);
   const [renamingThread, setRenamingThread] = useState<{ id:string; title:string }|null>(null);
-  const [threadStats, setThreadStats] = useState<{ total_tokens:number; message_count:number; token_history:{tokens:number;created_at:string}[] }|null>(null);
+  const [threadStats, setThreadStats] = useState<{ total_tokens:number; message_count:number; token_history:{tokens:number;created_at:string;model?:string|null;role?:string}[]; model_breakdown?:{model:string;provider:string;requests:number;prompt_tokens:number;completion_tokens:number;total_tokens:number;cost:number}[]; recent_calls?:{model:string;provider:string;prompt_tokens:number;completion_tokens:number;total_tokens:number;provider_cost:number;created_at:string}[] }|null>(null);
   const [projectMenu, setProjectMenu] = useState<{ projectId:string; x:number; y:number } | null>(null);
   const [renamingProject, setRenamingProject] = useState<{ id:string; name:string } | null>(null);
   const [showAllThreads, setShowAllThreads] = useState(false);
@@ -1885,7 +1885,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.24</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.25</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -2695,21 +2695,28 @@ export default function ForgeApp() {
                       </div>
                     )}
 
-                    {/* CONTEXT -- Token progress bar */}
+                    {/* CONTEXT -- Token progress bar + per-model breakdown */}
                     {rightTab==='context' && (() => {
                       const used = threadStats?.total_tokens || 0;
                       const limit = getContextLimit(selectedModel);
                       const pct = Math.min(100, (used / limit) * 100);
                       const color = pct > 80 ? 'var(--fg-red)' : pct > 60 ? 'var(--fg-orange2)' : 'var(--fg-orange)';
+                      const providerColors: Record<string,string> = {
+                        anthropic:'#D97706', openai:'#10B981', openrouter:'#8B5CF6',
+                        groq:'#EF4444', mistral:'#3B82F6', gemini:'#F59E0B', morph:'#06B6D4',
+                      };
+                      const modelBreakdown = threadStats?.model_breakdown || [];
+                      const totalModelTokens = modelBreakdown.reduce((s,m) => s + (m.total_tokens||0), 0);
                       return (
-                        <div>
+                        <div style={{ overflowY:'auto' }}>
                           <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 12px' }}>Context Usage</p>
+                          {/* Context bar for current thread */}
                           <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, marginBottom:12 }}>
                             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                              <span style={{ fontSize:13, color:'var(--fg-text2)', fontWeight:600 }}>{selectedModel}</span>
-                              <span style={{ fontSize:12, color:color, fontWeight:700 }}>{pct.toFixed(1)}%</span>
+                              <span style={{ fontSize:12, color:'var(--fg-text2)', fontWeight:600 }}>{selectedModel.replace('openrouter/','')}</span>
+                              <span style={{ fontSize:12, color, fontWeight:700 }}>{pct.toFixed(1)}%</span>
                             </div>
-                            <div style={{ background:'var(--fg-bg4)', borderRadius:6, height:12, overflow:'hidden', marginBottom:8 }}>
+                            <div style={{ background:'var(--fg-bg4)', borderRadius:6, height:10, overflow:'hidden', marginBottom:8 }}>
                               <div style={{ height:'100%', width:`${pct}%`, background:color, borderRadius:6, transition:'width 0.5s ease', boxShadow:`0 0 8px ${color}55` }} />
                             </div>
                             <div style={{ display:'flex', justifyContent:'space-between' }}>
@@ -2720,10 +2727,8 @@ export default function ForgeApp() {
                           {pct > 70 && (
                             <div style={{ background:'var(--fg-bg2)', border:'1px solid rgba(248,113,113,0.53)', borderRadius:8, padding:12, marginBottom:12 }}>
                               <p style={{ margin:'0 0 8px', fontSize:12, color:'var(--fg-red)', fontWeight:600 }}>⚠️ {pct > 90 ? 'Critical' : 'Warning'}: Context {pct > 90 ? 'nearly full' : 'filling up'}</p>
-                              <p style={{ margin:'0 0 10px', fontSize:11, color:'var(--fg-text2)' }}>Auto-compact will summarize older messages to free up context space.</p>
                               <button onClick={async () => {
                                 if (!user || !activeThread) return;
-                                const keepMsgs = messages.slice(-6);
                                 const summarizeContent = messages.slice(0, -6).map(m => `${m.role}: ${m.content}`).join('\n');
                                 try {
                                   await apiFetch(`/threads/${activeThread.id}/compact`, { method:'POST', body:JSON.stringify({ keep_recent: 6, summary_hint: summarizeContent.slice(0,2000) }) }, user.token);
@@ -2733,21 +2738,61 @@ export default function ForgeApp() {
                               }} style={{ width:'100%', padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:600 }}>⚡ Compact Now</button>
                             </div>
                           )}
-                          {threadStats && (
+                          {/* Per-model LLM usage breakdown */}
+                          {modelBreakdown.length > 0 && (
+                            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, marginBottom:12 }}>
+                              <p style={{ margin:'0 0 10px', fontSize:11, color:'var(--fg-text3)', fontWeight:600, textTransform:'uppercase' }}>Models Used</p>
+                              {modelBreakdown.slice(0,8).map((m, i) => {
+                                const prov = m.provider || 'unknown';
+                                const barColor = providerColors[prov] || 'var(--fg-orange)';
+                                const barPct = totalModelTokens > 0 ? Math.min(100, (m.total_tokens / totalModelTokens) * 100) : 0;
+                                const modelLabel = (m.model || '').replace('openrouter/','').replace('anthropic.','');
+                                return (
+                                  <div key={i} style={{ marginBottom:10 }}>
+                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+                                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                        <div style={{ width:8, height:8, borderRadius:'50%', background:barColor, flexShrink:0 }} />
+                                        <span style={{ fontSize:11, color:'var(--fg-text2)', fontWeight:600, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={m.model}>{modelLabel}</span>
+                                        <span style={{ fontSize:10, color:'var(--fg-text3)', background:'var(--fg-bg4)', borderRadius:3, padding:'1px 4px' }}>{prov}</span>
+                                      </div>
+                                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                        <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{m.requests}req</span>
+                                        <span style={{ fontSize:11, color:'var(--fg-text2)', fontWeight:600 }}>{m.total_tokens >= 1000 ? (m.total_tokens/1000).toFixed(1)+'k' : m.total_tokens}</span>
+                                      </div>
+                                    </div>
+                                    <div style={{ background:'var(--fg-bg4)', borderRadius:3, height:5, overflow:'hidden' }}>
+                                      <div style={{ height:'100%', width:`${barPct}%`, background:barColor, borderRadius:3 }} />
+                                    </div>
+                                    <div style={{ display:'flex', justifyContent:'space-between', marginTop:2 }}>
+                                      <span style={{ fontSize:10, color:'var(--fg-text3)' }}>in: {(m.prompt_tokens||0) >= 1000 ? ((m.prompt_tokens||0)/1000).toFixed(1)+'k' : m.prompt_tokens||0} · out: {(m.completion_tokens||0) >= 1000 ? ((m.completion_tokens||0)/1000).toFixed(1)+'k' : m.completion_tokens||0}</span>
+                                      {m.cost > 0 && <span style={{ fontSize:10, color:'var(--fg-text3)' }}>${m.cost.toFixed(4)}</span>}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {/* Message token history */}
+                          {threadStats && threadStats.token_history.filter(h=>h.tokens>0).length > 0 && (
                             <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14 }}>
                               <p style={{ margin:'0 0 10px', fontSize:11, color:'var(--fg-text3)', fontWeight:600, textTransform:'uppercase' }}>Message Breakdown</p>
-                              {threadStats.token_history.slice(-10).map((h, i) => (
-                                <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                                  <div style={{ fontSize:10, color:'var(--fg-text3)', width:16 }}>#{i+1}</div>
-                                  <div style={{ flex:1, background:'var(--fg-bg4)', borderRadius:3, height:6, overflow:'hidden' }}>
-                                    <div style={{ height:'100%', width:`${Math.min(100, (h.tokens / (threadStats.token_history.reduce((a,b) => Math.max(a,b.tokens), 1)))*100)}%`, background:'var(--fg-orange)' }} />
+                              {threadStats.token_history.filter(h=>h.tokens>0).slice(-10).map((h, i) => {
+                                const maxTok = Math.max(...threadStats.token_history.map(x=>x.tokens), 1);
+                                const barColor = h.role === 'user' ? 'var(--fg-orange2)' : 'var(--fg-orange)';
+                                return (
+                                  <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                                    <div style={{ fontSize:10, color:'var(--fg-text3)', width:20, flexShrink:0 }}>{h.role==='user'?'👤':'🤖'}</div>
+                                    <div style={{ flex:1, background:'var(--fg-bg4)', borderRadius:3, height:6, overflow:'hidden' }}>
+                                      <div style={{ height:'100%', width:`${Math.min(100,(h.tokens/maxTok)*100)}%`, background:barColor }} />
+                                    </div>
+                                    <span style={{ fontSize:10, color:'var(--fg-text3)', width:40, textAlign:'right', flexShrink:0 }}>{h.tokens>=1000?(h.tokens/1000).toFixed(1)+'k':h.tokens}</span>
                                   </div>
-                                  <span style={{ fontSize:10, color:'var(--fg-text3)', width:50, textAlign:'right' }}>{h.tokens >= 1000 ? (h.tokens/1000).toFixed(1)+'k' : h.tokens}</span>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
                           {!activeThread && <p style={{ color:'var(--fg-text3)', fontSize:13, textAlign:'center', marginTop:40 }}>Start a conversation to see context usage.</p>}
+                          {activeThread && modelBreakdown.length === 0 && !threadStats && <p style={{ color:'var(--fg-text3)', fontSize:12, textAlign:'center', marginTop:20 }}>No usage data yet — send a message to see model stats.</p>}
                         </div>
                       );
                     })()}

@@ -141,7 +141,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.24' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.25' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -1876,6 +1876,55 @@ app.delete('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
   const r = db.prepare('DELETE FROM threads WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
   if (!r.changes) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
   res.json({ success: true, message: 'Thread deleted' });
+});
+
+// ── Thread stats (context usage panel) ────────────────────────
+app.get('/api/threads/:id/stats', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const threadId = req.params.id;
+  const t = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(threadId, userId);
+  if (!t) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+
+  // Per-message token history with model info
+  const msgs = db.prepare(`
+    SELECT m.id, m.role, m.token_count, m.created_at, m.model
+    FROM messages m WHERE m.thread_id=? ORDER BY m.created_at ASC
+  `).all(threadId) as any[];
+
+  const total_tokens = msgs.reduce((s: number, m: any) => s + (m.token_count || 0), 0);
+  const token_history = msgs.map((m: any) => ({ tokens: m.token_count || 0, created_at: m.created_at, model: m.model || null, role: m.role }));
+
+  // Per-model breakdown from usage_logs for this thread's recent calls
+  // usage_logs doesn't have thread_id, so pull user-level recent grouped by model
+  const modelBreakdown = db.prepare(`
+    SELECT model, provider,
+      COUNT(*) as requests,
+      SUM(prompt_tokens) as prompt_tokens,
+      SUM(completion_tokens) as completion_tokens,
+      SUM(total_tokens) as total_tokens,
+      SUM(provider_cost) as cost
+    FROM usage_logs
+    WHERE user_id=?
+    GROUP BY model, provider
+    ORDER BY total_tokens DESC
+  `).all(userId) as any[];
+
+  // Recent calls (last 20) for timeline
+  const recentCalls = db.prepare(`
+    SELECT model, provider, prompt_tokens, completion_tokens, total_tokens, provider_cost, created_at
+    FROM usage_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 20
+  `).all(userId) as any[];
+
+  res.json({
+    success: true,
+    data: {
+      total_tokens,
+      message_count: msgs.length,
+      token_history,
+      model_breakdown: modelBreakdown,
+      recent_calls: recentCalls,
+    }
+  });
 });
 
 // ── Artifacts ─────────────────────────────────────────────────
