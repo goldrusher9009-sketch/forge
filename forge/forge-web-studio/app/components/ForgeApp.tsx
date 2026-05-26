@@ -396,7 +396,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'>('workspace');
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>('tracker');
@@ -568,6 +568,26 @@ export default function ForgeApp() {
   const [asiLivePhases, setAsiLivePhases] = useState<{phase:string;content:string;done:boolean}[]>([]);
   const [asiCurrentPhase, setAsiCurrentPhase] = useState('');
   const [asiWebSearch, setAsiWebSearch] = useState(false);
+
+  // MVP Builder state
+  const [mvpIdea, setMvpIdea] = useState('');
+  const [mvpIndustry, setMvpIndustry] = useState('');
+  const [mvpTarget, setMvpTarget] = useState('');
+  const [mvpBuilding, setMvpBuilding] = useState(false);
+  const [mvpResult, setMvpResult] = useState<{spec:string;stack:string;roadmap:string;pitch:string}|null>(null);
+  const [mvpPhase, setMvpPhase] = useState('');
+
+  // Intelligence (Context Graph) state
+  const [igNodes, setIgNodes] = useState<{id:string;label:string;type:string;weight:number}[]>([]);
+  const [igQuery, setIgQuery] = useState('');
+  const [igLoading, setIgLoading] = useState(false);
+
+  // Agent Swarm state
+  const [swarmTask, setSwarmTask] = useState('');
+  const [swarmAgentCount, setSwarmAgentCount] = useState(5);
+  const [swarmRunning, setSwarmRunning] = useState(false);
+  const [swarmResults, setSwarmResults] = useState<{agentId:string;role:string;result:string;tokens:number;done:boolean}[]>([]);
+  const [swarmSynthesis, setSwarmSynthesis] = useState('');
 
   // Skills & Tools state (must be top-level — not inside render IIFE)
   const [skillSearch, setSkillSearch] = useState('');
@@ -1913,6 +1933,9 @@ export default function ForgeApp() {
             { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
             { id:'forgeasi', icon:'🌌', label:'ForgeASI' },
+            { id:'mvp', icon:'🏗️', label:'MVP Builder' },
+            { id:'intelligence', icon:'🧠', label:'Intelligence' },
+            { id:'swarm', icon:'🐝', label:'Agent Swarm' },
             ...(user.role === 'admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
           ]) as Array<{ id: string; icon: string; label: string }>).map((tab) => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id === 'admin') { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); } if (tab.id === 'super') { loadSuperMemory(); loadSuperHistory(); } if (tab.id === 'settings') { loadVault(); } }} title={tab.label} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:mainTab===tab.id ? 'var(--fg-bg4)' : 'transparent', border:'none', borderRadius:6, color:mainTab===tab.id ? (tab.id==='admin' ? 'var(--fg-orange2)' : tab.id==='super' ? 'var(--fg-orange2)' : 'var(--fg-orange2)') : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:mainTab===tab.id ? 600 : 400, marginBottom:2, justifyContent:sidebarExpanded ? 'flex-start' : 'center' }}>
@@ -4992,6 +5015,234 @@ export default function ForgeApp() {
           </div>
         )}
 
+        {/* ── MVP Builder ─────────────────────────────────────────────── */}
+        {mainTab === 'mvp' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:28 }}>
+                <span style={{ fontSize:42 }}>🏗️</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:26, fontWeight:900, color:'var(--fg-text)' }}>MVP Builder</h1>
+                  <p style={{ margin:0, fontSize:14, color:'var(--fg-text3)' }}>Describe your idea — Forge generates a full spec, tech stack, roadmap, and investor pitch in seconds.</p>
+                </div>
+              </div>
+              {!mvpResult ? (
+                <div style={{ display:'grid', gap:16 }}>
+                  <div>
+                    <label style={{ fontSize:12, color:'var(--fg-text3)', fontWeight:600, display:'block', marginBottom:6 }}>💡 YOUR IDEA</label>
+                    <textarea value={mvpIdea} onChange={e => setMvpIdea(e.target.value)} placeholder="e.g. An AI scheduling app that blocks deep work time automatically..." style={{ width:'100%', minHeight:90, padding:14, background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', boxSizing:'border-box', outline:'none', fontFamily:'inherit' }} />
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                    <div>
+                      <label style={{ fontSize:12, color:'var(--fg-text3)', fontWeight:600, display:'block', marginBottom:6 }}>🏭 INDUSTRY</label>
+                      <input value={mvpIndustry} onChange={e => setMvpIndustry(e.target.value)} placeholder="e.g. Productivity, FinTech..." style={{ width:'100%', padding:10, background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box', outline:'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize:12, color:'var(--fg-text3)', fontWeight:600, display:'block', marginBottom:6 }}>🎯 TARGET USER</label>
+                      <input value={mvpTarget} onChange={e => setMvpTarget(e.target.value)} placeholder="e.g. Startup founders, remote teams..." style={{ width:'100%', padding:10, background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box', outline:'none' }} />
+                    </div>
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(180px, 1fr))', gap:10, marginTop:4 }}>
+                    {([{icon:'🛒',label:'E-Commerce MVP'},{icon:'📱',label:'Mobile App MVP'},{icon:'🤖',label:'AI SaaS MVP'},{icon:'📊',label:'Analytics Dashboard'},{icon:'🎓',label:'EdTech Platform'},{icon:'💼',label:'B2B SaaS'},{icon:'🏥',label:'HealthTech App'},{icon:'🌐',label:'Marketplace MVP'}] as Array<{icon:string;label:string}>).map(t => (
+                      <button key={t.label} onClick={() => setMvpIdea(t.label + ' — ')} style={{ padding:'10px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', textAlign:'left', fontWeight:500 }}>{t.icon} {t.label}</button>
+                    ))}
+                  </div>
+                  <button disabled={!mvpIdea.trim() || mvpBuilding} onClick={async () => {
+                    setMvpBuilding(true); setMvpPhase('📋 Scoping your idea...'); setMvpResult(null);
+                    const phases = ['📋 Scoping...','⚙️ Tech stack...','🗺️ Roadmap...','🚀 Pitch...'];
+                    let pi = 0; const iv = setInterval(() => { pi=(pi+1)%phases.length; setMvpPhase(phases[pi]); }, 2000);
+                    try {
+                      const cm = selectedModel.startsWith('openrouter/') ? selectedModel.slice(11) : selectedModel;
+                      const prompt = 'You are a top startup advisor. Given this idea, produce a startup blueprint.\n\nIDEA: ' + mvpIdea + '\nINDUSTRY: ' + (mvpIndustry||'General') + '\nTARGET: ' + (mvpTarget||'Early adopters') + '\n\nReturn JSON with keys: spec (3-paragraph product spec), stack (tech stack + rationale), roadmap (4-phase numbered list), pitch (5-sentence investor pitch). Return ONLY the JSON.';
+                      const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: prompt, model: cm }) }, user.token);
+                      clearInterval(iv);
+                      try { let raw=(d?.data?.content||'{}').replace(/```json\n?/g,'').replace(/```\n?/g,'').trim(); setMvpResult(JSON.parse(raw)); }
+                      catch { setMvpResult({ spec: d?.data?.content||'', stack:'', roadmap:'', pitch:'' }); }
+                    } catch(e:any) { clearInterval(iv); alert('Error: '+e.message); }
+                    finally { setMvpBuilding(false); setMvpPhase(''); }
+                  }} style={{ padding:'14px 28px', background: mvpBuilding?'var(--fg-bg4)':'var(--fg-orange)', border:'none', borderRadius:10, color: mvpBuilding?'var(--fg-text3)':'#fff', fontSize:15, fontWeight:700, cursor: mvpBuilding?'not-allowed':'pointer', display:'flex', alignItems:'center', gap:10, justifyContent:'center' }}>
+                    {mvpBuilding ? <><span>⚙️</span>{' '}{mvpPhase}</> : '🚀 Build My MVP Blueprint'}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display:'grid', gap:20 }}>
+                  <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+                    <button onClick={() => setMvpResult(null)} style={{ padding:'8px 16px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight:600 }}>← New Idea</button>
+                    <button onClick={() => { setInput('PRODUCT SPEC\n\n'+(mvpResult!.spec)+'\n\nTECH STACK\n\n'+(mvpResult!.stack)+'\n\nROADMAP\n\n'+(mvpResult!.roadmap)+'\n\nPITCH\n\n'+(mvpResult!.pitch)); setMainTab('workspace'); setTimeout(() => textareaRef.current?.focus(), 100); }} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:700 }}>💬 Refine in Chat →</button>
+                  </div>
+                  {([{key:'spec',icon:'📋',title:'Product Specification'},{key:'stack',icon:'⚙️',title:'Tech Stack'},{key:'roadmap',icon:'🗺️',title:'Launch Roadmap'},{key:'pitch',icon:'🚀',title:'Investor Pitch'}] as Array<{key:string;icon:string;title:string}>).map(s => (
+                    <div key={s.key} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+                        <span style={{ fontSize:20 }}>{s.icon}</span>
+                        <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-orange)' }}>{s.title}</h3>
+                      </div>
+                      <p style={{ margin:0, fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{(mvpResult as any)[s.key]}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Intelligence ─────────────────────────────────────────────── */}
+        {mainTab === 'intelligence' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:16 }}>
+                <span style={{ fontSize:42 }}>🧠</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:26, fontWeight:900, color:'var(--fg-text)' }}>Intelligence Layer</h1>
+                  <p style={{ margin:0, fontSize:14, color:'var(--fg-text3)' }}>Your living AI memory. Every interaction builds a context graph that makes Forge smarter over time.</p>
+                </div>
+              </div>
+              <div style={{ background:'linear-gradient(135deg,rgba(139,92,246,0.15),rgba(249,115,22,0.1))', border:'1px solid rgba(139,92,246,0.3)', borderRadius:16, padding:24, marginBottom:20, display:'flex', alignItems:'center', gap:24, flexWrap:'wrap' }}>
+                <div style={{ textAlign:'center', flexShrink:0 }}>
+                  <div style={{ fontSize:56, fontWeight:900, color:'var(--fg-orange2)', lineHeight:1, fontFamily:'monospace' }}>{superStats.intelligenceScore}</div>
+                  <div style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:700, letterSpacing:1 }}>FORGE IQ</div>
+                </div>
+                <div style={{ flex:1, minWidth:200 }}>
+                  <h3 style={{ margin:'0 0 8px', fontSize:15, fontWeight:700, color:'var(--fg-text)' }}>
+                    {superStats.intelligenceScore < 50 ? '🌱 Getting Started' : superStats.intelligenceScore < 200 ? '⚡ Building Context' : superStats.intelligenceScore < 500 ? '🔥 Deep Intelligence' : '🌟 Superintelligent'}
+                  </h3>
+                  <p style={{ margin:'0 0 10px', fontSize:13, color:'var(--fg-text2)' }}>
+                    {superStats.intelligenceScore < 50 ? 'Start chatting to build your intelligence layer.' : `${superStats.memoryCount} memory entries across ${superStats.threadCount} conversations.`}
+                  </p>
+                  <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                    <div style={{ flex:1, height:8, background:'var(--fg-bg4)', borderRadius:4, overflow:'hidden' }}>
+                      <div style={{ width:`${Math.min(100,(superStats.intelligenceScore/1000)*100)}%`, height:'100%', background:'linear-gradient(90deg,#6366f1,var(--fg-orange))', borderRadius:4, transition:'width 0.6s' }} />
+                    </div>
+                    <span style={{ fontSize:11, color:'var(--fg-text3)', flexShrink:0 }}>{Math.min(100,Math.round((superStats.intelligenceScore/1000)*100))}%</span>
+                  </div>
+                </div>
+                <button onClick={async () => { setIgLoading(true); try { const d=await apiFetch('/superagent/memory',{},user.token); const mems:any[]=d?.data||[]; setIgNodes(mems.slice(0,30).map((m,i)=>({id:String(i),label:m.content?.slice(0,40)||m.key||'Memory',type:m.type||'fact',weight:m.importance||1}))); } catch {} finally { setIgLoading(false); } }} style={{ padding:'10px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                  {igLoading ? '⟳' : '🔍 Load Graph'}
+                </button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:12, marginBottom:20 }}>
+                {([{icon:'💾',label:'Memories',value:superStats.memoryCount},{icon:'💬',label:'Chats',value:superStats.threadCount},{icon:'📈',label:'IQ',value:superStats.intelligenceScore},{icon:'🧩',label:'Skills',value:activeSkills.size},{icon:'🔌',label:'Connectors',value:activeConnectors.size},{icon:'⚡',label:'Tools',value:activeTools.size}] as Array<{icon:string;label:string;value:number}>).map(s => (
+                  <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, textAlign:'center' }}>
+                    <div style={{ fontSize:22, marginBottom:4 }}>{s.icon}</div>
+                    <div style={{ fontSize:22, fontWeight:800, color:'var(--fg-orange)', fontFamily:'monospace' }}>{s.value}</div>
+                    <div style={{ fontSize:10, color:'var(--fg-text3)', fontWeight:600 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {igNodes.length > 0 && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
+                  <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🕸️ Context Graph Nodes</h3>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                    {igNodes.map((n,i) => (
+                      <div key={n.id} style={{ padding:'4px 10px', background:i%3===0?'rgba(249,115,22,0.12)':i%3===1?'rgba(99,102,241,0.12)':'rgba(16,185,129,0.12)', border:`1px solid ${i%3===0?'rgba(249,115,22,0.3)':i%3===1?'rgba(99,102,241,0.3)':'rgba(16,185,129,0.3)'}`, borderRadius:20, fontSize:11, color:'var(--fg-text2)', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{n.label}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+                {([
+                  {icon:'📚',title:'Knowledge Harvest',desc:'Extract facts, preferences, and patterns from your chats into persistent memory.',action:'Harvest Now',cb:async()=>{ try { await apiFetch('/superagent/harvest',{method:'POST'},user.token); const s=await apiFetch('/superagent/stats',{},user.token); if(s?.data)setSuperStats(s.data); alert('✅ Harvest complete!'); } catch(e:any){alert('Error: '+e.message);} }},
+                  {icon:'🧬',title:'Context Graph',desc:'Forge learns your business, writing style, and goals across every conversation.',action:'View Memories',cb:()=>setMainTab('super')},
+                  {icon:'🎯',title:'Smart Auto-Select',desc:'Auto-picks the best model and tools for each task based on your usage patterns.',action:'Configure',cb:()=>setMainTab('settings')},
+                  {icon:'🔮',title:'Predictive Mode',desc:'Forge predicts what you need before you ask, based on your context graph.',action:'Enable (v7)',cb:()=>alert('Coming in v7.0!')}
+                ] as Array<{icon:string;title:string;desc:string;action:string;cb:()=>void}>).map(f => (
+                  <div key={f.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+                    <div style={{ fontSize:26, marginBottom:8 }}>{f.icon}</div>
+                    <h3 style={{ margin:'0 0 6px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{f.title}</h3>
+                    <p style={{ margin:'0 0 12px', fontSize:12, color:'var(--fg-text3)', lineHeight:1.5 }}>{f.desc}</p>
+                    <button onClick={f.cb} style={{ padding:'7px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-orange)', fontSize:12, fontWeight:600, cursor:'pointer' }}>{f.action} →</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Agent Swarm ──────────────────────────────────────────────── */}
+        {mainTab === 'swarm' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:900, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:28 }}>
+                <span style={{ fontSize:42 }}>🐝</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:26, fontWeight:900, color:'var(--fg-text)' }}>Agent Swarm</h1>
+                  <p style={{ margin:0, fontSize:14, color:'var(--fg-text3)' }}>Deploy up to 20 parallel AI agents on one task. Each specializes — Forge synthesizes the results.</p>
+                </div>
+              </div>
+              {!swarmRunning && swarmResults.length === 0 && (
+                <div style={{ display:'grid', gap:16 }}>
+                  <div>
+                    <label style={{ fontSize:12, color:'var(--fg-text3)', fontWeight:600, display:'block', marginBottom:6 }}>🎯 MISSION</label>
+                    <textarea value={swarmTask} onChange={e => setSwarmTask(e.target.value)} placeholder="e.g. Write a comprehensive competitive analysis of the top 10 AI coding assistants..." style={{ width:'100%', minHeight:80, padding:14, background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', boxSizing:'border-box', outline:'none', fontFamily:'inherit' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize:12, color:'var(--fg-text3)', fontWeight:600, display:'block', marginBottom:8 }}>🤖 SWARM SIZE: {swarmAgentCount} agents</label>
+                    <input type="range" min={2} max={20} value={swarmAgentCount} onChange={e => setSwarmAgentCount(Number(e.target.value))} style={{ width:'100%', accentColor:'var(--fg-orange)' }} />
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'var(--fg-text3)', marginTop:4 }}>
+                      <span>2 (focused)</span><span>20 (comprehensive)</span>
+                    </div>
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:10 }}>
+                    {([{icon:'🔬',label:'Deep Research'},{icon:'💡',label:'Ideation Burst'},{icon:'📊',label:'Market Analysis'},{icon:'✍️',label:'Content Factory'},{icon:'⚙️',label:'Tech Blueprint'},{icon:'🚀',label:'Go-to-Market'}] as Array<{icon:string;label:string}>).map(t => (
+                      <button key={t.label} onClick={() => setSwarmTask(t.label + ': ')} style={{ padding:'10px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', textAlign:'left', fontWeight:600 }}>{t.icon} {t.label}</button>
+                    ))}
+                  </div>
+                  <button disabled={!swarmTask.trim()} onClick={async () => {
+                    setSwarmRunning(true); setSwarmResults([]); setSwarmSynthesis('');
+                    const allRoles = ['Researcher','Analyst','Strategist','Writer','Critic','Planner','Data Scientist','Domain Expert','Devil\'s Advocate','Synthesizer','Fact Checker','Creative Director','Technical Lead','Market Expert','UX Researcher','Financial Analyst','Legal Reviewer','SEO Specialist','Social Media Expert','Customer Advocate'];
+                    const chosenRoles = allRoles.slice(0, swarmAgentCount);
+                    const init = chosenRoles.map((r,i) => ({ agentId:`a${i}`, role:r, result:'', tokens:0, done:false }));
+                    setSwarmResults([...init]);
+                    const cm = selectedModel.startsWith('openrouter/') ? selectedModel.slice(11) : selectedModel;
+                    const res = [...init];
+                    await Promise.all(chosenRoles.map(async (role, i) => {
+                      try {
+                        const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message:'You are the '+role+' in a multi-agent swarm. Analyze from your perspective only:\n\nTASK: '+swarmTask+'\n\nGive 3-5 concise paragraphs of your expert '+role+' take.', model: cm }) }, user.token);
+                        res[i] = { ...res[i], result: d?.data?.content||'', tokens: d?.data?.tokens||0, done:true };
+                        setSwarmResults([...res]);
+                      } catch { res[i]={...res[i],result:'⚠️ Agent failed',done:true}; setSwarmResults([...res]); }
+                    }));
+                    try {
+                      const combined = res.map(r=>'['+r.role+']: '+r.result).join('\n\n---\n\n');
+                      const s = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message:'Synthesize these '+swarmAgentCount+' expert analyses into a concise executive summary with key insights and next steps:\n\nTASK: '+swarmTask+'\n\nRESULTS:\n'+combined.slice(0,8000), model: cm }) }, user.token);
+                      setSwarmSynthesis(s?.data?.content||'');
+                    } catch {}
+                    setSwarmRunning(false);
+                  }} style={{ padding:'14px 28px', background: swarmTask.trim()?'linear-gradient(135deg,#6366f1,var(--fg-orange))':'var(--fg-bg4)', border:'none', borderRadius:10, color: swarmTask.trim()?'#fff':'var(--fg-text3)', fontSize:15, fontWeight:700, cursor: swarmTask.trim()?'pointer':'not-allowed', display:'flex', alignItems:'center', gap:10, justifyContent:'center' }}>
+                    🐝 Deploy {swarmAgentCount} Agents
+                  </button>
+                </div>
+              )}
+              {(swarmRunning || swarmResults.length > 0) && (
+                <div style={{ display:'grid', gap:16 }}>
+                  <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+                    <div style={{ flex:1, fontSize:13, color:'var(--fg-text2)', fontWeight:600 }}>{swarmRunning ? `⚡ ${swarmResults.filter(r=>r.done).length}/${swarmResults.length} agents done...` : `✅ ${swarmResults.length} agents complete`}</div>
+                    {!swarmRunning && <button onClick={() => { setSwarmResults([]); setSwarmSynthesis(''); setSwarmTask(''); }} style={{ padding:'7px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>← New Mission</button>}
+                    {!swarmRunning && swarmSynthesis && <button onClick={() => { setInput('SWARM SYNTHESIS:\n\n'+swarmSynthesis); setMainTab('workspace'); setTimeout(()=>textareaRef.current?.focus(),100); }} style={{ padding:'7px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>💬 Continue in Chat →</button>}
+                  </div>
+                  {swarmSynthesis && (
+                    <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(249,115,22,0.08))', border:'1px solid rgba(99,102,241,0.3)', borderRadius:12, padding:20 }}>
+                      <h3 style={{ margin:'0 0 10px', fontSize:14, fontWeight:700, color:'var(--fg-orange)' }}>🌟 Swarm Synthesis</h3>
+                      <p style={{ margin:0, fontSize:13, color:'var(--fg-text2)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{swarmSynthesis}</p>
+                    </div>
+                  )}
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:12 }}>
+                    {swarmResults.map((r,i) => (
+                      <div key={r.agentId} style={{ background:'var(--fg-bg2)', border:`1px solid ${r.done?'var(--fg-border)':'rgba(249,115,22,0.3)'}`, borderRadius:10, padding:14 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                          <span>{r.done?'✅':'⟳'}</span>
+                          <span style={{ fontSize:12, fontWeight:700, color:r.done?'var(--fg-orange)':'var(--fg-text3)' }}>Agent {i+1}: {r.role}</span>
+                          {r.tokens>0 && <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:'auto' }}>{r.tokens.toLocaleString()}t</span>}
+                        </div>
+                        {r.done ? <p style={{ margin:0, fontSize:11, color:'var(--fg-text2)', lineHeight:1.5 }}>{r.result.slice(0,220)}{r.result.length>220?'...':''}</p> : <div style={{ height:4, background:'var(--fg-bg4)', borderRadius:2 }}><div style={{ width:'50%', height:'100%', background:'var(--fg-orange)', borderRadius:2 }} /></div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── Connector Setup Modal ────────────────────────────────────── */}
         {showConnectModal && (
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => setShowConnectModal(null)}>
@@ -5005,27 +5256,20 @@ export default function ForgeApp() {
               </div>
               <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16, marginBottom:16, fontSize:13, color:'var(--fg-text2)', lineHeight:1.6 }}>
                 <p style={{ margin:'0 0 10px', fontWeight:600, color:'var(--fg-orange)' }}>🔌 How to Connect</p>
-                <p style={{ margin:'0 0 8px' }}>1. Get your API key or OAuth credentials from {showConnectModal.name}</p>
-                <p style={{ margin:'0 0 8px' }}>2. Add it to your backend environment as <code style={{ background:'var(--fg-bg)', padding:'1px 6px', borderRadius:4, fontFamily:'monospace', fontSize:12 }}>{showConnectModal.envKey || showConnectModal.id.toUpperCase() + '_API_KEY'}</code></p>
-                <p style={{ margin:'0 0 8px' }}>3. Click "Activate" below — Forge will use it automatically in chat when {showConnectModal.name} is relevant</p>
-                <p style={{ margin:0, color:'var(--fg-text3)', fontSize:11 }}>Once active, just say "send email via Gmail" or "post to Slack" in chat and Forge will handle it.</p>
+                <p style={{ margin:'0 0 8px' }}>1. Get your API key from {showConnectModal.name}</p>
+                <p style={{ margin:'0 0 8px' }}>2. Add it as <code style={{ background:'var(--fg-bg)', padding:'1px 6px', borderRadius:4, fontFamily:'monospace', fontSize:12 }}>{showConnectModal.envKey || showConnectModal.id.toUpperCase()+'_API_KEY'}</code></p>
+                <p style={{ margin:'0 0 8px' }}>3. Click Activate — Forge uses it automatically</p>
+                <p style={{ margin:0, color:'var(--fg-text3)', fontSize:11 }}>Just say "send email via Gmail" or "post to Slack" and Forge handles it.</p>
               </div>
               <div style={{ display:'flex', gap:8, marginBottom:12 }}>
                 {showConnectModal.setupUrl && (
                   <button onClick={() => window.open(showConnectModal.setupUrl, '_blank')} style={{ flex:1, padding:'10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer', fontWeight:600 }}>📖 Get API Key →</button>
                 )}
-                <button onClick={() => {
-                  toggleConnector(showConnectModal.id);
-                  setShowConnectModal(null);
-                  addAgentStep('🔌', `${showConnectModal.name} connector activated`);
-                }} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:700 }}>
+                <button onClick={() => { toggleConnector(showConnectModal.id); setShowConnectModal(null); addAgentStep('🔌', showConnectModal.name+' connector activated'); }} style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:700 }}>
                   {activeConnectors.has(showConnectModal.id) ? '✓ Deactivate' : '⚡ Activate Now'}
                 </button>
               </div>
-              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', textAlign:'center' }}>
-                Forge will inject {showConnectModal.name} capabilities into the AI when this connector is active.
-                Full OAuth integration coming soon.
-              </p>
+              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', textAlign:'center' }}>Forge injects {showConnectModal.name} into the AI context when active.</p>
               <button onClick={() => setShowConnectModal(null)} style={{ position:'absolute', top:12, right:12, background:'none', border:'none', color:'var(--fg-text3)', fontSize:20, cursor:'pointer', padding:'4px 8px' }}>✕</button>
             </div>
           </div>

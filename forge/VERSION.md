@@ -1,6 +1,17 @@
 # Forge Platform — Version History
 
-## v6.31 — 2026-05-26 (current)
+## v6.32 — 2026-05-26 (current)
+
+### Moonshot Features: MVP Builder + Intelligence Layer + Agent Swarm
+
+- **MVP Builder tab** (🏗️) — Describe any idea, get a complete startup blueprint: product spec, tech stack, 4-phase roadmap, investor pitch. One-click templates for 8 MVP types. Results are editable and can be sent to chat for refinement
+- **Intelligence Layer tab** (🧠) — Living context graph showing Forge IQ score, memory entries, conversation count, active skills/connectors/tools. Knowledge Harvest, Context Graph, Smart Auto-Select, and Predictive Mode features. IQ progress bar toward 1000
+- **Agent Swarm tab** (🐝) — Deploy 2–20 parallel AI agents simultaneously on one task. Each agent takes a specialist role (Researcher, Analyst, Strategist, Writer, Critic, etc.). Results shown in real-time cards. Swarm Synthesis agent combines all outputs into an executive summary
+- **3 new left nav tabs**: MVP Builder (🏗️), Intelligence (🧠), Agent Swarm (🐝)
+- **mainTab type extended** to include `'mvp'|'intelligence'|'swarm'`
+- **New state**: mvpIdea/Industry/Target/Building/Result/Phase, igNodes/Query/Loading, swarmTask/AgentCount/Running/Results/Synthesis
+
+## v6.31 — 2026-05-25
 
 ### Progress Tracker + Ready-made Agents + Expanded Tools + Human Narration
 
