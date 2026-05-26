@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.27 -- fix enabledSkills/enabledConnectors in superagent/chat
+// Forge AI Workspace v6.28 -- persistent thinking steps panel after response
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -351,7 +351,10 @@ export default function ForgeApp() {
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
   const [agentSteps, setAgentSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
-  const addAgentStep = (icon: string, text: string) => setAgentSteps(prev => [...prev.slice(-20), { icon, text, ts: Date.now() }]);
+  const agentStepsRef = useRef<{icon:string;text:string;ts:number}[]>([]);
+  const addAgentStep = (icon: string, text: string) => setAgentSteps(prev => { const next = [...prev.slice(-20), { icon, text, ts: Date.now() }]; agentStepsRef.current = next; return next; });
+  const [lastThinkingSteps, setLastThinkingSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
+  const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
   // Tool calls captured during the current SSE stream — map of msgId -> tool call list
@@ -1371,7 +1374,8 @@ export default function ForgeApp() {
     }
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
-    setAgentSteps([]);
+    setAgentSteps([]); agentStepsRef.current = [];
+    setLastThinkingSteps([]); setThinkingExpanded(false);
     setMultiResponses([]);
     addAgentStep('🧠', 'Processing your message…');
     // Create AbortController so Stop button can cancel this request
@@ -1553,6 +1557,7 @@ export default function ForgeApp() {
       setMessages(prev => [...prev, errMsg]);
     } finally {
       clearTimeout(safetyTimer);
+      if (agentStepsRef.current.length > 0) setLastThinkingSteps([...agentStepsRef.current]);
       setSending(false); setTyping(false);
       sendAbortRef.current = null;
       // If user queued a message while we were thinking, send it now
@@ -1927,7 +1932,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.27</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.28</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -2279,6 +2284,29 @@ export default function ForgeApp() {
                     </div>
                     );
                   })}
+                  {/* Persistent thinking steps — shown after response arrives */}
+                  {!typing && lastThinkingSteps.length > 0 && (
+                    <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:680 }}>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>⚡</div>
+                      <div style={{ flex:1, borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', overflow:'hidden' }}>
+                        <button onClick={() => setThinkingExpanded(p => !p)} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', background:'none', border:'none', cursor:'pointer', textAlign:'left' }}>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>🧠 Forge thought for {lastThinkingSteps.length} step{lastThinkingSteps.length !== 1 ? 's' : ''}</span>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{thinkingExpanded ? '▲' : '▼'}</span>
+                        </button>
+                        {thinkingExpanded && (
+                          <div style={{ borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column' }}>
+                            {lastThinkingSteps.map((s, i) => (
+                              <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 14px', borderBottom: i < lastThinkingSteps.length-1 ? '1px solid var(--fg-border)' : 'none' }}>
+                                <span style={{ fontSize:12 }}>{s.icon}</span>
+                                <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{s.text}</span>
+                                <span style={{ fontSize:10, color:'var(--fg-green)', marginLeft:'auto' }}>✓</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {typing && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:680 }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-orange)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0, boxShadow:'0 0 12px rgba(249,115,22,0.4)' }}>⚡</div>

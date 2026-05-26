@@ -1,6 +1,16 @@
 # Forge Platform — Version History
 
-## v6.27 — 2026-05-25 (current)
+## v6.28 — 2026-05-25 (current)
+
+### Persistent Thinking Steps Panel
+
+- **Thinking steps persist after response** — agent steps (🧠 Processing, 🧩 Skills, ⚙️ Sending, 💭 live backend events) are now snapshotted into a collapsible "Forge thought for N steps" block that stays visible below the AI reply
+- **`agentStepsRef`** tracks steps via ref (not stale closure) so `finally` block captures the full set including backend SSE events
+- Steps cleared on next message send; expand/collapse toggle
+
+---
+
+## v6.27 — 2026-05-25
 
 ### Superagent Skills/Connectors Wiring Fix
 
