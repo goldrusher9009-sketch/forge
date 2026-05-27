@@ -1,6 +1,13 @@
 # Forge Platform — Version History
 
-## v6.33 — 2026-05-26 (current)
+## v6.34 — 2026-05-26 (current)
+### Critical crash fix + full audit
+- **Fixed `React is not defined` crash** — added `import React` + moved illegal `React.useState` hook out of IIFE into component scope
+- **Fixed app crash when clicking Agents right panel tab** — `activeAgentId` state moved to component level
+- **Default model** — Llama 3.3 70B (free) for fast responses
+- **BodyStreamBuffer** — friendly error message on stream interruption
+
+## v6.33 — 2026-05-26
 
 ### Full smoke test + backend tool infrastructure
 

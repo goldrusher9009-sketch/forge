@@ -1,6 +1,6 @@
-// Forge AI Workspace v6.30 -- autonomy layer, getUserLLMKey, goals/files/webhooks/reflect, BodyStreamBuffer fix
+// Forge AI Workspace v6.34 -- fix React import + activeAgentId hook violation crash
 'use client';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
@@ -599,6 +599,7 @@ export default function ForgeApp() {
     try { const s = localStorage.getItem('forge_active_connectors'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
   });
   const [activeSkillPrompt, setActiveSkillPrompt] = useState('');
+  const [activeAgentId, setActiveAgentId] = useState<string|null>(null);
   const [genTopic, setGenTopic] = useState('');
   const [genIndustry, setGenIndustry] = useState('');
   const [genGoal, setGenGoal] = useState('');
@@ -2075,7 +2076,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.33</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.34</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -2828,7 +2829,6 @@ export default function ForgeApp() {
                           { id:'automation', icon:'🤖', name:'Automation Builder', desc:'Workflows, Zapier/Make logic, API integrations' },
                         ]},
                       ];
-                      const [activeAgentId, setActiveAgentId] = React.useState<string|null>(null);
                       return (
                         <div>
                           <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:'0 0 4px', letterSpacing:'0.5px' }}>🧠 Ready-made Agents</p>
