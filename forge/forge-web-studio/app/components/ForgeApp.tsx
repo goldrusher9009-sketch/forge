@@ -959,12 +959,14 @@ export default function ForgeApp() {
       // Auto-select a reliable paid OR model if no valid model currently selected
       setSelectedModel(prev => {
         if (!prev || prev.endsWith(':free') || prev === '') {
-          // Prefer fast models: llama 3.3 70b free > deepseek > first paid
-          const preferred = models.find((m: any) => m.id === 'meta-llama/llama-3.3-70b-instruct:free')
-            || models.find((m: any) => m.id === 'google/gemini-flash-1.5:free')
-            || models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324');
-          const firstPaid = models.find((m: any) => !m.id.includes(':free') && m.pricing?.prompt !== '0' && m.pricing?.prompt !== '0.0');
-          return preferred?.id || firstPaid?.id || models[0].id;
+          // Prefer reliable paid models — free models rate-limit even with your own key
+          const preferred =
+            models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324')
+            || models.find((m: any) => m.id === 'meta-llama/llama-3.1-8b-instruct')
+            || models.find((m: any) => m.id === 'mistralai/mistral-7b-instruct')
+            || models.find((m: any) => !m.id.includes(':free') && (m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0'))
+            || models.find((m: any) => !m.id.includes(':free'));
+          return preferred?.id || models[0].id;
         }
         return prev;
       });
@@ -1020,7 +1022,7 @@ export default function ForgeApp() {
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
-        if (confirmed['openrouter']) return (prev && prev !== 'deepseek/deepseek-chat-v3-0324') ? prev : 'meta-llama/llama-3.3-70b-instruct:free'; // prefer fast model
+        if (confirmed['openrouter']) return (prev && !prev.endsWith(':free')) ? prev : 'deepseek/deepseek-chat-v3-0324'; // prefer paid model — free models rate-limit even with own key
         // No keys at all — leave empty so UI shows the warning
         return '';
       });
