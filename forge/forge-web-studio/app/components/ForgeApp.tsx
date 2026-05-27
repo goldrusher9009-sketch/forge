@@ -5015,6 +5015,237 @@ export default function ForgeApp() {
           </div>
         )}
 
+        {/* ── Files ─────────────────────────────────────────────────────── */}
+        {mainTab === 'files' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>📁</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Files</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Upload, manage, and share files with your agents. Files persist across conversations.</p>
+                </div>
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'2px dashed var(--fg-border2)', borderRadius:12, padding:40, textAlign:'center', marginBottom:20 }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>📤</div>
+                <p style={{ margin:'0 0 16px', fontSize:15, color:'var(--fg-text2)', fontWeight:600 }}>Drop files here or click to upload</p>
+                <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>PDF, DOCX, CSV, TXT, PNG, JPG — up to 50MB each</p>
+                <button onClick={() => { const inp = document.createElement('input'); inp.type='file'; inp.multiple=true; inp.click(); }} style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Choose Files</button>
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>📂 Your Files</h3>
+                  <span style={{ fontSize:11, color:'var(--fg-text3)' }}>0 files · 0 MB used</span>
+                </div>
+                <div style={{ textAlign:'center', padding:'32px 0' }}>
+                  <div style={{ fontSize:32, marginBottom:8 }}>📭</div>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No files uploaded yet. Upload files to reference them in chat.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Hooks ─────────────────────────────────────────────────────── */}
+        {mainTab === 'hooks' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>🪝</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Hooks</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Auto-inject context, rules, and tools into every conversation. Hooks fire before every message.</p>
+                </div>
+              </div>
+              <div style={{ display:'grid', gap:16 }}>
+                {[{icon:'🧠',title:'Memory Hook',desc:'Automatically inject your top memories into every chat for personalized responses.',status:'active'},{icon:'🛠',title:'Tools Hook',desc:'Pre-load your most-used tools (search, code exec, browser) before every conversation.',status:'active'},{icon:'📋',title:'System Prompt Hook',desc:'Inject a custom system prompt that shapes the AI persona for all conversations.',status:'off'},{icon:'🔌',title:'Connector Hook',desc:'Auto-activate connected services (Slack, Gmail, GitHub) when relevant keywords appear.',status:'off'},{icon:'📊',title:'Context Hook',desc:'Summarize previous conversation context and inject it into new chats automatically.',status:'off'}].map(h => (
+                  <div key={h.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, display:'flex', alignItems:'center', gap:16 }}>
+                    <span style={{ fontSize:28 }}>{h.icon}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                        <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{h.title}</span>
+                        <span style={{ fontSize:10, padding:'2px 7px', borderRadius:20, background: h.status==='active' ? 'rgba(34,197,94,0.15)' : 'var(--fg-bg4)', color: h.status==='active' ? '#22c55e' : 'var(--fg-text3)', fontWeight:700 }}>{h.status==='active' ? '● ACTIVE' : '○ OFF'}</span>
+                      </div>
+                      <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>{h.desc}</p>
+                    </div>
+                    <button style={{ padding:'6px 14px', background: h.status==='active' ? 'var(--fg-bg4)' : 'var(--fg-orange)', border:'none', borderRadius:7, color: h.status==='active' ? 'var(--fg-text2)' : '#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>{h.status==='active' ? 'Disable' : 'Enable'}</button>
+                  </div>
+                ))}
+                <button style={{ padding:'12px', background:'var(--fg-bg2)', border:'1px dashed var(--fg-border2)', borderRadius:10, color:'var(--fg-text3)', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ Create Custom Hook</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Runs ─────────────────────────────────────────────────────── */}
+        {mainTab === 'runs' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>🏃</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Runs</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Scheduled and automated agent runs. Set tasks to execute on a schedule or trigger automatically.</p>
+                </div>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
+                {[{icon:'✅',label:'Completed',count:'0',color:'#22c55e'},{icon:'⚡',label:'Running',count:'0',color:'var(--fg-orange)'},{icon:'⏳',label:'Scheduled',count:'0',color:'#6366f1'}].map(s => (
+                  <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, textAlign:'center' }}>
+                    <div style={{ fontSize:24, marginBottom:4 }}>{s.icon}</div>
+                    <div style={{ fontSize:22, fontWeight:800, color:s.color }}>{s.count}</div>
+                    <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Recent Runs</h3>
+                  <button style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>+ Schedule Run</button>
+                </div>
+                <div style={{ textAlign:'center', padding:'28px 0' }}>
+                  <div style={{ fontSize:28, marginBottom:8 }}>📭</div>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No runs yet. Schedule an agent to run automatically.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ForgeCo ─────────────────────────────────────────────────── */}
+        {mainTab === 'forgeco' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>🧑‍💻</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeCo</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Your AI-powered coding co-pilot. Write, review, debug, and deploy code with Forge agents.</p>
+                </div>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16, marginBottom:20 }}>
+                {[{icon:'✍️',title:'Write Code',desc:'Describe what you want to build and get production-ready code instantly.',action:'Start Coding →'},{icon:'🐛',title:'Debug & Fix',desc:'Paste broken code and let Forge find and fix bugs automatically.',action:'Debug Code →'},{icon:'👁️',title:'Code Review',desc:'Get a senior-engineer review of your PR or codebase in seconds.',action:'Review Code →'},{icon:'🚀',title:'Deploy Helper',desc:'Generate Docker, CI/CD configs, and deployment scripts for any stack.',action:'Deploy Now →'}].map(item => (
+                  <div key={item.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, cursor:'pointer' }} onClick={() => { setInput(item.title + ': '); setMainTab('workspace'); setTimeout(() => textareaRef.current?.focus(), 100); }}>
+                    <div style={{ fontSize:28, marginBottom:8 }}>{item.icon}</div>
+                    <h3 style={{ margin:'0 0 6px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{item.title}</h3>
+                    <p style={{ margin:'0 0 12px', fontSize:12, color:'var(--fg-text3)', lineHeight:1.5 }}>{item.desc}</p>
+                    <span style={{ fontSize:12, color:'var(--fg-orange)', fontWeight:700 }}>{item.action}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+                <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>⚡ Quick Prompts</h3>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {['Build a REST API in Node.js','Create a React component','Write unit tests for my code','Optimize this SQL query','Build a Docker Compose file','Create a GitHub Actions CI pipeline'].map(p => (
+                    <button key={p} onClick={() => { setInput(p); setMainTab('workspace'); setTimeout(() => textareaRef.current?.focus(), 100); }} style={{ padding:'6px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:20, color:'var(--fg-text2)', fontSize:11, cursor:'pointer', fontWeight:500 }}>{p}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ForgeAuto ─────────────────────────────────────────────────── */}
+        {mainTab === 'forgeauto' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>⚡</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeAuto</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Fully autonomous agent mode. Give Forge a goal and it handles everything — planning, tools, execution.</p>
+                </div>
+              </div>
+              <div style={{ background:'linear-gradient(135deg,rgba(251,146,60,0.15),rgba(99,102,241,0.15))', border:'1px solid var(--fg-border)', borderRadius:14, padding:24, marginBottom:20 }}>
+                <h3 style={{ margin:'0 0 8px', fontSize:15, fontWeight:800, color:'var(--fg-text)' }}>🤖 Autonomous Task Runner</h3>
+                <p style={{ margin:'0 0 16px', fontSize:13, color:'var(--fg-text2)' }}>Describe your goal. ForgeAuto will break it down, pick tools, execute steps, and deliver results — no hand-holding needed.</p>
+                <textarea placeholder="e.g. Research competitors in the AI SaaS space, find their pricing, and summarize in a table..." style={{ width:'100%', minHeight:80, padding:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', outline:'none', fontFamily:'inherit', marginBottom:12 }} />
+                <button onClick={() => setMainTab('workspace')} style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>⚡ Run Autonomously</button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+                {[{icon:'🔍',title:'Deep Research',desc:'Multi-source research with synthesis'},{icon:'📊',title:'Data Analysis',desc:'Analyze datasets and generate insights'},{icon:'✍️',title:'Content Pipeline',desc:'Research → write → publish automatically'},{icon:'🤝',title:'Lead Research',desc:'Find and enrich sales prospects'},{icon:'📧',title:'Email Automation',desc:'Draft, personalize, and schedule emails'},{icon:'🛠',title:'Code Generation',desc:'Build entire features autonomously'}].map(item => (
+                  <div key={item.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, cursor:'pointer', textAlign:'center' }} onClick={() => { setInput(item.title + ': '); setMainTab('workspace'); setTimeout(() => textareaRef.current?.focus(),100); }}>
+                    <div style={{ fontSize:24, marginBottom:6 }}>{item.icon}</div>
+                    <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:4 }}>{item.title}</div>
+                    <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ForgeMulti ─────────────────────────────────────────────────── */}
+        {mainTab === 'forgemulti' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>🤖</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeMulti</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Run the same prompt across multiple models simultaneously. Compare outputs side-by-side.</p>
+                </div>
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
+                <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>📊 Multi-Model Comparison</h3>
+                <textarea placeholder="Enter your prompt to run across all selected models..." style={{ width:'100%', minHeight:80, padding:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', outline:'none', fontFamily:'inherit', marginBottom:12 }} />
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
+                  {['Claude Opus','GPT-4o','Gemini 2.5 Pro','DeepSeek V3','Llama 3.3 70B'].map(m => (
+                    <label key={m} style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:20, cursor:'pointer', fontSize:12, color:'var(--fg-text2)' }}>
+                      <input type="checkbox" defaultChecked style={{ accentColor:'var(--fg-orange)' }} /> {m}
+                    </label>
+                  ))}
+                </div>
+                <button onClick={() => setMainTab('workspace')} style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>🤖 Run All Models</button>
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>💡 Use Cases</h3>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                  {['Best answer for customer support','Which model writes best code?','Fact-check across models','Find consensus on complex topics','Best creative writing model','Speed vs quality comparison'].map(u => (
+                    <div key={u} style={{ padding:'10px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, fontSize:12, color:'var(--fg-text2)', cursor:'pointer' }} onClick={() => { setMainTab('workspace'); }}>🔀 {u}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ForgeASI ─────────────────────────────────────────────────── */}
+        {mainTab === 'forgeasi' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>🌌</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeASI</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>EPIC: Extended Parallel Intelligence Chains. Chain multiple specialized agents into an unstoppable pipeline.</p>
+                </div>
+              </div>
+              <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(168,85,247,0.12))', border:'1px solid rgba(99,102,241,0.3)', borderRadius:14, padding:24, marginBottom:20 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                  <span style={{ fontSize:20 }}>🌌</span>
+                  <h3 style={{ margin:0, fontSize:15, fontWeight:800, color:'#818cf8' }}>EPIC Mode — Extended Parallel Intelligence Chains</h3>
+                </div>
+                <p style={{ margin:'0 0 16px', fontSize:13, color:'var(--fg-text2)', lineHeight:1.6 }}>Chain specialist agents in sequence. Agent 1 researches → Agent 2 analyzes → Agent 3 synthesizes → Agent 4 produces deliverable. Each agent sees the full upstream context.</p>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8, marginBottom:16 }}>
+                  {['🔍 Research','📊 Analyze','🧠 Synthesize','📝 Deliver'].map((step,i) => (
+                    <div key={i} style={{ background:'rgba(99,102,241,0.15)', border:'1px solid rgba(99,102,241,0.3)', borderRadius:8, padding:10, textAlign:'center', fontSize:12, color:'#818cf8', fontWeight:700 }}>{step}</div>
+                  ))}
+                </div>
+                <button onClick={() => setMainTab('workspace')} style={{ padding:'10px 24px', background:'#6366f1', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>🌌 Launch EPIC Chain</button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+                {[{icon:'📈',title:'Market Intelligence Pipeline',desc:'Research → Competitor analysis → SWOT → Strategy report'},{icon:'🛠',title:'Full-Stack Build Pipeline',desc:'Spec → Architecture → Code → Tests → Deploy config'},{icon:'📧',title:'Sales Intelligence Pipeline',desc:'Lead research → Personalization → Email sequence → Follow-ups'},{icon:'📰',title:'Content Production Pipeline',desc:'Research → Outline → Draft → SEO optimize → Publish-ready'}].map(p => (
+                  <div key={p.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, cursor:'pointer' }} onClick={() => { setInput(p.title + ': '); setMainTab('workspace'); setTimeout(() => textareaRef.current?.focus(),100); }}>
+                    <div style={{ fontSize:24, marginBottom:8 }}>{p.icon}</div>
+                    <h4 style={{ margin:'0 0 6px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{p.title}</h4>
+                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', lineHeight:1.5 }}>{p.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── MVP Builder ─────────────────────────────────────────────── */}
         {mainTab === 'mvp' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
