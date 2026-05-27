@@ -596,7 +596,7 @@ function getUserKey(userId: string, provider: string): string | null {
 function getUserLLMKey(userId: string): { provider: string; apiKey: string; model: string } {
   const order = [
     { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' },
-    { provider: 'openrouter', model: 'meta-llama/llama-3.1-8b-instruct:free' },
+    { provider: 'openrouter', model: 'meta-llama/llama-3.1-8b-instruct' },
     { provider: 'openai', model: 'gpt-4o-mini' },
     { provider: 'gemini', model: 'gemini-1.5-flash' },
     { provider: 'groq', model: 'llama3-8b-8192' },
@@ -1943,7 +1943,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   // Now safe to do DB work — connection is already alive
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!thread) { endSSE({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_connectors = [], enabled_hooks = [], forge_mode = 'ask' } = req.body;
+  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_skill_prompts = {}, active_connectors = [], enabled_hooks = [], forge_mode = 'ask', desktop_context } = req.body;
   if (!content?.trim()) { endSSE({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
   const userId = req.user!.sub;
   ensureSubscription(userId);
@@ -1972,17 +1972,28 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     const agentRows = db.prepare(`SELECT system_prompt FROM workspace_agents WHERE id IN (${agent_ids.map(()=>'?').join(',')}) AND user_id=?`).all(...agent_ids, userId) as any[];
     agentRows.forEach(a => { if (a.system_prompt) systemParts.push(a.system_prompt); });
   }
+  // Inject desktop context (local folders + browser page) if running in Forge Desktop
+  if (desktop_context) {
+    systemParts.push(`## Desktop Context\nThe user is running Forge Desktop. Local context available:\n${desktop_context}`);
+  }
   // Inject active skills into system prompt and emit activity
   if (active_skills.length > 0) {
-    emitStep('🧩', `Loading ${active_skills.length} skill${active_skills.length > 1 ? 's' : ''}: ${(active_skills as string[]).slice(0,3).join(', ')}${active_skills.length > 3 ? '…' : ''}`);
-    const skillLines = (active_skills as string[]).map((s: string) => `- ${s}`).join('\n');
-    systemParts.push(`## Active Skills\nYou have the following skills enabled. Apply their expertise to every response:\n${skillLines}`);
+    const skillNames = (active_skills as string[]).map((id: string) => {
+      const p = (active_skill_prompts as Record<string,string>)[id];
+      return p ? id : id; // use id as display name; prompt goes into body
+    });
+    emitStep('🧩', `Loading ${active_skills.length} skill${active_skills.length > 1 ? 's' : ''}: ${skillNames.slice(0,3).join(', ')}${active_skills.length > 3 ? '…' : ''}`);
+    const skillLines = (active_skills as string[]).map((id: string) => {
+      const prompt = (active_skill_prompts as Record<string,string>)[id];
+      return prompt ? `### ${id}\n${prompt}` : `- ${id}`;
+    }).join('\n');
+    systemParts.push(`## Active Skills\nThe user has activated the following skills. Apply their expertise throughout every response:\n${skillLines}`);
   }
   // Inject active connectors into system prompt and emit activity
   if (active_connectors.length > 0) {
     emitStep('🔌', `Connecting: ${(active_connectors as string[]).slice(0,3).join(', ')}${active_connectors.length > 3 ? '…' : ''}`);
     const connLines = (active_connectors as string[]).map((c: string) => `- ${c}`).join('\n');
-    systemParts.push(`## Connected Integrations\nThe following connectors are active. Reference them when relevant to the user's request:\n${connLines}`);
+    systemParts.push(`## Connected Integrations\nThe following connectors are active. Reference them and their capabilities when relevant:\n${connLines}`);
   }
   // Inject enabled hooks into system prompt and emit activity
   if (enabled_hooks.length > 0) {

@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.35 -- fix OpenRouter 429 rate-limit error handling
+// Forge AI Workspace v6.37 -- desktop app integration (folder context, browser bridge, memory)
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -396,7 +396,13 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'>('workspace');
+  // Desktop app integration
+  const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
+  const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
+  const [desktopFileTree, setDesktopFileTree] = useState<any[]>([]);
+  const [desktopMemory, setDesktopMemory] = useState<Record<string, any>>({});
+  const [desktopBrowserCtx, setDesktopBrowserCtx] = useState<{ url: string; title: string; text: string } | null>(null);
 
   // Right panel tabs
   const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>('tracker');
@@ -410,6 +416,23 @@ export default function ForgeApp() {
     return () => window.removeEventListener('resize', check);
   }, []);
   const [rightExpanded, setRightExpanded] = useState(true);
+
+  // Desktop app: load state + listen for browser events from Chrome extension
+  useEffect(() => {
+    if (!isDesktop) return;
+    const fd = (window as any).forgeDesktop;
+    fd.getOpenFolders().then((folders: string[]) => {
+      setDesktopFolders(folders);
+      if (folders.length > 0) fd.getTree(folders[0]).then((tree: any[]) => setDesktopFileTree(tree)).catch(() => {});
+    }).catch(() => {});
+    fd.memoryGet().then((mem: any) => setDesktopMemory(mem || {})).catch(() => {});
+    const cleanup = fd.onBrowserEvent((evt: any) => {
+      if (evt.type === 'page-context' || evt.type === 'page-content' || evt.type === 'selection') {
+        setDesktopBrowserCtx({ url: evt.url || '', title: evt.title || '', text: evt.text || evt.selection || '' });
+      }
+    });
+    return cleanup;
+  }, [isDesktop]);
 
   // Composer
   const [input, setInput] = useState('');
@@ -958,15 +981,21 @@ export default function ForgeApp() {
       setOpenRouterModels(models);
       // Auto-select a reliable paid OR model if no valid model currently selected
       setSelectedModel(prev => {
+        const isFreeModel = (m: any) => m.id.includes(':free') || m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0';
         if (!prev || prev.endsWith(':free') || prev === '') {
-          // Prefer reliable paid models — free models rate-limit even with your own key
+          // Prefer genuinely paid models — free models (by id or pricing) rate-limit even with your own key
           const preferred =
             models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324')
-            || models.find((m: any) => m.id === 'meta-llama/llama-3.1-8b-instruct')
-            || models.find((m: any) => m.id === 'mistralai/mistral-7b-instruct')
-            || models.find((m: any) => !m.id.includes(':free') && (m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0'))
-            || models.find((m: any) => !m.id.includes(':free'));
-          return preferred?.id || models[0].id;
+            || models.find((m: any) => m.id === 'mistralai/mistral-small-3.2-24b-instruct')
+            || models.find((m: any) => m.id === 'mistralai/mistral-7b-instruct' && !isFreeModel(m))
+            || models.find((m: any) => !isFreeModel(m));
+          return preferred?.id || 'deepseek/deepseek-chat-v3-0324';
+        }
+        // Also replace if current selection is a free-priced model
+        const currentModel = models.find((m: any) => m.id === prev || m.id === prev.replace('openrouter/', ''));
+        if (currentModel && isFreeModel(currentModel)) {
+          const preferred = models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324') || models.find((m: any) => !isFreeModel(m));
+          return preferred?.id || prev;
         }
         return prev;
       });
@@ -1468,9 +1497,13 @@ export default function ForgeApp() {
       // Fire the new thread request independently — no await so current send keeps going
       const spawnContent = input.trim();
       const spawnModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
+      const spawnCatalogSkills: any[] = (window as any).FORGE_CATALOG_DATA?.skills || [];
+      const spawnSkillPrompts: Record<string, string> = {};
+      spawnCatalogSkills.forEach((s: any) => { if (activeSkills.has(s.id)) spawnSkillPrompts[s.id] = s.prompt || s.name; });
       const spawnBody: any = {
         content: spawnContent, model: spawnModel, agent_ids: activeAgentIds,
         enabled_tools: Array.from(activeTools), active_skills: Array.from(activeSkills),
+        active_skill_prompts: spawnSkillPrompts,
         active_connectors: Array.from(activeConnectors),
         enabled_hooks: hooks.filter(h => h.enabled).map(h => ({ event: h.event, action: h.action, target: h.target })),
       };
@@ -1544,6 +1577,10 @@ export default function ForgeApp() {
         setSending(false); setTyping(false);
         return;
       }
+      // Build skill prompt map from catalog so backend gets rich descriptions, not just IDs
+      const catalogSkills: any[] = (window as any).FORGE_CATALOG_DATA?.skills || [];
+      const skillPromptsMap: Record<string, string> = {};
+      catalogSkills.forEach((s: any) => { if (activeSkills.has(s.id)) skillPromptsMap[s.id] = s.prompt || s.name; });
       const body: any = {
         content: userContent,
         model: cleanModel,
@@ -1551,11 +1588,19 @@ export default function ForgeApp() {
         language: language !== 'en' ? language : undefined,
         enabled_tools: Array.from(activeTools),
         active_skills: Array.from(activeSkills),
+        active_skill_prompts: skillPromptsMap,
         active_connectors: Array.from(activeConnectors),
         enabled_hooks: hooks.filter(h => h.enabled).map(h => ({ event: h.event, action: h.action, target: h.target })),
         forge_mode: superMode === 'forgeMagic' ? 'magic' : 'ask',
       };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
+      // Inject desktop context (folder list + browser page) into system prompt when running in desktop app
+      if (isDesktop) {
+        const ctxParts: string[] = [];
+        if (desktopFolders.length > 0) ctxParts.push(`Open folders: ${desktopFolders.join(', ')}`);
+        if (desktopBrowserCtx) ctxParts.push(`Current browser page: ${desktopBrowserCtx.title} (${desktopBrowserCtx.url})${desktopBrowserCtx.text ? `\nPage excerpt: ${desktopBrowserCtx.text.slice(0,600)}` : ''}`);
+        if (ctxParts.length > 0) body.desktop_context = ctxParts.join('\n\n');
+      }
       // Emit local thinking steps for skills/connectors/hooks
       if (activeSkills.size > 0) addAgentStep('🧩', `Skills active: ${Array.from(activeSkills).slice(0,3).join(', ')}`);
       if (activeConnectors.size > 0) addAgentStep('🔌', `Connectors: ${Array.from(activeConnectors).slice(0,3).join(', ')}`);
@@ -1696,7 +1741,7 @@ export default function ForgeApp() {
         .replace(/BodyStreamBuffer.*aborted/i, 'Stream interrupted — the response was cut off. Try sending again or switch to a faster model.')
         .replace(/AbortError/i, 'Request cancelled.')
         .replace(/rate.limit.*upstream.*add your own key[^]*/i, 'Free model is rate-limited. Add your OpenRouter API key in **Settings → LLM Providers** for unlimited access, or switch models.')
-        .replace(/"?Provider returned error"?,?\s*"?code"?:?\s*429[^]*/i, 'Free model is temporarily rate-limited. Add your OpenRouter API key in **Settings → LLM Providers**, or switch to a different model.')
+        .replace(/"?Provider returned error"?,?\s*"?code"?:?\s*429[^]*/i, 'Model is rate-limited. Switch to a different model in Settings → LLM Providers.')
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
@@ -1946,6 +1991,7 @@ export default function ForgeApp() {
             { id:'mvp', icon:'🏗️', label:'MVP Builder' },
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🐝', label:'Agent Swarm' },
+            ...(isDesktop ? [{ id:'desktop', icon:'🖥️', label:'Desktop & Files' }] : []),
             ...(user.role === 'admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
           ]) as Array<{ id: string; icon: string; label: string }>).map((tab) => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id === 'admin') { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); } if (tab.id === 'super') { loadSuperMemory(); loadSuperHistory(); } if (tab.id === 'settings') { loadVault(); } }} title={tab.label} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:mainTab===tab.id ? 'var(--fg-bg4)' : 'transparent', border:'none', borderRadius:6, color:mainTab===tab.id ? (tab.id==='admin' ? 'var(--fg-orange2)' : tab.id==='super' ? 'var(--fg-orange2)' : 'var(--fg-orange2)') : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:mainTab===tab.id ? 600 : 400, marginBottom:2, justifyContent:sidebarExpanded ? 'flex-start' : 'center' }}>
@@ -2080,7 +2126,8 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.35</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.37</span>
+                  {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
@@ -4816,6 +4863,13 @@ export default function ForgeApp() {
           const filtered = SKILLS.filter((s:any) => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
           const launchSkill = (skill: typeof SKILLS[0]) => {
             setActiveSkillPrompt(skill.prompt);
+            // Auto-activate the skill so it's always on when launched
+            setActiveSkills(prev => {
+              const next = new Set(prev);
+              next.add(skill.id);
+              try { localStorage.setItem('forge_active_skills', JSON.stringify(Array.from(next))); } catch {}
+              return next;
+            });
             setMainTab('workspace');
             setTimeout(() => {
               setInput('');
@@ -4962,7 +5016,7 @@ export default function ForgeApp() {
                         <div style={{ display:'flex', gap:6 }}>
                           {isReady ? (
                             <>
-                              <button onClick={() => { toggleConnector(c.id); setMainTab('workspace'); }} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, flex:1 }}>Use Now</button>
+                              <button onClick={() => { setActiveConnectors(prev => { const next = new Set(prev); next.add(c.id); try { localStorage.setItem('forge_active_connectors', JSON.stringify(Array.from(next))); } catch {} return next; }); setMainTab('workspace'); }} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, flex:1 }}>Use Now</button>
                               <button onClick={() => toggleConnector(c.id)} style={{ padding:'5px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>{isActive ? '✓ On' : '+ On'}</button>
                             </>
                           ) : (
@@ -5051,6 +5105,139 @@ export default function ForgeApp() {
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No files uploaded yet. Upload files to reference them in chat.</p>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Desktop & Files ───────────────────────────────────────────── */}
+        {mainTab === 'desktop' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:900, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>🖥️</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Forge Desktop</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Local file access, persistent memory, and browser integration via the Forge Desktop app.</p>
+                </div>
+                {isDesktop && <span style={{ marginLeft:'auto', fontSize:12, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'4px 12px', borderRadius:20, border:'1px solid rgba(34,197,94,0.3)', fontWeight:700 }}>● Desktop Connected</span>}
+              </div>
+
+              {!isDesktop ? (
+                <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-orange)', borderRadius:16, padding:32, textAlign:'center' }}>
+                  <div style={{ fontSize:48, marginBottom:16 }}>⬇️</div>
+                  <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:800, color:'var(--fg-text)' }}>Download Forge Desktop</h2>
+                  <p style={{ margin:'0 0 20px', fontSize:14, color:'var(--fg-text3)', maxWidth:480, marginLeft:'auto', marginRight:'auto' }}>
+                    The Forge Desktop app gives you local file access, persistent memory, and a Chrome extension to browse alongside AI.
+                  </p>
+                  <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginBottom:20 }}>
+                    {[['🪟 Windows', '.exe'], ['🍎 macOS', '.dmg'], ['🐧 Linux', '.AppImage']].map(([label, ext]) => (
+                      <button key={ext} style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>{label}</button>
+                    ))}
+                  </div>
+                  <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>
+                    Or clone &amp; run: <code style={{ background:'var(--fg-bg)', padding:'2px 8px', borderRadius:4, fontFamily:'monospace' }}>cd forge-desktop &amp;&amp; npm install &amp;&amp; npm start</code>
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display:'grid', gap:20 }}>
+                  {/* Folder Context */}
+                  <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+                      <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>📂 Folder Context ({desktopFolders.length})</h3>
+                      <button onClick={async () => {
+                        const fd = (window as any).forgeDesktop;
+                        const folder = await fd.pickFolder();
+                        if (folder) {
+                          const folders = await fd.getOpenFolders();
+                          setDesktopFolders(folders);
+                          const tree = await fd.getTree(folder).catch(() => []);
+                          setDesktopFileTree(tree);
+                        }
+                      }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ Open Folder</button>
+                    </div>
+                    {desktopFolders.length === 0 ? (
+                      <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)', textAlign:'center', padding:'16px 0' }}>No folders open. Click "Open Folder" to give Forge file access.</p>
+                    ) : (
+                      <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                        {desktopFolders.map(f => (
+                          <div key={f} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'var(--fg-bg)', borderRadius:8, border:'1px solid var(--fg-border)' }}>
+                            <span>📁</span>
+                            <span style={{ flex:1, fontSize:12, fontFamily:'monospace', color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f}</span>
+                            <button onClick={() => { (window as any).forgeDesktop.revealInExplorer(f); }} style={{ padding:'3px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Show</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* File Tree */}
+                  {desktopFileTree.length > 0 && (
+                    <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                      <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>🗂️ File Tree</h3>
+                      <div style={{ maxHeight:300, overflowY:'auto', fontFamily:'monospace', fontSize:12, color:'var(--fg-text2)' }}>
+                        {desktopFileTree.map((item: any, i: number) => (
+                          <div key={i} style={{ display:'flex', alignItems:'center', gap:6, padding:'3px 0', paddingLeft:(item.depth||0)*14 }}>
+                            <span>{item.type === 'dir' ? '📁' : '📄'}</span>
+                            <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color: item.type === 'dir' ? 'var(--fg-text)' : 'var(--fg-text2)' }}>{item.name}</span>
+                            {item.type === 'file' && (
+                              <button onClick={async () => {
+                                const content = await (window as any).forgeDesktop.readFile(item.path);
+                                setInput(`Here is the file \`${item.name}\`:\n\`\`\`\n${content.slice(0,3000)}\n\`\`\``);
+                                setMainTab('workspace');
+                              }} style={{ padding:'1px 6px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:4, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', flexShrink:0 }}>Use</button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Browser Context */}
+                  <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                    <h3 style={{ margin:'0 0 10px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>🌐 Browser Context</h3>
+                    {desktopBrowserCtx ? (
+                      <div>
+                        <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:6 }}>
+                          <span style={{ color:'var(--fg-text2)', fontWeight:600 }}>{desktopBrowserCtx.title}</span>
+                          <span style={{ marginLeft:8, fontFamily:'monospace', fontSize:11 }}>{desktopBrowserCtx.url.slice(0,60)}{desktopBrowserCtx.url.length > 60 ? '…' : ''}</span>
+                        </div>
+                        {desktopBrowserCtx.text && (
+                          <div style={{ background:'var(--fg-bg)', borderRadius:8, padding:10, fontSize:12, color:'var(--fg-text3)', maxHeight:100, overflowY:'auto', marginBottom:10, fontStyle:'italic' }}>
+                            "{desktopBrowserCtx.text.slice(0, 300)}{desktopBrowserCtx.text.length > 300 ? '…' : ''}"
+                          </div>
+                        )}
+                        <button onClick={() => {
+                          setInput(`Context from browser:\nURL: ${desktopBrowserCtx.url}\nTitle: ${desktopBrowserCtx.title}\n\n${desktopBrowserCtx.text.slice(0,1500)}`);
+                          setMainTab('workspace');
+                        }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer' }}>💬 Use in Chat</button>
+                      </div>
+                    ) : (
+                      <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No browser context yet. Install the Forge Chrome extension and browse a page.</p>
+                    )}
+                  </div>
+
+                  {/* Desktop Memory */}
+                  <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                      <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>🧠 Desktop Memory ({Object.keys(desktopMemory).length} entries)</h3>
+                      <button onClick={() => (window as any).forgeDesktop?.memoryClear().then(() => setDesktopMemory({}))} style={{ padding:'4px 10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Clear All</button>
+                    </div>
+                    {Object.keys(desktopMemory).length === 0 ? (
+                      <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No memory stored. Forge will save notes here automatically during Desktop sessions.</p>
+                    ) : (
+                      <div style={{ display:'flex', flexDirection:'column', gap:6, maxHeight:200, overflowY:'auto' }}>
+                        {Object.entries(desktopMemory).map(([key, val]) => (
+                          <div key={key} style={{ display:'flex', gap:8, padding:'6px 10px', background:'var(--fg-bg)', borderRadius:6, border:'1px solid var(--fg-border)', fontSize:12 }}>
+                            <span style={{ color:'var(--fg-orange)', fontWeight:600, flexShrink:0 }}>{key}</span>
+                            <span style={{ color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{JSON.stringify(val)}</span>
+                            <button onClick={() => (window as any).forgeDesktop?.memoryDelete(key).then(() => setDesktopMemory(p => { const n={...p}; delete n[key]; return n; }))} style={{ padding:'1px 6px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:4, color:'var(--fg-text3)', fontSize:10, cursor:'pointer' }}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

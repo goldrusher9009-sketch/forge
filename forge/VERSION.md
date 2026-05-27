@@ -1,6 +1,25 @@
 # Forge Platform — Version History
 
-## v6.35 — 2026-05-26 (current)
+## v6.37 — 2026-05-26 (current)
+### Forge Desktop app integration
+- **`🖥️ Desktop` tab** — appears in sidebar only when running in Electron, shows folder context, file tree, browser context, and memory
+- **Auto-detects desktop mode** via `window.forgeDesktop` — badge shown in sidebar footer
+- **Folder picker** — open local folders, browse file tree, click any file to inject contents into chat
+- **Browser bridge** — Chrome extension page context (URL, title, text selection) shown and usable in chat
+- **Desktop memory viewer** — view/clear persistent key-value memory stored by the desktop app
+- **Desktop context injected into messages** — active folders + browser page sent to backend so Forge knows local context
+- **Backend** — accepts `desktop_context` field, adds it to system prompt automatically
+- **Chrome extension scaffold** — complete MV3 extension (background.js, content.js, popup.html) ready to load unpacked
+
+## v6.36 — 2026-05-26
+### Skills auto-activate + richer prompt injection
+- **Skills auto-activate on Launch**: clicking "▶ Launch in Chat" now also toggles the skill ON automatically
+- **Connectors auto-activate on "Use Now"**: always sets connector active (no accidental deactivate)
+- **Richer system prompt injection**: sends full skill prompt/description to backend per skill, not just IDs
+- **Backend**: uses skill prompts in system context so Forge deeply applies each skill's expertise
+- **OR model fix**: never auto-select free-priced models when user has own key (pricing=0 models excluded too)
+
+## v6.35 — 2026-05-26
 ### Fix OpenRouter 429 rate-limit error
 - **Backend**: Detect 429 from OpenRouter, return friendly actionable message instead of raw JSON
 - **Frontend**: Clean up rate-limit error display — shows "Add your API key in Settings → LLM Providers" guidance
