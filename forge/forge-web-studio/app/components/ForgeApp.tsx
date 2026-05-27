@@ -958,7 +958,10 @@ export default function ForgeApp() {
       // Auto-select a reliable paid OR model if no valid model currently selected
       setSelectedModel(prev => {
         if (!prev || prev.endsWith(':free') || prev === '') {
-          const preferred = models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324');
+          // Prefer fast models: llama 3.3 70b free > deepseek > first paid
+          const preferred = models.find((m: any) => m.id === 'meta-llama/llama-3.3-70b-instruct:free')
+            || models.find((m: any) => m.id === 'google/gemini-flash-1.5:free')
+            || models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324');
           const firstPaid = models.find((m: any) => !m.id.includes(':free') && m.pricing?.prompt !== '0' && m.pricing?.prompt !== '0.0');
           return preferred?.id || firstPaid?.id || models[0].id;
         }
@@ -1016,7 +1019,7 @@ export default function ForgeApp() {
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
-        if (confirmed['openrouter']) return (prev && !prev.endsWith(':free')) ? prev : 'deepseek/deepseek-chat-v3-0324'; // avoid slow free models
+        if (confirmed['openrouter']) return (prev && prev !== 'deepseek/deepseek-chat-v3-0324') ? prev : 'meta-llama/llama-3.3-70b-instruct:free'; // prefer fast model
         // No keys at all — leave empty so UI shows the warning
         return '';
       });
@@ -1687,6 +1690,8 @@ export default function ForgeApp() {
         .replace(/^signal is aborted without reason$/i, 'Request timed out — the model took too long. Try a faster model.')
         .replace(/^Failed to fetch$/i, 'Connection timed out — the model took too long to respond. Try a faster model.')
         .replace(/^NetworkError.*$/i, 'Network error — check your connection or try a different model.')
+        .replace(/BodyStreamBuffer.*aborted/i, 'Stream interrupted — the response was cut off. Try sending again or switch to a faster model.')
+        .replace(/AbortError/i, 'Request cancelled.')
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
