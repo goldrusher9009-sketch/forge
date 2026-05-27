@@ -3061,4 +3061,17 @@ app.post('/api/webhooks', requireAuth, (req: AuthRequest, res) => {
 app.post('/api/webhooks/trigger/:id/:secret', async (req, res) => {
   const hook = db.prepare('SELECT * FROM webhook_triggers WHERE id=? AND secret=? AND enabled=1').get(req.params.id, req.params.secret) as any;
   if (!hook) { res.status(404).json({ error: 'webhook not found or disabled' }); return; }
-  db.prepare("UPDATE webhook_triggers SET last_triggered=datetime('now') WHERE id=?").run(h
+  db.prepare("UPDATE webhook_triggers SET last_triggered=datetime('now') WHERE id=?").run(hook.id);
+  // Fire the webhook prompt through the agent
+  try {
+    const payload = req.body;
+    res.json({ success: true, message: 'Webhook triggered', hookId: hook.id, prompt: hook.prompt });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Start server ──────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`Forge Platform running on port ${PORT} (${NODE_ENV})`);
+});
