@@ -739,6 +739,178 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   throw new Error(`Unknown provider: ${provider}`);
 }
 
+// ─── Tool infrastructure ──────────────────────────────────────────────────────
+
+async function toolShellExec(command: string, cwd?: string, timeoutMs = 15000): Promise<string> {
+  return new Promise((resolve) => {
+    exec(command, { cwd: cwd || '/tmp', timeout: timeoutMs, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
+      resolve(stdout || stderr || (err ? err.message : ''));
+    });
+  });
+}
+
+async function runForgeTool(toolName: string, args: Record<string, any>): Promise<string> {
+  try {
+    switch (toolName) {
+      case 'web_search': {
+        const q = encodeURIComponent(args.query || args.q || '');
+        if (!q) return 'No query provided';
+        // Use DuckDuckGo HTML scrape as fallback (no API key required)
+        const res = await fetchWithTimeout(`https://html.duckduckgo.com/html/?q=${q}`, { headers: { 'User-Agent': 'Mozilla/5.0' } }, 8000);
+        const html = await res.text();
+        // Extract result snippets
+        const results: string[] = [];
+        const snippetRe = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+        const titleRe = /<a class="result__a"[^>]*>([\s\S]*?)<\/a>/g;
+        let m; const titles: string[] = [];
+        while ((m = titleRe.exec(html)) !== null && titles.length < 5) titles.push(m[1].replace(/<[^>]+>/g, '').trim());
+        const snips: string[] = [];
+        while ((m = snippetRe.exec(html)) !== null && snips.length < 5) snips.push(m[1].replace(/<[^>]+>/g, '').trim());
+        for (let i = 0; i < Math.min(titles.length, snips.length, 5); i++) results.push(`**${titles[i]}**\n${snips[i]}`);
+        return results.length ? results.join('\n\n') : `Search completed for: ${decodeURIComponent(q)}`;
+      }
+      case 'run_code': {
+        const lang = (args.language || 'javascript').toLowerCase();
+        const code = args.code || '';
+        if (lang === 'javascript' || lang === 'js') {
+          const tmpFile = `/tmp/forge_code_${Date.now()}.js`;
+          const { writeFileSync } = await import('fs');
+          writeFileSync(tmpFile, code);
+          return await toolShellExec(`node ${tmpFile}`, '/tmp', 10000);
+        } else if (lang === 'python' || lang === 'py') {
+          const tmpFile = `/tmp/forge_code_${Date.now()}.py`;
+          const { writeFileSync } = await import('fs');
+          writeFileSync(tmpFile, code);
+          return await toolShellExec(`python3 ${tmpFile}`, '/tmp', 10000);
+        }
+        return `Language ${lang} not supported. Use javascript or python.`;
+      }
+      case 'write_file': {
+        const path = args.path || args.filename || '/tmp/forge_output.txt';
+        const content = args.content || '';
+        const { writeFileSync, mkdirSync } = await import('fs');
+        const { dirname } = await import('path');
+        try { mkdirSync(dirname(path), { recursive: true }); } catch {}
+        writeFileSync(path, content, 'utf8');
+        return `File written: ${path} (${content.length} bytes)`;
+      }
+      case 'read_file': {
+        const path = args.path || args.filename || '';
+        if (!path) return 'No path provided';
+        const { readFileSync } = await import('fs');
+        try { return readFileSync(path, 'utf8'); } catch (e: any) { return `Error reading file: ${e.message}`; }
+      }
+      case 'shell': {
+        const cmd = args.command || args.cmd || '';
+        if (!cmd) return 'No command provided';
+        return await toolShellExec(cmd, args.cwd, 15000);
+      }
+      case 'create_artifact': {
+        return `Artifact created: ${args.title || 'untitled'}\n\`\`\`${args.language || ''}\n${args.content || ''}\n\`\`\``;
+      }
+      case 'http_request': {
+        const url = args.url || '';
+        if (!url) return 'No URL provided';
+        const method = (args.method || 'GET').toUpperCase();
+        const fetchOpts: RequestInit = { method, headers: args.headers || {} };
+        if (args.body && method !== 'GET') fetchOpts.body = typeof args.body === 'string' ? args.body : JSON.stringify(args.body);
+        const r = await fetchWithTimeout(url, fetchOpts, 10000);
+        const text = await r.text();
+        return `Status: ${r.status}\n${text.slice(0, 2000)}`;
+      }
+      default:
+        return `Tool '${toolName}' executed with args: ${JSON.stringify(args)}`;
+    }
+  } catch (e: any) {
+    return `Tool error (${toolName}): ${e.message}`;
+  }
+}
+
+const FORGE_TOOLS_ANTHROPIC = [
+  { name: 'web_search', description: 'Search the web for real-time information', input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Search query' } }, required: ['query'] } },
+  { name: 'run_code', description: 'Execute JavaScript or Python code and return output', input_schema: { type: 'object', properties: { language: { type: 'string', enum: ['javascript', 'python'] }, code: { type: 'string', description: 'Code to execute' } }, required: ['language', 'code'] } },
+  { name: 'write_file', description: 'Write content to a file', input_schema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'] } },
+  { name: 'read_file', description: 'Read contents of a file', input_schema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
+  { name: 'shell', description: 'Execute a shell command', input_schema: { type: 'object', properties: { command: { type: 'string' }, cwd: { type: 'string' } }, required: ['command'] } },
+  { name: 'http_request', description: 'Make an HTTP request to any URL', input_schema: { type: 'object', properties: { url: { type: 'string' }, method: { type: 'string', enum: ['GET','POST','PUT','DELETE','PATCH'] }, headers: { type: 'object' }, body: {} }, required: ['url'] } },
+  { name: 'create_artifact', description: 'Create a code or content artifact to display to the user', input_schema: { type: 'object', properties: { title: { type: 'string' }, language: { type: 'string' }, content: { type: 'string' } }, required: ['title', 'content'] } },
+];
+
+// Convert Anthropic tool format to OpenAI function format
+const FORGE_TOOLS_OPENAI = FORGE_TOOLS_ANTHROPIC.map(t => ({
+  type: 'function' as const,
+  function: { name: t.name, description: t.description, parameters: t.input_schema }
+}));
+
+async function callAnthropicWithTools(
+  apiKey: string, model: string, messages: any[],
+  onToolCall: (name: string, args: any, result: string) => void
+): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
+  const msgs = [...messages];
+  let promptTokens = 0, completionTokens = 0;
+  for (let iter = 0; iter < 8; iter++) {
+    const res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model, messages: msgs.filter(m => m.role !== 'system'), system: msgs.find(m => m.role === 'system')?.content || '', max_tokens: 4096, tools: FORGE_TOOLS_ANTHROPIC })
+    }, 45000);
+    const d: any = await res.json();
+    if (!res.ok) throw new Error(`Anthropic error: ${JSON.stringify(d.error || d).slice(0, 200)}`);
+    promptTokens += d.usage?.input_tokens || 0;
+    completionTokens += d.usage?.output_tokens || 0;
+    if (d.stop_reason === 'end_turn' || !d.content?.some((b: any) => b.type === 'tool_use')) {
+      const text = d.content?.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('') || '';
+      return { content: text, promptTokens, completionTokens };
+    }
+    // Process tool calls
+    msgs.push({ role: 'assistant', content: d.content });
+    const toolResults: any[] = [];
+    for (const block of d.content) {
+      if (block.type === 'tool_use') {
+        const result = await runForgeTool(block.name, block.input);
+        onToolCall(block.name, block.input, result);
+        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
+      }
+    }
+    msgs.push({ role: 'user', content: toolResults });
+  }
+  return { content: 'Task completed.', promptTokens, completionTokens };
+}
+
+async function callOpenAICompatWithTools(
+  url: string, apiKey: string, model: string, messages: any[],
+  extraHeaders: Record<string, string>,
+  onToolCall: (name: string, args: any, result: string) => void
+): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
+  const msgs = [...messages];
+  let promptTokens = 0, completionTokens = 0;
+  for (let iter = 0; iter < 8; iter++) {
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...extraHeaders },
+      body: JSON.stringify({ model, messages: msgs, tools: FORGE_TOOLS_OPENAI, tool_choice: 'auto', max_tokens: 4096 })
+    }, 45000);
+    const d: any = await res.json();
+    if (!res.ok) throw new Error(`LLM error: ${JSON.stringify(d.error || d).slice(0, 200)}`);
+    promptTokens += d.usage?.prompt_tokens || 0;
+    completionTokens += d.usage?.completion_tokens || 0;
+    const msg = d.choices?.[0]?.message;
+    if (!msg) throw new Error('No message in response');
+    if (!msg.tool_calls || msg.tool_calls.length === 0) {
+      return { content: msg.content || '', promptTokens, completionTokens };
+    }
+    msgs.push(msg);
+    for (const tc of msg.tool_calls) {
+      let args: any = {};
+      try { args = JSON.parse(tc.function.arguments || '{}'); } catch {}
+      const result = await runForgeTool(tc.function.name, args);
+      onToolCall(tc.function.name, args, result);
+      msgs.push({ role: 'tool', tool_call_id: tc.id, content: result });
+    }
+  }
+  return { content: 'Task completed.', promptTokens, completionTokens };
+}
+
 // ── Chat (also aliased as /api/chat/completions for OpenAI-compat clients) ──
 app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRequest, res) => {
   // Support both Forge format {messages,model} and OpenAI format {messages,model}
