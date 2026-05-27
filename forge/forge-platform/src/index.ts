@@ -730,24 +730,24 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
     const orModel = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
     let res: Response;
     try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 60000); }
-    catch (e: any) { throw new Error(e?.name==='AbortError' ? `Model "${orModel}" timed out after 22s — try a faster model` : e.message); }
+    catch (e: any) { throw new Error(e?.name==='AbortError' ? `Model "${orModel}" timed out. DeepSeek and some models can be slow under load — try again or switch to Claude/GPT-4o for faster responses.` : e.message); }
     if (!res.ok) {
       const e = await res.text();
       if (res.status === 429) {
-        const isFree = orModel.endsWith(':free');
+        const isFree = orModel.endsWith(':free') || orModel.includes('/free');
         throw new Error(isFree
-          ? `⚡ The free model "${orModel}" is rate-limited. Add your own OpenRouter API key in Settings → LLM Providers to get full access, or switch to a paid model.`
-          : `⚡ Rate limit hit for "${orModel}". Please wait a moment and try again, or switch models.`);
+          ? `⚡ Free model "${orModel}" has hit its shared rate limit. Switch to a paid model for unthrottled access.`
+          : `⚡ Rate limit hit for "${orModel}". Wait a moment and try again, or switch to a different model.`);
       }
       throw new Error(`OpenRouter error (${orModel}): ${e.slice(0,300)}`);
     }
     const d: any = await res.json();
     if (d.error) {
       if (d.error.code === 429) {
-        const isFree = orModel.endsWith(':free');
+        const isFree = orModel.endsWith(':free') || orModel.includes('/free');
         throw new Error(isFree
-          ? `⚡ The free model "${orModel}" is rate-limited. Add your own OpenRouter API key in Settings → LLM Providers to get full access, or switch to a paid model.`
-          : `⚡ Rate limit hit for "${orModel}". Please wait a moment and try again, or switch models.`);
+          ? `⚡ Free model "${orModel}" has hit its shared rate limit. Switch to a paid model for unthrottled access.`
+          : `⚡ Rate limit hit for "${orModel}". Wait a moment and try again, or switch to a different model.`);
       }
       throw new Error(`OpenRouter error (${orModel}): ${JSON.stringify(d.error).slice(0,200)}`);
     }
@@ -913,8 +913,8 @@ async function callOpenAICompatWithTools(
         const m = typeof d.error?.metadata?.raw === 'string' ? d.error.metadata.raw : '';
         const isFree = m.includes(':free') || model.endsWith(':free');
         throw new Error(isFree
-          ? `⚡ The free model "${model}" is rate-limited. Add your own OpenRouter API key in Settings → LLM Providers to get full access, or switch to a paid model.`
-          : `⚡ Rate limit hit for "${model}". Please wait a moment and try again, or switch models.`);
+          ? `⚡ Free model "${model}" has hit its shared rate limit. Switch to a paid model for unthrottled access.`
+          : `⚡ Rate limit hit for "${model}". Wait a moment and try again, or switch to a different model.`);
       }
       throw new Error(`LLM error: ${JSON.stringify(d.error || d).slice(0, 200)}`);
     }
@@ -3061,167 +3061,4 @@ app.post('/api/webhooks', requireAuth, (req: AuthRequest, res) => {
 app.post('/api/webhooks/trigger/:id/:secret', async (req, res) => {
   const hook = db.prepare('SELECT * FROM webhook_triggers WHERE id=? AND secret=? AND enabled=1').get(req.params.id, req.params.secret) as any;
   if (!hook) { res.status(404).json({ error: 'webhook not found or disabled' }); return; }
-  db.prepare("UPDATE webhook_triggers SET last_triggered=datetime('now') WHERE id=?").run(hook.id);
-  res.json({ success: true, message: 'webhook received, processing async' });
-  const payload = JSON.stringify(req.body || {}).slice(0, 2000);
-  setImmediate(async () => {
-    try {
-      const { provider, apiKey, model } = getUserLLMKey(hook.user_id);
-      if (!apiKey) return;
-      const result = await callLLM(provider, apiKey, model, [
-        { role: 'system', content: 'You are an autonomous agent triggered by a webhook. Execute the task.' },
-        { role: 'user', content: `Event: ${hook.event_type}\nPayload: ${payload}\nTask: ${hook.prompt}` }
-      ]);
-      db.prepare('INSERT INTO user_files (id,user_id,filename,content,mime_type,size) VALUES (?,?,?,?,?,?)').run(
-        uuidv4(), hook.user_id, `webhook-${hook.name}-${Date.now()}.txt`, result.content, 'text/plain', result.content.length
-      );
-      emitAgentActivity(hook.user_id, { type: 'done', message: `✅ Webhook task done: ${hook.name}` });
-    } catch (e: any) {
-      emitAgentActivity(hook.user_id, { type: 'error', message: `❌ Webhook error: ${e.message}` });
-    }
-  });
-});
-
-app.delete('/api/webhooks/:id', requireAuth, (req: AuthRequest, res) => {
-  db.prepare('DELETE FROM webhook_triggers WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
-  res.json({ success: true });
-});
-
-// ── Self-reflection ───────────────────────────────────────────────────────────
-app.post('/api/reflect/:threadId/:messageId', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const msg = db.prepare('SELECT * FROM messages WHERE id=? AND thread_id=?').get(req.params.messageId, req.params.threadId) as any;
-  if (!msg) { res.status(404).json({ success: false, error: 'message not found' }); return; }
-  try {
-    const { provider, apiKey, model } = getUserLLMKey(userId);
-    if (!apiKey) { res.json({ success: true, score: 5, feedback: 'no LLM key', shouldRetry: false }); return; }
-    const r = await callLLM(provider, apiKey, model, [
-      { role: 'system', content: 'You are a quality evaluator. Score this AI response 1-10. Respond ONLY with JSON: {"score":7,"feedback":"reason","should_retry":false}' },
-      { role: 'user', content: `Rate:\n\n${msg.content.slice(0, 3000)}` }
-    ]);
-    let score = 7, feedback = '', shouldRetry = false;
-    try { const p = JSON.parse((r.content.match(/\{[\s\S]*\}/) || ['{}'])[0]); score = p.score || 7; feedback = p.feedback || ''; shouldRetry = !!p.should_retry; } catch {}
-    db.prepare('INSERT INTO reflection_log (id,user_id,thread_id,message_id,score,feedback,action_taken) VALUES (?,?,?,?,?,?,?)').run(uuidv4(), userId, req.params.threadId, req.params.messageId, score, feedback, shouldRetry ? 'retry' : 'none');
-    res.json({ success: true, data: { score, feedback, shouldRetry } });
-  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-
-app.get('/api/reflect/:threadId', requireAuth, (req: AuthRequest, res) => {
-  const logs = db.prepare('SELECT * FROM reflection_log WHERE user_id=? AND thread_id=? ORDER BY created_at DESC LIMIT 20').all(req.user!.sub, req.params.threadId);
-  res.json({ success: true, data: logs });
-});
-
-// ── Multi-agent handoff ───────────────────────────────────────────────────────
-app.post('/api/handoff', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const { from_agent, to_agent, task, context = '', thread_id } = req.body;
-  if (!task || !to_agent) { res.status(400).json({ success: false, error: 'task and to_agent required' }); return; }
-  try {
-    const agent = db.prepare('SELECT * FROM workspace_agents WHERE id=? AND user_id=?').get(to_agent, userId) as any;
-    const systemPrompt = agent?.system_prompt || 'You are a helpful AI agent.';
-    const { provider, apiKey, model } = getUserLLMKey(userId);
-    if (!apiKey) { res.status(400).json({ success: false, error: 'no LLM key' }); return; }
-    const msgs: any[] = [{ role: 'system', content: systemPrompt }];
-    if (context) msgs.push({ role: 'user', content: `Context from ${from_agent || 'previous agent'}:\n${context}` });
-    msgs.push({ role: 'user', content: task });
-    const result = await callLLM(provider, apiKey, model, msgs);
-    if (thread_id) {
-      db.prepare('INSERT INTO messages (id,thread_id,role,content,tokens,model) VALUES (?,?,?,?,?,?)').run(uuidv4(), thread_id, 'assistant', result.content, result.promptTokens + result.completionTokens, model);
-    }
-    res.json({ success: true, data: { agent: agent?.name || to_agent, content: result.content } });
-  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-
-// ── Progress tracker ──────────────────────────────────────────────────────────
-app.get('/api/progress', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const goals    = (db.prepare('SELECT COUNT(*) as c FROM goals WHERE user_id=?').get(userId) as any).c;
-  const files    = (db.prepare('SELECT COUNT(*) as c FROM user_files WHERE user_id=?').get(userId) as any).c;
-  const hooks    = (db.prepare('SELECT COUNT(*) as c FROM webhook_triggers WHERE user_id=? AND enabled=1').get(userId) as any).c;
-  const reflAvg  = (db.prepare('SELECT AVG(score) as a FROM reflection_log WHERE user_id=?').get(userId) as any).a;
-  const features = [
-    { name: 'Persistent Memory',   status: 'live', pct: 100 },
-    { name: 'Goal Decomposition',  status: 'live', pct: 100 },
-    { name: 'Self-Reflection',     status: 'live', pct: 100 },
-    { name: 'File Storage',        status: 'live', pct: 100 },
-    { name: 'Webhook Triggers',    status: 'live', pct: 100 },
-    { name: 'Multi-Agent Handoff', status: 'live', pct: 100 },
-    { name: 'Scheduled Runs',      status: 'live', pct: 100 },
-    { name: 'Syntax Highlighting', status: 'live', pct: 100 },
-    { name: 'Auto-Compact',        status: 'live', pct: 100 },
-    { name: 'Context Awareness',   status: 'live', pct: 100 },
-  ];
-  res.json({ success: true, data: { goals, files, hooks, avg_reflection_score: reflAvg ? Math.round(reflAvg * 10) / 10 : null, features, overall_pct: 100 } });
-});
-
-// ─── ForgeAuto: run N models in parallel ──────────────────────────────────────
-app.post('/api/forgeauto/run', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const { prompt, models } = req.body;
-  if (!prompt || !Array.isArray(models) || !models.length) { res.status(400).json({ success: false, error: 'prompt and models[] required' }); return; }
-  emitAgentActivity(userId, { type: 'start', message: `🔀 ForgeAuto running ${models.length} models in parallel...` });
-  try {
-    const results = await Promise.allSettled(models.map(async (modelId: string) => {
-      const actualModel = resolveForgeModel(modelId);
-      const provider = getProviderForModel(actualModel);
-      const apiKey = getUserKey(userId, provider);
-      if (!apiKey) return { model: modelId, error: `No ${provider} key`, content: null };
-      const start = Date.now();
-      const r = await callLLM(provider, apiKey, actualModel, [{ role: 'user', content: prompt }]);
-      emitAgentActivity(userId, { type: 'done', message: `✅ ${modelId} done (${((Date.now()-start)/1000).toFixed(1)}s)` });
-      return { model: modelId, content: r.content, tokens: r.promptTokens + r.completionTokens, elapsed: Date.now() - start };
-    }));
-    res.json({ success: true, data: results.map((r, i) => r.status === 'fulfilled' ? r.value : { model: models[i], error: (r as any).reason?.message, content: null }) });
-  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-
-// ─── ForgeMulti: swarm of specialized agents ──────────────────────────────────
-const FORGE_MULTI_AGENTS = [
-  { role: 'Analyst',    icon: '🔍', prompt: 'You are a sharp analytical thinker. Break down problems systematically. Be concise and precise.' },
-  { role: 'Creative',   icon: '💡', prompt: 'You are a creative brainstormer. Generate bold, novel, unconventional ideas.' },
-  { role: 'Critic',     icon: '⚡', prompt: 'You are a rigorous critic. Find flaws, risks, and counter-arguments. Be direct.' },
-  { role: 'Strategist', icon: '🎯', prompt: 'You are a strategic planner. Think long-term, identify priorities and actionable steps.' },
-  { role: 'Researcher', icon: '📚', prompt: 'You are a knowledgeable researcher. Provide context, examples, and references.' },
-];
-
-app.post('/api/forgemulti/run', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const { prompt, model: modelId = 'claude-sonnet-4', agent_roles } = req.body;
-  if (!prompt) { res.status(400).json({ success: false, error: 'prompt required' }); return; }
-  const agents = agent_roles ? FORGE_MULTI_AGENTS.filter(a => agent_roles.includes(a.role)) : FORGE_MULTI_AGENTS;
-  const actualModel = resolveForgeModel(modelId);
-  const provider = getProviderForModel(actualModel);
-  const apiKey = getUserKey(userId, provider);
-  if (!apiKey) { res.status(400).json({ success: false, error: `No ${provider} API key` }); return; }
-  emitAgentActivity(userId, { type: 'start', message: `🤖 ForgeMulti dispatching ${agents.length} agents...` });
-  try {
-    const results = await Promise.allSettled(agents.map(async (agent) => {
-      const start = Date.now();
-      const r = await callLLM(provider, apiKey, actualModel, [
-        { role: 'system', content: agent.prompt },
-        { role: 'user', content: prompt }
-      ]);
-      emitAgentActivity(userId, { type: 'done', message: `${agent.icon} ${agent.role} responded` });
-      return { role: agent.role, icon: agent.icon, content: r.content, elapsed: Date.now() - start };
-    }));
-    const responses = results.map((r, i) => r.status === 'fulfilled' ? r.value : { role: agents[i].role, icon: agents[i].icon, content: null, error: (r as any).reason?.message });
-    res.json({ success: true, data: responses });
-  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Global error handlers — prevent unhandled rejections from crashing the process
-// ─────────────────────────────────────────────────────────────────────────────
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION (keeping process alive):', err);
-});
-process.on('unhandledRejection', (reason) => {
-  console.error('UNHANDLED REJECTION (keeping process alive):', reason);
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Start server
-// ─────────────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`Forge backend v6.32 running on port ${PORT}`);
-});
+  db.prepare("UPDATE webhook_triggers SET last_triggered=datetime('now') WHERE id=?").run(h

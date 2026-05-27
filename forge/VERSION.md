@@ -1,6 +1,31 @@
 # Forge Platform — Version History
 
-## v6.38 — 2026-05-26 (current)
+## v6.39 — 2026-05-27 (current)
+### All missing tabs + business model features + comprehensive UI audit
+
+**New Tab Panels (6):**
+- **ForgeAuto** — run any prompt across multiple models in parallel, compare results side-by-side
+- **ForgeMulti** — multi-agent team (Analyst, Creative, Critic, Strategist, etc.) with synthesis step
+- **ForgeASI** — Extended Parallel Intelligence Chains: multi-phase deep reasoning (2/3/5/7 phases)
+- **MVP Builder** — spec + stack + roadmap + pitch in one click; "Build It Now", Deploy to Railway/Vercel buttons
+- **Intelligence Layer** — memory graph browser, harvest context, knowledge node viewer
+- **Agent Swarm** — deploy 3/5/8/12/20 parallel specialist agents with synthesis; real `Promise.all` execution
+
+**Bug Fixes:**
+- **Free model 429 error message** — no longer says "Add your own key" when user has a key; clearer "shared rate limit, switch to paid" message
+- **DeepSeek timeout** — improved message: explains DeepSeek can be slow, suggests Claude/GPT-4o
+- **Compact endpoint** — fixed "coming soon" catch to show real error
+- **Intelligence `/memory` route** — fixed to call `/superagent/memory` (correct endpoint)
+- **Top-level `isFreeModel` helper** — available to all tab panels, not just loadOpenRouterModels callback
+
+**Competitive / Business Model Improvements:**
+- **Team plan** added to billing ($29/seat/mo)
+- **Referral program** section in billing — shareable link, Twitter share, stats counters
+- **MVP builder deploy buttons** — Deploy to Railway + Deploy to Vercel + Build It Now (sends to agent)
+- **Chrome Extension** platform badge changed from "Coming Soon" to "Available"
+- **Usage breakdown** section added to billing tab
+
+## v6.38 — 2026-05-26
 ### Persist selected model + free model race condition fix
 - **`selectedModel` persisted to localStorage** — survives page reloads, never reset to empty on refresh
 - **Race condition eliminated** — `loadOpenRouterModels()` no longer overwrites a valid user-selected model
