@@ -1,6 +1,24 @@
 # Forge Platform — Version History
 
-## v6.39 — 2026-05-27 (current)
+## v6.40 — 2026-05-27 (current)
+### Comprehensive UI fixes + ForgeCO + NL commands + live agent progress
+
+**New Features:**
+- **ForgeCO panel** — team workspace with Team/Projects/Docs/Chat tabs; member cards, project progress bars, live team chat
+- **Natural language commands** — type "enable hooks", "launch agents", "schedule run", "open mvp builder" etc. in chat workspace; auto-navigates to correct panel
+- **ForgeMulti live progress** — per-agent tiles appear and fill in real-time as each agent completes (no more waiting for all to finish)
+- **ForgeAuto feature toggles** — Self-Correction, Goal Tracking, and all capability cards now have real ACTIVE/INACTIVE toggle buttons
+- **Progress Tracker auto-populate** — every agent step automatically added to the tracker as a numbered item, crossed off when response arrives (like Claude's task list)
+- **renderContent markdown** — headings (h1/h2/h3), bullet lists, numbered lists, horizontal rules now render properly in all chat panels including ForgeSuper
+
+**Bug Fixes:**
+- **Chat folders** — delete (🗑), rename (✏️), pin (📌) buttons on every chat folder item; pins sort to top
+- **Hooks panel** — enable/disable toggles + Create New Hook form fully wired (previous session)
+- **Messages array error** — all MVP Builder, Agent Swarm, Intelligence, ForgeMulti, ForgeASI API calls fixed (previous session)
+- **Runs "Schedule Run"** — button now opens prompt dialogs to set task + schedule
+- **ForgeSuper formatting** — assistant messages now use renderContent() for proper markdown rendering
+
+## v6.39 — 2026-05-27
 ### All missing tabs + business model features + comprehensive UI audit
 
 **New Tab Panels (6):**

@@ -1,0 +1,29 @@
+﻿ADD:git.exe : warning: in the working copy of 'forge/VERSION.md', LF will be replaced by CRLF the next time Git touches it
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush5.ps1:4 char:19
++ ... = "ADD:" + (& $git add "forge-web-studio/app/components/ForgeApp.tsx" ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'forge/forge-platform/src/index.ts', LF will be replaced by CRLF the next time Git 
+touches it
+warning: in the working copy of 'forge/forge-web-studio/app/components/ForgeApp.tsx', LF will be replaced by CRLF the 
+next time Git touches it
+
+COMMIT:[main 68b89a4] fix: OpenRouter 429 rate-limit friendly error + bump v6.35
+ 3 files changed, 31 insertions(+), 6 deletions(-)
+
+PUSH:git.exe : To https://github.com/goldrusher9009-sketch/forge.git
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush5.ps1:6 char:20
++ $out += "PUSH:" + (& $git push origin main 2>&1 | Out-String)
++                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...ketch/forge.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   26ef8f6..68b89a4  main -> main
+
+LOG:68b89a4 fix: OpenRouter 429 rate-limit friendly error + bump v6.35
+26ef8f6 fix: React import + activeAgentId hook crash, bump v6.34
+3c1784f fix: default fast model + BodyStreamBuffer error message
+dfa7775 chore: v6.33 smoke test complete
+

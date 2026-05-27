@@ -1,0 +1,26 @@
+﻿ADD:git.exe : warning: in the working copy of 'forge/forge-platform/src/index.ts', LF will be replaced by CRLF the next 
+time Git touches it
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush6.ps1:4 char:19
++ ... ut += "ADD:" + (& $git add "forge-platform/src/index.ts" 2>&1 | Out-S ...
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+COMMIT:[main 4f4f47a] fix: 429 rate-limit error in callOpenAICompatWithTools (ForgeMagic path)
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+PUSH:git.exe : To https://github.com/goldrusher9009-sketch/forge.git
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush6.ps1:6 char:20
++ $out += "PUSH:" + (& $git push origin main 2>&1 | Out-String)
++                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...ketch/forge.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   68b89a4..4f4f47a  main -> main
+
+LOG:4f4f47a fix: 429 rate-limit error in callOpenAICompatWithTools (ForgeMagic path)
+68b89a4 fix: OpenRouter 429 rate-limit friendly error + bump v6.35
+26ef8f6 fix: React import + activeAgentId hook crash, bump v6.34
+3c1784f fix: default fast model + BodyStreamBuffer error message
+

@@ -1,0 +1,27 @@
+﻿ADD:git.exe : warning: in the working copy of 'forge/VERSION.md', LF will be replaced by CRLF the next time Git touches it
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush4.ps1:4 char:19
++ ... = "ADD:" + (& $git add "forge-web-studio/app/components/ForgeApp.tsx" ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'forge/forge-web-studio/app/components/ForgeApp.tsx', LF will be replaced by CRLF the 
+next time Git touches it
+
+COMMIT:[main 26ef8f6] fix: React import + activeAgentId hook crash, bump v6.34
+ 2 files changed, 12 insertions(+), 5 deletions(-)
+
+PUSH:git.exe : To https://github.com/goldrusher9009-sketch/forge.git
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush4.ps1:6 char:20
++ $out += "PUSH:" + (& $git push origin main 2>&1 | Out-String)
++                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...ketch/forge.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   3c1784f..26ef8f6  main -> main
+
+LOG:26ef8f6 fix: React import + activeAgentId hook crash, bump v6.34
+3c1784f fix: default fast model + BodyStreamBuffer error message
+dfa7775 chore: v6.33 smoke test complete
+d0cfa49 fix: implement callAnthropicWithTools, callOpenAICompatWithTools, runForgeTool, toolShellExec, FORGE_TOOLS_ANTHROPIC
+

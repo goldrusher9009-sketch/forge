@@ -1,0 +1,17 @@
+﻿ADD:
+COMMIT:[main dfa7775] chore: v6.33 smoke test complete
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+PUSH:git.exe : To https://github.com/goldrusher9009-sketch/forge.git
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush.ps1:6 char:20
++ $out += "PUSH:" + (& $git push origin main 2>&1 | Out-String)
++                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...ketch/forge.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   d0cfa49..dfa7775  main -> main
+
+LOG:dfa7775 chore: v6.33 smoke test complete
+d0cfa49 fix: implement callAnthropicWithTools, callOpenAICompatWithTools, runForgeTool, toolShellExec, FORGE_TOOLS_ANTHROPIC
+91b7bb5 fix: add content panels for Files, Hooks, Runs, ForgeCo, ForgeAuto, ForgeMulti, ForgeASI tabs
+

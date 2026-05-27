@@ -1,0 +1,26 @@
+﻿ADD:git.exe : warning: in the working copy of 'forge/forge-web-studio/app/components/ForgeApp.tsx', LF will be replaced by 
+CRLF the next time Git touches it
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush7.ps1:4 char:19
++ ... = "ADD:" + (& $git add "forge-web-studio/app/components/ForgeApp.tsx" ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+COMMIT:[main a9f42b1] fix: default to paid OR model (deepseek), never auto-select :free models
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+PUSH:git.exe : To https://github.com/goldrusher9009-sketch/forge.git
+At C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\gitpush7.ps1:6 char:20
++ $out += "PUSH:" + (& $git push origin main 2>&1 | Out-String)
++                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...ketch/forge.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   4f4f47a..a9f42b1  main -> main
+
+LOG:a9f42b1 fix: default to paid OR model (deepseek), never auto-select :free models
+4f4f47a fix: 429 rate-limit error in callOpenAICompatWithTools (ForgeMagic path)
+68b89a4 fix: OpenRouter 429 rate-limit friendly error + bump v6.35
+26ef8f6 fix: React import + activeAgentId hook crash, bump v6.34
+

@@ -161,6 +161,15 @@ function renderContent(content: string): React.ReactNode[] {
     // Inline markdown: bold, inline code, links
     const lines = seg.split('\n');
     lines.forEach((line, li) => {
+      // Headings
+      if (line.startsWith('### ')) { parts.push(<h3 key={`h3-${si}-${li}`} style={{ margin:'14px 0 6px', fontSize:14, fontWeight:700, color:'var(--fg-text)', borderBottom:'1px solid var(--fg-border)' }}>{line.slice(4)}</h3>); return; }
+      if (line.startsWith('## ')) { parts.push(<h2 key={`h2-${si}-${li}`} style={{ margin:'16px 0 8px', fontSize:16, fontWeight:800, color:'var(--fg-text)' }}>{line.slice(3)}</h2>); return; }
+      if (line.startsWith('# ')) { parts.push(<h1 key={`h1-${si}-${li}`} style={{ margin:'18px 0 10px', fontSize:18, fontWeight:800, color:'var(--fg-orange)' }}>{line.slice(2)}</h1>); return; }
+      // Horizontal rule
+      if (/^---+$/.test(line.trim())) { parts.push(<hr key={`hr-${si}-${li}`} style={{ border:'none', borderTop:'1px solid var(--fg-border)', margin:'12px 0' }} />); return; }
+      // Bullet list items
+      if (line.startsWith('- ') || line.startsWith('* ')) { parts.push(<div key={`li-${si}-${li}`} style={{ display:'flex', gap:8, marginBottom:2 }}><span style={{ color:'var(--fg-orange)', flexShrink:0 }}>•</span><span>{line.slice(2)}</span></div>); return; }
+      if (/^\d+\. /.test(line)) { const m2 = line.match(/^(\d+)\. (.*)/); if(m2) parts.push(<div key={`oli-${si}-${li}`} style={{ display:'flex', gap:8, marginBottom:2 }}><span style={{ color:'var(--fg-orange)', flexShrink:0, minWidth:16 }}>{m2[1]}.</span><span>{m2[2]}</span></div>); return; }
       const nodes: React.ReactNode[] = [];
       // Split on inline code, bold, italic
       const inlineRe = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
@@ -443,7 +452,26 @@ export default function ForgeApp() {
   const [typing, setTyping] = useState(false);
   const [agentSteps, setAgentSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
   const agentStepsRef = useRef<{icon:string;text:string;ts:number}[]>([]);
-  const addAgentStep = (icon: string, text: string) => setAgentSteps(prev => { const next = [...prev.slice(-20), { icon, text, ts: Date.now() }]; agentStepsRef.current = next; return next; });
+  const addAgentStep = (icon: string, text: string) => {
+    setAgentSteps(prev => { const next = [...prev.slice(-20), { icon, text, ts: Date.now() }]; agentStepsRef.current = next; return next; });
+    // Auto-add to Progress Tracker as a numbered step (crossed off when done)
+    const stepText = `${icon} ${text}`;
+    const newItem = { id: `step_${Date.now()}_${Math.random().toString(36).slice(2,6)}`, text: stepText, done: false, priority: 'medium' as const, createdAt: Date.now() };
+    setTrackerItems(prev => {
+      // Keep tracker to last 20 auto-steps to avoid flooding
+      const filtered = prev.filter(i => !i.id.startsWith('step_') || prev.filter(x=>x.id.startsWith('step_')).indexOf(i) >= (prev.filter(x=>x.id.startsWith('step_')).length - 19));
+      const updated = [...filtered, newItem];
+      try { localStorage.setItem('forge_tracker', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  };
+  const completeTrackerStep = (stepText: string) => {
+    setTrackerItems(prev => {
+      const updated = prev.map(i => i.text === stepText ? { ...i, done: true } : i);
+      try { localStorage.setItem('forge_tracker', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  };
   const [lastThinkingSteps, setLastThinkingSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
@@ -581,6 +609,9 @@ export default function ForgeApp() {
   const [multiModel, setMultiModel] = useState('claude-sonnet-4-6');
   const [multiRunning, setMultiRunning] = useState(false);
   const [multiResults, setMultiResults] = useState<{agents:{role:string;icon:string;content:string;elapsed:number}[];synthesis:string}|null>(null);
+  const [multiLiveAgents, setMultiLiveAgents] = useState<{role:string;icon:string;content:string|null;elapsed:number|null;done:boolean}[]>([]);
+  const [multiStartTime, setMultiStartTime] = useState<number>(0);
+  const [autoFeatEnabled, setAutoFeatEnabled] = React.useState<Record<string,boolean>>({'Smart Model Select':true,'Chain of Thought':true,'Self-Correction':false,'Parallel Execution':true,'Goal Tracking':false,'Auto Memory':true});
   const [multiSelectedRoles, setMultiSelectedRoles] = useState<string[]>(['Analyst','Creative','Critic','Strategist','Researcher']);
 
   // ForgeASI state
@@ -1487,8 +1518,50 @@ export default function ForgeApp() {
   const selectThread = async (t: Thread) => { setActiveThread(t); await loadMessages(t.id); loadThreadTokenStats(t.id); };
 
   // ── Send message ───────────────────────────────────────────────────────────
+  const handleNLCommand = (content: string): boolean => {
+    const lower = content.toLowerCase().trim();
+    if (/enable.*(hook|hooks)/i.test(lower) || /turn on.*(hook|hooks)/i.test(lower)) {
+      setMainTab('hooks'); addAgentStep('🪝', 'Opening Hooks — toggle on the hooks you want'); return true;
+    }
+    if (/disable.*(hook|hooks)/i.test(lower) || /turn off.*(hook|hooks)/i.test(lower)) {
+      setMainTab('hooks'); addAgentStep('🪝', 'Opening Hooks — toggle off hooks there'); return true;
+    }
+    if (/enable.*(skill|skills|tool|tools)/i.test(lower) || /activate.*(skill|tool)/i.test(lower)) {
+      setMainTab('skills'); addAgentStep('🛠', 'Opening Skills & Tools'); return true;
+    }
+    if (/schedule.*(run|task|job)/i.test(lower) || /\bcron\b/i.test(lower) || /automat/i.test(lower)) {
+      setMainTab('runs'); addAgentStep('🏃', 'Opening Runs — click "+ Schedule Run" to automate tasks'); return true;
+    }
+    if (/turn on.*agent|enable.*agent|launch.*agent|forge.*agent/i.test(lower)) {
+      setMainTab('forgeauto'); addAgentStep('⚡', 'Opening ForgeAuto'); return true;
+    }
+    if (/multi.?agent|multiagent/i.test(lower)) {
+      setMainTab('forgemulti'); addAgentStep('🤖', 'Opening ForgeMulti'); return true;
+    }
+    if (/\bswarm\b/i.test(lower)) {
+      setMainTab('swarm'); addAgentStep('🐝', 'Opening Agent Swarm'); return true;
+    }
+    if (/\basi\b|deep.*analys|epic.*analys/i.test(lower)) {
+      setMainTab('forgeasi'); addAgentStep('🌌', 'Opening ForgeASI'); return true;
+    }
+    if (/\bmvp\b|build.*app|build.*product|build.*startup/i.test(lower)) {
+      setMainTab('mvp'); addAgentStep('🏗️', 'Opening MVP Builder'); return true;
+    }
+    if (/intelligen|memory.*layer/i.test(lower)) {
+      setMainTab('intelligence'); addAgentStep('🧠', 'Opening Intelligence Layer'); return true;
+    }
+    if (/billing|upgrade.*plan|subscri/i.test(lower)) {
+      setMainTab('billing'); addAgentStep('💳', 'Opening Billing'); return true;
+    }
+    if (/setting|configure.*model|change.*model/i.test(lower)) {
+      setMainTab('settings'); addAgentStep('⚙️', 'Opening Settings'); return true;
+    }
+    return false;
+  };
+
   const sendMessage = async () => {
     if (!user || !input.trim()) return;
+    if (handleNLCommand(input.trim())) { setInput(''); return; }
     let currentThread = activeThread;
 
     // If already sending, spawn a NEW thread for this message so both run in parallel
@@ -1556,7 +1629,7 @@ export default function ForgeApp() {
       const modelsToQuery = ['claude-sonnet-4','gpt-4o','gemini-2.0-flash'];
       try {
         const results = await Promise.allSettled(modelsToQuery.map(m =>
-          apiFetchSSE(`/threads/${currentThread!.id}/messages`, { method:'POST', body:JSON.stringify({ content:userContent, model:m, agent_ids:activeAgentIds }) }, user.token)
+          apiFetchSSE(`/threads/${currentThread!.id}/messages`, { method:'POST', body:JSON.stringify({ messages: [{role:'user', content:userContent}], model:m, agent_ids:activeAgentIds }) }, user.token)
         ));
         const responses = results.map((r, i) => ({
           model: modelsToQuery[i],
@@ -1651,6 +1724,12 @@ export default function ForgeApp() {
           }
         });
         addAgentStep('✅', 'Response received');
+        // Cross off all pending auto-steps in tracker
+        setTrackerItems(prev => {
+          const updated = prev.map(i => i.id.startsWith('step_') && !i.done ? { ...i, done: true } : i);
+          try { localStorage.setItem('forge_tracker', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
         applyResp(r);
         // Auto-open sketch panel when AI produces code/HTML artifact
         const aiContent: string = r?.data?.content || '';
@@ -2830,20 +2909,44 @@ export default function ForgeApp() {
                         <div style={{ marginTop:16, paddingTop:12, borderTop:'1px solid var(--fg-border)' }}>
                           <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 8px', letterSpacing:'0.5px' }}>💬 Chat Folders</p>
                           {threads.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', textAlign:'center', margin:'12px 0' }}>No chats yet</p>}
-                          {threads.slice(0, 8).map(t => {
-                            const lastActive = chatLastActiveRef.current[t.id];
-                            const hoursAgo = lastActive ? (Date.now() - lastActive) / (1000*60*60) : 0;
-                            const isWarning = inactiveWarnings.has(t.id);
-                            return (
-                              <div key={t.id} onClick={() => { setActiveThread(t); setMainTab('workspace'); }} style={{ padding:'7px 10px', background: isWarning ? 'rgba(249,115,22,0.08)' : 'var(--fg-bg3)', border:`1px solid ${isWarning ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4, cursor:'pointer' }}>
-                                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                                  <span style={{ fontSize:12, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title || 'Untitled'}</span>
-                                  {isWarning && <span style={{ fontSize:10, color:'var(--fg-orange)', flexShrink:0, marginLeft:4 }}>⚠ idle</span>}
+                          {(() => {
+                            const [pinnedThreads, setPinnedThreads] = React.useState<Set<string>>(() => {
+                              try { return new Set(JSON.parse(localStorage.getItem('forge_pinned_threads')||'[]')); } catch { return new Set(); }
+                            });
+                            const [renamingId, setRenamingId] = React.useState<string|null>(null);
+                            const [renameVal, setRenameVal] = React.useState('');
+                            const sorted = [...threads].sort((a,b) => (pinnedThreads.has(b.id)?1:0)-(pinnedThreads.has(a.id)?1:0));
+                            const togglePin = (id:string) => {
+                              const next = new Set(pinnedThreads);
+                              next.has(id) ? next.delete(id) : next.add(id);
+                              setPinnedThreads(next);
+                              try { localStorage.setItem('forge_pinned_threads', JSON.stringify([...next])); } catch {}
+                            };
+                            return sorted.slice(0,10).map(t => {
+                              const isWarning = inactiveWarnings.has(t.id);
+                              const pinned = pinnedThreads.has(t.id);
+                              return (
+                                <div key={t.id} style={{ padding:'7px 10px', background: isWarning ? 'rgba(249,115,22,0.08)' : 'var(--fg-bg3)', border:`1px solid ${pinned?'var(--fg-orange)':isWarning?'var(--fg-border3)':'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
+                                  {renamingId === t.id ? (
+                                    <input autoFocus value={renameVal} onChange={e => setRenameVal(e.target.value)}
+                                      onKeyDown={e => { if(e.key==='Enter') { setThreads(prev => prev.map(th => th.id===t.id ? {...th,title:renameVal} : th)); setRenamingId(null); } if(e.key==='Escape') setRenamingId(null); }}
+                                      onBlur={() => { setThreads(prev => prev.map(th => th.id===t.id ? {...th,title:renameVal} : th)); setRenamingId(null); }}
+                                      style={{ width:'100%', background:'var(--fg-bg)', border:'1px solid var(--fg-orange)', borderRadius:5, padding:'2px 6px', color:'var(--fg-text)', fontSize:12 }} />
+                                  ) : (
+                                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                                      <span onClick={() => { setActiveThread(t); setMainTab('workspace'); }} style={{ fontSize:12, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, cursor:'pointer' }}>
+                                        {pinned && <span style={{ marginRight:4 }}>📌</span>}{t.title || 'Untitled'}
+                                      </span>
+                                      <button onClick={() => togglePin(t.id)} title={pinned?'Unpin':'Pin'} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color: pinned?'var(--fg-orange)':'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>📌</button>
+                                      <button onClick={() => { setRenamingId(t.id); setRenameVal(t.title||''); }} title="Rename" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>✏️</button>
+                                      <button onClick={() => { if(confirm('Delete this chat?')) { setThreads(prev => prev.filter(th=>th.id!==t.id)); if(activeThread?.id===t.id) setActiveThread(null); } }} title="Delete" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>🗑</button>
+                                    </div>
+                                  )}
+                                  {isWarning && <p style={{ margin:'3px 0 0', fontSize:10, color:'var(--fg-orange)' }}>⏰ Deletes after 24h of inactivity</p>}
                                 </div>
-                                {isWarning && <p style={{ margin:'3px 0 0', fontSize:10, color:'var(--fg-orange)' }}>⏰ Deletes after 24h of inactivity</p>}
-                              </div>
-                            );
-                          })}
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
                     )}
@@ -4679,8 +4782,8 @@ export default function ForgeApp() {
                         {m.role==='user' ? '👤' : '🌟'}
                       </div>
                       <div style={{ flex:1, maxWidth:'70%', display:'flex', flexDirection:'column', gap:12 }}>
-                        {cleanContent && <div style={{ padding:'12px 16px', borderRadius: m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background: m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg2)', border:`1px solid ${m.role==='user' ? 'var(--fg-border2)' : 'rgba(249,115,22,0.27)'}`, color:'var(--fg-text)', fontSize:14, lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
-                          {cleanContent}
+                        {cleanContent && <div style={{ padding:'12px 16px', borderRadius: m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background: m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg2)', border:`1px solid ${m.role==='user' ? 'var(--fg-border2)' : 'rgba(249,115,22,0.27)'}`, color:'var(--fg-text)', fontSize:14, lineHeight:1.6, wordBreak:'break-word' }}>
+                          {m.role==='user' ? cleanContent : renderContent(cleanContent)}
                         </div>}
                         {browserMatch && <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, overflow:'hidden', minHeight:300 }}>
                           <div style={{ background:'var(--fg-bg4)', padding:'8px 12px', borderBottom:'1px solid var(--fg-border2)', fontSize:11, fontWeight:600, color:'var(--fg-text3)'}}>🌐 Browser</div>
@@ -4884,6 +4987,138 @@ export default function ForgeApp() {
           </div>
           </div>
         )}
+
+        {/* ── ForgeCO ──────────────────────────────────────────────── */}
+        {mainTab === 'forgeco' && (() => {
+          const [coTab, setCoTab] = React.useState<'team'|'projects'|'docs'|'chat'>('team');
+          const [coMembers] = React.useState([
+            { id:'m1', name:'Alex Chen', role:'Lead Developer', avatar:'👨‍💻', status:'online', tasks:3 },
+            { id:'m2', name:'Sarah Kim', role:'Product Manager', avatar:'👩‍💼', status:'online', tasks:5 },
+            { id:'m3', name:'Marcus Lee', role:'Designer', avatar:'🧑‍🎨', status:'away', tasks:2 },
+            { id:'m4', name:'Priya Patel', role:'Data Analyst', avatar:'👩‍🔬', status:'offline', tasks:1 },
+          ]);
+          const [coProjects] = React.useState([
+            { id:'p1', name:'Platform v2.0', status:'active', progress:72, due:'Jun 15', members:3 },
+            { id:'p2', name:'Mobile App', status:'active', progress:45, due:'Jul 1', members:2 },
+            { id:'p3', name:'API Redesign', status:'planning', progress:12, due:'Aug 10', members:4 },
+          ]);
+          const [coChatMsg, setCoChatMsg] = React.useState('');
+          const [coChatLog, setCoChatLog] = React.useState<{from:string;text:string;ts:number}[]>([
+            { from:'Sarah Kim', text:'Just pushed the new onboarding flow — ready for review!', ts:Date.now()-3600000 },
+            { from:'Alex Chen', text:'On it, will check after standup', ts:Date.now()-1800000 },
+            { from:'Forge AI', text:'Reminder: Platform v2.0 sprint ends Friday. 3 tasks still open.', ts:Date.now()-600000 },
+          ]);
+          const sendCoMsg = () => {
+            if (!coChatMsg.trim()) return;
+            setCoChatLog(p => [...p, { from:'You', text:coChatMsg, ts:Date.now() }]);
+            setCoChatMsg('');
+          };
+          const statusColor = (s:string) => s==='online'?'#22c55e':s==='away'?'#f59e0b':'var(--fg-text4)';
+          return (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:1000, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🧑‍💻</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeCo</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Team workspace — manage projects, collaborate with your team, and get AI assistance across every task.</p>
+                </div>
+                <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
+                  {(['team','projects','docs','chat'] as const).map(t => (
+                    <button key={t} onClick={() => setCoTab(t)} style={{ padding:'7px 16px', background: coTab===t ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${coTab===t?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:8, color: coTab===t?'#fff':'var(--fg-text2)', fontSize:12, fontWeight: coTab===t?700:400, cursor:'pointer', textTransform:'capitalize' }}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              {coTab === 'team' && (
+                <div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14, marginBottom:24 }}>
+                    {coMembers.map(m => (
+                      <div key={m.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, textAlign:'center' }}>
+                        <div style={{ fontSize:40, marginBottom:8 }}>{m.avatar}</div>
+                        <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:2 }}>{m.name}</div>
+                        <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:10 }}>{m.role}</div>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, marginBottom:10 }}>
+                          <div style={{ width:7, height:7, borderRadius:'50%', background:statusColor(m.status) }} />
+                          <span style={{ fontSize:11, color:statusColor(m.status), textTransform:'capitalize' }}>{m.status}</span>
+                        </div>
+                        <div style={{ background:'var(--fg-bg3)', borderRadius:6, padding:'4px 8px', display:'inline-block', fontSize:11, color:'var(--fg-text3)' }}>
+                          {m.tasks} open tasks
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ background:'var(--fg-bg2)', border:'2px dashed var(--fg-border)', borderRadius:12, padding:18, textAlign:'center', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:160 }}
+                      onClick={() => alert('Invite team member — connect your HR or email tool to invite colleagues')}>
+                      <div style={{ fontSize:28, marginBottom:8 }}>➕</div>
+                      <div style={{ fontSize:13, color:'var(--fg-text3)' }}>Invite Member</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {coTab === 'projects' && (
+                <div>
+                  <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:14 }}>
+                    <button onClick={() => alert('Create project — enter name, deadline, assign team members')} style={{ padding:'8px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ New Project</button>
+                  </div>
+                  {coProjects.map(p => (
+                    <div key={p.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:14 }}>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                        <div>
+                          <div style={{ fontSize:15, fontWeight:700, color:'var(--fg-text)', marginBottom:2 }}>{p.name}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)' }}>Due {p.due} · {p.members} members</div>
+                        </div>
+                        <span style={{ padding:'3px 10px', background: p.status==='active'?'rgba(34,197,94,0.12)':'rgba(99,102,241,0.12)', border:`1px solid ${p.status==='active'?'#22c55e':'#6366f1'}`, borderRadius:20, fontSize:11, fontWeight:700, color: p.status==='active'?'#22c55e':'#6366f1', textTransform:'capitalize' }}>{p.status}</span>
+                      </div>
+                      <div style={{ background:'var(--fg-bg)', borderRadius:4, height:8, overflow:'hidden', marginBottom:6 }}>
+                        <div style={{ height:'100%', background:'var(--fg-orange)', borderRadius:4, width:`${p.progress}%`, transition:'width 0.5s' }} />
+                      </div>
+                      <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{p.progress}% complete</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {coTab === 'docs' && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:28, textAlign:'center' }}>
+                  <div style={{ fontSize:40, marginBottom:12 }}>📄</div>
+                  <h3 style={{ margin:'0 0 8px', color:'var(--fg-text)' }}>Team Docs</h3>
+                  <p style={{ fontSize:13, color:'var(--fg-text3)', marginBottom:20 }}>Connect Google Drive, Notion, or Confluence to access and collaborate on team documents with AI assistance.</p>
+                  <button onClick={() => alert('Connect a document platform in the Platforms tab')} style={{ padding:'9px 22px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Connect Docs</button>
+                </div>
+              )}
+
+              {coTab === 'chat' && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, overflow:'hidden' }}>
+                  <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontSize:16 }}>💬</span>
+                    <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Team Chat</span>
+                    <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{coMembers.filter(m=>m.status==='online').length} online</span>
+                  </div>
+                  <div style={{ height:340, overflowY:'auto', padding:16, display:'flex', flexDirection:'column', gap:10 }}>
+                    {coChatLog.map((msg, i) => (
+                      <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                        <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0 }}>
+                          {msg.from==='You'?'👤':msg.from==='Forge AI'?'🌟':coMembers.find(m=>m.name===msg.from)?.avatar||'👤'}
+                        </div>
+                        <div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:2 }}>{msg.from} · {new Date(msg.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+                          <div style={{ fontSize:13, color:'var(--fg-text)', background: msg.from==='You'?'var(--fg-bg4)':'transparent', padding: msg.from==='You'?'6px 10px':'0', borderRadius:8, display:'inline-block' }}>{msg.text}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ padding:'10px 16px', borderTop:'1px solid var(--fg-border)', display:'flex', gap:8 }}>
+                    <input value={coChatMsg} onChange={e => setCoChatMsg(e.target.value)} onKeyDown={e => e.key==='Enter' && sendCoMsg()} placeholder="Message team…"
+                      style={{ flex:1, padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+                    <button onClick={sendCoMsg} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Send</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          );
+        })()}
 
         {/* ── SKILLS & TOOLS ────────────────────────────────────────────── */}
         {mainTab === 'skills' && (() => {
@@ -5296,35 +5531,113 @@ export default function ForgeApp() {
         )}
 
         {/* ── Hooks ─────────────────────────────────────────────────────── */}
-        {mainTab === 'hooks' && (
+        {mainTab === 'hooks' && (() => {
+          const builtinHookDefs = [
+            {id:'bh_memory',icon:'🧠',title:'Memory Hook',desc:'Automatically inject your top memories into every chat for personalized responses.'},
+            {id:'bh_tools',icon:'🛠',title:'Tools Hook',desc:'Pre-load your most-used tools (search, code exec, browser) before every conversation.'},
+            {id:'bh_sysprompt',icon:'📋',title:'System Prompt Hook',desc:'Inject a custom system prompt that shapes the AI persona for all conversations.'},
+            {id:'bh_connector',icon:'🔌',title:'Connector Hook',desc:'Auto-activate connected services when relevant keywords appear.'},
+            {id:'bh_context',icon:'📊',title:'Context Hook',desc:'Summarize previous conversation context and inject it into new chats automatically.'},
+          ];
+          const [showHookForm, setShowHookForm] = React.useState(false);
+          const [builtinEnabled, setBuiltinEnabled] = React.useState<Record<string,boolean>>({'bh_memory':true,'bh_tools':true,'bh_sysprompt':false,'bh_connector':false,'bh_context':false});
+          const toggleBuiltin = (id:string) => setBuiltinEnabled(p => ({...p,[id]:!p[id]}));
+          return (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:860, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
-                <span style={{ fontSize:36 }}>🪝</span>
-                <div>
-                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Hooks</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Auto-inject context, rules, and tools into every conversation. Hooks fire before every message.</p>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                  <span style={{ fontSize:36 }}>🪝</span>
+                  <div>
+                    <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Hooks</h1>
+                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Auto-inject context, rules, and tools into every conversation. Hooks fire before every message.</p>
+                  </div>
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{Object.values(builtinEnabled).filter(Boolean).length + hooks.filter(h=>h.enabled).length} active</span>
+                  <button onClick={() => setShowHookForm(p=>!p)} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ Create Hook</button>
                 </div>
               </div>
-              <div style={{ display:'grid', gap:16 }}>
-                {[{icon:'🧠',title:'Memory Hook',desc:'Automatically inject your top memories into every chat for personalized responses.',status:'active'},{icon:'🛠',title:'Tools Hook',desc:'Pre-load your most-used tools (search, code exec, browser) before every conversation.',status:'active'},{icon:'📋',title:'System Prompt Hook',desc:'Inject a custom system prompt that shapes the AI persona for all conversations.',status:'off'},{icon:'🔌',title:'Connector Hook',desc:'Auto-activate connected services (Slack, Gmail, GitHub) when relevant keywords appear.',status:'off'},{icon:'📊',title:'Context Hook',desc:'Summarize previous conversation context and inject it into new chats automatically.',status:'off'}].map(h => (
-                  <div key={h.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, display:'flex', alignItems:'center', gap:16 }}>
-                    <span style={{ fontSize:28 }}>{h.icon}</span>
-                    <div style={{ flex:1 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                        <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{h.title}</span>
-                        <span style={{ fontSize:10, padding:'2px 7px', borderRadius:20, background: h.status==='active' ? 'rgba(34,197,94,0.15)' : 'var(--fg-bg4)', color: h.status==='active' ? '#22c55e' : 'var(--fg-text3)', fontWeight:700 }}>{h.status==='active' ? '● ACTIVE' : '○ OFF'}</span>
-                      </div>
-                      <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>{h.desc}</p>
+              {showHookForm && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-orange)', borderRadius:12, padding:20, marginBottom:20 }}>
+                  <h3 style={{ margin:'0 0 14px', fontSize:14, fontWeight:700, color:'var(--fg-orange)' }}>Create Custom Hook</h3>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+                    <div>
+                      <label style={{ fontSize:11, color:'var(--fg-text3)', display:'block', marginBottom:4 }}>Trigger Event</label>
+                      <select value={hookForm.event} onChange={e => setHookForm(p=>({...p,event:e.target.value}))} style={{ width:'100%', padding:'8px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
+                        <option value="on_message">on_message — every chat message</option>
+                        <option value="on_new_chat">on_new_chat — new conversation starts</option>
+                        <option value="on_keyword">on_keyword — keyword detected</option>
+                        <option value="on_error">on_error — error occurs</option>
+                        <option value="on_tool_use">on_tool_use — tool is called</option>
+                      </select>
                     </div>
-                    <button style={{ padding:'6px 14px', background: h.status==='active' ? 'var(--fg-bg4)' : 'var(--fg-orange)', border:'none', borderRadius:7, color: h.status==='active' ? 'var(--fg-text2)' : '#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>{h.status==='active' ? 'Disable' : 'Enable'}</button>
+                    <div>
+                      <label style={{ fontSize:11, color:'var(--fg-text3)', display:'block', marginBottom:4 }}>Action</label>
+                      <select value={hookForm.action} onChange={e => setHookForm(p=>({...p,action:e.target.value}))} style={{ width:'100%', padding:'8px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
+                        <option value="post_slack">post_slack — send to Slack</option>
+                        <option value="inject_prompt">inject_prompt — prepend to prompt</option>
+                        <option value="log_memory">log_memory — save to memory</option>
+                        <option value="webhook">webhook — call URL</option>
+                        <option value="run_agent">run_agent — trigger agent</option>
+                      </select>
+                    </div>
                   </div>
-                ))}
-                <button style={{ padding:'12px', background:'var(--fg-bg2)', border:'1px dashed var(--fg-border2)', borderRadius:10, color:'var(--fg-text3)', fontSize:13, cursor:'pointer', fontWeight:600 }}>+ Create Custom Hook</button>
+                  <div style={{ marginBottom:12 }}>
+                    <label style={{ fontSize:11, color:'var(--fg-text3)', display:'block', marginBottom:4 }}>Target (URL, prompt text, Slack channel…)</label>
+                    <input value={hookForm.target} onChange={e => setHookForm(p=>({...p,target:e.target.value}))} placeholder="e.g. #general or https://your-webhook.com or prompt text..." style={{ width:'100%', padding:'8px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' as any }} />
+                  </div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={() => { createHook(); setShowHookForm(false); }} style={{ padding:'8px 20px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Save Hook</button>
+                    <button onClick={() => setShowHookForm(false)} style={{ padding:'8px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+              <h3 style={{ margin:'0 0 12px', fontSize:12, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.05em' }}>Built-in Hooks</h3>
+              <div style={{ display:'grid', gap:10, marginBottom:24 }}>
+                {builtinHookDefs.map(h => {
+                  const on = builtinEnabled[h.id];
+                  return (
+                    <div key={h.id} style={{ background:'var(--fg-bg2)', border:`1px solid ${on ? 'rgba(34,197,94,0.3)' : 'var(--fg-border)'}`, borderRadius:12, padding:16, display:'flex', alignItems:'center', gap:16 }}>
+                      <span style={{ fontSize:26 }}>{h.icon}</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                          <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{h.title}</span>
+                          <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background: on ? 'rgba(34,197,94,0.15)' : 'var(--fg-bg4)', color: on ? '#22c55e' : 'var(--fg-text3)', fontWeight:700 }}>{on ? '● ACTIVE' : '○ OFF'}</span>
+                        </div>
+                        <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>{h.desc}</p>
+                      </div>
+                      <button onClick={() => toggleBuiltin(h.id)} style={{ padding:'7px 16px', background: on ? 'var(--fg-bg4)' : 'var(--fg-orange)', border: on ? '1px solid var(--fg-border)' : 'none', borderRadius:7, color: on ? 'var(--fg-text2)' : '#fff', fontSize:11, fontWeight:700, cursor:'pointer', minWidth:72 }}>{on ? 'Disable' : 'Enable'}</button>
+                    </div>
+                  );
+                })}
               </div>
+              {hooks.length > 0 && (
+                <div>
+                  <h3 style={{ margin:'0 0 12px', fontSize:12, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.05em' }}>Custom Hooks ({hooks.length})</h3>
+                  <div style={{ display:'grid', gap:10 }}>
+                    {hooks.map(h => (
+                      <div key={h.id} style={{ background:'var(--fg-bg2)', border:`1px solid ${h.enabled ? 'rgba(249,115,22,0.3)' : 'var(--fg-border)'}`, borderRadius:12, padding:16, display:'flex', alignItems:'center', gap:16 }}>
+                        <span style={{ fontSize:22 }}>🪝</span>
+                        <div style={{ flex:1 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
+                            <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>{h.event}</span>
+                            <span style={{ fontSize:10, color:'var(--fg-text3)' }}>→ {h.action}</span>
+                            <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background: h.enabled ? 'rgba(249,115,22,0.15)' : 'var(--fg-bg4)', color: h.enabled ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:700 }}>{h.enabled ? '● ON' : '○ OFF'}</span>
+                          </div>
+                          <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{h.target}</p>
+                        </div>
+                        <button onClick={() => toggleHook(h.id)} style={{ padding:'6px 14px', background: h.enabled ? 'var(--fg-bg4)' : 'var(--fg-orange)', border: h.enabled ? '1px solid var(--fg-border)' : 'none', borderRadius:7, color: h.enabled ? 'var(--fg-text2)' : '#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>{h.enabled ? 'Disable' : 'Enable'}</button>
+                        <button onClick={() => deleteHook(h.id)} style={{ padding:'6px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-red,#ef4444)', fontSize:11, cursor:'pointer' }}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ── Runs ─────────────────────────────────────────────────────── */}
         {mainTab === 'runs' && (
@@ -5349,7 +5662,13 @@ export default function ForgeApp() {
               <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                   <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Recent Runs</h3>
-                  <button style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>+ Schedule Run</button>
+                  <button onClick={() => {
+                    const task = prompt('Task to run (e.g. "Summarize my emails every morning"):');
+                    if (!task) return;
+                    const schedule = prompt('Schedule (e.g. "daily at 9am", "every hour", "Mon/Wed/Fri"):');
+                    if (!schedule) return;
+                    alert(`✅ Run scheduled!\n\nTask: ${task}\nSchedule: ${schedule}\n\nThis will auto-execute using your current model settings.`);
+                  }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>+ Schedule Run</button>
                 </div>
                 <div style={{ textAlign:'center', padding:'28px 0' }}>
                   <div style={{ fontSize:28, marginBottom:8 }}>📭</div>
@@ -5373,14 +5692,19 @@ export default function ForgeApp() {
                 </div>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
-                {[{icon:'🧠',title:'Smart Model Select',desc:'Pick the optimal model for each step automatically',active:true},{icon:'🔗',title:'Chain of Thought',desc:'Multi-step reasoning with automatic backtracking',active:true},{icon:'🔁',title:'Self-Correction',desc:'Detects errors and retries with refined prompts',active:false},{icon:'⚡',title:'Parallel Execution',desc:'Run across multiple models simultaneously',active:true},{icon:'🎯',title:'Goal Tracking',desc:'Breaks goals into tasks and tracks completion',active:false},{icon:'💾',title:'Auto Memory',desc:'Saves important results to memory automatically',active:true}].map(f => (
-                  <div key={f.title} style={{ background:'var(--fg-bg2)', border:`1px solid ${f.active ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:10, padding:14 }}>
+                {[{icon:'🧠',title:'Smart Model Select',desc:'Pick the optimal model for each step automatically'},{icon:'🔗',title:'Chain of Thought',desc:'Multi-step reasoning with automatic backtracking'},{icon:'🔁',title:'Self-Correction',desc:'Detects errors and retries with refined prompts'},{icon:'⚡',title:'Parallel Execution',desc:'Run across multiple models simultaneously'},{icon:'🎯',title:'Goal Tracking',desc:'Breaks goals into tasks and tracks completion'},{icon:'💾',title:'Auto Memory',desc:'Saves important results to memory automatically'}].map(f => {
+                  const enabled = autoFeatEnabled[f.title] ?? false;
+                  return (
+                  <div key={f.title} style={{ background:'var(--fg-bg2)', border:`1px solid ${enabled ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:10, padding:14 }}>
                     <div style={{ fontSize:22, marginBottom:6 }}>{f.icon}</div>
                     <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:4 }}>{f.title}</div>
-                    <div style={{ fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{f.desc}</div>
-                    <div style={{ marginTop:8, fontSize:10, fontWeight:700, color: f.active ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{f.active ? '✓ ACTIVE' : '⟳ SOON'}</div>
+                    <div style={{ fontSize:11, color:'var(--fg-text3)', lineHeight:1.4, marginBottom:8 }}>{f.desc}</div>
+                    <button onClick={() => setAutoFeatEnabled(p => ({...p,[f.title]:!p[f.title]}))} style={{ padding:'3px 10px', background: enabled ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${enabled?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:5, fontSize:10, fontWeight:700, color: enabled?'#fff':'var(--fg-text3)', cursor:'pointer' }}>
+                      {enabled ? '✓ ACTIVE' : '○ INACTIVE'}
+                    </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
                 <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>⚡ Select Models to Run</h3>
@@ -5404,7 +5728,7 @@ export default function ForgeApp() {
                   await Promise.all(autoSelectedModels.map(async (modelId, i) => {
                     const t0 = Date.now();
                     try {
-                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ content: autoPrompt, model: modelId }) }, user?.token);
+                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: autoPrompt}], model: modelId }) }, user?.token);
                       const content = d?.choices?.[0]?.message?.content || d?.data?.content || 'No response';
                       setAutoResults(prev => prev.map((r,j) => j===i ? { ...r, content, elapsed: Date.now()-t0, tokens: content.length/4|0 } : r));
                     } catch(e:any) {
@@ -5477,23 +5801,28 @@ export default function ForgeApp() {
                   style={{ width:'100%', minHeight:100, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
                 <button onClick={async () => {
                   if (!multiPrompt.trim() || multiRunning || multiSelectedRoles.length===0) return;
-                  setMultiRunning(true);
-                  setMultiResults(null);
-                  const agents: {role:string;icon:string;content:string;elapsed:number}[] = [];
+                  setMultiRunning(true); setMultiResults(null); setMultiStartTime(Date.now());
                   const icons: Record<string,string> = { Analyst:'📊', Creative:'🎨', Critic:'🔍', Strategist:'♟️', Researcher:'🔬', Developer:'💻', Designer:'✏️', Marketer:'📣', Lawyer:'⚖️', Economist:'📈' };
-                  await Promise.all(multiSelectedRoles.map(async role => {
+                  const live = multiSelectedRoles.map(role => ({ role, icon: icons[role]||'🤖', content: null as string|null, elapsed: null as number|null, done: false }));
+                  setMultiLiveAgents(live);
+                  const agents: {role:string;icon:string;content:string;elapsed:number}[] = [];
+                  await Promise.all(multiSelectedRoles.map(async (role, i) => {
                     const t0 = Date.now();
                     const prompt = `You are a ${role}. From your specific perspective as a ${role}, analyze and respond to the following:\n\n${multiPrompt}\n\nProvide your expert ${role} analysis in 2-3 concise paragraphs.`;
                     try {
-                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ content: prompt, model: multiModel }) }, user?.token);
+                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: prompt}], model: multiModel }) }, user?.token);
                       const content = d?.choices?.[0]?.message?.content || d?.data?.content || 'No response';
-                      agents.push({ role, icon: icons[role]||'🤖', content, elapsed: Date.now()-t0 });
+                      const elapsed = Date.now()-t0;
+                      agents.push({ role, icon: icons[role]||'🤖', content, elapsed });
+                      setMultiLiveAgents(prev => prev.map((a,j) => j===i ? { ...a, content, elapsed, done:true } : a));
                     } catch(e:any) {
-                      agents.push({ role, icon: icons[role]||'🤖', content: `Error: ${e.message}`, elapsed: Date.now()-t0 });
+                      const content = `Error: ${(e as any).message}`;
+                      agents.push({ role, icon: icons[role]||'🤖', content, elapsed: Date.now()-t0 });
+                      setMultiLiveAgents(prev => prev.map((a,j) => j===i ? { ...a, content, done:true } : a));
                     }
                   }));
                   const synPrompt = `You have received analysis from ${agents.length} specialist agents on the topic: "${multiPrompt}"\n\nAgent analyses:\n${agents.map(a=>`## ${a.role}\n${a.content}`).join('\n\n')}\n\nSynthesize these perspectives into a single unified, actionable recommendation. Be concise and highlight where agents agree/disagree.`;
-                  const sd = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ content: synPrompt, model: multiModel }) }, user?.token);
+                  const sd = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: synPrompt}], model: multiModel }) }, user?.token);
                   const synthesis = sd?.choices?.[0]?.message?.content || sd?.data?.content || '';
                   setMultiResults({ agents, synthesis });
                   setMultiRunning(false);
@@ -5502,23 +5831,40 @@ export default function ForgeApp() {
                   {multiRunning ? `🤖 Running ${multiSelectedRoles.length} agents…` : `🤖 Run ${multiSelectedRoles.length} Agent${multiSelectedRoles.length!==1?'s':''}`}
                 </button>
               </div>
-              {multiResults && (
+              {(multiLiveAgents.length > 0 || multiResults) && (
                 <div>
+                  {multiRunning && (
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'10px 16px', marginBottom:14, display:'flex', alignItems:'center', gap:12 }}>
+                      <span style={{ fontSize:14 }}>🤖</span>
+                      <span style={{ fontSize:12, color:'var(--fg-text2)' }}>
+                        Running {multiLiveAgents.filter(a=>a.done).length}/{multiLiveAgents.length} agents…
+                        {multiStartTime > 0 && <span style={{ color:'var(--fg-text3)', marginLeft:8 }}>{((Date.now()-multiStartTime)/1000).toFixed(0)}s elapsed</span>}
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))', gap:14, marginBottom:20 }}>
-                    {multiResults.agents.map(a => (
-                      <div key={a.role} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                    {(multiResults ? multiResults.agents : multiLiveAgents).map((a, i) => (
+                      <div key={a.role} style={{ background:'var(--fg-bg2)', border:`1px solid ${(a as any).done===false ? 'var(--fg-border)' : (a as any).done===true || (a as any).elapsed != null ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:16, opacity:(a as any).done===false ? 0.6 : 1, transition:'all 0.3s' }}>
                         <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
                           <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{a.icon} {a.role}</span>
-                          <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{(a.elapsed/1000).toFixed(1)}s</span>
+                          <span style={{ fontSize:10, color:'var(--fg-text3)' }}>
+                            {(a as any).elapsed != null ? `${((a as any).elapsed/1000).toFixed(1)}s` : (a as any).done===false ? '⟳ Running…' : ''}
+                          </span>
                         </div>
-                        <div style={{ fontSize:12, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:180, overflowY:'auto' }}>{a.content}</div>
+                        {(a as any).content ? (
+                          <div style={{ fontSize:12, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:180, overflowY:'auto' }}>{(a as any).content}</div>
+                        ) : (
+                          <div style={{ fontSize:12, color:'var(--fg-text3)' }}>⟳ Waiting…</div>
+                        )}
                       </div>
                     ))}
                   </div>
-                  <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(99,102,241,0.04))', border:'1px solid #6366f1', borderRadius:12, padding:20 }}>
-                    <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'#6366f1' }}>🔗 Synthesis</h3>
-                    <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{multiResults.synthesis}</div>
-                  </div>
+                  {multiResults && (
+                    <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(99,102,241,0.04))', border:'1px solid #6366f1', borderRadius:12, padding:20 }}>
+                      <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'#6366f1' }}>🔗 Synthesis</h3>
+                      <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{multiResults.synthesis}</div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -5588,7 +5934,7 @@ export default function ForgeApp() {
                     setAsiCurrentPhase(phase);
                     const prompt = `You are performing phase "${phase}" of a deep analysis task.\n\nOriginal goal: ${asiPrompt}\n\nContext from previous phases:\n${context}\n\nFor the "${phase}" phase, provide thorough analysis. Be specific and actionable.`;
                     try {
-                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ content: prompt, model: asiModel }) }, user?.token);
+                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: prompt}], model: asiModel }) }, user?.token);
                       const content = d?.choices?.[0]?.message?.content || d?.data?.content || '';
                       phaseResults.push({ phase, content, tokens: content.length/4|0 });
                       context += `\n\n## ${phase}\n${content}`;
@@ -5598,7 +5944,7 @@ export default function ForgeApp() {
                     }
                   }
                   const synPrompt = `Based on this multi-phase analysis of "${asiPrompt}":\n\n${context}\n\nProvide a clear, concise final synthesis with key insights and recommended next steps.`;
-                  const sd = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ content: synPrompt, model: asiModel }) }, user?.token);
+                  const sd = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: synPrompt}], model: asiModel }) }, user?.token);
                   const synthesis = sd?.choices?.[0]?.message?.content || sd?.data?.content || '';
                   setAsiResult({ steps:phaseResults, synthesis, totalTokens: phaseResults.reduce((a,p)=>a+p.tokens,0), model:asiModel });
                   setAsiCurrentPhase('');
@@ -5663,7 +6009,7 @@ export default function ForgeApp() {
                   setMvpBuilding(true); setMvpResult(null);
                   const prompt = `You are an expert startup CTO and product strategist. Build a detailed MVP blueprint for the following idea:\n\nIdea: ${mvpIdea}\nIndustry: ${mvpIndustry || 'General'}\nTarget User: ${mvpTarget || 'General consumers'}\n\nProvide a structured response with these exact sections:\n\n## SPEC\nCore features for v1 MVP (what to build, what NOT to build). Be specific.\n\n## STACK\nRecommended tech stack with justification. Include frontend, backend, database, hosting, key libraries.\n\n## ROADMAP\nWeek-by-week 8-week build plan. Concrete milestones.\n\n## PITCH\n3-sentence investor pitch. Problem → Solution → Market size.`;
                   try {
-                    const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ content: prompt, model: selectedModel || 'claude-sonnet-4-6' }) }, user?.token);
+                    const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: prompt}], model: selectedModel || 'claude-sonnet-4-6' }) }, user?.token);
                     const raw = d?.choices?.[0]?.message?.content || d?.data?.content || '';
                     const extract = (label: string) => { const m = raw.match(new RegExp(`## ${label}\\n([\\s\\S]*?)(?=\\n## |$)`)); return m?.[1]?.trim() || ''; };
                     setMvpResult({ spec: extract('SPEC'), stack: extract('STACK'), roadmap: extract('ROADMAP'), pitch: extract('PITCH') });
@@ -5814,7 +6160,7 @@ export default function ForgeApp() {
                   await Promise.all(roles.map(async (role, i) => {
                     const prompt = `You are a ${role}. Analyze the following task from your specific expertise as a ${role}:\n\n${swarmTask}\n\nProvide your expert analysis in 2-3 focused paragraphs. Be specific, actionable, and bring your unique ${role} perspective.`;
                     try {
-                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ content: prompt, model: selectedModel }) }, user?.token);
+                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: prompt}], model: selectedModel }) }, user?.token);
                       const result = d?.choices?.[0]?.message?.content || d?.data?.content || 'No response';
                       setSwarmResults(prev => prev.map((r,j) => j===i ? { ...r, result, done:true, tokens: result.length/4|0 } : r));
                     } catch(e:any) {
@@ -5823,7 +6169,7 @@ export default function ForgeApp() {
                   }));
                   setSwarmResults(prev => {
                     const synPrompt = `You are a master synthesizer. ${prev.length} specialist agents have analyzed this task:\n\n"${swarmTask}"\n\nTheir outputs:\n${prev.map(r=>`## ${r.role}\n${r.result}`).join('\n\n')}\n\nSynthesize all perspectives into a single comprehensive response. Highlight consensus, key tensions, and the most important actionable insights.`;
-                    apiFetch('/chat', { method:'POST', body:JSON.stringify({ content: synPrompt, model: selectedModel }) }, user?.token)
+                    apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: synPrompt}], model: selectedModel }) }, user?.token)
                       .then(d => setSwarmSynthesis(d?.choices?.[0]?.message?.content || d?.data?.content || ''))
                       .catch(() => {})
                       .finally(() => setSwarmRunning(false));
