@@ -1,6 +1,14 @@
 # Forge Platform — Version History
 
-## v6.32 — 2026-05-26 (current)
+## v6.33 — 2026-05-26 (current)
+
+### Full smoke test + backend tool infrastructure
+
+- **Full smoke test passed** — all 15 nav tabs verified: Workspace, ForgeRouter, Billing, Platforms, Settings, Forge Super, Skills & Tools, Files, Hooks, Runs, ForgeCo, ForgeAuto, ForgeMulti, ForgeASI, MVP Builder, Intelligence, Agent Swarm
+- **Backend tool infrastructure** — implemented `callAnthropicWithTools`, `callOpenAICompatWithTools`, `runForgeTool`, `toolShellExec`, `FORGE_TOOLS_ANTHROPIC` (7 tools: web_search, run_code, write_file, read_file, shell, http_request, create_artifact)
+- **Fixed blank nav tabs** — Files, Hooks, Runs, ForgeCo, ForgeAuto, ForgeMulti, ForgeASI now render full content panels
+
+## v6.32 — 2026-05-26
 
 ### Moonshot Features: MVP Builder + Intelligence Layer + Agent Swarm
 
