@@ -1,0 +1,15 @@
+{
+  "name": "forge-ai-extension",
+  "version": "1.0.0",
+  "description": "Forge AI browser extension — Chrome, Edge, Firefox, Safari",
+  "scripts": {
+    "build:chrome": "node build.js chrome",
+    "build:firefox": "node build.js firefox",
+    "build:all": "node build.js all",
+    "icons": "node generate-icons.js"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.0",
+    "sharp": "^0.33.0"
+  }
+}

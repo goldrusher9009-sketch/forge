@@ -1,95 +1,110 @@
 # Forge AI Desktop
 
-Downloadable desktop app for Forge — with folder context, persistent memory, and Chrome browser integration. Like Manus or Claude Desktop, but for the Forge platform.
+Native desktop app for Windows, macOS and Linux. Wraps the Forge web app with local superpowers.
 
 ## Features
+- 📁 **Local folder access** — open any folder, browse file tree, inject file contents into chat
+- 🧠 **Persistent memory** — key-value store that survives across sessions
+- 🌐 **Browser bridge** — Chrome extension sends current page context to the desktop app
+- 🖥️ **Native menus** — Cmd/Ctrl+O to open folder, Cmd/Ctrl+N for new chat
+- 🔄 **File watcher** — detects file changes in open folders in real time
+- 🔒 **Local WebSocket server** — bridge on `ws://127.0.0.1:27184`
 
-- **Folder Context** — Open any folder and Forge sees your files. Ask questions about your code, documents, or data.
-- **Persistent Memory** — Forge remembers things across sessions. Stores notes, context, and preferences locally.
-- **Chrome Bridge** — Install the companion extension to let Forge see your current browser tab, selected text, and page content.
-- **File System Access** — Read, write, and browse files directly from the Forge chat interface.
-- **Live File Watching** — Forge detects when files change and updates context automatically.
+## Supported Platforms
 
-## Quick Start
+| Platform | Status |
+|----------|--------|
+| **Windows** x64 | ✅ |
+| **Windows** ARM64 | ✅ |
+| **macOS** Universal (Intel + Apple Silicon) | ✅ |
+| **Linux** x64 | ✅ |
 
-### 1. Install dependencies
+---
+
+## Install (Pre-built)
+
+Download from GitHub Releases:
+
+| Platform | File |
+|----------|------|
+| Windows | `Forge-AI-Setup-x.x.x-x64.exe` |
+| macOS | `Forge-AI-x.x.x-universal.dmg` |
+| Linux | `Forge-AI-x.x.x-x64.AppImage` |
+
+---
+
+## Build from Source
+
 ```bash
 cd forge-desktop
 npm install
 ```
 
-### 2. Run in development
+### Windows
 ```bash
-npm start
+npm run build:win          # x64 NSIS installer + portable
+npm run build:win:arm      # ARM64
 ```
 
-### 3. Build installers
-
-**Windows (.exe installer)**
+### macOS
 ```bash
-npm run build:win
+npm run build:mac          # Universal binary (Intel + Apple Silicon)
+npm run build:mac:x64      # Intel only
+npm run build:mac:arm      # Apple Silicon only
 ```
 
-**macOS (.dmg)**
+> **Mac code signing:** Set `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` for notarization.
+
+### Linux
 ```bash
-npm run build:mac
+npm run build:linux        # AppImage + .deb
 ```
 
-**Linux (.AppImage)**
+### All platforms
 ```bash
-npm run build:linux
+npm run build:all
 ```
-
-Installers appear in `dist/`.
 
 ---
 
-## Chrome Extension Setup
+## Development
 
-1. Open Chrome → go to `chrome://extensions/`
-2. Enable **Developer mode** (top right)
-3. Click **Load unpacked** → select the `chrome-extension/` folder
-4. The ⚡ Forge icon appears in your toolbar
-5. Start Forge Desktop first, then the extension auto-connects
-
-When connected, the extension badge turns purple. Click it to send the current page to Forge.
+```bash
+npm start      # Run in production mode
+npm run dev    # Run with DevTools open
+```
 
 ---
 
 ## How It Works
 
-```
-Forge Desktop (Electron)
-  ├── Loads forge-sand-two.vercel.app in a webview
-  ├── Injects window.forgeDesktop API via preload.js
-  ├── Opens WebSocket server on ws://127.0.0.1:27184
-  └── Watches selected folders with chokidar
+1. App loads `https://forge-sand-two.vercel.app` in an Electron window
+2. `preload.js` exposes `window.forgeDesktop` API via contextBridge
+3. The web app detects `window.forgeDesktop` and shows the `🖥️ Desktop` tab
+4. Local folder context, memory, and browser events flow through IPC
 
-Chrome Extension
-  ├── background.js connects to ws://127.0.0.1:27184
-  ├── content.js extracts page text + selection
-  └── popup.html shows connection status
-```
+## WebSocket Bridge (for desktop Chrome extension)
 
-The web app (`ForgeApp.tsx`) detects `window.forgeDesktop` and unlocks:
-- Folder picker button in Studio sidebar
-- File tree panel
-- Memory viewer
-- "Send to Forge" from browser extension
+When running, starts `ws://127.0.0.1:27184`.  
+Load `chrome-extension/` as an unpacked extension to connect browser → desktop → Forge.
+
+For a **standalone** browser extension (no desktop app), use `../forge-extension/` instead.
 
 ---
 
-## Architecture
+## File Structure
 
-| File | Purpose |
-|------|---------|
-| `src/main.js` | Electron main process — window, IPC, WebSocket bridge, file watcher |
-| `src/preload.js` | Secure bridge between Electron and web app |
-| `chrome-extension/` | Chrome extension for browser integration |
-
-## Security
-
-- All file operations are sandboxed to user-selected folders
-- WebSocket bridge only listens on `127.0.0.1` (localhost only)
-- No remote code execution — the web app makes all AI calls via the Forge API
-- Token stored in Electron's userData directory (encrypted by OS keychain on macOS/Windows)
+```
+forge-desktop/
+├── src/
+│   ├── main.js                    # Main process
+│   └── preload.js                 # window.forgeDesktop API
+├── assets/
+│   ├── icon.ico                   # Windows
+│   ├── icon.icns                  # macOS
+│   ├── icon.png                   # Linux
+│   ├── dmg-background.png         # macOS DMG background
+│   └── entitlements.mac.plist     # Mac hardened runtime
+├── chrome-extension/              # Desktop bridge extension
+└── package.json
+```
