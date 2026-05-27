@@ -1,6 +1,12 @@
 # Forge Platform — Version History
 
-## v6.37 — 2026-05-26 (current)
+## v6.38 — 2026-05-26 (current)
+### Persist selected model + free model race condition fix
+- **`selectedModel` persisted to localStorage** — survives page reloads, never reset to empty on refresh
+- **Race condition eliminated** — `loadOpenRouterModels()` no longer overwrites a valid user-selected model
+- **Init from localStorage** — on page load, the last-used model is restored immediately before any async key checks
+
+## v6.37 — 2026-05-26
 ### Forge Desktop app integration
 - **`🖥️ Desktop` tab** — appears in sidebar only when running in Electron, shows folder context, file tree, browser context, and memory
 - **Auto-detects desktop mode** via `window.forgeDesktop` — badge shown in sidebar footer
