@@ -731,9 +731,26 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
     let res: Response;
     try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 60000); }
     catch (e: any) { throw new Error(e?.name==='AbortError' ? `Model "${orModel}" timed out after 22s — try a faster model` : e.message); }
-    if (!res.ok) { const e = await res.text(); throw new Error(`OpenRouter error (${orModel}): ${e.slice(0,300)}`); }
+    if (!res.ok) {
+      const e = await res.text();
+      if (res.status === 429) {
+        const isFree = orModel.endsWith(':free');
+        throw new Error(isFree
+          ? `⚡ The free model "${orModel}" is rate-limited. Add your own OpenRouter API key in Settings → LLM Providers to get full access, or switch to a paid model.`
+          : `⚡ Rate limit hit for "${orModel}". Please wait a moment and try again, or switch models.`);
+      }
+      throw new Error(`OpenRouter error (${orModel}): ${e.slice(0,300)}`);
+    }
     const d: any = await res.json();
-    if (d.error) throw new Error(`OpenRouter error (${orModel}): ${JSON.stringify(d.error).slice(0,200)}`);
+    if (d.error) {
+      if (d.error.code === 429) {
+        const isFree = orModel.endsWith(':free');
+        throw new Error(isFree
+          ? `⚡ The free model "${orModel}" is rate-limited. Add your own OpenRouter API key in Settings → LLM Providers to get full access, or switch to a paid model.`
+          : `⚡ Rate limit hit for "${orModel}". Please wait a moment and try again, or switch models.`);
+      }
+      throw new Error(`OpenRouter error (${orModel}): ${JSON.stringify(d.error).slice(0,200)}`);
+    }
     return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
   }
   throw new Error(`Unknown provider: ${provider}`);

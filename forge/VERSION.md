@@ -1,6 +1,12 @@
 # Forge Platform — Version History
 
-## v6.34 — 2026-05-26 (current)
+## v6.35 — 2026-05-26 (current)
+### Fix OpenRouter 429 rate-limit error
+- **Backend**: Detect 429 from OpenRouter, return friendly actionable message instead of raw JSON
+- **Frontend**: Clean up rate-limit error display — shows "Add your API key in Settings → LLM Providers" guidance
+- **Free model rate-limit**: Both `:free` model detection + generic 429 handled gracefully
+
+## v6.34 — 2026-05-26
 ### Critical crash fix + full audit
 - **Fixed `React is not defined` crash** — added `import React` + moved illegal `React.useState` hook out of IIFE into component scope
 - **Fixed app crash when clicking Agents right panel tab** — `activeAgentId` state moved to component level

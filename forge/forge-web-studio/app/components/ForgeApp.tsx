@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.34 -- fix React import + activeAgentId hook violation crash
+// Forge AI Workspace v6.35 -- fix OpenRouter 429 rate-limit error handling
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -1686,13 +1686,15 @@ export default function ForgeApp() {
       const raw: string = abortReason || e.message || 'Something went wrong';
       // Strip raw provider prefixes like "Anthropic error: " for clean display
       const clean = raw
-        .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error:\s*/i, '')
+        .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error[^:]*:\s*/i, '')
         .replace(/^\{"type":"error".*?"message":"([^"]+)".*\}$/i, '$1')
         .replace(/^signal is aborted without reason$/i, 'Request timed out — the model took too long. Try a faster model.')
         .replace(/^Failed to fetch$/i, 'Connection timed out — the model took too long to respond. Try a faster model.')
         .replace(/^NetworkError.*$/i, 'Network error — check your connection or try a different model.')
         .replace(/BodyStreamBuffer.*aborted/i, 'Stream interrupted — the response was cut off. Try sending again or switch to a faster model.')
         .replace(/AbortError/i, 'Request cancelled.')
+        .replace(/rate.limit.*upstream.*add your own key[^]*/i, 'Free model is rate-limited. Add your OpenRouter API key in **Settings → LLM Providers** for unlimited access, or switch models.')
+        .replace(/"?Provider returned error"?,?\s*"?code"?:?\s*429[^]*/i, 'Free model is temporarily rate-limited. Add your OpenRouter API key in **Settings → LLM Providers**, or switch to a different model.')
         .trim();
       const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
@@ -2076,7 +2078,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.34</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.35</span>
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>↗</button>
