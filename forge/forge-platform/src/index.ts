@@ -908,7 +908,16 @@ async function callOpenAICompatWithTools(
       body: JSON.stringify({ model, messages: msgs, tools: FORGE_TOOLS_OPENAI, tool_choice: 'auto', max_tokens: 4096 })
     }, 45000);
     const d: any = await res.json();
-    if (!res.ok) throw new Error(`LLM error: ${JSON.stringify(d.error || d).slice(0, 200)}`);
+    if (!res.ok) {
+      if (res.status === 429 || d.error?.code === 429) {
+        const m = typeof d.error?.metadata?.raw === 'string' ? d.error.metadata.raw : '';
+        const isFree = m.includes(':free') || model.endsWith(':free');
+        throw new Error(isFree
+          ? `⚡ The free model "${model}" is rate-limited. Add your own OpenRouter API key in Settings → LLM Providers to get full access, or switch to a paid model.`
+          : `⚡ Rate limit hit for "${model}". Please wait a moment and try again, or switch models.`);
+      }
+      throw new Error(`LLM error: ${JSON.stringify(d.error || d).slice(0, 200)}`);
+    }
     promptTokens += d.usage?.prompt_tokens || 0;
     completionTokens += d.usage?.completion_tokens || 0;
     const msg = d.choices?.[0]?.message;
