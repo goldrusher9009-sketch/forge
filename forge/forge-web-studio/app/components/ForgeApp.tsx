@@ -611,6 +611,24 @@ export default function ForgeApp() {
   const [multiResults, setMultiResults] = useState<{agents:{role:string;icon:string;content:string;elapsed:number}[];synthesis:string}|null>(null);
   const [multiLiveAgents, setMultiLiveAgents] = useState<{role:string;icon:string;content:string|null;elapsed:number|null;done:boolean}[]>([]);
   const [multiStartTime, setMultiStartTime] = useState<number>(0);
+  // Chat folder actions (hoisted — can't use useState inside render IIFE)
+  const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('forge_pinned_threads')||'[]')); } catch { return new Set(); }
+  });
+  const [folderRenamingId, setFolderRenamingId] = useState<string|null>(null);
+  const [folderRenameVal, setFolderRenameVal] = useState('');
+  // ForgeCO hoisted state
+  const [coTab, setCoTab] = useState<'team'|'projects'|'docs'|'chat'>('team');
+  const [coChatMsg, setCoChatMsg] = useState('');
+  const [coChatLog, setCoChatLog] = useState<{from:string;text:string;ts:number}[]>([
+    { from:'Sarah Kim', text:'Just pushed the new onboarding flow — ready for review!', ts:Date.now()-3600000 },
+    { from:'Alex Chen', text:'On it, will check after standup', ts:Date.now()-1800000 },
+    { from:'Forge AI', text:'Reminder: Platform v2.0 sprint ends Friday. 3 tasks still open.', ts:Date.now()-600000 },
+  ]);
+  // Hooks panel hoisted state
+  const [showHookFormPanelPanel, setShowHookFormPanelPanel] = useState(false);
+  const [builtinEnabled, setBuiltinEnabled] = useState<Record<string,boolean>>({'bh_memory':true,'bh_tools':true,'bh_sysprompt':false,'bh_connector':false,'bh_context':false});
+
   const [autoFeatEnabled, setAutoFeatEnabled] = React.useState<Record<string,boolean>>({'Smart Model Select':true,'Chain of Thought':true,'Self-Correction':false,'Parallel Execution':true,'Goal Tracking':false,'Auto Memory':true});
   const [multiSelectedRoles, setMultiSelectedRoles] = useState<string[]>(['Analyst','Creative','Critic','Strategist','Researcher']);
 
@@ -669,12 +687,12 @@ export default function ForgeApp() {
   // Hooks state (persisted locally + synced with backend when available)
   const [hooks, setHooks] = useState<{id:string;event:string;action:string;target:string;enabled:boolean}[]>([]);
   const [hookForm, setHookForm] = useState({event:'on_message',action:'post_slack',target:''});
-  const [showHookForm, setShowHookForm] = useState(false);
+  const [showHookFormPanel, setShowHookFormPanel] = useState(false);
   const addHook = () => {
     if (!hookForm.target.trim()) return;
     setHooks(prev => [...prev, { id: Date.now().toString(), event: hookForm.event, action: hookForm.action, target: hookForm.target.trim(), enabled: true }]);
     setHookForm({event:'on_message',action:'post_slack',target:''});
-    setShowHookForm(false);
+    setShowHookFormPanel(false);
   };
   const toggleHook = (id: string) => setHooks(prev => prev.map(h => h.id === id ? {...h, enabled: !h.enabled} : h));
   const deleteHook = (id: string) => setHooks(prev => prev.filter(h => h.id !== id));
@@ -2909,28 +2927,21 @@ export default function ForgeApp() {
                         <div style={{ marginTop:16, paddingTop:12, borderTop:'1px solid var(--fg-border)' }}>
                           <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 8px', letterSpacing:'0.5px' }}>💬 Chat Folders</p>
                           {threads.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', textAlign:'center', margin:'12px 0' }}>No chats yet</p>}
-                          {(() => {
-                            const [pinnedThreads, setPinnedThreads] = React.useState<Set<string>>(() => {
-                              try { return new Set(JSON.parse(localStorage.getItem('forge_pinned_threads')||'[]')); } catch { return new Set(); }
-                            });
-                            const [renamingId, setRenamingId] = React.useState<string|null>(null);
-                            const [renameVal, setRenameVal] = React.useState('');
-                            const sorted = [...threads].sort((a,b) => (pinnedThreads.has(b.id)?1:0)-(pinnedThreads.has(a.id)?1:0));
-                            const togglePin = (id:string) => {
-                              const next = new Set(pinnedThreads);
-                              next.has(id) ? next.delete(id) : next.add(id);
-                              setPinnedThreads(next);
-                              try { localStorage.setItem('forge_pinned_threads', JSON.stringify([...next])); } catch {}
-                            };
-                            return sorted.slice(0,10).map(t => {
+          {[...threads].sort((a,b) => (pinnedThreads.has(b.id)?1:0)-(pinnedThreads.has(a.id)?1:0)).slice(0,10).map(t => {
                               const isWarning = inactiveWarnings.has(t.id);
                               const pinned = pinnedThreads.has(t.id);
+                              const togglePin = (id:string) => {
+                                const next = new Set(pinnedThreads);
+                                next.has(id) ? next.delete(id) : next.add(id);
+                                setPinnedThreads(next);
+                                try { localStorage.setItem('forge_pinned_threads', JSON.stringify([...next])); } catch {}
+                              };
                               return (
                                 <div key={t.id} style={{ padding:'7px 10px', background: isWarning ? 'rgba(249,115,22,0.08)' : 'var(--fg-bg3)', border:`1px solid ${pinned?'var(--fg-orange)':isWarning?'var(--fg-border3)':'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
-                                  {renamingId === t.id ? (
-                                    <input autoFocus value={renameVal} onChange={e => setRenameVal(e.target.value)}
-                                      onKeyDown={e => { if(e.key==='Enter') { setThreads(prev => prev.map(th => th.id===t.id ? {...th,title:renameVal} : th)); setRenamingId(null); } if(e.key==='Escape') setRenamingId(null); }}
-                                      onBlur={() => { setThreads(prev => prev.map(th => th.id===t.id ? {...th,title:renameVal} : th)); setRenamingId(null); }}
+                                  {folderRenamingId === t.id ? (
+                                    <input autoFocus value={folderRenameVal} onChange={e => setFolderRenameVal(e.target.value)}
+                                      onKeyDown={e => { if(e.key==='Enter') { setThreads(prev => prev.map(th => th.id===t.id ? {...th,title:folderRenameVal} : th)); setFolderRenamingId(null); } if(e.key==='Escape') setFolderRenamingId(null); }}
+                                      onBlur={() => { setThreads(prev => prev.map(th => th.id===t.id ? {...th,title:folderRenameVal} : th)); setFolderRenamingId(null); }}
                                       style={{ width:'100%', background:'var(--fg-bg)', border:'1px solid var(--fg-orange)', borderRadius:5, padding:'2px 6px', color:'var(--fg-text)', fontSize:12 }} />
                                   ) : (
                                     <div style={{ display:'flex', alignItems:'center', gap:4 }}>
@@ -2938,15 +2949,14 @@ export default function ForgeApp() {
                                         {pinned && <span style={{ marginRight:4 }}>📌</span>}{t.title || 'Untitled'}
                                       </span>
                                       <button onClick={() => togglePin(t.id)} title={pinned?'Unpin':'Pin'} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color: pinned?'var(--fg-orange)':'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>📌</button>
-                                      <button onClick={() => { setRenamingId(t.id); setRenameVal(t.title||''); }} title="Rename" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>✏️</button>
+                                      <button onClick={() => { setFolderRenamingId(t.id); setFolderRenameVal(t.title||''); }} title="Rename" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>✏️</button>
                                       <button onClick={() => { if(confirm('Delete this chat?')) { setThreads(prev => prev.filter(th=>th.id!==t.id)); if(activeThread?.id===t.id) setActiveThread(null); } }} title="Delete" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>🗑</button>
                                     </div>
                                   )}
                                   {isWarning && <p style={{ margin:'3px 0 0', fontSize:10, color:'var(--fg-orange)' }}>⏰ Deletes after 24h of inactivity</p>}
                                 </div>
                               );
-                            });
-                          })()}
+                            })}
                         </div>
                       </div>
                     )}
@@ -4990,24 +5000,17 @@ export default function ForgeApp() {
 
         {/* ── ForgeCO ──────────────────────────────────────────────── */}
         {mainTab === 'forgeco' && (() => {
-          const [coTab, setCoTab] = React.useState<'team'|'projects'|'docs'|'chat'>('team');
-          const [coMembers] = React.useState([
+          const coMembers = [
             { id:'m1', name:'Alex Chen', role:'Lead Developer', avatar:'👨‍💻', status:'online', tasks:3 },
             { id:'m2', name:'Sarah Kim', role:'Product Manager', avatar:'👩‍💼', status:'online', tasks:5 },
             { id:'m3', name:'Marcus Lee', role:'Designer', avatar:'🧑‍🎨', status:'away', tasks:2 },
             { id:'m4', name:'Priya Patel', role:'Data Analyst', avatar:'👩‍🔬', status:'offline', tasks:1 },
-          ]);
-          const [coProjects] = React.useState([
+          ];
+          const coProjects = [
             { id:'p1', name:'Platform v2.0', status:'active', progress:72, due:'Jun 15', members:3 },
             { id:'p2', name:'Mobile App', status:'active', progress:45, due:'Jul 1', members:2 },
             { id:'p3', name:'API Redesign', status:'planning', progress:12, due:'Aug 10', members:4 },
-          ]);
-          const [coChatMsg, setCoChatMsg] = React.useState('');
-          const [coChatLog, setCoChatLog] = React.useState<{from:string;text:string;ts:number}[]>([
-            { from:'Sarah Kim', text:'Just pushed the new onboarding flow — ready for review!', ts:Date.now()-3600000 },
-            { from:'Alex Chen', text:'On it, will check after standup', ts:Date.now()-1800000 },
-            { from:'Forge AI', text:'Reminder: Platform v2.0 sprint ends Friday. 3 tasks still open.', ts:Date.now()-600000 },
-          ]);
+          ];
           const sendCoMsg = () => {
             if (!coChatMsg.trim()) return;
             setCoChatLog(p => [...p, { from:'You', text:coChatMsg, ts:Date.now() }]);
@@ -5539,8 +5542,6 @@ export default function ForgeApp() {
             {id:'bh_connector',icon:'🔌',title:'Connector Hook',desc:'Auto-activate connected services when relevant keywords appear.'},
             {id:'bh_context',icon:'📊',title:'Context Hook',desc:'Summarize previous conversation context and inject it into new chats automatically.'},
           ];
-          const [showHookForm, setShowHookForm] = React.useState(false);
-          const [builtinEnabled, setBuiltinEnabled] = React.useState<Record<string,boolean>>({'bh_memory':true,'bh_tools':true,'bh_sysprompt':false,'bh_connector':false,'bh_context':false});
           const toggleBuiltin = (id:string) => setBuiltinEnabled(p => ({...p,[id]:!p[id]}));
           return (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
@@ -5555,10 +5556,10 @@ export default function ForgeApp() {
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                   <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{Object.values(builtinEnabled).filter(Boolean).length + hooks.filter(h=>h.enabled).length} active</span>
-                  <button onClick={() => setShowHookForm(p=>!p)} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ Create Hook</button>
+                  <button onClick={() => setShowHookFormPanel(p=>!p)} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ Create Hook</button>
                 </div>
               </div>
-              {showHookForm && (
+              {showHookFormPanel && (
                 <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-orange)', borderRadius:12, padding:20, marginBottom:20 }}>
                   <h3 style={{ margin:'0 0 14px', fontSize:14, fontWeight:700, color:'var(--fg-orange)' }}>Create Custom Hook</h3>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
@@ -5588,8 +5589,8 @@ export default function ForgeApp() {
                     <input value={hookForm.target} onChange={e => setHookForm(p=>({...p,target:e.target.value}))} placeholder="e.g. #general or https://your-webhook.com or prompt text..." style={{ width:'100%', padding:'8px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' as any }} />
                   </div>
                   <div style={{ display:'flex', gap:8 }}>
-                    <button onClick={() => { createHook(); setShowHookForm(false); }} style={{ padding:'8px 20px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Save Hook</button>
-                    <button onClick={() => setShowHookForm(false)} style={{ padding:'8px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>Cancel</button>
+                    <button onClick={() => { createHook(); setShowHookFormPanel(false); }} style={{ padding:'8px 20px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Save Hook</button>
+                    <button onClick={() => setShowHookFormPanel(false)} style={{ padding:'8px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>Cancel</button>
                   </div>
                 </div>
               )}
