@@ -618,9 +618,9 @@ export default function ForgeApp() {
   const [folderRenamingId, setFolderRenamingId] = useState<string|null>(null);
   const [folderRenameVal, setFolderRenameVal] = useState('');
   // ForgeCO hoisted state
-  const [coTab, setCoTab] = useState<'team'|'projects'|'docs'|'chat'>('team');
-  const [coChatMsg, setCoChatMsg] = useState('');
-  const [coChatLog, setCoChatLog] = useState<{from:string;text:string;ts:number}[]>([
+  const [forgecoTab, setForgecoTab] = useState<'team'|'projects'|'docs'|'chat'>('team');
+  const [forgecoChatMsg, setForgecoChatMsg] = useState('');
+  const [forgecoChatLog, setForgecoChatLog] = useState<{from:string;text:string;ts:number}[]>([
     { from:'Sarah Kim', text:'Just pushed the new onboarding flow — ready for review!', ts:Date.now()-3600000 },
     { from:'Alex Chen', text:'On it, will check after standup', ts:Date.now()-1800000 },
     { from:'Forge AI', text:'Reminder: Platform v2.0 sprint ends Friday. 3 tasks still open.', ts:Date.now()-600000 },
@@ -5012,9 +5012,9 @@ export default function ForgeApp() {
             { id:'p3', name:'API Redesign', status:'planning', progress:12, due:'Aug 10', members:4 },
           ];
           const sendCoMsg = () => {
-            if (!coChatMsg.trim()) return;
-            setCoChatLog(p => [...p, { from:'You', text:coChatMsg, ts:Date.now() }]);
-            setCoChatMsg('');
+            if (!forgecoChatMsg.trim()) return;
+            setForgecoChatLog(p => [...p, { from:'You', text:forgecoChatMsg, ts:Date.now() }]);
+            setForgecoChatMsg('');
           };
           const statusColor = (s:string) => s==='online'?'#22c55e':s==='away'?'#f59e0b':'var(--fg-text4)';
           return (
@@ -5028,12 +5028,12 @@ export default function ForgeApp() {
                 </div>
                 <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
                   {(['team','projects','docs','chat'] as const).map(t => (
-                    <button key={t} onClick={() => setCoTab(t)} style={{ padding:'7px 16px', background: coTab===t ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${coTab===t?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:8, color: coTab===t?'#fff':'var(--fg-text2)', fontSize:12, fontWeight: coTab===t?700:400, cursor:'pointer', textTransform:'capitalize' }}>{t}</button>
+                    <button key={t} onClick={() => setForgecoTab(t)} style={{ padding:'7px 16px', background: forgecoTab===t ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${forgecoTab===t?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:8, color: forgecoTab===t?'#fff':'var(--fg-text2)', fontSize:12, fontWeight: forgecoTab===t?700:400, cursor:'pointer', textTransform:'capitalize' }}>{t}</button>
                   ))}
                 </div>
               </div>
 
-              {coTab === 'team' && (
+              {forgecoTab === 'team' && (
                 <div>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14, marginBottom:24 }}>
                     {coMembers.map(m => (
@@ -5059,7 +5059,7 @@ export default function ForgeApp() {
                 </div>
               )}
 
-              {coTab === 'projects' && (
+              {forgecoTab === 'projects' && (
                 <div>
                   <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:14 }}>
                     <button onClick={() => alert('Create project — enter name, deadline, assign team members')} style={{ padding:'8px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ New Project</button>
@@ -5082,7 +5082,7 @@ export default function ForgeApp() {
                 </div>
               )}
 
-              {coTab === 'docs' && (
+              {forgecoTab === 'docs' && (
                 <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:28, textAlign:'center' }}>
                   <div style={{ fontSize:40, marginBottom:12 }}>📄</div>
                   <h3 style={{ margin:'0 0 8px', color:'var(--fg-text)' }}>Team Docs</h3>
@@ -5091,7 +5091,7 @@ export default function ForgeApp() {
                 </div>
               )}
 
-              {coTab === 'chat' && (
+              {forgecoTab === 'chat' && (
                 <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, overflow:'hidden' }}>
                   <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8 }}>
                     <span style={{ fontSize:16 }}>💬</span>
@@ -5099,7 +5099,7 @@ export default function ForgeApp() {
                     <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{coMembers.filter(m=>m.status==='online').length} online</span>
                   </div>
                   <div style={{ height:340, overflowY:'auto', padding:16, display:'flex', flexDirection:'column', gap:10 }}>
-                    {coChatLog.map((msg, i) => (
+                    {forgecoChatLog.map((msg, i) => (
                       <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
                         <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0 }}>
                           {msg.from==='You'?'👤':msg.from==='Forge AI'?'🌟':coMembers.find(m=>m.name===msg.from)?.avatar||'👤'}
@@ -5112,7 +5112,7 @@ export default function ForgeApp() {
                     ))}
                   </div>
                   <div style={{ padding:'10px 16px', borderTop:'1px solid var(--fg-border)', display:'flex', gap:8 }}>
-                    <input value={coChatMsg} onChange={e => setCoChatMsg(e.target.value)} onKeyDown={e => e.key==='Enter' && sendCoMsg()} placeholder="Message team…"
+                    <input value={forgecoChatMsg} onChange={e => setForgecoChatMsg(e.target.value)} onKeyDown={e => e.key==='Enter' && sendCoMsg()} placeholder="Message team…"
                       style={{ flex:1, padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
                     <button onClick={sendCoMsg} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Send</button>
                   </div>
