@@ -626,7 +626,6 @@ export default function ForgeApp() {
     { from:'Forge AI', text:'Reminder: Platform v2.0 sprint ends Friday. 3 tasks still open.', ts:Date.now()-600000 },
   ]);
   // Hooks panel hoisted state
-  const [showHookFormPanelPanel, setShowHookFormPanelPanel] = useState(false);
   const [builtinEnabled, setBuiltinEnabled] = useState<Record<string,boolean>>({'bh_memory':true,'bh_tools':true,'bh_sysprompt':false,'bh_connector':false,'bh_context':false});
 
   const [autoFeatEnabled, setAutoFeatEnabled] = React.useState<Record<string,boolean>>({'Smart Model Select':true,'Chain of Thought':true,'Self-Correction':false,'Parallel Execution':true,'Goal Tracking':false,'Auto Memory':true});
