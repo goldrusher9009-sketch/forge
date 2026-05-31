@@ -1,6 +1,22 @@
 # Forge Platform — Version History
 
-## v6.40 — 2026-05-27 (current)
+## v6.41 — 2026-05-31 (current)
+### React hooks crash fix — app fully restored
+
+**Bug Fixes:**
+- **React error #310 eliminated** — removed two duplicate `useState` declarations that caused hooks count mismatch on mount
+  - `const [coTab, ...]` at line 621 renamed to `forgecoTab` (was colliding with existing `coTab` at line 746)
+  - Orphaned `const [showHookFormPanelPanel, ...]` removed (duplicate of `showHookFormPanel` at line 690)
+- **App fully loads** — ForgeApp mounts cleanly after login/signup; all sidebar tabs visible (Workspace, ForgeRouter, Billing, Platforms, Settings, ForgeSuper, Skills & Tools, Files, Hooks, Runs, ForgeCo)
+- **Zero console errors** on load (only a Chrome extension error from unrelated 3rd-party extension)
+
+**Commits:**
+- `fix: rename duplicate coTab state to forgecoTab - resolves React hooks crash v6.40`
+- `fix: remove duplicate showHookFormPanelPanel useState - fixes React hooks count error #310`
+
+---
+
+## v6.40 — 2026-05-27
 ### Comprehensive UI fixes + ForgeCO + NL commands + live agent progress
 
 **New Features:**
