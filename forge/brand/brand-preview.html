@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Forge Brand</title>
+<style>
+ body{margin:0;font:16px/1.5 -apple-system,Segoe UI,Arial,sans-serif;color:#15161A;background:#fff}
+ .hero{background:linear-gradient(135deg,#1A1B1E,#0B0B0D);padding:64px;text-align:center}
+ .hero img{width:420px;max-width:90%}
+ section{padding:40px 64px;border-bottom:1px solid #eee}
+ h2{font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#888}
+ .row{display:flex;gap:32px;align-items:center;flex-wrap:wrap}
+ .chip{width:64px;height:64px;border-radius:12px}
+ .fav{display:flex;gap:24px;align-items:flex-end}
+ .fav figure{margin:0;text-align:center}.fav img{image-rendering:auto;border:1px solid #eee;border-radius:6px}
+ .fav figcaption{font-size:12px;color:#888;margin-top:6px}
+ code{background:#f4f4f5;padding:2px 6px;border-radius:4px;font-size:13px}
+ pre{background:#15161A;color:#eee;padding:20px;border-radius:10px;overflow:auto}
+ .swatch{text-align:center;font-size:12px}
+</style></head><body>
+ <div class="hero"><img src="forge-wordmark-dark.png" alt="Forge"></div>
+
+ <section><h2>Logo — light & dark</h2>
+  <div class="row" style="background:#fafafa;padding:24px;border-radius:12px"><img src="forge-wordmark.png" style="width:360px"></div>
+  <div class="row" style="background:#0B0B0D;padding:24px;border-radius:12px;margin-top:16px"><img src="forge-wordmark-dark.png" style="width:360px"></div>
+ </section>
+
+ <section><h2>App icon</h2>
+  <div class="row"><img src="forge-icon.png" style="width:160px;border-radius:36px"><img src="forge-icon.png" style="width:80px;border-radius:18px"><img src="forge-icon.png" style="width:48px;border-radius:11px"></div>
+ </section>
+
+ <section><h2>Favicon sizes</h2>
+  <div class="fav">
+   <figure><img src="favicon-16.png" width="16"><figcaption>16</figcaption></figure>
+   <figure><img src="favicon-32.png" width="32"><figcaption>32</figcaption></figure>
+   <figure><img src="favicon-48.png" width="48"><figcaption>48</figcaption></figure>
+   <figure><img src="apple-touch-icon.png" width="64"><figcaption>180 apple</figcaption></figure>
+  </div>
+ </section>
+
+ <section><h2>Palette</h2>
+  <div class="row">
+   <div class="swatch"><div class="chip" style="background:#FFC34D"></div>#FFC34D</div>
+   <div class="swatch"><div class="chip" style="background:#FF7A18"></div>#FF7A18</div>
+   <div class="swatch"><div class="chip" style="background:#E5360B"></div>#E5360B</div>
+   <div class="swatch"><div class="chip" style="background:#15161A"></div>#15161A</div>
+   <div class="swatch"><div class="chip" style="background:#0B0B0D"></div>#0B0B0D</div>
+  </div>
+ </section>
+
+ <section><h2>Drop-in HTML &lt;head&gt;</h2>
+<pre>&lt;link rel="icon" href="/favicon.ico" sizes="any"&gt;
+&lt;link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"&gt;
+&lt;link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"&gt;
+&lt;link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"&gt;
+&lt;link rel="manifest" href="/site.webmanifest"&gt;</pre>
+ </section>
+</body></html>
