@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.46 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.47 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -7,45 +7,63 @@ const GLOBAL_STYLES = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --fg-bg:      #0d0608;
-  --fg-bg2:     #120a0c;
-  --fg-bg3:     #1a0e12;
-  --fg-bg4:     #231419;
-  --fg-bg5:     #2e1a20;
-  --fg-orange:  #cc2936;
-  --fg-orange2: #e63946;
-  --fg-odim:    rgba(204,41,54,0.14);
-  --fg-odim2:   rgba(204,41,54,0.22);
-  --fg-border:  rgba(255,255,255,0.06);
-  --fg-border2: rgba(255,255,255,0.11);
-  --fg-border3: rgba(204,41,54,0.30);
-  --fg-text:    #f0ecec;
-  --fg-text2:   #9a8f91;
-  --fg-text3:   #5c5054;
-  --fg-green:   #4ade80;
-  --fg-purple:  #a78bfa;
-  --fg-blue:    #60a5fa;
-  --fg-red:     #f87171;
+  /* Deep-space indigo base */
+  --fg-bg:      #07080f;
+  --fg-bg2:     #0c0e1a;
+  --fg-bg3:     #121527;
+  --fg-bg4:     #1a1e36;
+  --fg-bg5:     #242a48;
+  /* Electric primary (cyan→violet) replaces flat crimson; var names kept for compatibility */
+  --fg-orange:  #6ea8ff;
+  --fg-orange2: #b07cff;
+  --fg-odim:    rgba(110,168,255,0.13);
+  --fg-odim2:   rgba(176,124,255,0.22);
+  --fg-border:  rgba(255,255,255,0.07);
+  --fg-border2: rgba(255,255,255,0.13);
+  --fg-border3: rgba(110,168,255,0.32);
+  --fg-text:    #eef1fb;
+  --fg-text2:   #9aa0c0;
+  --fg-text3:   #5b6080;
+  --fg-green:   #3ee6b0;
+  --fg-purple:  #b07cff;
+  --fg-blue:    #6ea8ff;
+  --fg-red:     #ff5d7d;
+  /* extra multicolor accents available app-wide */
+  --fg-cyan:    #22d3ee;
+  --fg-magenta: #ff4ecd;
+  --fg-amber:   #ffb84d;
+  --fg-accent-grad: linear-gradient(135deg,#22d3ee 0%,#6ea8ff 35%,#b07cff 70%,#ff4ecd 100%);
   --fg-font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --fg-font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --fg-font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --fg-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 }
 
 * { box-sizing: border-box; }
 
-body, #__next { background: var(--fg-bg) !important; color: var(--fg-text) !important; font-family: var(--fg-font-ui) !important; }
+body, #__next {
+  background:
+    radial-gradient(1100px 700px at 12% -8%, rgba(110,168,255,0.10), transparent 60%),
+    radial-gradient(900px 600px at 92% 0%, rgba(176,124,255,0.10), transparent 55%),
+    radial-gradient(800px 800px at 50% 120%, rgba(34,211,238,0.07), transparent 60%),
+    var(--fg-bg) !important;
+  background-attachment: fixed !important;
+  color: var(--fg-text) !important; font-family: var(--fg-font-ui) !important;
+}
+/* Multicolor accent helpers usable anywhere */
+.fg-accent-bar { height:3px; background:var(--fg-accent-grad); background-size:200% auto; animation:fg-sheen 6s linear infinite; border-radius:3px; }
+.fg-glass { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); backdrop-filter: blur(6px); }
 
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--fg-bg5); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#22d3ee,#b07cff); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--fg-bg4); }
 
 @keyframes pulse { 0%,100%{opacity:.4;transform:scale(.85)} 50%{opacity:1;transform:scale(1)} }
 @keyframes fg-live-pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)} 50%{opacity:.7;box-shadow:0 0 0 5px rgba(34,197,94,0)} }
-@keyframes fg-orange-glow { 0%,100%{box-shadow:0 0 0 0 rgba(204,41,54,.35)} 50%{box-shadow:0 0 0 5px rgba(204,41,54,0)} }
+@keyframes fg-orange-glow { 0%,100%{box-shadow:0 0 0 0 rgba(110,168,255,.35)} 50%{box-shadow:0 0 0 5px rgba(110,168,255,0)} }
 @keyframes forge-flash {
-  0%,100% { background:var(--fg-orange); box-shadow:0 0 12px rgba(204,41,54,.6); }
-  50%     { background:var(--fg-orange2); box-shadow:0 0 20px rgba(230,57,70,.4); }
+  0%,100% { background:var(--fg-orange); box-shadow:0 0 12px rgba(110,168,255,.6); }
+  50%     { background:var(--fg-orange2); box-shadow:0 0 20px rgba(176,124,255,.4); }
 }
 @keyframes forge-ring {
   0%,100% { border-color: var(--fg-border3); }
@@ -56,8 +74,8 @@ body, #__next { background: var(--fg-bg) !important; color: var(--fg-text) !impo
   50%     { color: var(--fg-orange2); }
 }
 @keyframes send-pulse {
-  0%,100% { background:var(--fg-orange); box-shadow:0 0 0 0 rgba(204,41,54,.5); }
-  50%     { background:var(--fg-orange2); box-shadow:0 0 0 6px rgba(204,41,54,0); }
+  0%,100% { background:var(--fg-orange); box-shadow:0 0 0 0 rgba(110,168,255,.5); }
+  50%     { background:var(--fg-orange2); box-shadow:0 0 0 6px rgba(110,168,255,0); }
 }
 @keyframes fg-think { 0%,60%,100%{transform:scale(.8);opacity:.3} 30%{transform:scale(1.15);opacity:1} }
 @keyframes fg-slide-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
@@ -2272,7 +2290,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.46</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.47</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>

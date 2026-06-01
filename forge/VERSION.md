@@ -1,6 +1,19 @@
 # Forge Platform — Version History
 
-## v6.46 — 2026-06-01 (current)
+## v6.47 — 2026-06-01 (current)
+### Full multicolor visual overhaul (theme-variable driven)
+
+Recolored the ENTIRE app by retuning the `:root` CSS variables (single source of truth — every panel/button/border inherits automatically, no structural changes, all functions identical):
+- **Deep-space indigo base** (`#07080f`→`#242a48`) replacing flat crimson.
+- **Electric primary** cyan→violet (`--fg-orange`/`--fg-orange2` repurposed as `#6ea8ff`/`#b07cff`; names kept for compatibility). New `--fg-cyan`, `--fg-magenta`, `--fg-amber`, and `--fg-accent-grad` available app-wide.
+- **Multicolor body background** — layered radial glows (blue/violet/cyan) fixed-attached; gradient scrollbar; `.fg-accent-bar` + `.fg-glass` helpers.
+- All animation glows (flash/pulse/ring/send) swapped from crimson rgba to electric blue/violet.
+
+**Verified:** frontend esbuild-clean.
+
+---
+
+## v6.46 — 2026-06-01
 ### File-linked progress tracker + high-end neon brand polish
 
 - **Progress tracker is now folder/file-linked (dynamic like folders)** — each tracker item stamps the active folder (`folderId`); the tracker view filters to the active folder's items (global/un-tagged items still show everywhere). Switching folders shows that folder's progress. All buttons/functions unchanged.
