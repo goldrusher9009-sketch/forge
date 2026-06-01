@@ -6229,3 +6229,5 @@ export default function ForgeApp() {
 
       </div>
     </div>
+  );
+}

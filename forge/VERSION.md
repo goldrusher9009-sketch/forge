@@ -1,7 +1,9 @@
 # Forge Platform — Version History
 
 ## v6.44 — 2026-06-01 (current)
-### Correct OpenRouter ~alias handling + refreshed model lists
+### Correct OpenRouter ~alias handling + refreshed model lists + CRITICAL frontend build fix
+
+- **CRITICAL: fixed truncated ForgeApp.tsx that was blocking ALL frontend deploys since v6.41.** The component's closing `);` + `}` were missing (file ended mid-JSX), so `next build` failed and Vercel kept serving v6.41 — which is why v6.42/6.43 never appeared. Restored the closers; file now compiles (esbuild verified). This is why the version badge never moved.
 
 - **Fixed `google/gemini-flash-latest is not a valid model ID`** — the leading `~` in `~google/gemini-flash-latest` is a *valid* OpenRouter auto-router alias and must NOT be stripped. Reverted the v6.42 over-strip: `~` is now preserved in every id sent to OpenRouter (`resolveForgeModel`, `callLLM`, `modelResolver`); only the Forge-internal `openrouter/` prefix is removed. Provider routing still detects `~…/…` correctly.
 - **Refreshed model lists (pulled live from OpenRouter, June 2026):** new OpenRouter group in the model picker with current valid slugs (Claude Opus 4.8, GPT-5.5, Gemini 3.5 Flash, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, Grok 4.3, Mistral Medium 3.5, and the `~google/gemini-flash-latest` alias). Google direct group updated with 2.5 Flash Lite / 2.0 Flash Lite.
