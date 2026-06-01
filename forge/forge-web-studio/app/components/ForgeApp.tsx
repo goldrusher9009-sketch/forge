@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.43 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.44 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -296,7 +296,9 @@ const DIRECT_MODELS = [
   { group:'Google', models:[
     { id:'gemini-2.5-pro',   label:'Gemini 2.5 Pro' },
     { id:'gemini-2.5-flash', label:'Gemini 2.5 Flash' },
+    { id:'gemini-2.5-flash-lite', label:'Gemini 2.5 Flash Lite' },
     { id:'gemini-2.0-flash', label:'Gemini 2.0 Flash' },
+    { id:'gemini-2.0-flash-lite', label:'Gemini 2.0 Flash Lite' },
     { id:'gemini-1.5-pro',   label:'Gemini 1.5 Pro' },
     { id:'gemini-1.5-flash', label:'Gemini 1.5 Flash' },
   ]},
@@ -316,6 +318,22 @@ const DIRECT_MODELS = [
     { id:'claude-3-5-sonnet', label:'Claude 3.5 Sonnet' },
     { id:'claude-3-5-haiku',  label:'Claude 3.5 Haiku' },
     { id:'claude-3-opus',     label:'Claude 3 Opus' },
+  ]},
+  { group:'OpenRouter (400+ models — connect an OpenRouter key for the full live list)', models:[
+    { id:'openrouter/anthropic/claude-opus-4.8',        label:'Claude Opus 4.8 (OR)' },
+    { id:'openrouter/anthropic/claude-sonnet-4.6',      label:'Claude Sonnet 4.6 (OR)' },
+    { id:'openrouter/openai/gpt-5.5',                   label:'GPT-5.5 (OR)' },
+    { id:'openrouter/openai/gpt-5.4-mini',              label:'GPT-5.4 Mini (OR)' },
+    { id:'openrouter/~google/gemini-flash-latest',      label:'Gemini Flash (latest, OR)' },
+    { id:'openrouter/google/gemini-3.5-flash',          label:'Gemini 3.5 Flash (OR)' },
+    { id:'openrouter/google/gemini-2.5-flash',          label:'Gemini 2.5 Flash (OR)' },
+    { id:'openrouter/deepseek/deepseek-v4-pro',         label:'DeepSeek V4 Pro (OR)' },
+    { id:'openrouter/deepseek/deepseek-chat-v3.1',      label:'DeepSeek V3.1 (OR)' },
+    { id:'openrouter/meta-llama/llama-4-maverick',      label:'Llama 4 Maverick (OR)' },
+    { id:'openrouter/meta-llama/llama-3.3-70b-instruct',label:'Llama 3.3 70B (OR)' },
+    { id:'openrouter/qwen/qwen3.7-max',                 label:'Qwen 3.7 Max (OR)' },
+    { id:'openrouter/x-ai/grok-4.3',                    label:'Grok 4.3 (OR)' },
+    { id:'openrouter/mistralai/mistral-medium-3-5',     label:'Mistral Medium 3.5 (OR)' },
   ]},
 ];
 
@@ -2225,7 +2243,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.43</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.44</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>

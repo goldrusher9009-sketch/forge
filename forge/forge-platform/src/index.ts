@@ -552,14 +552,15 @@ function resolveForgeModel(modelId: string): string {
     'forge-gpt':      'gpt-4o',
     'forge-gemini':   'gemini-2.0-flash',
   };
-  // Strip "openrouter/" prefix — frontend prefixes OR models but OR API expects bare IDs
-  let cleaned = modelId.startsWith('~') ? modelId.slice(1) : modelId;
-  cleaned = cleaned.startsWith('openrouter/') ? cleaned.slice('openrouter/'.length) : cleaned;
+  // Keep a leading "~" — it's a VALID OpenRouter auto-router alias (e.g. ~google/gemini-flash-latest).
+  // Only strip the Forge-internal "openrouter/" prefix and resolve forge-* aliases.
+  const cleaned = modelId.startsWith('openrouter/') ? modelId.slice('openrouter/'.length) : modelId;
   return forgeMap[cleaned] || ANTHROPIC_MODEL_MAP[cleaned] || cleaned;
 }
 
 function getProviderForModel(modelId: string): string {
-  // Strip openrouter/ prefix if present before routing
+  // For routing only: strip a leading "~" (OR alias marker) and "openrouter/" so we can match the provider.
+  // The ~ is preserved in the model id actually sent to OpenRouter (see resolveForgeModel / callLLM).
   let mid = modelId.startsWith('~') ? modelId.slice(1) : modelId;
   mid = mid.startsWith('openrouter/') ? mid.slice('openrouter/'.length) : mid;
   if (mid.startsWith('morph-')) return 'morph';
@@ -729,7 +730,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   }
   // OpenRouter (passthrough for 400+ models)
   if (provider === 'openrouter') {
-    const orModel = (model.startsWith('~') ? model.slice(1) : model).replace(/^openrouter\//, '');
+    const orModel = model.replace(/^openrouter\//, ''); // keep leading ~ — valid OpenRouter alias
     let res: Response;
     try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 60000); }
     catch (e: any) { throw new Error(e?.name==='AbortError' ? `Model "${orModel}" timed out. DeepSeek and some models can be slow under load — try again or switch to Claude/GPT-4o for faster responses.` : e.message); }
@@ -2187,7 +2188,7 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
         openai:     { url: 'https://api.openai.com/v1/chat/completions', headers: {} },
         groq:       { url: 'https://api.groq.com/openai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'llama-3.3-70b':'llama-3.3-70b-versatile','llama-3.1-70b':'llama-3.1-70b-versatile','llama-3.1-8b':'llama-3.1-8b-instant','mixtral-8x7b':'mixtral-8x7b-32768','gemma2-9b':'gemma2-9b-it' })[m] || m },
         mistral:    { url: 'https://api.mistral.ai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'mistral-large':'mistral-large-latest','mistral-small':'mistral-small-latest','mistral-medium':'mistral-medium-latest','codestral':'codestral-latest' })[m] || m },
-        openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', headers: { 'HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio' }, modelResolver: (m) => { let x = m.startsWith('~') ? m.slice(1) : m; return x.startsWith('openrouter/') ? x.slice('openrouter/'.length) : x; } },
+        openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', headers: { 'HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio' }, modelResolver: (m) => m.replace(/^openrouter\//, '') /* keep leading ~ alias for OpenRouter */ },
         morph:      { url: 'https://api.morphllm.com/v1/chat/completions', headers: {} },
       };
 

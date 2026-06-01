@@ -1,6 +1,17 @@
 # Forge Platform — Version History
 
-## v6.43 — 2026-06-01 (current)
+## v6.44 — 2026-06-01 (current)
+### Correct OpenRouter ~alias handling + refreshed model lists
+
+- **Fixed `google/gemini-flash-latest is not a valid model ID`** — the leading `~` in `~google/gemini-flash-latest` is a *valid* OpenRouter auto-router alias and must NOT be stripped. Reverted the v6.42 over-strip: `~` is now preserved in every id sent to OpenRouter (`resolveForgeModel`, `callLLM`, `modelResolver`); only the Forge-internal `openrouter/` prefix is removed. Provider routing still detects `~…/…` correctly.
+- **Refreshed model lists (pulled live from OpenRouter, June 2026):** new OpenRouter group in the model picker with current valid slugs (Claude Opus 4.8, GPT-5.5, Gemini 3.5 Flash, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, Grok 4.3, Mistral Medium 3.5, and the `~google/gemini-flash-latest` alias). Google direct group updated with 2.5 Flash Lite / 2.0 Flash Lite.
+- The live `/api/models` endpoint already pulls the full per-provider list when a key is connected; these curated defaults are the valid fallback shown before that fetch.
+
+**Verified:** backend esbuild clean; frontend edit region brace-balanced (pre-existing standalone-bundle warning is unrelated, Next build handles it).
+
+---
+
+## v6.43 — 2026-06-01
 ### Credential guidance (all modes) + full-autonomy Magic mode + escalation
 
 - **Asks & guides on missing keys/connectors (all modes)** — instead of failing, the model names what's needed, where to add it (Settings → LLM Providers, with the exact key URL per provider), what it unlocks, and offers the best alternative it can do now. Suggests free Groq/Gemini keys when relevant.
