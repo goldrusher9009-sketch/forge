@@ -1,6 +1,17 @@
 # Forge Platform — Version History
 
-## v6.45 — 2026-06-01 (current)
+## v6.46 — 2026-06-01 (current)
+### File-linked progress tracker + high-end neon brand polish
+
+- **Progress tracker is now folder/file-linked (dynamic like folders)** — each tracker item stamps the active folder (`folderId`); the tracker view filters to the active folder's items (global/un-tagged items still show everywhere). Switching folders shows that folder's progress. All buttons/functions unchanged.
+- **Neon brand polish (looks only):** sharp animated multi-colour neon "Forge" wordmark (`.forge-neon`, cycles cyan→orange→gold→green→blue→violet→pink) on login, sidebar, and mobile headers; added Space Grotesk display font; gradient-text helper. No functional changes.
+- **New neon favicon + app icons** — sharp cyan→violet→magenta "F" on dark; wired `app/icon.png`, `app/apple-icon.png`, `favicon.ico` + layout `icons` metadata; themeColor → neon cyan.
+
+**Verified:** frontend esbuild-clean.
+
+---
+
+## v6.45 — 2026-06-01
 ### Dynamic folders: files linked to chat folders, cascade delete, LLM auto-filing
 
 The right-side chat list (threads) now acts as **folders**, and files belong to the folder they were created in:

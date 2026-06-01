@@ -7,8 +7,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
   title: "Forge — AI Agent Platform",
   description: "Manage, deploy and monitor AI agents at scale",
+  icons: { icon: "/icon.png", apple: "/apple-icon.png", shortcut: "/favicon.ico" },
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
-  themeColor: "#ff6600",
+  themeColor: "#00ccff",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent" },
 };
 

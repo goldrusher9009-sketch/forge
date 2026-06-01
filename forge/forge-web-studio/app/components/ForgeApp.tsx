@@ -1,10 +1,10 @@
-// Forge AI Workspace v6.45 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.46 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   --fg-bg:      #0d0608;
@@ -71,6 +71,20 @@ body, #__next { background: var(--fg-bg) !important; color: var(--fg-text) !impo
   71%  { color: #9f4ffa; text-shadow: 0 0 8px #9f4ffa, 0 0 22px rgba(159,79,250,.6); }
   85%  { color: #ff0099; text-shadow: 0 0 8px #ff0099, 0 0 22px rgba(255,0,153,.6); }
   100% { color: #ff003c; text-shadow: 0 0 8px #ff003c, 0 0 22px rgba(255,0,60,.6); }
+}
+/* High-end neon brand wordmark — sharp, multicolour, animated */
+.forge-neon {
+  font-family: 'Space Grotesk','Inter',ui-sans-serif,system-ui,sans-serif;
+  font-weight: 700; letter-spacing: -1px;
+  animation: neon-cycle 6s linear infinite;
+  will-change: color, text-shadow;
+}
+.forge-neon-dot { animation: neon-cycle 6s linear infinite; will-change: color, text-shadow; }
+@keyframes fg-sheen { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.fg-gradient-text {
+  background: linear-gradient(90deg,#ff003c,#ff6600,#ffcc00,#00ff88,#00ccff,#9f4ffa,#ff0099,#ff003c);
+  background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; animation: fg-sheen 5s linear infinite;
 }
 `;
 
@@ -380,7 +394,7 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
       <div style={{ width:400, padding:'40px', background:'var(--fg-bg3)', borderRadius:16, border:'1px solid var(--fg-border)' }}>
         <div style={{ textAlign:'center', marginBottom:32 }}>
           <div style={{ fontSize:40, marginBottom:8, animation:'neon-cycle 4s linear infinite' }}>⚡</div>
-          <h1 style={{ color:'#fff', fontSize:24, fontWeight:800, margin:0, fontFamily:'var(--fg-font-display)', letterSpacing:'-0.5px' }}>Forge</h1>
+          <h1 className="forge-neon" style={{ fontSize:30, margin:0 }}>Forge</h1>
           <p style={{ color:'var(--fg-text3)', margin:'4px 0 0', fontSize:14 }}>AI Workspace Platform</p>
         </div>
         <div style={{ display:'flex', background:'var(--fg-bg)', borderRadius:8, marginBottom:24, padding:4 }}>
@@ -715,16 +729,17 @@ export default function ForgeApp() {
   const deleteHook = (id: string) => setHooks(prev => prev.filter(h => h.id !== id));
 
   // Progress Tracker state
-  const [trackerItems, setTrackerItems] = useState<{id:string;text:string;done:boolean;priority:'high'|'medium'|'low';createdAt:number}[]>(() => {
+  const [trackerItems, setTrackerItems] = useState<{id:string;text:string;done:boolean;priority:'high'|'medium'|'low';createdAt:number;folderId?:string|null}[]>(() => {
     try { return JSON.parse(localStorage.getItem('forge_tracker') || '[]'); } catch { return []; }
   });
   const [trackerInput, setTrackerInput] = useState('');
   const [trackerEditId, setTrackerEditId] = useState<string|null>(null);
   const [trackerEditText, setTrackerEditText] = useState('');
   const saveTracker = (items: typeof trackerItems) => { setTrackerItems(items); try { localStorage.setItem('forge_tracker', JSON.stringify(items)); } catch {} };
+  const visibleTrackerItems = (typeof activeThread !== 'undefined' && activeThread?.id) ? trackerItems.filter(i => !i.folderId || i.folderId === activeThread.id) : trackerItems;
   const addTrackerItem = () => {
     if (!trackerInput.trim()) return;
-    const item = { id: Date.now().toString(), text: trackerInput.trim(), done: false, priority: 'medium' as const, createdAt: Date.now() };
+    const item = { id: Date.now().toString(), text: trackerInput.trim(), done: false, priority: 'medium' as const, createdAt: Date.now(), folderId: activeThread?.id || null };
     saveTracker([...trackerItems, item]);
     setTrackerInput('');
   };
@@ -2086,7 +2101,7 @@ export default function ForgeApp() {
         <div style={{ position:'fixed', top:0, left:0, right:0, height:52, background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', padding:'0 14px', gap:10, zIndex:99, flexShrink:0 }}>
           <button onClick={e => { e.stopPropagation(); setMobileDrawerOpen(o=>!o); }} style={{ background:'none', border:'none', color:'var(--fg-text2)', fontSize:20, cursor:'pointer', padding:4 }}>☰</button>
           <div style={{ width:28, height:28, background:'transparent', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, animation:'neon-cycle 3s linear infinite' }}>⚡</div>
-          <span style={{ fontWeight:800, fontSize:15, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>Forge</span>
+          <span className="forge-neon" style={{ fontSize:16 }}>Forge</span>
           <div style={{ marginLeft:'auto', fontSize:12, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{selectedModel || 'forge-fast'}</div>
         </div>
       )}
@@ -2097,7 +2112,7 @@ export default function ForgeApp() {
         <div style={{ padding:'16px 12px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid var(--fg-border)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, overflow:'hidden' }}>
             <div style={{ width:32, height:32, background:'var(--fg-orange)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>⚡</div>
-            {sidebarExpanded && <span style={{ fontWeight:800, fontSize:16, color:'var(--fg-orange)', whiteSpace:'nowrap', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.3px' }}>Forge</span>}
+            {sidebarExpanded && <span className="forge-neon" style={{ fontSize:18, whiteSpace:'nowrap' }}>Forge</span>}
           </div>
           <button onClick={() => setSidebarExpanded(!sidebarExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:16, padding:4 }}>{sidebarExpanded ? '◀' : '▶'}</button>
         </div>
@@ -2257,7 +2272,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.45</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.46</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -2876,15 +2891,16 @@ export default function ForgeApp() {
                     {/* PROGRESS TRACKER */}
                     {rightTab==='tracker' && (
                       <div>
+
                         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                           <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>📌 Progress Tracker</p>
-                          <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{trackerItems.filter(i=>i.done).length}/{trackerItems.length} done</span>
+                          <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{visibleTrackerItems.filter(i=>i.done).length}/{visibleTrackerItems.length} done</span>
                         </div>
 
                         {/* Progress bar */}
-                        {trackerItems.length > 0 && (
+                        {visibleTrackerItems.length > 0 && (
                           <div style={{ marginBottom:12, height:6, background:'var(--fg-bg3)', borderRadius:3, overflow:'hidden' }}>
-                            <div style={{ height:'100%', background:'var(--fg-orange)', borderRadius:3, width:`${(trackerItems.filter(i=>i.done).length/trackerItems.length)*100}%`, transition:'width 0.3s' }} />
+                            <div style={{ height:'100%', background:'var(--fg-orange)', borderRadius:3, width:`${(visibleTrackerItems.filter(i=>i.done).length/visibleTrackerItems.length)*100}%`, transition:'width 0.3s' }} />
                           </div>
                         )}
 
@@ -2901,7 +2917,7 @@ export default function ForgeApp() {
                         </div>
 
                         {/* Tracker items */}
-                        {trackerItems.length === 0 && (
+                        {visibleTrackerItems.length === 0 && (
                           <div style={{ textAlign:'center', padding:'24px 12px', color:'var(--fg-text3)', fontSize:12 }}>
                             <div style={{ fontSize:28, marginBottom:8 }}>📋</div>
                             <p style={{ margin:0 }}>No goals yet. Add your first goal above.</p>
@@ -2910,7 +2926,7 @@ export default function ForgeApp() {
                         )}
 
                         {['high','medium','low'].map(priority => {
-                          const items = trackerItems.filter(i => i.priority === priority);
+                          const items = visibleTrackerItems.filter(i => i.priority === priority);
                           if (items.length === 0) return null;
                           const colors: Record<string,string> = { high:'var(--fg-red,#ef4444)', medium:'var(--fg-orange)', low:'var(--fg-text3)' };
                           return (
@@ -2918,14 +2934,14 @@ export default function ForgeApp() {
                               <p style={{ fontSize:10, color:colors[priority], fontWeight:700, textTransform:'uppercase', margin:'0 0 5px', letterSpacing:'0.5px' }}>{priority === 'high' ? '🔴' : priority === 'medium' ? '🟡' : '🟢'} {priority}</p>
                               {items.map(item => (
                                 <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background: item.done ? 'var(--fg-bg3)' : 'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:4, opacity: item.done ? 0.6 : 1 }}>
-                                  <button onClick={() => saveTracker(trackerItems.map(i => i.id===item.id ? {...i,done:!i.done} : i))}
+                                  <button onClick={() => saveTracker(visibleTrackerItems.map(i => i.id===item.id ? {...i,done:!i.done} : i))}
                                     style={{ width:16, height:16, borderRadius:'50%', border:`2px solid ${item.done ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, background: item.done ? 'var(--fg-orange)' : 'transparent', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', padding:0 }}>
                                     {item.done && <span style={{ fontSize:9, color:'#fff' }}>✓</span>}
                                   </button>
                                   {trackerEditId === item.id ? (
                                     <input autoFocus value={trackerEditText} onChange={e => setTrackerEditText(e.target.value)}
-                                      onKeyDown={e => { if(e.key==='Enter') { saveTracker(trackerItems.map(i=>i.id===item.id?{...i,text:trackerEditText}:i)); setTrackerEditId(null); } if(e.key==='Escape') setTrackerEditId(null); }}
-                                      onBlur={() => { saveTracker(trackerItems.map(i=>i.id===item.id?{...i,text:trackerEditText}:i)); setTrackerEditId(null); }}
+                                      onKeyDown={e => { if(e.key==='Enter') { saveTracker(visibleTrackerItems.map(i=>i.id===item.id?{...i,text:trackerEditText}:i)); setTrackerEditId(null); } if(e.key==='Escape') setTrackerEditId(null); }}
+                                      onBlur={() => { saveTracker(visibleTrackerItems.map(i=>i.id===item.id?{...i,text:trackerEditText}:i)); setTrackerEditId(null); }}
                                       style={{ flex:1, background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:5, color:'var(--fg-text)', fontSize:12, padding:'2px 6px', outline:'none' }}
                                     />
                                   ) : (
@@ -2935,11 +2951,11 @@ export default function ForgeApp() {
                                     </span>
                                   )}
                                   <div style={{ display:'flex', gap:2, flexShrink:0 }}>
-                                    <select value={item.priority} onChange={e => saveTracker(trackerItems.map(i=>i.id===item.id?{...i,priority:e.target.value as any}:i))}
+                                    <select value={item.priority} onChange={e => saveTracker(visibleTrackerItems.map(i=>i.id===item.id?{...i,priority:e.target.value as any}:i))}
                                       style={{ fontSize:10, background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:4, color:'var(--fg-text3)', padding:'1px 3px', cursor:'pointer' }}>
                                       <option value="high">🔴</option><option value="medium">🟡</option><option value="low">🟢</option>
                                     </select>
-                                    <button onClick={() => saveTracker(trackerItems.filter(i=>i.id!==item.id))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'0 2px' }}>✕</button>
+                                    <button onClick={() => saveTracker(visibleTrackerItems.filter(i=>i.id!==item.id))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'0 2px' }}>✕</button>
                                   </div>
                                 </div>
                               ))}
@@ -2947,9 +2963,9 @@ export default function ForgeApp() {
                           );
                         })}
 
-                        {trackerItems.length > 0 && (
+                        {visibleTrackerItems.length > 0 && (
                           <div style={{ display:'flex', gap:6, marginTop:8 }}>
-                            <button onClick={() => saveTracker(trackerItems.filter(i=>!i.done))} style={{ flex:1, padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Clear done</button>
+                            <button onClick={() => saveTracker(visibleTrackerItems.filter(i=>!i.done))} style={{ flex:1, padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Clear done</button>
                             <button onClick={() => saveTracker([])} style={{ flex:1, padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Clear all</button>
                           </div>
                         )}
