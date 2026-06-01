@@ -1,6 +1,21 @@
 # Forge Platform — Version History
 
-## v6.41 — 2026-05-31 (current)
+## v6.42 — 2026-05-31 (current)
+### Gemini/OpenRouter fix + human-tone narration + restored truncated backend
+
+**Bug Fixes:**
+- **Gemini "Task completed" with no result fixed** — model ids with a leading `~` (e.g. `~google/gemini-flash-latest`) were sent to OpenRouter unstripped → invalid slug → empty response. Now strip `~` in `resolveForgeModel`, `getProviderForModel`, the OpenRouter `modelResolver`, and `callLLM`.
+- **No more silent "Task completed."** — both agent loops (Anthropic + OpenAI-compat) now track interim text and return the last real content or a clear diagnostic instead of an empty stub.
+- **Restored truncated `index.ts`** — file had lost its tail (userfiles `:id`/download/delete routes, webhook routes, `app.listen`). Reconstructed + de-duplicated; backend boots again.
+
+**Features:**
+- **Human-tone live narration for ALL providers** — new `humanizeToolStep()` emits warm first-person status ("Searching the web for…", "Writing file…") across Gemini, GPT, Claude, Groq, OpenRouter. System prompt now instructs every model to narrate like a colleague and always end with a real result.
+
+**Verified:** full file transpiles clean (esbuild, 0 errors).
+
+---
+
+## v6.41 — 2026-05-31
 ### React hooks crash fix — app fully restored
 
 **Bug Fixes:**

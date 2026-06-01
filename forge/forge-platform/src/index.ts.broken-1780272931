@@ -553,15 +553,13 @@ function resolveForgeModel(modelId: string): string {
     'forge-gemini':   'gemini-2.0-flash',
   };
   // Strip "openrouter/" prefix — frontend prefixes OR models but OR API expects bare IDs
-  let cleaned = modelId.startsWith('~') ? modelId.slice(1) : modelId;
-  cleaned = cleaned.startsWith('openrouter/') ? cleaned.slice('openrouter/'.length) : cleaned;
+  const cleaned = modelId.startsWith('openrouter/') ? modelId.slice('openrouter/'.length) : modelId;
   return forgeMap[cleaned] || ANTHROPIC_MODEL_MAP[cleaned] || cleaned;
 }
 
 function getProviderForModel(modelId: string): string {
   // Strip openrouter/ prefix if present before routing
-  let mid = modelId.startsWith('~') ? modelId.slice(1) : modelId;
-  mid = mid.startsWith('openrouter/') ? mid.slice('openrouter/'.length) : mid;
+  const mid = modelId.startsWith('openrouter/') ? modelId.slice('openrouter/'.length) : modelId;
   if (mid.startsWith('morph-')) return 'morph';
   if (mid.startsWith('claude')) return 'anthropic';
   if (mid.startsWith('gpt') || mid.startsWith('o3') || mid.startsWith('o1') || mid.startsWith('o4') || mid === 'chatgpt-4o-latest') return 'openai';
@@ -729,7 +727,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   }
   // OpenRouter (passthrough for 400+ models)
   if (provider === 'openrouter') {
-    const orModel = (model.startsWith('~') ? model.slice(1) : model).replace(/^openrouter\//, '');
+    const orModel = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
     let res: Response;
     try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 60000); }
     catch (e: any) { throw new Error(e?.name==='AbortError' ? `Model "${orModel}" timed out. DeepSeek and some models can be slow under load — try again or switch to Claude/GPT-4o for faster responses.` : e.message); }
@@ -861,42 +859,12 @@ const FORGE_TOOLS_OPENAI = FORGE_TOOLS_ANTHROPIC.map(t => ({
   function: { name: t.name, description: t.description, parameters: t.input_schema }
 }));
 
-// Turn a raw tool call into a warm, human first-person status line — used across ALL providers
-// so every model (Gemini, GPT, Claude, OpenRouter, Groq…) narrates work the same friendly way.
-function humanizeToolStep(toolName: string, args: Record<string, any>): { icon: string; message: string } {
-  const a = args || {};
-  switch (toolName) {
-    case 'web_search':
-      return { icon: '\ud83d\udd0e', message: `Searching the web for "${String(a.query || a.q || '').slice(0, 60)}"…` };
-    case 'web_scrape':
-    case 'http_request': {
-      const url = String(a.url || '').replace(/^https?:\/\//, '').slice(0, 50);
-      return { icon: '\ud83c\udf10', message: url ? `Fetching ${url}…` : 'Making a web request…' };
-    }
-    case 'run_code':
-      return { icon: '⚙️', message: `Running some ${String(a.language || 'code')} to work this out…` };
-    case 'write_file':
-      return { icon: '\ud83d\udcdd', message: `Writing ${String(a.path || a.filename || 'a file').split('/').pop()}…` };
-    case 'read_file':
-      return { icon: '\ud83d\udcd6', message: `Reading ${String(a.path || a.filename || 'a file').split('/').pop()}…` };
-    case 'shell':
-      return { icon: '\ud83d\udda5️', message: `Running: ${String(a.command || a.cmd || '').slice(0, 50)}…` };
-    case 'create_artifact':
-      return { icon: '✨', message: `Putting together ${String(a.title || 'something for you')}…` };
-    case 'browser_action':
-      return { icon: '\ud83e\udded', message: `Driving the browser: ${String(a.action || 'navigating')}…` };
-    default:
-      return { icon: '\ud83d\udd27', message: `Working with ${toolName.replace(/_/g, ' ')}…` };
-  }
-}
-
 async function callAnthropicWithTools(
   apiKey: string, model: string, messages: any[],
   onToolCall: (name: string, args: any, result: string) => void
 ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
   const msgs = [...messages];
   let promptTokens = 0, completionTokens = 0;
-  let lastText = '';
   for (let iter = 0; iter < 8; iter++) {
     const res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -921,11 +889,9 @@ async function callAnthropicWithTools(
         toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
       }
     }
-    const interimText = d.content?.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('').trim();
-    if (interimText) lastText = interimText;
     msgs.push({ role: 'user', content: toolResults });
   }
-  return { content: lastText || 'I worked through the task but ran out of steps before wrapping up \u2014 ask me to continue and I\'ll pick up from here.', promptTokens, completionTokens };
+  return { content: 'Task completed.', promptTokens, completionTokens };
 }
 
 async function callOpenAICompatWithTools(
@@ -935,7 +901,6 @@ async function callOpenAICompatWithTools(
 ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
   const msgs = [...messages];
   let promptTokens = 0, completionTokens = 0;
-  let lastText = '';
   for (let iter = 0; iter < 8; iter++) {
     const res = await fetchWithTimeout(url, {
       method: 'POST',
@@ -958,13 +923,8 @@ async function callOpenAICompatWithTools(
     const msg = d.choices?.[0]?.message;
     if (!msg) throw new Error('No message in response');
     if (!msg.tool_calls || msg.tool_calls.length === 0) {
-      const finalText = (msg.content || '').trim();
-      if (!finalText && !lastText) {
-        return { content: 'The model returned an empty response. This usually means an invalid model id or a provider hiccup \u2014 try resending, or switch models in Settings.', promptTokens, completionTokens };
-      }
-      return { content: finalText || lastText, promptTokens, completionTokens };
+      return { content: msg.content || '', promptTokens, completionTokens };
     }
-    if (typeof msg.content === 'string' && msg.content.trim()) lastText = msg.content.trim();
     msgs.push(msg);
     for (const tc of msg.tool_calls) {
       let args: any = {};
@@ -974,7 +934,7 @@ async function callOpenAICompatWithTools(
       msgs.push({ role: 'tool', tool_call_id: tc.id, content: result });
     }
   }
-  return { content: lastText || 'I worked through the task but ran out of steps before wrapping up. Ask me to continue and I\'ll pick up from here.', promptTokens, completionTokens };
+  return { content: 'Task completed.', promptTokens, completionTokens };
 }
 
 // ── Chat (also aliased as /api/chat/completions for OpenAI-compat clients) ──
@@ -2107,7 +2067,7 @@ ${isMagic ? `**You are in MAGIC MODE. Rules:**
 2. NEVER say "I cannot" or "I don't have access" — you have full tool access
 3. Chain tools: search → run_code → write_file in one response when needed
 4. Return real working results, not descriptions of what you would do
-5. Be fast and direct. Build first, explain after.\n\n## Narration — Talk Like A Human As You Work\n- Before each tool call, say what you're about to do in a warm, natural first-person sentence — e.g. \"Let me search for the latest pricing…\", \"Pulling that page now…\".\n- Keep it conversational and brief, like a sharp colleague thinking out loud — never robotic.\n- ALWAYS end with a real, substantive answer or result. Never finish with just \"Task completed\" or an empty message.
+5. Be fast and direct. Build first, explain after.
 
 ${isMagic ? '' : `## Asking Clarification (Ask Mode Only)
 If a request is genuinely ambiguous, ask ONE concise question with 2-4 numbered options:
@@ -2145,7 +2105,7 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
     endSSE({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
     return;
   }
-  emitStep('🤖', `Spinning up ${model} — let me get to work…`);
+  emitStep('🤖', `Invoking ${model} via ${provider}`);
   try {
     let result: { content: string; promptTokens: number; completionTokens: number; toolCalls?: Array<{name:string;args:any;result:string}> };
 
@@ -2156,10 +2116,11 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
           apiKey, actualModel, llmMessages,
           (toolName, toolArgs, toolResult) => {
             // Emit each tool call as a live step
-            const step = humanizeToolStep(toolName, toolArgs);
-            emitStep(step.icon, step.message);
-            emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model });
-            try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500), label: step.message })}\n\n`); } catch {}
+            const argsPreview = JSON.stringify(toolArgs).slice(0, 80);
+            emitStep('🔧', `Tool: ${toolName}(${argsPreview})`);
+            emitAgentActivity(userId, { type: 'tool', message: `🔧 ${toolName}: ${argsPreview}`, model });
+            // Also emit a tool_call event so frontend can render inline
+            try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500) })}\n\n`); } catch {}
           }
         ),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Anthropic agent timed out after 60s')), 60000))
@@ -2168,17 +2129,17 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
     } else {
       // OpenAI-compatible providers: use function calling tool loop
       const onToolCall = (toolName: string, toolArgs: any, toolResult: string) => {
-        const step = humanizeToolStep(toolName, toolArgs);
-        emitStep(step.icon, step.message);
-        emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model });
-        try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500), label: step.message })}\n\n`); } catch {}
+        const argsPreview = JSON.stringify(toolArgs).slice(0, 80);
+        emitStep('🔧', `Tool: ${toolName}(${argsPreview})`);
+        emitAgentActivity(userId, { type: 'tool', message: `🔧 ${toolName}: ${argsPreview}`, model });
+        try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500) })}\n\n`); } catch {}
       };
 
       const openAICompatProviders: Record<string, { url: string; headers: Record<string,string>; modelResolver?: (m:string)=>string }> = {
         openai:     { url: 'https://api.openai.com/v1/chat/completions', headers: {} },
         groq:       { url: 'https://api.groq.com/openai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'llama-3.3-70b':'llama-3.3-70b-versatile','llama-3.1-70b':'llama-3.1-70b-versatile','llama-3.1-8b':'llama-3.1-8b-instant','mixtral-8x7b':'mixtral-8x7b-32768','gemma2-9b':'gemma2-9b-it' })[m] || m },
         mistral:    { url: 'https://api.mistral.ai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'mistral-large':'mistral-large-latest','mistral-small':'mistral-small-latest','mistral-medium':'mistral-medium-latest','codestral':'codestral-latest' })[m] || m },
-        openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', headers: { 'HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio' }, modelResolver: (m) => { let x = m.startsWith('~') ? m.slice(1) : m; return x.startsWith('openrouter/') ? x.slice('openrouter/'.length) : x; } },
+        openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', headers: { 'HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio' }, modelResolver: (m) => m.startsWith('openrouter/') ? m.slice('openrouter/'.length) : m },
         morph:      { url: 'https://api.morphllm.com/v1/chat/completions', headers: {} },
       };
 
@@ -3090,40 +3051,4 @@ app.get('/api/webhooks', requireAuth, (req: AuthRequest, res) => {
 app.post('/api/webhooks', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
   const { name, event_type = 'generic', prompt } = req.body;
-  if (!name || !prompt) { res.status(400).json({ success: false, error: 'name and prompt required' }); return; }
-  const id = uuidv4();
-  const secret = uuidv4().replace(/-/g, '');
-  db.prepare('INSERT INTO webhook_triggers (id,user_id,name,event_type,prompt,secret) VALUES (?,?,?,?,?,?)').run(id, userId, name, event_type, prompt, secret);
-  const baseUrl = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
-  res.status(201).json({ success: true, data: { id, name, event_type, enabled: 1, webhook_url: `${baseUrl}/api/webhooks/${id}/fire?secret=${secret}` } });
-});
-
-app.patch('/api/webhooks/:id', requireAuth, (req: AuthRequest, res) => {
-  const { enabled } = req.body;
-  try { db.prepare('UPDATE webhook_triggers SET enabled=? WHERE id=? AND user_id=?').run(enabled ? 1 : 0, req.params.id, req.user!.sub); } catch {}
-  res.json({ success: true });
-});
-
-app.delete('/api/webhooks/:id', requireAuth, (req: AuthRequest, res) => {
-  db.prepare('DELETE FROM webhook_triggers WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
-  res.json({ success: true });
-});
-
-// Fire a webhook trigger (public, authenticated by per-hook secret)
-app.post('/api/webhooks/:id/fire', (req: AuthRequest, res) => {
-  const hook = db.prepare('SELECT * FROM webhook_triggers WHERE id=?').get(req.params.id) as any;
-  if (!hook) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
-  const secret = req.query.secret || req.headers['x-forge-secret'];
-  if (!secret || secret !== hook.secret) { res.status(401).json({ success: false, error: 'INVALID_SECRET' }); return; }
-  if (!hook.enabled) { res.status(403).json({ success: false, error: 'DISABLED' }); return; }
-  try { db.prepare("UPDATE webhook_triggers SET last_triggered=datetime('now') WHERE id=?").run(hook.id); } catch {}
-  res.json({ success: true, data: { id: hook.id, name: hook.name, event_type: hook.event_type, triggered_at: new Date().toISOString() } });
-});
-
-// M-bM-^TM-^@M-bM-^TM-^@ Health check M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@
-app.get('/api/health', (_req, res) => { res.json({ success: true, status: 'ok', env: NODE_ENV, time: new Date().toISOString() }); });
-
-// M-bM-^TM-^@M-bM-^TM-^@ Server startup M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@
-app.listen(PORT, () => {
-  console.log(`Forge backend listening on port ${PORT} (${NODE_ENV})`);
-});
+  if (!name || !prompt) {
