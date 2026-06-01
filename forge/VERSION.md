@@ -1,6 +1,18 @@
 # Forge Platform — Version History
 
-## v6.42 — 2026-05-31 (current)
+## v6.43 — 2026-06-01 (current)
+### Credential guidance (all modes) + full-autonomy Magic mode + escalation
+
+- **Asks & guides on missing keys/connectors (all modes)** — instead of failing, the model names what's needed, where to add it (Settings → LLM Providers, with the exact key URL per provider), what it unlocks, and offers the best alternative it can do now. Suggests free Groq/Gemini keys when relevant.
+- **Magic mode = full human-like autonomy** — browse the web, control a browser, run shell/code, read/write files, call any API, install tools/skills, and even switch LLM models to get the best result. Builds a working demo when a live credential is truly required.
+- **Escalation** — if Magic mode hits something it genuinely cannot do, it never just stops; it tells the user the single best way to solve it, step by step.
+- **Friendlier NO_API_KEY response** — actionable, warm, Claude-style message with provider-specific key links.
+
+**Verified:** esbuild transpile clean (0 errors).
+
+---
+
+## v6.42 — 2026-05-31
 ### Gemini/OpenRouter fix + human-tone narration + restored truncated backend
 
 **Bug Fixes:**

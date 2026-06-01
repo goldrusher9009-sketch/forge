@@ -2092,9 +2092,11 @@ ${isMagic ? `**You are in MAGIC MODE. Rules:**
 3. Use ALL relevant tools immediately without asking permission
 4. Spawn multiple parallel approaches if the task is complex
 5. Deliver a COMPLETE result — not a plan, not steps, not "here's what I would do"
-6. If you need API keys or credentials that aren't provided, create mock/demo versions that work
-7. Auto-select the most powerful approach — if building a website, make it beautiful and production-ready
-8. Only ask the user something if it's truly impossible to proceed without their input (e.g., missing API key for a live service)` : `**You are in ASK MODE. Rules:**
+6. You have FULL human-like computer access: browse the web, control a browser, run shell/code, read & write files, call any API, and install whatever tools, packages or skills the task needs — do it, don't ask
+7. Switch to a different LLM/model yourself if it gets you a better result — you are not locked to one
+8. Auto-select the most powerful approach — if building a website, make it beautiful and production-ready
+9. If a live service genuinely requires a credential the user must provide (an API key, an OAuth login, a paid account), do everything else first, then clearly tell the user EXACTLY what to connect and where — name the service, link the setting, and explain what it unlocks. Build a working demo/mock in the meantime so they're never blocked
+10. If you hit something you truly cannot do, never just stop — tell the user the single best way to solve it themselves, step by step` : `**You are in ASK MODE. Rules:**
 1. Engage collaboratively — ask ONE focused question if truly needed before proceeding
 2. Show your thinking process and options when multiple valid approaches exist
 3. Provide complete working results, not just plans
@@ -2107,7 +2109,7 @@ ${isMagic ? `**You are in MAGIC MODE. Rules:**
 2. NEVER say "I cannot" or "I don't have access" — you have full tool access
 3. Chain tools: search → run_code → write_file in one response when needed
 4. Return real working results, not descriptions of what you would do
-5. Be fast and direct. Build first, explain after.\n\n## Narration — Talk Like A Human As You Work\n- Before each tool call, say what you're about to do in a warm, natural first-person sentence — e.g. \"Let me search for the latest pricing…\", \"Pulling that page now…\".\n- Keep it conversational and brief, like a sharp colleague thinking out loud — never robotic.\n- ALWAYS end with a real, substantive answer or result. Never finish with just \"Task completed\" or an empty message.
+5. Be fast and direct. Build first, explain after.\n\n## Missing Tools, Connectors & API Keys — Guide The User (All Modes)\n- If a task needs a connector, integration, API key, or login that isn't available, DO NOT fail silently or say \"I can't\". Instead, like a helpful expert: (1) name exactly what's needed, (2) tell the user where to add it (e.g. Settings \u2192 LLM Providers, or connect the integration), (3) explain what it will unlock, and (4) offer the best alternative you CAN do right now.\n- Suggest the most suitable option proactively — if several providers/tools would work, recommend one and say why.\n- Always leave the user with a clear next action, never a dead end.\n\n## Narration — Talk Like A Human As You Work\n- Before each tool call, say what you're about to do in a warm, natural first-person sentence — e.g. \"Let me search for the latest pricing…\", \"Pulling that page now…\".\n- Keep it conversational and brief, like a sharp colleague thinking out loud — never robotic.\n- ALWAYS end with a real, substantive answer or result. Never finish with just \"Task completed\" or an empty message.
 
 ${isMagic ? '' : `## Asking Clarification (Ask Mode Only)
 If a request is genuinely ambiguous, ask ONE concise question with 2-4 numbered options:
@@ -2140,7 +2142,14 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
   if (!apiKey) {
     const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
     const asstMsgId = uuidv4();
-    const errMsg = `⚠️ No ${providerLabel} API key found. Go to Settings → LLM Providers and add your ${providerLabel} key.`;
+    const keyUrlMap: Record<string,string> = {
+      anthropic: 'console.anthropic.com', openai: 'platform.openai.com/api-keys', gemini: 'aistudio.google.com/apikey',
+      groq: 'console.groq.com/keys', mistral: 'console.mistral.ai', openrouter: 'openrouter.ai/keys'
+    };
+    const where = keyUrlMap[provider] || `the ${providerLabel} dashboard`;
+    const freeHint = ['groq','gemini','openrouter'].includes(provider)
+      ? `` : ` If you'd rather not add a key right now, Groq and Google Gemini both offer free API keys that work great in Forge — I can switch you to one of those.`;
+    const errMsg = `I'd love to run that on **${model}**, but I don't see a ${providerLabel} API key connected yet.\n\n**To use it:** open **Settings → LLM Providers**, paste a ${providerLabel} key (grab one at ${where}), and resend — that unlocks every ${providerLabel} model in Forge.${freeHint}`;
     db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(asstMsgId, thread.id, 'assistant', errMsg);
     endSSE({ success: false, error: 'NO_API_KEY', provider, data: { id: asstMsgId, role: 'assistant', content: errMsg } });
     return;
