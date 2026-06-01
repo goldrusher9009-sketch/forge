@@ -2159,16 +2159,31 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
   try {
     let result: { content: string; promptTokens: number; completionTokens: number; toolCalls?: Array<{name:string;args:any;result:string}> };
 
+    // Auto-file agent-created files (write_file/create_artifact) into the ACTIVE folder (thread).
+    const persistAgentFile = (toolName: string, toolArgs: any) => {
+      try {
+        if (toolName !== 'write_file' && toolName !== 'create_artifact') return;
+        const filename = String(toolArgs.path || toolArgs.filename || toolArgs.title || `forge-${Date.now()}.txt`).split('/').pop() || `forge-${Date.now()}.txt`;
+        const content = String(toolArgs.content || '');
+        if (!content) return;
+        const ext = filename.split('.').pop()?.toLowerCase() || '';
+        const mime = ext === 'html' ? 'text/html' : ext === 'json' ? 'application/json' : ext === 'js' ? 'text/javascript' : ext === 'md' ? 'text/markdown' : 'text/plain';
+        db.prepare('INSERT INTO user_files (id,user_id,thread_id,filename,content,mime_type,size) VALUES (?,?,?,?,?,?,?)')
+          .run(uuidv4(), userId, thread.id, filename, content, mime, Buffer.byteLength(content, 'utf8'));
+        try { res.write(`data: ${JSON.stringify({ type: 'file_created', filename, thread_id: thread.id })}\n\n`); } catch {}
+      } catch {}
+    };
+
     // For Anthropic models: use native tool_use agentic loop
     if (provider === 'anthropic') {
-      const agentResult = await Promise.race([
+const agentResult = await Promise.race([
         callAnthropicWithTools(
           apiKey, actualModel, llmMessages,
           (toolName, toolArgs, toolResult) => {
-            // Emit each tool call as a live step
             const step = humanizeToolStep(toolName, toolArgs);
             emitStep(step.icon, step.message);
             emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model });
+            persistAgentFile(toolName, toolArgs);
             try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500), label: step.message })}\n\n`); } catch {}
           }
         ),
@@ -2181,6 +2196,7 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
         const step = humanizeToolStep(toolName, toolArgs);
         emitStep(step.icon, step.message);
         emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model });
+        persistAgentFile(toolName, toolArgs);
         try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500), label: step.message })}\n\n`); } catch {}
       };
 
@@ -2300,7 +2316,10 @@ app.patch('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
 app.delete('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
   const r = db.prepare('DELETE FROM threads WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
   if (!r.changes) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  res.json({ success: true, message: 'Thread deleted' });
+  // Cascade: a thread IS a folder — delete every file that lived in it
+  let filesDeleted = 0;
+  try { filesDeleted = db.prepare('DELETE FROM user_files WHERE thread_id=? AND user_id=?').run(req.params.id, req.user!.sub).changes; } catch {}
+  res.json({ success: true, message: 'Thread deleted', filesDeleted });
 });
 
 // ── Thread stats (context usage panel) ────────────────────────
@@ -3058,7 +3077,10 @@ app.delete('/api/goals/:id', requireAuth, (req: AuthRequest, res) => {
 
 // ── File storage ──────────────────────────────────────────────────────────────
 app.get('/api/userfiles', requireAuth, (req: AuthRequest, res) => {
-  const rows = db.prepare('SELECT id,filename,mime_type,size,thread_id,created_at FROM user_files WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user!.sub);
+  const { thread_id } = req.query;
+  const rows = thread_id
+    ? db.prepare('SELECT id,filename,mime_type,size,thread_id,created_at FROM user_files WHERE user_id=? AND thread_id=? ORDER BY created_at DESC LIMIT 200').all(req.user!.sub, thread_id)
+    : db.prepare('SELECT id,filename,mime_type,size,thread_id,created_at FROM user_files WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user!.sub);
   res.json({ success: true, data: rows });
 });
 

@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.44 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.45 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -745,9 +745,19 @@ export default function ForgeApp() {
     return () => clearInterval(interval);
   }, []);
 
-  // Files state
+  // Files state — files belong to the ACTIVE folder (thread); switching folders reloads its files
   const [files, setFiles] = useState<{id:string;name:string;size:number;type:string;created_at:string}[]>([]);
   const filesInputRef = useRef<HTMLInputElement>(null);
+  const loadFolderFiles = useCallback(async () => {
+    if (!user) return;
+    try {
+      const q = activeThread?.id ? `?thread_id=${activeThread.id}` : '';
+      const r = await apiFetch(`/userfiles${q}`, {}, user.token);
+      const rows = (r.data || []).map((f: any) => ({ id: f.id, name: f.filename, size: f.size || 0, type: f.mime_type || 'text/plain', created_at: f.created_at }));
+      setFiles(rows);
+    } catch { /* keep current list if endpoint unavailable */ }
+  }, [user, activeThread?.id]);
+  useEffect(() => { loadFolderFiles(); }, [loadFolderFiles]);
   const uploadFile = async (file: File) => {
     if (!user) return;
     const entry = { id: Date.now().toString(), name: file.name, size: file.size, type: file.type || 'application/octet-stream', created_at: new Date().toISOString() };
@@ -1756,6 +1766,10 @@ export default function ForgeApp() {
             const tc = { tool: evt.tool, args: evt.args, result: evt.result || '', ts: Date.now() };
             setLiveToolCalls(prev => [...prev, tc]);
             addAgentStep('🔧', `${evt.tool}(${JSON.stringify(evt.args||{}).slice(0,60)})`);
+          } else if (evt.type === 'file_created') {
+            // Agent created a file — it's auto-filed into this folder; refresh the left panel
+            addAgentStep('📄', `Saved ${evt.filename} to this folder`);
+            loadFolderFiles();
           }
         });
         addAgentStep('✅', 'Response received');
@@ -2243,7 +2257,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.44</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.45</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>

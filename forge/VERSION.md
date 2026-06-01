@@ -1,6 +1,18 @@
 # Forge Platform — Version History
 
-## v6.44 — 2026-06-01 (current)
+## v6.45 — 2026-06-01 (current)
+### Dynamic folders: files linked to chat folders, cascade delete, LLM auto-filing
+
+The right-side chat list (threads) now acts as **folders**, and files belong to the folder they were created in:
+- **Files are folder-scoped** — `/api/userfiles?thread_id=…` returns only that folder's files; the left files panel reloads whenever you switch folders (`loadFolderFiles` + effect on active thread).
+- **Cascade delete** — deleting a folder (thread) now also deletes every file that lived in it (`DELETE FROM user_files WHERE thread_id=…`). Rename already updates the folder label.
+- **LLM-created files auto-file into the active folder** — when the agent calls `write_file`/`create_artifact`, the file is persisted to `user_files` with the active `thread_id` and the UI is told via a new `file_created` SSE event, so it appears under the right folder instantly.
+
+**Verified:** backend + frontend both esbuild-clean.
+
+---
+
+## v6.44 — 2026-06-01
 ### Correct OpenRouter ~alias handling + refreshed model lists + CRITICAL frontend build fix
 
 - **CRITICAL: fixed truncated ForgeApp.tsx that was blocking ALL frontend deploys since v6.41.** The component's closing `);` + `}` were missing (file ended mid-JSX), so `next build` failed and Vercel kept serving v6.41 — which is why v6.42/6.43 never appeared. Restored the closers; file now compiles (esbuild verified). This is why the version badge never moved.
