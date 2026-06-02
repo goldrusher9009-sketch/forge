@@ -1,38 +1,38 @@
-// Forge AI Workspace v6.47 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.48 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* Deep-space indigo base */
-  --fg-bg:      #07080f;
-  --fg-bg2:     #0c0e1a;
-  --fg-bg3:     #121527;
-  --fg-bg4:     #1a1e36;
-  --fg-bg5:     #242a48;
-  /* Electric primary (cyan→violet) replaces flat crimson; var names kept for compatibility */
-  --fg-orange:  #6ea8ff;
-  --fg-orange2: #b07cff;
-  --fg-odim:    rgba(110,168,255,0.13);
-  --fg-odim2:   rgba(176,124,255,0.22);
+  /* Neutral near-black base (not pure black — softer, premium) */
+  --fg-bg:      #0a0a0c;
+  --fg-bg2:     #101013;
+  --fg-bg3:     #16161a;
+  --fg-bg4:     #1f1f25;
+  --fg-bg5:     #2a2a31;
+  /* Vivid scarlet brand red — sharp accent (logo, primary actions, top bar) */
+  --fg-orange:  #ff2b3d;
+  --fg-orange2: #ff5263;
+  --fg-odim:    rgba(255,43,61,0.13);
+  --fg-odim2:   rgba(255,43,61,0.22);
   --fg-border:  rgba(255,255,255,0.07);
   --fg-border2: rgba(255,255,255,0.13);
-  --fg-border3: rgba(110,168,255,0.32);
-  --fg-text:    #eef1fb;
-  --fg-text2:   #9aa0c0;
-  --fg-text3:   #5b6080;
-  --fg-green:   #3ee6b0;
-  --fg-purple:  #b07cff;
-  --fg-blue:    #6ea8ff;
-  --fg-red:     #ff5d7d;
-  /* extra multicolor accents available app-wide */
+  --fg-border3: rgba(255,43,61,0.34);
+  --fg-text:    #f5f6f8;
+  --fg-text2:   #a7a9b4;
+  --fg-text3:   #6b6d78;
+  --fg-green:   #34d399;
+  --fg-purple:  #a78bfa;
+  --fg-blue:    #60a5fa;
+  --fg-red:     #ff2b3d;
+  /* supporting accents */
   --fg-cyan:    #22d3ee;
   --fg-magenta: #ff4ecd;
-  --fg-amber:   #ffb84d;
-  --fg-accent-grad: linear-gradient(135deg,#22d3ee 0%,#6ea8ff 35%,#b07cff 70%,#ff4ecd 100%);
+  --fg-amber:   #ffb020;
+  --fg-accent-grad: linear-gradient(135deg,#ff2b3d 0%,#ff5263 50%,#ff8a3d 100%);
   --fg-font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --fg-font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --fg-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
@@ -42,20 +42,23 @@ const GLOBAL_STYLES = `
 
 body, #__next {
   background:
-    radial-gradient(1100px 700px at 12% -8%, rgba(110,168,255,0.10), transparent 60%),
-    radial-gradient(900px 600px at 92% 0%, rgba(176,124,255,0.10), transparent 55%),
-    radial-gradient(800px 800px at 50% 120%, rgba(34,211,238,0.07), transparent 60%),
+    radial-gradient(1000px 640px at 10% -10%, rgba(255,43,61,0.10), transparent 58%),
+    radial-gradient(820px 560px at 94% -4%, rgba(255,82,99,0.07), transparent 55%),
     var(--fg-bg) !important;
   background-attachment: fixed !important;
-  color: var(--fg-text) !important; font-family: var(--fg-font-ui) !important;
+  color: var(--fg-text) !important;
+  font-family: var(--fg-font-ui) !important;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility; font-feature-settings: 'ss01','cv01','cv11'; letter-spacing: -0.01em;
 }
+h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font-weight: 700; }
 /* Multicolor accent helpers usable anywhere */
 .fg-accent-bar { height:3px; background:var(--fg-accent-grad); background-size:200% auto; animation:fg-sheen 6s linear infinite; border-radius:3px; }
 .fg-glass { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); backdrop-filter: blur(6px); }
 
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#22d3ee,#b07cff); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#ff2b3d,#ff5263); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--fg-bg4); }
 
 @keyframes pulse { 0%,100%{opacity:.4;transform:scale(.85)} 50%{opacity:1;transform:scale(1)} }
@@ -2290,7 +2293,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.47</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.48</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>

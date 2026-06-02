@@ -1,7 +1,19 @@
 # Forge Platform — Version History
 
-## v6.47 — 2026-06-01 (current)
-### Full multicolor visual overhaul (theme-variable driven)
+## v6.48 — 2026-06-01 (current)
+### Refined red theme + sharper typography (research-backed)
+
+Reverted the indigo experiment per feedback (red was better) and applied 2026 dashboard best-practice (neutral near-black base + sharp brand accent, not a colored background):
+- **Vivid scarlet red brand accent** `#ff2b3d`/`#ff5263` (sharper, cleaner than the old muddy crimson) on a neutral near-black base (`#0a0a0c`→`#2a2a31`). Red used as accent (logo, primary actions, borders), neutral elsewhere — the recommended premium pattern.
+- **Sharper fonts:** `-webkit-font-smoothing: antialiased`, `text-rendering: optimizeLegibility`, tighter letter-spacing, heavier Inter weights (700-900), Space Grotesk on all headings with -0.02em tracking, OpenType `ss01` features.
+- Body glows + scrollbar + accent-grad returned to red tones; neon multicolor logo retained.
+
+**Verified:** frontend esbuild-clean. themeColor → `#ff2b3d`.
+
+---
+
+## v6.47 — 2026-06-01
+### Full multicolor visual overhaul (theme-variable driven) — superseded by v6.48
 
 Recolored the ENTIRE app by retuning the `:root` CSS variables (single source of truth — every panel/button/border inherits automatically, no structural changes, all functions identical):
 - **Deep-space indigo base** (`#07080f`→`#242a48`) replacing flat crimson.

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Manage, deploy and monitor AI agents at scale",
   icons: { icon: "/icon.png", apple: "/apple-icon.png", shortcut: "/favicon.ico" },
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
-  themeColor: "#00ccff",
+  themeColor: "#ff2b3d",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent" },
 };
 
@@ -18,9 +18,4 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
-      </body>
-    </html>
-  );
-}
+      <body className={`${inter.var
