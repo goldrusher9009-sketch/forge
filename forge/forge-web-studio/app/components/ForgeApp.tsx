@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.53 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.54 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -1211,7 +1211,7 @@ export default function ForgeApp() {
   };
   const loadSuperHistory = async () => {
     if (!user) return;
-    try { const d = await apiFetch('/superagent/history', {}, user.token); setSuperMessages(Array.isArray(d?.data) ? d.data.map((m:any) => ({ role:m.role, content:m.content })) : []); } catch {}
+    try { const d = await apiFetch('/superagent/history', {}, user.token); setSuperMessages(Array.isArray(d?.data) ? d.data.map((m:any) => ({ role:m.role, content:m.content||'' })).filter((m:any)=>m.content) : []); } catch {}
   };
   const loadThreadTokenStats = async (threadId: string) => {
     if (!user) return;
@@ -1519,10 +1519,10 @@ export default function ForgeApp() {
       const d = await apiFetch('/superagent/harvest', { method:'POST' }, user.token);
       await loadSuperMemory();
       try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
-      const msg = d?.data?.message || `✅ Harvest complete! Intelligence: ${d?.data?.intelligenceScore || '+'}`;
-      setSuperMessages(prev => [...prev, { role:'assistant', content: msg }]);
+      const msg = d?.data?.message || d?.message || `✅ Harvest complete! Intelligence: ${d?.data?.intelligenceScore ?? d?.intelligenceScore ?? '+'}`;
+      setSuperMessages(prev => [...prev, { role:'assistant', content: String(msg) }]);
       setSuperTab('chat');
-    } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`❌ Harvest error: ${e.message}` }]); }
+    } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content: `❌ Harvest error: ${String(e?.message || e)}` }]); }
     finally { setSuperHarvesting(false); }
   };
   const sendSuperMessage = async () => {
@@ -1587,7 +1587,7 @@ export default function ForgeApp() {
         setToolVisibility(tools.map((t: any) => ({ tool: t.name || t.id || 'unknown', status: t.status || 'done', input: t.input, output: t.output })));
       }
 
-      setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]);
+      setSuperMessages(prev => [...prev, { role:'assistant', content: String(d?.data?.content || d?.message || '(no response)') }]);
       loadTotalTokens();
       try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
     } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); }
@@ -2337,7 +2337,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.53</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.54</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -4999,6 +4999,7 @@ export default function ForgeApp() {
                   )}
                   {superMessages.map((m, i) => {
                     // Check for embedded elements in content
+                    if (!m.content) return null;
                     const browserMatch = m.content.match(/\[BROWSER\]([\s\S]*?)\[\/BROWSER\]/);
                     const terminalMatch = m.content.match(/\[TERMINAL\]([\s\S]*?)\[\/TERMINAL\]/);
                     const spreadsheetMatch = m.content.match(/\[SPREADSHEET\]([\s\S]*?)\[\/SPREADSHEET\]/);
