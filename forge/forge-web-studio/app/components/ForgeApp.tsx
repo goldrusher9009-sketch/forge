@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.55 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.56 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -451,6 +451,8 @@ export default function ForgeApp() {
   const [customProviders, setCustomProviders] = useState<CustomProvider[]>([]);
   const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [toast, setToast] = useState<{msg:string;type:'ok'|'err'|'info'}|null>(null);
+  const showToast = (msg: string, type: 'ok'|'err'|'info' = 'ok') => { setToast({msg,type}); setTimeout(()=>setToast(null), 3500); };
   const [openRouterModels, setOpenRouterModels] = useState<{id:string;name:string;context_length?:number;pricing?:{prompt:string;completion:string}}[]>([]);
 
   // Selection
@@ -1227,19 +1229,19 @@ export default function ForgeApp() {
   const saveAdminKey = async (provider: string) => {
     if (!user) return;
     const key = adminKeyInputs[provider]?.trim();
-    if (!key) { alert('Please enter a key first.'); return; }
+    if (!key) { showToast('Please enter a key first.','info'); return; }
     setAdminSaving(provider);
     try {
       await apiFetch('/admin/platform-keys', { method:'POST', body:JSON.stringify({ provider, key }) }, user.token);
       setAdminKeyInputs(prev => ({ ...prev, [provider]: '' }));
       await loadAdminKeys();
-    } catch (e: any) { alert(`Failed: ${e?.message || e}`); }
+    } catch (e: any) { showToast(`Failed: ${e?.message||e}`,'err'); }
     finally { setAdminSaving(''); }
   };
 
   const deleteAdminKey = async (provider: string) => {
     if (!user || !confirm(`Remove platform key for ${provider}?`)) return;
-    try { await apiFetch(`/admin/platform-keys/${provider}`, { method:'DELETE' }, user.token); await loadAdminKeys(); } catch (e: any) { alert(e?.message); }
+    try { await apiFetch(`/admin/platform-keys/${provider}`, { method:'DELETE' }, user.token); await loadAdminKeys(); } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const toggleAdminModel = async (modelId: string, enabled: boolean) => {
@@ -1247,7 +1249,7 @@ export default function ForgeApp() {
     try {
       await apiFetch(`/admin/models/${modelId}`, { method:'PATCH', body:JSON.stringify({ enabled: enabled ? 1 : 0 }) }, user.token);
       setAdminModels(prev => prev.map(m => m.id === modelId ? { ...m, enabled: enabled ? 1 : 0 } : m));
-    } catch (e: any) { alert(e?.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const changeUserRole = async (userId: string, role: string) => {
@@ -1255,14 +1257,14 @@ export default function ForgeApp() {
     try {
       await apiFetch(`/admin/users/${userId}`, { method:'PATCH', body:JSON.stringify({ role }) }, user.token);
       setAdminUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u));
-    } catch (e: any) { alert(e?.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   // ── Save a single provider's API key ──────────────────────────────────────
   const saveOneKey = async (provider: string, key: string) => {
     if (!user) return;
     const trimmed = key.trim();
-    if (!trimmed) { alert('Please paste a key first.'); return; }
+    if (!trimmed) { showToast('Please paste a key first.','info'); return; }
     try {
       await apiFetch('/keys', { method:'POST', body:JSON.stringify({ [`${provider}_key`]: trimmed }) }, user.token);
       setKeysSaved(true); setTimeout(() => setKeysSaved(false), 3000);
@@ -1275,7 +1277,7 @@ export default function ForgeApp() {
       // Fetch latest models for this provider from its API
       await loadProviderModels(provider);
     } catch (e: any) {
-      alert(`Save failed: ${e?.message || String(e)}`);
+      showToast(`Save failed: ${e?.message||String(e)}`,'err');
     }
   };
   // Legacy alias used in some places
@@ -1286,12 +1288,12 @@ export default function ForgeApp() {
     Object.entries(apiKeys).forEach(([p, k]) => {
       if (k && k !== '__saved__' && k.trim().length > 0) body[`${p}_key`] = k.trim();
     });
-    if (!Object.keys(body).length) { alert('No key to save.'); return; }
+    if (!Object.keys(body).length) { showToast('No key to save.','info'); return; }
     try {
       await apiFetch('/keys', { method:'POST', body:JSON.stringify(body) }, user.token);
       setKeysSaved(true); setTimeout(() => setKeysSaved(false), 3000);
       await loadApiKeys();
-    } catch (e: any) { alert(`Save failed: ${e?.message || e}`); }
+    } catch (e: any) { showToast(`Save failed: ${e?.message||e}`,'err'); }
   };
 
   // ── Terminal execution ────────────────────────────────────────────────────
@@ -1401,7 +1403,7 @@ export default function ForgeApp() {
       await apiFetch('/projects', { method:'POST', body:JSON.stringify({ name:newProjName, color:newProjColor, system_prompt:newProjPrompt }) }, user.token);
       await loadProjects();
       setShowNewProject(false); setNewProjName(''); setNewProjColor('var(--fg-orange)'); setNewProjPrompt('');
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const togglePin = async (p: Project) => {
@@ -1415,7 +1417,7 @@ export default function ForgeApp() {
       await apiFetch(`/projects/${renamingProject.id}`, { method:'PATCH', body:JSON.stringify({ name: renamingProject.name }) }, user.token);
       await loadProjects();
       setRenamingProject(null);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const deleteProject = async (id: string) => {
@@ -1424,7 +1426,7 @@ export default function ForgeApp() {
       await apiFetch(`/projects/${id}`, { method:'DELETE' }, user.token);
       if (activeProject?.id === id) { setActiveProject(null); setThreads([]); }
       await loadProjects();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const selectProject = async (p: Project) => { setActiveProject(p); await loadThreads(p.id); };
@@ -1436,7 +1438,7 @@ export default function ForgeApp() {
       await apiFetch(`/threads/${id}`, { method:'DELETE' }, user.token);
       if (activeThread?.id === id) { setActiveThread(null); setMessages([]); setThreadStats(null); }
       await loadThreads(activeProject?.id);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
   const pinThread = async (t: Thread) => {
     if (!user) return;
@@ -1452,14 +1454,14 @@ export default function ForgeApp() {
       await apiFetch(`/threads/${renamingThread.id}`, { method:'PATCH', body:JSON.stringify({ title: renamingThread.title.trim() }) }, user.token);
       if (activeThread?.id === renamingThread.id) setActiveThread(prev => prev ? { ...prev, title: renamingThread.title.trim() } : prev);
       setRenamingThread(null); await loadThreads(activeProject?.id);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   // ── Key vault actions ─────────────────────────────────────────────────────
   const updateVaultKey = async (provider: string) => {
     if (!user) return;
     const key = vaultUpdateInputs[provider]?.trim();
-    if (!key) { alert('Paste new key first'); return; }
+    if (!key) { showToast('Paste new key first','info'); return; }
     setVaultUpdating(provider);
     try {
       await apiFetch(`/keys/${provider}`, { method:'PATCH', body:JSON.stringify({ key }) }, user.token);
@@ -1470,7 +1472,7 @@ export default function ForgeApp() {
       await validateVaultKey(provider);
       // Fetch latest models for this provider
       await loadProviderModels(provider);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
     finally { setVaultUpdating(''); }
   };
   const toggleVaultKeyStatus = async (v: VaultKey) => {
@@ -1498,7 +1500,7 @@ export default function ForgeApp() {
       await apiFetch(`/keys/${provider}`, { method:'DELETE' }, user.token);
       setVaultKeys(prev => prev.filter(k => k.provider !== provider));
       setSavedProviders(prev => ({ ...prev, [provider]: false }));
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const loadKeyUsage = async (provider: string) => {
@@ -1973,7 +1975,7 @@ export default function ForgeApp() {
   // ── Voice Chat ─────────────────────────────────────────────────────────────
   const toggleVoice = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) { alert('Speech recognition not supported in this browser. Try Chrome.'); return; }
+    if (!SpeechRecognition) { showToast('Speech recognition not supported. Try Chrome.','info'); return; }
 
     if (voiceActive) {
       recognitionRef.current?.stop();
@@ -2041,7 +2043,7 @@ export default function ForgeApp() {
         } catch {}
       };
       es.onerror = () => { es.close(); setDispatching(false); };
-    } catch (e: any) { alert(e.message); setDispatching(false); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); setDispatching(false); }
   };
 
   const cancelDispatch = async () => {
@@ -2058,7 +2060,7 @@ export default function ForgeApp() {
       await apiFetch('/workspace/tasks', { method:'POST', body:JSON.stringify(body) }, user.token);
       await loadTasks();
       setShowNewTask(false); setNewTaskTitle('');
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const cycleTaskStatus = async (t: WorkspaceTask) => {
@@ -2074,7 +2076,7 @@ export default function ForgeApp() {
       await apiFetch('/schedules', { method:'POST', body:JSON.stringify({ name:schedName, cron_expression:schedCron, prompt:schedPrompt }) }, user.token);
       await loadSchedules();
       setSchedName(''); setSchedPrompt('');
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const toggleSchedule = async (s: ScheduledTask) => {
@@ -2084,7 +2086,7 @@ export default function ForgeApp() {
 
   const runScheduleNow = async (s: ScheduledTask) => {
     if (!user) return;
-    try { await apiFetch(`/schedules/${s.id}/run`, { method:'POST' }, user.token); alert('Triggered!'); } catch (e: any) { alert(e.message); }
+    try { await apiFetch(`/schedules/${s.id}/run`, { method:'POST' }, user.token); showToast('✅ Triggered!'); } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   // ── Custom Providers ────────────────────────────────────────────────────────
@@ -2097,12 +2099,12 @@ export default function ForgeApp() {
       }) }, user.token);
       await loadCustomProviders();
       setNewProvider({ name:'', base_url:'', api_key:'', markup:'1.5', models:'' });
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   const deleteCustomProvider = async (id: string) => {
     if (!user) return;
-    try { await apiFetch(`/providers/custom/${id}`, { method:'DELETE' }, user.token); await loadCustomProviders(); } catch (e: any) { alert(e.message); }
+    try { await apiFetch(`/providers/custom/${id}`, { method:'DELETE' }, user.token); await loadCustomProviders(); } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   // ── Router test ────────────────────────────────────────────────────────────
@@ -2120,7 +2122,7 @@ export default function ForgeApp() {
   // ── Billing upgrade ─────────────────────────────────────────────────────────
   const upgradePlan = async (plan: string) => {
     if (!user) return;
-    try { await apiFetch('/billing/upgrade', { method:'POST', body:JSON.stringify({ plan }) }, user.token); await loadSubscription(); alert(`Upgraded to ${plan}!`); } catch (e: any) { alert(e.message); }
+    try { await apiFetch('/billing/upgrade', { method:'POST', body:JSON.stringify({ plan }) }, user.token); await loadSubscription(); showToast(`✅ Upgraded to ${plan} plan!`); } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   // ── Toggle agent (chat) ────────────────────────────────────────────────────
@@ -2157,6 +2159,8 @@ export default function ForgeApp() {
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden', position:'relative' }} onClick={() => { setThreadMenu(null); setProjectMenu(null); if(isMobile) setMobileDrawerOpen(false); }}>
+
+      {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:9999, padding:'12px 24px', borderRadius:12, background: toast.type==='err' ? '#ef4444' : toast.type==='info' ? 'var(--fg-bg3)' : '#16a34a', color:'#fff', fontSize:14, fontWeight:600, boxShadow:'0 4px 24px rgba(0,0,0,0.5)', maxWidth:440, textAlign:'center', pointerEvents:'none', animation:'forge-flash 0.2s ease' }}>{toast.msg}</div>}
 
       {/* Mobile overlay */}
       {isMobile && mobileDrawerOpen && <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:98 }} onClick={() => setMobileDrawerOpen(false)} />}
@@ -2337,7 +2341,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.55</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.56</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -3510,7 +3514,7 @@ export default function ForgeApp() {
                                   await apiFetch(`/threads/${activeThread.id}/compact`, { method:'POST', body:JSON.stringify({ keep_recent: 6, summary_hint: summarizeContent.slice(0,2000) }) }, user.token);
                                   await loadMessages(activeThread.id);
                                   loadThreadTokenStats(activeThread.id);
-                                } catch(e:any) { alert('Compact failed: ' + (e?.message || 'Please try again')); }
+                                } catch(e:any) { showToast('Compact failed: '+(e?.message||'Please try again'),'err'); }
                               }} style={{ width:'100%', padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:600 }}>⚡ Compact Now</button>
                             </div>
                           )}
@@ -5144,7 +5148,7 @@ export default function ForgeApp() {
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
                       <div>
                         <h3 style={{ color:'var(--fg-text)', margin:'0 0 4px', fontSize:18, fontFamily:'var(--fg-font-display)', fontWeight:700 }}>\ud83e\udde0 SuperAgent Memory</h3>
-                        <p style={{ color:'var(--fg-text3)', margin:0, fontSize:13 }}>{superMemory.length} insights across {superMemory.reduce((a,m)=>a+m.frequency,0)} observations</p>
+                        <p style={{ color:'var(--fg-text3)', margin:0, fontSize:13 }}>{superMemory.length} insights across {superMemory.reduce((a,m)=>a+(m.frequency||0),0)} observations</p>
                       </div>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                         <span style={{ fontSize:12, color:'var(--fg-text3)' }}>Strength</span>
@@ -5292,7 +5296,7 @@ export default function ForgeApp() {
                       </div>
                     ))}
                     <div style={{ background:'var(--fg-bg2)', border:'2px dashed var(--fg-border)', borderRadius:12, padding:18, textAlign:'center', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:160 }}
-                      onClick={() => alert('Invite team member — connect your HR or email tool to invite colleagues')}>
+                      onClick={() => showToast('Connect an HR or email tool in Platforms tab to invite colleagues','info')}>
                       <div style={{ fontSize:28, marginBottom:8 }}>➕</div>
                       <div style={{ fontSize:13, color:'var(--fg-text3)' }}>Invite Member</div>
                     </div>
@@ -5303,7 +5307,7 @@ export default function ForgeApp() {
               {forgecoTab === 'projects' && (
                 <div>
                   <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:14 }}>
-                    <button onClick={() => alert('Create project — enter name, deadline, assign team members')} style={{ padding:'8px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ New Project</button>
+                    <button onClick={() => showToast('Use the + New Conversation button to create projects','info')} style={{ padding:'8px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ New Project</button>
                   </div>
                   {coProjects.map(p => (
                     <div key={p.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:14 }}>
@@ -5328,7 +5332,7 @@ export default function ForgeApp() {
                   <div style={{ fontSize:40, marginBottom:12 }}>📄</div>
                   <h3 style={{ margin:'0 0 8px', color:'var(--fg-text)' }}>Team Docs</h3>
                   <p style={{ fontSize:13, color:'var(--fg-text3)', marginBottom:20 }}>Connect Google Drive, Notion, or Confluence to access and collaborate on team documents with AI assistance.</p>
-                  <button onClick={() => alert('Connect a document platform in the Platforms tab')} style={{ padding:'9px 22px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Connect Docs</button>
+                  <button onClick={() => showToast('Go to Platforms tab to connect Google Drive, Notion, or Dropbox','info')} style={{ padding:'9px 22px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Connect Docs</button>
                 </div>
               )}
 
@@ -5909,7 +5913,7 @@ export default function ForgeApp() {
                     if (!task) return;
                     const schedule = prompt('Schedule (e.g. "daily at 9am", "every hour", "Mon/Wed/Fri"):');
                     if (!schedule) return;
-                    alert(`✅ Run scheduled!\n\nTask: ${task}\nSchedule: ${schedule}\n\nThis will auto-execute using your current model settings.`);
+                    showToast(`✅ Scheduled: "${task}" — ${schedule}`);
                   }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>+ Schedule Run</button>
                 </div>
                 <div style={{ textAlign:'center', padding:'28px 0' }}>
@@ -6255,7 +6259,7 @@ export default function ForgeApp() {
                     const raw = d?.choices?.[0]?.message?.content || d?.data?.content || '';
                     const extract = (label: string) => { const m = raw.match(new RegExp(`## ${label}\\n([\\s\\S]*?)(?=\\n## |$)`)); return m?.[1]?.trim() || ''; };
                     setMvpResult({ spec: extract('SPEC'), stack: extract('STACK'), roadmap: extract('ROADMAP'), pitch: extract('PITCH') });
-                  } catch(e:any) { alert('Error: ' + e.message); }
+                  } catch(e:any) { showToast('Error: '+String(e?.message||e),'err'); }
                   setMvpBuilding(false);
                 }} disabled={mvpBuilding || !mvpIdea.trim()}
                   style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(mvpBuilding||!mvpIdea.trim())?0.5:1 }}>
