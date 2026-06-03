@@ -932,16 +932,19 @@ async function callAnthropicWithTools(
 async function callOpenAICompatWithTools(
   url: string, apiKey: string, model: string, messages: any[],
   extraHeaders: Record<string, string>,
-  onToolCall: (name: string, args: any, result: string) => void
+  onToolCall: (name: string, args: any, result: string) => void,
+  noTools = false
 ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
   const msgs = [...messages];
   let promptTokens = 0, completionTokens = 0;
   let lastText = '';
   for (let iter = 0; iter < 8; iter++) {
+    const body: any = { model, messages: msgs, max_tokens: 4096 };
+    if (!noTools) { body.tools = FORGE_TOOLS_OPENAI; body.tool_choice = 'auto'; }
     const res = await fetchWithTimeout(url, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...extraHeaders },
-      body: JSON.stringify({ model, messages: msgs, tools: FORGE_TOOLS_OPENAI, tool_choice: 'auto', max_tokens: 4096 })
+      body: JSON.stringify(body)
     }, 45000);
     const d: any = await res.json();
     if (!res.ok) {
@@ -2212,7 +2215,7 @@ const agentResult = await Promise.race([
       if (pc) {
         const resolvedModel = pc.modelResolver ? pc.modelResolver(actualModel) : actualModel;
         result = await Promise.race([
-          callOpenAICompatWithTools(pc.url, apiKey, resolvedModel, llmMessages, pc.headers, onToolCall),
+          callOpenAICompatWithTools(pc.url, apiKey, resolvedModel, llmMessages, pc.headers, onToolCall, provider === 'openrouter'),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out`)), provider === 'openrouter' ? 90000 : 30000))
         ]);
       } else {
