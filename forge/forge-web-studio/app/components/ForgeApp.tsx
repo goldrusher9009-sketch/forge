@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.48 // deploy-bust -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.49 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -1088,9 +1088,8 @@ export default function ForgeApp() {
     if (!user) return;
     setOrLoading(true);
     try {
-      // Only fetch OR models using the user's saved key — never fall back to public (no key = no models)
+      // Fetch OR models — uses user key if saved, else returns public list (400+ models always available)
       const d = await apiFetch('/keys/openrouter-models', {}, user.token);
-      if (d?.error === 'NO_OPENROUTER_KEY') { setOrLoading(false); return; }
       const models = Array.isArray(d?.data?.models) ? d.data.models : [];
       if (!models.length) { setOrLoading(false); return; }
       setOpenRouterModels(models);
@@ -1142,8 +1141,8 @@ export default function ForgeApp() {
       setSavedProviders(confirmed);
       // Trigger model fetch for all confirmed providers (in background, don't await)
       Object.keys(confirmed).forEach(p => { if (confirmed[p]) loadProviderModels(p); });
-      // Only load OR models if user actually has an OR key
-      if (confirmed['openrouter']) loadOpenRouterModels();
+      // Always load OR models (public list available even without key; key gives full access)
+      loadOpenRouterModels();
       // Auto-select best available model based on keys user has actually saved
       setSelectedModel(prev => {
         // Helper: which provider does a model belong to?
@@ -2293,7 +2292,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.48</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.49</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -2456,6 +2455,12 @@ export default function ForgeApp() {
                   </select>
                 );
               })()}
+              {/* OR model refresh button */}
+              {savedProviders['openrouter'] && (
+                <button onClick={loadOpenRouterModels} disabled={orLoading} title="Refresh OpenRouter models" style={{ background:'none', border:'none', color: orLoading ? 'var(--fg-text3)' : 'var(--fg-orange)', cursor: orLoading ? 'default' : 'pointer', fontSize:14, padding:'2px 4px', flexShrink:0 }}>
+                  {orLoading ? '⏳' : '🔄'}
+                </button>
+              )}
 
               {!isMobile && <button onClick={() => setRightExpanded(!rightExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{rightExpanded ? '▶' : '◀'}</button>}
             </div>
