@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.50 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.51 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -754,10 +754,13 @@ export default function ForgeApp() {
     try { return JSON.parse(localStorage.getItem('forge_tracker') || '[]'); } catch { return []; }
   });
   const [trackerInput, setTrackerInput] = useState('');
+  const [showTrackerArchive, setShowTrackerArchive] = useState(false);
   const [trackerEditId, setTrackerEditId] = useState<string|null>(null);
   const [trackerEditText, setTrackerEditText] = useState('');
   const saveTracker = (items: typeof trackerItems) => { setTrackerItems(items); try { localStorage.setItem('forge_tracker', JSON.stringify(items)); } catch {} };
   const visibleTrackerItems = (typeof activeThread !== 'undefined' && activeThread?.id) ? trackerItems.filter(i => !i.folderId || i.folderId === activeThread.id) : trackerItems;
+  const archivedTrackerItems = visibleTrackerItems.filter(i => i.done);
+  const activeTrackerItems = visibleTrackerItems.filter(i => !i.done).slice(0, 5);
   const addTrackerItem = () => {
     if (!trackerInput.trim()) return;
     const item = { id: Date.now().toString(), text: trackerInput.trim(), done: false, priority: 'medium' as const, createdAt: Date.now(), folderId: activeThread?.id || null };
@@ -910,6 +913,8 @@ export default function ForgeApp() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -1004,7 +1009,8 @@ export default function ForgeApp() {
     loadTotalTokens(); loadSuperMemory(); loadSuperHistory();
   }, [user]);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
+  useEffect(() => { if (!userScrolledUp) messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, userScrolledUp]);
+  useEffect(() => { if (sending) { setUserScrolledUp(false); messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); } }, [sending]);
   useEffect(() => { superEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [superMessages]);
   useEffect(() => { terminalEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [terminalLines]);
 
@@ -1397,7 +1403,7 @@ export default function ForgeApp() {
     if (!user || !confirm('Delete this project and all its threads?')) return;
     try {
       await apiFetch(`/projects/${id}`, { method:'DELETE' }, user.token);
-      if (activeProject?.id === id) { setActiveProject(null); await loadThreads(); }
+      if (activeProject?.id === id) { setActiveProject(null); setThreads([]); }
       await loadProjects();
     } catch (e: any) { alert(e.message); }
   };
@@ -2294,7 +2300,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.50</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.51</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -2518,7 +2524,7 @@ export default function ForgeApp() {
                 )}
 
                 {/* Messages canvas */}
-                <div style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
+                <div onScroll={e=>{const el=e.currentTarget;const b=el.scrollHeight-el.scrollTop-el.clientHeight<80;setShowScrollDown(!b);setUserScrolledUp(!b);}} style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
                   {messages.length === 0 && !activeThread && (
                     <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
                       <div style={{ fontSize:48 }}>⚡</div>
@@ -2787,6 +2793,18 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
+                  {sending && agentSteps.length > 0 && (
+                    <div style={{ display:'flex', alignItems:'center', gap:6, padding:'2px 16px', fontSize:11, color:'var(--fg-text3)' }}>
+                      <span>⚙️</span>
+                      <span style={{ color:'var(--fg-orange2)' }}>
+                        {agentSteps[agentSteps.length-1]?.text?.includes('web_search') ? '🔍 Searching web...'
+                          : agentSteps[agentSteps.length-1]?.text?.includes('web_scrape') ? '🌐 Reading page...'
+                          : agentSteps[agentSteps.length-1]?.text?.includes('run_code') ? '💻 Running code...'
+                          : agentSteps[agentSteps.length-1]?.text || 'Thinking...'}
+                      </span>
+                      <span>· {messages.length} in context</span>
+                    </div>
+                  )}
                   {/* Subtle typing indicator — shows only while waiting for response */}
                   {typing && (
                     <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 16px' }}>
@@ -2798,6 +2816,10 @@ export default function ForgeApp() {
                   )}
                   <div ref={messagesEndRef} />
                 </div>
+                {showScrollDown && (
+                  <button onClick={() => { setUserScrolledUp(false); messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }}
+                    style={{ position:'absolute', bottom:110, right:24, zIndex:50, width:34, height:34, borderRadius:'50%', background:'var(--fg-orange)', border:'none', color:'#fff', fontSize:18, cursor:'pointer', boxShadow:'0 2px 10px rgba(0,0,0,0.5)' }}>↓</button>
+                )}
 
                 {/* Live activity shown in 📺 toolbar button only — no inline overlay */}
 
@@ -2944,8 +2966,9 @@ export default function ForgeApp() {
                           <button onClick={addTrackerItem} style={{ padding:'7px 12px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>+</button>
                         </div>
 
-                        {/* Tracker items */}
-                        {visibleTrackerItems.length === 0 && (
+                        {/* Tracker items — scrollable, max 5 active */}
+                        <div style={{ overflowY:'auto', maxHeight:300 }}>
+                        {activeTrackerItems.length === 0 && archivedTrackerItems.length === 0 && (
                           <div style={{ textAlign:'center', padding:'24px 12px', color:'var(--fg-text3)', fontSize:12 }}>
                             <div style={{ fontSize:28, marginBottom:8 }}>📋</div>
                             <p style={{ margin:0 }}>No goals yet. Add your first goal above.</p>
@@ -2954,7 +2977,7 @@ export default function ForgeApp() {
                         )}
 
                         {['high','medium','low'].map(priority => {
-                          const items = visibleTrackerItems.filter(i => i.priority === priority);
+                          const items = activeTrackerItems.filter(i => i.priority === priority);
                           if (items.length === 0) return null;
                           const colors: Record<string,string> = { high:'var(--fg-red,#ef4444)', medium:'var(--fg-orange)', low:'var(--fg-text3)' };
                           return (
@@ -2995,6 +3018,22 @@ export default function ForgeApp() {
                           <div style={{ display:'flex', gap:6, marginTop:8 }}>
                             <button onClick={() => saveTracker(visibleTrackerItems.filter(i=>!i.done))} style={{ flex:1, padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Clear done</button>
                             <button onClick={() => saveTracker([])} style={{ flex:1, padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Clear all</button>
+                          </div>
+                        )}
+                        </div>{/* end tracker scroll */}
+                        {archivedTrackerItems.length > 0 && (
+                          <div style={{ marginTop:6, borderTop:'1px solid var(--fg-border)', paddingTop:6 }}>
+                            <button onClick={() => setShowTrackerArchive(p => !p)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'2px 0', display:'flex', alignItems:'center', gap:4 }}>
+                              <span>{showTrackerArchive ? 'v' : '>'}</span>
+                              <span>Archive ({archivedTrackerItems.length} done)</span>
+                            </button>
+                            {showTrackerArchive && archivedTrackerItems.map(item => (
+                              <div key={item.id} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 8px', opacity:0.6, fontSize:12 }}>
+                                <span style={{ color:'var(--fg-green)' }}>✓</span>
+                                <span style={{ flex:1, textDecoration:'line-through', color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.text}</span>
+                                <button onClick={() => saveTracker(visibleTrackerItems.filter(i => i.id !== item.id))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>x</button>
+                              </div>
+                            ))}
                           </div>
                         )}
 
