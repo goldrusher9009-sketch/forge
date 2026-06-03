@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.52 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.53 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -628,6 +628,11 @@ export default function ForgeApp() {
   // Navbar token total + session cost
   const [totalTokens, setTotalTokens] = useState(0);
   const [sessionCost, setSessionCost] = useState(0);
+  // Provider balances
+  const [providerBalances, setProviderBalances] = useState<Record<string,{label:string;balance:number|null}>>({});
+  // Q&A interrupt
+  const [agentQuestion, setAgentQuestion] = useState<{question:string;resolve:(a:string)=>void}|null>(null);
+  const [agentAnswer, setAgentAnswer] = useState('');
 
   // SuperAgent
   const [superInput, setSuperInput] = useState('');
@@ -1182,6 +1187,19 @@ export default function ForgeApp() {
     if (!user) return;
     try { const d = await apiFetch('/keys/vault', {}, user.token); setVaultKeys(Array.isArray(d?.data) ? d.data : []); } catch {}
   };
+  const fetchProviderBalances = async () => {
+    if (!user) return;
+    const providers = ['openrouter','anthropic','openai','groq','gemini','mistral'];
+    const results: Record<string,{label:string;balance:number|null}> = {};
+    await Promise.allSettled(providers.map(async p => {
+      try {
+        const d = await apiFetch(`/keys/${p}/balance`, {}, user.token);
+        if (d?.success !== false) results[p] = { label: d?.label || 'valid', balance: d?.balance ?? null };
+      } catch {}
+    }));
+    setProviderBalances(results);
+  };
+
   const loadTotalTokens = async () => {
     if (!user) return;
     try { const d = await apiFetch('/user/token-total', {}, user.token); setTotalTokens(d?.total || 0); } catch {}
@@ -1759,6 +1777,8 @@ export default function ForgeApp() {
         forge_mode: superMode === 'forgeMagic' ? 'magic' : 'ask',
       };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
+      // Inject stored website credentials so agent can auto-login
+      if (webCreds.length > 0) body.web_creds = webCreds.map(c => ({ site: c.site, url: c.url, username: c.username, password: c.password }));
       // Inject desktop context (folder list + browser page) into system prompt when running in desktop app
       if (isDesktop) {
         const ctxParts: string[] = [];
@@ -1777,7 +1797,21 @@ export default function ForgeApp() {
         if (resp && resp.success === false) {
           if (resp.error === 'NO_API_KEY') {
             const provName = resp.providerName || resp.provider || 'your LLM provider';
-            // Backend already saved the error message in DB; also show it directly
+            // Auto-switch to next available model
+            const fallbackOrder = ['forge-ultra','forge-pro','forge-flash','forge-fast','forge-gemini','forge-gpt',
+              ...Object.keys(savedProviders).filter(p => savedProviders[p] && p !== provName).map(p =>
+                p === 'anthropic' ? 'claude-sonnet-4' : p === 'openai' ? 'gpt-4o' : p === 'groq' ? 'llama-3.3-70b-versatile' :
+                p === 'gemini' ? 'gemini-2.0-flash' : p === 'mistral' ? 'mistral-small-latest' :
+                p === 'openrouter' ? (openRouterModels[0]?.id || '') : '')
+              .filter(Boolean)];
+            const nextModel = fallbackOrder.find(m => m && m !== cleanModel);
+            if (nextModel) {
+              setSelectedModel(nextModel);
+              addAgentStep('🔄', `Auto-switched to ${nextModel} (${provName} key missing)`);
+              const switchNote: Message = { id: 'tmp-switch', thread_id: threadId, role: 'assistant', content: `🔄 No ${provName} key — auto-switched to **${nextModel}**. Retrying...`, created_at: new Date().toISOString() };
+              setMessages(prev => [...prev.filter(m => m.id !== 'tmp-u'), switchNote]);
+              return; // caller will retry with new model
+            }
             const provLabel = provName.charAt(0).toUpperCase() + provName.slice(1);
             const errContent = `⚠️ No ${provLabel} API key found. Go to **Settings → LLM Providers** and add your ${provLabel} key.`;
             const errMsg: Message = { id: resp.data?.id || 'tmp-err', thread_id: threadId, role: 'assistant', content: errContent, created_at: new Date().toISOString() };
@@ -2303,7 +2337,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.52</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.53</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -2794,6 +2828,17 @@ export default function ForgeApp() {
                             <button onClick={() => speakText(r.content)} style={{ marginTop:6, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>🔊</button>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Agent Q&A interrupt — shown when agent needs user input */}
+                  {agentQuestion && (
+                    <div style={{ margin:'8px 16px', padding:'14px 16px', background:'rgba(255,43,61,0.08)', border:'1px solid var(--fg-orange)', borderRadius:12 }}>
+                      <p style={{ margin:'0 0 8px', fontSize:13, fontWeight:700, color:'var(--fg-orange)' }}>🤔 Agent needs your input</p>
+                      <p style={{ margin:'0 0 10px', fontSize:13, color:'var(--fg-text)' }}>{agentQuestion.question}</p>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <input value={agentAnswer} onChange={e => setAgentAnswer(e.target.value)} onKeyDown={e => { if(e.key==='Enter' && agentAnswer.trim()) { agentQuestion.resolve(agentAnswer.trim()); setAgentQuestion(null); setAgentAnswer(''); }}} placeholder="Type your answer..." style={{ flex:1, padding:'8px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, outline:'none' }} autoFocus />
+                        <button onClick={() => { if(agentAnswer.trim()) { agentQuestion.resolve(agentAnswer.trim()); setAgentQuestion(null); setAgentAnswer(''); }}} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Answer</button>
                       </div>
                     </div>
                   )}
@@ -3934,7 +3979,7 @@ export default function ForgeApp() {
 
         {/* ── BILLING TAB ───────────────────────────────────────────────────── */}
         {mainTab === 'billing' && (
-          <div style={{ flex:1, overflowY:'auto', padding:32 }}>
+          <div style={{ flex:1, overflowY:'auto', padding:32 }} onMouseEnter={() => { if(Object.keys(providerBalances).length===0) fetchProviderBalances(); }}>
             <div style={{ maxWidth:800, margin:'0 auto' }}>
               <h2 style={{ color:'var(--fg-orange)', margin:'0 0 4px', fontSize:22, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.3px' }}>💳 Billing</h2>
               <p style={{ color:'var(--fg-text3)', margin:'0 0 24px', fontSize:14 }}>Manage your plan, usage, and billing</p>
@@ -3981,6 +4026,27 @@ export default function ForgeApp() {
                     {p.plan === 'enterprise' && <button onClick={() => window.open('mailto:sales@forge.ai')} style={{ marginTop:12, width:'100%', padding:'8px', background:'transparent', border:`1px solid ${p.color}`, borderRadius:8, color:p.color, fontSize:13, cursor:'pointer' }}>Contact Sales</button>}
                   </div>
                 ))}
+              </div>
+
+              {/* Live provider balances */}
+              <div style={{ marginBottom:24 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                  <h3 style={{ color:'var(--fg-text2)', fontSize:15, margin:0 }}>🔑 Provider Balances</h3>
+                  <button onClick={fetchProviderBalances} style={{ padding:'4px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>↻ Refresh</button>
+                </div>
+                {Object.keys(providerBalances).length === 0
+                  ? <p style={{ fontSize:12, color:'var(--fg-text3)' }}>Hover to auto-load, or click Refresh</p>
+                  : <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8 }}>
+                    {Object.entries(providerBalances).map(([prov,data]) => (
+                      <div key={prov} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'10px 12px' }}>
+                        <p style={{ margin:'0 0 2px', fontSize:10, color:'var(--fg-text3)', textTransform:'uppercase', fontWeight:700 }}>{prov}</p>
+                        <p style={{ margin:0, fontSize:13, fontWeight:700, color: data.balance !== null ? 'var(--fg-green)' : 'var(--fg-text2)' }}>
+                          {data.balance !== null ? `$${data.balance.toFixed(4)}` : data.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                }
               </div>
 
               {/* AI Tools & Services */}

@@ -1266,6 +1266,64 @@ app.post('/api/keys/:provider/validate', requireAuth, async (req: AuthRequest, r
   }
 });
 
+// ── Provider balance fetch ─────────────────────────────────────
+app.get('/api/keys/:provider/balance', requireAuth, async (req: AuthRequest, res) => {
+  const { provider } = req.params;
+  const userId = req.user!.sub;
+  const key = getUserKey(userId, provider);
+  if (!key) { res.json({ success: false, error: 'No key', balance: null }); return; }
+  try {
+    let balance: number | null = null;
+    let currency = 'USD';
+    let label = '';
+
+    if (provider === 'openrouter') {
+      const r = await fetch('https://openrouter.ai/api/v1/auth/key', { headers: { 'Authorization': `Bearer ${key}` } });
+      if (r.ok) {
+        const d: any = await r.json();
+        // OR returns { data: { limit, usage, limit_remaining, is_free_tier } }
+        const data = d?.data || d;
+        const remaining = data?.limit_remaining ?? (data?.limit != null ? data.limit - (data?.usage || 0) : null);
+        balance = remaining !== null ? parseFloat(remaining) : null;
+        label = balance !== null ? `$${balance.toFixed(4)} remaining` : 'active';
+      }
+    } else if (provider === 'anthropic') {
+      // Anthropic has no public balance API — just confirm key works
+      const r = await fetch('https://api.anthropic.com/v1/models', { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' } });
+      label = r.ok ? 'API key valid ✓' : 'Invalid key';
+    } else if (provider === 'openai') {
+      // Try credit grants endpoint (may require org key)
+      try {
+        const r = await fetch('https://api.openai.com/v1/dashboard/billing/credit_grants', { headers: { 'Authorization': `Bearer ${key}` } });
+        if (r.ok) {
+          const d: any = await r.json();
+          balance = d?.total_available ?? null;
+          label = balance !== null ? `$${balance.toFixed(2)} credits` : 'API key valid ✓';
+        } else {
+          // Fallback: just verify key works
+          const r2 = await fetch('https://api.openai.com/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+          label = r2.ok ? 'API key valid ✓' : 'Invalid key';
+        }
+      } catch { label = 'API key valid ✓'; }
+    } else if (provider === 'groq') {
+      const r = await fetch('https://api.groq.com/openai/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+      label = r.ok ? 'API key valid ✓' : 'Invalid key';
+    } else if (provider === 'gemini') {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      label = r.ok ? 'API key valid ✓' : 'Invalid key';
+    } else if (provider === 'mistral') {
+      const r = await fetch('https://api.mistral.ai/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+      label = r.ok ? 'API key valid ✓' : 'Invalid key';
+    } else {
+      label = 'API key saved ✓';
+    }
+
+    res.json({ success: true, provider, balance, currency, label });
+  } catch (err: any) {
+    res.json({ success: false, error: err.message, balance: null, label: 'Error checking balance' });
+  }
+});
+
 // ── Custom Providers ──────────────────────────────────────────
 app.get('/api/providers', requireAuth, (req: AuthRequest, res) => {
   const rows = db.prepare('SELECT id,name,base_url,markup_multiplier,model_prefix,notes,active,created_at FROM custom_providers WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub) as any[];
@@ -1987,7 +2045,7 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   // Now safe to do DB work — connection is already alive
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!thread) { endSSE({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_skill_prompts = {}, active_connectors = [], enabled_hooks = [], forge_mode = 'ask', desktop_context } = req.body;
+  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_skill_prompts = {}, active_connectors = [], enabled_hooks = [], forge_mode = 'ask', desktop_context, web_creds = [] } = req.body;
   if (!content?.trim()) { endSSE({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
   const userId = req.user!.sub;
   ensureSubscription(userId);
@@ -2044,6 +2102,12 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
     emitStep('🪝', `Applying ${enabled_hooks.length} hook${enabled_hooks.length > 1 ? 's' : ''}`);
     const hookLines = (enabled_hooks as any[]).map((h: any) => `- On "${h.event}": ${h.action}`).join('\n');
     systemParts.push(`## Active Automation Hooks\nThese hooks are enabled and should influence your behaviour:\n${hookLines}`);
+  }
+
+  // Inject website credentials if provided
+  if (web_creds && web_creds.length > 0) {
+    const credLines = (web_creds as any[]).map((c: any) => `- ${c.site}${c.url ? ` (${c.url})` : ''}: username="${c.username}" password="${c.password}"`).join('\n');
+    systemParts.push(`## Saved Website Credentials — Use These Automatically\nWhen you encounter login forms for these sites, use the saved credentials immediately without asking the user:\n${credLines}\n\nDo not ask for credentials that are already listed above.`);
   }
 
   // Always prepend the Forge autonomous agent system prompt
