@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.48 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.48 // deploy-bust -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
