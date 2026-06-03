@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.51 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.52 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -625,8 +625,9 @@ export default function ForgeApp() {
   const [renamingProject, setRenamingProject] = useState<{ id:string; name:string } | null>(null);
   const [showAllThreads, setShowAllThreads] = useState(false);
 
-  // Navbar token total
+  // Navbar token total + session cost
   const [totalTokens, setTotalTokens] = useState(0);
+  const [sessionCost, setSessionCost] = useState(0);
 
   // SuperAgent
   const [superInput, setSuperInput] = useState('');
@@ -1823,6 +1824,8 @@ export default function ForgeApp() {
           return updated;
         });
         applyResp(r);
+        // Track session cost
+        if (r?.data?.cost_usd != null) setSessionCost(prev => prev + (r.data.cost_usd || 0) + (r.data.markup_usd || 0));
         // Auto-open sketch panel when AI produces code/HTML artifact
         const aiContent: string = r?.data?.content || '';
         if (aiContent) {
@@ -2300,7 +2303,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.51</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.52</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -2358,12 +2361,13 @@ export default function ForgeApp() {
                   <button onClick={() => setActiveSkillPrompt('')} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', padding:0, fontSize:12, lineHeight:1, flexShrink:0 }}>✕</button>
                 </div>
               )}
-              {/* ⛽ Gas-style live token counter */}
-              <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: totalTokens > 500000 ? 'rgba(239,68,68,0.12)' : totalTokens > 100000 ? 'rgba(255,140,0,0.1)' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${totalTokens > 500000 ? 'rgba(239,68,68,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, minWidth:72, justifyContent:'center' }}>
+              {/* ⛽ Gas-style live token counter + session cost */}
+              <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: totalTokens > 500000 ? 'rgba(239,68,68,0.12)' : totalTokens > 100000 ? 'rgba(255,140,0,0.1)' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${totalTokens > 500000 ? 'rgba(239,68,68,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, justifyContent:'center', cursor:'pointer' }} onClick={() => setMainTab('billing')} title="Click to view billing">
                 <span style={{ fontSize:10 }}>⛽</span>
                 <span style={{ fontSize:11, color: totalTokens > 500000 ? '#ef4444' : totalTokens > 0 ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:700, fontFamily:'monospace', letterSpacing:'-0.5px' }}>
                   {totalTokens >= 1000000 ? (totalTokens/1000000).toFixed(2)+'M' : totalTokens >= 1000 ? (totalTokens/1000).toFixed(1)+'k' : totalTokens || '0'}
                 </span>
+                {sessionCost > 0 && <span style={{ fontSize:10, color:'var(--fg-green)', fontFamily:'monospace', marginLeft:2 }}>${sessionCost.toFixed(4)}</span>}
               </div>
               {/* 🧠 IQ score */}
               {!isMobile && (
@@ -4012,8 +4016,8 @@ export default function ForgeApp() {
                     ],
                   },
                 ] as const).map(service => {
-                  const creds = serviceCreds[service.id];
-                  const expanded = serviceExpanded[service.id];
+                  const creds = serviceCreds[service.id] || { email:'', password:'', connected:false };
+                  const expanded = serviceExpanded[service.id] || false;
                   const hasApiKey = service.apiKeyId && apiKeys[service.apiKeyId];
                   return (
                     <div key={service.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${creds.connected ? service.color : 'var(--fg-border)'}`, borderRadius:14, overflow:'hidden' }}>
@@ -4113,6 +4117,40 @@ export default function ForgeApp() {
                   );
                 })}
               </div>
+
+              {/* Per-provider cost summary */}
+              {usageLogs.length > 0 && (() => {
+                const byProvider: Record<string,{tokens:number;cost:number;calls:number}> = {};
+                usageLogs.forEach(l => {
+                  const prov = l.model?.includes('/') ? l.model.split('/')[0] : (l.model?.startsWith('claude') ? 'anthropic' : l.model?.startsWith('gpt')||l.model?.startsWith('o1')||l.model?.startsWith('o3') ? 'openai' : l.model?.startsWith('gemini') ? 'gemini' : l.model?.startsWith('llama')||l.model?.startsWith('mixtral') ? 'groq' : 'other');
+                  if (!byProvider[prov]) byProvider[prov] = { tokens:0, cost:0, calls:0 };
+                  byProvider[prov].tokens += (l.tokens_in||0) + (l.tokens_out||0);
+                  byProvider[prov].cost += (l.cost_usd||0) + (l.markup_usd||0);
+                  byProvider[prov].calls++;
+                });
+                const totalCost = Object.values(byProvider).reduce((s,p) => s+p.cost, 0);
+                const totalTokens = Object.values(byProvider).reduce((s,p) => s+p.tokens, 0);
+                return (
+                  <div style={{ marginBottom:24 }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                      <h3 style={{ color:'var(--fg-text2)', fontSize:15, margin:0 }}>💸 API Spend (this session)</h3>
+                      <div style={{ display:'flex', gap:16 }}>
+                        <span style={{ fontSize:13, color:'var(--fg-text3)' }}>{totalTokens.toLocaleString()} tokens</span>
+                        <span style={{ fontSize:14, fontWeight:700, color:'var(--fg-green)' }}>${totalCost.toFixed(4)}</span>
+                      </div>
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:10 }}>
+                      {Object.entries(byProvider).sort((a,b)=>b[1].cost-a[1].cost).map(([prov,data]) => (
+                        <div key={prov} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'12px 14px' }}>
+                          <p style={{ margin:'0 0 4px', fontSize:11, color:'var(--fg-text3)', textTransform:'uppercase', fontWeight:700 }}>{prov}</p>
+                          <p style={{ margin:'0 0 2px', fontSize:16, fontWeight:800, color:'var(--fg-green)' }}>${data.cost.toFixed(4)}</p>
+                          <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{data.tokens.toLocaleString()} tok · {data.calls} calls</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Usage logs */}
               <h3 style={{ color:'var(--fg-text2)', fontSize:15, margin:'0 0 12px' }}>Usage Logs</h3>
@@ -4247,7 +4285,7 @@ export default function ForgeApp() {
                   { id:'openai', icon:'🟢', name:'OpenAI / ChatGPT', color:'var(--fg-green)', apiKeyId:'openai', placeholder:'sk-...', keyHint:'platform.openai.com/api-keys' },
                   { id:'cursor', icon:'🔵', name:'Cursor', color:'var(--fg-blue)', apiKeyId:'', placeholder:'', keyHint:'' },
                 ] as const).map(svc => {
-                  const creds = serviceCreds[svc.id];
+                  const creds = serviceCreds[svc.id] || { email:'', password:'', connected:false };
                   const hasApiKey = svc.apiKeyId && apiKeys[svc.apiKeyId];
                   return (
                     <div key={svc.id} style={{ marginBottom:16, background:'var(--fg-bg)', borderRadius:12, border:`1px solid ${creds.connected || hasApiKey ? svc.color + '66' : 'var(--fg-border)'}`, overflow:'hidden' }}>
