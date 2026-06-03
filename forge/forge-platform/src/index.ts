@@ -2947,36 +2947,32 @@ Be direct, powerful, and use your memory to give personalized, contextual respon
 
   emitAgentActivity(userId, { type: 'start', message: `🤖 SuperAgent thinking with ${rawModel}…` });
   try {
-    const tools: Array<{name:string;status:string;input?:string}> = [];
+    const toolCalls: Array<{name:string;status:string;input?:string}> = [];
+    const onToolCall = (name: string, args: any, result: string) => {
+      toolCalls.push({ name, status: 'done', input: JSON.stringify(args).slice(0, 100) });
+      emitAgentActivity(userId, { type: 'tool_call', tool: name, args, result: result.slice(0, 300), label: `SuperAgent: ${name}` });
+    };
 
-    // Track enabled skills
-    if (enabledSkills?.length > 0) {
-      enabledSkills.forEach((skillId: string) => {
-        tools.push({ name: skillId, status: 'done' });
-      });
+    let result: { content: string; promptTokens: number; completionTokens: number };
+    if (provider === 'anthropic') {
+      result = await callAnthropicWithTools(apiKey, actualModel, llmMessages, onToolCall);
+    } else if (['openai','groq','mistral','morph'].includes(provider)) {
+      const openAICompatProviders: Record<string, { url: string; headers: Record<string,string>; modelResolver?: (m:string)=>string }> = {
+        openai:  { url: 'https://api.openai.com/v1/chat/completions', headers: {} },
+        groq:    { url: 'https://api.groq.com/openai/v1/chat/completions', headers: {} },
+        mistral: { url: 'https://api.mistral.ai/v1/chat/completions', headers: {} },
+        morph:   { url: 'https://api.morphllm.com/v1/chat/completions', headers: {} },
+      };
+      const pc = openAICompatProviders[provider];
+      result = await callOpenAICompatWithTools(pc.url, apiKey, actualModel, llmMessages, pc.headers, onToolCall, false);
+    } else {
+      // openrouter + others: no tool support, plain call
+      result = await callLLM(provider, apiKey, actualModel, llmMessages);
     }
 
-    // Track enabled connectors
-    if (enabledConnectors?.length > 0) {
-      enabledConnectors.forEach((connId: string) => {
-        tools.push({ name: connId, status: 'done' });
-      });
-    }
-
-    const result = await callLLM(provider, apiKey, actualModel, llmMessages);
-
-    // If skills/connectors performed actions, wrap results
-    let enrichedContent = result.content;
-    if (enabledConnectors?.includes('gmail')) {
-      enrichedContent = `${result.content}\n\n[BROWSER]<h1>Gmail Interface</h1><p>Email operations completed...</p>[/BROWSER]`;
-    }
-    if (enabledSkills?.includes('xlsx')) {
-      enrichedContent = `${result.content}\n\n[SPREADSHEET]Column A\tColumn B\tColumn C\nData 1\tData 2\tData 3[/SPREADSHEET]`;
-    }
-
-    db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'assistant', enrichedContent);
+    db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'assistant', result.content);
     emitAgentActivity(userId, { type: 'done', message: `✅ SuperAgent response ready` });
-    res.json({ success: true, data: { role: 'assistant', content: enrichedContent, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens, tools } });
+    res.json({ success: true, data: { role: 'assistant', content: result.content, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens, tools: toolCalls } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ SuperAgent error: ${err.message}` });
     res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });
