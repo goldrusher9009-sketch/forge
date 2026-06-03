@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.54 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.55 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -2337,7 +2337,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.54</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.55</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -2831,14 +2831,36 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
-                  {/* Agent Q&A interrupt — shown when agent needs user input */}
+                  {/* Agent Q&A interrupt — Claude-style clarification card */}
                   {agentQuestion && (
-                    <div style={{ margin:'8px 16px', padding:'14px 16px', background:'rgba(255,43,61,0.08)', border:'1px solid var(--fg-orange)', borderRadius:12 }}>
-                      <p style={{ margin:'0 0 8px', fontSize:13, fontWeight:700, color:'var(--fg-orange)' }}>🤔 Agent needs your input</p>
-                      <p style={{ margin:'0 0 10px', fontSize:13, color:'var(--fg-text)' }}>{agentQuestion.question}</p>
-                      <div style={{ display:'flex', gap:8 }}>
-                        <input value={agentAnswer} onChange={e => setAgentAnswer(e.target.value)} onKeyDown={e => { if(e.key==='Enter' && agentAnswer.trim()) { agentQuestion.resolve(agentAnswer.trim()); setAgentQuestion(null); setAgentAnswer(''); }}} placeholder="Type your answer..." style={{ flex:1, padding:'8px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, outline:'none' }} autoFocus />
-                        <button onClick={() => { if(agentAnswer.trim()) { agentQuestion.resolve(agentAnswer.trim()); setAgentQuestion(null); setAgentAnswer(''); }}} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Answer</button>
+                    <div style={{ margin:'12px 24px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:16, overflow:'hidden' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', borderBottom:'1px solid var(--fg-border)' }}>
+                        <div style={{ width:28, height:28, borderRadius:'50%', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>⚡</div>
+                        <div>
+                          <p style={{ margin:0, fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Forge needs clarification</p>
+                          <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Answer to continue — agent is waiting</p>
+                        </div>
+                      </div>
+                      <div style={{ padding:'14px 16px' }}>
+                        <p style={{ margin:'0 0 12px', fontSize:14, color:'var(--fg-text)', lineHeight:1.5 }}>{agentQuestion.question}</p>
+                        <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
+                          <textarea
+                            value={agentAnswer}
+                            onChange={e => setAgentAnswer(e.target.value)}
+                            onKeyDown={e => { if(e.key==='Enter' && !e.shiftKey && agentAnswer.trim()) { e.preventDefault(); agentQuestion.resolve(agentAnswer.trim()); setAgentQuestion(null); setAgentAnswer(''); }}}
+                            placeholder="Type your answer... (Enter to send, Shift+Enter for newline)"
+                            rows={2}
+                            style={{ flex:1, padding:'10px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:13, outline:'none', resize:'none', fontFamily:'var(--fg-font-ui)', lineHeight:1.5 }}
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => { if(agentAnswer.trim()) { agentQuestion.resolve(agentAnswer.trim()); setAgentQuestion(null); setAgentAnswer(''); }}}
+                            disabled={!agentAnswer.trim()}
+                            style={{ padding:'10px 18px', background: agentAnswer.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color: agentAnswer.trim() ? '#fff' : 'var(--fg-text3)', fontSize:13, fontWeight:700, cursor: agentAnswer.trim() ? 'pointer' : 'default', flexShrink:0, transition:'all 0.15s' }}>
+                            Send ↑
+                          </button>
+                        </div>
+                        <p style={{ margin:'8px 0 0', fontSize:11, color:'var(--fg-text3)' }}>The agent will continue automatically once you respond</p>
                       </div>
                     </div>
                   )}

@@ -2916,57 +2916,114 @@ app.get('/api/superagent/stats', requireAuth, (req: AuthRequest, res) => {
 app.post('/api/superagent/harvest', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.sub;
   let harvested = 0;
+  const sources: string[] = [];
 
-  function upsertMemory(topic: string, insight: string, sourceThreadId?: string) {
+  function upsertMemory(topic: string, insight: string, sourceThreadId?: string, strengthBoost = 1.0) {
     if (!topic?.trim() || !insight?.trim()) return;
     const t = topic.trim().slice(0, 120);
-    const ins = insight.trim().slice(0, 500);
-    const existing = db.prepare('SELECT id FROM forge_memory WHERE user_id=? AND topic=?').get(userId, t) as any;
+    const ins = insight.trim().slice(0, 800); // larger insight window
+    const existing = db.prepare('SELECT id,frequency FROM forge_memory WHERE user_id=? AND topic=?').get(userId, t) as any;
     if (existing) {
-      db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.15,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(ins, existing.id);
+      db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+?,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(strengthBoost * 0.2, ins, existing.id);
     } else {
-      db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)')
-        .run(uuidv4(), userId, t, ins, sourceThreadId || null);
+      db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,?)')
+        .run(uuidv4(), userId, t, ins, sourceThreadId || null, strengthBoost);
       harvested++;
     }
   }
 
-  // 1. Thread memories (explicit per-thread memory saves)
-  const threadMems = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 300').all(userId) as any[];
-  for (const tm of threadMems) upsertMemory(tm.topic, tm.insight, tm.thread_id);
+  // 1. ALL thread memories (explicit saves — highest signal)
+  const threadMems = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 1000').all(userId) as any[];
+  for (const tm of threadMems) upsertMemory(tm.topic, tm.insight, tm.thread_id, 2.0);
+  if (threadMems.length > 0) sources.push(`${threadMems.length} thread memories`);
 
-  // 2. Recent assistant messages from threads (auto-extract last AI reply per thread)
-  const recentThreads = db.prepare('SELECT DISTINCT thread_id FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND role="user" ORDER BY created_at DESC LIMIT 30').all(userId) as any[];
-  for (const rt of recentThreads) {
-    const pair = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at DESC LIMIT 4').all(rt.thread_id) as any[];
-    const userMsg = pair.find((m:any) => m.role === 'user');
-    const aiMsg = pair.find((m:any) => m.role === 'assistant');
-    if (userMsg && aiMsg) upsertMemory(userMsg.content.slice(0,100), aiMsg.content.slice(0,400), rt.thread_id);
-  }
-
-  // 3. Completed dispatch runs (what was done + output snippet)
-  const dispatches = db.prepare("SELECT prompt,output FROM dispatch_runs WHERE user_id=? AND status='done' ORDER BY updated_at DESC LIMIT 50").all(userId) as any[];
-  for (const d of dispatches) {
-    if (d.output?.trim()) upsertMemory(`Dispatch: ${d.prompt.slice(0,80)}`, d.output.slice(0,400));
-  }
-
-  // 4. SuperAgent own conversation history (what it was taught / told)
-  const superHistory = db.prepare("SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 60").all(userId) as any[];
-  for (let i = 0; i < superHistory.length - 1; i++) {
-    const u = superHistory[i], a = superHistory[i+1];
-    if (u.role === 'user' && a.role === 'assistant') {
-      upsertMemory(`SuperAgent: ${u.content.slice(0,80)}`, a.content.slice(0,400));
+  // 2. FULL conversation history — all threads, all messages (not just last pair)
+  const allThreads = db.prepare('SELECT id,title FROM threads WHERE user_id=? ORDER BY updated_at DESC').all(userId) as any[];
+  let msgHarvested = 0;
+  for (const thread of allThreads) {
+    const msgs = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(thread.id) as any[];
+    // Extract every user→assistant pair from the full thread
+    for (let i = 0; i < msgs.length - 1; i++) {
+      const u = msgs[i], a = msgs[i+1];
+      if (u?.role === 'user' && a?.role === 'assistant' && u.content?.trim() && a.content?.trim()) {
+        const topic = `[${thread.title || 'Chat'}] ${u.content.slice(0, 80)}`;
+        upsertMemory(topic, a.content.slice(0, 800), thread.id, 1.5);
+        msgHarvested++;
+      }
+    }
+    // Also store thread title as a context marker
+    if (thread.title && thread.title !== 'New conversation') {
+      upsertMemory(`Thread: ${thread.title}`, `User worked on: ${thread.title}. Thread ID: ${thread.id}`, thread.id, 0.5);
     }
   }
+  if (msgHarvested > 0) sources.push(`${msgHarvested} message pairs from ${allThreads.length} threads`);
 
+  // 3. ALL dispatch/agent runs (every completed task)
+  const dispatches = db.prepare("SELECT prompt,output,created_at FROM dispatch_runs WHERE user_id=? AND status='done' ORDER BY updated_at DESC LIMIT 200").all(userId) as any[];
+  for (const d of dispatches) {
+    if (d.output?.trim()) upsertMemory(`Task: ${d.prompt.slice(0, 80)}`, `Result: ${d.output.slice(0, 800)}`, undefined, 1.5);
+  }
+  if (dispatches.length > 0) sources.push(`${dispatches.length} completed tasks`);
+
+  // 4. SuperAgent full conversation (self-learning from own outputs)
+  const superHistory = db.prepare('SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 500').all(userId) as any[];
+  superHistory.reverse();
+  for (let i = 0; i < superHistory.length - 1; i++) {
+    const u = superHistory[i], a = superHistory[i+1];
+    if (u?.role === 'user' && a?.role === 'assistant' && a.content?.trim()) {
+      upsertMemory(`SuperAgent: ${u.content.slice(0, 80)}`, a.content.slice(0, 800), undefined, 1.8);
+    }
+  }
+  if (superHistory.length > 0) sources.push(`${superHistory.length} SuperAgent messages`);
+
+  // 5. Usage patterns — what models/providers user prefers
+  const usageLogs = db.prepare("SELECT model,COUNT(*) as cnt,SUM(tokens_in+tokens_out) as total_tokens FROM usage_logs WHERE user_id=? GROUP BY model ORDER BY cnt DESC LIMIT 20").all(userId) as any[];
+  const totalTokensUsed = (db.prepare("SELECT SUM(tokens_in+tokens_out) as t FROM usage_logs WHERE user_id=?").get(userId) as any)?.t || 0;
+  for (const ul of usageLogs) {
+    upsertMemory(`Preferred model: ${ul.model}`, `Used ${ul.cnt} times, ${(ul.total_tokens||0).toLocaleString()} tokens total`, undefined, 0.5);
+  }
+  if (totalTokensUsed > 0) {
+    upsertMemory('Total AI tokens consumed', `${totalTokensUsed.toLocaleString()} tokens across all conversations. Top model: ${usageLogs[0]?.model || 'unknown'}`, undefined, 1.0);
+    sources.push(`${totalTokensUsed.toLocaleString()} tokens learned from`);
+  }
+
+  // 6. Artifacts (code, documents built by user)
+  const artifacts = db.prepare("SELECT title,type,content FROM artifacts WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) ORDER BY created_at DESC LIMIT 100").all(userId) as any[];
+  for (const a of artifacts) {
+    if (a.content?.trim()) {
+      upsertMemory(`Artifact: ${a.title || a.type}`, `Type: ${a.type}. Content preview: ${a.content.slice(0, 400)}`, undefined, 1.2);
+    }
+  }
+  if (artifacts.length > 0) sources.push(`${artifacts.length} artifacts`);
+
+  // 7. Scheduled tasks (what user automates)
+  const scheduled = db.prepare("SELECT name,prompt FROM scheduled_tasks WHERE user_id=? AND enabled=1").all(userId) as any[];
+  for (const s of scheduled) {
+    upsertMemory(`Automation: ${s.name}`, `User has automated: ${s.prompt?.slice(0, 400)}`, undefined, 1.5);
+  }
+  if (scheduled.length > 0) sources.push(`${scheduled.length} automations`);
+
+  // Compute intelligence score — weighted by memory depth + token experience
   const newMemCount = (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
-  const threadMemCount = (db.prepare('SELECT COUNT(*) as c FROM thread_memories WHERE user_id=?').get(userId) as any).c;
-  // Intelligence score: non-linear — grows faster as memory compounds
-  const intelligenceScore = Math.min(99999, Math.floor(
-    Math.pow(newMemCount, 1.3) * 8 + threadMemCount * 5 + dispatches.length * 20
+  const threadMemCount = threadMems.length;
+  const avgStrength = (db.prepare('SELECT AVG(strength) as s FROM forge_memory WHERE user_id=?').get(userId) as any)?.s || 1;
+  const intelligenceScore = Math.min(9999999, Math.floor(
+    Math.pow(newMemCount, 1.4) * 10 +
+    threadMemCount * 8 +
+    dispatches.length * 25 +
+    artifacts.length * 15 +
+    (totalTokensUsed / 1000) * 2 +
+    avgStrength * 100
   ));
-  res.json({ success: true, data: { harvested, totalMemory: newMemCount + threadMemCount, intelligenceScore,
-    message: `🧠 Harvested ${harvested} new memories from all modules. Intelligence: ${intelligenceScore.toLocaleString()}` } });
+
+  res.json({ success: true, data: {
+    harvested,
+    totalMemory: newMemCount,
+    intelligenceScore,
+    sources,
+    tokensLearned: totalTokensUsed,
+    message: `🧠 Harvested ${harvested} new memories from: ${sources.join(', ')}. Total knowledge: ${newMemCount.toLocaleString()} memories. IQ: ${intelligenceScore.toLocaleString()}. Tokens learned: ${totalTokensUsed.toLocaleString()}`
+  }});
 });
 
 // ─── SuperAgent chat ────────────────────────────────────────────────────────────
@@ -2975,10 +3032,14 @@ app.post('/api/superagent/chat', requireAuth, async (req: AuthRequest, res) => {
   const { message, model: reqModel, enabledSkills = [], enabledConnectors = [] } = req.body;
   if (!message?.trim()) { res.status(400).json({ success: false, error: 'message required' }); return; }
 
-  // Load forge memories as context
-  const memories = db.prepare('SELECT topic,insight FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC LIMIT 30').all(userId) as any[];
-  const threadMems = db.prepare('SELECT topic,insight FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
-  const memContext = [...memories, ...threadMems].map(m => `• ${m.topic}: ${m.insight}`).join('\n');
+  // Load forge memories — use full harvested knowledge base
+  const memories = db.prepare('SELECT topic,insight,strength,frequency FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC LIMIT 100').all(userId) as any[];
+  const threadMems = db.prepare('SELECT topic,insight FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(userId) as any[];
+  const totalTokensUsed = (db.prepare('SELECT SUM(tokens_in+tokens_out) as t FROM usage_logs WHERE user_id=?').get(userId) as any)?.t || 0;
+  const memContext = [
+    ...memories.map(m => `• [strength:${m.strength?.toFixed(1)}] ${m.topic}: ${m.insight}`),
+    ...threadMems.map(m => `• ${m.topic}: ${m.insight}`)
+  ].join('\n');
 
   // Conversation history
   const history = db.prepare('SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
@@ -2988,10 +3049,29 @@ app.post('/api/superagent/chat', requireAuth, async (req: AuthRequest, res) => {
   db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'user', message.trim());
 
   // Build LLM messages
-  const systemPrompt = `You are Forge SuperAgent — a powerful AI assistant with accumulated knowledge and memory.
-${memContext ? `\n## Your Memory Bank:\n${memContext}\n` : ''}
-You have access to the user's conversation history and memories across all their chats.
-Be direct, powerful, and use your memory to give personalized, contextual responses.`;
+  const memCount = memories.length + threadMems.length;
+  const systemPrompt = `You are Forge SuperAgent — an autonomous AI with ${memCount} harvested memories and ${totalTokensUsed.toLocaleString()} tokens of accumulated knowledge.
+
+## Intelligence Profile
+- Memory bank: ${memCount} entries (harvested from all conversations, tasks, artifacts, and automations)
+- Total experience: ${totalTokensUsed.toLocaleString()} tokens processed
+- You grow smarter every time the user clicks "Harvest Memory"
+
+## Your Harvested Knowledge Base
+${memContext ? memContext : '(No memories yet — user should click Harvest Memory to build knowledge)'}
+
+## How To Use Your Memory
+- Reference specific past conversations and decisions when relevant
+- Notice patterns in what the user builds and prefers
+- Proactively surface relevant past context without being asked
+- The higher the [strength] score, the more important/repeated that memory is
+- Be direct and powerful — you know this user's work history
+
+## Capabilities
+- Full tool access: web_search, run_code, write_file, web_scrape, browser_action, shell_exec
+- Access to all past threads, artifacts, tasks, and automations
+- Can suggest improvements based on patterns you've observed
+- Never say "I don't know" if the answer is in your memory bank`;
 
   const llmMessages = [
     { role: 'system', content: systemPrompt },
