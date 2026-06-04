@@ -497,7 +497,7 @@ function previewKey(key: string): string {
   return key.slice(0, 6) + '…' + key.slice(-4);
 }
 
-const PLAN_LIMITS: Record<string, number> = { free: 10000, starter: 500000, pro: 2000000, enterprise: 10000000 };
+const PLAN_LIMITS: Record<string, number> = { free: 10000, starter: 500000, pro: 2000000, team: 5000000, enterprise: 10000000 };
 const MODEL_COSTS: Record<string, { input: number; output: number; provider: string; markup: number }> = {
   'forge-ultra':      { input: 0.015,   output: 0.075,  provider: 'anthropic', markup: 1.5  },
   'forge-pro':        { input: 0.003,   output: 0.015,  provider: 'anthropic', markup: 1.5  },
@@ -1402,7 +1402,7 @@ const STRIPE_PRICE_IDS: Record<string, string> = {
 
 app.post('/api/billing/upgrade', requireAuth, async (req: AuthRequest, res) => {
   const { plan } = req.body;
-  if (!['free','starter','pro','enterprise'].includes(plan)) {
+  if (!['free','starter','pro','team','enterprise'].includes(plan)) {
     res.status(400).json({ success: false, error: 'INVALID_PLAN' }); return;
   }
   const userId = req.user!.sub;
