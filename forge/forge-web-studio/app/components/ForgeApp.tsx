@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.58 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.59 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -766,7 +766,10 @@ export default function ForgeApp() {
   const [trackerEditId, setTrackerEditId] = useState<string|null>(null);
   const [trackerEditText, setTrackerEditText] = useState('');
   const saveTracker = (items: typeof trackerItems) => { setTrackerItems(items); try { localStorage.setItem('forge_tracker', JSON.stringify(items)); } catch {} };
-  const visibleTrackerItems = (typeof activeThread !== 'undefined' && activeThread?.id) ? trackerItems.filter(i => !i.folderId || i.folderId === activeThread.id) : trackerItems;
+  // Tracker is scoped to active thread — empty when no chat selected
+  const visibleTrackerItems = activeThread?.id
+    ? trackerItems.filter(i => !i.folderId || i.folderId === activeThread.id)
+    : [];
   const archivedTrackerItems = visibleTrackerItems.filter(i => i.done);
   const activeTrackerItems = visibleTrackerItems.filter(i => !i.done).slice(0, 5);
   const addTrackerItem = () => {
@@ -1433,7 +1436,7 @@ export default function ForgeApp() {
 
   // ── Thread actions ────────────────────────────────────────────────────────
   const deleteThread = async (id: string) => {
-    if (!user || !confirm('Delete this conversation?')) return;
+    if (!user) return;
     try {
       await apiFetch(`/threads/${id}`, { method:'DELETE' }, user.token);
       if (activeThread?.id === id) { setActiveThread(null); setMessages([]); setThreadStats(null); }
@@ -1517,14 +1520,21 @@ export default function ForgeApp() {
   const harvestMemory = async () => {
     if (!user) return;
     setSuperHarvesting(true);
+    showToast('⚡ Harvesting knowledge...', 'info');
     try {
-      const d = await apiFetch('/superagent/harvest', { method:'POST' }, user.token);
+      // Longer timeout for harvest — queries all threads/messages
+      const d = await apiFetch('/superagent/harvest', { method:'POST', signal: AbortSignal.timeout(120000) }, user.token);
       await loadSuperMemory();
       try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
       const msg = d?.data?.message || d?.message || `✅ Harvest complete! Intelligence: ${d?.data?.intelligenceScore ?? d?.intelligenceScore ?? '+'}`;
       setSuperMessages(prev => [...prev, { role:'assistant', content: String(msg) }]);
       setSuperTab('chat');
-    } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content: `❌ Harvest error: ${String(e?.message || e)}` }]); }
+      showToast('🧠 Memory harvested!');
+    } catch (e: any) {
+      const errMsg = `❌ Harvest error: ${String(e?.message || e)}`;
+      setSuperMessages(prev => [...prev, { role:'assistant', content: errMsg }]);
+      showToast(errMsg, 'err');
+    }
     finally { setSuperHarvesting(false); }
   };
   const sendSuperMessage = async () => {
@@ -2345,7 +2355,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.58</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.59</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
@@ -2905,6 +2915,27 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
+                  {/* Token optimization hint — shown after conversation has tokens */}
+                  {!sending && messages.length >= 4 && threadStats && threadStats.total_tokens > 0 && (() => {
+                    const tokens = threadStats.total_tokens;
+                    const msgs = threadStats.message_count || messages.length;
+                    const avgPerMsg = Math.round(tokens / Math.max(msgs, 1));
+                    const tips: string[] = [];
+                    if (tokens > 50000) tips.push('Use shorter follow-ups — this thread is getting long. Start a new chat for new topics.');
+                    if (avgPerMsg > 2000) tips.push('Your messages are long. Try bullet points or split into smaller questions to save tokens.');
+                    if (tokens > 20000 && msgs < 6) tips.push('Long initial prompt detected. Use system instructions once, then ask short follow-ups.');
+                    if (tips.length === 0 && tokens > 10000) tips.push('💡 Tip: Reference previous answers with "as above" instead of repeating context.');
+                    if (tips.length === 0) return null;
+                    return (
+                      <div style={{ margin:'0 32px 12px', padding:'8px 14px', background:'rgba(255,43,61,0.06)', border:'1px solid rgba(255,43,61,0.2)', borderRadius:10, display:'flex', alignItems:'flex-start', gap:8 }}>
+                        <span style={{ fontSize:14, flexShrink:0 }}>⚡</span>
+                        <div>
+                          <p style={{ margin:'0 0 2px', fontSize:11, fontWeight:700, color:'var(--fg-orange)', textTransform:'uppercase', letterSpacing:'0.5px' }}>Token Optimizer · {tokens.toLocaleString()} used · ~${((tokens/1000000)*3).toFixed(4)}</p>
+                          <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', lineHeight:1.5 }}>{tips[0]}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div ref={messagesEndRef} />
                 </div>
                 {showScrollDown && (
@@ -3155,7 +3186,7 @@ export default function ForgeApp() {
                                       </span>
                                       <button onClick={() => togglePin(t.id)} title={pinned?'Unpin':'Pin'} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color: pinned?'var(--fg-orange)':'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>📌</button>
                                       <button onClick={() => { setFolderRenamingId(t.id); setFolderRenameVal(t.title||''); }} title="Rename" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>✏️</button>
-                                      <button onClick={() => { if(confirm('Delete this chat?')) { setThreads(prev => prev.filter(th=>th.id!==t.id)); if(activeThread?.id===t.id) setActiveThread(null); } }} title="Delete" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>🗑</button>
+                                      <button onClick={() => deleteThread(t.id)} title="Delete" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>🗑</button>
                                     </div>
                                   )}
                                   {isWarning && <p style={{ margin:'3px 0 0', fontSize:10, color:'var(--fg-orange)' }}>⏰ Deletes after 24h of inactivity</p>}
