@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.56 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.57 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -1083,7 +1083,7 @@ export default function ForgeApp() {
   const loadDispatchRuns = async () => { if (!user) return; try { const d = await apiFetch('/dispatch/runs', {}, user.token); setDispatchRuns(unwrap(d)); } catch {} };
   const loadSchedules = async () => { if (!user) return; try { const d = await apiFetch('/schedules', {}, user.token); setSchedules(unwrap(d)); } catch {} };
   const loadCustomProviders = async () => { if (!user) return; try { const d = await apiFetch('/providers/custom', {}, user.token); setCustomProviders(Array.isArray(d) ? d : []); } catch {} };
-  const loadUsageLogs = async () => { if (!user) return; try { const d = await apiFetch('/billing/usage', {}, user.token); setUsageLogs(Array.isArray(d?.logs) ? d.logs : []); } catch {} };
+  const loadUsageLogs = async () => { if (!user) return; try { const d = await apiFetch('/billing/usage', {}, user.token); const rows = Array.isArray(d?.data) ? d.data : Array.isArray(d?.logs) ? d.logs : []; setUsageLogs(rows.map((r:any) => ({ id: r.id||String(Math.random()), model: r.model||'unknown', tokens_in: r.tokens_in||r.total_tokens||0, tokens_out: r.tokens_out||0, cost_usd: r.cost_usd||r.provider_cost||0, markup_usd: r.markup_usd||r.forge_revenue||0, created_at: r.created_at }))); } catch {} };
   const loadSubscription = async () => {
     if (!user) return;
     try {
@@ -2122,7 +2122,11 @@ export default function ForgeApp() {
   // ── Billing upgrade ─────────────────────────────────────────────────────────
   const upgradePlan = async (plan: string) => {
     if (!user) return;
-    try { await apiFetch('/billing/upgrade', { method:'POST', body:JSON.stringify({ plan }) }, user.token); await loadSubscription(); showToast(`✅ Upgraded to ${plan} plan!`); } catch (e: any) { showToast(String(e?.message||e),'err'); }
+    try {
+      const d = await apiFetch('/billing/upgrade', { method:'POST', body:JSON.stringify({ plan }) }, user.token);
+      if (d?.checkoutUrl) { window.open(d.checkoutUrl, '_blank'); showToast('Opening Stripe checkout...','info'); }
+      else { await loadSubscription(); showToast(d?.message || `✅ Upgraded to ${plan} plan!`); }
+    } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
   // ── Toggle agent (chat) ────────────────────────────────────────────────────
@@ -2341,7 +2345,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.56</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.57</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥️ Desktop</span>}
                 </div>
               </div>
