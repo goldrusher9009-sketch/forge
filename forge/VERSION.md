@@ -1,6 +1,24 @@
 # Forge Platform — Version History
 
-## v6.48 — 2026-06-01 (current)
+## v6.61 — 2026-06-05 (current)
+### Taskade-style red/black redesign
+- Deeper blacks (#080809 base), sharper red (#ff1f35), Taskade-style gradient vars
+- Body: ambient red glow bottom-left + top-right (Taskade pattern)
+- Sidebar: 3 zones (Core / Build / System) with dividers + left-border active indicator
+- Active tabs: red left-border pill indicator instead of flat background
+- Logo: gradient mark + white gradient text, red glow shadow
+- New Conversation: gradient pill button with hover glow + lift
+- Send button: gradient + red glow when active
+- Topbar: animated red accent line at bottom edge
+- Global `.fg-btn-primary` / `.fg-btn-secondary` classes for consistent buttons
+
+## v6.60 — 2026-06-03
+### Bug fixes
+- Strip `<tool_call>` XML from chat messages (renderContent + workspace cleanContent)
+- ForgeOptimizer panel shows loading spinner immediately on click (no data needed)
+- Harvest: extend socket timeout to 120s to prevent Railway 30s timeout
+
+## v6.48 — 2026-06-01
 ### Refined red theme + sharper typography (research-backed)
 
 Reverted the indigo experiment per feedback (red was better) and applied 2026 dashboard best-practice (neutral near-black base + sharp brand accent, not a colored background):

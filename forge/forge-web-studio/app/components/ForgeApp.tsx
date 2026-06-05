@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.59 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.61 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -7,32 +7,38 @@ const GLOBAL_STYLES = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* Neutral near-black base (not pure black — softer, premium) */
-  --fg-bg:      #0a0a0c;
-  --fg-bg2:     #101013;
-  --fg-bg3:     #16161a;
-  --fg-bg4:     #1f1f25;
-  --fg-bg5:     #2a2a31;
-  /* Vivid scarlet brand red — sharp accent (logo, primary actions, top bar) */
-  --fg-orange:  #ff2b3d;
-  --fg-orange2: #ff5263;
-  --fg-odim:    rgba(255,43,61,0.13);
-  --fg-odim2:   rgba(255,43,61,0.22);
-  --fg-border:  rgba(255,255,255,0.07);
-  --fg-border2: rgba(255,255,255,0.13);
-  --fg-border3: rgba(255,43,61,0.34);
-  --fg-text:    #f5f6f8;
-  --fg-text2:   #a7a9b4;
-  --fg-text3:   #6b6d78;
-  --fg-green:   #34d399;
+  /* ── Taskade-style deep blacks ── */
+  --fg-bg:      #080809;
+  --fg-bg2:     #0d0d0f;
+  --fg-bg3:     #131316;
+  --fg-bg4:     #1a1a1e;
+  --fg-bg5:     #242428;
+  /* ── Forge red — sharper, more saturated ── */
+  --fg-orange:  #ff1f35;
+  --fg-orange2: #ff4d5e;
+  --fg-odim:    rgba(255,31,53,0.12);
+  --fg-odim2:   rgba(255,31,53,0.22);
+  --fg-border:  rgba(255,255,255,0.06);
+  --fg-border2: rgba(255,255,255,0.11);
+  --fg-border3: rgba(255,31,53,0.38);
+  --fg-text:    #f0f1f5;
+  --fg-text2:   #9a9caa;
+  --fg-text3:   #5c5e6b;
+  --fg-green:   #2ed18a;
   --fg-purple:  #a78bfa;
   --fg-blue:    #60a5fa;
-  --fg-red:     #ff2b3d;
-  /* supporting accents */
+  --fg-red:     #ff1f35;
   --fg-cyan:    #22d3ee;
   --fg-magenta: #ff4ecd;
   --fg-amber:   #ffb020;
-  --fg-accent-grad: linear-gradient(135deg,#ff2b3d 0%,#ff5263 50%,#ff8a3d 100%);
+  /* ── Taskade-style gradients ── */
+  --fg-accent-grad: linear-gradient(135deg,#ff1f35 0%,#ff4d5e 45%,#ff6b35 100%);
+  --fg-btn-grad:    linear-gradient(135deg,#ff1f35,#cc1020);
+  --fg-btn-grad-hover: linear-gradient(135deg,#ff3347,#e01225);
+  --fg-sidebar-w: 52px;
+  --fg-sidebar-expanded: 220px;
+  --fg-radius-btn: 10px;
+  --fg-radius-card: 14px;
   --fg-font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --fg-font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --fg-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
@@ -42,8 +48,9 @@ const GLOBAL_STYLES = `
 
 body, #__next {
   background:
-    radial-gradient(1000px 640px at 10% -10%, rgba(255,43,61,0.10), transparent 58%),
-    radial-gradient(820px 560px at 94% -4%, rgba(255,82,99,0.07), transparent 55%),
+    radial-gradient(900px 700px at 0% 100%, rgba(255,31,53,0.09) 0%, transparent 55%),
+    radial-gradient(700px 500px at 100% 0%, rgba(255,31,53,0.06) 0%, transparent 50%),
+    radial-gradient(600px 400px at 50% 50%, rgba(255,31,53,0.03) 0%, transparent 60%),
     var(--fg-bg) !important;
   background-attachment: fixed !important;
   color: var(--fg-text) !important;
@@ -58,8 +65,30 @@ h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font
 
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#ff2b3d,#ff5263); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--fg-bg4); }
+::-webkit-scrollbar-thumb { background: rgba(255,31,53,0.35); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,31,53,0.6); }
+
+/* ── Taskade-style pill button global class ── */
+.fg-btn-primary {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:9px 20px; border-radius:var(--fg-radius-btn); border:none;
+  background:var(--fg-btn-grad); color:#fff; font-size:13px; font-weight:700;
+  font-family:var(--fg-font-ui); cursor:pointer; letter-spacing:-0.01em;
+  box-shadow:0 0 0 0 rgba(255,31,53,0); transition:all 0.18s ease;
+}
+.fg-btn-primary:hover {
+  background:var(--fg-btn-grad-hover);
+  box-shadow:0 0 18px rgba(255,31,53,0.35), 0 4px 12px rgba(0,0,0,0.4);
+  transform:translateY(-1px);
+}
+.fg-btn-secondary {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:8px 18px; border-radius:var(--fg-radius-btn);
+  border:1px solid var(--fg-border2); background:var(--fg-bg4); color:var(--fg-text2);
+  font-size:13px; font-weight:500; font-family:var(--fg-font-ui); cursor:pointer;
+  transition:all 0.15s ease;
+}
+.fg-btn-secondary:hover { border-color:var(--fg-border3); color:var(--fg-text); background:var(--fg-bg5); }
 
 @keyframes pulse { 0%,100%{opacity:.4;transform:scale(.85)} 50%{opacity:1;transform:scale(1)} }
 @keyframes fg-live-pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)} 50%{opacity:.7;box-shadow:0 0 0 5px rgba(34,197,94,0)} }
@@ -82,6 +111,7 @@ h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font
 }
 @keyframes fg-think { 0%,60%,100%{transform:scale(.8);opacity:.3} 30%{transform:scale(1.15);opacity:1} }
 @keyframes fg-slide-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes forge-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 @keyframes fg-topbar-line { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
 @keyframes neon-cycle {
   0%   { color: #ff003c; text-shadow: 0 0 8px #ff003c, 0 0 22px rgba(255,0,60,.6); }
@@ -170,8 +200,10 @@ function syntaxHighlight(code: string, lang: string): string {
 // ─── Render message content — markdown-lite with syntax-highlighted code blocks ─
 function renderContent(content: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
+  // Strip raw XML tool_call blocks that leak from agent responses
+  const noToolXml = content.replace(/<tool_call>[\s\S]*?<\/tool_call>/g,'').replace(/<tool_name>[\s\S]*?<\/tool_name>/g,'').replace(/<tool_parameters>[\s\S]*?<\/tool_parameters>/g,'').replace(/<\/?(tool_parameter|query|parameter)[^>]*>/g,'').trim();
   // Detect sandbox:/ links and replace with download notice
-  const sandboxFixed = content.replace(/\[([^\]]+)\]\(sandbox:\/[^)]*\)/g, (_, label) =>
+  const sandboxFixed = noToolXml.replace(/\[([^\]]+)\]\(sandbox:\/[^)]*\)/g, (_, label) =>
     `**[⬇ ${label} — use the 💾 Download button above]**`
   );
   const segments = sandboxFixed.split(/(```[\s\S]*?```)/g);
@@ -630,6 +662,11 @@ export default function ForgeApp() {
   // Navbar token total + session cost
   const [totalTokens, setTotalTokens] = useState(0);
   const [sessionCost, setSessionCost] = useState(0);
+  // ForgeOptimizer
+  const [optimizerEnabled, setOptimizerEnabled] = useState(true);
+  const [optimizerData, setOptimizerData] = useState<{totalTokens:number;potentialSavings:number;savingsPct:number;estimatedCost:string;savedCost:string;suggestions:Array<{type:string;title:string;description:string;tokenSavings:number;auto:boolean}>;autoApplyCount:number}|null>(null);
+  const [optimizerRunning, setOptimizerRunning] = useState(false);
+  const [optimizerOpen, setOptimizerOpen] = useState(false);
   // Provider balances
   const [providerBalances, setProviderBalances] = useState<Record<string,{label:string;balance:number|null}>>({});
   // Q&A interrupt
@@ -1203,6 +1240,44 @@ export default function ForgeApp() {
       } catch {}
     }));
     setProviderBalances(results);
+  };
+
+  const runForgeOptimizer = async (threadId?: string, autoApply = false) => {
+    const tid = threadId || activeThread?.id;
+    if (!user || !tid) return;
+    setOptimizerRunning(true);
+    try {
+      const d = await apiFetch(`/forge-optimizer/${tid}/analyze`, {}, user.token);
+      if (d?.data) {
+        setOptimizerData(d.data);
+        setOptimizerOpen(true);
+        if (autoApply && d.data.autoApplyCount > 0 && d.data.savingsPct >= 30) {
+          // Auto-apply if savings > 30%
+          const r = await apiFetch(`/forge-optimizer/${tid}/apply`, { method:'POST' }, user.token);
+          if (r?.data?.message) showToast(r.data.message);
+          await loadMessages(tid);
+          await loadThreadTokenStats(tid);
+          setOptimizerData(null); // reset to re-analyze
+        }
+      }
+    } catch (e:any) { showToast('Optimizer error: '+String(e?.message||e),'err'); }
+    finally { setOptimizerRunning(false); }
+  };
+
+  const applyForgeOptimizer = async () => {
+    const tid = activeThread?.id;
+    if (!user || !tid) return;
+    setOptimizerRunning(true);
+    try {
+      const r = await apiFetch(`/forge-optimizer/${tid}/apply`, { method:'POST' }, user.token);
+      if (r?.data?.message) showToast(r.data.message);
+      await loadMessages(tid);
+      await loadThreadTokenStats(tid);
+      setOptimizerData(null);
+      setOptimizerOpen(false);
+      await runForgeOptimizer(tid); // re-analyze
+    } catch (e:any) { showToast('Apply failed: '+String(e?.message||e),'err'); }
+    finally { setOptimizerRunning(false); }
   };
 
   const loadTotalTokens = async () => {
@@ -1922,6 +1997,8 @@ export default function ForgeApp() {
       await loadThreads(activeProject?.id);
       loadThreadTokenStats(threadId);
       loadTotalTokens();
+      // Auto-run ForgeOptimizer if enabled (fire-and-forget, auto-apply if big savings)
+      if (optimizerEnabled) runForgeOptimizer(threadId, true).catch(()=>{});
       // Auto-extract memory from this exchange (fire-and-forget)
       try {
         const memTopic = userContent.slice(0, 80);
@@ -2192,27 +2269,35 @@ export default function ForgeApp() {
       {/* ── LEFT SIDEBAR ──────────────────────────────────────────────────── */}
       <div style={{ width: isMobile ? (mobileDrawerOpen ? 260 : 0) : (sidebarExpanded ? 260 : 60), background:'var(--fg-bg)', borderRight:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0, transition:'width 0.2s', overflow:'hidden', position: isMobile ? 'fixed' : 'relative', top:0, left:0, bottom:0, zIndex: isMobile ? 99 : 'auto' as any }} onClick={e => e.stopPropagation()}>
         {/* Logo + collapse */}
-        <div style={{ padding:'16px 12px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid var(--fg-border)' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, overflow:'hidden' }}>
-            <div style={{ width:32, height:32, background:'var(--fg-orange)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>⚡</div>
-            {sidebarExpanded && <span className="forge-neon" style={{ fontSize:18, whiteSpace:'nowrap' }}>Forge</span>}
+        <div style={{ padding:'14px 10px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid var(--fg-border)' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:9, overflow:'hidden' }}>
+            <div style={{ width:30, height:30, background:'var(--fg-btn-grad)', borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0, boxShadow:'0 0 14px rgba(255,31,53,0.4)' }}>⚡</div>
+            {sidebarExpanded && <span style={{ fontSize:16, fontWeight:800, letterSpacing:'-0.04em', fontFamily:'var(--fg-font-display)', whiteSpace:'nowrap', background:'linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.7) 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Forge</span>}
           </div>
-          <button onClick={() => setSidebarExpanded(!sidebarExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:16, padding:4 }}>{sidebarExpanded ? '◀' : '▶'}</button>
+          <button onClick={() => setSidebarExpanded(!sidebarExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13, padding:4, opacity:0.6 }}>{sidebarExpanded ? '◀' : '▶'}</button>
         </div>
 
-        {/* Nav tabs */}
-        <div style={{ padding:'8px', borderBottom:'1px solid var(--fg-border)', overflowY:'auto', flexShrink:0, maxHeight: sidebarExpanded ? 'calc(100vh - 340px)' : 'calc(100vh - 120px)' }}>
-          {(([
+        {/* Nav tabs — 3-zone Taskade-style */}
+        <div style={{ padding:'6px 6px', borderBottom:'1px solid var(--fg-border)', overflowY:'auto', flexShrink:0, maxHeight: sidebarExpanded ? 'calc(100vh - 340px)' : 'calc(100vh - 120px)' }}>
+          {/* ── ZONE 1: Core ── */}
+          {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>Core</div>}
+          {([
             { id:'workspace', icon:'💬', label:'Workspace' },
-            { id:'router', icon:'🔀', label:'ForgeRouter' },
-            { id:'billing', icon:'💳', label:'Billing' },
-            { id:'platforms', icon:'🌐', label:'Platforms' },
-            { id:'settings', icon:'⚙️', label:'Settings' },
-            { id:'super', icon:'🌟', label:'Forge Super' },
+            { id:'super', icon:'🌟', label:'SuperAgent' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
-            { id:'files', icon:'📁', label:'Files' },
-            { id:'hooks', icon:'🪝', label:'Hooks' },
-            { id:'runs', icon:'🏃', label:'Runs' },
+          ] as Array<{id:string;icon:string;label:string}>).map(tab => (
+            <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
+              style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
+              <span style={{ fontSize:15, flexShrink:0 }}>{tab.icon}</span>
+              {sidebarExpanded && <span style={{ fontSize:12, letterSpacing:'-0.01em' }}>{tab.label}</span>}
+            </button>
+          ))}
+
+          {/* ── ZONE 2: Build ── */}
+          <div style={{ margin:'8px 0 2px', height:'1px', background:'var(--fg-border)' }} />
+          {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>Build</div>}
+          {([
+            { id:'router', icon:'🔀', label:'ForgeRouter' },
             { id:'forgeco', icon:'🧑‍💻', label:'ForgeCo' },
             { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
@@ -2220,12 +2305,31 @@ export default function ForgeApp() {
             { id:'mvp', icon:'🏗️', label:'MVP Builder' },
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🐝', label:'Agent Swarm' },
+            { id:'files', icon:'📁', label:'Files' },
+            { id:'runs', icon:'🏃', label:'Runs' },
+            { id:'hooks', icon:'🪝', label:'Hooks' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥️', label:'Desktop & Files' }] : []),
-            ...(user.role === 'admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
-          ]) as Array<{ id: string; icon: string; label: string }>).map((tab) => (
-            <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id === 'admin') { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); } if (tab.id === 'super') { loadSuperMemory(); loadSuperHistory(); } if (tab.id === 'settings') { loadVault(); } }} title={tab.label} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:mainTab===tab.id ? 'var(--fg-bg4)' : 'transparent', border:'none', borderRadius:6, color:mainTab===tab.id ? (tab.id==='admin' ? 'var(--fg-orange2)' : tab.id==='super' ? 'var(--fg-orange2)' : 'var(--fg-orange2)') : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:mainTab===tab.id ? 600 : 400, marginBottom:2, justifyContent:sidebarExpanded ? 'flex-start' : 'center' }}>
-              <span style={{ fontSize:16 }}>{tab.icon}</span>
-              {sidebarExpanded && tab.label}
+          ] as Array<{id:string;icon:string;label:string}>).map(tab => (
+            <button key={tab.id} onClick={() => setMainTab(tab.id as any)} title={tab.label}
+              style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.10)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius:'0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
+              <span style={{ fontSize:14, flexShrink:0 }}>{tab.icon}</span>
+              {sidebarExpanded && <span style={{ fontSize:12, letterSpacing:'-0.01em' }}>{tab.label}</span>}
+            </button>
+          ))}
+
+          {/* ── ZONE 3: System ── */}
+          <div style={{ margin:'8px 0 2px', height:'1px', background:'var(--fg-border)' }} />
+          {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>System</div>}
+          {([
+            { id:'platforms', icon:'🌐', label:'Platforms' },
+            { id:'billing', icon:'💳', label:'Billing' },
+            { id:'settings', icon:'⚙️', label:'Settings' },
+            ...(user.role==='admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
+          ] as Array<{id:string;icon:string;label:string}>).map(tab => (
+            <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if(tab.id==='admin'){loadAdminStats();loadAdminUsers();loadAdminKeys();loadAdminModels();} if(tab.id==='settings'){loadVault();} }} title={tab.label}
+              style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.10)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius:'0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
+              <span style={{ fontSize:14, flexShrink:0 }}>{tab.icon}</span>
+              {sidebarExpanded && <span style={{ fontSize:12, letterSpacing:'-0.01em' }}>{tab.label}</span>}
             </button>
           ))}
         </div>
@@ -2234,8 +2338,10 @@ export default function ForgeApp() {
         {mainTab === 'workspace' && sidebarExpanded && (
           <>
             <div style={{ padding:'10px 10px 0' }}>
-              <button onClick={newThread} style={{ width:'100%', padding:'10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', cursor:'pointer', fontSize:13, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
-                <span>✏️</span>New conversation
+              <button onClick={newThread} style={{ width:'100%', padding:'9px 14px', background:'var(--fg-btn-grad)', border:'none', borderRadius:'var(--fg-radius-btn)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:7, boxShadow:'0 2px 10px rgba(255,31,53,0.25)', transition:'all 0.18s', letterSpacing:'-0.01em' }}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 0 18px rgba(255,31,53,0.4), 0 4px 12px rgba(0,0,0,0.4)';(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)';}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 2px 10px rgba(255,31,53,0.25)';(e.currentTarget as HTMLButtonElement).style.transform='none';}}>
+                <span style={{ fontSize:14 }}>✏️</span>New conversation
               </button>
             </div>
 
@@ -2373,7 +2479,8 @@ export default function ForgeApp() {
         {mainTab === 'workspace' && (
           <>
             {/* Top bar */}
-            <div style={{ padding:'0 10px', height:52, background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+            <div style={{ padding:'0 10px', height:52, background:'var(--fg-bg2)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0, position:'relative' }}>
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'2px', background:'var(--fg-accent-grad)', backgroundSize:'200% auto', animation:'fg-topbar-line 4s linear infinite', opacity:0.6 }} />
               {/* Active Space selector */}
               {!isMobile && (
                 <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', background:'var(--fg-bg4)', borderRadius:8, border:'1px solid var(--fg-border2)', flexShrink:0, cursor:'pointer' }} title="Active Space">
@@ -2421,6 +2528,23 @@ export default function ForgeApp() {
                 </span>
                 {sessionCost > 0 && <span style={{ fontSize:10, color:'var(--fg-green)', fontFamily:'monospace', marginLeft:2 }}>${sessionCost.toFixed(4)}</span>}
               </div>
+              {/* 🔧 ForgeOptimizer toggle */}
+              {!isMobile && activeThread && (
+                <div style={{ display:'flex', alignItems:'center', gap:4, flexShrink:0 }}>
+                  <button
+                    onClick={() => { if (optimizerData) { setOptimizerOpen(!optimizerOpen); } else { setOptimizerOpen(true); runForgeOptimizer(); } }}
+                    disabled={optimizerRunning}
+                    title={optimizerData ? `ForgeOptimizer: ${optimizerData.savingsPct}% savings available` : 'Analyze token usage'}
+                    style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: optimizerData && optimizerData.savingsPct > 20 ? 'linear-gradient(135deg,rgba(255,43,61,0.2),rgba(251,146,60,0.15))' : 'var(--fg-bg4)', border:`1px solid ${optimizerData && optimizerData.savingsPct > 20 ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: optimizerData && optimizerData.savingsPct > 20 ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:700, fontFamily:'monospace' }}>
+                    <span>{optimizerRunning ? '⟳' : '🔧'}</span>
+                    <span>{optimizerRunning ? 'Analyzing...' : optimizerData ? `${optimizerData.savingsPct}% save` : 'Optimizer'}</span>
+                  </button>
+                  <button onClick={() => setOptimizerEnabled(!optimizerEnabled)} title={optimizerEnabled ? 'Auto-optimizer ON (click to disable)' : 'Auto-optimizer OFF (click to enable)'}
+                    style={{ padding:'4px 6px', background:'none', border:`1px solid ${optimizerEnabled ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: optimizerEnabled ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:9, fontWeight:700 }}>
+                    {optimizerEnabled ? 'AUTO' : 'OFF'}
+                  </button>
+                </div>
+              )}
               {/* 🧠 IQ score */}
               {!isMobile && (
                 <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: superStats.intelligenceScore > 100 ? 'linear-gradient(135deg,rgba(139,92,246,0.15),rgba(56,189,248,0.1))' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${superStats.intelligenceScore > 100 ? 'rgba(139,92,246,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, cursor:'pointer' }} onClick={() => setMainTab('super')} title="SuperAgent IQ — click to open">
@@ -2945,6 +3069,64 @@ export default function ForgeApp() {
 
                 {/* Live activity shown in 📺 toolbar button only — no inline overlay */}
 
+                {/* ForgeOptimizer Panel */}
+                {optimizerOpen && (optimizerData || optimizerRunning) && (
+                  <div style={{ margin:'0 24px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-orange)', borderRadius:14, overflow:'hidden' }}>
+                    {optimizerRunning && !optimizerData && (
+                      <div style={{ padding:'20px', textAlign:'center', color:'var(--fg-orange)', fontSize:13, fontWeight:700 }}>
+                        <span style={{ display:'inline-block', animation:'forge-spin 1s linear infinite', marginRight:8 }}>⟳</span>
+                        Analyzing token usage...
+                      </div>
+                    )}
+                    {optimizerData && <>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'linear-gradient(135deg,rgba(255,43,61,0.12),transparent)', borderBottom:'1px solid var(--fg-border)' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <span style={{ fontSize:16 }}>🔧</span>
+                        <div>
+                          <p style={{ margin:0, fontSize:13, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeOptimizer™</p>
+                          <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>World's first 90-95% token optimizer</p>
+                        </div>
+                      </div>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <div style={{ textAlign:'right' }}>
+                          <p style={{ margin:0, fontSize:20, fontWeight:800, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)' }}>{optimizerData.savingsPct}%</p>
+                          <p style={{ margin:0, fontSize:10, color:'var(--fg-text3)' }}>potential savings</p>
+                        </div>
+                        <div style={{ textAlign:'right' }}>
+                          <p style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)' }}>${optimizerData.savedCost}</p>
+                          <p style={{ margin:0, fontSize:10, color:'var(--fg-text3)' }}>saved cost</p>
+                        </div>
+                        <button onClick={() => setOptimizerOpen(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:16 }}>✕</button>
+                      </div>
+                    </div>
+                    <div style={{ padding:'10px 14px' }}>
+                      <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:10 }}>
+                        {optimizerData.suggestions.map((s,i) => (
+                          <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'6px 10px', background:'var(--fg-bg3)', borderRadius:8, border:'1px solid var(--fg-border)' }}>
+                            <span style={{ fontSize:12, flexShrink:0, marginTop:1 }}>{s.auto ? '⚡' : '💡'}</span>
+                            <div style={{ flex:1 }}>
+                              <p style={{ margin:'0 0 2px', fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>{s.title} <span style={{ color:'var(--fg-green)', fontFamily:'monospace' }}>~{s.tokenSavings.toLocaleString()} tok</span></p>
+                              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{s.description}</p>
+                            </div>
+                            {s.auto && <span style={{ fontSize:10, color:'var(--fg-green)', fontWeight:700, flexShrink:0 }}>AUTO</span>}
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <button onClick={applyForgeOptimizer} disabled={optimizerRunning}
+                          style={{ flex:1, padding:'8px 16px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                          {optimizerRunning ? '⟳ Optimizing...' : `⚡ Apply All (save ${optimizerData.savingsPct}% tokens)`}
+                        </button>
+                        <button onClick={() => setOptimizerOpen(false)}
+                          style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>
+                          Later
+                        </button>
+                      </div>
+                    </div>
+                    </>}
+                  </div>
+                )}
+
                 {/* Composer */}
                 <div style={{ padding: isMobile ? '8px 10px 12px' : '12px 24px 16px', background:'var(--fg-bg)', borderTop:'1px solid var(--fg-border)' }}>
                   <div style={{ display:'flex', gap:6, marginBottom:10, flexWrap:'wrap' }}>
@@ -3034,7 +3216,7 @@ export default function ForgeApp() {
                             }
                           }}
                           disabled={!input.trim() && !sending}
-                          style={{ width:32, height:32, background: input.trim() ? 'var(--fg-orange)' : sending ? 'var(--fg-bg4)' : 'var(--fg-bg4)', border:'none', borderRadius:8, color:'#fff', cursor: input.trim() ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', animation: sending && !input.trim() ? 'send-pulse 0.9s ease-in-out infinite' : 'none', transition:'background 0.2s' }}
+                          style={{ width:34, height:34, background: input.trim() ? 'var(--fg-btn-grad)' : sending ? 'rgba(255,31,53,0.2)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', cursor: input.trim() ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', animation: sending && !input.trim() ? 'send-pulse 0.9s ease-in-out infinite' : 'none', transition:'all 0.18s', boxShadow: input.trim() ? '0 0 12px rgba(255,31,53,0.3)' : 'none' }}
                         >
                           {sending && !input.trim() ? '⚡' : input.trim() && sending ? '⏎' : '↑'}
                         </button>
@@ -5076,7 +5258,7 @@ export default function ForgeApp() {
                     const browserMatch = m.content.match(/\[BROWSER\]([\s\S]*?)\[\/BROWSER\]/);
                     const terminalMatch = m.content.match(/\[TERMINAL\]([\s\S]*?)\[\/TERMINAL\]/);
                     const spreadsheetMatch = m.content.match(/\[SPREADSHEET\]([\s\S]*?)\[\/SPREADSHEET\]/);
-                    const cleanContent = m.content.replace(/\[BROWSER\][\s\S]*?\[\/BROWSER\]/g,'').replace(/\[TERMINAL\][\s\S]*?\[\/TERMINAL\]/g,'').replace(/\[SPREADSHEET\][\s\S]*?\[\/SPREADSHEET\]/g,'').trim();
+                    const cleanContent = m.content.replace(/\[BROWSER\][\s\S]*?\[\/BROWSER\]/g,'').replace(/\[TERMINAL\][\s\S]*?\[\/TERMINAL\]/g,'').replace(/\[SPREADSHEET\][\s\S]*?\[\/SPREADSHEET\]/g,'').replace(/<tool_call>[\s\S]*?<\/tool_call>/g,'').replace(/<tool_name>[\s\S]*?<\/tool_name>/g,'').replace(/<tool_parameters>[\s\S]*?<\/tool_parameters>/g,'').replace(/<tool_parameter[^>]*>[\s\S]*?<\/tool_parameter[^>]*>/g,'').trim();
 
                     return (
                     <div key={i} style={{ display:'flex', gap:12, marginBottom:20, flexDirection: m.role==='user' ? 'row-reverse' : 'row' }}>
