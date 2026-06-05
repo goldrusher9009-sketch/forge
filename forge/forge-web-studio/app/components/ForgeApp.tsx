@@ -1,4 +1,4 @@
-// Forge AI Workspace v6.61 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.62 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -196,6 +196,31 @@ function syntaxHighlight(code: string, lang: string): string {
   c = c.replace(/([a-zA-Z_$][a-zA-Z0-9_$]*)(\s*\()/g, '<span style="color:#60a5fa">$1</span>$2');
   return c;
 }
+
+// ─── Slash command definitions ────────────────────────────────────────────────
+const SLASH_COMMANDS = [
+  // Agents
+  { cmd:'researcher',  icon:'🔬', label:'Researcher',    desc:'Deep web research on any topic',         category:'agent',   insert:'/researcher ' },
+  { cmd:'coder',       icon:'💻', label:'Coder',          desc:'Write, review, or debug code',          category:'agent',   insert:'/coder ' },
+  { cmd:'writer',      icon:'✍️', label:'Writer',         desc:'Draft emails, docs, content',            category:'agent',   insert:'/writer ' },
+  { cmd:'analyst',     icon:'📊', label:'Analyst',        desc:'Analyze data, create reports',           category:'agent',   insert:'/analyst ' },
+  { cmd:'designer',    icon:'🎨', label:'Designer',       desc:'UI/UX critique and mockup ideas',        category:'agent',   insert:'/designer ' },
+  // Skills
+  { cmd:'summarize',   icon:'📝', label:'Summarize',      desc:'Summarize the current thread',           category:'skill',   insert:'/summarize this conversation' },
+  { cmd:'translate',   icon:'🌐', label:'Translate',      desc:'Translate text to another language',     category:'skill',   insert:'/translate to Spanish: ' },
+  { cmd:'explain',     icon:'🧠', label:'Explain',        desc:'Explain like I\'m 5',                    category:'skill',   insert:'/explain ' },
+  { cmd:'fix',         icon:'🔧', label:'Fix',            desc:'Fix bugs in selected code',              category:'skill',   insert:'/fix this: ' },
+  { cmd:'improve',     icon:'⚡', label:'Improve',        desc:'Improve and polish text',                category:'skill',   insert:'/improve: ' },
+  // Actions
+  { cmd:'new',         icon:'✏️', label:'New thread',     desc:'Start a new conversation',               category:'action',  insert:'__NEW_THREAD__' },
+  { cmd:'harvest',     icon:'🧠', label:'Harvest memory', desc:'Harvest knowledge into SuperAgent',      category:'action',  insert:'__HARVEST__' },
+  { cmd:'clear',       icon:'🗑️', label:'Clear input',    desc:'Clear the composer',                     category:'action',  insert:'__CLEAR__' },
+  // Modes
+  { cmd:'router',      icon:'🔀', label:'ForgeRouter',    desc:'Open model router',                      category:'mode',    insert:'__TAB_router__' },
+  { cmd:'super',       icon:'🌟', label:'SuperAgent',     desc:'Open SuperAgent',                        category:'mode',    insert:'__TAB_super__' },
+  { cmd:'skills',      icon:'🧩', label:'Skills',         desc:'Browse skills & tools',                  category:'mode',    insert:'__TAB_skills__' },
+  { cmd:'billing',     icon:'💳', label:'Billing',        desc:'Open billing panel',                     category:'mode',    insert:'__TAB_billing__' },
+];
 
 // ─── Render message content — markdown-lite with syntax-highlighted code blocks ─
 function renderContent(content: string): React.ReactNode[] {
@@ -532,6 +557,9 @@ export default function ForgeApp() {
 
   // Composer
   const [input, setInput] = useState('');
+  const [slashOpen, setSlashOpen] = useState(false);
+  const [slashQuery, setSlashQuery] = useState('');
+  const [slashIdx, setSlashIdx] = useState(0);
   const [activeAgentIds, setActiveAgentIds] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState(() => { try { return localStorage.getItem('forge_selected_model') || ''; } catch { return ''; } }); // persisted to localStorage
   const isFreeModel = (m: any) => !m ? false : (typeof m === 'string' ? m.includes(':free') : (m.id?.includes(':free') || m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0'));
@@ -2392,40 +2420,75 @@ export default function ForgeApp() {
                     </div>
                   </div>
                 ))}
-                {/* Regular threads — show 5, rest hidden behind View All */}
-                {threads.filter(t => !t.pinned && !t.archived).slice(0, showAllThreads ? 100 : 5).map(t => (
-                  <div key={t.id} style={{ position:'relative' }}
-                    onContextMenu={e => { e.preventDefault(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }}>
-                    <div onClick={() => selectThread(t)} style={{ padding:'7px 8px 5px', borderRadius:6, cursor:'pointer', marginBottom:1, background:activeThread?.id===t.id ? 'var(--fg-bg4)' : 'transparent' }}
-                      onMouseEnter={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style && ((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity = '1'); }}
-                      onMouseLeave={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style && ((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity = '0'); }}>
-                      <div style={{ display:'flex', alignItems:'center' }}>
-                        {renamingThread?.id === t.id ? (
-                          <input autoFocus value={renamingThreadInput} onChange={e => setRenamingThreadInput(e.target.value)}
-                            onKeyDown={async e => {
-                              if (e.key === 'Enter') {
-                                await apiFetch(`/threads/${t.id}`, { method:'PATCH', body:JSON.stringify({ title: renamingThreadInput }) }, user?.token||'');
-                                setThreads(prev => prev.map(th => th.id===t.id ? {...th, title:renamingThreadInput} : th));
-                                setRenamingThread(null);
-                              }
-                              if (e.key === 'Escape') setRenamingThread(null);
-                            }}
-                            onBlur={() => setRenamingThread(null)}
-                            style={{ flex:1, background:'var(--fg-bg3)', border:'1px solid var(--fg-orange)', borderRadius:4, color:'var(--fg-text)', fontSize:12, padding:'1px 6px', outline:'none' }} />
-                        ) : (
-                          <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
-                        )}
-                        <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">•••</button>
+                {/* Grouped threads — Today / Yesterday / This week / Older */}
+                {(() => {
+                  const unpinned = threads.filter(t => !t.pinned && !t.archived);
+                  const now = new Date(); const today = now.toDateString();
+                  const yesterday = new Date(now.getTime()-86400000).toDateString();
+                  const weekAgo = new Date(now.getTime()-7*86400000);
+                  const groups: {label:string; threads:typeof unpinned}[] = [
+                    { label:'Today',     threads: unpinned.filter(t => { const d = new Date(t.updated_at||t.created_at||0); return d.toDateString()===today; }) },
+                    { label:'Yesterday', threads: unpinned.filter(t => { const d = new Date(t.updated_at||t.created_at||0); return d.toDateString()===yesterday; }) },
+                    { label:'This week', threads: unpinned.filter(t => { const d = new Date(t.updated_at||t.created_at||0); return d < new Date(yesterday) && d >= weekAgo; }) },
+                    { label:'Older',     threads: unpinned.filter(t => { const d = new Date(t.updated_at||t.created_at||0); return d < weekAgo; }) },
+                  ].filter(g => g.threads.length > 0);
+                  const allGrouped = groups.flatMap(g => g.threads);
+                  // If no date info, fall back to flat list
+                  if (allGrouped.length === 0) return unpinned.slice(0, showAllThreads ? 100 : 8).map(t => {
+                    const isActive = activeThread?.id===t.id;
+                    return (
+                      <div key={t.id} style={{ position:'relative' }} onContextMenu={e => { e.preventDefault(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }}>
+                        <div onClick={() => selectThread(t)} style={{ padding:'6px 8px', borderRadius:7, cursor:'pointer', marginBottom:1, background: isActive ? 'rgba(255,31,53,0.1)' : 'transparent', borderLeft: isActive ? '2px solid var(--fg-orange)' : '2px solid transparent', transition:'all 0.12s' }}
+                          onMouseEnter={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style&&((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity='1'); }}
+                          onMouseLeave={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style&&((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity='0'); }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                            <p style={{ margin:0, fontSize:12, color: isActive ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
+                            <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">•••</button>
+                          </div>
+                        </div>
                       </div>
-                      {t.total_tokens ? <p style={{ margin:'2px 0 0', fontSize:10, color:'var(--fg-text3)' }}>{t.total_tokens >= 1000 ? (t.total_tokens/1000).toFixed(1)+'k' : t.total_tokens} tokens</p> : null}
-                    </div>
-                  </div>
-                ))}
-                {threads.filter(t => !t.pinned && !t.archived).length > 5 && (
-                  <button onClick={() => setShowAllThreads(p => !p)} style={{ width:'100%', padding:'6px 8px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11, marginTop:4 }}>
-                    {showAllThreads ? '▲ Show less' : `▼ View all (${threads.filter(t => !t.pinned && !t.archived).length})`}
-                  </button>
-                )}
+                    );
+                  });
+                  return (
+                    <>
+                      {groups.map(group => (
+                        <div key={group.label}>
+                          <div style={{ padding:'8px 4px 3px', fontSize:9, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)' }}>{group.label}</div>
+                          {(showAllThreads ? group.threads : group.threads.slice(0, group.label==='Today' ? 10 : group.label==='Yesterday' ? 5 : 3)).map(t => {
+                            const isActive = activeThread?.id===t.id;
+                            return (
+                              <div key={t.id} style={{ position:'relative' }} onContextMenu={e => { e.preventDefault(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }}>
+                                <div onClick={() => selectThread(t)} style={{ padding:'6px 8px', borderRadius:7, cursor:'pointer', marginBottom:1, background: isActive ? 'rgba(255,31,53,0.1)' : 'transparent', borderLeft: isActive ? '2px solid var(--fg-orange)' : '2px solid transparent', transition:'all 0.12s' }}
+                                  onMouseEnter={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style && ((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity='1'); if(!isActive)(e.currentTarget as HTMLElement).style.background='var(--fg-bg4)'; }}
+                                  onMouseLeave={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style && ((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity='0'); if(!isActive)(e.currentTarget as HTMLElement).style.background='transparent'; }}>
+                                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                                    {renamingThread?.id === t.id ? (
+                                      <input autoFocus value={renamingThreadInput} onChange={e => setRenamingThreadInput(e.target.value)}
+                                        onKeyDown={async e => {
+                                          if (e.key==='Enter') { await apiFetch(`/threads/${t.id}`,{method:'PATCH',body:JSON.stringify({title:renamingThreadInput})},user?.token||''); setThreads(prev=>prev.map(th=>th.id===t.id?{...th,title:renamingThreadInput}:th)); setRenamingThread(null); }
+                                          if (e.key==='Escape') setRenamingThread(null);
+                                        }} onBlur={() => setRenamingThread(null)}
+                                        style={{ flex:1, background:'var(--fg-bg3)', border:'1px solid var(--fg-orange)', borderRadius:4, color:'var(--fg-text)', fontSize:12, padding:'1px 6px', outline:'none' }} />
+                                    ) : (
+                                      <p style={{ margin:0, fontSize:12, color: isActive ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, letterSpacing:'-0.01em' }}>{t.title}</p>
+                                    )}
+                                    <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s', flexShrink:0 }} className="thread-menu-btn">•••</button>
+                                  </div>
+                                  {t.total_tokens ? <p style={{ margin:'1px 0 0', fontSize:10, color:'var(--fg-text3)' }}>{t.total_tokens>=1000?(t.total_tokens/1000).toFixed(1)+'k':t.total_tokens} tok</p> : null}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                      {unpinned.length > 8 && (
+                        <button onClick={() => setShowAllThreads(p=>!p)} style={{ width:'100%', padding:'5px 8px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11, marginTop:4 }}>
+                          {showAllThreads ? '▲ Show less' : `▼ All threads (${unpinned.length})`}
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
                 {threads.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, padding:'4px 8px' }}>No conversations yet</p>}
               </div>
             </div>
@@ -3155,18 +3218,93 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
-                  <div style={{ position:'relative', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:12, overflow:'hidden' }}>
-                    <textarea ref={textareaRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => {
-                      if (e.key==='Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (sending) {
-                          // Queue for after current response
-                          if (input.trim()) { setPendingMessage(input.trim()); setInput(''); }
-                        } else {
-                          sendMessage();
+                  <div style={{ position:'relative', background:'var(--fg-bg3)', border:`1px solid ${slashOpen ? 'var(--fg-border3)' : 'var(--fg-border2)'}`, borderRadius:12, overflow:'visible' }}>
+                    {/* Slash command dropdown */}
+                    {slashOpen && (() => {
+                      const q = slashQuery.toLowerCase();
+                      const filtered = SLASH_COMMANDS.filter(c => c.cmd.startsWith(q) || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
+                      if (!filtered.length) return null;
+                      return (
+                        <div style={{ position:'absolute', bottom:'calc(100% + 6px)', left:0, right:0, background:'var(--fg-bg2)', border:'1px solid var(--fg-border3)', borderRadius:12, overflow:'hidden', zIndex:200, boxShadow:'0 -8px 32px rgba(0,0,0,0.6)' }}>
+                          <div style={{ padding:'6px 12px 4px', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-orange)', borderBottom:'1px solid var(--fg-border)' }}>⚡ Commands</div>
+                          <div style={{ maxHeight:280, overflowY:'auto' }}>
+                            {(['agent','skill','action','mode'] as const).map(cat => {
+                              const items = filtered.filter(c => c.category === cat);
+                              if (!items.length) return null;
+                              const catLabel: Record<string,string> = { agent:'Agents', skill:'Skills', action:'Actions', mode:'Navigate' };
+                              return (
+                                <div key={cat}>
+                                  <div style={{ padding:'5px 12px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)' }}>{catLabel[cat]}</div>
+                                  {items.map((c, i) => {
+                                    const globalIdx = filtered.indexOf(c);
+                                    const active = globalIdx === slashIdx;
+                                    return (
+                                      <div key={c.cmd} onMouseDown={e => { e.preventDefault();
+                                        if (c.insert === '__NEW_THREAD__') { newThread(); setSlashOpen(false); setInput(''); return; }
+                                        if (c.insert === '__HARVEST__') { harvestMemory(); setSlashOpen(false); setInput(''); return; }
+                                        if (c.insert === '__CLEAR__') { setInput(''); setSlashOpen(false); return; }
+                                        if (c.insert.startsWith('__TAB_')) { setMainTab(c.insert.replace('__TAB_','') as any); setSlashOpen(false); setInput(''); return; }
+                                        setInput(c.insert); setSlashOpen(false); setTimeout(() => textareaRef.current?.focus(), 10);
+                                      }} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background: active ? 'rgba(255,31,53,0.1)' : 'transparent', cursor:'pointer', borderLeft: active ? '2px solid var(--fg-orange)' : '2px solid transparent', transition:'all 0.1s' }}>
+                                        <span style={{ fontSize:16, flexShrink:0 }}>{c.icon}</span>
+                                        <div style={{ flex:1, minWidth:0 }}>
+                                          <div style={{ fontSize:13, fontWeight:600, color: active ? 'var(--fg-orange)' : 'var(--fg-text)', letterSpacing:'-0.01em' }}>{c.label}</div>
+                                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:1 }}>{c.desc}</div>
+                                        </div>
+                                        <kbd style={{ fontSize:9, padding:'2px 5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text3)', flexShrink:0 }}>↵</kbd>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <textarea ref={textareaRef} value={input}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setInput(val);
+                        // Slash detection
+                        const match = val.match(/(?:^|\n)\/(\S*)$/);
+                        if (match) { setSlashOpen(true); setSlashQuery(match[1]); setSlashIdx(0); }
+                        else { setSlashOpen(false); setSlashQuery(''); }
+                      }}
+                      onKeyDown={e => {
+                        if (slashOpen) {
+                          const q = slashQuery.toLowerCase();
+                          const filtered = SLASH_COMMANDS.filter(c => c.cmd.startsWith(q) || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
+                          if (e.key === 'ArrowDown') { e.preventDefault(); setSlashIdx(i => Math.min(i+1, filtered.length-1)); return; }
+                          if (e.key === 'ArrowUp') { e.preventDefault(); setSlashIdx(i => Math.max(i-1, 0)); return; }
+                          if (e.key === 'Escape') { setSlashOpen(false); return; }
+                          if (e.key === 'Enter' || e.key === 'Tab') {
+                            const sel = filtered[slashIdx];
+                            if (sel) {
+                              e.preventDefault();
+                              if (sel.insert === '__NEW_THREAD__') { newThread(); setSlashOpen(false); setInput(''); return; }
+                              if (sel.insert === '__HARVEST__') { harvestMemory(); setSlashOpen(false); setInput(''); return; }
+                              if (sel.insert === '__CLEAR__') { setInput(''); setSlashOpen(false); return; }
+                              if (sel.insert.startsWith('__TAB_')) { setMainTab(sel.insert.replace('__TAB_','') as any); setSlashOpen(false); setInput(''); return; }
+                              // Replace the /cmd with the insert text
+                              setInput(prev => prev.replace(/(?:^|\n)\/\S*$/, (m) => m.startsWith('\n') ? '\n'+sel.insert : sel.insert));
+                              setSlashOpen(false);
+                              setTimeout(() => textareaRef.current?.focus(), 10);
+                              return;
+                            }
+                          }
                         }
-                      }
-                    }} placeholder={sending ? (pendingMessage ? `Queued: "${pendingMessage.slice(0,40)}…"` : 'AI is thinking… press Enter to queue next message') : (activeThread ? 'Message...' : 'Start a conversation...')} rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
+                        if (e.key==='Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (sending) {
+                            if (input.trim()) { setPendingMessage(input.trim()); setInput(''); }
+                          } else {
+                            sendMessage();
+                          }
+                        }
+                      }}
+                      placeholder={sending ? (pendingMessage ? `Queued: "${pendingMessage.slice(0,40)}…"` : 'AI is thinking… press Enter to queue') : (activeThread ? 'Message… or type / for commands' : 'Start a conversation… or type / for commands')}
+                      rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
                         {/* Voice button */}

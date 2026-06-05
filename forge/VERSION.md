@@ -1,6 +1,13 @@
 # Forge Platform — Version History
 
-## v6.61 — 2026-06-05 (current)
+## v6.62 — 2026-06-05 (current)
+### UX improvements
+- Slash commands: type `/` in composer → dropdown (agents/skills/actions/navigate)
+- Thread grouping: Today / Yesterday / This week / Older with red left-border active indicator
+- Sidebar already grouped in v6.61 (Core/Build/System)
+- Component split deferred (separate session)
+
+## v6.61 — 2026-06-05
 ### Taskade-style red/black redesign
 - Deeper blacks (#080809 base), sharper red (#ff1f35), Taskade-style gradient vars
 - Body: ambient red glow bottom-left + top-right (Taskade pattern)
