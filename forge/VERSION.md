@@ -1,6 +1,23 @@
 # Forge Platform — Version History
 
-## v6.62 — 2026-06-05 (current)
+## v6.81 — 2026-06-05 (current)
+### Full backend rebuild + GraphQL
+- **Restored real SQLite backend** (was replaced by in-memory Map store in v6.80 — all data was lost on restart)
+- **GraphQL API** at `POST /api/graphql` — queries: threads, messages, memories, me, analytics, personas, search; mutations: createThread, deleteThread, createMemory, deletePersona
+- **ForgeOptimizer** `/api/forge-optimizer/:id/analyze` + `/apply` — real token analysis + context trimming
+- **Rate limiting** — 30 req/min per user on chat endpoint (in-memory, no Redis needed)
+- **Webhooks** — full CRUD + outbound delivery with HMAC signing, retry, delivery log
+- **Multi-model routing** `/api/models/available` — returns available models based on user's connected keys
+- **Personas** — full CRUD: custom system prompts, model, temperature, icon
+- **Prompt cache/templates** — save/reuse prompts with use count tracking
+- **Full-text search** `/api/search` — across threads, messages, memories
+- **Analytics** `/api/analytics` — daily usage, top models, token totals, period filter
+- **Data export** `/api/export` — full JSON export of all user data
+- **Version endpoint** `/api/version` — reports features + build time
+- Fixed harvest socket timeout (120s)
+- package.json: added `graphql`, `better-sqlite3`; version → 6.81.0; start script uses ts-node
+
+## v6.62 — 2026-06-05
 ### UX improvements
 - Slash commands: type `/` in composer → dropdown (agents/skills/actions/navigate)
 - Thread grouping: Today / Yesterday / This week / Older with red left-border active indicator
@@ -614,21 +631,4 @@ The right-side chat list (threads) now acts as **folders**, and files belong to 
 ## v5.1 — 2026-05-20
 
 ### Frontend: forge-web-studio/app/components/ForgeApp.tsx (1878 lines)
-- **Admin panel** — 🛡️ tab visible only to `role=admin` users
-  - Stats dashboard: users, threads, messages, revenue, tokens
-  - User management: list all users, change role (user ↔ admin)
-  - Platform API keys: save encrypted server-side keys for Anthropic, OpenAI, Gemini, Groq, OpenRouter, Mistral, Together, Perplexity — used as fallback for all users
-  - Model management: toggle enable/disable per model, see markup
-- **Per-provider key save** — each Save button saves ONLY that provider's key
-- **savedProviders state** — source of truth for which providers have confirmed saved keys (from backend `has_*` flags)
-- **Model dropdown gating** — only shows models whose provider key is confirmed saved
-- **Thread recovery** — auto-creates new thread if Railway DB wipe returns THREAD_NOT_FOUND
-- **role** added to User interface and populated on login
-- **Model list updated** — Claude Opus 4.6, Sonnet 4.6 added; correct model IDs (claude-sonnet-4-6 etc.)
-
-### Backend: forge-platform/src/index.ts (1750 lines)
-- **DB persistence** — DB_PATH uses `/data/forge.db` on Railway (add volume mount at /data)
-- **platform_models table** — 18 models seeded, admin can enable/disable
-- **platform_api_keys table** — encrypted platform-wide keys, fallback for all users
-- **platform_settings table** — general KV settings store
-- **Admin routes**: GET/PATCH /api/adm
+- **Admin panel** — 🛡️ tab visi
