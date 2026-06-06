@@ -1,102 +1,54 @@
 {
   "name": "forge-desktop",
   "version": "1.0.0",
-  "description": "Forge AI Desktop — folder context, memory, browser integration",
-  "main": "src/main.js",
+  "description": "Forge AI Platform — Desktop Application",
+  "main": "src/main.ts",
+  "homepage": "./",
   "scripts": {
-    "start": "electron .",
-    "dev": "NODE_ENV=development electron .",
-    "build:win": "electron-builder --win --x64",
-    "build:win:arm": "electron-builder --win --arm64",
-    "build:mac": "electron-builder --mac --universal",
-    "build:mac:x64": "electron-builder --mac --x64",
-    "build:mac:arm": "electron-builder --mac --arm64",
-    "build:linux": "electron-builder --linux --x64",
-    "build:all": "electron-builder --win --mac --linux",
-    "postinstall": "electron-builder install-app-deps"
-  },
-  "keywords": ["forge", "ai", "electron", "desktop"],
-  "author": "Forge AI",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.0.0"
+    "dev": "electron .",
+    "build": "tsc && electron-builder",
+    "build:win": "tsc && electron-builder --win --publish never",
+    "build:mac": "tsc && electron-builder --mac --publish never",
+    "build:linux": "tsc && electron-builder --linux --publish never"
   },
   "dependencies": {
-    "ws": "^8.17.0",
-    "chokidar": "^3.6.0",
-    "electron-updater": "^6.1.0"
+    "electron-updater": "^5.3.0"
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "typescript": "^5.0.0"
   },
   "build": {
-    "appId": "com.forgeai.desktop",
-    "productName": "Forge AI",
-    "copyright": "Copyright © 2024 Forge AI",
+    "appId": "com.forge.app",
+    "productName": "Forge",
     "files": [
-      "src/**/*",
-      "assets/**/*",
-      "!assets/icon.icns",
-      "!assets/icon.ico"
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
     ],
-    "extraResources": [],
-    "publish": {
-      "provider": "github",
-      "owner": "goldrusher9009-sketch",
-      "repo": "forge"
-    },
     "win": {
-      "target": [
-        { "target": "nsis", "arch": ["x64", "arm64"] },
-        { "target": "portable", "arch": ["x64"] }
-      ],
-      "icon": "assets/icon.ico",
-      "artifactName": "Forge-AI-Setup-${version}-${arch}.${ext}",
-      "requestedExecutionLevel": "asInvoker",
-      "publisherName": "Forge AI"
-    },
-    "mac": {
-      "target": [
-        { "target": "dmg", "arch": ["universal"] },
-        { "target": "zip", "arch": ["universal"] }
-      ],
-      "icon": "assets/icon.icns",
-      "category": "public.app-category.productivity",
-      "artifactName": "Forge-AI-${version}-${arch}.${ext}",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "assets/entitlements.mac.plist",
-      "entitlementsInherit": "assets/entitlements.mac.plist",
-      "darkModeSupport": true,
-      "minimumSystemVersion": "10.15"
-    },
-    "linux": {
-      "target": [
-        { "target": "AppImage", "arch": ["x64"] },
-        { "target": "deb", "arch": ["x64"] }
-      ],
-      "icon": "assets/icon.png",
-      "category": "Network;Utility",
-      "artifactName": "Forge-AI-${version}-${arch}.${ext}"
+      "target": ["nsis", "portable"],
+      "certificateFile": null,
+      "certificatePassword": null
     },
     "nsis": {
       "oneClick": false,
-      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico",
-      "installerHeaderIcon": "assets/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Forge AI"
+      "shortcutName": "Forge"
     },
-    "dmg": {
-      "title": "Forge AI ${version}",
-      "background": "assets/dmg-background.png",
-      "iconSize": 100,
-      "window": { "width": 540, "height": 380 },
-      "contents": [
-        { "x": 140, "y": 180, "type": "file" },
-        { "x": 400, "y": 180, "type": "link", "path": "/Applications" }
-      ]
+    "portable": {
+      "artifactName": "${productName}-${version}.exe"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Utility"
     }
   }
 }

@@ -26,6 +26,8 @@ import { setupTokenomicsRoutes } from './tokenomics';
 import { setupRouterRoutes } from './router';
 import { setupMemoryRoutes } from './memory';
 import { setupRealtime } from './realtime';
+import { setupAlertWorker } from './alerts';
+import { setupWebhookRetry, setupWebhookLogging } from './webhooks';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -3452,6 +3454,13 @@ setupRouterRoutes(app, db, requireAuth);
 
 // Phase 4: Vector Memory (AI differentiator)
 setupMemoryRoutes(app, db, requireAuth);
+
+// Phase 2 Completion: Alert Worker (background job + email)
+setupAlertWorker(db);
+
+// Phase 2 Completion: Webhook Retry + Logging
+setupWebhookRetry(db);
+setupWebhookLogging(app, db, requireAuth);
 
 // Feature 3: Advanced Analytics
 db.exec(`CREATE TABLE IF NOT EXISTS analytics (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, event TEXT NOT NULL, metadata TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);

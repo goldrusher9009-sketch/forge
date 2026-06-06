@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Forge AI Assistant",
+  "version": "1.0.0",
+  "description": "AI-powered sidebar for the web",
+  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "host_permissions": ["https://*/*", "http://*/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Forge AI"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*/*", "http://*/*"],
+      "js": ["content.js"],
+      "css": ["sidebar.css"]
+    }
+  ]
+}
