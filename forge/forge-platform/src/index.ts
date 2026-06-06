@@ -42,6 +42,8 @@ import { setupDocGen } from './doc-gen';
 import { setupPersonas } from './personas';
 import { setupContextManager } from './context-manager';
 import { setupReplySuggestions } from './reply-suggestions';
+import { setupAdvancedAnalytics } from './advanced-analytics';
+import { setupRetentionAnalytics } from './retention-analytics';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -390,6 +392,12 @@ setupContextManager(app, db, requireAuth);
 
 // ── Phase 8: Reply Suggestions ────────────────────────────────
 setupReplySuggestions(app, db, requireAuth);
+
+// ── Phase 9: Advanced Analytics ───────────────────────────────
+setupAdvancedAnalytics(app, db, requireAuth);
+
+// ── Phase 9: Retention Analytics ──────────────────────────────
+setupRetentionAnalytics(app, db, requireAuth);
 
 // ── Start Server ──────────────────────────────────────────────
 server.listen(PORT, () => {
