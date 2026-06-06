@@ -21,6 +21,12 @@ import { execFile, exec } from 'child_process';
 import { promisify } from 'util';
 import Database from 'better-sqlite3';
 import { setupBillingRoutes } from './billing';
+import { setupMonetizationRoutes } from './monetization';
+import { setupTokenomicsRoutes } from './tokenomics';
+import { setupRouterRoutes } from './router';
+import { setupMemoryRoutes } from './memory';
+import { setupRealtime } from './realtime';
+import http from 'http';
 
 const execAsync = promisify(exec);
 
@@ -3435,6 +3441,18 @@ app.get('/api/health', (_req, res) => { res.json({ success: true, status: 'ok', 
 // Setup billing routes (5/5 billing system complete)
 setupBillingRoutes(app, db, requireAuth);
 
+// Phase 3: Monetization (marketplace commissions)
+setupMonetizationRoutes(app, db, requireAuth);
+
+// Phase 3: Tokenomics (FORGE token)
+setupTokenomicsRoutes(app, db, requireAuth);
+
+// Phase 4: Proprietary Router (data moat)
+setupRouterRoutes(app, db, requireAuth);
+
+// Phase 4: Vector Memory (AI differentiator)
+setupMemoryRoutes(app, db, requireAuth);
+
 // Feature 3: Advanced Analytics
 db.exec(`CREATE TABLE IF NOT EXISTS analytics (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, event TEXT NOT NULL, metadata TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
 app.post('/api/analytics/log', requireAuth, (req: AuthRequest, res) => {
@@ -3521,7 +3539,49 @@ app.post('/api/security/grant-role', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, message: `Granted ${role} to user` });
 });
 
-// Server startup
-app.listen(PORT, () => {
-  console.log(`Forge backend listening on port ${PORT} (${NODE_ENV})`);
+// Feature 11: Monitoring Alerts
+db.exec(`CREATE TABLE IF NOT EXISTS alerts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL, threshold REAL NOT NULL, webhook_url TEXT, enabled INTEGER DEFAULT 1, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
+app.post('/api/alerts/create', requireAuth, (req: AuthRequest, res) => {
+  const { name, threshold, webhook_url } = req.body;
+  if (!name || threshold === undefined) { res.status(400).json({ error: 'name and threshold required' }); return; }
+  const id = uuidv4();
+  db.prepare('INSERT INTO alerts (id,user_id,name,threshold,webhook_url) VALUES (?,?,?,?,?)').run(id, req.user!.sub, name, threshold, webhook_url||null);
+  res.status(201).json({ success: true, data: { id, name, threshold, enabled: 1 } });
+});
+app.get('/api/alerts/list', requireAuth, (req: AuthRequest, res) => {
+  const alerts = db.prepare('SELECT * FROM alerts WHERE user_id=?').all(req.user!.sub);
+  res.json({ success: true, data: alerts });
+});
+
+// Feature 12: Chrome Extension Sidebar
+app.post('/api/chrome/sidebar', requireAuth, (req: AuthRequest, res) => {
+  const { action } = req.body;
+  res.json({ success: true, data: { action, timestamp: new Date().toISOString() } });
+});
+
+// Feature 13: Webhook Signature Verification
+app.post('/api/webhooks/verify', requireAuth, (req: AuthRequest, res) => {
+  const crypto = require('crypto');
+  const { payload, signature, secret } = req.body;
+  const hash = crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
+  const valid = hash === signature;
+  res.json({ success: true, valid });
+});
+
+// Feature 14: Rate Limit Headers
+app.use(requireAuth, (req: AuthRequest, res, next) => {
+  const userId = req.user!.sub;
+  const limit = rateLimitMap.get(userId) || { count: 0, reset: Date.now() + 60000 };
+  res.setHeader('X-RateLimit-Limit', '100');
+  res.setHeader('X-RateLimit-Remaining', Math.max(0, 100 - limit.count));
+  res.setHeader('X-RateLimit-Reset', Math.ceil(limit.reset / 1000));
+  next();
+});
+
+// Server startup with Socket.IO
+const httpServer = http.createServer(app);
+const io = setupRealtime(httpServer);
+
+httpServer.listen(PORT, () => {
+  console.log(`Forge backend listening on port ${PORT} (${NODE_ENV}) — Socket.IO enabled`);
 });
