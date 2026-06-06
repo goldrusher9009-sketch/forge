@@ -20,6 +20,7 @@ import vm from 'vm';
 import { execFile, exec } from 'child_process';
 import { promisify } from 'util';
 import Database from 'better-sqlite3';
+import { setupBillingRoutes } from './billing';
 
 const execAsync = promisify(exec);
 
@@ -3431,7 +3432,10 @@ app.post('/api/webhooks/:id/fire', (req: AuthRequest, res) => {
 // M-bM-^TM-^@M-bM-^TM-^@ Health check M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@
 app.get('/api/health', (_req, res) => { res.json({ success: true, status: 'ok', env: NODE_ENV, time: new Date().toISOString() }); });
 
-// M-bM-^TM-^@M-bM-^TM-^@ Server startup M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@M-bM-^TM-^@
+// Setup billing routes (5/5 billing system complete)
+setupBillingRoutes(app, db, requireAuth);
+
+// Server startup
 app.listen(PORT, () => {
   console.log(`Forge backend listening on port ${PORT} (${NODE_ENV})`);
 });

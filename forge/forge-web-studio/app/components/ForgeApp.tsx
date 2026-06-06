@@ -527,7 +527,9 @@ export default function ForgeApp() {
   const [desktopBrowserCtx, setDesktopBrowserCtx] = useState<{ url: string; title: string; text: string } | null>(null);
 
   // Right panel tabs
-  const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>('tracker');
+  const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>(() => {
+    try { return (localStorage.getItem('forge_right_tab') as any) || 'tracker'; } catch { return 'tracker'; }
+  });
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -537,11 +539,19 @@ export default function ForgeApp() {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
-  const [rightExpanded, setRightExpanded] = useState(true);
+  const [rightExpanded, setRightExpanded] = useState(() => {
+    try { return localStorage.getItem('forge_right_expanded') !== 'false'; } catch { return true; }
+  });
   const [showOnboarding, setShowOnboarding] = useState(false);
   useEffect(() => {
     setShowOnboarding(localStorage.getItem('forge_onboarding_done') !== 'true');
   }, []);
+  useEffect(() => {
+    try { localStorage.setItem('forge_right_tab', rightTab); } catch {}
+  }, [rightTab]);
+  useEffect(() => {
+    try { localStorage.setItem('forge_right_expanded', rightExpanded ? 'true' : 'false'); } catch {}
+  }, [rightExpanded]);
 
   // Desktop app: load state + listen for browser events from Chrome extension
   useEffect(() => {
@@ -794,6 +804,7 @@ export default function ForgeApp() {
 
   // Skills & Tools state (must be top-level — not inside render IIFE)
   const [skillSearch, setSkillSearch] = useState('');
+  const [threadSearch, setThreadSearch] = useState('');
   const [skillCat, setSkillCat] = useState('All');
   const [activeSkills, setActiveSkills] = useState<Set<string>>(() => {
     try { const s = localStorage.getItem('forge_active_skills'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
@@ -2395,9 +2406,10 @@ export default function ForgeApp() {
 
             <div style={{ padding:'12px 12px 4px', flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
               <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 8px' }}>{activeProject ? activeProject.name : 'Recent'}</p>
+              <input value={threadSearch} onChange={e => setThreadSearch(e.target.value)} placeholder="🔍 Search threads..." style={{ flex:'0 0 auto', marginBottom:8, padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, outline:'none' }} />
               <div style={{ flex:1, overflowY:'auto' }}>
                 {/* Pinned threads first */}
-                {threads.filter(t => t.pinned && !t.archived).map(t => (
+                {threads.filter(t => t.pinned && !t.archived && t.title.toLowerCase().includes(threadSearch.toLowerCase())).map(t => (
                   <div key={t.id} style={{ position:'relative' }}
                     onContextMenu={e => { e.preventDefault(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }}>
                     <div onClick={() => selectThread(t)}
@@ -2429,7 +2441,7 @@ export default function ForgeApp() {
                 ))}
                 {/* Grouped threads — Today / Yesterday / This week / Older */}
                 {(() => {
-                  const unpinned = threads.filter(t => !t.pinned && !t.archived);
+                  const unpinned = threads.filter(t => !t.pinned && !t.archived && t.title.toLowerCase().includes(threadSearch.toLowerCase()));
                   const now = new Date(); const today = now.toDateString();
                   const yesterday = new Date(now.getTime()-86400000).toDateString();
                   const weekAgo = new Date(now.getTime()-7*86400000);
@@ -2776,14 +2788,28 @@ export default function ForgeApp() {
                 {/* Messages canvas */}
                 <div onScroll={e=>{const el=e.currentTarget;const b=el.scrollHeight-el.scrollTop-el.clientHeight<80;setShowScrollDown(!b);setUserScrolledUp(!b);}} style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
                   {messages.length === 0 && !activeThread && (
-                    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
-                      <div style={{ fontSize:48 }}>⚡</div>
-                      <h2 style={{ color:'var(--fg-text)', margin:0, fontSize:24, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.5px' }}>What do you want to build?</h2>
-                      <p style={{ color:'var(--fg-text3)', margin:0, textAlign:'center', maxWidth:400 }}>Start a conversation, pick a project, or dispatch an agent to work on your next big idea.</p>
-                      <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center', marginTop:8 }}>
+                    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20 }}>
+                      <div style={{ fontSize:56 }}>⚡</div>
+                      <h1 style={{ color:'var(--fg-text)', margin:0, fontSize:28, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.6px' }}>What do you want to build?</h1>
+                      <p style={{ color:'var(--fg-text3)', margin:0, textAlign:'center', maxWidth:480, fontSize:14, lineHeight:1.5 }}>Start a conversation, dispatch an agent, or explore your tools and skills.</p>
+                      <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center', marginTop:12 }}>
                         {['Write a React component','Research a topic','Build an API endpoint','Create a deployment plan'].map(s => (
-                          <button key={s} onClick={() => { setInput(s); textareaRef.current?.focus(); }} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:20, color:'var(--fg-text2)', fontSize:13, cursor:'pointer' }}>{s}</button>
+                          <button key={s} onClick={() => { setInput(s); textareaRef.current?.focus(); }} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:20, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.background='var(--fg-bg3)';(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border3)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.background='var(--fg-bg4)';(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';}}>{s}</button>
                         ))}
+                      </div>
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginTop:24, maxWidth:540 }}>
+                        <button onClick={() => { newThread(); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
+                          <span style={{ fontSize:28 }}>💬</span>
+                          <span style={{ fontSize:12, fontWeight:600 }}>New Thread</span>
+                        </button>
+                        <button onClick={() => { setMainTab('agents'); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
+                          <span style={{ fontSize:28 }}>🤖</span>
+                          <span style={{ fontSize:12, fontWeight:600 }}>Agents</span>
+                        </button>
+                        <button onClick={() => { setMainTab('skills'); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
+                          <span style={{ fontSize:28 }}>🛠</span>
+                          <span style={{ fontSize:12, fontWeight:600 }}>Skills</span>
+                        </button>
                       </div>
                     </div>
                   )}
@@ -3314,6 +3340,8 @@ export default function ForgeApp() {
                       rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
+                        {/* Slash command button */}
+                        <button onClick={() => { setSlashOpen(true); textareaRef.current?.focus(); }} title="Commands" style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:'5px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', cursor:'pointer', fontSize:14, fontWeight:700 }}>/</button>
                         {/* Voice button */}
                         <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background:voiceActive ? 'var(--fg-orange)' : 'var(--fg-odim)', border:`1px solid ${voiceActive ? 'var(--fg-orange2)' : 'var(--fg-odim2)'}`, borderRadius:8, color:voiceActive ? '#fff' : 'var(--fg-orange2)', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>🎤 {voiceActive ? '● Rec' : 'Voice'}</button>
                         {/* Attach file */}
@@ -6378,6 +6406,73 @@ export default function ForgeApp() {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── MVP Builder ─────────────────────────────────────────────── */}
+        {mainTab === 'mvp' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:800, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:40 }}>🏗️</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:24, fontWeight:800, color:'var(--fg-text)' }}>MVP Builder</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Scope, spec, and build a working MVP in hours. From idea to roadmap.</p>
+                </div>
+              </div>
+              {!mvpResult ? (
+                <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                  <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                    <label style={{ display:'block', fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:8 }}>💡 What's your MVP idea?</label>
+                    <textarea value={mvpIdea} onChange={e => setMvpIdea(e.target.value)} placeholder="E.g., An AI-powered note-taking app that auto-summarizes meetings..." style={{ width:'100%', minHeight:80, padding:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                      <label style={{ display:'block', fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>🏢 Industry</label>
+                      <input value={mvpIndustry} onChange={e => setMvpIndustry(e.target.value)} placeholder="E.g., Productivity, FinTech, Healthcare..." style={{ width:'100%', padding:10, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} />
+                    </div>
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                      <label style={{ display:'block', fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>👥 Target User</label>
+                      <input value={mvpTarget} onChange={e => setMvpTarget(e.target.value)} placeholder="E.g., Remote workers, small businesses..." style={{ width:'100%', padding:10, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} />
+                    </div>
+                  </div>
+                  <button onClick={async () => {
+                    if (!mvpIdea.trim() || !mvpIndustry.trim() || !mvpTarget.trim()) return;
+                    setMvpBuilding(true);
+                    try {
+                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: `You are an MVP builder. Design a spec for: Idea: ${mvpIdea}\nIndustry: ${mvpIndustry}\nTarget User: ${mvpTarget}\n\nProvide: 1) Technical spec (stack, key features), 2) 90-day roadmap (3 milestones), 3) One-paragraph pitch. Format as JSON: {spec, stack, roadmap, pitch}`}], model: 'claude-3-5-sonnet-20241022' }) }, user?.token);
+                      const content = d?.choices?.[0]?.message?.content || '';
+                      try { const j = JSON.parse(content); setMvpResult(j); } catch { setMvpResult({spec:content, stack:'',roadmap:'',pitch:''}); }
+                    } catch (e) { console.error(e); }
+                    setMvpBuilding(false);
+                  }} disabled={!mvpIdea.trim() || !mvpIndustry.trim() || !mvpTarget.trim() || mvpBuilding} style={{ padding:'12px 20px', background: mvpBuilding ? 'rgba(255,31,53,0.2)' : 'var(--fg-btn-grad)', border:'none', borderRadius:8, color:'#fff', cursor:mvpBuilding?'default':'pointer', fontSize:14, fontWeight:700, transition:'all 0.18s' }}>
+                    {mvpBuilding ? '🔄 Generating...' : '✨ Generate Spec'}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                  <div style={{ background:'rgba(255,31,53,0.05)', border:'1px solid var(--fg-orange)', borderRadius:12, padding:20 }}>
+                    <h2 style={{ margin:'0 0 12px', fontSize:16, fontWeight:800, color:'var(--fg-orange)' }}>🎯 {mvpResult.pitch?.slice(0,60)}...</h2>
+                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', lineHeight:1.6 }}>{mvpResult.pitch}</p>
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                      <h3 style={{ margin:'0 0 10px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>💻 Tech Stack</h3>
+                      <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', lineHeight:1.5 }}>{mvpResult.stack}</p>
+                    </div>
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                      <h3 style={{ margin:'0 0 10px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>📋 Spec</h3>
+                      <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', lineHeight:1.5 }}>{mvpResult.spec?.slice(0,200)}...</p>
+                    </div>
+                  </div>
+                  <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                    <h3 style={{ margin:'0 0 10px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🗓️ 90-Day Roadmap</h3>
+                    <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{mvpResult.roadmap}</p>
+                  </div>
+                  <button onClick={() => setMvpResult(null)} style={{ padding:'10px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight:600 }}>← Start Over</button>
                 </div>
               )}
             </div>
