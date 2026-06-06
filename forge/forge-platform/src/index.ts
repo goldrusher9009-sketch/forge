@@ -34,6 +34,9 @@ import { setupGovernance } from './governance';
 import { setupEnterprise } from './enterprise';
 import { setupWhiteLabel } from './whitelabel';
 import { setupMetering } from './metering';
+import { setupPromptCache } from './prompt-cache';
+import { setupBatchJobs } from './batch-jobs';
+import { setupMultiModelInference } from './multi-model';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -3485,6 +3488,15 @@ setupWhiteLabel(app, db, requireAuth);
 
 // Phase 5: Usage-Based Metering + Billing
 setupMetering(app, db, requireAuth);
+
+// Phase 6: Prompt Caching + Optimization
+setupPromptCache(app, db, requireAuth);
+
+// Phase 6: Batch Processing + Async Jobs
+setupBatchJobs(app, db, requireAuth);
+
+// Phase 6: Multi-Model Inference + Cost Optimization
+setupMultiModelInference(app, db, requireAuth);
 
 // Feature 3: Advanced Analytics
 db.exec(`CREATE TABLE IF NOT EXISTS analytics (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, event TEXT NOT NULL, metadata TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
