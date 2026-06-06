@@ -28,6 +28,9 @@ import { setupMemoryRoutes } from './memory';
 import { setupRealtime } from './realtime';
 import { setupAlertWorker } from './alerts';
 import { setupWebhookRetry, setupWebhookLogging } from './webhooks';
+import { setupGenesisBuilder } from './genesis';
+import { setupAgentHarness } from './harness';
+import { setupGovernance } from './governance';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -3461,6 +3464,15 @@ setupAlertWorker(db);
 // Phase 2 Completion: Webhook Retry + Logging
 setupWebhookRetry(db);
 setupWebhookLogging(app, db, requireAuth);
+
+// Vision Feature: Genesis App Builder (one-prompt-to-app)
+setupGenesisBuilder(app, db, requireAuth);
+
+// Vision Feature: Agent Harness (40 tools + DAG)
+setupAgentHarness(app, db, requireAuth);
+
+// Vision Feature: Governance (community voting)
+setupGovernance(app, db, requireAuth);
 
 // Feature 3: Advanced Analytics
 db.exec(`CREATE TABLE IF NOT EXISTS analytics (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, event TEXT NOT NULL, metadata TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);

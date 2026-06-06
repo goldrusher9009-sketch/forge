@@ -6,6 +6,7 @@ import { BillingPage } from './BillingPage';
 import { TeamDashboard } from './TeamDashboard';
 import { MarketplaceDetail } from './MarketplaceDetail';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
+import { StakingPage } from './StakingPage';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
@@ -522,7 +523,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'team'|'analytics'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'team'|'analytics'|'staking'|'governance'>('workspace');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -2357,6 +2358,8 @@ export default function ForgeApp() {
             { id:'billing', icon:'💳', label:'Billing' },
             { id:'team', icon:'👥', label:'Team' },
             { id:'analytics', icon:'📊', label:'Analytics' },
+            { id:'staking', icon:'💎', label:'Staking' },
+            { id:'governance', icon:'🗳️', label:'Governance' },
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🐝', label:'Agent Swarm' },
             { id:'files', icon:'📁', label:'Files' },
@@ -6527,6 +6530,22 @@ export default function ForgeApp() {
         {/* ── Analytics Dashboard ───────────────────────────────────── */}
         {mainTab === 'analytics' && (
           <AnalyticsDashboard />
+        )}
+
+        {/* ── Staking Page ──────────────────────────────────────────── */}
+        {mainTab === 'staking' && (
+          <StakingPage />
+        )}
+
+        {/* ── Governance (placeholder) ──────────────────────────────── */}
+        {mainTab === 'governance' && (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '28px', background: 'var(--fg-bg)' }}>
+            <h1>🗳️ Governance</h1>
+            <div style={{ background: 'var(--fg-bg3)', border: '1px solid var(--fg-border2)', borderRadius: '12px', padding: '24px' }}>
+              <h2 style={{ marginBottom: '16px' }}>Active Proposals</h2>
+              <p style={{ color: 'var(--fg-text2)' }}>Voting powered by staked FORGE tokens. Earn governance rewards.</p>
+            </div>
+          </div>
         )}
 
         {/* ── ForgeMulti ────────────────────────────────────────────── */}
