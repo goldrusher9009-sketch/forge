@@ -2,6 +2,10 @@
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { OnboardingFlow } from './OnboardingFlow';
+import { BillingPage } from './BillingPage';
+import { TeamDashboard } from './TeamDashboard';
+import { MarketplaceDetail } from './MarketplaceDetail';
+import { AnalyticsDashboard } from './AnalyticsDashboard';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
@@ -518,7 +522,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'team'|'analytics'>('workspace');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -2350,6 +2354,9 @@ export default function ForgeApp() {
             { id:'forgeasi', icon:'🌌', label:'ForgeASI' },
             { id:'mvp', icon:'🏗️', label:'MVP Builder' },
             { id:'marketplace', icon:'🛍️', label:'Marketplace' },
+            { id:'billing', icon:'💳', label:'Billing' },
+            { id:'team', icon:'👥', label:'Team' },
+            { id:'analytics', icon:'📊', label:'Analytics' },
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🐝', label:'Agent Swarm' },
             { id:'files', icon:'📁', label:'Files' },
@@ -2369,7 +2376,6 @@ export default function ForgeApp() {
           {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>System</div>}
           {([
             { id:'platforms', icon:'🌐', label:'Platforms' },
-            { id:'billing', icon:'💳', label:'Billing' },
             { id:'settings', icon:'⚙️', label:'Settings' },
             ...(user.role==='admin' ? [{ id:'admin', icon:'🛡️', label:'Admin' }] : []),
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
@@ -6478,6 +6484,49 @@ export default function ForgeApp() {
               )}
             </div>
           </div>
+        )}
+
+        {/* ── Onboarding Tour ───────────────────────────────────────── */}
+        {showOnboarding && (
+          <OnboardingFlow
+            onComplete={({ orgName, teamSize, providers }) => {
+              localStorage.setItem('forge_onboarding_done', 'true');
+              setShowOnboarding(false);
+              showToast(`✅ Welcome to Forge, ${orgName}!`);
+            }}
+          />
+        )}
+
+        {/* ── Billing Page ──────────────────────────────────────────── */}
+        {mainTab === 'billing' && (
+          <BillingPage />
+        )}
+
+        {/* ── Team Dashboard ────────────────────────────────────────── */}
+        {mainTab === 'team' && (
+          <TeamDashboard />
+        )}
+
+        {/* ── Marketplace Detail ────────────────────────────────────── */}
+        {mainTab === 'marketplace' && (
+          <MarketplaceDetail
+            product={{
+              id: '1',
+              name: 'Chat Widget',
+              price: '$49/mo',
+              rating: 4.8,
+              reviews: 142,
+              description: 'Advanced chat component with real-time sync',
+              screenshots: ['1', '2', '3'],
+              creator: 'Forge Team'
+            }}
+            onInstall={() => showToast('✅ Installed!')}
+          />
+        )}
+
+        {/* ── Analytics Dashboard ───────────────────────────────────── */}
+        {mainTab === 'analytics' && (
+          <AnalyticsDashboard />
         )}
 
         {/* ── ForgeMulti ────────────────────────────────────────────── */}
