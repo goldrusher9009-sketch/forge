@@ -1,6 +1,7 @@
 // Forge AI Workspace v6.62 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { OnboardingFlow } from './OnboardingFlow';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
@@ -537,6 +538,10 @@ export default function ForgeApp() {
     return () => window.removeEventListener('resize', check);
   }, []);
   const [rightExpanded, setRightExpanded] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  useEffect(() => {
+    setShowOnboarding(localStorage.getItem('forge_onboarding_done') !== 'true');
+  }, []);
 
   // Desktop app: load state + listen for browser events from Chrome extension
   useEffect(() => {
@@ -2280,6 +2285,8 @@ export default function ForgeApp() {
     <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden', position:'relative' }} onClick={() => { setThreadMenu(null); setProjectMenu(null); if(isMobile) setMobileDrawerOpen(false); }}>
 
       {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:9999, padding:'12px 24px', borderRadius:12, background: toast.type==='err' ? '#ef4444' : toast.type==='info' ? 'var(--fg-bg3)' : '#16a34a', color:'#fff', fontSize:14, fontWeight:600, boxShadow:'0 4px 24px rgba(0,0,0,0.5)', maxWidth:440, textAlign:'center', pointerEvents:'none', animation:'forge-flash 0.2s ease' }}>{toast.msg}</div>}
+
+      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); }} onSelectPrompt={(p) => { setInput(p); }} hasKeys={vaultKeys.length > 0} />}
 
       {/* Mobile overlay */}
       {isMobile && mobileDrawerOpen && <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:98 }} onClick={() => setMobileDrawerOpen(false)} />}
