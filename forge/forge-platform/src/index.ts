@@ -44,6 +44,8 @@ import { setupContextManager } from './context-manager';
 import { setupReplySuggestions } from './reply-suggestions';
 import { setupAdvancedAnalytics } from './advanced-analytics';
 import { setupRetentionAnalytics } from './retention-analytics';
+import { setupPerformance } from './performance';
+import { setupRateLimiting } from './rate-limiting';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -398,6 +400,12 @@ setupAdvancedAnalytics(app, db, requireAuth);
 
 // ── Phase 9: Retention Analytics ──────────────────────────────
 setupRetentionAnalytics(app, db, requireAuth);
+
+// ── Phase 10: Performance & Caching ────────────────────────────
+setupPerformance(app, db, requireAuth);
+
+// ── Phase 10: Rate Limiting ────────────────────────────────────
+setupRateLimiting(app, db);
 
 // ── Start Server ──────────────────────────────────────────────
 server.listen(PORT, () => {
