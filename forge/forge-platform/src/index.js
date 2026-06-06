@@ -1,34 +1,33 @@
 /**
  * Forge Platform v6.80 — PRODUCTION
- * Dynamic LLM routing: use user's provided key for selected provider
- * Supports: Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter (400+ models)
+ * Vanilla JavaScript, zero build step, dynamic LLM routing
  */
 
-import 'dotenv/config';
-import express, { Request, Response } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import cookieParser from 'cookie-parser';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'forge-dev-secret';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://forge-sand-two.vercel.app';
 
 // In-memory store
 const store = {
-  users: new Map<string, any>(),
-  apiKeys: new Map<string, any>(),
-  threads: new Map<string, any>(),
-  messages: new Map<string, any>(),
+  users: new Map(),
+  apiKeys: new Map(),
+  threads: new Map(),
+  messages: new Map(),
 };
 
 // Decrypt helper
-function decrypt(encrypted: string, secret: string): string {
+function decrypt(encrypted, secret) {
   const decipher = crypto.createDecipher('aes-256-cbc', secret);
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
@@ -36,7 +35,7 @@ function decrypt(encrypted: string, secret: string): string {
 }
 
 // Encrypt helper
-function encrypt(text: string, secret: string): string {
+function encrypt(text, secret) {
   const cipher = crypto.createCipher('aes-256-cbc', secret);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -44,11 +43,11 @@ function encrypt(text: string, secret: string): string {
 }
 
 // Auth middleware
-const requireAuth = (req: any, res: any, next: any) => {
+const requireAuth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'UNAUTHORIZED' });
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = { sub: decoded.sub };
     next();
   } catch (e) {
@@ -68,7 +67,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: 'v6.80', timestamp: new Date().toISOString() }));
 
 // ===== AUTH =====
-app.post('/api/auth/register', async (req: any, res) => {
+app.post('/api/auth/register', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'EMAIL_PASSWORD_REQUIRED' });
   if (store.users.has(email)) return res.status(409).json({ error: 'USER_EXISTS' });
@@ -90,7 +89,7 @@ app.post('/api/auth/register', async (req: any, res) => {
   });
 });
 
-app.post('/api/auth/login', async (req: any, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   const user = Array.from(store.users.values()).find((u) => u.email === email);
   if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -101,14 +100,14 @@ app.post('/api/auth/login', async (req: any, res) => {
   res.json({ success: true, access_token: token, user: { id: user.id, email } });
 });
 
-app.get('/api/profile', requireAuth, (req: any, res) => {
+app.get('/api/profile', requireAuth, (req, res) => {
   const user = Array.from(store.users.values()).find((u) => u.id === req.user.sub);
   if (!user) return res.status(404).json({ error: 'NOT_FOUND' });
   res.json({ success: true, data: user });
 });
 
 // ===== API KEYS =====
-app.post('/api/keys', requireAuth, (req: any, res) => {
+app.post('/api/keys', requireAuth, (req, res) => {
   const { provider, key, model } = req.body;
   if (!provider || !key) return res.status(400).json({ error: 'PROVIDER_KEY_REQUIRED' });
 
@@ -132,7 +131,7 @@ app.post('/api/keys', requireAuth, (req: any, res) => {
   });
 });
 
-app.get('/api/keys', requireAuth, (req: any, res) => {
+app.get('/api/keys', requireAuth, (req, res) => {
   const keys = Array.from(store.apiKeys.values()).filter((k) => k.user_id === req.user.sub);
   const providers = new Set(keys.map((k) => k.provider));
 
@@ -149,7 +148,7 @@ app.get('/api/keys', requireAuth, (req: any, res) => {
 });
 
 // ===== THREADS =====
-app.post('/api/threads', requireAuth, (req: any, res) => {
+app.post('/api/threads', requireAuth, (req, res) => {
   const { title } = req.body;
   const threadId = uuidv4();
   store.threads.set(threadId, {
@@ -165,19 +164,19 @@ app.post('/api/threads', requireAuth, (req: any, res) => {
   });
 });
 
-app.get('/api/threads', requireAuth, (req: any, res) => {
+app.get('/api/threads', requireAuth, (req, res) => {
   const threads = Array.from(store.threads.values()).filter((t) => t.user_id === req.user.sub);
   res.json({ success: true, data: threads });
 });
 
-app.get('/api/threads/:id', requireAuth, (req: any, res) => {
+app.get('/api/threads/:id', requireAuth, (req, res) => {
   const thread = store.threads.get(req.params.id);
   if (!thread || thread.user_id !== req.user.sub) return res.status(404).json({ error: 'NOT_FOUND' });
   res.json({ success: true, data: thread });
 });
 
 // ===== MESSAGES & LLM ROUTING =====
-app.post('/api/threads/:id/chat', requireAuth, async (req: any, res) => {
+app.post('/api/threads/:id/chat', requireAuth, async (req, res) => {
   const { message, provider, model } = req.body;
   const threadId = req.params.id;
 
@@ -311,7 +310,7 @@ app.post('/api/threads/:id/chat', requireAuth, async (req: any, res) => {
     } else {
       response = `[Unknown provider: ${provider}]`;
     }
-  } catch (e: any) {
+  } catch (e) {
     response = `[LLM Error: ${e.message}]`;
   }
 
@@ -332,7 +331,7 @@ app.post('/api/threads/:id/chat', requireAuth, async (req: any, res) => {
   res.end();
 });
 
-app.get('/api/threads/:id/messages', requireAuth, (req: any, res) => {
+app.get('/api/threads/:id/messages', requireAuth, (req, res) => {
   const thread = store.threads.get(req.params.id);
   if (!thread || thread.user_id !== req.user.sub) return res.status(404).json({ error: 'NOT_FOUND' });
 
@@ -353,8 +352,7 @@ app.get('/api/launch/readiness', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Forge v6.80 deployed on port ${PORT}`);
+  console.log(`🚀 Forge v6.80 LIVE on port ${PORT}`);
   console.log(`📍 Frontend: ${FRONTEND_URL}`);
-  console.log(`✅ LLM Routing: Use user's selected provider + API key`);
-  console.log(`✅ Supported: Anthropic | OpenAI | Gemini | Groq | Mistral | OpenRouter`);
+  console.log(`✅ Dynamic LLM Routing: Anthropic | OpenAI | Gemini | Groq | Mistral | OpenRouter`);
 });
