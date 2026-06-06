@@ -1,7 +1,6 @@
 // Forge AI Workspace v6.62 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { OnboardingFlow } from './OnboardingFlow';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
@@ -513,14 +512,6 @@ export default function ForgeApp() {
   const showToast = (msg: string, type: 'ok'|'err'|'info' = 'ok') => { setToast({msg,type}); setTimeout(()=>setToast(null), 3500); };
   const [openRouterModels, setOpenRouterModels] = useState<{id:string;name:string;context_length?:number;pricing?:{prompt:string;completion:string}}[]>([]);
 
-  // Onboarding
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  useEffect(() => {
-    if (typeof window !== 'undefined' && threads.length === 0 && !localStorage.getItem('forge_onboarding_done')) {
-      setShowOnboarding(true);
-    }
-  }, []);
-
   // Selection
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
@@ -534,18 +525,8 @@ export default function ForgeApp() {
   const [desktopMemory, setDesktopMemory] = useState<Record<string, any>>({});
   const [desktopBrowserCtx, setDesktopBrowserCtx] = useState<{ url: string; title: string; text: string } | null>(null);
 
-  // Right panel tabs — persist across navigation
-  const [rightTab, setRightTabState] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('forge_rightTab');
-      return (saved as any) || 'tracker';
-    }
-    return 'tracker';
-  });
-  const setRightTab = (tab: any) => {
-    setRightTabState(tab);
-    if (typeof window !== 'undefined') localStorage.setItem('forge_rightTab', tab);
-  };
+  // Right panel tabs
+  const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>('tracker');
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -556,12 +537,6 @@ export default function ForgeApp() {
     return () => window.removeEventListener('resize', check);
   }, []);
   const [rightExpanded, setRightExpanded] = useState(true);
-  const [threadSearchQuery, setThreadSearchQuery] = useState('');
-
-  // Filter threads by search query
-  const filteredThreads = threadSearchQuery.trim() === ''
-    ? threads
-    : threads.filter(t => t.name.toLowerCase().includes(threadSearchQuery.toLowerCase()));
 
   // Desktop app: load state + listen for browser events from Chrome extension
   useEffect(() => {
@@ -2304,21 +2279,6 @@ export default function ForgeApp() {
   return (
     <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden', position:'relative' }} onClick={() => { setThreadMenu(null); setProjectMenu(null); if(isMobile) setMobileDrawerOpen(false); }}>
 
-      {showOnboarding && (
-        <OnboardingFlow
-          onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); }}
-          onSelectPrompt={(prompt) => {
-            if (!activeThread) {
-              const newThread: Thread = { id: Date.now().toString(), name: 'New conversation', messages: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-              setThreads(t => [...t, newThread]);
-              setActiveThread(newThread);
-            }
-            setComposerInput(prompt + ' ');
-          }}
-          hasKeys={hasAnyKeys}
-        />
-      )}
-
       {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:9999, padding:'12px 24px', borderRadius:12, background: toast.type==='err' ? '#ef4444' : toast.type==='info' ? 'var(--fg-bg3)' : '#16a34a', color:'#fff', fontSize:14, fontWeight:600, boxShadow:'0 4px 24px rgba(0,0,0,0.5)', maxWidth:440, textAlign:'center', pointerEvents:'none', animation:'forge-flash 0.2s ease' }}>{toast.msg}</div>}
 
       {/* Mobile overlay */}
@@ -2428,13 +2388,6 @@ export default function ForgeApp() {
 
             <div style={{ padding:'12px 12px 4px', flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
               <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 8px' }}>{activeProject ? activeProject.name : 'Recent'}</p>
-              {threads.length > 3 && (
-                <input value={threadSearchQuery} onChange={e => setThreadSearchQuery(e.target.value)}
-                  placeholder="Search threads…" style={{
-                    width:'100%', padding:'6px 8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6,
-                    color:'var(--fg-text)', fontSize:12, marginBottom:8, outline:'none', boxSizing:'border-box'
-                  }} />
-              )}
               <div style={{ flex:1, overflowY:'auto' }}>
                 {/* Pinned threads first */}
                 {threads.filter(t => t.pinned && !t.archived).map(t => (
@@ -2469,7 +2422,7 @@ export default function ForgeApp() {
                 ))}
                 {/* Grouped threads — Today / Yesterday / This week / Older */}
                 {(() => {
-                  const unpinned = filteredThreads.filter(t => !t.pinned && !t.archived);
+                  const unpinned = threads.filter(t => !t.pinned && !t.archived);
                   const now = new Date(); const today = now.toDateString();
                   const yesterday = new Date(now.getTime()-86400000).toDateString();
                   const weekAgo = new Date(now.getTime()-7*86400000);
@@ -2536,7 +2489,7 @@ export default function ForgeApp() {
                     </>
                   );
                 })()}
-                {filteredThreads.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, padding:'4px 8px' }}>{threadSearchQuery ? 'No matches' : 'No conversations yet'}</p>}
+                {threads.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, padding:'4px 8px' }}>No conversations yet</p>}
               </div>
             </div>
 
@@ -2816,29 +2769,13 @@ export default function ForgeApp() {
                 {/* Messages canvas */}
                 <div onScroll={e=>{const el=e.currentTarget;const b=el.scrollHeight-el.scrollTop-el.clientHeight<80;setShowScrollDown(!b);setUserScrolledUp(!b);}} style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
                   {messages.length === 0 && !activeThread && (
-                    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:24, padding:'40px 20px' }}>
-                      <div style={{ fontSize:56 }}>✨</div>
-                      <div style={{ textAlign:'center' }}>
-                        <h2 style={{ color:'var(--fg-text)', margin:'0 0 8px 0', fontSize:26, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.5px' }}>What do you want to build?</h2>
-                        <p style={{ color:'var(--fg-text3)', margin:0, fontSize:14, maxWidth:420, lineHeight:1.6 }}>Start a new conversation or pick a starter prompt to jump in.</p>
-                      </div>
-                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:12, width:'100%', maxWidth:600 }}>
-                        {[
-                          { emoji:'🔍', title:'Research', desc:'Deep dive into a topic' },
-                          { emoji:'💻', title:'Code', desc:'Write or debug code' },
-                          { emoji:'✍️', title:'Write', desc:'Draft or refine text' },
-                          { emoji:'📊', title:'Analyze', desc:'Break down data' }
-                        ].map(p => (
-                          <button key={p.title} onClick={() => { setInput(p.title + ': '); textareaRef.current?.focus(); }} style={{
-                            padding:16, background:'rgba(255,31,53,0.06)', border:'1px solid var(--fg-border)', borderRadius:10,
-                            color:'var(--fg-text)', cursor:'pointer', transition:'all 0.2s ease', textAlign:'center'
-                          }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,31,53,0.12)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,31,53,0.38)'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,31,53,0.06)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--fg-border)'; }}>
-                            <div style={{ fontSize:28, marginBottom:6 }}>{p.emoji}</div>
-                            <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{p.title}</div>
-                            <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{p.desc}</div>
-                          </button>
+                    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
+                      <div style={{ fontSize:48 }}>⚡</div>
+                      <h2 style={{ color:'var(--fg-text)', margin:0, fontSize:24, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.5px' }}>What do you want to build?</h2>
+                      <p style={{ color:'var(--fg-text3)', margin:0, textAlign:'center', maxWidth:400 }}>Start a conversation, pick a project, or dispatch an agent to work on your next big idea.</p>
+                      <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center', marginTop:8 }}>
+                        {['Write a React component','Research a topic','Build an API endpoint','Create a deployment plan'].map(s => (
+                          <button key={s} onClick={() => { setInput(s); textareaRef.current?.focus(); }} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:20, color:'var(--fg-text2)', fontSize:13, cursor:'pointer' }}>{s}</button>
                         ))}
                       </div>
                     </div>
@@ -3370,10 +3307,6 @@ export default function ForgeApp() {
                       rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
-                        {/* Slash commands button */}
-                        <button onClick={() => { setInput(prev => prev + '/'); setSlashOpen(true); textareaRef.current?.focus(); }} title="Slash commands (Agents, Skills, Actions)" style={{ display:'flex', alignItems:'center', gap:3, padding:'5px 9px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight:600, transition:'all 0.15s' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--fg-bg5)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--fg-border3)'; (e.currentTarget as HTMLElement).style.color = 'var(--fg-orange)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--fg-bg4)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--fg-border2)'; (e.currentTarget as HTMLElement).style.color = 'var(--fg-text2)'; }}>/</button>
                         {/* Voice button */}
                         <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background:voiceActive ? 'var(--fg-orange)' : 'var(--fg-odim)', border:`1px solid ${voiceActive ? 'var(--fg-orange2)' : 'var(--fg-odim2)'}`, borderRadius:8, color:voiceActive ? '#fff' : 'var(--fg-orange2)', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>🎤 {voiceActive ? '● Rec' : 'Voice'}</button>
                         {/* Attach file */}
@@ -6694,39 +6627,6 @@ export default function ForgeApp() {
                     const extract = (label: string) => { const m = raw.match(new RegExp(`## ${label}\\n([\\s\\S]*?)(?=\\n## |$)`)); return m?.[1]?.trim() || ''; };
                     setMvpResult({ spec: extract('SPEC'), stack: extract('STACK'), roadmap: extract('ROADMAP'), pitch: extract('PITCH') });
                   } catch(e:any) { showToast('Error: '+String(e?.message||e),'err'); }
-                  finally { setMvpBuilding(false); }
-                }} style={{ ...btnPrimaryStyle, marginBottom:16 }} disabled={mvpBuilding}>
-                  {mvpBuilding ? '⏳ Building...' : '🚀 Generate MVP Blueprint'}
-                </button>
-                {mvpBuilding && <div style={{ display:'flex', alignItems:'center', gap:8, color:'var(--fg-text3)', fontSize:13 }}><div style={{ animation:'pulse 1s infinite' }}>●</div>Analyzing your idea…</div>}
-                {mvpResult && (
-                  <div style={{ marginTop:20, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
-                    <div style={{ marginBottom:16 }}>
-                      <h3 style={{ margin:'0 0 8px 0', color:'#60a5fa' }}>📋 Specification</h3>
-                      <div style={{ fontSize:13, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.6 }}>{mvpResult.spec}</div>
-                    </div>
-                    <div style={{ marginBottom:16 }}>
-                      <h3 style={{ margin:'0 0 8px 0', color:'#2ed18a' }}>🛠️ Tech Stack</h3>
-                      <div style={{ fontSize:13, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.6 }}>{mvpResult.stack}</div>
-                    </div>
-                    <div style={{ marginBottom:16 }}>
-                      <h3 style={{ margin:'0 0 8px 0', color:'#a78bfa' }}>🗓️ 8-Week Roadmap</h3>
-                      <div style={{ fontSize:13, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.6 }}>{mvpResult.roadmap}</div>
-                    </div>
-                    <div>
-                      <h3 style={{ margin:'0 0 8px 0', color:'#ff1f35' }}>💼 Investor Pitch</h3>
-                      <div style={{ fontSize:13, color:'var(--fg-text)', fontStyle:'italic', lineHeight:1.6 }}>{mvpResult.pitch}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
                   setMvpBuilding(false);
                 }} disabled={mvpBuilding || !mvpIdea.trim()}
                   style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(mvpBuilding||!mvpIdea.trim())?0.5:1 }}>
