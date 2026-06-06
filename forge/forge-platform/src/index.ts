@@ -39,6 +39,9 @@ import { setupMultiModelInference } from './multi-model';
 import { setupZKP } from './zkp';
 import { setupCompliance } from './compliance';
 import { setupDocGen } from './doc-gen';
+import { setupPersonas } from './personas';
+import { setupContextManager } from './context-manager';
+import { setupReplySuggestions } from './reply-suggestions';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -378,6 +381,15 @@ setupCompliance(app, db, requireAuth);
 
 // ── Phase 7: Documentation Generation ────────────────────────
 setupDocGen(app, db, requireAuth);
+
+// ── Phase 8: Chat Personas ────────────────────────────────────
+setupPersonas(app, db, requireAuth);
+
+// ── Phase 8: Context Management ───────────────────────────────
+setupContextManager(app, db, requireAuth);
+
+// ── Phase 8: Reply Suggestions ────────────────────────────────
+setupReplySuggestions(app, db, requireAuth);
 
 // ── Start Server ──────────────────────────────────────────────
 server.listen(PORT, () => {
