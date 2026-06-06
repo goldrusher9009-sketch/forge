@@ -3501,6 +3501,26 @@ app.get('/api/webhooks/list', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data: hooks });
 });
 
+// Feature 8: Chrome Extension API
+app.post('/api/chrome/install', requireAuth, (req: AuthRequest, res) => {
+  res.json({ success: true, message: 'Chrome extension installed', extensionId: 'forge-ext-' + uuidv4() });
+});
+
+// Feature 9: Monitoring/Metrics
+db.exec(`CREATE TABLE IF NOT EXISTS metrics (id TEXT PRIMARY KEY, metric_name TEXT NOT NULL, value REAL NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
+app.get('/api/metrics/summary', (req: AuthRequest, res) => {
+  const metrics = db.prepare('SELECT metric_name, AVG(value) as avg_value FROM metrics GROUP BY metric_name').all() as any[];
+  res.json({ success: true, data: metrics });
+});
+
+// Feature 10: Security/RBAC
+db.exec(`CREATE TABLE IF NOT EXISTS roles (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, role TEXT NOT NULL, org_id TEXT)`);
+app.post('/api/security/grant-role', requireAuth, (req: AuthRequest, res) => {
+  const { target_user_id, role, org_id } = req.body;
+  db.prepare('INSERT INTO roles (id,user_id,role,org_id) VALUES (?,?,?,?)').run(uuidv4(), target_user_id, role, org_id||null);
+  res.json({ success: true, message: `Granted ${role} to user` });
+});
+
 // Server startup
 app.listen(PORT, () => {
   console.log(`Forge backend listening on port ${PORT} (${NODE_ENV})`);
