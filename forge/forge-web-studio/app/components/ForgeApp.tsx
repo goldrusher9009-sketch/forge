@@ -7,6 +7,7 @@ import { TeamDashboard } from './TeamDashboard';
 import { MarketplaceDetail } from './MarketplaceDetail';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { StakingPage } from './StakingPage';
+import { SubscriptionTiers } from './SubscriptionTiers';
 
 // ─── CSS injected once for animations ────────────────────────────────────────
 const GLOBAL_STYLES = `
@@ -523,7 +524,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'team'|'analytics'|'staking'|'governance'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'team'|'analytics'|'staking'|'governance'|'tiers'|'enterprise'>('workspace');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -2360,6 +2361,8 @@ export default function ForgeApp() {
             { id:'analytics', icon:'📊', label:'Analytics' },
             { id:'staking', icon:'💎', label:'Staking' },
             { id:'governance', icon:'🗳️', label:'Governance' },
+            { id:'tiers', icon:'📊', label:'Tiers' },
+            { id:'enterprise', icon:'🏢', label:'Enterprise' },
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🐝', label:'Agent Swarm' },
             { id:'files', icon:'📁', label:'Files' },
@@ -6544,6 +6547,36 @@ export default function ForgeApp() {
             <div style={{ background: 'var(--fg-bg3)', border: '1px solid var(--fg-border2)', borderRadius: '12px', padding: '24px' }}>
               <h2 style={{ marginBottom: '16px' }}>Active Proposals</h2>
               <p style={{ color: 'var(--fg-text2)' }}>Voting powered by staked FORGE tokens. Earn governance rewards.</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Subscription Tiers ─────────────────────────────────────── */}
+        {mainTab === 'tiers' && (
+          <SubscriptionTiers />
+        )}
+
+        {/* ── Enterprise Settings ────────────────────────────────────── */}
+        {mainTab === 'enterprise' && (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '28px', background: 'var(--fg-bg)' }}>
+            <h1>🏢 Enterprise</h1>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+              <div style={{ background: 'var(--fg-bg3)', border: '1px solid var(--fg-border2)', borderRadius: '12px', padding: '24px' }}>
+                <h2 style={{ fontSize: '16px', marginBottom: '12px' }}>🔐 SSO Configuration</h2>
+                <p style={{ color: 'var(--fg-text2)', fontSize: '13px' }}>Configure SAML 2.0 or OAuth for single sign-on</p>
+              </div>
+              <div style={{ background: 'var(--fg-bg3)', border: '1px solid var(--fg-border2)', borderRadius: '12px', padding: '24px' }}>
+                <h2 style={{ fontSize: '16px', marginBottom: '12px' }}>📋 Audit Logs</h2>
+                <p style={{ color: 'var(--fg-text2)', fontSize: '13px' }}>View all user activity and changes in your organization</p>
+              </div>
+              <div style={{ background: 'var(--fg-bg3)', border: '1px solid var(--fg-border2)', borderRadius: '12px', padding: '24px' }}>
+                <h2 style={{ fontSize: '16px', marginBottom: '12px' }}>🎨 White-Label</h2>
+                <p style={{ color: 'var(--fg-text2)', fontSize: '13px' }}>Customize branding and domain for your instance</p>
+              </div>
+              <div style={{ background: 'var(--fg-bg3)', border: '1px solid var(--fg-border2)', borderRadius: '12px', padding: '24px' }}>
+                <h2 style={{ fontSize: '16px', marginBottom: '12px' }}>📊 Usage Metering</h2>
+                <p style={{ color: 'var(--fg-text2)', fontSize: '13px' }}>Track and bill for API calls, storage, and compute</p>
+              </div>
             </div>
           </div>
         )}

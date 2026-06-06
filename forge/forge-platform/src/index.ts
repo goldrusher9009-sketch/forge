@@ -31,6 +31,9 @@ import { setupWebhookRetry, setupWebhookLogging } from './webhooks';
 import { setupGenesisBuilder } from './genesis';
 import { setupAgentHarness } from './harness';
 import { setupGovernance } from './governance';
+import { setupEnterprise } from './enterprise';
+import { setupWhiteLabel } from './whitelabel';
+import { setupMetering } from './metering';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -3473,6 +3476,15 @@ setupAgentHarness(app, db, requireAuth);
 
 // Vision Feature: Governance (community voting)
 setupGovernance(app, db, requireAuth);
+
+// Phase 5: Enterprise SSO + Audit Logs
+setupEnterprise(app, db, requireAuth);
+
+// Phase 5: White-Label Support
+setupWhiteLabel(app, db, requireAuth);
+
+// Phase 5: Usage-Based Metering + Billing
+setupMetering(app, db, requireAuth);
 
 // Feature 3: Advanced Analytics
 db.exec(`CREATE TABLE IF NOT EXISTS analytics (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, event TEXT NOT NULL, metadata TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
