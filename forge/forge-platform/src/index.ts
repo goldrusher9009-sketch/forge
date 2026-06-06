@@ -51,6 +51,9 @@ import { setupWebhookSandbox } from './webhook-sandbox';
 import { setupAdvancedSecurity } from './advanced-security';
 import { setupDataExport } from './data-export';
 import { setupIntegrations } from './integrations';
+import { setupMobileOffline } from './mobile-offline';
+import { setupSearchIndex } from './search-index';
+import { setupLaunchReadiness } from './launch-readiness';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -424,6 +427,15 @@ setupAdvancedSecurity(app, db, requireAuth);
 // ── Phase 13: Data Export & Integrations ───────────────────────
 setupDataExport(app, db, requireAuth);
 setupIntegrations(app, db, requireAuth);
+
+// ── Phase 14: Mobile & Offline ──────────────────────────────────
+setupMobileOffline(app, db, requireAuth);
+
+// ── Phase 15: Search & Indexing ────────────────────────────────
+setupSearchIndex(app, db, requireAuth);
+
+// ── Phase 16: Launch Readiness ─────────────────────────────────
+setupLaunchReadiness(app, db, requireAuth);
 
 // ── Start Server ──────────────────────────────────────────────
 server.listen(PORT, () => {
