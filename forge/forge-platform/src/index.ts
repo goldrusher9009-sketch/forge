@@ -49,6 +49,8 @@ import { setupRateLimiting } from './rate-limiting';
 import { setupApiDocs } from './api-docs';
 import { setupWebhookSandbox } from './webhook-sandbox';
 import { setupAdvancedSecurity } from './advanced-security';
+import { setupDataExport } from './data-export';
+import { setupIntegrations } from './integrations';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -418,6 +420,10 @@ setupWebhookSandbox(app, db, requireAuth);
 
 // ── Phase 12: Advanced Security ────────────────────────────────
 setupAdvancedSecurity(app, db, requireAuth);
+
+// ── Phase 13: Data Export & Integrations ───────────────────────
+setupDataExport(app, db, requireAuth);
+setupIntegrations(app, db, requireAuth);
 
 // ── Start Server ──────────────────────────────────────────────
 server.listen(PORT, () => {
