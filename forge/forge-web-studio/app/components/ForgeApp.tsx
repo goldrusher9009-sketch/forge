@@ -518,7 +518,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'>('workspace');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -2349,6 +2349,7 @@ export default function ForgeApp() {
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
             { id:'forgeasi', icon:'🌌', label:'ForgeASI' },
             { id:'mvp', icon:'🏗️', label:'MVP Builder' },
+            { id:'marketplace', icon:'🛍️', label:'Marketplace' },
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🐝', label:'Agent Swarm' },
             { id:'files', icon:'📁', label:'Files' },

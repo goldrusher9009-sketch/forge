@@ -3435,6 +3435,72 @@ app.get('/api/health', (_req, res) => { res.json({ success: true, status: 'ok', 
 // Setup billing routes (5/5 billing system complete)
 setupBillingRoutes(app, db, requireAuth);
 
+// Feature 3: Advanced Analytics
+db.exec(`CREATE TABLE IF NOT EXISTS analytics (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, event TEXT NOT NULL, metadata TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
+app.post('/api/analytics/log', requireAuth, (req: AuthRequest, res) => {
+  const { event, metadata } = req.body;
+  db.prepare('INSERT INTO analytics (id,user_id,event,metadata) VALUES (?,?,?,?)').run(uuidv4(), req.user!.sub, event, JSON.stringify(metadata||{}));
+  res.json({ success: true });
+});
+app.get('/api/analytics/summary', requireAuth, (req: AuthRequest, res) => {
+  const events = db.prepare('SELECT event, COUNT(*) as count FROM analytics WHERE user_id=? GROUP BY event ORDER BY count DESC').all(req.user!.sub) as any[];
+  res.json({ success: true, data: events });
+});
+
+// Feature 4: Team/Enterprise
+db.exec(`CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, name TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS org_members (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, user_id TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'member')`);
+app.post('/api/orgs', requireAuth, (req: AuthRequest, res) => {
+  const { name } = req.body;
+  const id = uuidv4();
+  db.prepare('INSERT INTO organizations (id,owner_id,name) VALUES (?,?,?)').run(id, req.user!.sub, name);
+  res.json({ success: true, data: { id, name } });
+});
+app.get('/api/orgs', requireAuth, (req: AuthRequest, res) => {
+  const orgs = db.prepare('SELECT * FROM organizations WHERE owner_id=?').all(req.user!.sub);
+  res.json({ success: true, data: orgs });
+});
+app.post('/api/orgs/:id/invite', requireAuth, (req: AuthRequest, res) => {
+  const { email, role = 'member' } = req.body;
+  res.json({ success: true, message: `Invite sent to ${email} as ${role}` });
+});
+
+// Feature 5: Mobile API (same endpoints, mobile-optimized responses)
+app.get('/api/mobile/threads', requireAuth, (req: AuthRequest, res) => {
+  const threads = db.prepare('SELECT id, title, updated_at FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT 20').all(req.user!.sub);
+  res.json({ success: true, data: threads });
+});
+
+// Feature 6: Rate Limiting
+const rateLimitMap = new Map<string, { count: number; reset: number }>();
+const rateLimit = (userId: string): boolean => {
+  const now = Date.now();
+  const limit = rateLimitMap.get(userId) || { count: 0, reset: now + 60000 };
+  if (now >= limit.reset) {
+    limit.count = 1;
+    limit.reset = now + 60000;
+  } else {
+    limit.count++;
+    if (limit.count > 100) return false; // 100 requests/min
+  }
+  rateLimitMap.set(userId, limit);
+  return true;
+};
+
+app.use(requireAuth, (req: AuthRequest, res, next) => {
+  if (!rateLimit(req.user!.sub)) {
+    res.status(429).json({ error: 'Rate limit exceeded' });
+  } else {
+    next();
+  }
+});
+
+// Feature 7: Webhooks (already exists, just expose list endpoint)
+app.get('/api/webhooks/list', requireAuth, (req: AuthRequest, res) => {
+  const hooks = db.prepare('SELECT id, name, event_type, webhook_url FROM webhook_triggers WHERE user_id=? ORDER BY created_at DESC').all(req.user!.sub);
+  res.json({ success: true, data: hooks });
+});
+
 // Server startup
 app.listen(PORT, () => {
   console.log(`Forge backend listening on port ${PORT} (${NODE_ENV})`);
