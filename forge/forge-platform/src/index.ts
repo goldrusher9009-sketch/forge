@@ -37,6 +37,8 @@ import { setupMetering } from './metering';
 import { setupPromptCache } from './prompt-cache';
 import { setupBatchJobs } from './batch-jobs';
 import { setupMultiModelInference } from './multi-model';
+import { setupZKP } from './zkp';
+import { setupCompliance } from './compliance';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -3497,6 +3499,12 @@ setupBatchJobs(app, db, requireAuth);
 
 // Phase 6: Multi-Model Inference + Cost Optimization
 setupMultiModelInference(app, db, requireAuth);
+
+// Phase 7: Zero-Knowledge Proofs
+setupZKP(app, db, requireAuth);
+
+// Phase 7: HIPAA/GDPR Compliance
+setupCompliance(app, db, requireAuth);
 
 // Feature 3: Advanced Analytics
 db.exec(`CREATE TABLE IF NOT EXISTS analytics (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, event TEXT NOT NULL, metadata TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
