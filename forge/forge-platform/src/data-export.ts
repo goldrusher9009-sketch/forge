@@ -1,7 +1,6 @@
 import { Database } from 'better-sqlite3';
 import { Express } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { stringify } from 'csv-stringify/sync';
 
 interface AuthRequest {
   user?: { sub: string };
