@@ -1,5 +1,8 @@
-// Forge AI Workspace v6.62 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.80 PRODUCTION -- All 16 phases, 50+ features
 'use client';
+
+// Cache bust: forces fresh load on every deploy
+const BUILD_VERSION = '6.80.' + Math.floor(Date.now() / 60000);
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { OnboardingFlow } from './OnboardingFlow';
 import { BillingPage } from './BillingPage';
