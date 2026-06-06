@@ -46,6 +46,8 @@ import { setupAdvancedAnalytics } from './advanced-analytics';
 import { setupRetentionAnalytics } from './retention-analytics';
 import { setupPerformance } from './performance';
 import { setupRateLimiting } from './rate-limiting';
+import { setupApiDocs } from './api-docs';
+import { setupWebhookSandbox } from './webhook-sandbox';
 import http from 'http';
 
 const execAsync = promisify(exec);
@@ -406,6 +408,12 @@ setupPerformance(app, db, requireAuth);
 
 // ── Phase 10: Rate Limiting ────────────────────────────────────
 setupRateLimiting(app, db);
+
+// ── Phase 11: API Documentation ────────────────────────────────
+setupApiDocs(app, db, requireAuth);
+
+// ── Phase 11: Webhook Sandbox ──────────────────────────────────
+setupWebhookSandbox(app, db, requireAuth);
 
 // ── Start Server ──────────────────────────────────────────────
 server.listen(PORT, () => {
