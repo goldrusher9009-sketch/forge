@@ -13,6 +13,7 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import http from 'http';
 import path from 'path';
 import crypto from 'crypto';
 import fs from 'fs';
@@ -3120,10 +3121,7 @@ app.post('/api/webhooks/trigger/:id/:secret', async (req, res) => {
   }
 });
 
-// ── Start server ──────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`🚀 Forge Platform v6.81 running on port ${PORT} (${NODE_ENV})`);
-});
+// ── Server started at bottom of file ──────────────────────────────────────
 
 // ─── ForgeOptimizer ───────────────────────────────────────────────────────────
 app.get('/api/forge-optimizer/:threadId/analyze', requireAuth, (req: AuthRequest, res) => {
@@ -3397,3 +3395,41 @@ try {
 // ─── Version ──────────────────────────────────────────────────────────────────
 app.get('/api/version', (_req, res) => res.json({ version:'v6.81', features:['sqlite','jwt','graphql','webhooks','rate-limiting','multi-model','personas','prompt-cache','search','analytics','forge-optimizer','superagent','harvest','billing','export'], built:new Date().toISOString() }));
 
+
+
+// ─── Socket.IO — real-time bidirectional ──────────────────────────────────────
+const httpServer = require('http').createServer(app);
+try {
+  const { Server } = require('socket.io');
+  const io = new Server(httpServer, {
+    cors: { origin: FRONTEND_URL, methods: ['GET','POST'], credentials: true },
+    transports: ['websocket','polling'],
+  });
+  io.use((socket: any, next: any) => {
+    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+    if (!token) { next(new Error('UNAUTHORIZED')); return; }
+    try { const d = jwt.verify(token, JWT_SECRET) as any; socket.userId = d.sub; next(); }
+    catch { next(new Error('INVALID_TOKEN')); }
+  });
+  io.on('connection', (socket: any) => {
+    const userId = socket.userId;
+    socket.join(`user:${userId}`);
+    socket.on('join_thread', (tid: string) => { socket.join(`thread:${tid}`); socket.to(`thread:${tid}`).emit('user_joined', { userId }); });
+    socket.on('leave_thread', (tid: string) => { socket.leave(`thread:${tid}`); });
+    socket.on('typing_start', ({ threadId }: any) => { socket.to(`thread:${threadId}`).emit('typing', { userId, typing: true }); });
+    socket.on('typing_stop', ({ threadId }: any) => { socket.to(`thread:${threadId}`).emit('typing', { userId, typing: false }); });
+    socket.on('thread_update', (data: any) => { io.to(`user:${userId}`).emit('thread_updated', data); });
+    socket.on('ping', () => socket.emit('pong', { time: Date.now() }));
+    socket.on('disconnect', () => { io.to(`user:${userId}`).emit('user_offline', { userId }); });
+  });
+  (app as any).io = io;
+  console.log('✅ Socket.IO enabled');
+} catch(e: any) {
+  console.warn('⚠️ Socket.IO not loaded:', e.message);
+}
+
+// ── Start server ──────────────────────────────────────────────────────────────
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Forge Platform v6.82 running on port ${PORT} (${NODE_ENV})`);
+  console.log(`✅ SQLite + JWT + GraphQL + Socket.IO + Webhooks + Rate-limiting`);
+});

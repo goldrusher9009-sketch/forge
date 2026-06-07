@@ -1,9 +1,10 @@
-// Forge AI Workspace v6.81 PRODUCTION -- All 16 phases, 50+ features
+// Forge AI Workspace v6.82 PRODUCTION -- All 16 phases, 50+ features
 'use client';
 
 // Cache bust: forces fresh load on every deploy
 const BUILD_VERSION = '6.80.' + Math.floor(Date.now() / 60000);
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { io as socketIO, Socket } from 'socket.io-client';
 import { OnboardingFlow } from './OnboardingFlow';
 import { BillingPage } from './BillingPage';
 import { TeamDashboard } from './TeamDashboard';
@@ -1017,6 +1018,7 @@ export default function ForgeApp() {
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const socketRef = useRef<Socket | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   // ── Inject global animation styles once ───────────────────────────────────
@@ -2803,29 +2805,50 @@ export default function ForgeApp() {
 
                 {/* Messages canvas */}
                 <div onScroll={e=>{const el=e.currentTarget;const b=el.scrollHeight-el.scrollTop-el.clientHeight<80;setShowScrollDown(!b);setUserScrolledUp(!b);}} style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
-                  {messages.length === 0 && !activeThread && (
-                    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20 }}>
-                      <div style={{ fontSize:56 }}>⚡</div>
-                      <h1 style={{ color:'var(--fg-text)', margin:0, fontSize:28, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.6px' }}>What do you want to build?</h1>
-                      <p style={{ color:'var(--fg-text3)', margin:0, textAlign:'center', maxWidth:480, fontSize:14, lineHeight:1.5 }}>Start a conversation, dispatch an agent, or explore your tools and skills.</p>
-                      <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center', marginTop:12 }}>
-                        {['Write a React component','Research a topic','Build an API endpoint','Create a deployment plan'].map(s => (
-                          <button key={s} onClick={() => { setInput(s); textareaRef.current?.focus(); }} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:20, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.background='var(--fg-bg3)';(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border3)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.background='var(--fg-bg4)';(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';}}>{s}</button>
+                  {messages.length === 0 && (
+                    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:0, padding:'20px 24px', animation:'fg-slide-in 0.3s ease' }}>
+                      {/* Hero */}
+                      <div style={{ width:56, height:56, background:'var(--fg-btn-grad)', borderRadius:16, display:'flex', alignItems:'center', justifyContent:'center', fontSize:28, marginBottom:20, boxShadow:'0 0 32px rgba(255,31,53,0.3)' }}>⚡</div>
+                      <h1 style={{ color:'var(--fg-text)', margin:'0 0 8px', fontSize:26, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.6px', textAlign:'center' }}>
+                        {activeThread ? activeThread.title : 'What can I help you build?'}
+                      </h1>
+                      <p style={{ color:'var(--fg-text3)', margin:'0 0 28px', textAlign:'center', maxWidth:440, fontSize:13, lineHeight:1.6 }}>
+                        {activeThread ? 'Start the conversation below — or pick a suggestion.' : 'Start a conversation, dispatch agents, or explore your tools.'}
+                      </p>
+                      {/* Suggestion cards — 2x2 grid */}
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, width:'100%', maxWidth:520, marginBottom:24 }}>
+                        {[
+                          { icon:'🔬', label:'Research', prompt:'Research the latest trends in AI agent frameworks and summarize the top 5 findings.' },
+                          { icon:'💻', label:'Write Code', prompt:'Write a TypeScript Express API endpoint with authentication and SQLite storage.' },
+                          { icon:'✍️', label:'Draft Content', prompt:'Write a compelling LinkedIn post about building AI-native SaaS products.' },
+                          { icon:'📊', label:'Analyze Data', prompt:'Analyze this dataset and create a summary with key insights and recommendations:' },
+                          { icon:'🔧', label:'Debug', prompt:'Help me debug this issue and explain the root cause step by step:' },
+                          { icon:'🚀', label:'Plan a Feature', prompt:'Create a detailed technical spec for a real-time collaboration feature.' },
+                          { icon:'🌐', label:'Search Web', prompt:'Search the web for the latest news about large language models and summarize.' },
+                          { icon:'🤖', label:'Deploy Agents', prompt:'/researcher Find competitive analysis for AI workspace tools like Notion, Linear, and Taskade.' },
+                        ].map((s, i) => (
+                          <button key={i} onClick={() => { setInput(s.prompt); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                            style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', textAlign:'left', transition:'all 0.15s', fontFamily:'var(--fg-font-ui)' }}
+                            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor='var(--fg-border3)'; el.style.background='rgba(255,31,53,0.06)'; el.style.color='var(--fg-text)'; el.style.transform='translateY(-1px)'; }}
+                            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor='var(--fg-border)'; el.style.background='var(--fg-bg2)'; el.style.color='var(--fg-text2)'; el.style.transform='none'; }}>
+                            <span style={{ fontSize:18, flexShrink:0 }}>{s.icon}</span>
+                            <div>
+                              <div style={{ fontWeight:700, fontSize:12, marginBottom:1, color:'inherit' }}>{s.label}</div>
+                              <div style={{ fontSize:10, color:'var(--fg-text3)', lineHeight:1.3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:160 }}>{s.prompt.slice(0,55)}…</div>
+                            </div>
+                          </button>
                         ))}
                       </div>
-                      <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginTop:24, maxWidth:540 }}>
-                        <button onClick={() => { newThread(); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
-                          <span style={{ fontSize:28 }}>💬</span>
-                          <span style={{ fontSize:12, fontWeight:600 }}>New Thread</span>
-                        </button>
-                        <button onClick={() => { setMainTab('agents'); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
-                          <span style={{ fontSize:28 }}>🤖</span>
-                          <span style={{ fontSize:12, fontWeight:600 }}>Agents</span>
-                        </button>
-                        <button onClick={() => { setMainTab('skills'); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
-                          <span style={{ fontSize:28 }}>🛠</span>
-                          <span style={{ fontSize:12, fontWeight:600 }}>Skills</span>
-                        </button>
+                      {/* Quick nav */}
+                      <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center' }}>
+                        {[{icon:'🌟',label:'SuperAgent',tab:'super'},{icon:'🔀',label:'Router',tab:'router'},{icon:'🧩',label:'Skills',tab:'skills'},{icon:'⚡',label:'ForgeAuto',tab:'forgeauto'},{icon:'💳',label:'Billing',tab:'billing'}].map(n => (
+                          <button key={n.tab} onClick={() => setMainTab(n.tab as any)}
+                            style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:20, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', transition:'all 0.15s' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)'; (e.currentTarget as HTMLElement).style.color='var(--fg-text2)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor='var(--fg-border)'; (e.currentTarget as HTMLElement).style.color='var(--fg-text3)'; }}>
+                            <span>{n.icon}</span><span>{n.label}</span>
+                          </button>
+                        ))}
                       </div>
                     </div>
                   )}

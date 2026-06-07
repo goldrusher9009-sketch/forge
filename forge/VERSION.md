@@ -1,6 +1,14 @@
 # Forge Platform — Version History
 
-## v6.81 — 2026-06-05 (current)
+## v6.82 — 2026-06-07 (current)
+### Socket.IO + Empty state upgrade
+- **Socket.IO** backend: real-time bidirectional events — typing indicators, thread sync, user presence, ping/pong
+- **Socket.IO** frontend: auto-connects on login, joins thread rooms, handles thread_updated + typing events
+- **Empty state** upgraded: 8 suggestion cards (2x4 grid), shows on any empty thread (not just no-thread), quick-nav bar
+- Backend: `socket.io@4.7.4` added, httpServer wraps Express app, auth middleware on socket connections
+- Frontend: `socket.io-client@4.7.4` added, socketRef, auto-reconnect
+
+## v6.81 — 2026-06-05
 ### Full backend rebuild + GraphQL
 - **Restored real SQLite backend** (was replaced by in-memory Map store in v6.80 — all data was lost on restart)
 - **GraphQL API** at `POST /api/graphql` — queries: threads, messages, memories, me, analytics, personas, search; mutations: createThread, deleteThread, createMemory, deletePersona
