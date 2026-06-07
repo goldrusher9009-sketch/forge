@@ -1481,6 +1481,34 @@ app.get('/api/keys/vault', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data });
 });
 
+// ── Connectors CRUD (store keys in api_keys table with connector_ prefix) ──
+app.get('/api/connectors', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare("SELECT provider, key_status, created_at FROM api_keys WHERE user_id=? AND provider LIKE 'connector_%'").all(req.user!.sub) as any[];
+  const data = rows.map((r: any) => ({ id: r.provider.replace('connector_', ''), connected: true, created_at: r.created_at }));
+  res.json({ success: true, data });
+});
+
+app.post('/api/connectors', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { id, key } = req.body;
+  if (!id) { res.status(400).json({ success: false, error: 'id required' }); return; }
+  const provider = `connector_${id}`;
+  const encrypted = key ? encryptKey(key) : '';
+  const existing = db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(userId, provider);
+  if (existing) {
+    db.prepare("UPDATE api_keys SET key_encrypted=?, key_status='active', updated_at=datetime('now') WHERE user_id=? AND provider=?").run(encrypted, userId, provider);
+  } else {
+    const { randomUUID } = require('crypto');
+    db.prepare("INSERT INTO api_keys (id,user_id,provider,key_encrypted,key_status) VALUES (?,?,?,?,'active')").run(randomUUID(), userId, provider, encrypted);
+  }
+  res.json({ success: true, data: { id, connected: true } });
+});
+
+app.delete('/api/connectors/:id', requireAuth, (req: AuthRequest, res) => {
+  db.prepare("DELETE FROM api_keys WHERE user_id=? AND provider=?").run(req.user!.sub, `connector_${req.params.id}`);
+  res.json({ success: true });
+});
+
 // Per-provider usage analytics
 app.get('/api/keys/:provider/usage', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;

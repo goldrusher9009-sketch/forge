@@ -849,6 +849,17 @@ export default function ForgeApp() {
       setHooks(rows.map((r:any) => ({ id: r.id, event: r.event_type || 'on_message', action: r.name || 'hook', target: r.prompt || '', enabled: r.enabled !== 0 })));
     } catch {}
   };
+  const loadConnectors = async () => {
+    if (!user) return;
+    try {
+      const d = await apiFetch('/connectors', {}, user.token);
+      const rows = (d?.data || []) as any[];
+      if (rows.length > 0) {
+        setConnectorConnected(prev => { const n = new Set(prev); rows.forEach((r:any) => n.add(r.id)); return n; });
+        setActiveConnectors(prev => { const n = new Set(prev); rows.forEach((r:any) => n.add(r.id)); return n; });
+      }
+    } catch {}
+  };
   const addHook = async () => {
     if (!hookForm.target.trim() || !user) return;
     try {
@@ -1137,7 +1148,7 @@ export default function ForgeApp() {
     loadCustomProviders(); loadUsageLogs(); loadSubscription();
     loadApiKeys(); loadVault(); // loadOpenRouterModels called inside loadApiKeys only when OR key confirmed
     loadTotalTokens(); loadSuperMemory(); loadSuperHistory();
-    loadHooks();
+    loadHooks(); loadConnectors();
   }, [user]);
 
   useEffect(() => { if (!userScrolledUp) messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, userScrolledUp]);
@@ -6150,12 +6161,13 @@ export default function ForgeApp() {
                   )}
                   <div style={{ display:'flex', gap:10 }}>
                     <button onClick={() => { setShowConnectModal(null); setConnectModalInput(''); setConnectModalStep('input'); }} style={{ flex:1, padding:'11px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text2)', fontSize:14, fontWeight:600, cursor:'pointer' }}>Cancel</button>
-                    <button onClick={() => {
+                    <button onClick={async () => {
                       if (!connectModalInput.trim()) return;
                       const key = connectModalInput.trim();
                       setConnectorApiKeys(prev => { const n = { ...prev, [showConnectModal!.id]: key }; try { localStorage.setItem('forge_connector_keys', JSON.stringify(n)); } catch {} return n; });
                       setConnectorConnected(prev => { const n = new Set(prev); n.add(showConnectModal!.id); try { localStorage.setItem('forge_connector_connected', JSON.stringify(Array.from(n))); } catch {} return n; });
                       setActiveConnectors(prev => { const n = new Set(prev); n.add(showConnectModal!.id); try { localStorage.setItem('forge_active_connectors', JSON.stringify(Array.from(n))); } catch {} return n; });
+                      if (user) { try { await apiFetch('/connectors', { method:'POST', body:JSON.stringify({ id: showConnectModal!.id, key }) }, user.token); } catch {} }
                       setConnectModalStep('success');
                     }} disabled={!connectModalInput.trim()} style={{ flex:2, padding:'11px', background: connectModalInput.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor: connectModalInput.trim() ? 'pointer' : 'default', opacity: connectModalInput.trim() ? 1 : 0.6 }}>
                       ≡ƒöù Connect {showConnectModal.name}
