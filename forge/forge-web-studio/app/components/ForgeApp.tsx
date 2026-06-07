@@ -449,12 +449,12 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
         // Auto-login after register
         const login = await apiFetch('/auth/login', { method:'POST', body:JSON.stringify({ email, password }) });
         const u = login.data?.user || login.user || {};
-        const token = login.data?.accessToken || login.token || '';
+        const token = login.data?.accessToken || login.data?.access_token || login.accessToken || login.access_token || login.token || '';
         onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token, role: u.role });
       } else {
         const data = await apiFetch('/auth/login', { method:'POST', body:JSON.stringify(body) });
         const u = data.data?.user || data.user || {};
-        const token = data.data?.accessToken || data.token || '';
+        const token = data.data?.accessToken || data.data?.access_token || data.accessToken || data.access_token || data.token || '';
         if (!token) throw new Error('No token received -- check credentials');
         onLogin({ id: u.id, email: u.email, name: u.firstName || u.name || email, token, role: u.role });
       }
