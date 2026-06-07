@@ -841,14 +841,34 @@ export default function ForgeApp() {
   const [hooks, setHooks] = useState<{id:string;event:string;action:string;target:string;enabled:boolean}[]>([]);
   const [hookForm, setHookForm] = useState({event:'on_message',action:'post_slack',target:''});
   const [showHookFormPanel, setShowHookFormPanel] = useState(false);
-  const addHook = () => {
-    if (!hookForm.target.trim()) return;
-    setHooks(prev => [...prev, { id: Date.now().toString(), event: hookForm.event, action: hookForm.action, target: hookForm.target.trim(), enabled: true }]);
+  const loadHooks = async () => {
+    if (!user) return;
+    try {
+      const d = await apiFetch('/webhooks', {}, user.token);
+      const rows = (d?.data || []) as any[];
+      setHooks(rows.map((r:any) => ({ id: r.id, event: r.event_type || 'on_message', action: r.name || 'hook', target: r.prompt || '', enabled: r.enabled !== 0 })));
+    } catch {}
+  };
+  const addHook = async () => {
+    if (!hookForm.target.trim() || !user) return;
+    try {
+      const d = await apiFetch('/webhooks', { method:'POST', body:JSON.stringify({ name: hookForm.action, event_type: hookForm.event, prompt: hookForm.target.trim() }) }, user.token);
+      if (d?.success) await loadHooks();
+    } catch {}
     setHookForm({event:'on_message',action:'post_slack',target:''});
     setShowHookFormPanel(false);
   };
-  const toggleHook = (id: string) => setHooks(prev => prev.map(h => h.id === id ? {...h, enabled: !h.enabled} : h));
-  const deleteHook = (id: string) => setHooks(prev => prev.filter(h => h.id !== id));
+  const toggleHook = async (id: string) => {
+    const h = hooks.find(x => x.id === id);
+    if (!h || !user) return;
+    setHooks(prev => prev.map(x => x.id === id ? {...x, enabled: !x.enabled} : x));
+    try { await apiFetch(`/webhooks/${id}`, { method:'PATCH', body:JSON.stringify({ enabled: h.enabled ? 0 : 1 }) }, user.token); } catch {}
+  };
+  const deleteHook = async (id: string) => {
+    if (!user) return;
+    setHooks(prev => prev.filter(h => h.id !== id));
+    try { await apiFetch(`/webhooks/${id}`, { method:'DELETE' }, user.token); } catch {}
+  };
 
   // Progress Tracker state
   const [trackerItems, setTrackerItems] = useState<{id:string;text:string;done:boolean;priority:'high'|'medium'|'low';createdAt:number;folderId?:string|null}[]>(() => {
@@ -1117,6 +1137,7 @@ export default function ForgeApp() {
     loadCustomProviders(); loadUsageLogs(); loadSubscription();
     loadApiKeys(); loadVault(); // loadOpenRouterModels called inside loadApiKeys only when OR key confirmed
     loadTotalTokens(); loadSuperMemory(); loadSuperHistory();
+    loadHooks();
   }, [user]);
 
   useEffect(() => { if (!userScrolledUp) messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, userScrolledUp]);
@@ -5859,13 +5880,16 @@ export default function ForgeApp() {
               textareaRef.current?.focus();
             }, 100);
           };
-          const toggleSkill = (id: string) => {
+          const toggleSkill = async (id: string) => {
             setActiveSkills(prev => {
               const next = new Set(prev);
               if (next.has(id)) next.delete(id); else next.add(id);
               try { localStorage.setItem('forge_active_skills', JSON.stringify(Array.from(next))); } catch {}
               return next;
             });
+            if (user) {
+              try { await apiFetch(`/skills/${id}/toggle`, { method:'POST' }, user.token); } catch {}
+            }
           };
           const toggleConnector = (id: string) => {
             setActiveConnectors(prev => {
