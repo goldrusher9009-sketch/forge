@@ -201,7 +201,7 @@ function syntaxHighlight(code: string, lang: string): string {
 // --- Slash command definitions ------------------------------------------------
 const SLASH_COMMANDS = [
   // Agents
-  { cmd:'researcher',  icon:'≡ƒö¼', label:'Researcher',    desc:'Deep web research on any topic',         category:'agent',   insert:'/researcher ' },
+  { cmd:'researcher',  icon:'🔬', label:'Researcher',    desc:'Deep web research on any topic',         category:'agent',   insert:'/researcher ' },
   { cmd:'coder',       icon:'💻', label:'Coder',          desc:'Write, review, or debug code',          category:'agent',   insert:'/coder ' },
   { cmd:'writer',      icon:'✍️', label:'Writer',         desc:'Draft emails, docs, content',            category:'agent',   insert:'/writer ' },
   { cmd:'analyst',     icon:'📊', label:'Analyst',        desc:'Analyze data, create reports',           category:'agent',   insert:'/analyst ' },
@@ -215,11 +215,11 @@ const SLASH_COMMANDS = [
   // Actions
   { cmd:'new',         icon:'📝', label:'New thread',     desc:'Start a new conversation',               category:'action',  insert:'__NEW_THREAD__' },
   { cmd:'harvest',     icon:'🧠', label:'Harvest memory', desc:'Harvest knowledge into SuperAgent',      category:'action',  insert:'__HARVEST__' },
-  { cmd:'clear',       icon:'≡ƒùæ', label:'Clear input',    desc:'Clear the composer',                     category:'action',  insert:'__CLEAR__' },
+  { cmd:'clear',       icon:'🗑', label:'Clear input',    desc:'Clear the composer',                     category:'action',  insert:'__CLEAR__' },
   // Modes
-  { cmd:'router',      icon:'≡ƒöÇ', label:'ForgeRouter',    desc:'Open model router',                      category:'mode',    insert:'__TAB_router__' },
-  { cmd:'super',       icon:'≡ƒîƒ', label:'SuperAgent',     desc:'Open SuperAgent',                        category:'mode',    insert:'__TAB_super__' },
-  { cmd:'skills',      icon:'≡ƒº⌐', label:'Skills',         desc:'Browse skills & tools',                  category:'mode',    insert:'__TAB_skills__' },
+  { cmd:'router',      icon:'🔀', label:'ForgeRouter',    desc:'Open model router',                      category:'mode',    insert:'__TAB_router__' },
+  { cmd:'super',       icon:'🌟', label:'SuperAgent',     desc:'Open SuperAgent',                        category:'mode',    insert:'__TAB_super__' },
+  { cmd:'skills',      icon:'🧩', label:'Skills',         desc:'Browse skills & tools',                  category:'mode',    insert:'__TAB_skills__' },
   { cmd:'billing',     icon:'💳', label:'Billing',        desc:'Open billing panel',                     category:'mode',    insert:'__TAB_billing__' },
 ];
 
@@ -1117,7 +1117,7 @@ export default function ForgeApp() {
         if (data.type === 'connected') return;
         // Feed thinking/tool events directly into the Manus agent steps panel
         if (data.type === 'thinking' || data.type === 'tool' || data.type === 'start') {
-          const icon = data.type === 'start' ? '🚀' : data.type === 'tool' ? '🔧' : '≡ƒÆ¡';
+          const icon = data.type === 'start' ? '🚀' : data.type === 'tool' ? '🔧' : '💬';
           addAgentStep(icon, data.message || '');
         }
         setLiveEvents(prev => {
@@ -1139,7 +1139,7 @@ export default function ForgeApp() {
             // Feed new thinking/tool steps into the Manus panel
             newEvs.forEach((e: any) => {
               if (e.type === 'thinking' || e.type === 'tool' || e.type === 'start') {
-                const icon = e.type === 'start' ? '🚀' : e.type === 'tool' ? '🔧' : '≡ƒÆ¡';
+                const icon = e.type === 'start' ? '🚀' : e.type === 'tool' ? '🔧' : '💬';
                 addAgentStep(icon, e.message || '');
               }
             });
@@ -1650,7 +1650,7 @@ export default function ForgeApp() {
       setSuperTab('chat');
       showToast('🧠 Memory harvested!');
     } catch (e: any) {
-      const errMsg = `Γ¥î Harvest error: ${String(e?.message || e)}`;
+      const errMsg = `❌ Harvest error: ${String(e?.message || e)}`;
       setSuperMessages(prev => [...prev, { role:'assistant', content: errMsg }]);
       showToast(errMsg, 'err');
     }
@@ -1780,10 +1780,10 @@ export default function ForgeApp() {
       setMainTab('swarm'); addAgentStep('🎉', 'Opening Agent Swarm'); return true;
     }
     if (/\basi\b|deep.*analys|epic.*analys/i.test(lower)) {
-      setMainTab('forgeasi'); addAgentStep('≡ƒîî', 'Opening ForgeASI'); return true;
+      setMainTab('forgeasi'); addAgentStep('🌌', 'Opening ForgeASI'); return true;
     }
     if (/\bmvp\b|build.*app|build.*product|build.*startup/i.test(lower)) {
-      setMainTab('mvp'); addAgentStep('≡ƒÅù', 'Opening MVP Builder'); return true;
+      setMainTab('mvp'); addAgentStep('🏗', 'Opening MVP Builder'); return true;
     }
     if (/intelligen|memory.*layer/i.test(lower)) {
       setMainTab('intelligence'); addAgentStep('🧠', 'Opening Intelligence Layer'); return true;
@@ -1839,7 +1839,7 @@ export default function ForgeApp() {
     // Build content with attached files
     let userContent = input.trim();
     if (attachedFiles.length > 0) {
-      const fileContext = attachedFiles.map(f => `\n\n---\n≡ƒôÄ **${f.name}**:\n\`\`\`\n${f.content}\n\`\`\``).join('');
+      const fileContext = attachedFiles.map(f => `\n\n---\n📎 **${f.name}**:\n\`\`\`\n${f.content}\n\`\`\``).join('');
       userContent += fileContext;
       setAttachedFiles([]); // Clear after send
     }
@@ -1918,8 +1918,8 @@ export default function ForgeApp() {
         if (ctxParts.length > 0) body.desktop_context = ctxParts.join('\n\n');
       }
       // Emit local thinking steps for skills/connectors/hooks
-      if (activeSkills.size > 0) addAgentStep('≡ƒº⌐', `Skills active: ${Array.from(activeSkills).slice(0,3).join(', ')}`);
-      if (activeConnectors.size > 0) addAgentStep('≡ƒöî', `Connectors: ${Array.from(activeConnectors).slice(0,3).join(', ')}`);
+      if (activeSkills.size > 0) addAgentStep('🧩', `Skills active: ${Array.from(activeSkills).slice(0,3).join(', ')}`);
+      if (activeConnectors.size > 0) addAgentStep('🔗', `Connectors: ${Array.from(activeConnectors).slice(0,3).join(', ')}`);
       if (hooks.filter(h => h.enabled).length > 0) addAgentStep('🪝', `${hooks.filter(h => h.enabled).length} hook(s) applied`);
       let threadId = currentThread.id;
 
@@ -2329,8 +2329,8 @@ export default function ForgeApp() {
           {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>Core</div>}
           {([
             { id:'workspace', icon:'🛠', label:'Workspace' },
-            { id:'super', icon:'≡ƒîƒ', label:'SuperAgent' },
-            { id:'skills', icon:'≡ƒº⌐', label:'Skills & Tools' },
+            { id:'super', icon:'🌟', label:'SuperAgent' },
+            { id:'skills', icon:'🧩', label:'Skills & Tools' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -2343,19 +2343,19 @@ export default function ForgeApp() {
           <div style={{ margin:'8px 0 2px', height:'1px', background:'var(--fg-border)' }} />
           {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>Build</div>}
           {([
-            { id:'router', icon:'≡ƒöÇ', label:'ForgeRouter' },
-            { id:'forgeco', icon:'≡ƒºæ"💻', label:'ForgeCo' },
+            { id:'router', icon:'🔀', label:'ForgeRouter' },
+            { id:'forgeco', icon:'🧪"💻', label:'ForgeCo' },
             { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
             { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
-            { id:'forgeasi', icon:'≡ƒîî', label:'ForgeASI' },
-            { id:'mvp', icon:'≡ƒÅù', label:'MVP Builder' },
-            { id:'marketplace', icon:'≡ƒ¢ì', label:'Marketplace' },
+            { id:'forgeasi', icon:'🌌', label:'ForgeASI' },
+            { id:'mvp', icon:'🏗', label:'MVP Builder' },
+            { id:'marketplace', icon:'🛍', label:'Marketplace' },
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🎉', label:'Agent Swarm' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
-            ...(isDesktop ? [{ id:'desktop', icon:'≡ƒûÑ', label:'Desktop & Files' }] : []),
+            ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop & Files' }] : []),
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => setMainTab(tab.id as any)} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.10)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius:'0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -2371,7 +2371,7 @@ export default function ForgeApp() {
             { id:'platforms', icon:'🌐', label:'Platforms' },
             { id:'billing', icon:'💳', label:'Billing' },
             { id:'settings', icon:'⚙️', label:'Settings' },
-            ...(user.role==='admin' ? [{ id:'admin', icon:'≡ƒ¢í', label:'Admin' }] : []),
+            ...(user.role==='admin' ? [{ id:'admin', icon:'🛡', label:'Admin' }] : []),
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if(tab.id==='admin'){loadAdminStats();loadAdminUsers();loadAdminKeys();loadAdminModels();} if(tab.id==='settings'){loadVault();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.10)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius:'0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -2399,7 +2399,7 @@ export default function ForgeApp() {
                   <div key={p.id} onClick={() => selectProject(p)} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 8px', borderRadius:6, cursor:'pointer', background:activeProject?.id===p.id ? 'var(--fg-bg4)' : 'transparent', marginBottom:2 }}>
                     <div style={{ width:10, height:10, borderRadius:'50%', background:p.color, flexShrink:0 }} />
                     <span style={{ fontSize:13, color:'var(--fg-text)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.name}</span>
-                    <button onClick={e => { e.stopPropagation(); togglePin(p); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:2 }}>≡ƒôî</button>
+                    <button onClick={e => { e.stopPropagation(); togglePin(p); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:2 }}>📌</button>
                   </div>
                 ))}
               </div>
@@ -2418,7 +2418,7 @@ export default function ForgeApp() {
                       onMouseLeave={e => { const b = e.currentTarget.querySelector('.thread-menu-btn') as HTMLElement; if (b) b.style.opacity='0'; }}
                       style={{ padding:'7px 8px 5px', borderRadius:6, cursor:'pointer', marginBottom:1, background:activeThread?.id===t.id ? 'var(--fg-bg4)' : 'var(--fg-bg)', border:'1px solid var(--fg-border2)' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                        <span style={{ fontSize:10 }}>≡ƒôî</span>
+                        <span style={{ fontSize:10 }}>📌</span>
                         {renamingThread?.id === t.id ? (
                           <input autoFocus value={renamingThreadInput} onChange={e => setRenamingThreadInput(e.target.value)}
                             onKeyDown={async e => {
@@ -2545,7 +2545,7 @@ export default function ForgeApp() {
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
                   <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.82</span>
-                  {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>≡ƒûÑ Desktop</span>}
+                  {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>
               <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>×</button>
@@ -2598,7 +2598,7 @@ export default function ForgeApp() {
               {/* Active skill indicator */}
               {activeSkillPrompt && (
                 <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 8px', background:'rgba(255,140,0,0.12)', border:'1px solid var(--fg-orange)', borderRadius:8, flexShrink:0 }}>
-                  <span style={{ fontSize:10 }}>≡ƒº⌐</span>
+                  <span style={{ fontSize:10 }}>🧩</span>
                   <span style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:600 }}>Skill</span>
                   <button onClick={() => setActiveSkillPrompt('')} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', padding:0, fontSize:12, lineHeight:1, flexShrink:0 }}>×</button>
                 </div>
@@ -2645,23 +2645,23 @@ export default function ForgeApp() {
               {/* Language selector */}
               {!isMobile && (
                 <select value={language} onChange={e => setLanguage(e.target.value)} style={{ background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text2)', padding:'4px 8px', fontSize:11, cursor:'pointer' }} title="Response language">
-                  <option value="en">≡ƒç¼≡ƒçº EN</option>
-                  <option value="es">≡ƒç¬≡ƒç╕ ES</option>
-                  <option value="fr">≡ƒç½≡ƒç╖ FR</option>
-                  <option value="de">≡ƒç⌐≡ƒç¬ DE</option>
-                  <option value="pt">≡ƒçº≡ƒç╖ PT</option>
-                  <option value="it">≡ƒç«≡ƒç╣ IT</option>
-                  <option value="zh">≡ƒç¿≡ƒç│ ZH</option>
-                  <option value="ja">≡ƒç»≡ƒç╡ JA</option>
-                  <option value="ko">≡ƒç░≡ƒç╖ KO</option>
-                  <option value="ar">≡ƒç╕≡ƒçª AR</option>
-                  <option value="hi">≡ƒç«≡ƒç│ HI</option>
-                  <option value="ru">≡ƒç╖≡ƒç║ RU</option>
+                  <option value="en">🇬🇧 EN</option>
+                  <option value="es">🇫🇷 ES</option>
+                  <option value="fr">🇪🇸 FR</option>
+                  <option value="de">🇩🇪 DE</option>
+                  <option value="pt">🇯🇵 PT</option>
+                  <option value="it">🇺🇸 IT</option>
+                  <option value="zh">🇧🇷 ZH</option>
+                  <option value="ja">🇰🇷 JA</option>
+                  <option value="ko">🇨🇳 KO</option>
+                  <option value="ar">🇮🇳 AR</option>
+                  <option value="hi">🇦🇺 HI</option>
+                  <option value="ru">🇿🇦 RU</option>
                 </select>
               )}
               {/* EPIC button */}
               {!isMobile && (
-                <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>≡ƒîî EPIC</button>
+                <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>🌌 EPIC</button>
               )}
               {/* Sketch toggle */}
               {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'4px 8px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, flexShrink:0 }}>📝</button>}
@@ -2715,10 +2715,10 @@ export default function ForgeApp() {
                         orGrouped[grpKey].push(m);
                       });
                       return Object.entries(orGrouped).sort(([a],[b]) => a.localeCompare(b)).map(([grp, ms]) => (
-                        <optgroup key={`or-${grp}`} label={`≡ƒöÇ OR ┬╖ ${grp}`}>
+                        <optgroup key={`or-${grp}`} label={`🔀 OR ┬╖ ${grp}`}>
                           {ms.sort((a,b) => (a.name||a.id).localeCompare(b.name||b.id)).map(m => {
                             const isFree = m.id.includes(':free') || m.pricing?.prompt === '0';
-                            return <option key={m.id} value={m.id}>{isFree ? '≡ƒåô ' : ''}{m.name || m.id}</option>;
+                            return <option key={m.id} value={m.id}>{isFree ? '🆓 ' : ''}{m.name || m.id}</option>;
                           })}
                         </optgroup>
                       ));
@@ -2817,7 +2817,7 @@ export default function ForgeApp() {
                   {/* Clarification question card */}
                   {clarifyQuestion && !sending && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:560 }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>≡ƒñö</div>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>👤</div>
                       <div style={{ flex:1, padding:'12px 16px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)' }}>
                         <p style={{ margin:'0 0 10px', fontSize:13, color:'var(--fg-text)', fontWeight:500 }}>{clarifyQuestion.question}</p>
                         <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
@@ -2847,13 +2847,13 @@ export default function ForgeApp() {
                           web_search: { icon:'🔌', narrate: a => `Searched the web for "${a?.query||'...'}"` },
                           web_scrape: { icon:'🌐', narrate: a => `Read the page at ${a?.url||'...'}` },
                           run_code: { icon:'💻', narrate: a => `Ran ${a?.language||'code'} to compute the result` },
-                          shell_exec: { icon:'≡ƒûÑ', narrate: a => `Executed shell command: ${(a?.command||'').slice(0,60)}` },
+                          shell_exec: { icon:'🖥', narrate: a => `Executed shell command: ${(a?.command||'').slice(0,60)}` },
                           browser_action: { icon:'🖱', narrate: a => `Interacted with browser — ${a?.action||'click'}` },
                           read_file: { icon:'📄', narrate: a => `Read file: ${a?.path||a?.file||'...'}` },
                           write_file: { icon:'💾', narrate: a => `Wrote file: ${a?.path||a?.file||'...'}` },
-                          http_request: { icon:'≡ƒôí', narrate: a => `Made ${a?.method||'GET'} request to ${a?.url||'...'}` },
+                          http_request: { icon:'📡', narrate: a => `Made ${a?.method||'GET'} request to ${a?.url||'...'}` },
                           list_directory: { icon:'📌', narrate: a => `Listed files in ${a?.path||'...'}` },
-                          screenshot: { icon:'≡ƒô╕', narrate: _a => 'Took a screenshot' },
+                          screenshot: { icon:'🖼', narrate: _a => 'Took a screenshot' },
                           image_gen: { icon:'🎨', narrate: a => `Generated image: "${(a?.prompt||'').slice(0,50)}"` },
                         };
                         const meta = toolMeta[tc.tool] || { icon:'🔧', narrate: _a => `Used ${tc.tool}` };
@@ -2941,7 +2941,7 @@ export default function ForgeApp() {
                               style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
                               onMouseEnter={e => (e.currentTarget.style.background='var(--fg-border)')}
                               onMouseLeave={e => (e.currentTarget.style.background='none')}>
-                              ≡ƒöè Read
+                              📖 Read
                             </button>
                           )}
                         </div>
@@ -2993,7 +2993,7 @@ export default function ForgeApp() {
                               const isToolStep = s.text.startsWith('Tool:');
                               const isSearchStep = s.icon === '🔌' || (isToolStep && s.text.includes('web_search'));
                               const isScrapeStep = s.icon === '🌐' || (isToolStep && s.text.includes('web_scrape'));
-                              const isBrowserStep = s.icon === '≡ƒûÑ' || (isToolStep && s.text.includes('browser'));
+                              const isBrowserStep = s.icon === '🖥' || (isToolStep && s.text.includes('browser'));
                               const isCodeStep = isToolStep && s.text.includes('run_code');
                               const isShellStep = isToolStep && s.text.includes('shell_exec');
 
@@ -3015,9 +3015,9 @@ export default function ForgeApp() {
                                       <div style={{ marginTop:4, fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)', background:'var(--fg-bg)', padding:'4px 8px', borderRadius:6, wordBreak:'break-all' }}>
                                         {isSearchStep && <span>🔌 Searching: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_search(','').replace(')','').replace(/[{}"query:]/g,'').slice(0,80)}</span></span>}
                                         {isScrapeStep && <span>🌐 Reading: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_scrape(','').replace(')','').replace(/[{}"url:]/g,'').slice(0,80)}</span></span>}
-                                        {isBrowserStep && <span>≡ƒûÑ Browser: <span style={{ color:'var(--fg-orange2)' }}>{s.text.slice(0,80)}</span></span>}
+                                        {isBrowserStep && <span>🖥 Browser: <span style={{ color:'var(--fg-orange2)' }}>{s.text.slice(0,80)}</span></span>}
                                         {isCodeStep && <span>💻 Executing code…</span>}
-                                        {isShellStep && <span>≡ƒûÑ Shell: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: shell_exec(','').replace(')','').replace(/[{}"command:]/g,'').slice(0,80)}</span></span>}
+                                        {isShellStep && <span>🖥 Shell: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: shell_exec(','').replace(')','').replace(/[{}"command:]/g,'').slice(0,80)}</span></span>}
                                         {!isSearchStep && !isScrapeStep && !isBrowserStep && !isCodeStep && !isShellStep && <span>{s.text.slice(0,100)}</span>}
                                       </div>
                                     )}
@@ -3034,7 +3034,7 @@ export default function ForgeApp() {
                             {liveToolCalls.map((tc, idx) => (
                               <div key={idx} style={{ borderRadius:6, border:'1px solid var(--fg-border2)', overflow:'hidden', background:'var(--fg-bg3)' }}>
                                 <div onClick={() => setExpandedTools(p => ({ ...p, [idx]: !p[idx] }))} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', cursor:'pointer' }}>
-                                  <span style={{ fontSize:12 }}>{tc.tool==='web_search'?'🔌':tc.tool==='web_scrape'?'🌐':tc.tool==='run_code'?'💻':tc.tool==='shell_exec'?'≡ƒûÑ':tc.tool==='browser_action'?'🖱':tc.tool==='http_request'?'≡ƒôí':'🔧'}</span>
+                                  <span style={{ fontSize:12 }}>{tc.tool==='web_search'?'🔌':tc.tool==='web_scrape'?'🌐':tc.tool==='run_code'?'💻':tc.tool==='shell_exec'?'🖥':tc.tool==='browser_action'?'🖱':tc.tool==='http_request'?'📡':'🔧'}</span>
                                   <span style={{ fontSize:11, color:'var(--fg-text)', fontFamily:'var(--fg-font-mono)', fontWeight:600 }}>{tc.tool}</span>
                                   <span style={{ fontSize:11, color:'var(--fg-orange2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                                     {tc.tool==='web_search' ? `"${tc.args?.query}"` : tc.tool==='web_scrape'||tc.tool==='browser_action' ? (tc.args?.url||tc.args?.action||'') : tc.tool==='run_code' ? `${tc.args?.language}` : tc.tool==='shell_exec' ? tc.args?.command?.slice(0,60) : tc.tool==='http_request' ? `${tc.args?.method||'GET'} ${tc.args?.url}` : JSON.stringify(tc.args||{}).slice(0,50)}
@@ -3064,7 +3064,7 @@ export default function ForgeApp() {
                           <div key={i} style={{ flex:'1 1 250px', minWidth:200, padding:'12px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12 }}>
                             <p style={{ margin:'0 0 6px', fontSize:11, color:'var(--fg-orange)', fontWeight:600 }}>{r.model}</p>
                             <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{r.content.slice(0, 400)}{r.content.length > 400 ? '...' : ''}</p>
-                            <button onClick={() => speakText(r.content)} style={{ marginTop:6, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒöè</button>
+                            <button onClick={() => speakText(r.content)} style={{ marginTop:6, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📖</button>
                           </div>
                         ))}
                       </div>
@@ -3246,7 +3246,7 @@ export default function ForgeApp() {
                   {attachedFiles.length > 0 && (
                     <div style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:5, padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:16 }}>
-                        <span style={{ fontSize:11 }}>≡ƒôÄ</span>
+                        <span style={{ fontSize:11 }}>📎</span>
                         <span style={{ fontSize:11, color:'var(--fg-text2)' }}>{attachedFiles.length} file{attachedFiles.length!==1?'s':''} attached</span>
                         <button onClick={() => setAttachedFiles([])} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0, lineHeight:1, marginLeft:2 }} title="Remove all">×</button>
                       </div>
@@ -3354,7 +3354,7 @@ export default function ForgeApp() {
                           }
                           e.target.value = '';
                         }} />
-                        <button onClick={() => fileInputRef.current?.click()} title="Attach files" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒôÄ {attachedFiles.length > 0 ? `${attachedFiles.length}` : 'Files'}</button>
+                        <button onClick={() => fileInputRef.current?.click()} title="Attach files" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📎 {attachedFiles.length > 0 ? `${attachedFiles.length}` : 'Files'}</button>
                         {/* Quick right panel buttons */}
                         <button onClick={() => { setRightTab('context'); setRightExpanded(true); }} title="Context usage" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📊</button>
                         <button onClick={() => { setRightTab('live'); setRightExpanded(true); }} title={liveEvents[0]?.message || 'Live activity'} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: sending ? 'var(--fg-odim)' : liveEvents.length > 0 ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${sending ? 'var(--fg-orange)' : liveEvents.length > 0 ? 'var(--fg-odim2)' : 'var(--fg-border2)'}`, borderRadius:6, color: sending ? 'var(--fg-orange2)' : liveEvents.length > 0 ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, maxWidth:160, overflow:'hidden' }}>
@@ -3405,7 +3405,7 @@ export default function ForgeApp() {
                 <div style={{ width:360, background:'var(--fg-bg)', borderLeft:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0 }}>
                   <div style={{ display:'flex', borderBottom:'1px solid var(--fg-border)', padding:'0 2px', overflowX:'auto' }}>
                     {([
-                      {id:'tracker',icon:'≡ƒôî'},{id:'agents',icon:'🧠'},
+                      {id:'tracker',icon:'📌'},{id:'agents',icon:'🧠'},
                       {id:'tools',icon:'🛡'},{id:'hooks',icon:'🪝'},{id:'runs',icon:'🏃'},
                       {id:'agent',icon:'🤖'},{id:'artifacts',icon:'📄'},{id:'tasks',icon:'✓'},
                       {id:'live',icon:'📺'},{id:'schedule',icon:'📅'},{id:'context',icon:'📊'},
@@ -3421,7 +3421,7 @@ export default function ForgeApp() {
                       <div>
 
                         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                          <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>≡ƒôî Progress Tracker</p>
+                          <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>📌 Progress Tracker</p>
                           <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{visibleTrackerItems.filter(i=>i.done).length}/{visibleTrackerItems.length} done</span>
                         </div>
 
@@ -3460,7 +3460,7 @@ export default function ForgeApp() {
                           const colors: Record<string,string> = { high:'var(--fg-red,#ef4444)', medium:'var(--fg-orange)', low:'var(--fg-text3)' };
                           return (
                             <div key={priority} style={{ marginBottom:10 }}>
-                              <p style={{ fontSize:10, color:colors[priority], fontWeight:700, textTransform:'uppercase', margin:'0 0 5px', letterSpacing:'0.5px' }}>{priority === 'high' ? '≡ƒö┤' : priority === 'medium' ? '≡ƒƒí' : '≡ƒƒó'} {priority}</p>
+                              <p style={{ fontSize:10, color:colors[priority], fontWeight:700, textTransform:'uppercase', margin:'0 0 5px', letterSpacing:'0.5px' }}>{priority === 'high' ? '🟡' : priority === 'medium' ? '🟢' : '🔴'} {priority}</p>
                               {items.map(item => (
                                 <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background: item.done ? 'var(--fg-bg3)' : 'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:4, opacity: item.done ? 0.6 : 1 }}>
                                   <button onClick={() => saveTracker(visibleTrackerItems.map(i => i.id===item.id ? {...i,done:!i.done} : i))}
@@ -3482,7 +3482,7 @@ export default function ForgeApp() {
                                   <div style={{ display:'flex', gap:2, flexShrink:0 }}>
                                     <select value={item.priority} onChange={e => saveTracker(visibleTrackerItems.map(i=>i.id===item.id?{...i,priority:e.target.value as any}:i))}
                                       style={{ fontSize:10, background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:4, color:'var(--fg-text3)', padding:'1px 3px', cursor:'pointer' }}>
-                                      <option value="high">≡ƒö┤</option><option value="medium">≡ƒƒí</option><option value="low">≡ƒƒó</option>
+                                      <option value="high">🟡</option><option value="medium">🟢</option><option value="low">🔴</option>
                                     </select>
                                     <button onClick={() => saveTracker(visibleTrackerItems.filter(i=>i.id!==item.id))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'0 2px' }}>×</button>
                                   </div>
@@ -3538,11 +3538,11 @@ export default function ForgeApp() {
                                   ) : (
                                     <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                                       <span onClick={() => { setActiveThread(t); setMainTab('workspace'); }} style={{ fontSize:12, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, cursor:'pointer' }}>
-                                        {pinned && <span style={{ marginRight:4 }}>≡ƒôî</span>}{t.title || 'Untitled'}
+                                        {pinned && <span style={{ marginRight:4 }}>📌</span>}{t.title || 'Untitled'}
                                       </span>
-                                      <button onClick={() => togglePin(t.id)} title={pinned?'Unpin':'Pin'} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color: pinned?'var(--fg-orange)':'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>≡ƒôî</button>
+                                      <button onClick={() => togglePin(t.id)} title={pinned?'Unpin':'Pin'} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color: pinned?'var(--fg-orange)':'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>📌</button>
                                       <button onClick={() => { setFolderRenamingId(t.id); setFolderRenameVal(t.title||''); }} title="Rename" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>📝</button>
-                                      <button onClick={() => deleteThread(t.id)} title="Delete" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>≡ƒùæ</button>
+                                      <button onClick={() => deleteThread(t.id)} title="Delete" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>🗑</button>
                                     </div>
                                   )}
                                   {isWarning && <p style={{ margin:'3px 0 0', fontSize:10, color:'var(--fg-orange)' }}>⏰ Deletes after 24h of inactivity</p>}
@@ -3556,34 +3556,34 @@ export default function ForgeApp() {
                     {/* READY-MADE AGENTS */}
                     {rightTab==='agents' && (() => {
                       const agentGroups = [
-                        { group:'≡ƒÆ╝ Business', agents:[
-                          { id:'ceo_advisor', icon:'≡ƒæö', name:'CEO Advisor', desc:'Strategic decisions, company direction, investor updates' },
-                          { id:'marketer', icon:'≡ƒôó', name:'Marketing Pro', desc:'Campaigns, copy, brand voice, social media strategy' },
-                          { id:'sales_coach', icon:'≡ƒñ¥', name:'Sales Coach', desc:'Outreach, objection handling, closing techniques, CRM' },
+                        { group:'💼 Business', agents:[
+                          { id:'ceo_advisor', icon:'👔', name:'CEO Advisor', desc:'Strategic decisions, company direction, investor updates' },
+                          { id:'marketer', icon:'📣', name:'Marketing Pro', desc:'Campaigns, copy, brand voice, social media strategy' },
+                          { id:'sales_coach', icon:'🤝', name:'Sales Coach', desc:'Outreach, objection handling, closing techniques, CRM' },
                           { id:'finance_analyst', icon:'💰', name:'Finance Analyst', desc:'P&L, budgets, cash flow, financial modeling, forecasts' },
                           { id:'legal_advisor', icon:'⚖️', name:'Legal Advisor', desc:'Contracts, compliance, IP, NDAs, business terms' },
-                          { id:'hr_manager', icon:'≡ƒæÑ', name:'HR Manager', desc:'Hiring, onboarding, culture, performance reviews' },
+                          { id:'hr_manager', icon:'👥', name:'HR Manager', desc:'Hiring, onboarding, culture, performance reviews' },
                           { id:'product_manager', icon:'🎯', name:'Product Manager', desc:'PRDs, roadmaps, user stories, prioritization frameworks' },
                           { id:'data_scientist', icon:'📊', name:'Data Scientist', desc:'Analysis, visualization, ML models, insights' },
-                          { id:'customer_support', icon:'≡ƒÄº', name:'Customer Support', desc:'Ticket triage, responses, escalation, knowledge base' },
+                          { id:'customer_support', icon:'🎧', name:'Customer Support', desc:'Ticket triage, responses, escalation, knowledge base' },
                           { id:'operations', icon:'⚙️', name:'Operations Lead', desc:'Process optimization, SOPs, workflows, logistics' },
                         ]},
-                        { group:'≡ƒºæ Individual', agents:[
-                          { id:'personal_coach', icon:'≡ƒÅï', name:'Life Coach', desc:'Goals, habits, productivity, mindset, accountability' },
+                        { group:'🧪 Individual', agents:[
+                          { id:'personal_coach', icon:'🏋', name:'Life Coach', desc:'Goals, habits, productivity, mindset, accountability' },
                           { id:'writer', icon:'✍️', name:'Writer', desc:'Essays, stories, scripts, emails, any written content' },
-                          { id:'researcher', icon:'≡ƒö¼', name:'Researcher', desc:'Deep research, fact-checking, summarizing papers' },
-                          { id:'tutor', icon:'≡ƒôÜ', name:'Tutor', desc:'Explain concepts, teach skills, quizzes, study plans' },
+                          { id:'researcher', icon:'🔬', name:'Researcher', desc:'Deep research, fact-checking, summarizing papers' },
+                          { id:'tutor', icon:'📚', name:'Tutor', desc:'Explain concepts, teach skills, quizzes, study plans' },
                           { id:'developer', icon:'💻', name:'Software Developer', desc:'Code, debug, architecture, code review, deploy' },
                           { id:'designer', icon:'🎨', name:'Designer', desc:'UI/UX, visual design, prototypes, design critique' },
-                          { id:'therapist', icon:'≡ƒºÿ', name:'Wellness Guide', desc:'Mental wellness tips, stress management, reflection' },
-                          { id:'travel_planner', icon:'Γ£ê', name:'Travel Planner', desc:'Itineraries, bookings, visa info, travel tips' },
-                          { id:'chef', icon:'≡ƒì│', name:'Chef', desc:'Recipes, meal plans, nutrition, cooking techniques' },
+                          { id:'therapist', icon:'🧘', name:'Wellness Guide', desc:'Mental wellness tips, stress management, reflection' },
+                          { id:'travel_planner', icon:'✈️', name:'Travel Planner', desc:'Itineraries, bookings, visa info, travel tips' },
+                          { id:'chef', icon:'🍳', name:'Chef', desc:'Recipes, meal plans, nutrition, cooking techniques' },
                           { id:'financial_planner', icon:'💳', name:'Financial Planner', desc:'Budgeting, savings, investments, debt payoff plans' },
                         ]},
                         { group:'🚀 Builder', agents:[
-                          { id:'mvp_builder', icon:'≡ƒÅù', name:'MVP Builder', desc:'Scope, spec, build and ship a working MVP fast' },
+                          { id:'mvp_builder', icon:'🏗', name:'MVP Builder', desc:'Scope, spec, build and ship a working MVP fast' },
                           { id:'project_manager', icon:'📋', name:'Project Manager', desc:'Plans, timelines, milestones, team coordination' },
-                          { id:'pitch_deck', icon:'≡ƒÄ₧', name:'Pitch Deck Creator', desc:'Investor decks, storytelling, traction slides' },
+                          { id:'pitch_deck', icon:'🎬', name:'Pitch Deck Creator', desc:'Investor decks, storytelling, traction slides' },
                           { id:'seo_expert', icon:'🔌', name:'SEO Expert', desc:'Keywords, on-page SEO, backlinks, content strategy' },
                           { id:'automation', icon:'🤖', name:'Automation Builder', desc:'Workflows, Zapier/Make logic, API integrations' },
                         ]},
@@ -3641,14 +3641,14 @@ export default function ForgeApp() {
                             <p style={{ margin:'0 0 8px', fontSize:10, color:'var(--fg-orange)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' }}>⚡ Active in this chat</p>
                             {activeSkillsList.map((s:any) => (
                               <div key={s.id} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                                <span style={{ fontSize:14 }}>{s.icon || '≡ƒº⌐'}</span>
+                                <span style={{ fontSize:14 }}>{s.icon || '🧩'}</span>
                                 <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{s.name}</span>
                                 <button onClick={() => setActiveSkills(prev => { const n=new Set(prev); n.delete(s.id); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0 }}>×</button>
                               </div>
                             ))}
                             {activeConnectorsList.map((c:any) => (
                               <div key={c.id} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                                <span style={{ fontSize:14 }}>{c.icon || '≡ƒöî'}</span>
+                                <span style={{ fontSize:14 }}>{c.icon || '🔗'}</span>
                                 <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{c.name}</span>
                                 <button onClick={() => setActiveConnectors(prev => { const n=new Set(prev); n.delete(c.id); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0 }}>×</button>
                               </div>
@@ -3675,7 +3675,7 @@ export default function ForgeApp() {
                         {allSkills.slice(0, 12).map((s:any) => (
                           <div key={s.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeSkills.has(s.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeSkills.has(s.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
-                              <span style={{ fontSize:14, flexShrink:0 }}>{s.icon || '≡ƒº⌐'}</span>
+                              <span style={{ fontSize:14, flexShrink:0 }}>{s.icon || '🧩'}</span>
                               <span style={{ fontSize:11, color: activeSkills.has(s.id) ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.name}</span>
                             </div>
                             <button onClick={() => setActiveSkills(prev => { const n=new Set(prev); n.has(s.id)?n.delete(s.id):n.add(s.id); return n; })} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeSkills.has(s.id) ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
@@ -3696,7 +3696,7 @@ export default function ForgeApp() {
                         {allConnectors.slice(0, 12).map((c:any) => (
                           <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeConnectors.has(c.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeConnectors.has(c.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
-                              <span style={{ fontSize:14, flexShrink:0 }}>{c.icon || '≡ƒöî'}</span>
+                              <span style={{ fontSize:14, flexShrink:0 }}>{c.icon || '🔗'}</span>
                               <span style={{ fontSize:11, color: activeConnectors.has(c.id) ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.name}</span>
                             </div>
                             <button onClick={() => setActiveConnectors(prev => { const n=new Set(prev); n.has(c.id)?n.delete(c.id):n.add(c.id); return n; })} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeConnectors.has(c.id) ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
@@ -3713,27 +3713,27 @@ export default function ForgeApp() {
                         {[
                           { id:'web_search', icon:'🔌', label:'Web Search', desc:'Search Google, Bing, DuckDuckGo' },
                           { id:'browser_navigate', icon:'🌐', label:'Browse Web', desc:'Navigate URLs, read pages' },
-                          { id:'browser_batch', icon:'≡ƒûÑ', label:'Browser Batch', desc:'Multi-tab parallel browsing' },
+                          { id:'browser_batch', icon:'🖥', label:'Browser Batch', desc:'Multi-tab parallel browsing' },
                           { id:'run_code', icon:'⚙️', label:'Run Code', desc:'Execute Python, JS, shell scripts' },
                           { id:'start_process', icon:'◀', label:'Start Process', desc:'Launch and manage processes' },
                           { id:'read_file', icon:'📄', label:'Read Files', desc:'Read any file type' },
                           { id:'write_file', icon:'💾', label:'Write Files', desc:'Create and save files' },
                           { id:'list_directory', icon:'📌', label:'List Directory', desc:'Browse filesystem' },
                           { id:'execute_js', icon:'⚡', label:'Execute JS', desc:'Run JavaScript in browser context' },
-                          { id:'screenshot', icon:'≡ƒô╕', label:'Screenshot', desc:'Capture screen or webpage' },
+                          { id:'screenshot', icon:'🖼', label:'Screenshot', desc:'Capture screen or webpage' },
                           { id:'click', icon:'🖱', label:'Click / Interact', desc:'Click buttons, fill forms' },
                           { id:'press_key', icon:'⌨️', label:'Press Key', desc:'Keyboard shortcuts and input' },
                           { id:'webhooks', icon:'🪝', label:'Webhooks', desc:'Send/receive webhook events' },
                           { id:'image_gen', icon:'🎨', label:'Image Gen', desc:'Generate images with AI' },
                           { id:'data_analyze', icon:'📊', label:'Data Analyze', desc:'Analyze CSV, JSON, datasets' },
-                          { id:'desktop_commander', icon:'≡ƒûÑ', label:'Desktop Commander', desc:'Control desktop apps' },
+                          { id:'desktop_commander', icon:'🖥', label:'Desktop Commander', desc:'Control desktop apps' },
                           { id:'computer_use', icon:'🤖', label:'Computer Use', desc:'Full computer automation' },
-                          { id:'send_request', icon:'≡ƒôí', label:'HTTP Request', desc:'GET/POST/PUT to any API' },
-                          { id:'read_process', icon:'≡ƒôƒ', label:'Read Process Output', desc:'Capture process stdout/stderr' },
+                          { id:'send_request', icon:'📡', label:'HTTP Request', desc:'GET/POST/PUT to any API' },
+                          { id:'read_process', icon:'📋', label:'Read Process Output', desc:'Capture process stdout/stderr' },
                           { id:'commit_deploy', icon:'🚀', label:'Commit & Deploy', desc:'Git commit, push, deploy' },
                           { id:'tool_search', icon:'🔧', label:'Tool Search', desc:'Find and load tools dynamically' },
                           { id:'wait', icon:'⚡', label:'Wait / Delay', desc:'Pause execution, wait for events' },
-                          { id:'action', icon:'≡ƒÄ¼', label:'Action', desc:'Trigger any automation action' },
+                          { id:'action', icon:'🎬', label:'Action', desc:'Trigger any automation action' },
                         ].map((t: {id:string;icon:string;label:string;desc:string}) => (
                           <div key={t.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeTools.has(t.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeTools.has(t.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
@@ -4032,11 +4032,11 @@ export default function ForgeApp() {
                           <input value={browserInput} onChange={e => setBrowserInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') browserNavigate(browserInput); }} placeholder="Enter URL or search..." style={{ flex:1, padding:'5px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, outline:'none' }} />
                           <button onClick={() => browserNavigate(browserInput)} style={{ padding:'4px 8px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', cursor:'pointer', fontSize:12 }}>Go</button>
                           {/* Mode toggle */}
-                          <button onClick={() => setBrowserMode(m => m === 'proxy' ? 'iframe' : 'proxy')} title={browserMode === 'proxy' ? 'Switch to iframe mode' : 'Switch to reader mode'} style={{ padding:'4px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>{browserMode === 'proxy' ? '≡ƒôû' : '🌐'}</button>
+                          <button onClick={() => setBrowserMode(m => m === 'proxy' ? 'iframe' : 'proxy')} title={browserMode === 'proxy' ? 'Switch to iframe mode' : 'Switch to reader mode'} style={{ padding:'4px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>{browserMode === 'proxy' ? '🔄' : '🌐'}</button>
                         </div>
                         {/* Quick links */}
                         <div style={{ padding:'6px 8px', background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)', display:'flex', gap:6, flexShrink:0, flexWrap:'wrap' }}>
-                          {[['🔌 Google','https://www.google.com/search?q='],['≡ƒÉÖ GitHub','https://github.com'],['≡ƒôÜ Anthropic','https://docs.anthropic.com'],['🤖 OpenRouter','https://openrouter.ai/models'],['≡ƒô░ HN','https://news.ycombinator.com'],['≡ƒÉª Twitter','https://twitter.com'],['◀ YouTube','https://youtube.com']].map(([label, url]) => (
+                          {[['🔌 Google','https://www.google.com/search?q='],['🐙 GitHub','https://github.com'],['📚 Anthropic','https://docs.anthropic.com'],['🤖 OpenRouter','https://openrouter.ai/models'],['📜 HN','https://news.ycombinator.com'],['🐦 Twitter','https://twitter.com'],['◀ YouTube','https://youtube.com']].map(([label, url]) => (
                             <button key={url} onClick={() => browserNavigate(url)} title={url as string} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11, whiteSpace:'nowrap' }}>{label as string}</button>
                           ))}
                         </div>
@@ -4067,7 +4067,7 @@ export default function ForgeApp() {
                                 {/* Links sidebar */}
                                 {browserPage.links.length > 0 && (
                                   <details style={{ marginBottom:12 }}>
-                                    <summary style={{ fontSize:11, color:'var(--fg-text3)', cursor:'pointer', padding:'4px 0' }}>≡ƒöù {browserPage.links.length} links on this page</summary>
+                                    <summary style={{ fontSize:11, color:'var(--fg-text3)', cursor:'pointer', padding:'4px 0' }}>🔙 {browserPage.links.length} links on this page</summary>
                                     <div style={{ marginTop:6, display:'flex', flexDirection:'column', gap:2, maxHeight:200, overflowY:'auto', padding:'6px', background:'var(--fg-bg3)', borderRadius:6 }}>
                                       {browserPage.links.map((l, i) => (
                                         <button key={i} onClick={() => browserNavigate(l.href)} style={{ background:'none', border:'none', color:'var(--fg-orange2)', cursor:'pointer', fontSize:11, textAlign:'left', padding:'2px 4px', borderRadius:3, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }} title={l.href}>
@@ -4091,7 +4091,7 @@ export default function ForgeApp() {
                           <>
                             <iframe ref={browserFrameRef} src={browserUrl} title="ForgeBrowser" style={{ flex:1, border:'none', background:'#fff' }} sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-navigation" onLoad={e => { try { setBrowserInput((e.target as HTMLIFrameElement).contentDocument?.location?.href || browserUrl); } catch {} }} />
                             <div style={{ padding:'4px 8px', background:'var(--fg-bg)', borderTop:'1px solid var(--fg-border)', flexShrink:0 }}>
-                              <span style={{ fontSize:10, color:'var(--fg-text3)' }}>🌐 iFrame mode -- some sites block embedding. Switch to ≡ƒôû Reader mode for full access.</span>
+                              <span style={{ fontSize:10, color:'var(--fg-text3)' }}>🌐 iFrame mode -- some sites block embedding. Switch to 🔄 Reader mode for full access.</span>
                             </div>
                           </>
                         )}
@@ -4168,7 +4168,7 @@ export default function ForgeApp() {
                               borderLeft: msg.role === 'tool' ? '3px solid var(--fg-green)' : msg.role === 'tool_result' ? '3px solid var(--fg-green)' : msg.role === 'agent' ? '3px solid var(--fg-orange)' : 'none',
                             }}>
                               <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:3, textTransform:'uppercase', fontWeight:600 }}>
-                                {msg.role === 'user' ? '👤 You' : msg.role === 'agent' ? '🤖 ForgeAgent' : msg.role === 'tool' ? `🔧 Tool: ${msg.tool}` : msg.role === 'tool_result' ? `≡ƒôÑ Result: ${msg.tool}` : '⚠️ Error'}
+                                {msg.role === 'user' ? '👤 You' : msg.role === 'agent' ? '🤖 ForgeAgent' : msg.role === 'tool' ? `🔧 Tool: ${msg.tool}` : msg.role === 'tool_result' ? `🤖 Result: ${msg.tool}` : '⚠️ Error'}
                               </div>
                               <div style={{ fontSize:12, color: msg.role === 'error' ? 'var(--fg-red)' : msg.role === 'tool' ? 'var(--fg-green)' : 'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{msg.content}</div>
                               {msg.role === 'agent' && (
@@ -4314,7 +4314,7 @@ export default function ForgeApp() {
                   {/* Key entry if not loaded */}
                   {openRouterModels.length === 0 && (
                     <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-odim)', borderRadius:12, padding:16, marginBottom:16 }}>
-                      <p style={{ margin:'0 0 10px', fontSize:13, color:'var(--fg-text2)', fontWeight:600 }}>≡ƒöæ Add your OpenRouter API key to unlock 400+ models</p>
+                      <p style={{ margin:'0 0 10px', fontSize:13, color:'var(--fg-text2)', fontWeight:600 }}>🔑 Add your OpenRouter API key to unlock 400+ models</p>
                       <div style={{ display:'flex', gap:8 }}>
                         <input type="password" placeholder="sk-or-v1-..." value={apiKeys['openrouter'] || ''} onChange={e => setApiKeys(prev => ({ ...prev, openrouter: e.target.value }))} style={{ flex:1, padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
                         <button onClick={async () => { await saveOneKey('openrouter', apiKeys['openrouter'] || ''); loadOpenRouterModels(); }} style={{ padding:'9px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>{savedProviders['openrouter'] ? '✓ Saved' : 'Save & Load'}</button>
@@ -4327,8 +4327,8 @@ export default function ForgeApp() {
                     <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14, flexWrap:'wrap' }}>
                       <span style={{ fontSize:12, color:'var(--fg-text3)' }}>{openRouterModels.length} models</span>
                       <span style={{ fontSize:12, color:'var(--fg-green)' }}>✓ {openRouterModels.filter(m => m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free')).length} free</span>
-                      <span style={{ fontSize:12, color:'var(--fg-orange)' }}>≡ƒÆÄ {openRouterModels.filter(m => !(m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free'))).length} paid</span>
-                      <button onClick={loadOpenRouterModels} disabled={orLoading} style={{ marginLeft:'auto', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color: orLoading ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>{orLoading ? '⚡ Loading…' : 'Γå╗ Refresh'}</button>
+                      <span style={{ fontSize:12, color:'var(--fg-orange)' }}>💰 {openRouterModels.filter(m => !(m.pricing?.prompt==='0'||m.pricing?.prompt==='0.0'||m.id.includes(':free'))).length} paid</span>
+                      <button onClick={loadOpenRouterModels} disabled={orLoading} style={{ marginLeft:'auto', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color: orLoading ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, padding:'3px 8px' }}>{orLoading ? '⚡ Loading…' : '↻ Refresh'}</button>
                     </div>
                   )}
                   {/* Search + filter + sort */}
@@ -4460,8 +4460,8 @@ export default function ForgeApp() {
               {/* Live provider balances */}
               <div style={{ marginBottom:24 }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                  <h3 style={{ color:'var(--fg-text2)', fontSize:15, margin:0 }}>≡ƒöæ Provider Balances</h3>
-                  <button onClick={fetchProviderBalances} style={{ padding:'4px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Γå╗ Refresh</button>
+                  <h3 style={{ color:'var(--fg-text2)', fontSize:15, margin:0 }}>🔑 Provider Balances</h3>
+                  <button onClick={fetchProviderBalances} style={{ padding:'4px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>↻ Refresh</button>
                 </div>
                 {Object.keys(providerBalances).length === 0
                   ? <p style={{ fontSize:12, color:'var(--fg-text3)' }}>Hover to auto-load, or click Refresh</p>
@@ -4484,7 +4484,7 @@ export default function ForgeApp() {
               <div style={{ display:'flex', flexDirection:'column', gap:16, marginBottom:28 }}>
                 {([
                   {
-                    id:'claude', icon:'≡ƒƒú', name:'Claude (Anthropic)', color:'var(--fg-orange)', apiKeyId:'anthropic',
+                    id:'claude', icon:'🟣', name:'Claude (Anthropic)', color:'var(--fg-orange)', apiKeyId:'anthropic',
                     loginUrl:'https://claude.ai', signupUrl:'https://claude.ai/upgrade',
                     plans:[
                       { label:'Free', price:'$0/mo', desc:'Web access, limited messages' },
@@ -4493,7 +4493,7 @@ export default function ForgeApp() {
                     ],
                   },
                   {
-                    id:'openai', icon:'≡ƒƒó', name:'OpenAI / ChatGPT', color:'var(--fg-green)', apiKeyId:'openai',
+                    id:'openai', icon:'🔴', name:'OpenAI / ChatGPT', color:'var(--fg-green)', apiKeyId:'openai',
                     loginUrl:'https://chat.openai.com', signupUrl:'https://chat.openai.com/upgrade',
                     plans:[
                       { label:'Free', price:'$0/mo', desc:'GPT-4o mini, limited GPT-4o' },
@@ -4502,7 +4502,7 @@ export default function ForgeApp() {
                     ],
                   },
                   {
-                    id:'cursor', icon:'≡ƒö╡', name:'Cursor', color:'var(--fg-blue)', apiKeyId:'',
+                    id:'cursor', icon:'🖱', name:'Cursor', color:'var(--fg-blue)', apiKeyId:'',
                     loginUrl:'https://cursor.sh', signupUrl:'https://cursor.sh/pricing',
                     plans:[
                       { label:'Free', price:'$0/mo', desc:'2000 completions/mo' },
@@ -4628,7 +4628,7 @@ export default function ForgeApp() {
                 return (
                   <div style={{ marginBottom:24 }}>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                      <h3 style={{ color:'var(--fg-text2)', fontSize:15, margin:0 }}>≡ƒÆ╕ API Spend (this session)</h3>
+                      <h3 style={{ color:'var(--fg-text2)', fontSize:15, margin:0 }}>💸 API Spend (this session)</h3>
                       <div style={{ display:'flex', gap:16 }}>
                         <span style={{ fontSize:13, color:'var(--fg-text3)' }}>{totalTokens.toLocaleString()} tokens</span>
                         <span style={{ fontSize:14, fontWeight:700, color:'var(--fg-green)' }}>${totalCost.toFixed(4)}</span>
@@ -4670,7 +4670,7 @@ export default function ForgeApp() {
               {/* Referral Program */}
               <div style={{ background:'linear-gradient(135deg,rgba(251,146,60,0.12),rgba(99,102,241,0.08))', border:'1px solid var(--fg-orange)', borderRadius:16, padding:24, marginBottom:24 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
-                  <span style={{ fontSize:28 }}>≡ƒÄü</span>
+                  <span style={{ fontSize:28 }}>🎉</span>
                   <div>
                     <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:'var(--fg-orange)' }}>Referral Program — Earn Free Tokens</h3>
                     <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Share Forge, earn 500K tokens for every friend who signs up. They get 100K bonus tokens too.</p>
@@ -4686,11 +4686,11 @@ export default function ForgeApp() {
                   </button>
                   <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('I use Forge AI for multi-model agents, swarms, and deep research. BYOK = no markup. Try it free: https://forge-sand-two.vercel.app')}`, '_blank')}
                     style={{ padding:'10px 20px', background:'#1da1f2', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
-                    ≡¥òÅ Share
+                    ↗ Share
                   </button>
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginTop:16 }}>
-                  {[{icon:'≡ƒæÑ',label:'Friends Referred',val:'0'},{icon:'≡ƒÄü',label:'Tokens Earned',val:'0'},{icon:'💰',label:'Credits Value',val:'$0.00'}].map(s => (
+                  {[{icon:'👥',label:'Friends Referred',val:'0'},{icon:'🎉',label:'Tokens Earned',val:'0'},{icon:'💰',label:'Credits Value',val:'$0.00'}].map(s => (
                     <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14, textAlign:'center' }}>
                       <div style={{ fontSize:20, marginBottom:4 }}>{s.icon}</div>
                       <div style={{ fontSize:18, fontWeight:800, color:'var(--fg-orange)' }}>{s.val}</div>
@@ -4728,12 +4728,12 @@ export default function ForgeApp() {
 
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:16 }}>
                 {[
-                  { icon:'≡ƒûÑ', name:'Desktop App', desc:'Native Electron app for Mac, Windows, Linux. Works offline and syncs with your workspace.', badge:'View Releases', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => window.open('https://github.com/goldrusher9009/forge/releases', '_blank') },
-                  { icon:'≡ƒô▒', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android — tap Share → Add to Home Screen in your browser.', badge:'Open App', badgeColor:'var(--fg-blue)', comingSoon:false, action:() => window.open('https://forge-sand-two.vercel.app', '_blank') },
-                  { icon:'≡ƒöî', name:'REST API', desc:'Full API access with your JWT token. Use any language or framework to call Forge models and agents.', badge:'API Docs', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => window.open(`${API.replace('/api','')}/health`, '_blank') },
+                  { icon:'🖥', name:'Desktop App', desc:'Native Electron app for Mac, Windows, Linux. Works offline and syncs with your workspace.', badge:'View Releases', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => window.open('https://github.com/goldrusher9009/forge/releases', '_blank') },
+                  { icon:'📱', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android — tap Share → Add to Home Screen in your browser.', badge:'Open App', badgeColor:'var(--fg-blue)', comingSoon:false, action:() => window.open('https://forge-sand-two.vercel.app', '_blank') },
+                  { icon:'🔗', name:'REST API', desc:'Full API access with your JWT token. Use any language or framework to call Forge models and agents.', badge:'API Docs', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => window.open(`${API.replace('/api','')}/health`, '_blank') },
                   { icon:'🤖', name:'Telegram Bot', desc:'Chat with your Forge agents via Telegram. Add your bot token in Settings to connect.', badge:'Get Token', badgeColor:'#229ED9', comingSoon:false, action:() => window.open('https://t.me/BotFather', '_blank') },
                   { icon:'🛠', name:'Slack Bot', desc:'Bring Forge into your Slack workspace. Ask questions and run agents without leaving Slack.', badge:'Coming Soon', badgeColor:'var(--fg-text3)', comingSoon:true, action:() => window.open('https://forge-sand-two.vercel.app','_blank') },
-                  { icon:'≡ƒº⌐', name:'Chrome Extension', desc:'Use Forge on any webpage — highlight text, run agents, get answers in context.', badge:'Available', badgeColor:'var(--fg-green)', comingSoon:false, action:() => window.open('https://github.com/goldrusher9009/forge','_blank') },
+                  { icon:'🧩', name:'Chrome Extension', desc:'Use Forge on any webpage — highlight text, run agents, get answers in context.', badge:'Available', badgeColor:'var(--fg-green)', comingSoon:false, action:() => window.open('https://github.com/goldrusher9009/forge','_blank') },
                 ].map(p => (
                   <div key={p.name} style={{ padding:'20px', background:'var(--fg-bg3)', border:`1px solid ${p.comingSoon ? 'var(--fg-border)' : 'var(--fg-border2)'}`, borderRadius:14, opacity: p.comingSoon ? 0.7 : 1 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
@@ -4776,9 +4776,9 @@ export default function ForgeApp() {
                 <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:'0 0 4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Connected Services</h3>
                 <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 16px' }}>Sign in with your existing subscriptions or enter API keys to use Claude, OpenAI, and Cursor.</p>
                 {([
-                  { id:'claude', icon:'≡ƒƒú', name:'Claude', color:'var(--fg-orange)', apiKeyId:'anthropic', placeholder:'sk-ant-...', keyHint:'console.anthropic.com/keys' },
-                  { id:'openai', icon:'≡ƒƒó', name:'OpenAI / ChatGPT', color:'var(--fg-green)', apiKeyId:'openai', placeholder:'sk-...', keyHint:'platform.openai.com/api-keys' },
-                  { id:'cursor', icon:'≡ƒö╡', name:'Cursor', color:'var(--fg-blue)', apiKeyId:'', placeholder:'', keyHint:'' },
+                  { id:'claude', icon:'🟣', name:'Claude', color:'var(--fg-orange)', apiKeyId:'anthropic', placeholder:'sk-ant-...', keyHint:'console.anthropic.com/keys' },
+                  { id:'openai', icon:'🔴', name:'OpenAI / ChatGPT', color:'var(--fg-green)', apiKeyId:'openai', placeholder:'sk-...', keyHint:'platform.openai.com/api-keys' },
+                  { id:'cursor', icon:'🖱', name:'Cursor', color:'var(--fg-blue)', apiKeyId:'', placeholder:'', keyHint:'' },
                 ] as const).map(svc => {
                   const creds = serviceCreds[svc.id] || { email:'', password:'', connected:false };
                   const hasApiKey = svc.apiKeyId && apiKeys[svc.apiKeyId];
@@ -4872,7 +4872,7 @@ export default function ForgeApp() {
               <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:16, padding:24, marginBottom:24 }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
                   <div>
-                    <h3 style={{ color:'var(--fg-orange)', fontSize:14, margin:'0 0 2px', textTransform:'uppercase', letterSpacing:'0.05em' }}>≡ƒöæ Website Credentials</h3>
+                    <h3 style={{ color:'var(--fg-orange)', fontSize:14, margin:'0 0 2px', textTransform:'uppercase', letterSpacing:'0.05em' }}>🔑 Website Credentials</h3>
                     <p style={{ color:'var(--fg-text3)', fontSize:12, margin:0 }}>Saved locally in your browser only — never sent to any server. Add logins for any website.</p>
                   </div>
                 </div>
@@ -4919,7 +4919,7 @@ export default function ForgeApp() {
                       <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
                         <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'monospace' }}>👤 {c.username}</span>
                         <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'monospace', cursor:'pointer' }} onClick={() => setWebCredShowPassIds(prev => { const n = new Set(prev); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; })}>
-                          ≡ƒöÆ {webCredShowPassIds.has(c.id) ? c.password : '••••••••'}
+                          🔐 {webCredShowPassIds.has(c.id) ? c.password : '••••••••'}
                         </span>
                       </div>
                     </div>
@@ -4935,10 +4935,10 @@ export default function ForgeApp() {
                 <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:16, padding:24, marginBottom:24 }}>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
                     <div>
-                      <h3 style={{ color:'var(--fg-orange)', fontSize:14, margin:'0 0 2px', textTransform:'uppercase', letterSpacing:'0.05em' }}>≡ƒöÉ Key Vault</h3>
+                      <h3 style={{ color:'var(--fg-orange)', fontSize:14, margin:'0 0 2px', textTransform:'uppercase', letterSpacing:'0.05em' }}>🔐 Key Vault</h3>
                       <p style={{ color:'var(--fg-text3)', fontSize:12, margin:0 }}>Your API keys are encrypted and saved -- no re-entry needed on login.</p>
                     </div>
-                    <button onClick={loadVault} style={{ background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'4px 10px' }}>Γå╗ Refresh</button>
+                    <button onClick={loadVault} style={{ background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'4px 10px' }}>↻ Refresh</button>
                   </div>
                   {vaultKeys.map(v => (
                     <div key={v.provider} style={{ marginBottom:10, background:'var(--fg-bg)', borderRadius:12, border:`1px solid ${v.key_status==='active' ? '#05966633' : v.key_status==='invalid' ? 'rgba(248,113,113,0.33)' : 'rgba(255,255,255,0.033)'}`, padding:'12px 14px' }}>
@@ -4947,7 +4947,7 @@ export default function ForgeApp() {
                         <div style={{ width:8, height:8, borderRadius:'50%', background: v.key_status==='active' ? 'var(--fg-green)' : v.key_status==='invalid' ? 'var(--fg-red)' : 'var(--fg-text2)', boxShadow: v.key_status==='active' ? '0 0 6px var(--fg-green)' : v.key_status==='invalid' ? '0 0 6px var(--fg-red)' : 'none', flexShrink:0 }} />
                         <span style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', flex:1, textTransform:'capitalize' }}>{v.provider}</span>
                         <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'monospace' }}>{v.key_preview}</span>
-                        <span style={{ fontSize:10, color: v.key_status==='active' ? 'var(--fg-green)' : v.key_status==='invalid' ? 'var(--fg-red)' : 'var(--fg-orange2)', background: v.key_status==='active' ? '#05966622' : v.key_status==='invalid' ? 'rgba(248,113,113,0.13)' : 'rgba(251,146,60,0.13)', padding:'2px 8px', borderRadius:10, fontWeight:700 }}>{v.key_status==='active' ? '✓ Active' : v.key_status==='invalid' ? 'Γ£ù Invalid' : '⏺ Inactive'}</span>
+                        <span style={{ fontSize:10, color: v.key_status==='active' ? 'var(--fg-green)' : v.key_status==='invalid' ? 'var(--fg-red)' : 'var(--fg-orange2)', background: v.key_status==='active' ? '#05966622' : v.key_status==='invalid' ? 'rgba(248,113,113,0.13)' : 'rgba(251,146,60,0.13)', padding:'2px 8px', borderRadius:10, fontWeight:700 }}>{v.key_status==='active' ? '✓ Active' : v.key_status==='invalid' ? '✅ Invalid' : '⏺ Inactive'}</span>
                         {/* Validate button */}
                         <button onClick={() => validateVaultKey(v.provider)} disabled={vaultValidating[v.provider]} title="Test this key against the provider API" style={{ background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-orange)', cursor:'pointer', fontSize:11, padding:'3px 8px', whiteSpace:'nowrap' }}>
                           {vaultValidating[v.provider] ? '⚡ Testing…' : '⚡ Validate'}
@@ -5003,12 +5003,12 @@ export default function ForgeApp() {
                 <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:'0 0 4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>LLM Providers</h3>
                 <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 16px' }}>Connect with your account credentials or paste an API key directly.</p>
                 {([
-                  { key:'openrouter', icon:'≡ƒöÇ', label:'OpenRouter', color:'var(--fg-orange)', placeholder:'sk-or-v1-...', hint:'openrouter.ai/keys', loginUrl:'https://openrouter.ai/sign-in' },
+                  { key:'openrouter', icon:'🔀', label:'OpenRouter', color:'var(--fg-orange)', placeholder:'sk-or-v1-...', hint:'openrouter.ai/keys', loginUrl:'https://openrouter.ai/sign-in' },
                   { key:'groq',       icon:'⚡', label:'Groq',        color:'#F97316', placeholder:'gsk_...',      hint:'console.groq.com/keys', loginUrl:'https://console.groq.com' },
                   { key:'gemini',     icon:'✨', label:'Google Gemini', color:'#4285F4', placeholder:'AIza...',    hint:'aistudio.google.com', loginUrl:'https://aistudio.google.com' },
                   { key:'mistral',    icon:'🌊', label:'Mistral',     color:'var(--fg-blue)', placeholder:'...',          hint:'console.mistral.ai', loginUrl:'https://console.mistral.ai' },
-                  { key:'together',   icon:'≡ƒñ¥', label:'Together AI', color:'var(--fg-green)', placeholder:'...',          hint:'api.together.xyz', loginUrl:'https://api.together.xyz/signin' },
-                  { key:'perplexity', icon:'≡ƒö¡', label:'Perplexity',  color:'#8B5CF6', placeholder:'pplx-...',    hint:'perplexity.ai/settings', loginUrl:'https://www.perplexity.ai' },
+                  { key:'together',   icon:'🤝', label:'Together AI', color:'var(--fg-green)', placeholder:'...',          hint:'api.together.xyz', loginUrl:'https://api.together.xyz/signin' },
+                  { key:'perplexity', icon:'🔮', label:'Perplexity',  color:'#8B5CF6', placeholder:'pplx-...',    hint:'perplexity.ai/settings', loginUrl:'https://www.perplexity.ai' },
                 ] as const).map(({ key, icon, label, color, placeholder, hint, loginUrl }) => {
                   const creds = llmCreds[key];
                   const expanded = llmExpanded[key];
@@ -5122,7 +5122,7 @@ export default function ForgeApp() {
           <div style={{ flex:1, overflowY:'auto', padding:24 }}>
             <div style={{ maxWidth:960, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24 }}>
-                <span style={{ fontSize:24 }}>≡ƒ¢í</span>
+                <span style={{ fontSize:24 }}>🛡</span>
                 <div>
                   <h2 style={{ margin:0, color:'var(--fg-orange2)', fontSize:20, fontWeight:800, fontFamily:'var(--fg-font-display)' }}>Admin Panel</h2>
                   <p style={{ margin:0, color:'var(--fg-text3)', fontSize:13 }}>Platform management & moderation</p>
@@ -5133,8 +5133,8 @@ export default function ForgeApp() {
               <div style={{ display:'flex', gap:4, marginBottom:24, background:'var(--fg-bg)', padding:4, borderRadius:10, width:'fit-content' }}>
                 {([
                   { id:'stats', label:'📊 Stats' },
-                  { id:'users', label:'≡ƒæÑ Users' },
-                  { id:'keys', label:'≡ƒöæ Platform Keys' },
+                  { id:'users', label:'👥 Users' },
+                  { id:'keys', label:'🔑 Platform Keys' },
                   { id:'models', label:'🤖 Models' },
                 ] as const).map(t => (
                   <button key={t.id} onClick={() => setAdminTab(t.id)} style={{ padding:'7px 16px', background:adminTab===t.id ? 'var(--fg-bg4)' : 'transparent', border:`1px solid ${adminTab===t.id ? 'var(--fg-orange2)' : 'transparent'}`, borderRadius:7, color:adminTab===t.id ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:adminTab===t.id ? 600 : 400, whiteSpace:'nowrap' }}>
@@ -5147,7 +5147,7 @@ export default function ForgeApp() {
               {adminTab === 'stats' && (
                 <div>
                   <div style={{ display:'flex', gap:4, marginBottom:16 }}>
-                    <button onClick={() => { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); }} style={{ padding:'7px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', cursor:'pointer', fontSize:13 }}>Γå║ Refresh</button>
+                    <button onClick={() => { loadAdminStats(); loadAdminUsers(); loadAdminKeys(); loadAdminModels(); }} style={{ padding:'7px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
                   </div>
                   {adminStats ? (
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:16, marginBottom:24 }}>
@@ -5193,7 +5193,7 @@ export default function ForgeApp() {
                           <option value="admin">admin</option>
                         </select>
                         <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '--'}</span>
-                        <span style={{ fontSize:11, color:u.verified ? 'var(--fg-green)' : 'var(--fg-red)' }}>{u.verified ? '✓ verified' : 'Γ£ù unverified'}</span>
+                        <span style={{ fontSize:11, color:u.verified ? 'var(--fg-green)' : 'var(--fg-red)' }}>{u.verified ? '✓ verified' : '✅ unverified'}</span>
                       </div>
                     ))}
                   </div>
@@ -5282,97 +5282,97 @@ export default function ForgeApp() {
               { id:'pdf', icon:'📄', name:'PDF Tools', category:'document', desc:'Extract, create, merge, split, fill PDF forms', prompt:'You are a PDF processing expert. Handle all PDF operations: extract text, merge documents, fill forms, and create new PDFs.' },
               { id:'docx', icon:'📝', name:'Word Documents', category:'document', desc:'Create, read, edit .docx with formatting, tables, images', prompt:'You are a Word document expert. Create and edit professional Word documents with proper formatting, tables, and styles.' },
               { id:'xlsx', icon:'📊', name:'Excel Spreadsheets', category:'document', desc:'Excel workbooks: formulas, charts, pivot tables, data analysis', prompt:'You are a spreadsheet expert. Create Excel workbooks with formulas, charts, pivot tables, and data analysis.' },
-              { id:'pptx', icon:'≡ƒÄ₧', name:'PowerPoint', category:'document', desc:'Create slide decks with layouts, animations, speaker notes', prompt:'You are a presentation expert. Create compelling slide decks with clear structure, visuals, and narrative flow.' },
-              { id:'csv', icon:'≡ƒùé', name:'CSV / Data Files', category:'document', desc:'Parse, transform, analyze and export CSV/TSV data', prompt:'You are a data file expert. Parse, clean, transform, and analyze CSV and structured data files.' },
+              { id:'pptx', icon:'🎬', name:'PowerPoint', category:'document', desc:'Create slide decks with layouts, animations, speaker notes', prompt:'You are a presentation expert. Create compelling slide decks with clear structure, visuals, and narrative flow.' },
+              { id:'csv', icon:'📊', name:'CSV / Data Files', category:'document', desc:'Parse, transform, analyze and export CSV/TSV data', prompt:'You are a data file expert. Parse, clean, transform, and analyze CSV and structured data files.' },
               { id:'markdown', icon:'✍️', name:'Markdown Writer', category:'document', desc:'Write, format and publish Markdown documents', prompt:'You are a technical writer. Create clear, well-structured Markdown documents, READMEs, and documentation.' },
               // Finance
               { id:'financial-model', icon:'💰', name:'Financial Modeling', category:'finance', desc:'Build P&L, cash flow forecasts, valuation models', prompt:'You are a financial modeling expert. Build detailed financial models, P&L statements, cash flow forecasts, and valuations.' },
-              { id:'invoice', icon:'≡ƒº╛', name:'Invoice & Billing', category:'finance', desc:'Create invoices, track payments, billing automation', prompt:'You are a billing expert. Create professional invoices, track payments, and automate billing workflows.' },
-              { id:'budget', icon:'≡ƒôë', name:'Budget Planning', category:'finance', desc:'Annual budgets, variance analysis, forecasting', prompt:'You are a budget analyst. Build and analyze budgets, perform variance analysis, and create financial forecasts.' },
-              { id:'tax', icon:'≡ƒÅª', name:'Tax Preparation', category:'finance', desc:'Tax calculations, deductions, 1099s, quarterly estimates', prompt:'You are a tax advisor. Help with tax calculations, identify deductions, prepare 1099s and quarterly estimates.' },
-              { id:'accounting', icon:'≡ƒöó', name:'Accounting', category:'finance', desc:'Journal entries, reconciliation, bookkeeping', prompt:'You are an accounting expert. Handle bookkeeping, journal entries, account reconciliation, and financial statements.' },
-              { id:'investment', icon:'≡ƒôê', name:'Investment Analysis', category:'finance', desc:'Stock analysis, portfolio review, ROI calculations', prompt:'You are an investment analyst. Analyze investments, calculate ROI, review portfolios, and model returns.' },
+              { id:'invoice', icon:'🧾', name:'Invoice & Billing', category:'finance', desc:'Create invoices, track payments, billing automation', prompt:'You are a billing expert. Create professional invoices, track payments, and automate billing workflows.' },
+              { id:'budget', icon:'📊', name:'Budget Planning', category:'finance', desc:'Annual budgets, variance analysis, forecasting', prompt:'You are a budget analyst. Build and analyze budgets, perform variance analysis, and create financial forecasts.' },
+              { id:'tax', icon:'🧾', name:'Tax Preparation', category:'finance', desc:'Tax calculations, deductions, 1099s, quarterly estimates', prompt:'You are a tax advisor. Help with tax calculations, identify deductions, prepare 1099s and quarterly estimates.' },
+              { id:'accounting', icon:'📒', name:'Accounting', category:'finance', desc:'Journal entries, reconciliation, bookkeeping', prompt:'You are an accounting expert. Handle bookkeeping, journal entries, account reconciliation, and financial statements.' },
+              { id:'investment', icon:'📈', name:'Investment Analysis', category:'finance', desc:'Stock analysis, portfolio review, ROI calculations', prompt:'You are an investment analyst. Analyze investments, calculate ROI, review portfolios, and model returns.' },
               // Analytics
               { id:'data-analyze', icon:'🔌', name:'Data Analysis', category:'analytics', desc:'Trends, patterns, outlier detection, hypothesis testing', prompt:'You are a data analyst. Analyze datasets, identify patterns, test hypotheses, and provide actionable insights.' },
-              { id:'data-viz', icon:'≡ƒôê', name:'Data Visualization', category:'analytics', desc:'Charts, graphs, infographics with matplotlib/plotly', prompt:'You are a data visualization expert. Create publication-ready charts and interactive visualizations.' },
-              { id:'dashboard', icon:'≡ƒÄ¢', name:'Dashboard Builder', category:'analytics', desc:'Interactive HTML dashboards with filters and KPIs', prompt:'You are a dashboard designer. Build interactive dashboards with charts, filters, KPI cards, and drill-downs.' },
-              { id:'sql', icon:'≡ƒùä', name:'SQL Queries', category:'analytics', desc:'Write optimized SQL for Snowflake, BigQuery, Postgres', prompt:'You are a SQL expert. Write efficient, optimized queries for any SQL dialect including window functions and CTEs.' },
-              { id:'statistics', icon:'≡ƒôÉ', name:'Statistical Analysis', category:'analytics', desc:'Regression, correlation, A/B testing, significance', prompt:'You are a statistician. Apply statistical methods, run A/B tests, calculate significance, and interpret results.' },
+              { id:'data-viz', icon:'📈', name:'Data Visualization', category:'analytics', desc:'Charts, graphs, infographics with matplotlib/plotly', prompt:'You are a data visualization expert. Create publication-ready charts and interactive visualizations.' },
+              { id:'dashboard', icon:'📊', name:'Dashboard Builder', category:'analytics', desc:'Interactive HTML dashboards with filters and KPIs', prompt:'You are a dashboard designer. Build interactive dashboards with charts, filters, KPI cards, and drill-downs.' },
+              { id:'sql', icon:'🗄', name:'SQL Queries', category:'analytics', desc:'Write optimized SQL for Snowflake, BigQuery, Postgres', prompt:'You are a SQL expert. Write efficient, optimized queries for any SQL dialect including window functions and CTEs.' },
+              { id:'statistics', icon:'📉', name:'Statistical Analysis', category:'analytics', desc:'Regression, correlation, A/B testing, significance', prompt:'You are a statistician. Apply statistical methods, run A/B tests, calculate significance, and interpret results.' },
               // Engineering
-              { id:'debug', icon:'≡ƒÉ¢', name:'Debug', category:'engineering', desc:'Systematic debugging: reproduce, isolate, fix', prompt:'You are a debugging expert. Systematically identify root causes, isolate issues, and provide tested fixes.' },
-              { id:'code-review', icon:'≡ƒæü', name:'Code Review', category:'engineering', desc:'Security, performance, correctness review', prompt:'You are a senior code reviewer. Evaluate code for security vulnerabilities, performance bottlenecks, and correctness.' },
-              { id:'architecture', icon:'≡ƒÅù', name:'System Architecture', category:'engineering', desc:'ADRs, system design, microservices, APIs', prompt:'You are a software architect. Design scalable systems, write ADRs, and make technology decisions.' },
+              { id:'debug', icon:'🐛', name:'Debug', category:'engineering', desc:'Systematic debugging: reproduce, isolate, fix', prompt:'You are a debugging expert. Systematically identify root causes, isolate issues, and provide tested fixes.' },
+              { id:'code-review', icon:'👁', name:'Code Review', category:'engineering', desc:'Security, performance, correctness review', prompt:'You are a senior code reviewer. Evaluate code for security vulnerabilities, performance bottlenecks, and correctness.' },
+              { id:'architecture', icon:'🏗', name:'System Architecture', category:'engineering', desc:'ADRs, system design, microservices, APIs', prompt:'You are a software architect. Design scalable systems, write ADRs, and make technology decisions.' },
               { id:'devops', icon:'🔧', name:'DevOps & CI/CD', category:'engineering', desc:'Docker, Kubernetes, GitHub Actions, deployment pipelines', prompt:'You are a DevOps expert. Build CI/CD pipelines, containerize apps, and manage cloud infrastructure.' },
-              { id:'api-design', icon:'≡ƒöî', name:'API Design', category:'engineering', desc:'REST, GraphQL, OpenAPI specs, authentication', prompt:'You are an API architect. Design clean REST and GraphQL APIs with proper auth, versioning, and documentation.' },
-              { id:'testing', icon:'≡ƒº¬', name:'Testing Strategy', category:'engineering', desc:'Unit, integration, E2E test plans and implementation', prompt:'You are a QA engineer. Design comprehensive test strategies and write unit, integration, and E2E tests.' },
-              { id:'incident', icon:'≡ƒÜ¿', name:'Incident Response', category:'engineering', desc:'On-call triage, postmortems, runbooks', prompt:'You are an SRE. Triage incidents, write blameless postmortems, and create runbooks for operational reliability.' },
+              { id:'api-design', icon:'🔗', name:'API Design', category:'engineering', desc:'REST, GraphQL, OpenAPI specs, authentication', prompt:'You are an API architect. Design clean REST and GraphQL APIs with proper auth, versioning, and documentation.' },
+              { id:'testing', icon:'🧪', name:'Testing Strategy', category:'engineering', desc:'Unit, integration, E2E test plans and implementation', prompt:'You are a QA engineer. Design comprehensive test strategies and write unit, integration, and E2E tests.' },
+              { id:'incident', icon:'🚨', name:'Incident Response', category:'engineering', desc:'On-call triage, postmortems, runbooks', prompt:'You are an SRE. Triage incidents, write blameless postmortems, and create runbooks for operational reliability.' },
               // Content
               { id:'brand-voice', icon:'🎤', name:'Brand Voice', category:'content', desc:'Apply brand guidelines, tone alignment, messaging', prompt:'You are a brand strategist. Ensure all content aligns with brand voice, tone, and messaging guidelines.' },
-              { id:'marketing', icon:'≡ƒôó', name:'Marketing Content', category:'content', desc:'Blog posts, emails, social media, landing pages', prompt:'You are a marketing copywriter. Create engaging, conversion-focused content across all channels.' },
-              { id:'email-seq', icon:'≡ƒô¼', name:'Email Sequences', category:'content', desc:'Drip campaigns, onboarding flows, nurture sequences', prompt:'You are an email marketing specialist. Write compelling email sequences with strong subject lines and CTAs.' },
-              { id:'seo', icon:'≡ƒöÄ', name:'SEO Content', category:'content', desc:'Keyword research, meta tags, SEO-optimized articles', prompt:'You are an SEO expert. Research keywords and write content that ranks while providing genuine value.' },
-              { id:'copywriting', icon:'Γ£Æ', name:'Copywriting', category:'content', desc:'Ad copy, headlines, CTAs, persuasive writing', prompt:'You are a direct-response copywriter. Write compelling copy that drives action and converts readers.' },
-              { id:'social-media', icon:'≡ƒô▒', name:'Social Media', category:'content', desc:'Posts, captions, hashtags for all platforms', prompt:'You are a social media expert. Create engaging platform-specific content for Twitter, LinkedIn, Instagram, TikTok.' },
+              { id:'marketing', icon:'📣', name:'Marketing Content', category:'content', desc:'Blog posts, emails, social media, landing pages', prompt:'You are a marketing copywriter. Create engaging, conversion-focused content across all channels.' },
+              { id:'email-seq', icon:'📧', name:'Email Sequences', category:'content', desc:'Drip campaigns, onboarding flows, nurture sequences', prompt:'You are an email marketing specialist. Write compelling email sequences with strong subject lines and CTAs.' },
+              { id:'seo', icon:'🔍', name:'SEO Content', category:'content', desc:'Keyword research, meta tags, SEO-optimized articles', prompt:'You are an SEO expert. Research keywords and write content that ranks while providing genuine value.' },
+              { id:'copywriting', icon:'✍', name:'Copywriting', category:'content', desc:'Ad copy, headlines, CTAs, persuasive writing', prompt:'You are a direct-response copywriter. Write compelling copy that drives action and converts readers.' },
+              { id:'social-media', icon:'📱', name:'Social Media', category:'content', desc:'Posts, captions, hashtags for all platforms', prompt:'You are a social media expert. Create engaging platform-specific content for Twitter, LinkedIn, Instagram, TikTok.' },
               // Design
               { id:'ux-design', icon:'🎨', name:'UX Design', category:'design', desc:'User research, wireframes, prototypes, usability', prompt:'You are a UX designer. Create user-centered designs, conduct research, and build intuitive experiences.' },
-              { id:'ui-design', icon:'≡ƒûî', name:'UI Design', category:'design', desc:'Visual design, components, design systems, Figma', prompt:'You are a UI designer. Create beautiful, consistent interfaces with proper spacing, typography, and color.' },
-              { id:'design-critique', icon:'≡ƒö¼', name:'Design Critique', category:'design', desc:'Review designs for usability, hierarchy, accessibility', prompt:'You are a design critic. Provide constructive feedback on visual hierarchy, usability, and aesthetic consistency.' },
+              { id:'ui-design', icon:'🎨', name:'UI Design', category:'design', desc:'Visual design, components, design systems, Figma', prompt:'You are a UI designer. Create beautiful, consistent interfaces with proper spacing, typography, and color.' },
+              { id:'design-critique', icon:'🔬', name:'Design Critique', category:'design', desc:'Review designs for usability, hierarchy, accessibility', prompt:'You are a design critic. Provide constructive feedback on visual hierarchy, usability, and aesthetic consistency.' },
               // Legal
               { id:'contract-review', icon:'⚖️', name:'Contract Review', category:'legal', desc:'Review contracts, flag risks, suggest redlines', prompt:'You are a contract analyst. Review agreements, identify risks, and suggest protective language changes.' },
-              { id:'nda', icon:'≡ƒöÆ', name:'NDA Triage', category:'legal', desc:'Triage NDAs as green/yellow/red risk', prompt:'You are a legal analyst. Triage NDAs, classify risk levels, and flag non-standard clauses.' },
+              { id:'nda', icon:'🔐', name:'NDA Triage', category:'legal', desc:'Triage NDAs as green/yellow/red risk', prompt:'You are a legal analyst. Triage NDAs, classify risk levels, and flag non-standard clauses.' },
               { id:'compliance', icon:'📋', name:'Compliance Check', category:'legal', desc:'GDPR, SOC2, HIPAA, regulatory requirements', prompt:'You are a compliance specialist. Check processes for regulatory compliance and identify gaps.' },
               // Product
               { id:'prd', icon:'🎯', name:'Product Spec', category:'product', desc:'PRDs, user stories, acceptance criteria', prompt:'You are a product manager. Write detailed PRDs, user stories, and acceptance criteria from requirements.' },
-              { id:'roadmap', icon:'≡ƒù║', name:'Roadmap Planning', category:'product', desc:'Now/Next/Later roadmaps, prioritization', prompt:'You are a product strategist. Build product roadmaps, prioritize features, and align stakeholders.' },
-              { id:'competitive', icon:'ΓÜö', name:'Competitive Analysis', category:'product', desc:'Competitor research, battlecards, positioning', prompt:'You are a competitive analyst. Research competitors, build battlecards, and identify market opportunities.' },
+              { id:'roadmap', icon:'🗺', name:'Roadmap Planning', category:'product', desc:'Now/Next/Later roadmaps, prioritization', prompt:'You are a product strategist. Build product roadmaps, prioritize features, and align stakeholders.' },
+              { id:'competitive', icon:'⚔', name:'Competitive Analysis', category:'product', desc:'Competitor research, battlecards, positioning', prompt:'You are a competitive analyst. Research competitors, build battlecards, and identify market opportunities.' },
               // Research
-              { id:'research', icon:'≡ƒö¡', name:'Deep Research', category:'research', desc:'Multi-source research, fact-checking, synthesis', prompt:'You are a research analyst. Conduct deep research, verify facts, synthesize sources, and produce clear reports.' },
+              { id:'research', icon:'🔮', name:'Deep Research', category:'research', desc:'Multi-source research, fact-checking, synthesis', prompt:'You are a research analyst. Conduct deep research, verify facts, synthesize sources, and produce clear reports.' },
               { id:'summarize', icon:'📋', name:'Summarizer', category:'research', desc:'Summarize documents, papers, meetings, threads', prompt:'You are a summarization expert. Extract key insights and create concise, accurate summaries of any content.' },
-              { id:'translation', icon:'≡ƒîì', name:'Translation', category:'research', desc:'Translate and localize content for any language', prompt:'You are a professional translator. Translate content accurately while preserving tone and cultural context.' },
+              { id:'translation', icon:'🌍', name:'Translation', category:'research', desc:'Translate and localize content for any language', prompt:'You are a professional translator. Translate content accurately while preserving tone and cultural context.' },
             ],
             connectors: [
               // Communication
               { id:'slack', icon:'🛠', name:'Slack', desc:'Send messages, read channels, manage threads', status:'coming', category:'communication' },
-              { id:'gmail', icon:'≡ƒôº', name:'Gmail', desc:'Read/send emails, manage labels, search inbox', status:'coming', category:'communication' },
-              { id:'teams', icon:'≡ƒÆ╝', name:'Microsoft Teams', desc:'Messages, channels, meetings, files', status:'coming', category:'communication' },
-              { id:'discord', icon:'≡ƒÄ«', name:'Discord', desc:'Send messages, manage servers, read channels', status:'coming', category:'communication' },
-              { id:'whatsapp', icon:'≡ƒÆÜ', name:'WhatsApp Business', desc:'Send messages, manage contacts, templates', status:'coming', category:'communication' },
+              { id:'gmail', icon:'📧', name:'Gmail', desc:'Read/send emails, manage labels, search inbox', status:'coming', category:'communication' },
+              { id:'teams', icon:'💼', name:'Microsoft Teams', desc:'Messages, channels, meetings, files', status:'coming', category:'communication' },
+              { id:'discord', icon:'💬', name:'Discord', desc:'Send messages, manage servers, read channels', status:'coming', category:'communication' },
+              { id:'whatsapp', icon:'💬', name:'WhatsApp Business', desc:'Send messages, manage contacts, templates', status:'coming', category:'communication' },
               // Project Management
               { id:'linear', icon:'📋', name:'Linear', desc:'Create/update issues, manage sprints', status:'coming', category:'project' },
               { id:'asana', icon:'✓', name:'Asana', desc:'Tasks, projects, teams, timelines', status:'coming', category:'project' },
-              { id:'jira', icon:'≡ƒö╖', name:'Jira', desc:'Tickets, sprints, epics, bug tracking', status:'coming', category:'project' },
+              { id:'jira', icon:'🎯', name:'Jira', desc:'Tickets, sprints, epics, bug tracking', status:'coming', category:'project' },
               { id:'notion', icon:'📄', name:'Notion', desc:'Pages, databases, wikis, docs', status:'coming', category:'project' },
-              { id:'trello', icon:'≡ƒôî', name:'Trello', desc:'Boards, cards, lists, automations', status:'coming', category:'project' },
-              { id:'monday', icon:'≡ƒîê', name:'Monday.com', desc:'Workspaces, boards, automations', status:'coming', category:'project' },
+              { id:'trello', icon:'📌', name:'Trello', desc:'Boards, cards, lists, automations', status:'coming', category:'project' },
+              { id:'monday', icon:'📅', name:'Monday.com', desc:'Workspaces, boards, automations', status:'coming', category:'project' },
               // Storage & Files
-              { id:'gdrive', icon:'Γÿü', name:'Google Drive', desc:'Files, folders, sharing, collaboration', status:'coming', category:'storage' },
-              { id:'dropbox', icon:'≡ƒôª', name:'Dropbox', desc:'Files, folders, sharing, sync', status:'coming', category:'storage' },
-              { id:'box', icon:'≡ƒô½', name:'Box', desc:'Enterprise file storage and sharing', status:'coming', category:'storage' },
-              { id:'onedrive', icon:'≡ƒö╡', name:'OneDrive', desc:'Microsoft file storage, SharePoint integration', status:'coming', category:'storage' },
-              { id:'s3', icon:'≡ƒ¬ú', name:'AWS S3', desc:'Object storage, buckets, file operations', status:'coming', category:'storage' },
+              { id:'gdrive', icon:'📗', name:'Google Drive', desc:'Files, folders, sharing, collaboration', status:'coming', category:'storage' },
+              { id:'dropbox', icon:'📦', name:'Dropbox', desc:'Files, folders, sharing, sync', status:'coming', category:'storage' },
+              { id:'box', icon:'📦', name:'Box', desc:'Enterprise file storage and sharing', status:'coming', category:'storage' },
+              { id:'onedrive', icon:'🖱', name:'OneDrive', desc:'Microsoft file storage, SharePoint integration', status:'coming', category:'storage' },
+              { id:'s3', icon:'☁️', name:'AWS S3', desc:'Object storage, buckets, file operations', status:'coming', category:'storage' },
               // Dev Tools
-              { id:'github', icon:'≡ƒÉÖ', name:'GitHub', desc:'PRs, repos, issues, CI/CD, code review', status:'coming', category:'devtools' },
-              { id:'gitlab', icon:'≡ƒªè', name:'GitLab', desc:'Repos, MRs, pipelines, issues', status:'coming', category:'devtools' },
+              { id:'github', icon:'🐙', name:'GitHub', desc:'PRs, repos, issues, CI/CD, code review', status:'coming', category:'devtools' },
+              { id:'gitlab', icon:'🦊', name:'GitLab', desc:'Repos, MRs, pipelines, issues', status:'coming', category:'devtools' },
               { id:'vercel', icon:'▲', name:'Vercel', desc:'Deployments, domains, environment variables', status:'coming', category:'devtools' },
-              { id:'railway', icon:'≡ƒÜé', name:'Railway', desc:'Deploy services, manage environments', status:'coming', category:'devtools' },
+              { id:'railway', icon:'🚂', name:'Railway', desc:'Deploy services, manage environments', status:'coming', category:'devtools' },
               { id:'supabase', icon:'⚡', name:'Supabase', desc:'Database, auth, storage, edge functions', status:'coming', category:'devtools' },
               { id:'firebase', icon:'🔥', name:'Firebase', desc:'Realtime DB, auth, hosting, functions', status:'coming', category:'devtools' },
               // CRM & Sales
-              { id:'hubspot', icon:'≡ƒºí', name:'HubSpot', desc:'Contacts, deals, emails, pipelines', status:'coming', category:'crm' },
-              { id:'salesforce', icon:'Γÿü', name:'Salesforce', desc:'Leads, opportunities, accounts, reports', status:'coming', category:'crm' },
+              { id:'hubspot', icon:'🏷', name:'HubSpot', desc:'Contacts, deals, emails, pipelines', status:'coming', category:'crm' },
+              { id:'salesforce', icon:'📗', name:'Salesforce', desc:'Leads, opportunities, accounts, reports', status:'coming', category:'crm' },
               { id:'stripe', icon:'💳', name:'Stripe', desc:'Payments, subscriptions, customers, invoices', status:'coming', category:'crm' },
-              { id:'calendly', icon:'≡ƒôà', name:'Calendly', desc:'Scheduling, meetings, availability', status:'coming', category:'crm' },
+              { id:'calendly', icon:'📅', name:'Calendly', desc:'Scheduling, meetings, availability', status:'coming', category:'crm' },
               // Productivity
               { id:'gcal', icon:'📅', name:'Google Calendar', desc:'Events, availability, scheduling', status:'coming', category:'productivity' },
-              { id:'zoom', icon:'≡ƒô╣', name:'Zoom', desc:'Meetings, recordings, transcripts', status:'coming', category:'productivity' },
-              { id:'airtable', icon:'≡ƒùâ', name:'Airtable', desc:'Bases, tables, views, automations', status:'coming', category:'productivity' },
+              { id:'zoom', icon:'📹', name:'Zoom', desc:'Meetings, recordings, transcripts', status:'coming', category:'productivity' },
+              { id:'airtable', icon:'📋', name:'Airtable', desc:'Bases, tables, views, automations', status:'coming', category:'productivity' },
               { id:'zapier', icon:'⚡', name:'Zapier', desc:'Connect 5000+ apps with no-code automations', status:'coming', category:'productivity' },
               { id:'make', icon:'🔄', name:'Make (Integromat)', desc:'Visual workflow automation platform', status:'coming', category:'productivity' },
               // AI & Data
               { id:'openai', icon:'🤖', name:'OpenAI API', desc:'GPT-4, DALL-E, Whisper, embeddings', status:'coming', category:'ai' },
-              { id:'anthropic', icon:'≡ƒîƒ', name:'Anthropic API', desc:'Claude models, direct API access', status:'coming', category:'ai' },
-              { id:'pinecone', icon:'≡ƒî▓', name:'Pinecone', desc:'Vector database for semantic search', status:'coming', category:'ai' },
-              { id:'snowflake', icon:'Γ¥ä', name:'Snowflake', desc:'Cloud data warehouse, SQL queries', status:'coming', category:'ai' },
+              { id:'anthropic', icon:'🌟', name:'Anthropic API', desc:'Claude models, direct API access', status:'coming', category:'ai' },
+              { id:'pinecone', icon:'🌲', name:'Pinecone', desc:'Vector database for semantic search', status:'coming', category:'ai' },
+              { id:'snowflake', icon:'❄️', name:'Snowflake', desc:'Cloud data warehouse, SQL queries', status:'coming', category:'ai' },
               { id:'bigquery', icon:'🔌', name:'BigQuery', desc:'Google analytics data warehouse', status:'coming', category:'ai' },
             ]
           };
@@ -5387,7 +5387,7 @@ export default function ForgeApp() {
             {/* Super header */}
             <div style={{ padding:'16px 24px 0', borderBottom:'1px solid var(--fg-border)', flexShrink:0 }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
-                <div style={{ width:40, height:40, borderRadius:'50%', animation:'forge-flash 2s ease-in-out infinite', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>≡ƒîƒ</div>
+                <div style={{ width:40, height:40, borderRadius:'50%', animation:'forge-flash 2s ease-in-out infinite', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🌟</div>
                 <div>
                   <h2 style={{ margin:0, fontSize:18, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.3px' }}>Forge SuperAgent</h2>
                   <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Using: {selectedModel || 'forge-fast'}</p>
@@ -5421,7 +5421,7 @@ export default function ForgeApp() {
                 <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
                   {superMessages.length === 0 && (
                     <div style={{ textAlign:'center', padding:'60px 0', color:'var(--fg-text3)' }}>
-                      <div style={{ fontSize:48, marginBottom:12, animation:'forge-flash 3s ease-in-out infinite', display:'inline-block' }}>≡ƒîƒ</div>
+                      <div style={{ fontSize:48, marginBottom:12, animation:'forge-flash 3s ease-in-out infinite', display:'inline-block' }}>🌟</div>
                       <p style={{ fontSize:16, color:'var(--fg-text3)', margin:'0 0 8px' }}>Forge SuperAgent is ready</p>
                       <p style={{ fontSize:13, color:'var(--fg-text3)', margin:0 }}>Start chatting -- it knows your workspace history. Hit "Harvest Memory" first for best results.</p>
                     </div>
@@ -5437,7 +5437,7 @@ export default function ForgeApp() {
                     return (
                     <div key={i} style={{ display:'flex', gap:12, marginBottom:20, flexDirection: m.role==='user' ? 'row-reverse' : 'row' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background: m.role==='user' ? 'var(--fg-border2)' : undefined, animation: m.role==='assistant' ? 'forge-flash 2s ease-in-out infinite' : undefined, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
-                        {m.role==='user' ? '👤' : '≡ƒîƒ'}
+                        {m.role==='user' ? '👤' : '🌟'}
                       </div>
                       <div style={{ flex:1, maxWidth:'70%', display:'flex', flexDirection:'column', gap:12 }}>
                         {cleanContent && <div style={{ padding:'12px 16px', borderRadius: m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background: m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg2)', border:`1px solid ${m.role==='user' ? 'var(--fg-border2)' : 'rgba(249,115,22,0.27)'}`, color:'var(--fg-text)', fontSize:14, lineHeight:1.6, wordBreak:'break-word' }}>
@@ -5471,7 +5471,7 @@ export default function ForgeApp() {
                   })}
                   {superSending && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite' }}>≡ƒîƒ</div>
+                      <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'forge-flash 1.8s ease-in-out infinite' }}>🌟</div>
                       <div style={{ flex:1, maxWidth:'70%' }}>
                         <div style={{ padding:'12px 18px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'2px solid var(--fg-orange)', animation:'forge-ring 1.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
                           {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
@@ -5483,15 +5483,15 @@ export default function ForgeApp() {
                               const toolMeta: Record<string,{icon:string;verb:string}> = {
                                 web_search:{icon:'🔌',verb:'Searching the web'},
                                 browser_navigate:{icon:'🌐',verb:'Opening browser'},
-                                browser_batch:{icon:'≡ƒûÑ',verb:'Browsing multiple pages'},
+                                browser_batch:{icon:'🖥',verb:'Browsing multiple pages'},
                                 run_code:{icon:'⚙️',verb:'Running code'},
                                 read_file:{icon:'📄',verb:'Reading file'},
                                 write_file:{icon:'💾',verb:'Writing file'},
                                 list_directory:{icon:'📌',verb:'Browsing files'},
                                 execute_js:{icon:'⚡',verb:'Running JavaScript'},
-                                screenshot:{icon:'≡ƒô╕',verb:'Taking screenshot'},
+                                screenshot:{icon:'🖼',verb:'Taking screenshot'},
                                 click:{icon:'🖱',verb:'Clicking element'},
-                                send_request:{icon:'≡ƒôí',verb:'Making API request'},
+                                send_request:{icon:'📡',verb:'Making API request'},
                                 image_gen:{icon:'🎨',verb:'Generating image'},
                                 data_analyze:{icon:'📊',verb:'Analyzing data'},
                                 commit_deploy:{icon:'🚀',verb:'Deploying changes'},
@@ -5649,10 +5649,10 @@ export default function ForgeApp() {
         {/* -- ForgeCO ------------------------------------------------ */}
         {mainTab === 'forgeco' && (() => {
           const coMembers = [
-            { id:'m1', name:'Alex Chen', role:'Lead Developer', avatar:'≡ƒæ¿"💻', status:'online', tasks:3 },
-            { id:'m2', name:'Sarah Kim', role:'Product Manager', avatar:'≡ƒæ⌐"≡ƒÆ╝', status:'online', tasks:5 },
-            { id:'m3', name:'Marcus Lee', role:'Designer', avatar:'≡ƒºæ"🎨', status:'away', tasks:2 },
-            { id:'m4', name:'Priya Patel', role:'Data Analyst', avatar:'≡ƒæ⌐"≡ƒö¼', status:'offline', tasks:1 },
+            { id:'m1', name:'Alex Chen', role:'Lead Developer', avatar:'👨"💻', status:'online', tasks:3 },
+            { id:'m2', name:'Sarah Kim', role:'Product Manager', avatar:'👩"💼', status:'online', tasks:5 },
+            { id:'m3', name:'Marcus Lee', role:'Designer', avatar:'🧪"🎨', status:'away', tasks:2 },
+            { id:'m4', name:'Priya Patel', role:'Data Analyst', avatar:'👩"🔬', status:'offline', tasks:1 },
           ];
           const coProjects = [
             { id:'p1', name:'Platform v2.0', status:'active', progress:72, due:'Jun 15', members:3 },
@@ -5669,7 +5669,7 @@ export default function ForgeApp() {
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:1000, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>≡ƒºæ"💻</span>
+                <span style={{ fontSize:36 }}>🧪"💻</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeCo</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Team workspace — manage projects, collaborate with your team, and get AI assistance across every task.</p>
@@ -5700,7 +5700,7 @@ export default function ForgeApp() {
                     ))}
                     <div style={{ background:'var(--fg-bg2)', border:'2px dashed var(--fg-border)', borderRadius:12, padding:18, textAlign:'center', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:160 }}
                       onClick={() => showToast('Connect an HR or email tool in Platforms tab to invite colleagues','info')}>
-                      <div style={{ fontSize:28, marginBottom:8 }}>Γ₧ò</div>
+                      <div style={{ fontSize:28, marginBottom:8 }}>👥</div>
                       <div style={{ fontSize:13, color:'var(--fg-text3)' }}>Invite Member</div>
                     </div>
                   </div>
@@ -5750,7 +5750,7 @@ export default function ForgeApp() {
                     {forgecoChatLog.map((msg, i) => (
                       <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
                         <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0 }}>
-                          {msg.from==='You'?'👤':msg.from==='Forge AI'?'≡ƒîƒ':coMembers.find(m=>m.name===msg.from)?.avatar||'👤'}
+                          {msg.from==='You'?'👤':msg.from==='Forge AI'?'🌟':coMembers.find(m=>m.name===msg.from)?.avatar||'👤'}
                         </div>
                         <div>
                           <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:2 }}>{msg.from} ┬╖ {new Date(msg.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
@@ -5778,7 +5778,7 @@ export default function ForgeApp() {
           const catalogData = {
             skills: (wcd.skills || []).map((s: any) => ({
               id: s.id,
-              icon: s.icon || '≡ƒº⌐',
+              icon: s.icon || '🧩',
               name: s.name,
               category: s.category || 'general',
               desc: s.description || '',
@@ -5786,7 +5786,7 @@ export default function ForgeApp() {
             })),
             connectors: (wcd.connectors || []).map((c: any) => ({
               id: c.id,
-              icon: c.icon || '≡ƒöî',
+              icon: c.icon || '🔗',
               name: c.name,
               desc: c.description || '',
               status: c.status === 'available' ? 'active' : 'coming',
@@ -5796,7 +5796,7 @@ export default function ForgeApp() {
           };
           const SKILLS = catalogData.skills;
           const CONNECTORS = catalogData.connectors;
-          const catIcons: Record<string,string> = { document:'📄', analytics:'📊', content:'Γ£Å', engineering:'⚙️', design:'🎨', sales:'≡ƒÆ╝', product:'≡ƒù║', legal:'⚖️', finance:'💰', operations:'🔧', support:'≡ƒÄ½', enterprise:'≡ƒÅó', seo:'🔌', integrations:'≡ƒöî', productivity:'⚡', smallbiz:'≡ƒÅ¬', ai:'🤖', general:'≡ƒº⌐' };
+          const catIcons: Record<string,string> = { document:'📄', analytics:'📊', content:'✍️', engineering:'⚙️', design:'🎨', sales:'💼', product:'🗺', legal:'⚖️', finance:'💰', operations:'🔧', support:'🎨', enterprise:'✏️', seo:'🔌', integrations:'🔗', productivity:'⚡', smallbiz:'💼', ai:'🤖', general:'🧩' };
           const cats = ['All', ...Array.from(new Set(SKILLS.map((s:any) => s.category)))];
           const connCats = ['All', ...Array.from(new Set(CONNECTORS.map((c:any) => c.category)))];
           const filtered = SKILLS.filter((s:any) => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
@@ -5847,7 +5847,7 @@ export default function ForgeApp() {
               <div style={{ maxWidth:960, margin:'0 auto' }}>
                 {/* Header */}
                 <div style={{ marginBottom:32 }}>
-                  <h1 style={{ margin:'0 0 6px', fontSize:28, fontWeight:900, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.5px' }}>≡ƒº⌐ Skills & Tools</h1>
+                  <h1 style={{ margin:'0 0 6px', fontSize:28, fontWeight:900, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.5px' }}>🧩 Skills & Tools</h1>
                   <p style={{ margin:0, color:'var(--fg-text3)', fontSize:15 }}>Prebuilt AI skills, connectors, and a use-case generator for any business or workflow.</p>
                 </div>
 
@@ -5917,13 +5917,13 @@ export default function ForgeApp() {
                 {/* Connectors */}
                 <div>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
-                    <h2 style={{ margin:0, fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>≡ƒöî Connectors ({CONNECTORS.length} MCP tools)</h2>
+                    <h2 style={{ margin:0, fontSize:17, fontWeight:800, color:'var(--fg-text)' }}>🔗 Connectors ({CONNECTORS.length} MCP tools)</h2>
                     <span style={{ fontSize:11, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'2px 10px', borderRadius:10 }}>{CONNECTORS.filter((c:any) => c.status==='active').length} ready</span>
                   </div>
                   <p style={{ margin:'0 0 12px', color:'var(--fg-text3)', fontSize:13 }}>Connect Forge to your tools and data sources via MCP. Active connectors are available immediately.</p>
                   <div style={{ display:'flex', gap:6, marginBottom:14, flexWrap:'wrap' }}>
                     {connCats.map((cat:string) => (
-                      <button key={cat} onClick={() => setSkillCat('conn_'+cat)} style={{ padding:'4px 12px', borderRadius:20, border: skillCat==='conn_'+cat ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border2)', background: skillCat==='conn_'+cat ? 'var(--fg-orange)' : 'transparent', color: skillCat==='conn_'+cat ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: skillCat==='conn_'+cat ? 600 : 400 }}>{catIcons[cat]||'≡ƒöî'} {cat}</button>
+                      <button key={cat} onClick={() => setSkillCat('conn_'+cat)} style={{ padding:'4px 12px', borderRadius:20, border: skillCat==='conn_'+cat ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border2)', background: skillCat==='conn_'+cat ? 'var(--fg-orange)' : 'transparent', color: skillCat==='conn_'+cat ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: skillCat==='conn_'+cat ? 600 : 400 }}>{catIcons[cat]||'🔗'} {cat}</button>
                     ))}
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:10 }}>
@@ -5959,7 +5959,7 @@ export default function ForgeApp() {
                               <button onClick={() => toggleConnector(c.id)} style={{ padding:'5px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>{isActive ? '✓ On' : '+ On'}</button>
                             </>
                           ) : (
-                            <button onClick={() => setShowConnectModal({ id:c.id, name:c.name, icon:c.icon, desc:c.desc, setupUrl: c.setupUrl, envKey: c.envKey })} style={{ padding:'5px 10px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', flex:1, fontWeight:600 }}>≡ƒöî Connect →</button>
+                            <button onClick={() => setShowConnectModal({ id:c.id, name:c.name, icon:c.icon, desc:c.desc, setupUrl: c.setupUrl, envKey: c.envKey })} style={{ padding:'5px 10px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', flex:1, fontWeight:600 }}>🔗 Connect →</button>
                           )}
                         </div>
                       </div>
@@ -5986,7 +5986,7 @@ export default function ForgeApp() {
                     const isSelected = selectedAskSkills.has(skill.id);
                     return (
                       <button key={skill.id} onClick={() => setSelectedAskSkills(prev => { const next = new Set(prev); if (next.has(skill.id)) next.delete(skill.id); else next.add(skill.id); return next; })} style={{ padding:12, background: isSelected ? 'rgba(249,115,22,0.2)' : 'var(--fg-bg2)', border:`1px solid ${isSelected ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color: isSelected ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'left' }}>
-                        <div>{skill.icon || '≡ƒº⌐'} {skill.name}</div>
+                        <div>{skill.icon || '🧩'} {skill.name}</div>
                         <div style={{ fontSize:10, color: isSelected ? 'rgba(249,115,22,0.7)' : 'var(--fg-text3)', marginTop:4 }}>{isSelected ? '✓ Selected' : 'Select'}</div>
                       </button>
                     );
@@ -5995,13 +5995,13 @@ export default function ForgeApp() {
               </div>
 
               <div style={{ marginBottom:28 }}>
-                <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>≡ƒöî Connectors</h3>
+                <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🔗 Connectors</h3>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
                   {((window.FORGE_CATALOG_DATA as any)?.connectors || []).map((conn: any) => {
                     const isSelected = selectedAskConnectors.has(conn.id);
                     return (
                       <button key={conn.id} onClick={() => setSelectedAskConnectors(prev => { const next = new Set(prev); if (next.has(conn.id)) next.delete(conn.id); else next.add(conn.id); return next; })} style={{ padding:12, background: isSelected ? 'rgba(249,115,22,0.2)' : 'var(--fg-bg2)', border:`1px solid ${isSelected ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color: isSelected ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'left' }}>
-                        <div>{conn.icon || '≡ƒöî'} {conn.name}</div>
+                        <div>{conn.icon || '🔗'} {conn.name}</div>
                         <div style={{ fontSize:10, color: isSelected ? 'rgba(249,115,22,0.7)' : 'var(--fg-text3)', marginTop:4 }}>{isSelected ? '✓ Selected' : 'Select'}</div>
                       </button>
                     );
@@ -6029,18 +6029,18 @@ export default function ForgeApp() {
                 </div>
               </div>
               <div style={{ background:'var(--fg-bg2)', border:'2px dashed var(--fg-border2)', borderRadius:12, padding:40, textAlign:'center', marginBottom:20 }}>
-                <div style={{ fontSize:40, marginBottom:12 }}>≡ƒôñ</div>
+                <div style={{ fontSize:40, marginBottom:12 }}>📁</div>
                 <p style={{ margin:'0 0 16px', fontSize:15, color:'var(--fg-text2)', fontWeight:600 }}>Drop files here or click to upload</p>
                 <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>PDF, DOCX, CSV, TXT, PNG, JPG — up to 50MB each</p>
                 <button onClick={() => { const inp = document.createElement('input'); inp.type='file'; inp.multiple=true; inp.click(); }} style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Choose Files</button>
               </div>
               <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>≡ƒôé Your Files</h3>
+                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>📂 Your Files</h3>
                   <span style={{ fontSize:11, color:'var(--fg-text3)' }}>0 files ┬╖ 0 MB used</span>
                 </div>
                 <div style={{ textAlign:'center', padding:'32px 0' }}>
-                  <div style={{ fontSize:32, marginBottom:8 }}>≡ƒô¡</div>
+                  <div style={{ fontSize:32, marginBottom:8 }}>📁</div>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No files uploaded yet. Upload files to reference them in chat.</p>
                 </div>
               </div>
@@ -6053,7 +6053,7 @@ export default function ForgeApp() {
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:900, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
-                <span style={{ fontSize:36 }}>≡ƒûÑ</span>
+                <span style={{ fontSize:36 }}>🖥</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Forge Desktop</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Local file access, persistent memory, and browser integration via the Forge Desktop app.</p>
@@ -6069,7 +6069,7 @@ export default function ForgeApp() {
                     The Forge Desktop app gives you local file access, persistent memory, and a Chrome extension to browse alongside AI.
                   </p>
                   <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginBottom:20 }}>
-                    {[['≡ƒ¬ƒ Windows', '.exe'], ['≡ƒìÄ macOS', '.dmg'], ['≡ƒÉº Linux', '.AppImage']].map(([label, ext]) => (
+                    {[['🪟 Windows', '.exe'], ['🍎 macOS', '.dmg'], ['🐧 Linux', '.AppImage']].map(([label, ext]) => (
                       <button key={ext} style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>{label}</button>
                     ))}
                   </div>
@@ -6082,7 +6082,7 @@ export default function ForgeApp() {
                   {/* Folder Context */}
                   <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-                      <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>≡ƒôé Folder Context ({desktopFolders.length})</h3>
+                      <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>📂 Folder Context ({desktopFolders.length})</h3>
                       <button onClick={async () => {
                         const fd = (window as any).forgeDesktop;
                         const folder = await fd.pickFolder();
@@ -6112,7 +6112,7 @@ export default function ForgeApp() {
                   {/* File Tree */}
                   {desktopFileTree.length > 0 && (
                     <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                      <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>≡ƒùé File Tree</h3>
+                      <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>📊 File Tree</h3>
                       <div style={{ maxHeight:300, overflowY:'auto', fontFamily:'monospace', fontSize:12, color:'var(--fg-text2)' }}>
                         {desktopFileTree.map((item: any, i: number) => (
                           <div key={i} style={{ display:'flex', alignItems:'center', gap:6, padding:'3px 0', paddingLeft:(item.depth||0)*14 }}>
@@ -6187,7 +6187,7 @@ export default function ForgeApp() {
             {id:'bh_memory',icon:'🧠',title:'Memory Hook',desc:'Automatically inject your top memories into every chat for personalized responses.'},
             {id:'bh_tools',icon:'🛡',title:'Tools Hook',desc:'Pre-load your most-used tools (search, code exec, browser) before every conversation.'},
             {id:'bh_sysprompt',icon:'📋',title:'System Prompt Hook',desc:'Inject a custom system prompt that shapes the AI persona for all conversations.'},
-            {id:'bh_connector',icon:'≡ƒöî',title:'Connector Hook',desc:'Auto-activate connected services when relevant keywords appear.'},
+            {id:'bh_connector',icon:'🔗',title:'Connector Hook',desc:'Auto-activate connected services when relevant keywords appear.'},
             {id:'bh_context',icon:'📊',title:'Context Hook',desc:'Summarize previous conversation context and inject it into new chats automatically.'},
           ];
           const toggleBuiltin = (id:string) => setBuiltinEnabled(p => ({...p,[id]:!p[id]}));
@@ -6320,7 +6320,7 @@ export default function ForgeApp() {
                   }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>+ Schedule Run</button>
                 </div>
                 <div style={{ textAlign:'center', padding:'28px 0' }}>
-                  <div style={{ fontSize:28, marginBottom:8 }}>≡ƒô¡</div>
+                  <div style={{ fontSize:28, marginBottom:8 }}>📁</div>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No runs yet. Schedule an agent to run automatically.</p>
                 </div>
               </div>
@@ -6341,7 +6341,7 @@ export default function ForgeApp() {
                 </div>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
-                {[{icon:'🧠',title:'Smart Model Select',desc:'Pick the optimal model for each step automatically'},{icon:'≡ƒöù',title:'Chain of Thought',desc:'Multi-step reasoning with automatic backtracking'},{icon:'≡ƒöü',title:'Self-Correction',desc:'Detects errors and retries with refined prompts'},{icon:'⚡',title:'Parallel Execution',desc:'Run across multiple models simultaneously'},{icon:'🎯',title:'Goal Tracking',desc:'Breaks goals into tasks and tracks completion'},{icon:'💾',title:'Auto Memory',desc:'Saves important results to memory automatically'}].map(f => {
+                {[{icon:'🧠',title:'Smart Model Select',desc:'Pick the optimal model for each step automatically'},{icon:'🔙',title:'Chain of Thought',desc:'Multi-step reasoning with automatic backtracking'},{icon:'🔋',title:'Self-Correction',desc:'Detects errors and retries with refined prompts'},{icon:'⚡',title:'Parallel Execution',desc:'Run across multiple models simultaneously'},{icon:'🎯',title:'Goal Tracking',desc:'Breaks goals into tasks and tracks completion'},{icon:'💾',title:'Auto Memory',desc:'Saves important results to memory automatically'}].map(f => {
                   const enabled = autoFeatEnabled[f.title] ?? false;
                   return (
                   <div key={f.title} style={{ background:'var(--fg-bg2)', border:`1px solid ${enabled ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:10, padding:14 }}>
@@ -6401,7 +6401,7 @@ export default function ForgeApp() {
                       {r.content === null ? (
                         <div style={{ fontSize:12, color:'var(--fg-text3)' }}>⚡ Running…</div>
                       ) : r.error ? (
-                        <div style={{ fontSize:12, color:'#ef4444' }}>Γ¥î {r.error}</div>
+                        <div style={{ fontSize:12, color:'#ef4444' }}>❌ {r.error}</div>
                       ) : (
                         <div style={{ fontSize:12, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:200, overflowY:'auto' }}>{r.content}</div>
                       )}
@@ -6418,7 +6418,7 @@ export default function ForgeApp() {
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:800, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
-                <span style={{ fontSize:40 }}>≡ƒÅù</span>
+                <span style={{ fontSize:40 }}>🏗</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:24, fontWeight:800, color:'var(--fg-text)' }}>MVP Builder</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Scope, spec, and build a working MVP in hours. From idea to roadmap.</p>
@@ -6432,11 +6432,11 @@ export default function ForgeApp() {
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                     <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
-                      <label style={{ display:'block', fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>≡ƒÅó Industry</label>
+                      <label style={{ display:'block', fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>✏️ Industry</label>
                       <input value={mvpIndustry} onChange={e => setMvpIndustry(e.target.value)} placeholder="E.g., Productivity, FinTech, Healthcare..." style={{ width:'100%', padding:10, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} />
                     </div>
                     <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
-                      <label style={{ display:'block', fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>≡ƒæÑ Target User</label>
+                      <label style={{ display:'block', fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>👥 Target User</label>
                       <input value={mvpTarget} onChange={e => setMvpTarget(e.target.value)} placeholder="E.g., Remote workers, small businesses..." style={{ width:'100%', padding:10, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} />
                     </div>
                   </div>
@@ -6470,10 +6470,10 @@ export default function ForgeApp() {
                     </div>
                   </div>
                   <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
-                    <h3 style={{ margin:'0 0 10px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>≡ƒùô 90-Day Roadmap</h3>
+                    <h3 style={{ margin:'0 0 10px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🗺 90-Day Roadmap</h3>
                     <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{mvpResult.roadmap}</p>
                   </div>
-                  <button onClick={() => setMvpResult(null)} style={{ padding:'10px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight:600 }}>ΓåÉ Start Over</button>
+                  <button onClick={() => setMvpResult(null)} style={{ padding:'10px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight:600 }}>← Start Over</button>
                 </div>
               )}
             </div>
@@ -6518,7 +6518,7 @@ export default function ForgeApp() {
                 <button onClick={async () => {
                   if (!multiPrompt.trim() || multiRunning || multiSelectedRoles.length===0) return;
                   setMultiRunning(true); setMultiResults(null); setMultiStartTime(Date.now());
-                  const icons: Record<string,string> = { Analyst:'📊', Creative:'🎨', Critic:'🔌', Strategist:'ΓÖƒ', Researcher:'≡ƒö¼', Developer:'💻', Designer:'📝', Marketer:'≡ƒôú', Lawyer:'⚖️', Economist:'≡ƒôê' };
+                  const icons: Record<string,string> = { Analyst:'📊', Creative:'🎨', Critic:'🔌', Strategist:'♟', Researcher:'🔬', Developer:'💻', Designer:'📝', Marketer:'🧑‍💼', Lawyer:'⚖️', Economist:'📈' };
                   const live = multiSelectedRoles.map(role => ({ role, icon: icons[role]||'🤖', content: null as string|null, elapsed: null as number|null, done: false }));
                   setMultiLiveAgents(live);
                   const agents: {role:string;icon:string;content:string;elapsed:number}[] = [];
@@ -6577,7 +6577,7 @@ export default function ForgeApp() {
                   </div>
                   {multiResults && (
                     <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(99,102,241,0.04))', border:'1px solid #6366f1', borderRadius:12, padding:20 }}>
-                      <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'#6366f1' }}>≡ƒöù Synthesis</h3>
+                      <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:'#6366f1' }}>🔙 Synthesis</h3>
                       <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{multiResults.synthesis}</div>
                     </div>
                   )}
@@ -6592,14 +6592,14 @@ export default function ForgeApp() {
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:900, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>≡ƒîî</span>
+                <span style={{ fontSize:36 }}>🌌</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeASI</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Extended Parallel Intelligence Chains — deep multi-phase reasoning for complex problems.</p>
                 </div>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12, marginBottom:24 }}>
-                {[{icon:'🎯',title:'Persistent Goals',desc:'Set long-horizon goals that guide every reasoning step'},{icon:'≡ƒö¼',title:'Deep Research',desc:'Auto-searches, synthesizes, and cites sources across phases'},{icon:'🤖',title:'Autonomous Action',desc:'Breaks problems into tasks and executes each phase'},{icon:'≡ƒîì',title:'World Model',desc:'Builds an internal model of the problem domain over time'}].map(f => (
+                {[{icon:'🎯',title:'Persistent Goals',desc:'Set long-horizon goals that guide every reasoning step'},{icon:'🔬',title:'Deep Research',desc:'Auto-searches, synthesizes, and cites sources across phases'},{icon:'🤖',title:'Autonomous Action',desc:'Breaks problems into tasks and executes each phase'},{icon:'🌍',title:'World Model',desc:'Builds an internal model of the problem domain over time'}].map(f => (
                   <div key={f.title} style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.08),rgba(99,102,241,0.02))', border:'1px solid rgba(99,102,241,0.3)', borderRadius:10, padding:16 }}>
                     <div style={{ fontSize:24, marginBottom:8 }}>{f.icon}</div>
                     <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>{f.title}</div>
@@ -6667,7 +6667,7 @@ export default function ForgeApp() {
                   setAsiRunning(false);
                 }} disabled={asiRunning || !asiPrompt.trim()}
                   style={{ marginTop:12, padding:'10px 24px', background:'#6366f1', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(asiRunning||!asiPrompt.trim())?0.5:1 }}>
-                  {asiRunning ? `≡ƒîî Phase: ${asiCurrentPhase}…` : `≡ƒîî Launch ${asiDepth}-Phase ASI Analysis`}
+                  {asiRunning ? `🌌 Phase: ${asiCurrentPhase}…` : `🌌 Launch ${asiDepth}-Phase ASI Analysis`}
                 </button>
               </div>
               {asiLivePhases.length > 0 && (
@@ -6681,7 +6681,7 @@ export default function ForgeApp() {
                   {asiResult && (
                     <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.15),rgba(99,102,241,0.05))', border:'1px solid #6366f1', borderRadius:12, padding:20 }}>
                       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
-                        <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'#6366f1' }}>≡ƒîî ASI Synthesis</h3>
+                        <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'#6366f1' }}>🌌 ASI Synthesis</h3>
                         <span style={{ fontSize:11, color:'var(--fg-text3)' }}>~{asiResult.totalTokens.toLocaleString()} tokens ┬╖ {asiResult.model}</span>
                       </div>
                       <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{asiResult.synthesis}</div>
@@ -6698,7 +6698,7 @@ export default function ForgeApp() {
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:860, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>≡ƒÅù</span>
+                <span style={{ fontSize:36 }}>🏗</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>MVP Builder</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>From idea to blueprint in seconds. Get your spec, stack, roadmap, and pitch deck outline.</p>
@@ -6733,12 +6733,12 @@ export default function ForgeApp() {
                   setMvpBuilding(false);
                 }} disabled={mvpBuilding || !mvpIdea.trim()}
                   style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(mvpBuilding||!mvpIdea.trim())?0.5:1 }}>
-                  {mvpBuilding ? '≡ƒÅù Building blueprint…' : '≡ƒÅù Build MVP Blueprint'}
+                  {mvpBuilding ? '🏗 Building blueprint…' : '🏗 Build MVP Blueprint'}
                 </button>
               </div>
               {mvpResult && (
                 <div style={{ display:'grid', gap:16 }}>
-                  {[{icon:'📋',label:'SPEC',color:'var(--fg-orange)',content:mvpResult.spec},{icon:'⚙️',label:'STACK',color:'#6366f1',content:mvpResult.stack},{icon:'≡ƒùô',label:'ROADMAP',color:'#22c55e',content:mvpResult.roadmap},{icon:'💡',label:'PITCH',color:'#f59e0b',content:mvpResult.pitch}].map(s => (
+                  {[{icon:'📋',label:'SPEC',color:'var(--fg-orange)',content:mvpResult.spec},{icon:'⚙️',label:'STACK',color:'#6366f1',content:mvpResult.stack},{icon:'🗺',label:'ROADMAP',color:'#22c55e',content:mvpResult.roadmap},{icon:'💡',label:'PITCH',color:'#f59e0b',content:mvpResult.pitch}].map(s => (
                     <div key={s.label} style={{ background:'var(--fg-bg2)', border:`1px solid ${s.color}40`, borderRadius:12, padding:20 }}>
                       <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:s.color }}>{s.icon} {s.label}</h3>
                       <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{s.content}</div>
@@ -6755,7 +6755,7 @@ export default function ForgeApp() {
                     </button>
                     <button onClick={() => window.open(`https://railway.app/new?template=nextjs`, '_blank')}
                       style={{ flex:1, padding:'10px', background:'#0f172a', border:'1px solid #6366f1', borderRadius:8, color:'#6366f1', fontSize:12, cursor:'pointer', fontWeight:700 }}>
-                      ≡ƒÜé Deploy to Railway
+                      🚂 Deploy to Railway
                     </button>
                     <button onClick={() => window.open(`https://vercel.com/new`, '_blank')}
                       style={{ flex:1, padding:'10px', background:'#000', border:'1px solid #fff3', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:700 }}>
@@ -6780,7 +6780,7 @@ export default function ForgeApp() {
                 </div>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
-                {[{icon:'📊',label:'Intelligence Score',value:'--',color:'var(--fg-orange)'},{icon:'≡ƒº⌐',label:'Memory Nodes',value:igNodes.length.toString(),color:'#6366f1'},{icon:'≡ƒöù',label:'Connections',value:(igNodes.length * 2).toString(),color:'#22c55e'}].map(s => (
+                {[{icon:'📊',label:'Intelligence Score',value:'--',color:'var(--fg-orange)'},{icon:'🧩',label:'Memory Nodes',value:igNodes.length.toString(),color:'#6366f1'},{icon:'🔙',label:'Connections',value:(igNodes.length * 2).toString(),color:'#22c55e'}].map(s => (
                   <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, textAlign:'center' }}>
                     <div style={{ fontSize:28, marginBottom:6 }}>{s.icon}</div>
                     <div style={{ fontSize:26, fontWeight:800, color:s.color, marginBottom:4 }}>{s.value}</div>
@@ -6790,7 +6790,7 @@ export default function ForgeApp() {
               </div>
               <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>≡ƒº⌐ Memory Graph</h3>
+                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>🧩 Memory Graph</h3>
                   <div style={{ display:'flex', gap:8 }}>
                     <input value={igQuery} onChange={e => setIgQuery(e.target.value)} placeholder="Search memories…"
                       style={{ padding:'7px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12, width:180 }} />
@@ -6825,7 +6825,7 @@ export default function ForgeApp() {
                 )}
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
-                {[{icon:'≡ƒî╛',title:'Harvest Context',desc:'Extract and index knowledge from your recent conversations',action:'Harvest Now',color:'var(--fg-orange)'},{icon:'≡ƒöù',title:'Build Connections',desc:'Automatically link related memories and create knowledge clusters',action:'Auto-Link',color:'#6366f1'},{icon:'≡ƒôÑ',title:'Import Knowledge',desc:'Upload documents, PDFs, or paste text to add to your knowledge base',action:'Import',color:'#22c55e'},{icon:'≡ƒôñ',title:'Export Graph',desc:'Download your knowledge graph as JSON or Markdown',action:'Export',color:'#f59e0b'}].map(f => (
+                {[{icon:'🌾',title:'Harvest Context',desc:'Extract and index knowledge from your recent conversations',action:'Harvest Now',color:'var(--fg-orange)'},{icon:'🔙',title:'Build Connections',desc:'Automatically link related memories and create knowledge clusters',action:'Auto-Link',color:'#6366f1'},{icon:'🤖',title:'Import Knowledge',desc:'Upload documents, PDFs, or paste text to add to your knowledge base',action:'Import',color:'#22c55e'},{icon:'📁',title:'Export Graph',desc:'Download your knowledge graph as JSON or Markdown',action:'Export',color:'#f59e0b'}].map(f => (
                   <div key={f.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16 }}>
                     <div style={{ fontSize:22, marginBottom:8 }}>{f.icon}</div>
                     <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>{f.title}</div>
