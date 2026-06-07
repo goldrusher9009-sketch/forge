@@ -1693,7 +1693,7 @@ export default function ForgeApp() {
       const contentLower = content.toLowerCase();
 
       // Match skills by prompt keywords
-      ((window.FORGE_CATALOG_DATA as any)?.skills || []).forEach((skill: any) => {
+      (((window as any).FORGE_CATALOG_DATA as any)?.skills || []).forEach((skill: any) => {
         const keywords = (skill.prompt || '').toLowerCase();
         const matchWords = ['pdf', 'docx', 'xlsx', 'pptx', 'excel', 'word', 'sheet', 'data', 'chart', 'graph', 'debug', 'code', 'review', 'brand', 'marketing', 'content'];
         if (matchWords.some(w => contentLower.includes(w) && keywords.includes(w))) {
@@ -2329,7 +2329,7 @@ export default function ForgeApp() {
 
       {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:9999, padding:'12px 24px', borderRadius:12, background: toast.type==='err' ? '#ef4444' : toast.type==='info' ? 'var(--fg-bg3)' : '#16a34a', color:'#fff', fontSize:14, fontWeight:600, boxShadow:'0 4px 24px rgba(0,0,0,0.5)', maxWidth:440, textAlign:'center', pointerEvents:'none', animation:'forge-flash 0.2s ease' }}>{toast.msg}</div>}
 
-      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); }} onSelectPrompt={(p) => { setInput(p); }} hasKeys={vaultKeys.length > 0} />}
+      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); }} />}
 
       {/* Mobile overlay */}
       {isMobile && mobileDrawerOpen && <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:98 }} onClick={() => setMobileDrawerOpen(false)} />}
@@ -2417,7 +2417,7 @@ export default function ForgeApp() {
         {mainTab === 'workspace' && sidebarExpanded && (
           <>
             <div style={{ padding:'10px 10px 0' }}>
-              <button onClick={newThread} style={{ width:'100%', padding:'9px 14px', background:'var(--fg-btn-grad)', border:'none', borderRadius:'var(--fg-radius-btn)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:7, boxShadow:'0 2px 10px rgba(255,31,53,0.25)', transition:'all 0.18s', letterSpacing:'-0.01em' }}
+              <button onClick={() => newThread()} style={{ width:'100%', padding:'9px 14px', background:'var(--fg-btn-grad)', border:'none', borderRadius:'var(--fg-radius-btn)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:7, boxShadow:'0 2px 10px rgba(255,31,53,0.25)', transition:'all 0.18s', letterSpacing:'-0.01em' }}
                 onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 0 18px rgba(255,31,53,0.4), 0 4px 12px rgba(0,0,0,0.4)';(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)';}}
                 onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 2px 10px rgba(255,31,53,0.25)';(e.currentTarget as HTMLButtonElement).style.transform='none';}}>
                 <span style={{ fontSize:14 }}>≡ƒô¥</span>New conversation
@@ -2479,10 +2479,10 @@ export default function ForgeApp() {
                   const yesterday = new Date(now.getTime()-86400000).toDateString();
                   const weekAgo = new Date(now.getTime()-7*86400000);
                   const groups: {label:string; threads:typeof unpinned}[] = [
-                    { label:'Today',     threads: unpinned.filter(t => { const d = new Date(t.updated_at||t.created_at||0); return d.toDateString()===today; }) },
-                    { label:'Yesterday', threads: unpinned.filter(t => { const d = new Date(t.updated_at||t.created_at||0); return d.toDateString()===yesterday; }) },
-                    { label:'This week', threads: unpinned.filter(t => { const d = new Date(t.updated_at||t.created_at||0); return d < new Date(yesterday) && d >= weekAgo; }) },
-                    { label:'Older',     threads: unpinned.filter(t => { const d = new Date(t.updated_at||t.created_at||0); return d < weekAgo; }) },
+                    { label:'Today',     threads: unpinned.filter(t => { const d = new Date((t as any).updated_at||t.created_at||0); return d.toDateString()===today; }) },
+                    { label:'Yesterday', threads: unpinned.filter(t => { const d = new Date((t as any).updated_at||t.created_at||0); return d.toDateString()===yesterday; }) },
+                    { label:'This week', threads: unpinned.filter(t => { const d = new Date((t as any).updated_at||t.created_at||0); return d < new Date(yesterday) && d >= weekAgo; }) },
+                    { label:'Older',     threads: unpinned.filter(t => { const d = new Date((t as any).updated_at||t.created_at||0); return d < weekAgo; }) },
                   ].filter(g => g.threads.length > 0);
                   const allGrouped = groups.flatMap(g => g.threads);
                   // If no date info, fall back to flat list
@@ -2617,7 +2617,7 @@ export default function ForgeApp() {
                   const max = Math.max(...vals, 1);
                   const w = 5; const gap = 2; const h = 18;
                   return (
-                    <svg width={vals.length * (w + gap)} height={h} style={{ flexShrink:0, opacity:0.7 }} title={`${threadStats.total_tokens.toLocaleString()} tokens total`}>
+                    <svg {...{} as any} width={vals.length * (w + gap)} height={h} style={{ flexShrink:0, opacity:0.7 }} title={`${threadStats.total_tokens.toLocaleString()} tokens total`}>
                       {vals.map((v, i) => {
                         const barH = Math.max(2, Math.round((v / max) * h));
                         const color = v === max ? 'var(--fg-orange2)' : 'var(--fg-border2)';
@@ -2693,7 +2693,7 @@ export default function ForgeApp() {
               )}
               {/* EPIC button */}
               {!isMobile && (
-                <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>≡ƒîî EPIC</button>
+                <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: (mainTab as string)==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${(mainTab as string)==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: (mainTab as string)==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>≡ƒîî EPIC</button>
               )}
               {/* Sketch toggle */}
               {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'4px 8px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, flexShrink:0 }}>≡ƒô¥</button>}
@@ -2776,7 +2776,7 @@ export default function ForgeApp() {
                   const isActive = activeAgentIds.includes(a.id);
                   const isProcessing = sending && isActive;
                   return (
-                    <button key={a.id} onClick={() => toggleAgent(a.id)} title={a.description || a.name} style={{ display:'flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:14, border: isActive ? `1px solid ${a.color}` : '1px solid var(--fg-border2)', background: isActive ? `${a.color}18` : 'transparent', color: isActive ? a.color : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: isActive ? 600 : 400, flexShrink:0, transition:'all 0.15s', position:'relative' }}>
+                    <button key={a.id} onClick={() => toggleAgent(a.id)} title={(a as any).description || a.name} style={{ display:'flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:14, border: isActive ? `1px solid ${a.color}` : '1px solid var(--fg-border2)', background: isActive ? `${a.color}18` : 'transparent', color: isActive ? a.color : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: isActive ? 600 : 400, flexShrink:0, transition:'all 0.15s', position:'relative' }}>
                       <span style={{ fontSize:13, animation: isProcessing ? 'forge-flash 0.8s ease-in-out infinite' : 'none' }}>{a.icon}</span>
                       <span>{a.name}</span>
                       {isProcessing && <span style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', display:'inline-block', animation:'pulse 0.8s ease-in-out infinite', marginLeft:2 }} />}
@@ -5309,7 +5309,7 @@ export default function ForgeApp() {
 
         {/* Skills & Connectors catalog (available to super + skills tabs) */}
         {(() => {
-          window.FORGE_CATALOG_DATA = {
+          (window as any).FORGE_CATALOG_DATA = {
             skills: [
               // Documents
               { id:'pdf', icon:'≡ƒôä', name:'PDF Tools', category:'document', desc:'Extract, create, merge, split, fill PDF forms', prompt:'You are a PDF processing expert. Handle all PDF operations: extract text, merge documents, fill forms, and create new PDFs.' },
@@ -5644,7 +5644,7 @@ export default function ForgeApp() {
                     <div style={{ padding:'8px 12px', fontSize:11, fontWeight:600, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.5px' }}>Skills ({activeSkills.size})</div>
                     <div style={{ display:'flex', flexDirection:'column', gap:4, padding:'0 8px' }}>
                       {Array.from(activeSkills).map(skillId => {
-                        const skill = (window.FORGE_CATALOG_DATA as any)?.skills?.find((s: any) => s.id === skillId);
+                        const skill = ((window as any).FORGE_CATALOG_DATA as any)?.skills?.find((s: any) => s.id === skillId);
                         return (
                           <div key={skillId} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background:'var(--fg-bg2)', borderRadius:6, border:'1px solid var(--fg-border)' }}>
                             <div style={{ fontSize:12 }}>{skill?.icon || '\u2699\ufe0f'}</div>
@@ -5663,7 +5663,7 @@ export default function ForgeApp() {
                     <div style={{ padding:'8px 12px', fontSize:11, fontWeight:600, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.5px' }}>Connectors ({activeConnectors.size})</div>
                     <div style={{ display:'flex', flexDirection:'column', gap:4, padding:'0 8px' }}>
                       {Array.from(activeConnectors).map(connectorId => {
-                        const connector = (window.FORGE_CATALOG_DATA as any)?.connectors?.find((c: any) => c.id === connectorId);
+                        const connector = ((window as any).FORGE_CATALOG_DATA as any)?.connectors?.find((c: any) => c.id === connectorId);
                         return (
                           <div key={connectorId} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background:'var(--fg-bg2)', borderRadius:6, border:'1px solid var(--fg-border)' }}>
                             <div style={{ fontSize:12 }}>{connector?.icon || '\ud83d\udd0c'}</div>
@@ -5817,8 +5817,8 @@ export default function ForgeApp() {
 
         {/* -- SKILLS & TOOLS ---------------------------------------------- */}
         {mainTab === 'skills' && (() => {
-          // Load from window.FORGE_CATALOG_DATA (populated from SKILLS_CATALOG.json)
-          const wcd = (window.FORGE_CATALOG_DATA as any) || { skills: [], connectors: [] };
+          // Load from (window as any).FORGE_CATALOG_DATA (populated from SKILLS_CATALOG.json)
+          const wcd = ((window as any).FORGE_CATALOG_DATA as any) || { skills: [], connectors: [] };
           const catalogData = {
             skills: (wcd.skills || []).map((s: any) => ({
               id: s.id,
@@ -6047,7 +6047,7 @@ export default function ForgeApp() {
               <div style={{ marginBottom:24 }}>
                 <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>≡ƒÄ» Skills</h3>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
-                  {((window.FORGE_CATALOG_DATA as any)?.skills || []).map((skill: any) => {
+                  {(((window as any).FORGE_CATALOG_DATA as any)?.skills || []).map((skill: any) => {
                     const isSelected = selectedAskSkills.has(skill.id);
                     return (
                       <button key={skill.id} onClick={() => setSelectedAskSkills(prev => { const next = new Set(prev); if (next.has(skill.id)) next.delete(skill.id); else next.add(skill.id); return next; })} style={{ padding:12, background: isSelected ? 'rgba(249,115,22,0.2)' : 'var(--fg-bg2)', border:`1px solid ${isSelected ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color: isSelected ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'left' }}>
@@ -6062,7 +6062,7 @@ export default function ForgeApp() {
               <div style={{ marginBottom:28 }}>
                 <h3 style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>≡ƒöù Connectors</h3>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
-                  {((window.FORGE_CATALOG_DATA as any)?.connectors || []).map((conn: any) => {
+                  {(((window as any).FORGE_CATALOG_DATA as any)?.connectors || []).map((conn: any) => {
                     const isSelected = selectedAskConnectors.has(conn.id);
                     return (
                       <button key={conn.id} onClick={() => setSelectedAskConnectors(prev => { const next = new Set(prev); if (next.has(conn.id)) next.delete(conn.id); else next.add(conn.id); return next; })} style={{ padding:12, background: isSelected ? 'rgba(249,115,22,0.2)' : 'var(--fg-bg2)', border:`1px solid ${isSelected ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color: isSelected ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'left' }}>
@@ -6608,9 +6608,9 @@ export default function ForgeApp() {
             {id:'m12',icon:'≡ƒîì',name:'Translator Pro',desc:'Real-time translation with context awareness across 100+ languages.',category:'writing',installs:1100,rating:4.6},
           ];
           const cats = ['All','productivity','data','tools','writing','research','developer','marketing'];
-          const [mktCat, setMktCat] = (useState as any)<string>('All');
-          const [mktSearch, setMktSearch] = (useState as any)<string>('');
-          const [mktInstalled, setMktInstalled] = (useState as any)<Set<string>>(new Set<string>());
+          const [mktCat, setMktCat] = useState('All');
+          const [mktSearch, setMktSearch] = useState('');
+          const [mktInstalled, setMktInstalled] = useState(new Set<string>());
           const filtered = mktItems.filter(m =>
             (mktCat==='All'||m.category===mktCat) &&
             (!mktSearch||m.name.toLowerCase().includes(mktSearch.toLowerCase())||m.desc.toLowerCase().includes(mktSearch.toLowerCase()))
