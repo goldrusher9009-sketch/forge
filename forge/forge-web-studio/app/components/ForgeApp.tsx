@@ -3,18 +3,18 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { OnboardingFlow } from './OnboardingFlow';
 
-// ΓöÇΓöÇΓöÇ CSS injected once for animations ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* ΓöÇΓöÇ Taskade-style deep blacks ΓöÇΓöÇ */
+  /* -- Taskade-style deep blacks -- */
   --fg-bg:      #080809;
   --fg-bg2:     #0d0d0f;
   --fg-bg3:     #131316;
   --fg-bg4:     #1a1a1e;
   --fg-bg5:     #242428;
-  /* ΓöÇΓöÇ Forge red ΓÇö sharper, more saturated ΓöÇΓöÇ */
+  /* -- Forge red — sharper, more saturated -- */
   --fg-orange:  #ff1f35;
   --fg-orange2: #ff4d5e;
   --fg-odim:    rgba(255,31,53,0.12);
@@ -32,7 +32,7 @@ const GLOBAL_STYLES = `
   --fg-cyan:    #22d3ee;
   --fg-magenta: #ff4ecd;
   --fg-amber:   #ffb020;
-  /* ΓöÇΓöÇ Taskade-style gradients ΓöÇΓöÇ */
+  /* -- Taskade-style gradients -- */
   --fg-accent-grad: linear-gradient(135deg,#ff1f35 0%,#ff4d5e 45%,#ff6b35 100%);
   --fg-btn-grad:    linear-gradient(135deg,#ff1f35,#cc1020);
   --fg-btn-grad-hover: linear-gradient(135deg,#ff3347,#e01225);
@@ -69,7 +69,7 @@ h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font
 ::-webkit-scrollbar-thumb { background: rgba(255,31,53,0.35); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,31,53,0.6); }
 
-/* ΓöÇΓöÇ Taskade-style pill button global class ΓöÇΓöÇ */
+/* -- Taskade-style pill button global class -- */
 .fg-btn-primary {
   display:inline-flex; align-items:center; justify-content:center; gap:6px;
   padding:9px 20px; border-radius:var(--fg-radius-btn); border:none;
@@ -124,7 +124,7 @@ h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font
   85%  { color: #ff0099; text-shadow: 0 0 8px #ff0099, 0 0 22px rgba(255,0,153,.6); }
   100% { color: #ff003c; text-shadow: 0 0 8px #ff003c, 0 0 22px rgba(255,0,60,.6); }
 }
-/* High-end neon brand wordmark ΓÇö sharp, multicolour, animated */
+/* High-end neon brand wordmark — sharp, multicolour, animated */
 .forge-neon {
   font-family: 'Space Grotesk','Inter',ui-sans-serif,system-ui,sans-serif;
   font-weight: 700; letter-spacing: -1px;
@@ -142,7 +142,7 @@ h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://forge-production-2692.up.railway.app/api';
 
-// ΓöÇΓöÇΓöÇ Code preview helpers (module-level to avoid TSX parser confusion with < chars) ΓöÇΓöÇ
+// --- Code preview helpers (module-level to avoid TSX parser confusion with < chars) --
 function extractCodeBlock(content: string): { code: string; isHtml: boolean; lang: string; suggestedFilename: string } | null {
   const fence = '```';
   // Match fenced code block with optional language
@@ -179,7 +179,7 @@ function wrapCodeForPreview(code: string): string {
   return open + '!DOCTYPE html>' + open + 'html>' + open + 'head>' + open + 'meta charset="utf-8">' + open + 'style>body{margin:0;font-family:system-ui,sans-serif;background:#fff;padding:16px;}' + open + '/style>' + open + '/head>' + open + 'body>' + code + open + '/body>' + open + '/html>';
 }
 
-// ΓöÇΓöÇΓöÇ Syntax highlighter (no deps ΓÇö inline tokenizer) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- Syntax highlighter (no deps — inline tokenizer) -------------------------
 function syntaxHighlight(code: string, lang: string): string {
   const e = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   let c = e(code);
@@ -198,39 +198,39 @@ function syntaxHighlight(code: string, lang: string): string {
   return c;
 }
 
-// ΓöÇΓöÇΓöÇ Slash command definitions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- Slash command definitions ------------------------------------------------
 const SLASH_COMMANDS = [
   // Agents
-  { cmd:'researcher',  icon:'≡ƒö¼', label:'Researcher',    desc:'Deep web research on any topic',         category:'agent',   insert:'/researcher ' },
-  { cmd:'coder',       icon:'≡ƒÆ╗', label:'Coder',          desc:'Write, review, or debug code',          category:'agent',   insert:'/coder ' },
-  { cmd:'writer',      icon:'Γ£ì∩╕Å', label:'Writer',         desc:'Draft emails, docs, content',            category:'agent',   insert:'/writer ' },
-  { cmd:'analyst',     icon:'≡ƒôè', label:'Analyst',        desc:'Analyze data, create reports',           category:'agent',   insert:'/analyst ' },
-  { cmd:'designer',    icon:'≡ƒÄ¿', label:'Designer',       desc:'UI/UX critique and mockup ideas',        category:'agent',   insert:'/designer ' },
+  { cmd:'researcher',  icon:'🔬', label:'Researcher',    desc:'Deep web research on any topic',         category:'agent',   insert:'/researcher ' },
+  { cmd:'coder',       icon:'💻', label:'Coder',          desc:'Write, review, or debug code',          category:'agent',   insert:'/coder ' },
+  { cmd:'writer',      icon:'✍️', label:'Writer',         desc:'Draft emails, docs, content',            category:'agent',   insert:'/writer ' },
+  { cmd:'analyst',     icon:'📊', label:'Analyst',        desc:'Analyze data, create reports',           category:'agent',   insert:'/analyst ' },
+  { cmd:'designer',    icon:'🎨', label:'Designer',       desc:'UI/UX critique and mockup ideas',        category:'agent',   insert:'/designer ' },
   // Skills
-  { cmd:'summarize',   icon:'≡ƒô¥', label:'Summarize',      desc:'Summarize the current thread',           category:'skill',   insert:'/summarize this conversation' },
-  { cmd:'translate',   icon:'≡ƒîÉ', label:'Translate',      desc:'Translate text to another language',     category:'skill',   insert:'/translate to Spanish: ' },
-  { cmd:'explain',     icon:'≡ƒºá', label:'Explain',        desc:'Explain like I\'m 5',                    category:'skill',   insert:'/explain ' },
-  { cmd:'fix',         icon:'≡ƒöº', label:'Fix',            desc:'Fix bugs in selected code',              category:'skill',   insert:'/fix this: ' },
-  { cmd:'improve',     icon:'ΓÜí', label:'Improve',        desc:'Improve and polish text',                category:'skill',   insert:'/improve: ' },
+  { cmd:'summarize',   icon:'📝', label:'Summarize',      desc:'Summarize the current thread',           category:'skill',   insert:'/summarize this conversation' },
+  { cmd:'translate',   icon:'🌐', label:'Translate',      desc:'Translate text to another language',     category:'skill',   insert:'/translate to Spanish: ' },
+  { cmd:'explain',     icon:'🧠', label:'Explain',        desc:'Explain like I\'m 5',                    category:'skill',   insert:'/explain ' },
+  { cmd:'fix',         icon:'🔧', label:'Fix',            desc:'Fix bugs in selected code',              category:'skill',   insert:'/fix this: ' },
+  { cmd:'improve',     icon:'⚡', label:'Improve',        desc:'Improve and polish text',                category:'skill',   insert:'/improve: ' },
   // Actions
-  { cmd:'new',         icon:'Γ£Å∩╕Å', label:'New thread',     desc:'Start a new conversation',               category:'action',  insert:'__NEW_THREAD__' },
-  { cmd:'harvest',     icon:'≡ƒºá', label:'Harvest memory', desc:'Harvest knowledge into SuperAgent',      category:'action',  insert:'__HARVEST__' },
-  { cmd:'clear',       icon:'≡ƒùæ∩╕Å', label:'Clear input',    desc:'Clear the composer',                     category:'action',  insert:'__CLEAR__' },
+  { cmd:'new',         icon:'📝', label:'New thread',     desc:'Start a new conversation',               category:'action',  insert:'__NEW_THREAD__' },
+  { cmd:'harvest',     icon:'🧠', label:'Harvest memory', desc:'Harvest knowledge into SuperAgent',      category:'action',  insert:'__HARVEST__' },
+  { cmd:'clear',       icon:'🗑', label:'Clear input',    desc:'Clear the composer',                     category:'action',  insert:'__CLEAR__' },
   // Modes
-  { cmd:'router',      icon:'≡ƒöÇ', label:'ForgeRouter',    desc:'Open model router',                      category:'mode',    insert:'__TAB_router__' },
-  { cmd:'super',       icon:'≡ƒîƒ', label:'SuperAgent',     desc:'Open SuperAgent',                        category:'mode',    insert:'__TAB_super__' },
-  { cmd:'skills',      icon:'≡ƒº⌐', label:'Skills',         desc:'Browse skills & tools',                  category:'mode',    insert:'__TAB_skills__' },
-  { cmd:'billing',     icon:'≡ƒÆ│', label:'Billing',        desc:'Open billing panel',                     category:'mode',    insert:'__TAB_billing__' },
+  { cmd:'router',      icon:'🔀', label:'ForgeRouter',    desc:'Open model router',                      category:'mode',    insert:'__TAB_router__' },
+  { cmd:'super',       icon:'🌟', label:'SuperAgent',     desc:'Open SuperAgent',                        category:'mode',    insert:'__TAB_super__' },
+  { cmd:'skills',      icon:'🧩', label:'Skills',         desc:'Browse skills & tools',                  category:'mode',    insert:'__TAB_skills__' },
+  { cmd:'billing',     icon:'💳', label:'Billing',        desc:'Open billing panel',                     category:'mode',    insert:'__TAB_billing__' },
 ];
 
-// ΓöÇΓöÇΓöÇ Render message content ΓÇö markdown-lite with syntax-highlighted code blocks ΓöÇ
+// --- Render message content — markdown-lite with syntax-highlighted code blocks -
 function renderContent(content: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   // Strip raw XML tool_call blocks that leak from agent responses
   const noToolXml = content.replace(/<tool_call>[\s\S]*?<\/tool_call>/g,'').replace(/<tool_name>[\s\S]*?<\/tool_name>/g,'').replace(/<tool_parameters>[\s\S]*?<\/tool_parameters>/g,'').replace(/<\/?(tool_parameter|query|parameter)[^>]*>/g,'').trim();
   // Detect sandbox:/ links and replace with download notice
   const sandboxFixed = noToolXml.replace(/\[([^\]]+)\]\(sandbox:\/[^)]*\)/g, (_, label) =>
-    `**[Γ¼ç ${label} ΓÇö use the ≡ƒÆ╛ Download button above]**`
+    `**[📎 ${label} — use the 💾 Download button above]**`
   );
   const segments = sandboxFixed.split(/(```[\s\S]*?```)/g);
   segments.forEach((seg, si) => {
@@ -261,7 +261,7 @@ function renderContent(content: string): React.ReactNode[] {
       // Horizontal rule
       if (/^---+$/.test(line.trim())) { parts.push(<hr key={`hr-${si}-${li}`} style={{ border:'none', borderTop:'1px solid var(--fg-border)', margin:'12px 0' }} />); return; }
       // Bullet list items
-      if (line.startsWith('- ') || line.startsWith('* ')) { parts.push(<div key={`li-${si}-${li}`} style={{ display:'flex', gap:8, marginBottom:2 }}><span style={{ color:'var(--fg-orange)', flexShrink:0 }}>ΓÇó</span><span>{line.slice(2)}</span></div>); return; }
+      if (line.startsWith('- ') || line.startsWith('* ')) { parts.push(<div key={`li-${si}-${li}`} style={{ display:'flex', gap:8, marginBottom:2 }}><span style={{ color:'var(--fg-orange)', flexShrink:0 }}>•</span><span>{line.slice(2)}</span></div>); return; }
       if (/^\d+\. /.test(line)) { const m2 = line.match(/^(\d+)\. (.*)/); if(m2) parts.push(<div key={`oli-${si}-${li}`} style={{ display:'flex', gap:8, marginBottom:2 }}><span style={{ color:'var(--fg-orange)', flexShrink:0, minWidth:16 }}>{m2[1]}.</span><span>{m2[2]}</span></div>); return; }
       const nodes: React.ReactNode[] = [];
       // Split on inline code, bold, italic
@@ -282,7 +282,7 @@ function renderContent(content: string): React.ReactNode[] {
   return parts;
 }
 
-// ΓöÇΓöÇΓöÇ Types ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- Types --------------------------------------------------------------------
 interface User { id: string; email: string; name?: string; token: string; plan?: string; role?: string; }
 interface Project { id: string; name: string; color: string; system_prompt?: string; pinned?: number; created_at: string; }
 interface Thread { id: string; project_id?: string; title: string; created_at: string; pinned?: number; archived?: number; total_tokens?: number; }
@@ -298,7 +298,7 @@ interface CustomProvider { id: string; name: string; base_url: string; api_key_h
 interface UsageLog { id: string; model: string; tokens_in: number; tokens_out: number; cost_usd: number; markup_usd: number; created_at: string; }
 interface Subscription { plan: string; tokens_used: number; token_limit: number; period_end?: string; }
 
-// ΓöÇΓöÇΓöÇ API Helper ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- API Helper ---------------------------------------------------------------
 let _onSessionExpired: (() => void) | null = null;
 async function apiFetch(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
@@ -333,7 +333,7 @@ async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string,
     throw new Error(err.error || 'Session expired. Please log in again.');
   }
   if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || err.error || `HTTP ${res.status}`); }
-  // Read SSE stream ΓÇö collect lines, fire callbacks for mid-stream events, return last result
+  // Read SSE stream — collect lines, fire callbacks for mid-stream events, return last result
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
   let buf = '';
@@ -356,9 +356,9 @@ async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string,
   return lastResult ?? {};
 }
 
-// ΓöÇΓöÇΓöÇ Constants ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- Constants ----------------------------------------------------------------
 const PROJECT_COLORS = ['var(--fg-orange)','var(--fg-blue)','var(--fg-green)','var(--fg-red)','var(--fg-orange)','var(--fg-orange)','var(--fg-blue)','var(--fg-green)'];
-const AGENT_ICONS = ['≡ƒºá','ΓÜí','≡ƒö«','≡ƒöÑ','≡ƒîè','≡ƒÄ¿','≡ƒÜÇ','≡ƒÆ╗'];
+const AGENT_ICONS = ['🧠','⚡','🔮','🔥','🌊','🎨','🚀','💻'];
 const FORGE_MODELS = [
   { id:'forge-ultra',  label:'Forge Ultra',  desc:'Claude Opus 4.6 + markup',       base:'claude-opus-4-6' },
   { id:'forge-pro',    label:'Forge Pro',    desc:'Claude Sonnet 4.6 + markup',     base:'claude-sonnet-4-6' },
@@ -399,7 +399,7 @@ const DIRECT_MODELS = [
     { id:'llama-3.3-70b',        label:'Llama 3.3 70B' },
     { id:'llama-3.1-8b-instant', label:'Llama 3.1 8B Instant' },
     { id:'llama-3.1-8b',         label:'Llama 3.1 8B' },
-    { id:'mixtral-8x7b',         label:'Mixtral 8├ù7B' },
+    { id:'mixtral-8x7b',         label:'Mixtral 8×7B' },
   ]},
   { group:'Mistral', models:[
     { id:'mistral-large',  label:'Mistral Large' },
@@ -412,7 +412,7 @@ const DIRECT_MODELS = [
     { id:'claude-3-5-haiku',  label:'Claude 3.5 Haiku' },
     { id:'claude-3-opus',     label:'Claude 3 Opus' },
   ]},
-  { group:'OpenRouter (400+ models ΓÇö connect an OpenRouter key for the full live list)', models:[
+  { group:'OpenRouter (400+ models — connect an OpenRouter key for the full live list)', models:[
     { id:'openrouter/anthropic/claude-opus-4.8',        label:'Claude Opus 4.8 (OR)' },
     { id:'openrouter/anthropic/claude-sonnet-4.6',      label:'Claude Sonnet 4.6 (OR)' },
     { id:'openrouter/openai/gpt-5.5',                   label:'GPT-5.5 (OR)' },
@@ -430,7 +430,7 @@ const DIRECT_MODELS = [
   ]},
 ];
 
-// ΓöÇΓöÇΓöÇ Login Screen ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- Login Screen -------------------------------------------------------------
 function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
   const [mode, setMode] = useState<'login'|'register'>('login');
   const [email, setEmail] = useState('');
@@ -472,7 +472,7 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
     <div style={{ minHeight:'100vh', background:'var(--fg-bg)', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ width:400, padding:'40px', background:'var(--fg-bg3)', borderRadius:16, border:'1px solid var(--fg-border)' }}>
         <div style={{ textAlign:'center', marginBottom:32 }}>
-          <div style={{ fontSize:40, marginBottom:8, animation:'neon-cycle 4s linear infinite' }}>ΓÜí</div>
+          <div style={{ fontSize:40, marginBottom:8, animation:'neon-cycle 4s linear infinite' }}>⚡</div>
           <h1 className="forge-neon" style={{ fontSize:30, margin:0 }}>Forge</h1>
           <p style={{ color:'var(--fg-text3)', margin:'4px 0 0', fontSize:14 }}>AI Workspace Platform</p>
         </div>
@@ -493,7 +493,7 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Main App ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- Main App -----------------------------------------------------------------
 export default function ForgeApp() {
   const [user, setUser] = useState<User | null>(null);
 
@@ -606,7 +606,7 @@ export default function ForgeApp() {
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
-  // Tool calls captured during the current SSE stream ΓÇö map of msgId -> tool call list
+  // Tool calls captured during the current SSE stream — map of msgId -> tool call list
   const [liveToolCalls, setLiveToolCalls] = useState<Array<{tool:string;args:any;result:string;ts:number}>>([]);
   const [expandedTools, setExpandedTools] = useState<Record<number,boolean>>({});
   // Clarification question from AI
@@ -752,7 +752,7 @@ export default function ForgeApp() {
   const [multiResults, setMultiResults] = useState<{agents:{role:string;icon:string;content:string;elapsed:number}[];synthesis:string}|null>(null);
   const [multiLiveAgents, setMultiLiveAgents] = useState<{role:string;icon:string;content:string|null;elapsed:number|null;done:boolean}[]>([]);
   const [multiStartTime, setMultiStartTime] = useState<number>(0);
-  // Chat folder actions (hoisted ΓÇö can't use useState inside render IIFE)
+  // Chat folder actions (hoisted — can't use useState inside render IIFE)
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('forge_pinned_threads')||'[]')); } catch { return new Set(); }
   });
@@ -762,7 +762,7 @@ export default function ForgeApp() {
   const [forgecoTab, setForgecoTab] = useState<'team'|'projects'|'docs'|'chat'>('team');
   const [forgecoChatMsg, setForgecoChatMsg] = useState('');
   const [forgecoChatLog, setForgecoChatLog] = useState<{from:string;text:string;ts:number}[]>([
-    { from:'Sarah Kim', text:'Just pushed the new onboarding flow ΓÇö ready for review!', ts:Date.now()-3600000 },
+    { from:'Sarah Kim', text:'Just pushed the new onboarding flow — ready for review!', ts:Date.now()-3600000 },
     { from:'Alex Chen', text:'On it, will check after standup', ts:Date.now()-1800000 },
     { from:'Forge AI', text:'Reminder: Platform v2.0 sprint ends Friday. 3 tasks still open.', ts:Date.now()-600000 },
   ]);
@@ -802,7 +802,7 @@ export default function ForgeApp() {
   const [swarmResults, setSwarmResults] = useState<{agentId:string;role:string;result:string;tokens:number;done:boolean}[]>([]);
   const [swarmSynthesis, setSwarmSynthesis] = useState('');
 
-  // Skills & Tools state (must be top-level ΓÇö not inside render IIFE)
+  // Skills & Tools state (must be top-level — not inside render IIFE)
   const [skillSearch, setSkillSearch] = useState('');
   const [toolSubTab, setToolSubTab] = useState<'skills'|'tools'>('skills');
   const [forgeTools, setForgeTools] = useState<any[]>([]);
@@ -852,7 +852,7 @@ export default function ForgeApp() {
   const [trackerEditId, setTrackerEditId] = useState<string|null>(null);
   const [trackerEditText, setTrackerEditText] = useState('');
   const saveTracker = (items: typeof trackerItems) => { setTrackerItems(items); try { localStorage.setItem('forge_tracker', JSON.stringify(items)); } catch {} };
-  // Tracker is scoped to active thread ΓÇö empty when no chat selected
+  // Tracker is scoped to active thread — empty when no chat selected
   const visibleTrackerItems = activeThread?.id
     ? trackerItems.filter(i => !i.folderId || i.folderId === activeThread.id)
     : [];
@@ -881,7 +881,7 @@ export default function ForgeApp() {
     return () => clearInterval(interval);
   }, []);
 
-  // Files state ΓÇö files belong to the ACTIVE folder (thread); switching folders reloads its files
+  // Files state — files belong to the ACTIVE folder (thread); switching folders reloads its files
   const [files, setFiles] = useState<{id:string;name:string;size:number;type:string;created_at:string}[]>([]);
   const filesInputRef = useRef<HTMLInputElement>(null);
   const loadFolderFiles = useCallback(async () => {
@@ -991,7 +991,7 @@ export default function ForgeApp() {
 
   // Terminal state
   const [terminalLines, setTerminalLines] = useState<{text:string;type:'input'|'output'|'error'|'system'}[]>([
-    { text: 'ΓÜí Forge Terminal -- type commands below', type:'system' },
+    { text: '⚡ Forge Terminal -- type commands below', type:'system' },
     { text: 'Safe commands: ls, cat, echo, date, pwd, env, node, python, curl, git log/status', type:'system' },
   ]);
   const [terminalInput, setTerminalInput] = useState('');
@@ -1015,7 +1015,7 @@ export default function ForgeApp() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  // ΓöÇΓöÇ Inject global animation styles once ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Inject global animation styles once -----------------------------------
   useEffect(() => {
     const id = 'forge-global-styles';
     if (!document.getElementById(id)) {
@@ -1026,7 +1026,7 @@ export default function ForgeApp() {
     fetch(`${API.replace('/api', '')}/health`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
   }, []);
 
-  // ΓöÇΓöÇ Auth ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Auth -------------------------------------------------------------------
   useEffect(() => {
     const stored = localStorage.getItem('forge_user');
     if (stored) { try { setUser(JSON.parse(stored)); } catch {} }
@@ -1068,7 +1068,7 @@ export default function ForgeApp() {
     const out: {id:string; label:string}[] = [];
     // Forge-aliased models (require anthropic key)
     if (savedProviders['anthropic']) {
-      out.push({ id:'forge-pro', label:'ΓÜí Forge Pro' }, { id:'forge-flash', label:'ΓÜí Forge Flash' });
+      out.push({ id:'forge-pro', label:'⚡ Forge Pro' }, { id:'forge-flash', label:'⚡ Forge Flash' });
     }
     // Direct provider models
     const DIRECT_MAP: Record<string, {id:string;label:string}[]> = {
@@ -1136,7 +1136,7 @@ export default function ForgeApp() {
         if (data.type === 'connected') return;
         // Feed thinking/tool events directly into the Manus agent steps panel
         if (data.type === 'thinking' || data.type === 'tool' || data.type === 'start') {
-          const icon = data.type === 'start' ? '≡ƒÜÇ' : data.type === 'tool' ? '≡ƒöº' : '≡ƒÆ¡';
+          const icon = data.type === 'start' ? '🚀' : data.type === 'tool' ? '🔧' : '💭';
           addAgentStep(icon, data.message || '');
         }
         setLiveEvents(prev => {
@@ -1147,7 +1147,7 @@ export default function ForgeApp() {
       } catch {}
     };
     liveSSERef.current = es;
-    // Polling fallback ΓÇö catches events when SSE is on a different backend instance
+    // Polling fallback — catches events when SSE is on a different backend instance
     let lastTs = 0;
     const poll = setInterval(async () => {
       try {
@@ -1158,7 +1158,7 @@ export default function ForgeApp() {
             // Feed new thinking/tool steps into the Manus panel
             newEvs.forEach((e: any) => {
               if (e.type === 'thinking' || e.type === 'tool' || e.type === 'start') {
-                const icon = e.type === 'start' ? '≡ƒÜÇ' : e.type === 'tool' ? '≡ƒöº' : '≡ƒÆ¡';
+                const icon = e.type === 'start' ? '🚀' : e.type === 'tool' ? '🔧' : '💭';
                 addAgentStep(icon, e.message || '');
               }
             });
@@ -1175,7 +1175,7 @@ export default function ForgeApp() {
   }, [user]);
 
 
-  // ΓöÇΓöÇ Data loaders ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Data loaders -----------------------------------------------------------
   const unwrap = (d: any): any[] => Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : [];
   const loadProjects = async () => { if (!user) return; try { const d = await apiFetch('/projects', {}, user.token); setProjects(unwrap(d)); } catch {} };
   const loadThreads = async (projectId?: string) => { if (!user) return; try { const path = projectId ? `/threads?project_id=${projectId}` : '/threads'; const d = await apiFetch(path, {}, user.token); setThreads(unwrap(d)); } catch {} };
@@ -1205,7 +1205,7 @@ export default function ForgeApp() {
     if (!user) return;
     setOrLoading(true);
     try {
-      // Fetch OR models ΓÇö uses user key if saved, else returns public list (400+ models always available)
+      // Fetch OR models — uses user key if saved, else returns public list (400+ models always available)
       const d = await apiFetch('/keys/openrouter-models', {}, user.token);
       const models = Array.isArray(d?.data?.models) ? d.data.models : [];
       if (!models.length) { setOrLoading(false); return; }
@@ -1214,7 +1214,7 @@ export default function ForgeApp() {
       setSelectedModel(prev => {
         const isFreeModel = (m: any) => m.id.includes(':free') || m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0';
         if (!prev || prev.endsWith(':free') || prev === '') {
-          // Prefer genuinely paid models ΓÇö free models (by id or pricing) rate-limit even with your own key
+          // Prefer genuinely paid models — free models (by id or pricing) rate-limit even with your own key
           const preferred =
             models.find((m: any) => m.id === 'deepseek/deepseek-chat-v3-0324')
             || models.find((m: any) => m.id === 'mistralai/mistral-small-3.2-24b-instruct')
@@ -1276,14 +1276,14 @@ export default function ForgeApp() {
         };
         // Keep current selection only if user has a key for that provider
         if (prev && confirmed[provOf(prev) || '']) return prev;
-        // Pick first provider user actually has a key for (priority order ΓÇö no morph)
+        // Pick first provider user actually has a key for (priority order — no morph)
         if (confirmed['anthropic']) return 'claude-sonnet-4-6';
         if (confirmed['openai']) return 'gpt-4o';
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
-        if (confirmed['openrouter']) return (prev && !prev.endsWith(':free')) ? prev : 'deepseek/deepseek-chat-v3-0324'; // prefer paid model ΓÇö free models rate-limit even with own key
-        // No keys at all ΓÇö leave empty so UI shows the warning
+        if (confirmed['openrouter']) return (prev && !prev.endsWith(':free')) ? prev : 'deepseek/deepseek-chat-v3-0324'; // prefer paid model — free models rate-limit even with own key
+        // No keys at all — leave empty so UI shows the warning
         return '';
       });
     } catch {}
@@ -1361,7 +1361,7 @@ export default function ForgeApp() {
     try { const d = await apiFetch(`/threads/${threadId}/stats`, {}, user.token); if (d?.success) setThreadStats(d.data); } catch {}
   };
 
-  // ΓöÇΓöÇ Admin loaders ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Admin loaders ----------------------------------------------------------
   const loadAdminStats   = async () => { if (!user) return; try { const d = await apiFetch('/admin/stats', {}, user.token); setAdminStats(d?.data || d); } catch {} };
   const loadAdminUsers   = async () => { if (!user) return; try { const d = await apiFetch('/admin/users', {}, user.token); setAdminUsers(unwrap(d)); } catch {} };
   const loadAdminKeys    = async () => { if (!user) return; try { const d = await apiFetch('/admin/platform-keys', {}, user.token); setAdminPlatformKeys(unwrap(d)); } catch {} };
@@ -1401,7 +1401,7 @@ export default function ForgeApp() {
     } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
-  // ΓöÇΓöÇ Save a single provider's API key ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Save a single provider's API key --------------------------------------
   const saveOneKey = async (provider: string, key: string) => {
     if (!user) return;
     const trimmed = key.trim();
@@ -1437,7 +1437,7 @@ export default function ForgeApp() {
     } catch (e: any) { showToast(`Save failed: ${e?.message||e}`,'err'); }
   };
 
-  // ΓöÇΓöÇ Terminal execution ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Terminal execution ----------------------------------------------------
   const runTerminalCommand = async (cmd: string) => {
     if (!user || !cmd.trim() || terminalRunning) return;
     const trimmed = cmd.trim();
@@ -1460,7 +1460,7 @@ export default function ForgeApp() {
     setTerminalRunning(false);
   };
 
-  // ΓöÇΓöÇ Browser navigation ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Browser navigation ----------------------------------------------------
   const browserNavigate = async (url: string) => {
     let nav = url.trim();
     if (!nav.startsWith('http://') && !nav.startsWith('https://')) {
@@ -1537,7 +1537,7 @@ export default function ForgeApp() {
     if (user) apiFetch('/superagent/harvest', { method:'POST' }, user.token).catch(() => {});
   };
 
-  // ΓöÇΓöÇ Projects ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Projects ---------------------------------------------------------------
   const createProject = async () => {
     if (!user || !newProjName.trim()) return;
     try {
@@ -1572,7 +1572,7 @@ export default function ForgeApp() {
 
   const selectProject = async (p: Project) => { setActiveProject(p); await loadThreads(p.id); };
 
-  // ΓöÇΓöÇ Thread actions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Thread actions --------------------------------------------------------
   const deleteThread = async (id: string) => {
     if (!user) return;
     try {
@@ -1598,7 +1598,7 @@ export default function ForgeApp() {
     } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
-  // ΓöÇΓöÇ Key vault actions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Key vault actions -----------------------------------------------------
   const updateVaultKey = async (provider: string) => {
     if (!user) return;
     const key = vaultUpdateInputs[provider]?.trim();
@@ -1654,22 +1654,22 @@ export default function ForgeApp() {
     } catch {}
   };
 
-  // ΓöÇΓöÇ SuperAgent actions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- SuperAgent actions ----------------------------------------------------
   const harvestMemory = async () => {
     if (!user) return;
     setSuperHarvesting(true);
-    showToast('ΓÜí Harvesting knowledge...', 'info');
+    showToast('⚡ Harvesting knowledge...', 'info');
     try {
-      // Longer timeout for harvest ΓÇö queries all threads/messages
+      // Longer timeout for harvest — queries all threads/messages
       const d = await apiFetch('/superagent/harvest', { method:'POST', signal: AbortSignal.timeout(120000) }, user.token);
       await loadSuperMemory();
       try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
-      const msg = d?.data?.message || d?.message || `Γ£à Harvest complete! Intelligence: ${d?.data?.intelligenceScore ?? d?.intelligenceScore ?? '+'}`;
+      const msg = d?.data?.message || d?.message || `✓ Harvest complete! Intelligence: ${d?.data?.intelligenceScore ?? d?.intelligenceScore ?? '+'}`;
       setSuperMessages(prev => [...prev, { role:'assistant', content: String(msg) }]);
       setSuperTab('chat');
-      showToast('≡ƒºá Memory harvested!');
+      showToast('🧠 Memory harvested!');
     } catch (e: any) {
-      const errMsg = `Γ¥î Harvest error: ${String(e?.message || e)}`;
+      const errMsg = `❌ Harvest error: ${String(e?.message || e)}`;
       setSuperMessages(prev => [...prev, { role:'assistant', content: errMsg }]);
       showToast(errMsg, 'err');
     }
@@ -1740,7 +1740,7 @@ export default function ForgeApp() {
       setSuperMessages(prev => [...prev, { role:'assistant', content: String(d?.data?.content || d?.message || '(no response)') }]);
       loadTotalTokens();
       try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
-    } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`ΓÜá∩╕Å ${e.message}` }]); }
+    } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); }
     finally { setSuperSending(false); }
   };
   const deleteMemoryEntry = async (id: string) => {
@@ -1748,7 +1748,7 @@ export default function ForgeApp() {
     try { await apiFetch(`/superagent/memory/${id}`, { method:'DELETE' }, user.token); setSuperMemory(prev => prev.filter(m => m.id !== id)); } catch {}
   };
 
-  // ΓöÇΓöÇ Threads ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Threads ----------------------------------------------------------------
   const newThread = async (title?: string): Promise<Thread|null> => {
     if (!user) return null;
     try {
@@ -1774,44 +1774,44 @@ export default function ForgeApp() {
 
   const selectThread = async (t: Thread) => { setActiveThread(t); await loadMessages(t.id); loadThreadTokenStats(t.id); };
 
-  // ΓöÇΓöÇ Send message ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Send message -----------------------------------------------------------
   const handleNLCommand = (content: string): boolean => {
     const lower = content.toLowerCase().trim();
     if (/enable.*(hook|hooks)/i.test(lower) || /turn on.*(hook|hooks)/i.test(lower)) {
-      setMainTab('hooks'); addAgentStep('≡ƒ¬¥', 'Opening Hooks ΓÇö toggle on the hooks you want'); return true;
+      setMainTab('hooks'); addAgentStep('🪝', 'Opening Hooks — toggle on the hooks you want'); return true;
     }
     if (/disable.*(hook|hooks)/i.test(lower) || /turn off.*(hook|hooks)/i.test(lower)) {
-      setMainTab('hooks'); addAgentStep('≡ƒ¬¥', 'Opening Hooks ΓÇö toggle off hooks there'); return true;
+      setMainTab('hooks'); addAgentStep('🪝', 'Opening Hooks — toggle off hooks there'); return true;
     }
     if (/enable.*(skill|skills|tool|tools)/i.test(lower) || /activate.*(skill|tool)/i.test(lower)) {
-      setMainTab('skills'); addAgentStep('≡ƒ¢á', 'Opening Skills & Tools'); return true;
+      setMainTab('skills'); addAgentStep('🛠', 'Opening Skills & Tools'); return true;
     }
     if (/schedule.*(run|task|job)/i.test(lower) || /\bcron\b/i.test(lower) || /automat/i.test(lower)) {
-      setMainTab('runs'); addAgentStep('≡ƒÅâ', 'Opening Runs ΓÇö click "+ Schedule Run" to automate tasks'); return true;
+      setMainTab('runs'); addAgentStep('🏃', 'Opening Runs — click "+ Schedule Run" to automate tasks'); return true;
     }
     if (/turn on.*agent|enable.*agent|launch.*agent|forge.*agent/i.test(lower)) {
-      setMainTab('forgeauto'); addAgentStep('ΓÜí', 'Opening ForgeAuto'); return true;
+      setMainTab('forgeauto'); addAgentStep('⚡', 'Opening ForgeAuto'); return true;
     }
     if (/multi.?agent|multiagent/i.test(lower)) {
-      setMainTab('forgemulti'); addAgentStep('≡ƒñû', 'Opening ForgeMulti'); return true;
+      setMainTab('forgemulti'); addAgentStep('🤖', 'Opening ForgeMulti'); return true;
     }
     if (/\bswarm\b/i.test(lower)) {
-      setMainTab('swarm'); addAgentStep('≡ƒÉ¥', 'Opening Agent Swarm'); return true;
+      setMainTab('swarm'); addAgentStep('🐝', 'Opening Agent Swarm'); return true;
     }
     if (/\basi\b|deep.*analys|epic.*analys/i.test(lower)) {
-      setMainTab('forgeasi'); addAgentStep('≡ƒîî', 'Opening ForgeASI'); return true;
+      setMainTab('forgeasi'); addAgentStep('🌌', 'Opening ForgeASI'); return true;
     }
     if (/\bmvp\b|build.*app|build.*product|build.*startup/i.test(lower)) {
-      setMainTab('mvp'); addAgentStep('≡ƒÅù∩╕Å', 'Opening MVP Builder'); return true;
+      setMainTab('mvp'); addAgentStep('🏗', 'Opening MVP Builder'); return true;
     }
     if (/intelligen|memory.*layer/i.test(lower)) {
-      setMainTab('intelligence'); addAgentStep('≡ƒºá', 'Opening Intelligence Layer'); return true;
+      setMainTab('intelligence'); addAgentStep('🧠', 'Opening Intelligence Layer'); return true;
     }
     if (/billing|upgrade.*plan|subscri/i.test(lower)) {
-      setMainTab('billing'); addAgentStep('≡ƒÆ│', 'Opening Billing'); return true;
+      setMainTab('billing'); addAgentStep('💳', 'Opening Billing'); return true;
     }
     if (/setting|configure.*model|change.*model/i.test(lower)) {
-      setMainTab('settings'); addAgentStep('ΓÜÖ∩╕Å', 'Opening Settings'); return true;
+      setMainTab('settings'); addAgentStep('⚙️', 'Opening Settings'); return true;
     }
     return false;
   };
@@ -1827,7 +1827,7 @@ export default function ForgeApp() {
       const spawnThread = await newThread(title);
       if (!spawnThread) return;
       setInput('');
-      // Fire the new thread request independently ΓÇö no await so current send keeps going
+      // Fire the new thread request independently — no await so current send keeps going
       const spawnContent = input.trim();
       const spawnModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
       const spawnCatalogSkills: any[] = (window as any).FORGE_CATALOG_DATA?.skills || [];
@@ -1841,7 +1841,7 @@ export default function ForgeApp() {
         enabled_hooks: hooks.filter(h => h.enabled).map(h => ({ event: h.event, action: h.action, target: h.target })),
       };
       if (activeSkillPrompt) spawnBody.skill_prompt = activeSkillPrompt;
-      addAgentStep('ΓÜí', `Spawning parallel agent for: ${spawnContent.slice(0,40)}ΓÇª`);
+      addAgentStep('⚡', `Spawning parallel agent for: ${spawnContent.slice(0,40)}…`);
       apiFetchSSE(`/threads/${spawnThread.id}/messages`, { method:'POST', body:JSON.stringify(spawnBody) }, user.token)
         .then(() => { loadThreads(activeProject?.id); })
         .catch(() => {});
@@ -1858,7 +1858,7 @@ export default function ForgeApp() {
     // Build content with attached files
     let userContent = input.trim();
     if (attachedFiles.length > 0) {
-      const fileContext = attachedFiles.map(f => `\n\n---\n≡ƒôÄ **${f.name}**:\n\`\`\`\n${f.content}\n\`\`\``).join('');
+      const fileContext = attachedFiles.map(f => `\n\n---\n📎 **${f.name}**:\n\`\`\`\n${f.content}\n\`\`\``).join('');
       userContent += fileContext;
       setAttachedFiles([]); // Clear after send
     }
@@ -1867,16 +1867,16 @@ export default function ForgeApp() {
     setAgentSteps([]); agentStepsRef.current = [];
     setLastThinkingSteps([]); setThinkingExpanded(false);
     setMultiResponses([]);
-    addAgentStep('≡ƒºá', 'Processing your messageΓÇª');
+    addAgentStep('🧠', 'Processing your message…');
     // Create AbortController so Stop button can cancel this request
     const abortCtrl = new AbortController();
     sendAbortRef.current = abortCtrl;
     // Hard safety timeout: abort + unstick UI after 30s (backend LLM timeout is 20s, Railway kills at 30s)
     const safetyTimer = setTimeout(() => {
-      abortCtrl.abort(new DOMException('Request timed out ΓÇö the model took too long to respond. Try a faster model.', 'TimeoutError'));
+      abortCtrl.abort(new DOMException('Request timed out — the model took too long to respond. Try a faster model.', 'TimeoutError'));
       setSending(false); setTyping(false); sendAbortRef.current = null;
     }, 55000);
-    // Don't auto-open live tab ΓÇö user stays in chat view
+    // Don't auto-open live tab — user stays in chat view
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
     setMessages(prev => [...prev, tempUser]);
@@ -1902,9 +1902,9 @@ export default function ForgeApp() {
 
     try {
       const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
-      // Guard: no model selected ΓÇö tell user clearly instead of silently failing
+      // Guard: no model selected — tell user clearly instead of silently failing
       if (!cleanModel) {
-        const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:'ΓÜá∩╕Å No AI model selected. Go to **Settings ΓåÆ LLM Providers** and add an API key, then pick a model from the dropdown.', created_at:new Date().toISOString() };
+        const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:'⚠️ No AI model selected. Go to **Settings → LLM Providers** and add an API key, then pick a model from the dropdown.', created_at:new Date().toISOString() };
         setMessages(prev => [...prev, errMsg]);
         clearTimeout(safetyTimer);
         setSending(false); setTyping(false);
@@ -1937,12 +1937,12 @@ export default function ForgeApp() {
         if (ctxParts.length > 0) body.desktop_context = ctxParts.join('\n\n');
       }
       // Emit local thinking steps for skills/connectors/hooks
-      if (activeSkills.size > 0) addAgentStep('≡ƒº⌐', `Skills active: ${Array.from(activeSkills).slice(0,3).join(', ')}`);
-      if (activeConnectors.size > 0) addAgentStep('≡ƒöî', `Connectors: ${Array.from(activeConnectors).slice(0,3).join(', ')}`);
-      if (hooks.filter(h => h.enabled).length > 0) addAgentStep('≡ƒ¬¥', `${hooks.filter(h => h.enabled).length} hook(s) applied`);
+      if (activeSkills.size > 0) addAgentStep('🧩', `Skills active: ${Array.from(activeSkills).slice(0,3).join(', ')}`);
+      if (activeConnectors.size > 0) addAgentStep('🔌', `Connectors: ${Array.from(activeConnectors).slice(0,3).join(', ')}`);
+      if (hooks.filter(h => h.enabled).length > 0) addAgentStep('🪝', `${hooks.filter(h => h.enabled).length} hook(s) applied`);
       let threadId = currentThread.id;
 
-      // Extract AI reply from response and append directly ΓÇö avoids loadMessages race condition
+      // Extract AI reply from response and append directly — avoids loadMessages race condition
       const applyResp = (resp: any) => {
         if (resp && resp.success === false) {
           if (resp.error === 'NO_API_KEY') {
@@ -1957,20 +1957,20 @@ export default function ForgeApp() {
             const nextModel = fallbackOrder.find(m => m && m !== cleanModel);
             if (nextModel) {
               setSelectedModel(nextModel);
-              addAgentStep('≡ƒöä', `Auto-switched to ${nextModel} (${provName} key missing)`);
-              const switchNote: Message = { id: 'tmp-switch', thread_id: threadId, role: 'assistant', content: `≡ƒöä No ${provName} key ΓÇö auto-switched to **${nextModel}**. Retrying...`, created_at: new Date().toISOString() };
+              addAgentStep('🔄', `Auto-switched to ${nextModel} (${provName} key missing)`);
+              const switchNote: Message = { id: 'tmp-switch', thread_id: threadId, role: 'assistant', content: `🔄 No ${provName} key — auto-switched to **${nextModel}**. Retrying...`, created_at: new Date().toISOString() };
               setMessages(prev => [...prev.filter(m => m.id !== 'tmp-u'), switchNote]);
               return; // caller will retry with new model
             }
             const provLabel = provName.charAt(0).toUpperCase() + provName.slice(1);
-            const errContent = `ΓÜá∩╕Å No ${provLabel} API key found. Go to **Settings ΓåÆ LLM Providers** and add your ${provLabel} key.`;
+            const errContent = `⚠️ No ${provLabel} API key found. Go to **Settings → LLM Providers** and add your ${provLabel} key.`;
             const errMsg: Message = { id: resp.data?.id || 'tmp-err', thread_id: threadId, role: 'assistant', content: errContent, created_at: new Date().toISOString() };
             setMessages(prev => [...prev.filter(m => m.id !== 'tmp-u'), errMsg]);
-            return; // don't throw ΓÇö message is shown
+            return; // don't throw — message is shown
           }
           throw new Error(resp.message || resp.error || 'Unknown error from server');
         }
-        // Success ΓÇö append AI reply directly from response, no re-fetch needed
+        // Success — append AI reply directly from response, no re-fetch needed
         const aiData = resp?.data;
         if (aiData?.content) {
           const aiMsg: Message = { id: aiData.id || 'tmp-ai', thread_id: threadId, role: 'assistant', content: aiData.content, created_at: new Date().toISOString() };
@@ -1986,21 +1986,21 @@ export default function ForgeApp() {
 
       try {
         const modelLabel = cleanModel.split('/').pop() || cleanModel;
-        addAgentStep('ΓÜÖ∩╕Å', `Sending to ${modelLabel}ΓÇª`);
+        addAgentStep('⚙️', `Sending to ${modelLabel}…`);
         setLiveToolCalls([]);
         setExpandedTools({});
         const r = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token, (evt) => {
           if (evt.type === 'tool_call') {
             const tc = { tool: evt.tool, args: evt.args, result: evt.result || '', ts: Date.now() };
             setLiveToolCalls(prev => [...prev, tc]);
-            addAgentStep('≡ƒöº', `${evt.tool}(${JSON.stringify(evt.args||{}).slice(0,60)})`);
+            addAgentStep('🔧', `${evt.tool}(${JSON.stringify(evt.args||{}).slice(0,60)})`);
           } else if (evt.type === 'file_created') {
-            // Agent created a file ΓÇö it's auto-filed into this folder; refresh the left panel
-            addAgentStep('≡ƒôä', `Saved ${evt.filename} to this folder`);
+            // Agent created a file — it's auto-filed into this folder; refresh the left panel
+            addAgentStep('📄', `Saved ${evt.filename} to this folder`);
             loadFolderFiles();
           }
         });
-        addAgentStep('Γ£à', 'Response received');
+        addAgentStep('✓', 'Response received');
         // Cross off all pending auto-steps in tracker
         setTrackerItems(prev => {
           const updated = prev.map(i => i.id.startsWith('step_') && !i.done ? { ...i, done: true } : i);
@@ -2022,9 +2022,9 @@ export default function ForgeApp() {
           const used = stats?.data?.total_tokens || 0;
           const limit = getContextLimit(cleanModel);
           if (used > 0 && limit > 0 && used / limit > 0.85) {
-            addAgentStep('≡ƒù£∩╕Å', 'Context full ΓÇö auto-compactingΓÇª');
+            addAgentStep('🗜', 'Context full — auto-compacting…');
             await apiFetch(`/threads/${threadId}/compact`, { method:'POST', body:JSON.stringify({ keep_recent: 8 }) }, user.token);
-            addAgentStep('Γ£à', 'Context compacted');
+            addAgentStep('✓', 'Context compacted');
             loadThreadTokenStats(threadId);
           }
         } catch {}
@@ -2054,7 +2054,7 @@ export default function ForgeApp() {
           await loadThreads(activeProject?.id);
         } else { throw e; }
       }
-      // Reload messages in background to sync with DB (don't await ΓÇö already have the reply)
+      // Reload messages in background to sync with DB (don't await — already have the reply)
       loadMessages(threadId);
       await loadArtifacts();
       await loadThreads(activeProject?.id);
@@ -2098,15 +2098,15 @@ export default function ForgeApp() {
       const clean = raw
         .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error[^:]*:\s*/i, '')
         .replace(/^\{"type":"error".*?"message":"([^"]+)".*\}$/i, '$1')
-        .replace(/^signal is aborted without reason$/i, 'Request timed out ΓÇö the model took too long. Try a faster model.')
-        .replace(/^Failed to fetch$/i, 'Connection timed out ΓÇö the model took too long to respond. Try a faster model.')
-        .replace(/^NetworkError.*$/i, 'Network error ΓÇö check your connection or try a different model.')
-        .replace(/BodyStreamBuffer.*aborted/i, 'Stream interrupted ΓÇö the response was cut off. Try sending again or switch to a faster model.')
+        .replace(/^signal is aborted without reason$/i, 'Request timed out — the model took too long. Try a faster model.')
+        .replace(/^Failed to fetch$/i, 'Connection timed out — the model took too long to respond. Try a faster model.')
+        .replace(/^NetworkError.*$/i, 'Network error — check your connection or try a different model.')
+        .replace(/BodyStreamBuffer.*aborted/i, 'Stream interrupted — the response was cut off. Try sending again or switch to a faster model.')
         .replace(/AbortError/i, 'Request cancelled.')
-        .replace(/rate.limit.*upstream.*add your own key[^]*/i, 'Free model is rate-limited ΓÇö switch to a paid model for unthrottled access.')
+        .replace(/rate.limit.*upstream.*add your own key[^]*/i, 'Free model is rate-limited — switch to a paid model for unthrottled access.')
         .replace(/"?Provider returned error"?,?\s*"?code"?:?\s*429[^]*/i, 'Model is rate-limited. Switch to a different model.')
         .trim();
-      const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`ΓÜá∩╕Å ${clean}`, created_at:new Date().toISOString() };
+      const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
       setMessages(prev => [...prev, errMsg]);
     } finally {
       clearTimeout(safetyTimer);
@@ -2122,7 +2122,7 @@ export default function ForgeApp() {
     }
   };
 
-  // ΓöÇΓöÇ Voice Chat ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Voice Chat -------------------------------------------------------------
   const toggleVoice = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) { showToast('Speech recognition not supported. Try Chrome.','info'); return; }
@@ -2163,7 +2163,7 @@ export default function ForgeApp() {
     window.speechSynthesis.speak(utter);
   };
 
-  // ΓöÇΓöÇ Dispatch (multi-agent swarm) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Dispatch (multi-agent swarm) -------------------------------------------
   const toggleDispatchAgent = (id: string) => {
     setDispatchAgentIds(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
   };
@@ -2201,7 +2201,7 @@ export default function ForgeApp() {
     try { await apiFetch(`/dispatch/cancel/${activeDispatchRunId}`, { method:'POST' }, user.token); eventSourceRef.current?.close(); setDispatching(false); } catch {}
   };
 
-  // ΓöÇΓöÇ Tasks ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Tasks ------------------------------------------------------------------
   const createTask = async () => {
     if (!user || !newTaskTitle.trim()) return;
     try {
@@ -2219,7 +2219,7 @@ export default function ForgeApp() {
     try { await apiFetch(`/workspace/tasks/${t.id}`, { method:'PATCH', body:JSON.stringify({ status:cycle[t.status] }) }, user.token); await loadTasks(); } catch {}
   };
 
-  // ΓöÇΓöÇ Schedules ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Schedules --------------------------------------------------------------
   const createSchedule = async () => {
     if (!user || !schedName.trim() || !schedPrompt.trim()) return;
     try {
@@ -2236,10 +2236,10 @@ export default function ForgeApp() {
 
   const runScheduleNow = async (s: ScheduledTask) => {
     if (!user) return;
-    try { await apiFetch(`/schedules/${s.id}/run`, { method:'POST' }, user.token); showToast('Γ£à Triggered!'); } catch (e: any) { showToast(String(e?.message||e),'err'); }
+    try { await apiFetch(`/schedules/${s.id}/run`, { method:'POST' }, user.token); showToast('✓ Triggered!'); } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
-  // ΓöÇΓöÇ Custom Providers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Custom Providers --------------------------------------------------------
   const createCustomProvider = async () => {
     if (!user || !newProvider.name || !newProvider.base_url) return;
     try {
@@ -2257,7 +2257,7 @@ export default function ForgeApp() {
     try { await apiFetch(`/providers/custom/${id}`, { method:'DELETE' }, user.token); await loadCustomProviders(); } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
-  // ΓöÇΓöÇ Router test ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Router test ------------------------------------------------------------
   const testRouter = async () => {
     if (!user || !routerTestPrompt.trim() || routerTesting) return;
     setRouterTesting(true); setRouterTestResult('');
@@ -2269,28 +2269,28 @@ export default function ForgeApp() {
     finally { setRouterTesting(false); }
   };
 
-  // ΓöÇΓöÇ Billing upgrade ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Billing upgrade ---------------------------------------------------------
   const upgradePlan = async (plan: string) => {
     if (!user) return;
     try {
       const d = await apiFetch('/billing/upgrade', { method:'POST', body:JSON.stringify({ plan }) }, user.token);
       if (d?.checkoutUrl) { window.open(d.checkoutUrl, '_blank'); showToast('Opening Stripe checkout...','info'); }
-      else { await loadSubscription(); showToast(d?.message || `Γ£à Upgraded to ${plan} plan!`); }
+      else { await loadSubscription(); showToast(d?.message || `✓ Upgraded to ${plan} plan!`); }
     } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
-  // ΓöÇΓöÇ Toggle agent (chat) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Toggle agent (chat) ----------------------------------------------------
   const toggleAgent = (id: string) => {
     setActiveAgentIds(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
   };
 
-  // ΓöÇΓöÇ Helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // -- Helpers ----------------------------------------------------------------
   const pinnedProjects = projects.filter(p => p.pinned);
   const unpinnedProjects = projects.filter(p => !p.pinned);
   const filteredTasks = activeProject ? tasks.filter(t => t.project_id === activeProject.id) : tasks;
   const taskStatusColor: Record<string, string> = { todo:'var(--fg-text2)', in_progress:'var(--fg-blue)', done:'var(--fg-green)', blocked:'var(--fg-red)' };
   const taskPriorityColor: Record<string, string> = { low:'var(--fg-text2)', medium:'var(--fg-orange)', high:'var(--fg-red)' };
-  const artifactTypeIcon: Record<string, string> = { code:'≡ƒÆ╗', html:'≡ƒîÉ', react:'ΓÜ¢∩╕Å', markdown:'≡ƒô¥', 'live-dashboard':'≡ƒôè', diff:'≡ƒôï', default:'≡ƒôä' };
+  const artifactTypeIcon: Record<string, string> = { code:'💻', html:'🌐', react:'⚛️', markdown:'📝', 'live-dashboard':'📊', diff:'📋', default:'📄' };
   const filteredOrModels = openRouterModels
     .filter(m => {
       const text = (m.id+' '+(m.name||'')).toLowerCase();
@@ -2310,7 +2310,7 @@ export default function ForgeApp() {
 
   if (!user) return <LoginScreen onLogin={handleLogin} />;
 
-  // ΓöÇΓöÇΓöÇ Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // --- Render --------------------------------------------------------------
   return (
     <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden', position:'relative' }} onClick={() => { setThreadMenu(null); setProjectMenu(null); if(isMobile) setMobileDrawerOpen(false); }}>
 
@@ -2324,32 +2324,32 @@ export default function ForgeApp() {
       {/* Mobile top bar */}
       {isMobile && (
         <div style={{ position:'fixed', top:0, left:0, right:0, height:52, background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', padding:'0 14px', gap:10, zIndex:99, flexShrink:0 }}>
-          <button onClick={e => { e.stopPropagation(); setMobileDrawerOpen(o=>!o); }} style={{ background:'none', border:'none', color:'var(--fg-text2)', fontSize:20, cursor:'pointer', padding:4 }}>Γÿ░</button>
-          <div style={{ width:28, height:28, background:'transparent', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, animation:'neon-cycle 3s linear infinite' }}>ΓÜí</div>
+          <button onClick={e => { e.stopPropagation(); setMobileDrawerOpen(o=>!o); }} style={{ background:'none', border:'none', color:'var(--fg-text2)', fontSize:20, cursor:'pointer', padding:4 }}>🌀</button>
+          <div style={{ width:28, height:28, background:'transparent', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, animation:'neon-cycle 3s linear infinite' }}>⚡</div>
           <span className="forge-neon" style={{ fontSize:16 }}>Forge</span>
           <div style={{ marginLeft:'auto', fontSize:12, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{selectedModel || 'forge-fast'}</div>
         </div>
       )}
 
-      {/* ΓöÇΓöÇ LEFT SIDEBAR ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+      {/* -- LEFT SIDEBAR ---------------------------------------------------- */}
       <div style={{ width: isMobile ? (mobileDrawerOpen ? 260 : 0) : (sidebarExpanded ? 260 : 60), background:'var(--fg-bg)', borderRight:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0, transition:'width 0.2s', overflow:'hidden', position: isMobile ? 'fixed' : 'relative', top:0, left:0, bottom:0, zIndex: isMobile ? 99 : 'auto' as any }} onClick={e => e.stopPropagation()}>
         {/* Logo + collapse */}
         <div style={{ padding:'14px 10px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid var(--fg-border)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:9, overflow:'hidden' }}>
-            <div style={{ width:30, height:30, background:'var(--fg-btn-grad)', borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0, boxShadow:'0 0 14px rgba(255,31,53,0.4)' }}>ΓÜí</div>
+            <div style={{ width:30, height:30, background:'var(--fg-btn-grad)', borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0, boxShadow:'0 0 14px rgba(255,31,53,0.4)' }}>⚡</div>
             {sidebarExpanded && <span style={{ fontSize:16, fontWeight:800, letterSpacing:'-0.04em', fontFamily:'var(--fg-font-display)', whiteSpace:'nowrap', background:'linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.7) 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Forge</span>}
           </div>
-          <button onClick={() => setSidebarExpanded(!sidebarExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13, padding:4, opacity:0.6 }}>{sidebarExpanded ? 'ΓùÇ' : 'Γû╢'}</button>
+          <button onClick={() => setSidebarExpanded(!sidebarExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13, padding:4, opacity:0.6 }}>{sidebarExpanded ? '«' : '◀'}</button>
         </div>
 
-        {/* Nav tabs ΓÇö 3-zone Taskade-style */}
+        {/* Nav tabs — 3-zone Taskade-style */}
         <div style={{ padding:'6px 6px', borderBottom:'1px solid var(--fg-border)', overflowY:'auto', flexShrink:0, maxHeight: sidebarExpanded ? 'calc(100vh - 340px)' : 'calc(100vh - 120px)' }}>
-          {/* ΓöÇΓöÇ ZONE 1: Core ΓöÇΓöÇ */}
+          {/* -- ZONE 1: Core -- */}
           {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>Core</div>}
           {([
-            { id:'workspace', icon:'≡ƒÆ¼', label:'Workspace' },
-            { id:'super', icon:'≡ƒîƒ', label:'SuperAgent' },
-            { id:'skills', icon:'≡ƒº⌐', label:'Skills & Tools' },
+            { id:'workspace', icon:'💬', label:'Workspace' },
+            { id:'super', icon:'🌟', label:'SuperAgent' },
+            { id:'skills', icon:'🧩', label:'Skills & Tools' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -2358,23 +2358,23 @@ export default function ForgeApp() {
             </button>
           ))}
 
-          {/* ΓöÇΓöÇ ZONE 2: Build ΓöÇΓöÇ */}
+          {/* -- ZONE 2: Build -- */}
           <div style={{ margin:'8px 0 2px', height:'1px', background:'var(--fg-border)' }} />
           {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>Build</div>}
           {([
-            { id:'router', icon:'≡ƒöÇ', label:'ForgeRouter' },
-            { id:'forgeco', icon:'≡ƒºæΓÇì≡ƒÆ╗', label:'ForgeCo' },
-            { id:'forgeauto', icon:'ΓÜí', label:'ForgeAuto' },
-            { id:'forgemulti', icon:'≡ƒñû', label:'ForgeMulti' },
-            { id:'forgeasi', icon:'≡ƒîî', label:'ForgeASI' },
-            { id:'mvp', icon:'≡ƒÅù∩╕Å', label:'MVP Builder' },
-            { id:'marketplace', icon:'≡ƒ¢ì∩╕Å', label:'Marketplace' },
-            { id:'intelligence', icon:'≡ƒºá', label:'Intelligence' },
-            { id:'swarm', icon:'≡ƒÉ¥', label:'Agent Swarm' },
-            { id:'files', icon:'≡ƒôü', label:'Files' },
-            { id:'runs', icon:'≡ƒÅâ', label:'Runs' },
-            { id:'hooks', icon:'≡ƒ¬¥', label:'Hooks' },
-            ...(isDesktop ? [{ id:'desktop', icon:'≡ƒûÑ∩╕Å', label:'Desktop & Files' }] : []),
+            { id:'router', icon:'🔀', label:'ForgeRouter' },
+            { id:'forgeco', icon:'🧑"💻', label:'ForgeCo' },
+            { id:'forgeauto', icon:'⚡', label:'ForgeAuto' },
+            { id:'forgemulti', icon:'🤖', label:'ForgeMulti' },
+            { id:'forgeasi', icon:'🌌', label:'ForgeASI' },
+            { id:'mvp', icon:'🏗', label:'MVP Builder' },
+            { id:'marketplace', icon:'🛍', label:'Marketplace' },
+            { id:'intelligence', icon:'🧠', label:'Intelligence' },
+            { id:'swarm', icon:'🐝', label:'Agent Swarm' },
+            { id:'files', icon:'📁', label:'Files' },
+            { id:'runs', icon:'🏃', label:'Runs' },
+            { id:'hooks', icon:'🪝', label:'Hooks' },
+            ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop & Files' }] : []),
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => setMainTab(tab.id as any)} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.10)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius:'0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -2383,14 +2383,14 @@ export default function ForgeApp() {
             </button>
           ))}
 
-          {/* ΓöÇΓöÇ ZONE 3: System ΓöÇΓöÇ */}
+          {/* -- ZONE 3: System -- */}
           <div style={{ margin:'8px 0 2px', height:'1px', background:'var(--fg-border)' }} />
           {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>System</div>}
           {([
-            { id:'platforms', icon:'≡ƒîÉ', label:'Platforms' },
-            { id:'billing', icon:'≡ƒÆ│', label:'Billing' },
-            { id:'settings', icon:'ΓÜÖ∩╕Å', label:'Settings' },
-            ...(user.role==='admin' ? [{ id:'admin', icon:'≡ƒ¢í∩╕Å', label:'Admin' }] : []),
+            { id:'platforms', icon:'🌐', label:'Platforms' },
+            { id:'billing', icon:'💳', label:'Billing' },
+            { id:'settings', icon:'⚙️', label:'Settings' },
+            ...(user.role==='admin' ? [{ id:'admin', icon:'🛡', label:'Admin' }] : []),
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if(tab.id==='admin'){loadAdminStats();loadAdminUsers();loadAdminKeys();loadAdminModels();} if(tab.id==='settings'){loadVault();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.10)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius:'0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -2407,7 +2407,7 @@ export default function ForgeApp() {
               <button onClick={newThread} style={{ width:'100%', padding:'9px 14px', background:'var(--fg-btn-grad)', border:'none', borderRadius:'var(--fg-radius-btn)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:7, boxShadow:'0 2px 10px rgba(255,31,53,0.25)', transition:'all 0.18s', letterSpacing:'-0.01em' }}
                 onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 0 18px rgba(255,31,53,0.4), 0 4px 12px rgba(0,0,0,0.4)';(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)';}}
                 onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 2px 10px rgba(255,31,53,0.25)';(e.currentTarget as HTMLButtonElement).style.transform='none';}}>
-                <span style={{ fontSize:14 }}>Γ£Å∩╕Å</span>New conversation
+                <span style={{ fontSize:14 }}>📝</span>New conversation
               </button>
             </div>
 
@@ -2418,7 +2418,7 @@ export default function ForgeApp() {
                   <div key={p.id} onClick={() => selectProject(p)} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 8px', borderRadius:6, cursor:'pointer', background:activeProject?.id===p.id ? 'var(--fg-bg4)' : 'transparent', marginBottom:2 }}>
                     <div style={{ width:10, height:10, borderRadius:'50%', background:p.color, flexShrink:0 }} />
                     <span style={{ fontSize:13, color:'var(--fg-text)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.name}</span>
-                    <button onClick={e => { e.stopPropagation(); togglePin(p); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:2 }}>≡ƒôî</button>
+                    <button onClick={e => { e.stopPropagation(); togglePin(p); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:2 }}>📌</button>
                   </div>
                 ))}
               </div>
@@ -2426,7 +2426,7 @@ export default function ForgeApp() {
 
             <div style={{ padding:'12px 12px 4px', flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
               <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 8px' }}>{activeProject ? activeProject.name : 'Recent'}</p>
-              <input value={threadSearch} onChange={e => setThreadSearch(e.target.value)} placeholder="≡ƒöì Search threads..." style={{ flex:'0 0 auto', marginBottom:8, padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, outline:'none' }} />
+              <input value={threadSearch} onChange={e => setThreadSearch(e.target.value)} placeholder="🔍 Search threads..." style={{ flex:'0 0 auto', marginBottom:8, padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, outline:'none' }} />
               <div style={{ flex:1, overflowY:'auto' }}>
                 {/* Pinned threads first */}
                 {threads.filter(t => t.pinned && !t.archived && t.title.toLowerCase().includes(threadSearch.toLowerCase())).map(t => (
@@ -2437,7 +2437,7 @@ export default function ForgeApp() {
                       onMouseLeave={e => { const b = e.currentTarget.querySelector('.thread-menu-btn') as HTMLElement; if (b) b.style.opacity='0'; }}
                       style={{ padding:'7px 8px 5px', borderRadius:6, cursor:'pointer', marginBottom:1, background:activeThread?.id===t.id ? 'var(--fg-bg4)' : 'var(--fg-bg)', border:'1px solid var(--fg-border2)' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                        <span style={{ fontSize:10 }}>≡ƒôî</span>
+                        <span style={{ fontSize:10 }}>📌</span>
                         {renamingThread?.id === t.id ? (
                           <input autoFocus value={renamingThreadInput} onChange={e => setRenamingThreadInput(e.target.value)}
                             onKeyDown={async e => {
@@ -2453,13 +2453,13 @@ export default function ForgeApp() {
                         ) : (
                           <p style={{ margin:0, fontSize:13, color:activeThread?.id===t.id ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
                         )}
-                        <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">ΓÇóΓÇóΓÇó</button>
+                        <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">•••</button>
                       </div>
                       {t.total_tokens ? <p style={{ margin:'2px 0 0 14px', fontSize:10, color:'var(--fg-text3)' }}>{t.total_tokens >= 1000 ? (t.total_tokens/1000).toFixed(1)+'k' : t.total_tokens} tokens</p> : null}
                     </div>
                   </div>
                 ))}
-                {/* Grouped threads ΓÇö Today / Yesterday / This week / Older */}
+                {/* Grouped threads — Today / Yesterday / This week / Older */}
                 {(() => {
                   const unpinned = threads.filter(t => !t.pinned && !t.archived && t.title.toLowerCase().includes(threadSearch.toLowerCase()));
                   const now = new Date(); const today = now.toDateString();
@@ -2482,7 +2482,7 @@ export default function ForgeApp() {
                           onMouseLeave={e => { (e.currentTarget.querySelector('.thread-menu-btn') as any)?.style&&((e.currentTarget.querySelector('.thread-menu-btn') as any).style.opacity='0'); }}>
                           <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                             <p style={{ margin:0, fontSize:12, color: isActive ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{t.title}</p>
-                            <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">ΓÇóΓÇóΓÇó</button>
+                            <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }} className="thread-menu-btn">•••</button>
                           </div>
                         </div>
                       </div>
@@ -2511,7 +2511,7 @@ export default function ForgeApp() {
                                     ) : (
                                       <p style={{ margin:0, fontSize:12, color: isActive ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, letterSpacing:'-0.01em' }}>{t.title}</p>
                                     )}
-                                    <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s', flexShrink:0 }} className="thread-menu-btn">ΓÇóΓÇóΓÇó</button>
+                                    <button onClick={e => { e.stopPropagation(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s', flexShrink:0 }} className="thread-menu-btn">•••</button>
                                   </div>
                                   {t.total_tokens ? <p style={{ margin:'1px 0 0', fontSize:10, color:'var(--fg-text3)' }}>{t.total_tokens>=1000?(t.total_tokens/1000).toFixed(1)+'k':t.total_tokens} tok</p> : null}
                                 </div>
@@ -2522,7 +2522,7 @@ export default function ForgeApp() {
                       ))}
                       {unpinned.length > 8 && (
                         <button onClick={() => setShowAllThreads(p=>!p)} style={{ width:'100%', padding:'5px 8px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11, marginTop:4 }}>
-                          {showAllThreads ? 'Γû▓ Show less' : `Γû╝ All threads (${unpinned.length})`}
+                          {showAllThreads ? '▲ Show less' : `▼ All threads (${unpinned.length})`}
                         </button>
                       )}
                     </>
@@ -2546,7 +2546,7 @@ export default function ForgeApp() {
                   style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 8px', borderRadius:6, cursor:'pointer', background:activeProject?.id===p.id ? 'var(--fg-bg4)' : 'transparent', marginBottom:1 }}>
                   <div style={{ width:8, height:8, borderRadius:'50%', background:p.color, flexShrink:0 }} />
                   <span style={{ fontSize:13, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.name}</span>
-                  <button onClick={e => { e.stopPropagation(); setProjectMenu({ projectId:p.id, x:e.clientX, y:e.clientY }); }} className="proj-menu-btn" style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }}>ΓÇóΓÇóΓÇó</button>
+                  <button onClick={e => { e.stopPropagation(); setProjectMenu({ projectId:p.id, x:e.clientX, y:e.clientY }); }} className="proj-menu-btn" style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'0 2px', opacity:0, transition:'opacity 0.15s' }}>•••</button>
                 </div>
               ))}
               {projects.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, padding:'2px 8px' }}>No projects yet</p>}
@@ -2556,7 +2556,7 @@ export default function ForgeApp() {
 
         {/* User profile + version */}
         <div style={{ padding:'10px 12px', borderTop:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, marginTop:'auto' }}>
-          <div style={{ width:32, height:32, background:'var(--fg-bg4)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>≡ƒæñ</div>
+          <div style={{ width:32, height:32, background:'var(--fg-bg4)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>👤</div>
           {sidebarExpanded && (
             <>
               <div style={{ flex:1, overflow:'hidden' }}>
@@ -2564,20 +2564,20 @@ export default function ForgeApp() {
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
                   <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.59</span>
-                  {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>≡ƒûÑ∩╕Å Desktop</span>}
+                  {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>
-              <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>Γåù</button>
+              <button onClick={handleLogout} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>×</button>
             </>
           )}
           {!sidebarExpanded && <span style={{ fontSize:9, color:'var(--fg-border2)', fontFamily:'monospace' }}>6.1</span>}
         </div>
       </div>
 
-      {/* ΓöÇΓöÇ MAIN CONTENT ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+      {/* -- MAIN CONTENT ---------------------------------------------------- */}
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', marginTop: isMobile ? 52 : 0 }}>
 
-        {/* ΓöÇΓöÇ WORKSPACE TAB ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+        {/* -- WORKSPACE TAB --------------------------------------------------- */}
         {mainTab === 'workspace' && (
           <div style={{ display:'contents' }}>
             {/* Top bar */}
@@ -2586,11 +2586,11 @@ export default function ForgeApp() {
               {/* Active Space selector */}
               {!isMobile && (
                 <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', background:'var(--fg-bg4)', borderRadius:8, border:'1px solid var(--fg-border2)', flexShrink:0, cursor:'pointer' }} title="Active Space">
-                  <span style={{ fontSize:11 }}>≡ƒîÉ</span>
+                  <span style={{ fontSize:11 }}>🌐</span>
                   <span style={{ fontSize:11, color:'var(--fg-orange2)', fontWeight:600, maxWidth:100, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                     {activeProject ? activeProject.name : 'Default Space'}
                   </span>
-                  <span style={{ fontSize:9, color:'var(--fg-text3)' }}>Γû╝</span>
+                  <span style={{ fontSize:9, color:'var(--fg-text3)' }}>▼</span>
                 </div>
               )}
               {/* Title */}
@@ -2617,20 +2617,20 @@ export default function ForgeApp() {
               {/* Active skill indicator */}
               {activeSkillPrompt && (
                 <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 8px', background:'rgba(255,140,0,0.12)', border:'1px solid var(--fg-orange)', borderRadius:8, flexShrink:0 }}>
-                  <span style={{ fontSize:10 }}>≡ƒº⌐</span>
+                  <span style={{ fontSize:10 }}>🧩</span>
                   <span style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:600 }}>Skill</span>
-                  <button onClick={() => setActiveSkillPrompt('')} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', padding:0, fontSize:12, lineHeight:1, flexShrink:0 }}>Γ£ò</button>
+                  <button onClick={() => setActiveSkillPrompt('')} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', padding:0, fontSize:12, lineHeight:1, flexShrink:0 }}>×</button>
                 </div>
               )}
-              {/* Γ¢╜ Gas-style live token counter + session cost */}
+              {/* 💰 Gas-style live token counter + session cost */}
               <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: totalTokens > 500000 ? 'rgba(239,68,68,0.12)' : totalTokens > 100000 ? 'rgba(255,140,0,0.1)' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${totalTokens > 500000 ? 'rgba(239,68,68,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, justifyContent:'center', cursor:'pointer' }} onClick={() => setMainTab('billing')} title="Click to view billing">
-                <span style={{ fontSize:10 }}>Γ¢╜</span>
+                <span style={{ fontSize:10 }}>💰</span>
                 <span style={{ fontSize:11, color: totalTokens > 500000 ? '#ef4444' : totalTokens > 0 ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:700, fontFamily:'monospace', letterSpacing:'-0.5px' }}>
                   {totalTokens >= 1000000 ? (totalTokens/1000000).toFixed(2)+'M' : totalTokens >= 1000 ? (totalTokens/1000).toFixed(1)+'k' : totalTokens || '0'}
                 </span>
                 {sessionCost > 0 && <span style={{ fontSize:10, color:'var(--fg-green)', fontFamily:'monospace', marginLeft:2 }}>${sessionCost.toFixed(4)}</span>}
               </div>
-              {/* ≡ƒöº ForgeOptimizer toggle */}
+              {/* 🔧 ForgeOptimizer toggle */}
               {!isMobile && activeThread && (
                 <div style={{ display:'flex', alignItems:'center', gap:4, flexShrink:0 }}>
                   <button
@@ -2638,7 +2638,7 @@ export default function ForgeApp() {
                     disabled={optimizerRunning}
                     title={optimizerData ? `ForgeOptimizer: ${optimizerData.savingsPct}% savings available` : 'Analyze token usage'}
                     style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: optimizerData && optimizerData.savingsPct > 20 ? 'linear-gradient(135deg,rgba(255,43,61,0.2),rgba(251,146,60,0.15))' : 'var(--fg-bg4)', border:`1px solid ${optimizerData && optimizerData.savingsPct > 20 ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:8, color: optimizerData && optimizerData.savingsPct > 20 ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:700, fontFamily:'monospace' }}>
-                    <span>{optimizerRunning ? 'Γƒ│' : '≡ƒöº'}</span>
+                    <span>{optimizerRunning ? '⚡' : '🔧'}</span>
                     <span>{optimizerRunning ? 'Analyzing...' : optimizerData ? `${optimizerData.savingsPct}% save` : 'Optimizer'}</span>
                   </button>
                   <button onClick={() => setOptimizerEnabled(!optimizerEnabled)} title={optimizerEnabled ? 'Auto-optimizer ON (click to disable)' : 'Auto-optimizer OFF (click to enable)'}
@@ -2647,46 +2647,46 @@ export default function ForgeApp() {
                   </button>
                 </div>
               )}
-              {/* ≡ƒºá IQ score */}
+              {/* 🧠 IQ score */}
               {!isMobile && (
-                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: superStats.intelligenceScore > 100 ? 'linear-gradient(135deg,rgba(139,92,246,0.15),rgba(56,189,248,0.1))' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${superStats.intelligenceScore > 100 ? 'rgba(139,92,246,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, cursor:'pointer' }} onClick={() => setMainTab('super')} title="SuperAgent IQ ΓÇö click to open">
-                  <span style={{ fontSize:10 }}>≡ƒºá</span>
+                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: superStats.intelligenceScore > 100 ? 'linear-gradient(135deg,rgba(139,92,246,0.15),rgba(56,189,248,0.1))' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${superStats.intelligenceScore > 100 ? 'rgba(139,92,246,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, cursor:'pointer' }} onClick={() => setMainTab('super')} title="SuperAgent IQ — click to open">
+                  <span style={{ fontSize:10 }}>🧠</span>
                   <span style={{ fontSize:11, fontWeight:700, color: superStats.intelligenceScore > 500 ? 'var(--fg-orange2)' : superStats.intelligenceScore > 100 ? '#a78bfa' : 'var(--fg-text3)', fontFamily:'monospace' }}>IQ {superStats.intelligenceScore}</span>
                 </div>
               )}
-              {/* ΓÜí Harvest button */}
+              {/* ⚡ Harvest button */}
               {!isMobile && (
-                <button onClick={harvestMemory} disabled={superHarvesting} title="Harvest memory ΓåÆ boost SuperAgent IQ" style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 10px', background: superHarvesting ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0, opacity: superHarvesting ? 0.5 : 1 }}>
-                  <span>{superHarvesting ? 'ΓÅ│' : 'ΓÜí'}</span>
+                <button onClick={harvestMemory} disabled={superHarvesting} title="Harvest memory → boost SuperAgent IQ" style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 10px', background: superHarvesting ? 'var(--fg-bg4)' : 'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0, opacity: superHarvesting ? 0.5 : 1 }}>
+                  <span>{superHarvesting ? '⚡' : '⚡'}</span>
                   <span>Harvest</span>
                 </button>
               )}
               {/* Language selector */}
               {!isMobile && (
                 <select value={language} onChange={e => setLanguage(e.target.value)} style={{ background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text2)', padding:'4px 8px', fontSize:11, cursor:'pointer' }} title="Response language">
-                  <option value="en">≡ƒç¼≡ƒçº EN</option>
-                  <option value="es">≡ƒç¬≡ƒç╕ ES</option>
-                  <option value="fr">≡ƒç½≡ƒç╖ FR</option>
-                  <option value="de">≡ƒç⌐≡ƒç¬ DE</option>
-                  <option value="pt">≡ƒçº≡ƒç╖ PT</option>
-                  <option value="it">≡ƒç«≡ƒç╣ IT</option>
-                  <option value="zh">≡ƒç¿≡ƒç│ ZH</option>
-                  <option value="ja">≡ƒç»≡ƒç╡ JA</option>
-                  <option value="ko">≡ƒç░≡ƒç╖ KO</option>
-                  <option value="ar">≡ƒç╕≡ƒçª AR</option>
-                  <option value="hi">≡ƒç«≡ƒç│ HI</option>
-                  <option value="ru">≡ƒç╖≡ƒç║ RU</option>
+                  <option value="en">🇬🇧 EN</option>
+                  <option value="es">🇪🇸 ES</option>
+                  <option value="fr">🇫🇷 FR</option>
+                  <option value="de">🇩🇪 DE</option>
+                  <option value="pt">🇧🇷 PT</option>
+                  <option value="it">🇮🇹 IT</option>
+                  <option value="zh">🇨🇳 ZH</option>
+                  <option value="ja">🇯🇵 JA</option>
+                  <option value="ko">🇰🇷 KO</option>
+                  <option value="ar">🇸🇦 AR</option>
+                  <option value="hi">🇮🇳 HI</option>
+                  <option value="ru">🇷🇺 RU</option>
                 </select>
               )}
               {/* EPIC button */}
               {!isMobile && (
-                <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>≡ƒîî EPIC</button>
+                <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${mainTab==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: mainTab==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>🌌 EPIC</button>
               )}
               {/* Sketch toggle */}
-              {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'4px 8px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, flexShrink:0 }}>Γ£Å∩╕Å</button>}
+              {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'4px 8px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, flexShrink:0 }}>📝</button>}
 
               {/* Multi-response toggle */}
-              {!isMobile && <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? 'var(--fg-border)' : 'transparent', border:`1px solid ${multiResponse ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:multiResponse ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>ΓÜí Multi</button>}
+              {!isMobile && <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? 'var(--fg-border)' : 'transparent', border:`1px solid ${multiResponse ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:multiResponse ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>⚡ Multi</button>}
 
               {/* Model selector -- shows models from all providers with saved keys */}
               {(() => {
@@ -2713,15 +2713,15 @@ export default function ForgeApp() {
                 const noKeys = availableForge.length === 0 && availableDirect.length === 0 && dynamicGroups.length === 0;
                 return (
                   <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color: noKeys && orModels.length === 0 ? 'var(--fg-text2)' : 'var(--fg-orange2)', padding:'6px 10px', fontSize:12, cursor:'pointer', maxWidth: isMobile ? 140 : 240 }}>
-                    {noKeys && orModels.length === 0 && <option value="">ΓÜá Add an API key in Settings</option>}
-                    {availableForge.length > 0 && <optgroup label="ΓÜí Forge Models">{availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</optgroup>}
+                    {noKeys && orModels.length === 0 && <option value="">⚠️ Add an API key in Settings</option>}
+                    {availableForge.length > 0 && <optgroup label="⚡ Forge Models">{availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</optgroup>}
                     {availableDirect.map(grp => (
                       <optgroup key={grp.group} label={grp.group}>
                         {grp.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
                       </optgroup>
                     ))}
                     {dynamicGroups.map(grp => (
-                      <optgroup key={grp.provider} label={`≡ƒöÑ ${grp.label} (live)`}>
+                      <optgroup key={grp.provider} label={`🔥 ${grp.label} (live)`}>
                         {grp.models.map(m => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
                       </optgroup>
                     ))}
@@ -2734,10 +2734,10 @@ export default function ForgeApp() {
                         orGrouped[grpKey].push(m);
                       });
                       return Object.entries(orGrouped).sort(([a],[b]) => a.localeCompare(b)).map(([grp, ms]) => (
-                        <optgroup key={`or-${grp}`} label={`≡ƒöÇ OR ┬╖ ${grp}`}>
+                        <optgroup key={`or-${grp}`} label={`🔀 OR · ${grp}`}>
                           {ms.sort((a,b) => (a.name||a.id).localeCompare(b.name||b.id)).map(m => {
                             const isFree = m.id.includes(':free') || m.pricing?.prompt === '0';
-                            return <option key={m.id} value={m.id}>{isFree ? '≡ƒåô ' : ''}{m.name || m.id}</option>;
+                            return <option key={m.id} value={m.id}>{isFree ? '🆓 ' : ''}{m.name || m.id}</option>;
                           })}
                         </optgroup>
                       ));
@@ -2748,14 +2748,14 @@ export default function ForgeApp() {
               {/* OR model refresh button */}
               {savedProviders['openrouter'] && (
                 <button onClick={loadOpenRouterModels} disabled={orLoading} title="Refresh OpenRouter models" style={{ background:'none', border:'none', color: orLoading ? 'var(--fg-text3)' : 'var(--fg-orange)', cursor: orLoading ? 'default' : 'pointer', fontSize:14, padding:'2px 4px', flexShrink:0 }}>
-                  {orLoading ? 'ΓÅ│' : '≡ƒöä'}
+                  {orLoading ? '⚡' : '🔄'}
                 </button>
               )}
 
-              {!isMobile && <button onClick={() => setRightExpanded(!rightExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{rightExpanded ? 'Γû╢' : 'ΓùÇ'}</button>}
+              {!isMobile && <button onClick={() => setRightExpanded(!rightExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{rightExpanded ? '◀' : '«'}</button>}
             </div>
 
-            {/* ΓöÇΓöÇ Active Agents Navbar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+            {/* -- Active Agents Navbar ------------------------------------------- */}
             {agents.filter(a => a.enabled).length > 0 && (
               <div style={{ padding:'4px 16px', borderBottom:'1px solid var(--fg-border)', background:'var(--fg-bg)', display:'flex', alignItems:'center', gap:6, flexShrink:0, overflowX:'auto', minHeight:34 }}>
                 <span style={{ fontSize:10, color:'var(--fg-text3)', whiteSpace:'nowrap', marginRight:4, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>Agents</span>
@@ -2788,7 +2788,7 @@ export default function ForgeApp() {
                   <div style={{ height:'40%', borderBottom:'1px solid var(--fg-border)', display:'flex', overflow:'hidden' }}>
                     <div style={{ flex:1, padding:12, overflow:'hidden', display:'flex', flexDirection:'column' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                        <span style={{ fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>Γ£Å∩╕Å Live Preview</span>
+                        <span style={{ fontSize:12, color:'var(--fg-orange)', fontWeight:600 }}>📝 Live Preview</span>
                         {artifacts.length > 0 && (
                           <select onChange={e => { const a = artifacts.find(x => x.id === e.target.value); if (a) { setSketchArtifact(a); setPreviewCode(a.content); } }} style={{ flex:1, padding:'4px 8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }}>
                             <option value="">Select artifact...</option>
@@ -2809,7 +2809,7 @@ export default function ForgeApp() {
                 <div onScroll={e=>{const el=e.currentTarget;const b=el.scrollHeight-el.scrollTop-el.clientHeight<80;setShowScrollDown(!b);setUserScrolledUp(!b);}} style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
                   {messages.length === 0 && !activeThread && (
                     <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20 }}>
-                      <div style={{ fontSize:56 }}>ΓÜí</div>
+                      <div style={{ fontSize:56 }}>⚡</div>
                       <h1 style={{ color:'var(--fg-text)', margin:0, fontSize:28, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.6px' }}>What do you want to build?</h1>
                       <p style={{ color:'var(--fg-text3)', margin:0, textAlign:'center', maxWidth:480, fontSize:14, lineHeight:1.5 }}>Start a conversation, dispatch an agent, or explore your tools and skills.</p>
                       <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center', marginTop:12 }}>
@@ -2819,15 +2819,15 @@ export default function ForgeApp() {
                       </div>
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginTop:24, maxWidth:540 }}>
                         <button onClick={() => { newThread(); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
-                          <span style={{ fontSize:28 }}>≡ƒÆ¼</span>
+                          <span style={{ fontSize:28 }}>💬</span>
                           <span style={{ fontSize:12, fontWeight:600 }}>New Thread</span>
                         </button>
                         <button onClick={() => { setMainTab('agents'); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
-                          <span style={{ fontSize:28 }}>≡ƒñû</span>
+                          <span style={{ fontSize:28 }}>🤖</span>
                           <span style={{ fontSize:12, fontWeight:600 }}>Agents</span>
                         </button>
                         <button onClick={() => { setMainTab('skills'); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
-                          <span style={{ fontSize:28 }}>≡ƒ¢á</span>
+                          <span style={{ fontSize:28 }}>🛠</span>
                           <span style={{ fontSize:12, fontWeight:600 }}>Skills</span>
                         </button>
                       </div>
@@ -2836,7 +2836,7 @@ export default function ForgeApp() {
                   {/* Clarification question card */}
                   {clarifyQuestion && !sending && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:560 }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>≡ƒñö</div>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>🤔</div>
                       <div style={{ flex:1, padding:'12px 16px', borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)' }}>
                         <p style={{ margin:'0 0 10px', fontSize:13, color:'var(--fg-text)', fontWeight:500 }}>{clarifyQuestion.question}</p>
                         <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
@@ -2852,30 +2852,30 @@ export default function ForgeApp() {
                               <span>{opt}</span>
                             </button>
                           ))}
-                          <button onClick={() => setClarifyQuestion(null)} style={{ padding:'4px 10px', background:'none', border:'none', color:'var(--fg-text3)', fontSize:11, cursor:'pointer', textAlign:'left' }}>Γ£ò dismiss</button>
+                          <button onClick={() => setClarifyQuestion(null)} style={{ padding:'4px 10px', background:'none', border:'none', color:'var(--fg-text3)', fontSize:11, cursor:'pointer', textAlign:'left' }}>× dismiss</button>
                         </div>
                       </div>
                     </div>
                   )}
-                  {/* Live tool call cards ΓÇö shown while/after agentic tools ran */}
+                  {/* Live tool call cards — shown while/after agentic tools ran */}
                   {liveToolCalls.length > 0 && !sending && (
                     <div style={{ display:'flex', flexDirection:'column', gap:6, padding:'10px 14px', background:'rgba(255,107,53,0.06)', border:'1px solid rgba(255,107,53,0.2)', borderRadius:12, marginBottom:4 }}>
-                      <div style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>ΓÜí I used {liveToolCalls.length} tool{liveToolCalls.length>1?'s':''} to get this done</div>
+                      <div style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>⚡ I used {liveToolCalls.length} tool{liveToolCalls.length>1?'s':''} to get this done</div>
                       {liveToolCalls.map((tc, idx) => {
                         const toolMeta: {[k:string]:{icon:string;narrate:(a:any)=>string}} = {
-                          web_search: { icon:'≡ƒöì', narrate: a => `Searched the web for "${a?.query||'...'}"` },
-                          web_scrape: { icon:'≡ƒîÉ', narrate: a => `Read the page at ${a?.url||'...'}` },
-                          run_code: { icon:'≡ƒÆ╗', narrate: a => `Ran ${a?.language||'code'} to compute the result` },
-                          shell_exec: { icon:'≡ƒûÑ∩╕Å', narrate: a => `Executed shell command: ${(a?.command||'').slice(0,60)}` },
-                          browser_action: { icon:'≡ƒû▒∩╕Å', narrate: a => `Interacted with browser ΓÇö ${a?.action||'click'}` },
-                          read_file: { icon:'≡ƒôä', narrate: a => `Read file: ${a?.path||a?.file||'...'}` },
-                          write_file: { icon:'≡ƒÆ╛', narrate: a => `Wrote file: ${a?.path||a?.file||'...'}` },
-                          http_request: { icon:'≡ƒôí', narrate: a => `Made ${a?.method||'GET'} request to ${a?.url||'...'}` },
-                          list_directory: { icon:'≡ƒôü', narrate: a => `Listed files in ${a?.path||'...'}` },
-                          screenshot: { icon:'≡ƒô╕', narrate: _a => 'Took a screenshot' },
-                          image_gen: { icon:'≡ƒÄ¿', narrate: a => `Generated image: "${(a?.prompt||'').slice(0,50)}"` },
+                          web_search: { icon:'🔍', narrate: a => `Searched the web for "${a?.query||'...'}"` },
+                          web_scrape: { icon:'🌐', narrate: a => `Read the page at ${a?.url||'...'}` },
+                          run_code: { icon:'💻', narrate: a => `Ran ${a?.language||'code'} to compute the result` },
+                          shell_exec: { icon:'🖥', narrate: a => `Executed shell command: ${(a?.command||'').slice(0,60)}` },
+                          browser_action: { icon:'🖱', narrate: a => `Interacted with browser — ${a?.action||'click'}` },
+                          read_file: { icon:'📄', narrate: a => `Read file: ${a?.path||a?.file||'...'}` },
+                          write_file: { icon:'💾', narrate: a => `Wrote file: ${a?.path||a?.file||'...'}` },
+                          http_request: { icon:'📡', narrate: a => `Made ${a?.method||'GET'} request to ${a?.url||'...'}` },
+                          list_directory: { icon:'📁', narrate: a => `Listed files in ${a?.path||'...'}` },
+                          screenshot: { icon:'📸', narrate: _a => 'Took a screenshot' },
+                          image_gen: { icon:'🎨', narrate: a => `Generated image: "${(a?.prompt||'').slice(0,50)}"` },
                         };
-                        const meta = toolMeta[tc.tool] || { icon:'≡ƒöº', narrate: _a => `Used ${tc.tool}` };
+                        const meta = toolMeta[tc.tool] || { icon:'🔧', narrate: _a => `Used ${tc.tool}` };
                         return (
                           <div key={idx} style={{ borderRadius:8, border:'1px solid var(--fg-border2)', overflow:'hidden', background:'var(--fg-bg3)' }}>
                             <div
@@ -2885,7 +2885,7 @@ export default function ForgeApp() {
                               <span style={{ fontSize:12, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                                 {meta.narrate(tc.args)}
                               </span>
-                              <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:'auto', flexShrink:0 }}>{expandedTools[idx] ? 'Γû▓' : 'Γû╝'}</span>
+                              <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:'auto', flexShrink:0 }}>{expandedTools[idx] ? '▲' : '▼'}</span>
                             </div>
                             {expandedTools[idx] && (
                               <div style={{ borderTop:'1px solid var(--fg-border)', padding:'8px 10px', display:'flex', flexDirection:'column', gap:6 }}>
@@ -2896,7 +2896,7 @@ export default function ForgeApp() {
                                 {tc.result && (
                                   <div>
                                     <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:3, fontWeight:600 }}>OUTPUT</div>
-                                    <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'6px 8px', borderRadius:6, maxHeight:200, overflowY:'auto' }}>{tc.result.slice(0, 800)}{tc.result.length > 800 ? '\nΓÇª(truncated)' : ''}</pre>
+                                    <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'6px 8px', borderRadius:6, maxHeight:200, overflowY:'auto' }}>{tc.result.slice(0, 800)}{tc.result.length > 800 ? '\n…(truncated)' : ''}</pre>
                                   </div>
                                 )}
                               </div>
@@ -2917,7 +2917,7 @@ export default function ForgeApp() {
                     return (
                     <div key={msgKey} style={{ display:'flex', gap:12, alignItems:'flex-start', flexDirection:m.role==='user' ? 'row-reverse' : 'row' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background:m.role==='user' ? 'var(--fg-orange)' : 'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
-                        {m.role==='user' ? '≡ƒæñ' : 'ΓÜí'}
+                        {m.role==='user' ? '👤' : '⚡'}
                       </div>
                       <div style={{ maxWidth: codeBlock ? '90%' : '75%', flex: codeBlock ? 1 : undefined, padding:'12px 16px', borderRadius:m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background:m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', lineHeight:1.6 }}>
                         <div style={{ margin:0, fontSize:14, color:'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-word', lineHeight:1.7 }}>{renderContent(m.content)}</div>
@@ -2926,12 +2926,12 @@ export default function ForgeApp() {
                           <div style={{ marginTop:12, border:'1px solid var(--fg-border2)', borderRadius:10, overflow:'hidden' }}>
                             {/* Preview toolbar */}
                             <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 10px', background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)' }}>
-                              <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, marginRight:4 }}>ΓÜí Live Preview</span>
+                              <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, marginRight:4 }}>⚡ Live Preview</span>
                               <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'code' }))} style={{ padding:'3px 10px', background: previewMode==='code' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='code' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Code</button>
                               <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'preview' }))} style={{ padding:'3px 10px', background: previewMode==='preview' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='preview' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Preview</button>
-                              <button onClick={() => { navigator.clipboard.writeText(codeBlock); }} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>≡ƒôï Copy</button>
-                              <button onClick={() => downloadCode(codeBlock, extracted?.suggestedFilename || (isHtml ? 'output.html' : 'output.txt'))} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Download file">≡ƒÆ╛ Download</button>
-                              <button onClick={() => { setPreviewCode(codeBlock); setSketchMode(true); }} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Open in Sketch panel">Γåù Expand</button>
+                              <button onClick={() => { navigator.clipboard.writeText(codeBlock); }} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>📋 Copy</button>
+                              <button onClick={() => downloadCode(codeBlock, extracted?.suggestedFilename || (isHtml ? 'output.html' : 'output.txt'))} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Download file">💾 Download</button>
+                              <button onClick={() => { setPreviewCode(codeBlock); setSketchMode(true); }} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Open in Sketch panel">× Expand</button>
                             </div>
                             {previewMode === 'code' ? (
                               <pre style={{ margin:0, padding:'12px 14px', background:'var(--fg-bg)', color:'var(--fg-green)', fontSize:12, fontFamily:'var(--fg-font-mono)', overflowX:'auto', maxHeight:280, overflowY:'auto', whiteSpace:'pre', lineHeight:1.6 }}>{codeBlock}</pre>
@@ -2953,14 +2953,14 @@ export default function ForgeApp() {
                             style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
                             onMouseEnter={e => (e.currentTarget.style.background='var(--fg-border)')}
                             onMouseLeave={e => (e.currentTarget.style.background='none')}>
-                            ≡ƒôï Copy
+                            📋 Copy
                           </button>
                           {m.role === 'assistant' && (
                             <button onClick={() => speakText(m.content)} title="Read aloud"
                               style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
                               onMouseEnter={e => (e.currentTarget.style.background='var(--fg-border)')}
                               onMouseLeave={e => (e.currentTarget.style.background='none')}>
-                              ≡ƒöè Read
+                              🔊 Read
                             </button>
                           )}
                         </div>
@@ -2968,14 +2968,14 @@ export default function ForgeApp() {
                     </div>
                     );
                   })}
-                  {/* Persistent thinking steps ΓÇö shown after response arrives */}
+                  {/* Persistent thinking steps — shown after response arrives */}
                   {!typing && lastThinkingSteps.length > 0 && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:680 }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>ΓÜí</div>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>⚡</div>
                       <div style={{ flex:1, borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', overflow:'hidden' }}>
                         <button onClick={() => setThinkingExpanded(p => !p)} style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', background:'none', border:'none', cursor:'pointer', textAlign:'left' }}>
-                          <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>≡ƒºá Forge thought for {lastThinkingSteps.length} step{lastThinkingSteps.length !== 1 ? 's' : ''}</span>
-                          <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{thinkingExpanded ? 'Γû▓' : 'Γû╝'}</span>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>🧠 Forge thought for {lastThinkingSteps.length} step{lastThinkingSteps.length !== 1 ? 's' : ''}</span>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{thinkingExpanded ? '▲' : '▼'}</span>
                         </button>
                         {thinkingExpanded && (
                           <div style={{ borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column' }}>
@@ -2983,7 +2983,7 @@ export default function ForgeApp() {
                               <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 14px', borderBottom: i < lastThinkingSteps.length-1 ? '1px solid var(--fg-border)' : 'none' }}>
                                 <span style={{ fontSize:12 }}>{s.icon}</span>
                                 <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{s.text}</span>
-                                <span style={{ fontSize:10, color:'var(--fg-green)', marginLeft:'auto' }}>Γ£ô</span>
+                                <span style={{ fontSize:10, color:'var(--fg-green)', marginLeft:'auto' }}>✓</span>
                               </div>
                             ))}
                           </div>
@@ -2993,7 +2993,7 @@ export default function ForgeApp() {
                   )}
                   {typing && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:680 }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-orange)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0, boxShadow:'0 0 12px rgba(249,115,22,0.4)' }}>ΓÜí</div>
+                      <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-orange)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0, boxShadow:'0 0 12px rgba(249,115,22,0.4)' }}>⚡</div>
                       {/* Manus-style full activity feed */}
                       <div style={{ flex:1, borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', overflow:'hidden' }}>
                         {/* Header */}
@@ -3001,18 +3001,18 @@ export default function ForgeApp() {
                           <div style={{ display:'flex', gap:3 }}>
                             {[0,1,2].map(i => <div key={i} style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
                           </div>
-                          <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', fontFamily:'var(--fg-font-mono)' }}>FORGE AGENT ΓÇö WORKING</span>
+                          <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', fontFamily:'var(--fg-font-mono)' }}>FORGE AGENT — WORKING</span>
                         </div>
-                        {/* Live steps ΓÇö each one shown in full */}
+                        {/* Live steps — each one shown in full */}
                         {agentSteps.length > 0 && (
                           <div style={{ display:'flex', flexDirection:'column' }}>
                             {agentSteps.slice(-12).map((s, i, arr) => {
                               const isLast = i === arr.length - 1;
                               // Parse tool details out of step text
                               const isToolStep = s.text.startsWith('Tool:');
-                              const isSearchStep = s.icon === '≡ƒöì' || (isToolStep && s.text.includes('web_search'));
-                              const isScrapeStep = s.icon === '≡ƒîÉ' || (isToolStep && s.text.includes('web_scrape'));
-                              const isBrowserStep = s.icon === '≡ƒûÑ∩╕Å' || (isToolStep && s.text.includes('browser'));
+                              const isSearchStep = s.icon === '🔍' || (isToolStep && s.text.includes('web_search'));
+                              const isScrapeStep = s.icon === '🌐' || (isToolStep && s.text.includes('web_scrape'));
+                              const isBrowserStep = s.icon === '🖥' || (isToolStep && s.text.includes('browser'));
                               const isCodeStep = isToolStep && s.text.includes('run_code');
                               const isShellStep = isToolStep && s.text.includes('shell_exec');
 
@@ -3027,16 +3027,16 @@ export default function ForgeApp() {
                                     <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                                       <span style={{ fontSize:13 }}>{s.icon}</span>
                                       <span style={{ fontSize:12, color: isLast ? 'var(--fg-text)' : 'var(--fg-text3)', fontWeight: isLast ? 600 : 400, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', animation: isLast ? 'forge-text-flash 2s ease-in-out infinite' : 'none' }}>{s.text}</span>
-                                      {!isLast && <span style={{ fontSize:10, color:'var(--fg-green)', flexShrink:0, fontWeight:700 }}>Γ£ô</span>}
+                                      {!isLast && <span style={{ fontSize:10, color:'var(--fg-green)', flexShrink:0, fontWeight:700 }}>✓</span>}
                                     </div>
                                     {/* Show extracted detail for tool steps */}
                                     {isToolStep && (
                                       <div style={{ marginTop:4, fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)', background:'var(--fg-bg)', padding:'4px 8px', borderRadius:6, wordBreak:'break-all' }}>
-                                        {isSearchStep && <span>≡ƒöì Searching: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_search(','').replace(')','').replace(/[{}"query:]/g,'').slice(0,80)}</span></span>}
-                                        {isScrapeStep && <span>≡ƒîÉ Reading: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_scrape(','').replace(')','').replace(/[{}"url:]/g,'').slice(0,80)}</span></span>}
-                                        {isBrowserStep && <span>≡ƒûÑ∩╕Å Browser: <span style={{ color:'var(--fg-orange2)' }}>{s.text.slice(0,80)}</span></span>}
-                                        {isCodeStep && <span>≡ƒÆ╗ Executing codeΓÇª</span>}
-                                        {isShellStep && <span>≡ƒûÑ∩╕Å Shell: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: shell_exec(','').replace(')','').replace(/[{}"command:]/g,'').slice(0,80)}</span></span>}
+                                        {isSearchStep && <span>🔍 Searching: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_search(','').replace(')','').replace(/[{}"query:]/g,'').slice(0,80)}</span></span>}
+                                        {isScrapeStep && <span>🌐 Reading: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_scrape(','').replace(')','').replace(/[{}"url:]/g,'').slice(0,80)}</span></span>}
+                                        {isBrowserStep && <span>🖥 Browser: <span style={{ color:'var(--fg-orange2)' }}>{s.text.slice(0,80)}</span></span>}
+                                        {isCodeStep && <span>💻 Executing code…</span>}
+                                        {isShellStep && <span>🖥 Shell: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: shell_exec(','').replace(')','').replace(/[{}"command:]/g,'').slice(0,80)}</span></span>}
                                         {!isSearchStep && !isScrapeStep && !isBrowserStep && !isCodeStep && !isShellStep && <span>{s.text.slice(0,100)}</span>}
                                       </div>
                                     )}
@@ -3049,21 +3049,21 @@ export default function ForgeApp() {
                         {/* Live tool calls inline during thinking */}
                         {liveToolCalls.length > 0 && (
                           <div style={{ padding:'8px 14px', borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', gap:4 }}>
-                            <div style={{ fontSize:10, color:'var(--fg-text3)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>ΓÜí TOOLS ACTIVE ({liveToolCalls.length})</div>
+                            <div style={{ fontSize:10, color:'var(--fg-text3)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>⚡ TOOLS ACTIVE ({liveToolCalls.length})</div>
                             {liveToolCalls.map((tc, idx) => (
                               <div key={idx} style={{ borderRadius:6, border:'1px solid var(--fg-border2)', overflow:'hidden', background:'var(--fg-bg3)' }}>
                                 <div onClick={() => setExpandedTools(p => ({ ...p, [idx]: !p[idx] }))} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', cursor:'pointer' }}>
-                                  <span style={{ fontSize:12 }}>{tc.tool==='web_search'?'≡ƒöì':tc.tool==='web_scrape'?'≡ƒîÉ':tc.tool==='run_code'?'≡ƒÆ╗':tc.tool==='shell_exec'?'≡ƒûÑ∩╕Å':tc.tool==='browser_action'?'≡ƒû▒∩╕Å':tc.tool==='http_request'?'≡ƒôí':'≡ƒöº'}</span>
+                                  <span style={{ fontSize:12 }}>{tc.tool==='web_search'?'🔍':tc.tool==='web_scrape'?'🌐':tc.tool==='run_code'?'💻':tc.tool==='shell_exec'?'🖥':tc.tool==='browser_action'?'🖱':tc.tool==='http_request'?'📡':'🔧'}</span>
                                   <span style={{ fontSize:11, color:'var(--fg-text)', fontFamily:'var(--fg-font-mono)', fontWeight:600 }}>{tc.tool}</span>
                                   <span style={{ fontSize:11, color:'var(--fg-orange2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                                     {tc.tool==='web_search' ? `"${tc.args?.query}"` : tc.tool==='web_scrape'||tc.tool==='browser_action' ? (tc.args?.url||tc.args?.action||'') : tc.tool==='run_code' ? `${tc.args?.language}` : tc.tool==='shell_exec' ? tc.args?.command?.slice(0,60) : tc.tool==='http_request' ? `${tc.args?.method||'GET'} ${tc.args?.url}` : JSON.stringify(tc.args||{}).slice(0,50)}
                                   </span>
-                                  <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{expandedTools[idx]?'Γû▓':'Γû╝'}</span>
+                                  <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{expandedTools[idx]?'▲':'▼'}</span>
                                 </div>
                                 {expandedTools[idx] && (
                                   <div style={{ borderTop:'1px solid var(--fg-border)', padding:'6px 8px', display:'flex', flexDirection:'column', gap:4 }}>
                                     <pre style={{ margin:0, fontSize:11, color:'var(--fg-text2)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'4px 6px', borderRadius:4, maxHeight:80, overflowY:'auto' }}>{JSON.stringify(tc.args,null,2)}</pre>
-                                    {tc.result && <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'4px 6px', borderRadius:4, maxHeight:120, overflowY:'auto' }}>{tc.result.slice(0,600)}{tc.result.length>600?'\nΓÇª':''}</pre>}
+                                    {tc.result && <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'4px 6px', borderRadius:4, maxHeight:120, overflowY:'auto' }}>{tc.result.slice(0,600)}{tc.result.length>600?'\n…':''}</pre>}
                                   </div>
                                 )}
                               </div>
@@ -3077,19 +3077,19 @@ export default function ForgeApp() {
                   {/* Multi-response cards */}
                   {multiResponses.length > 0 && (
                     <div>
-                      <p style={{ color:'var(--fg-orange)', fontSize:12, fontWeight:600, margin:'0 0 10px' }}>ΓÜí Multiple Responses</p>
+                      <p style={{ color:'var(--fg-orange)', fontSize:12, fontWeight:600, margin:'0 0 10px' }}>⚡ Multiple Responses</p>
                       <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
                         {multiResponses.map((r, i) => (
                           <div key={i} style={{ flex:'1 1 250px', minWidth:200, padding:'12px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12 }}>
                             <p style={{ margin:'0 0 6px', fontSize:11, color:'var(--fg-orange)', fontWeight:600 }}>{r.model}</p>
                             <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{r.content.slice(0, 400)}{r.content.length > 400 ? '...' : ''}</p>
-                            <button onClick={() => speakText(r.content)} style={{ marginTop:6, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒöè</button>
+                            <button onClick={() => speakText(r.content)} style={{ marginTop:6, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>🔊</button>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-                  {/* Agent Q&A ΓÇö Claude-style with option chips + free text */}
+                  {/* Agent Q&A — Claude-style with option chips + free text */}
                   {agentQuestion && (() => {
                     // Parse options from question like "1. Option A\n2. Option B\n3. Other"
                     const lines = agentQuestion.question.split('\n');
@@ -3099,10 +3099,10 @@ export default function ForgeApp() {
                     return (
                       <div style={{ margin:'12px 24px 0', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:16, overflow:'hidden' }}>
                         <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', background:'linear-gradient(135deg,rgba(255,43,61,0.08),transparent)', borderBottom:'1px solid var(--fg-border)' }}>
-                          <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>ΓÜí</div>
+                          <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>⚡</div>
                           <div>
                             <p style={{ margin:0, fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Forge needs your input to continue</p>
-                            <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Agent is paused ΓÇö answer below to resume</p>
+                            <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Agent is paused — answer below to resume</p>
                           </div>
                         </div>
                         <div style={{ padding:'16px' }}>
@@ -3127,7 +3127,7 @@ export default function ForgeApp() {
                               style={{ flex:1, padding:'10px 12px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text)', fontSize:13, outline:'none', resize:'none', lineHeight:1.5 }} />
                             <button onClick={() => { if(agentAnswer.trim()) answerOpt(agentAnswer.trim()); }} disabled={!agentAnswer.trim()}
                               style={{ padding:'10px 18px', background:agentAnswer.trim()?'var(--fg-orange)':'var(--fg-bg4)', border:'none', borderRadius:10, color:agentAnswer.trim()?'#fff':'var(--fg-text3)', fontSize:13, fontWeight:700, cursor:agentAnswer.trim()?'pointer':'default', flexShrink:0 }}>
-                              Send Γåæ
+                              Send ↵
                             </button>
                           </div>
                         </div>
@@ -3136,39 +3136,39 @@ export default function ForgeApp() {
                   })()}
                   {sending && agentSteps.length > 0 && (
                     <div style={{ display:'flex', alignItems:'center', gap:6, padding:'2px 16px', fontSize:11, color:'var(--fg-text3)' }}>
-                      <span>ΓÜÖ∩╕Å</span>
+                      <span>⚙️</span>
                       <span style={{ color:'var(--fg-orange2)' }}>
-                        {agentSteps[agentSteps.length-1]?.text?.includes('web_search') ? '≡ƒöì Searching web...'
-                          : agentSteps[agentSteps.length-1]?.text?.includes('web_scrape') ? '≡ƒîÉ Reading page...'
-                          : agentSteps[agentSteps.length-1]?.text?.includes('run_code') ? '≡ƒÆ╗ Running code...'
+                        {agentSteps[agentSteps.length-1]?.text?.includes('web_search') ? '🔍 Searching web...'
+                          : agentSteps[agentSteps.length-1]?.text?.includes('web_scrape') ? '🌐 Reading page...'
+                          : agentSteps[agentSteps.length-1]?.text?.includes('run_code') ? '💻 Running code...'
                           : agentSteps[agentSteps.length-1]?.text || 'Thinking...'}
                       </span>
                       <span>┬╖ {messages.length} in context</span>
                     </div>
                   )}
-                  {/* Subtle typing indicator ΓÇö shows only while waiting for response */}
+                  {/* Subtle typing indicator — shows only while waiting for response */}
                   {typing && (
                     <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 16px' }}>
-                      <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>≡ƒñû</div>
+                      <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>🤖</div>
                       <div style={{ display:'flex', gap:4, alignItems:'center' }}>
                         {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', opacity:0.7, animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
                       </div>
                     </div>
                   )}
-                  {/* Token optimization hint ΓÇö shown after conversation has tokens */}
+                  {/* Token optimization hint — shown after conversation has tokens */}
                   {!sending && messages.length >= 4 && threadStats && threadStats.total_tokens > 0 && (() => {
                     const tokens = threadStats.total_tokens;
                     const msgs = threadStats.message_count || messages.length;
                     const avgPerMsg = Math.round(tokens / Math.max(msgs, 1));
                     const tips: string[] = [];
-                    if (tokens > 50000) tips.push('Use shorter follow-ups ΓÇö this thread is getting long. Start a new chat for new topics.');
+                    if (tokens > 50000) tips.push('Use shorter follow-ups — this thread is getting long. Start a new chat for new topics.');
                     if (avgPerMsg > 2000) tips.push('Your messages are long. Try bullet points or split into smaller questions to save tokens.');
                     if (tokens > 20000 && msgs < 6) tips.push('Long initial prompt detected. Use system instructions once, then ask short follow-ups.');
-                    if (tips.length === 0 && tokens > 10000) tips.push('≡ƒÆí Tip: Reference previous answers with "as above" instead of repeating context.');
+                    if (tips.length === 0 && tokens > 10000) tips.push('💡 Tip: Reference previous answers with "as above" instead of repeating context.');
                     if (tips.length === 0) return null;
                     return (
                       <div style={{ margin:'0 32px 12px', padding:'8px 14px', background:'rgba(255,43,61,0.06)', border:'1px solid rgba(255,43,61,0.2)', borderRadius:10, display:'flex', alignItems:'flex-start', gap:8 }}>
-                        <span style={{ fontSize:14, flexShrink:0 }}>ΓÜí</span>
+                        <span style={{ fontSize:14, flexShrink:0 }}>⚡</span>
                         <div>
                           <p style={{ margin:'0 0 2px', fontSize:11, fontWeight:700, color:'var(--fg-orange)', textTransform:'uppercase', letterSpacing:'0.5px' }}>Token Optimizer ┬╖ {tokens.toLocaleString()} used ┬╖ ~${((tokens/1000000)*3).toFixed(4)}</p>
                           <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', lineHeight:1.5 }}>{tips[0]}</p>
@@ -3180,26 +3180,26 @@ export default function ForgeApp() {
                 </div>
                 {showScrollDown && (
                   <button onClick={() => { setUserScrolledUp(false); messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }}
-                    style={{ position:'absolute', bottom:110, right:24, zIndex:50, width:34, height:34, borderRadius:'50%', background:'var(--fg-orange)', border:'none', color:'#fff', fontSize:18, cursor:'pointer', boxShadow:'0 2px 10px rgba(0,0,0,0.5)' }}>Γåô</button>
+                    style={{ position:'absolute', bottom:110, right:24, zIndex:50, width:34, height:34, borderRadius:'50%', background:'var(--fg-orange)', border:'none', color:'#fff', fontSize:18, cursor:'pointer', boxShadow:'0 2px 10px rgba(0,0,0,0.5)' }}>×</button>
                 )}
 
-                {/* Live activity shown in ≡ƒô║ toolbar button only ΓÇö no inline overlay */}
+                {/* Live activity shown in 📺 toolbar button only — no inline overlay */}
 
                 {/* ForgeOptimizer Panel */}
                 {optimizerOpen && (optimizerData || optimizerRunning) && (
                   <div style={{ margin:'0 24px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-orange)', borderRadius:14, overflow:'hidden' }}>
                     {optimizerRunning && !optimizerData && (
                       <div style={{ padding:'20px', textAlign:'center', color:'var(--fg-orange)', fontSize:13, fontWeight:700 }}>
-                        <span style={{ display:'inline-block', animation:'forge-spin 1s linear infinite', marginRight:8 }}>Γƒ│</span>
+                        <span style={{ display:'inline-block', animation:'forge-spin 1s linear infinite', marginRight:8 }}>⚡</span>
                         Analyzing token usage...
                       </div>
                     )}
                     {optimizerData && <>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'linear-gradient(135deg,rgba(255,43,61,0.12),transparent)', borderBottom:'1px solid var(--fg-border)' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                        <span style={{ fontSize:16 }}>≡ƒöº</span>
+                        <span style={{ fontSize:16 }}>🔧</span>
                         <div>
-                          <p style={{ margin:0, fontSize:13, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeOptimizerΓäó</p>
+                          <p style={{ margin:0, fontSize:13, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeOptimizer™</p>
                           <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>World's first 90-95% token optimizer</p>
                         </div>
                       </div>
@@ -3212,14 +3212,14 @@ export default function ForgeApp() {
                           <p style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)' }}>${optimizerData.savedCost}</p>
                           <p style={{ margin:0, fontSize:10, color:'var(--fg-text3)' }}>saved cost</p>
                         </div>
-                        <button onClick={() => setOptimizerOpen(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:16 }}>Γ£ò</button>
+                        <button onClick={() => setOptimizerOpen(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:16 }}>×</button>
                       </div>
                     </div>
                     <div style={{ padding:'10px 14px' }}>
                       <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:10 }}>
                         {optimizerData.suggestions.map((s,i) => (
                           <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'6px 10px', background:'var(--fg-bg3)', borderRadius:8, border:'1px solid var(--fg-border)' }}>
-                            <span style={{ fontSize:12, flexShrink:0, marginTop:1 }}>{s.auto ? 'ΓÜí' : '≡ƒÆí'}</span>
+                            <span style={{ fontSize:12, flexShrink:0, marginTop:1 }}>{s.auto ? '⚡' : '💡'}</span>
                             <div style={{ flex:1 }}>
                               <p style={{ margin:'0 0 2px', fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>{s.title} <span style={{ color:'var(--fg-green)', fontFamily:'monospace' }}>~{s.tokenSavings.toLocaleString()} tok</span></p>
                               <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{s.description}</p>
@@ -3231,7 +3231,7 @@ export default function ForgeApp() {
                       <div style={{ display:'flex', gap:8 }}>
                         <button onClick={applyForgeOptimizer} disabled={optimizerRunning}
                           style={{ flex:1, padding:'8px 16px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
-                          {optimizerRunning ? 'Γƒ│ Optimizing...' : `ΓÜí Apply All (save ${optimizerData.savingsPct}% tokens)`}
+                          {optimizerRunning ? '⚡ Optimizing...' : `⚡ Apply All (save ${optimizerData.savingsPct}% tokens)`}
                         </button>
                         <button onClick={() => setOptimizerOpen(false)}
                           style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:10, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>
@@ -3257,7 +3257,7 @@ export default function ForgeApp() {
                   {voiceActive && (
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8, padding:'6px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-orange)', borderRadius:8 }}>
                       <div style={{ width:8, height:8, borderRadius:'50%', background:'var(--fg-red)', animation:'pulse 1s infinite' }} />
-                      <span style={{ fontSize:12, color:'var(--fg-orange)' }}>ListeningΓÇª {voiceTranscript ? `"${voiceTranscript.slice(0, 60)}..."` : ''}</span>
+                      <span style={{ fontSize:12, color:'var(--fg-orange)' }}>Listening… {voiceTranscript ? `"${voiceTranscript.slice(0, 60)}..."` : ''}</span>
                     </div>
                   )}
 
@@ -3265,9 +3265,9 @@ export default function ForgeApp() {
                   {attachedFiles.length > 0 && (
                     <div style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:5, padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:16 }}>
-                        <span style={{ fontSize:11 }}>≡ƒôÄ</span>
+                        <span style={{ fontSize:11 }}>📎</span>
                         <span style={{ fontSize:11, color:'var(--fg-text2)' }}>{attachedFiles.length} file{attachedFiles.length!==1?'s':''} attached</span>
-                        <button onClick={() => setAttachedFiles([])} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0, lineHeight:1, marginLeft:2 }} title="Remove all">Γ£ò</button>
+                        <button onClick={() => setAttachedFiles([])} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0, lineHeight:1, marginLeft:2 }} title="Remove all">×</button>
                       </div>
                     </div>
                   )}
@@ -3279,7 +3279,7 @@ export default function ForgeApp() {
                       if (!filtered.length) return null;
                       return (
                         <div style={{ position:'absolute', bottom:'calc(100% + 6px)', left:0, right:0, background:'var(--fg-bg2)', border:'1px solid var(--fg-border3)', borderRadius:12, overflow:'hidden', zIndex:200, boxShadow:'0 -8px 32px rgba(0,0,0,0.6)' }}>
-                          <div style={{ padding:'6px 12px 4px', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-orange)', borderBottom:'1px solid var(--fg-border)' }}>ΓÜí Commands</div>
+                          <div style={{ padding:'6px 12px 4px', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-orange)', borderBottom:'1px solid var(--fg-border)' }}>⚡ Commands</div>
                           <div style={{ maxHeight:280, overflowY:'auto' }}>
                             {(['agent','skill','action','mode'] as const).map(cat => {
                               const items = filtered.filter(c => c.category === cat);
@@ -3304,7 +3304,7 @@ export default function ForgeApp() {
                                           <div style={{ fontSize:13, fontWeight:600, color: active ? 'var(--fg-orange)' : 'var(--fg-text)', letterSpacing:'-0.01em' }}>{c.label}</div>
                                           <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:1 }}>{c.desc}</div>
                                         </div>
-                                        <kbd style={{ fontSize:9, padding:'2px 5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text3)', flexShrink:0 }}>Γå╡</kbd>
+                                        <kbd style={{ fontSize:9, padding:'2px 5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text3)', flexShrink:0 }}>↑</kbd>
                                       </div>
                                     );
                                   })}
@@ -3356,14 +3356,14 @@ export default function ForgeApp() {
                           }
                         }
                       }}
-                      placeholder={sending ? (pendingMessage ? `Queued: "${pendingMessage.slice(0,40)}ΓÇª"` : 'AI is thinkingΓÇª press Enter to queue') : (activeThread ? 'MessageΓÇª or type / for commands' : 'Start a conversationΓÇª or type / for commands')}
+                      placeholder={sending ? (pendingMessage ? `Queued: "${pendingMessage.slice(0,40)}…"` : 'AI is thinking… press Enter to queue') : (activeThread ? 'Message… or type / for commands' : 'Start a conversation… or type / for commands')}
                       rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
                         {/* Slash command button */}
                         <button onClick={() => { setSlashOpen(true); textareaRef.current?.focus(); }} title="Commands" style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:'5px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', cursor:'pointer', fontSize:14, fontWeight:700 }}>/</button>
                         {/* Voice button */}
-                        <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background:voiceActive ? 'var(--fg-orange)' : 'var(--fg-odim)', border:`1px solid ${voiceActive ? 'var(--fg-orange2)' : 'var(--fg-odim2)'}`, borderRadius:8, color:voiceActive ? '#fff' : 'var(--fg-orange2)', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>≡ƒÄñ {voiceActive ? 'ΓùÅ Rec' : 'Voice'}</button>
+                        <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background:voiceActive ? 'var(--fg-orange)' : 'var(--fg-odim)', border:`1px solid ${voiceActive ? 'var(--fg-orange2)' : 'var(--fg-odim2)'}`, borderRadius:8, color:voiceActive ? '#fff' : 'var(--fg-orange2)', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>🎤 {voiceActive ? '⏺ Rec' : 'Voice'}</button>
                         {/* Attach file */}
                         <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display:'none' }} onChange={async e => {
                           const files = Array.from(e.target.files || []);
@@ -3373,21 +3373,21 @@ export default function ForgeApp() {
                           }
                           e.target.value = '';
                         }} />
-                        <button onClick={() => fileInputRef.current?.click()} title="Attach files" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒôÄ {attachedFiles.length > 0 ? `${attachedFiles.length}` : 'Files'}</button>
+                        <button onClick={() => fileInputRef.current?.click()} title="Attach files" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📎 {attachedFiles.length > 0 ? `${attachedFiles.length}` : 'Files'}</button>
                         {/* Quick right panel buttons */}
-                        <button onClick={() => { setRightTab('context'); setRightExpanded(true); }} title="Context usage" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒôè</button>
+                        <button onClick={() => { setRightTab('context'); setRightExpanded(true); }} title="Context usage" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📊</button>
                         <button onClick={() => { setRightTab('live'); setRightExpanded(true); }} title={liveEvents[0]?.message || 'Live activity'} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: sending ? 'var(--fg-odim)' : liveEvents.length > 0 ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${sending ? 'var(--fg-orange)' : liveEvents.length > 0 ? 'var(--fg-odim2)' : 'var(--fg-border2)'}`, borderRadius:6, color: sending ? 'var(--fg-orange2)' : liveEvents.length > 0 ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, maxWidth:160, overflow:'hidden' }}>
-                          <span>≡ƒô║</span>
+                          <span>📺</span>
                           {sending && liveEvents[0] && <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:10, maxWidth:100 }}>{liveEvents[0].message.slice(0, 30)}</span>}
                         </button>
-                        <button onClick={() => { setRightTab('browser'); setRightExpanded(true); }} title="Browser" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒîÉ</button>
-                        <button onClick={() => { setRightTab('terminal'); setRightExpanded(true); }} title="Terminal" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒÆ╗</button>
-                        <button onClick={() => { setRightTab('dispatch'); setRightExpanded(true); }} title="Dispatch agents" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒÜÇ</button>
-                        <button onClick={() => { setShowNewTask(true); }} title="New task" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>Γ£à</button>
+                        <button onClick={() => { setRightTab('browser'); setRightExpanded(true); }} title="Browser" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>🌐</button>
+                        <button onClick={() => { setRightTab('terminal'); setRightExpanded(true); }} title="Terminal" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>💻</button>
+                        <button onClick={() => { setRightTab('dispatch'); setRightExpanded(true); }} title="Dispatch agents" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>🚀</button>
+                        <button onClick={() => { setShowNewTask(true); }} title="New task" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>✓</button>
                         {/* Mode pills in input bar */}
                         <div style={{ display:'flex', gap:3, marginLeft:4 }}>
-                          <button onClick={() => setSuperMode('forgeAsk')} title="Ask mode ΓÇö confirms skills/connectors before task" style={{ padding:'3px 8px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>Γ¥ô Ask</button>
-                          <button onClick={() => setSuperMode('forgeMagic')} title="Magic mode ΓÇö auto-loads all tools, skills, hooks & connectors" style={{ padding:'3px 8px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>Γ£¿ Magic</button>
+                          <button onClick={() => setSuperMode('forgeAsk')} title="Ask mode — confirms skills/connectors before task" style={{ padding:'3px 8px', background: superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeAsk' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeAsk' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>🙋 Ask</button>
+                          <button onClick={() => setSuperMode('forgeMagic')} title="Magic mode — auto-loads all tools, skills, hooks & connectors" style={{ padding:'3px 8px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>✨ Magic</button>
                         </div>
                       </div>
                       <div style={{ display:'flex', gap:4, flexShrink:0 }}>
@@ -3397,7 +3397,7 @@ export default function ForgeApp() {
                             title="Stop generation"
                             style={{ height:32, padding:'0 10px', background:'rgba(220,38,38,0.85)', border:'1px solid rgba(220,38,38,0.5)', borderRadius:8, color:'#fff', cursor:'pointer', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:4, whiteSpace:'nowrap' }}
                           >
-                            Γûá Stop
+                            ■ Stop
                           </button>
                         )}
                         <button
@@ -3411,7 +3411,7 @@ export default function ForgeApp() {
                           disabled={!input.trim() && !sending}
                           style={{ width:34, height:34, background: input.trim() ? 'var(--fg-btn-grad)' : sending ? 'rgba(255,31,53,0.2)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', cursor: input.trim() ? 'pointer' : 'default', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', animation: sending && !input.trim() ? 'send-pulse 0.9s ease-in-out infinite' : 'none', transition:'all 0.18s', boxShadow: input.trim() ? '0 0 12px rgba(255,31,53,0.3)' : 'none' }}
                         >
-                          {sending && !input.trim() ? 'ΓÜí' : input.trim() && sending ? 'ΓÅÄ' : 'Γåæ'}
+                          {sending && !input.trim() ? '⚡' : input.trim() && sending ? '⌛' : '↵'}
                         </button>
                       </div>
                     </div>
@@ -3424,11 +3424,11 @@ export default function ForgeApp() {
                 <div style={{ width:360, background:'var(--fg-bg)', borderLeft:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0 }}>
                   <div style={{ display:'flex', borderBottom:'1px solid var(--fg-border)', padding:'0 2px', overflowX:'auto' }}>
                     {([
-                      {id:'tracker',icon:'≡ƒôî'},{id:'agents',icon:'≡ƒºá'},
-                      {id:'tools',icon:'≡ƒ¢á'},{id:'hooks',icon:'≡ƒ¬¥'},{id:'runs',icon:'≡ƒÅâ'},
-                      {id:'agent',icon:'≡ƒñû'},{id:'artifacts',icon:'≡ƒôä'},{id:'tasks',icon:'Γ£à'},
-                      {id:'live',icon:'≡ƒô║'},{id:'schedule',icon:'ΓÅ▒'},{id:'context',icon:'≡ƒôè'},
-                      {id:'browser',icon:'≡ƒîÉ'},{id:'terminal',icon:'≡ƒÆ╗'},{id:'dispatch',icon:'≡ƒÜÇ'},
+                      {id:'tracker',icon:'📌'},{id:'agents',icon:'🧠'},
+                      {id:'tools',icon:'🛠'},{id:'hooks',icon:'🪝'},{id:'runs',icon:'🏃'},
+                      {id:'agent',icon:'🤖'},{id:'artifacts',icon:'📄'},{id:'tasks',icon:'✓'},
+                      {id:'live',icon:'📺'},{id:'schedule',icon:'📅'},{id:'context',icon:'📊'},
+                      {id:'browser',icon:'🌐'},{id:'terminal',icon:'💻'},{id:'dispatch',icon:'🚀'},
                     ] as const).map(tab => (
                       <button key={tab.id} onClick={() => setRightTab(tab.id as any)} title={tab.id} style={{ flex:'0 0 auto', padding:'10px 8px', background:'none', border:'none', borderBottom:rightTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', color:rightTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{tab.icon}</button>
                     ))}
@@ -3440,7 +3440,7 @@ export default function ForgeApp() {
                       <div>
 
                         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                          <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>≡ƒôî Progress Tracker</p>
+                          <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>📌 Progress Tracker</p>
                           <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{visibleTrackerItems.filter(i=>i.done).length}/{visibleTrackerItems.length} done</span>
                         </div>
 
@@ -3463,11 +3463,11 @@ export default function ForgeApp() {
                           <button onClick={addTrackerItem} style={{ padding:'7px 12px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>+</button>
                         </div>
 
-                        {/* Tracker items ΓÇö scrollable, max 5 active */}
+                        {/* Tracker items — scrollable, max 5 active */}
                         <div style={{ overflowY:'auto', maxHeight:300 }}>
                         {activeTrackerItems.length === 0 && archivedTrackerItems.length === 0 && (
                           <div style={{ textAlign:'center', padding:'24px 12px', color:'var(--fg-text3)', fontSize:12 }}>
-                            <div style={{ fontSize:28, marginBottom:8 }}>≡ƒôï</div>
+                            <div style={{ fontSize:28, marginBottom:8 }}>📋</div>
                             <p style={{ margin:0 }}>No goals yet. Add your first goal above.</p>
                             <p style={{ margin:'8px 0 0', fontSize:11 }}>Track MVPs, project milestones, and deliverables here.</p>
                           </div>
@@ -3479,12 +3479,12 @@ export default function ForgeApp() {
                           const colors: Record<string,string> = { high:'var(--fg-red,#ef4444)', medium:'var(--fg-orange)', low:'var(--fg-text3)' };
                           return (
                             <div key={priority} style={{ marginBottom:10 }}>
-                              <p style={{ fontSize:10, color:colors[priority], fontWeight:700, textTransform:'uppercase', margin:'0 0 5px', letterSpacing:'0.5px' }}>{priority === 'high' ? '≡ƒö┤' : priority === 'medium' ? '≡ƒƒí' : '≡ƒƒó'} {priority}</p>
+                              <p style={{ fontSize:10, color:colors[priority], fontWeight:700, textTransform:'uppercase', margin:'0 0 5px', letterSpacing:'0.5px' }}>{priority === 'high' ? '🔴' : priority === 'medium' ? '🟡' : '🟢'} {priority}</p>
                               {items.map(item => (
                                 <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background: item.done ? 'var(--fg-bg3)' : 'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, marginBottom:4, opacity: item.done ? 0.6 : 1 }}>
                                   <button onClick={() => saveTracker(visibleTrackerItems.map(i => i.id===item.id ? {...i,done:!i.done} : i))}
                                     style={{ width:16, height:16, borderRadius:'50%', border:`2px solid ${item.done ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, background: item.done ? 'var(--fg-orange)' : 'transparent', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', padding:0 }}>
-                                    {item.done && <span style={{ fontSize:9, color:'#fff' }}>Γ£ô</span>}
+                                    {item.done && <span style={{ fontSize:9, color:'#fff' }}>✓</span>}
                                   </button>
                                   {trackerEditId === item.id ? (
                                     <input autoFocus value={trackerEditText} onChange={e => setTrackerEditText(e.target.value)}
@@ -3501,9 +3501,9 @@ export default function ForgeApp() {
                                   <div style={{ display:'flex', gap:2, flexShrink:0 }}>
                                     <select value={item.priority} onChange={e => saveTracker(visibleTrackerItems.map(i=>i.id===item.id?{...i,priority:e.target.value as any}:i))}
                                       style={{ fontSize:10, background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:4, color:'var(--fg-text3)', padding:'1px 3px', cursor:'pointer' }}>
-                                      <option value="high">≡ƒö┤</option><option value="medium">≡ƒƒí</option><option value="low">≡ƒƒó</option>
+                                      <option value="high">🔴</option><option value="medium">🟡</option><option value="low">🟢</option>
                                     </select>
-                                    <button onClick={() => saveTracker(visibleTrackerItems.filter(i=>i.id!==item.id))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'0 2px' }}>Γ£ò</button>
+                                    <button onClick={() => saveTracker(visibleTrackerItems.filter(i=>i.id!==item.id))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'0 2px' }}>×</button>
                                   </div>
                                 </div>
                               ))}
@@ -3526,7 +3526,7 @@ export default function ForgeApp() {
                             </button>
                             {showTrackerArchive && archivedTrackerItems.map(item => (
                               <div key={item.id} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 8px', opacity:0.6, fontSize:12 }}>
-                                <span style={{ color:'var(--fg-green)' }}>Γ£ô</span>
+                                <span style={{ color:'var(--fg-green)' }}>✓</span>
                                 <span style={{ flex:1, textDecoration:'line-through', color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.text}</span>
                                 <button onClick={() => saveTracker(visibleTrackerItems.filter(i => i.id !== item.id))} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>x</button>
                               </div>
@@ -3536,7 +3536,7 @@ export default function ForgeApp() {
 
                         {/* Chat Files section */}
                         <div style={{ marginTop:16, paddingTop:12, borderTop:'1px solid var(--fg-border)' }}>
-                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 8px', letterSpacing:'0.5px' }}>≡ƒÆ¼ Chat Folders</p>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 8px', letterSpacing:'0.5px' }}>💬 Chat Folders</p>
                           {threads.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', textAlign:'center', margin:'12px 0' }}>No chats yet</p>}
           {[...threads].sort((a,b) => (pinnedThreads.has(b.id)?1:0)-(pinnedThreads.has(a.id)?1:0)).slice(0,10).map(t => {
                               const isWarning = inactiveWarnings.has(t.id);
@@ -3557,14 +3557,14 @@ export default function ForgeApp() {
                                   ) : (
                                     <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                                       <span onClick={() => { setActiveThread(t); setMainTab('workspace'); }} style={{ fontSize:12, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, cursor:'pointer' }}>
-                                        {pinned && <span style={{ marginRight:4 }}>≡ƒôî</span>}{t.title || 'Untitled'}
+                                        {pinned && <span style={{ marginRight:4 }}>📌</span>}{t.title || 'Untitled'}
                                       </span>
-                                      <button onClick={() => togglePin(t.id)} title={pinned?'Unpin':'Pin'} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color: pinned?'var(--fg-orange)':'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>≡ƒôî</button>
-                                      <button onClick={() => { setFolderRenamingId(t.id); setFolderRenameVal(t.title||''); }} title="Rename" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>Γ£Å∩╕Å</button>
-                                      <button onClick={() => deleteThread(t.id)} title="Delete" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>≡ƒùæ</button>
+                                      <button onClick={() => togglePin(t.id)} title={pinned?'Unpin':'Pin'} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color: pinned?'var(--fg-orange)':'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>📌</button>
+                                      <button onClick={() => { setFolderRenamingId(t.id); setFolderRenameVal(t.title||''); }} title="Rename" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>📝</button>
+                                      <button onClick={() => deleteThread(t.id)} title="Delete" style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--fg-text3)', padding:'0 2px', flexShrink:0 }}>🗑</button>
                                     </div>
                                   )}
-                                  {isWarning && <p style={{ margin:'3px 0 0', fontSize:10, color:'var(--fg-orange)' }}>ΓÅ░ Deletes after 24h of inactivity</p>}
+                                  {isWarning && <p style={{ margin:'3px 0 0', fontSize:10, color:'var(--fg-orange)' }}>⏰ Deletes after 24h of inactivity</p>}
                                 </div>
                               );
                             })}
@@ -3575,41 +3575,41 @@ export default function ForgeApp() {
                     {/* READY-MADE AGENTS */}
                     {rightTab==='agents' && (() => {
                       const agentGroups = [
-                        { group:'≡ƒÆ╝ Business', agents:[
-                          { id:'ceo_advisor', icon:'≡ƒæö', name:'CEO Advisor', desc:'Strategic decisions, company direction, investor updates' },
-                          { id:'marketer', icon:'≡ƒôó', name:'Marketing Pro', desc:'Campaigns, copy, brand voice, social media strategy' },
-                          { id:'sales_coach', icon:'≡ƒñ¥', name:'Sales Coach', desc:'Outreach, objection handling, closing techniques, CRM' },
-                          { id:'finance_analyst', icon:'≡ƒÆ░', name:'Finance Analyst', desc:'P&L, budgets, cash flow, financial modeling, forecasts' },
-                          { id:'legal_advisor', icon:'ΓÜû∩╕Å', name:'Legal Advisor', desc:'Contracts, compliance, IP, NDAs, business terms' },
-                          { id:'hr_manager', icon:'≡ƒæÑ', name:'HR Manager', desc:'Hiring, onboarding, culture, performance reviews' },
-                          { id:'product_manager', icon:'≡ƒÄ»', name:'Product Manager', desc:'PRDs, roadmaps, user stories, prioritization frameworks' },
-                          { id:'data_scientist', icon:'≡ƒôè', name:'Data Scientist', desc:'Analysis, visualization, ML models, insights' },
-                          { id:'customer_support', icon:'≡ƒÄº', name:'Customer Support', desc:'Ticket triage, responses, escalation, knowledge base' },
-                          { id:'operations', icon:'ΓÜÖ∩╕Å', name:'Operations Lead', desc:'Process optimization, SOPs, workflows, logistics' },
+                        { group:'💼 Business', agents:[
+                          { id:'ceo_advisor', icon:'👔', name:'CEO Advisor', desc:'Strategic decisions, company direction, investor updates' },
+                          { id:'marketer', icon:'📢', name:'Marketing Pro', desc:'Campaigns, copy, brand voice, social media strategy' },
+                          { id:'sales_coach', icon:'🤝', name:'Sales Coach', desc:'Outreach, objection handling, closing techniques, CRM' },
+                          { id:'finance_analyst', icon:'💰', name:'Finance Analyst', desc:'P&L, budgets, cash flow, financial modeling, forecasts' },
+                          { id:'legal_advisor', icon:'⚖️', name:'Legal Advisor', desc:'Contracts, compliance, IP, NDAs, business terms' },
+                          { id:'hr_manager', icon:'👥', name:'HR Manager', desc:'Hiring, onboarding, culture, performance reviews' },
+                          { id:'product_manager', icon:'🎯', name:'Product Manager', desc:'PRDs, roadmaps, user stories, prioritization frameworks' },
+                          { id:'data_scientist', icon:'📊', name:'Data Scientist', desc:'Analysis, visualization, ML models, insights' },
+                          { id:'customer_support', icon:'🎧', name:'Customer Support', desc:'Ticket triage, responses, escalation, knowledge base' },
+                          { id:'operations', icon:'⚙️', name:'Operations Lead', desc:'Process optimization, SOPs, workflows, logistics' },
                         ]},
-                        { group:'≡ƒºæ Individual', agents:[
-                          { id:'personal_coach', icon:'≡ƒÅï∩╕Å', name:'Life Coach', desc:'Goals, habits, productivity, mindset, accountability' },
-                          { id:'writer', icon:'Γ£ì∩╕Å', name:'Writer', desc:'Essays, stories, scripts, emails, any written content' },
-                          { id:'researcher', icon:'≡ƒö¼', name:'Researcher', desc:'Deep research, fact-checking, summarizing papers' },
-                          { id:'tutor', icon:'≡ƒôÜ', name:'Tutor', desc:'Explain concepts, teach skills, quizzes, study plans' },
-                          { id:'developer', icon:'≡ƒÆ╗', name:'Software Developer', desc:'Code, debug, architecture, code review, deploy' },
-                          { id:'designer', icon:'≡ƒÄ¿', name:'Designer', desc:'UI/UX, visual design, prototypes, design critique' },
-                          { id:'therapist', icon:'≡ƒºÿ', name:'Wellness Guide', desc:'Mental wellness tips, stress management, reflection' },
-                          { id:'travel_planner', icon:'Γ£ê∩╕Å', name:'Travel Planner', desc:'Itineraries, bookings, visa info, travel tips' },
-                          { id:'chef', icon:'≡ƒì│', name:'Chef', desc:'Recipes, meal plans, nutrition, cooking techniques' },
-                          { id:'financial_planner', icon:'≡ƒÆ│', name:'Financial Planner', desc:'Budgeting, savings, investments, debt payoff plans' },
+                        { group:'🧑 Individual', agents:[
+                          { id:'personal_coach', icon:'🏋', name:'Life Coach', desc:'Goals, habits, productivity, mindset, accountability' },
+                          { id:'writer', icon:'✍️', name:'Writer', desc:'Essays, stories, scripts, emails, any written content' },
+                          { id:'researcher', icon:'🔬', name:'Researcher', desc:'Deep research, fact-checking, summarizing papers' },
+                          { id:'tutor', icon:'📚', name:'Tutor', desc:'Explain concepts, teach skills, quizzes, study plans' },
+                          { id:'developer', icon:'💻', name:'Software Developer', desc:'Code, debug, architecture, code review, deploy' },
+                          { id:'designer', icon:'🎨', name:'Designer', desc:'UI/UX, visual design, prototypes, design critique' },
+                          { id:'therapist', icon:'🧘', name:'Wellness Guide', desc:'Mental wellness tips, stress management, reflection' },
+                          { id:'travel_planner', icon:'✈', name:'Travel Planner', desc:'Itineraries, bookings, visa info, travel tips' },
+                          { id:'chef', icon:'🍳', name:'Chef', desc:'Recipes, meal plans, nutrition, cooking techniques' },
+                          { id:'financial_planner', icon:'💳', name:'Financial Planner', desc:'Budgeting, savings, investments, debt payoff plans' },
                         ]},
-                        { group:'≡ƒÜÇ Builder', agents:[
-                          { id:'mvp_builder', icon:'≡ƒÅù∩╕Å', name:'MVP Builder', desc:'Scope, spec, build and ship a working MVP fast' },
-                          { id:'project_manager', icon:'≡ƒôï', name:'Project Manager', desc:'Plans, timelines, milestones, team coordination' },
-                          { id:'pitch_deck', icon:'≡ƒÄ₧∩╕Å', name:'Pitch Deck Creator', desc:'Investor decks, storytelling, traction slides' },
-                          { id:'seo_expert', icon:'≡ƒöì', name:'SEO Expert', desc:'Keywords, on-page SEO, backlinks, content strategy' },
-                          { id:'automation', icon:'≡ƒñû', name:'Automation Builder', desc:'Workflows, Zapier/Make logic, API integrations' },
+                        { group:'🚀 Builder', agents:[
+                          { id:'mvp_builder', icon:'🏗', name:'MVP Builder', desc:'Scope, spec, build and ship a working MVP fast' },
+                          { id:'project_manager', icon:'📋', name:'Project Manager', desc:'Plans, timelines, milestones, team coordination' },
+                          { id:'pitch_deck', icon:'🎞', name:'Pitch Deck Creator', desc:'Investor decks, storytelling, traction slides' },
+                          { id:'seo_expert', icon:'🔍', name:'SEO Expert', desc:'Keywords, on-page SEO, backlinks, content strategy' },
+                          { id:'automation', icon:'🤖', name:'Automation Builder', desc:'Workflows, Zapier/Make logic, API integrations' },
                         ]},
                       ];
                       return (
                         <div>
-                          <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:'0 0 4px', letterSpacing:'0.5px' }}>≡ƒºá Ready-made Agents</p>
+                          <p style={{ color:'var(--fg-orange2)', fontSize:12, fontWeight:700, textTransform:'uppercase', margin:'0 0 4px', letterSpacing:'0.5px' }}>🧠 Ready-made Agents</p>
                           <p style={{ color:'var(--fg-text3)', fontSize:11, margin:'0 0 12px' }}>Activate an agent to load its expertise into your workspace chat.</p>
                           {agentGroups.map(group => (
                             <div key={group.group} style={{ marginBottom:14 }}>
@@ -3657,25 +3657,25 @@ export default function ForgeApp() {
                         {/* Active summary banner */}
                         {(activeSkills.size > 0 || activeConnectors.size > 0 || enabledHooks.length > 0) ? (
                           <div style={{ marginBottom:12, padding:'10px 12px', background:'var(--fg-odim)', border:'1px solid var(--fg-border3)', borderRadius:10 }}>
-                            <p style={{ margin:'0 0 8px', fontSize:10, color:'var(--fg-orange)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' }}>ΓÜí Active in this chat</p>
+                            <p style={{ margin:'0 0 8px', fontSize:10, color:'var(--fg-orange)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' }}>⚡ Active in this chat</p>
                             {activeSkillsList.map((s:any) => (
                               <div key={s.id} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                                <span style={{ fontSize:14 }}>{s.icon || '≡ƒº⌐'}</span>
+                                <span style={{ fontSize:14 }}>{s.icon || '🧩'}</span>
                                 <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{s.name}</span>
-                                <button onClick={() => setActiveSkills(prev => { const n=new Set(prev); n.delete(s.id); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0 }}>Γ£ò</button>
+                                <button onClick={() => setActiveSkills(prev => { const n=new Set(prev); n.delete(s.id); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0 }}>×</button>
                               </div>
                             ))}
                             {activeConnectorsList.map((c:any) => (
                               <div key={c.id} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                                <span style={{ fontSize:14 }}>{c.icon || '≡ƒöî'}</span>
+                                <span style={{ fontSize:14 }}>{c.icon || '🔌'}</span>
                                 <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{c.name}</span>
-                                <button onClick={() => setActiveConnectors(prev => { const n=new Set(prev); n.delete(c.id); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0 }}>Γ£ò</button>
+                                <button onClick={() => setActiveConnectors(prev => { const n=new Set(prev); n.delete(c.id); return n; })} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0 }}>×</button>
                               </div>
                             ))}
                             {enabledHooks.map(h => (
                               <div key={h.id} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                                <span style={{ fontSize:14 }}>≡ƒ¬¥</span>
-                                <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{h.event} ΓåÆ {h.target}</span>
+                                <span style={{ fontSize:14 }}>🪝</span>
+                                <span style={{ fontSize:12, color:'var(--fg-text)', flex:1 }}>{h.event} → {h.target}</span>
                               </div>
                             ))}
                           </div>
@@ -3688,13 +3688,13 @@ export default function ForgeApp() {
                         {/* SKILLS from catalog */}
                         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
                           <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>Skills ({activeSkills.size} active)</p>
-                          <button onClick={() => setMainTab('skills')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Browse all ΓåÆ</button>
+                          <button onClick={() => setMainTab('skills')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Browse all →</button>
                         </div>
                         {allSkills.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 10px' }}>No skills loaded</p>}
                         {allSkills.slice(0, 12).map((s:any) => (
                           <div key={s.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeSkills.has(s.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeSkills.has(s.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
-                              <span style={{ fontSize:14, flexShrink:0 }}>{s.icon || '≡ƒº⌐'}</span>
+                              <span style={{ fontSize:14, flexShrink:0 }}>{s.icon || '🧩'}</span>
                               <span style={{ fontSize:11, color: activeSkills.has(s.id) ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.name}</span>
                             </div>
                             <button onClick={() => setActiveSkills(prev => { const n=new Set(prev); n.has(s.id)?n.delete(s.id):n.add(s.id); return n; })} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeSkills.has(s.id) ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
@@ -3703,19 +3703,19 @@ export default function ForgeApp() {
                           </div>
                         ))}
                         {allSkills.length > 12 && (
-                          <button onClick={() => setMainTab('skills')} style={{ width:'100%', padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', marginBottom:10 }}>+{allSkills.length - 12} more skills ΓåÆ</button>
+                          <button onClick={() => setMainTab('skills')} style={{ width:'100%', padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', marginBottom:10 }}>+{allSkills.length - 12} more skills →</button>
                         )}
 
                         {/* CONNECTORS from catalog */}
                         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', margin:'12px 0 6px' }}>
                           <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>Connectors ({activeConnectors.size} active)</p>
-                          <button onClick={() => setMainTab('skills')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Browse all ΓåÆ</button>
+                          <button onClick={() => setMainTab('skills')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Browse all →</button>
                         </div>
                         {allConnectors.length === 0 && <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 10px' }}>No connectors loaded</p>}
                         {allConnectors.slice(0, 12).map((c:any) => (
                           <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeConnectors.has(c.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeConnectors.has(c.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
-                              <span style={{ fontSize:14, flexShrink:0 }}>{c.icon || '≡ƒöî'}</span>
+                              <span style={{ fontSize:14, flexShrink:0 }}>{c.icon || '🔌'}</span>
                               <span style={{ fontSize:11, color: activeConnectors.has(c.id) ? 'var(--fg-orange2)' : 'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.name}</span>
                             </div>
                             <button onClick={() => setActiveConnectors(prev => { const n=new Set(prev); n.has(c.id)?n.delete(c.id):n.add(c.id); return n; })} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: activeConnectors.has(c.id) ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
@@ -3724,35 +3724,35 @@ export default function ForgeApp() {
                           </div>
                         ))}
                         {allConnectors.length > 12 && (
-                          <button onClick={() => setMainTab('skills')} style={{ width:'100%', padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', marginBottom:10 }}>+{allConnectors.length - 12} more connectors ΓåÆ</button>
+                          <button onClick={() => setMainTab('skills')} style={{ width:'100%', padding:'5px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', marginBottom:10 }}>+{allConnectors.length - 12} more connectors →</button>
                         )}
 
                         {/* BUILT-IN TOOLS */}
                         <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'12px 0 6px', letterSpacing:'0.5px' }}>Built-in Tools ({activeTools.size} active)</p>
                         {[
-                          { id:'web_search', icon:'≡ƒöì', label:'Web Search', desc:'Search Google, Bing, DuckDuckGo' },
-                          { id:'browser_navigate', icon:'≡ƒîÉ', label:'Browse Web', desc:'Navigate URLs, read pages' },
-                          { id:'browser_batch', icon:'≡ƒûÑ∩╕Å', label:'Browser Batch', desc:'Multi-tab parallel browsing' },
-                          { id:'run_code', icon:'ΓÜÖ∩╕Å', label:'Run Code', desc:'Execute Python, JS, shell scripts' },
-                          { id:'start_process', icon:'Γû╢∩╕Å', label:'Start Process', desc:'Launch and manage processes' },
-                          { id:'read_file', icon:'≡ƒôä', label:'Read Files', desc:'Read any file type' },
-                          { id:'write_file', icon:'≡ƒÆ╛', label:'Write Files', desc:'Create and save files' },
-                          { id:'list_directory', icon:'≡ƒôü', label:'List Directory', desc:'Browse filesystem' },
-                          { id:'execute_js', icon:'ΓÜí', label:'Execute JS', desc:'Run JavaScript in browser context' },
-                          { id:'screenshot', icon:'≡ƒô╕', label:'Screenshot', desc:'Capture screen or webpage' },
-                          { id:'click', icon:'≡ƒû▒∩╕Å', label:'Click / Interact', desc:'Click buttons, fill forms' },
-                          { id:'press_key', icon:'Γî¿∩╕Å', label:'Press Key', desc:'Keyboard shortcuts and input' },
-                          { id:'webhooks', icon:'≡ƒ¬¥', label:'Webhooks', desc:'Send/receive webhook events' },
-                          { id:'image_gen', icon:'≡ƒÄ¿', label:'Image Gen', desc:'Generate images with AI' },
-                          { id:'data_analyze', icon:'≡ƒôè', label:'Data Analyze', desc:'Analyze CSV, JSON, datasets' },
-                          { id:'desktop_commander', icon:'≡ƒûÑ∩╕Å', label:'Desktop Commander', desc:'Control desktop apps' },
-                          { id:'computer_use', icon:'≡ƒñû', label:'Computer Use', desc:'Full computer automation' },
-                          { id:'send_request', icon:'≡ƒôí', label:'HTTP Request', desc:'GET/POST/PUT to any API' },
-                          { id:'read_process', icon:'≡ƒôƒ', label:'Read Process Output', desc:'Capture process stdout/stderr' },
-                          { id:'commit_deploy', icon:'≡ƒÜÇ', label:'Commit & Deploy', desc:'Git commit, push, deploy' },
-                          { id:'tool_search', icon:'≡ƒöº', label:'Tool Search', desc:'Find and load tools dynamically' },
-                          { id:'wait', icon:'ΓÅ│', label:'Wait / Delay', desc:'Pause execution, wait for events' },
-                          { id:'action', icon:'≡ƒÄ¼', label:'Action', desc:'Trigger any automation action' },
+                          { id:'web_search', icon:'🔍', label:'Web Search', desc:'Search Google, Bing, DuckDuckGo' },
+                          { id:'browser_navigate', icon:'🌐', label:'Browse Web', desc:'Navigate URLs, read pages' },
+                          { id:'browser_batch', icon:'🖥', label:'Browser Batch', desc:'Multi-tab parallel browsing' },
+                          { id:'run_code', icon:'⚙️', label:'Run Code', desc:'Execute Python, JS, shell scripts' },
+                          { id:'start_process', icon:'◀', label:'Start Process', desc:'Launch and manage processes' },
+                          { id:'read_file', icon:'📄', label:'Read Files', desc:'Read any file type' },
+                          { id:'write_file', icon:'💾', label:'Write Files', desc:'Create and save files' },
+                          { id:'list_directory', icon:'📁', label:'List Directory', desc:'Browse filesystem' },
+                          { id:'execute_js', icon:'⚡', label:'Execute JS', desc:'Run JavaScript in browser context' },
+                          { id:'screenshot', icon:'📸', label:'Screenshot', desc:'Capture screen or webpage' },
+                          { id:'click', icon:'🖱', label:'Click / Interact', desc:'Click buttons, fill forms' },
+                          { id:'press_key', icon:'⌨️', label:'Press Key', desc:'Keyboard shortcuts and input' },
+                          { id:'webhooks', icon:'🪝', label:'Webhooks', desc:'Send/receive webhook events' },
+                          { id:'image_gen', icon:'🎨', label:'Image Gen', desc:'Generate images with AI' },
+                          { id:'data_analyze', icon:'📊', label:'Data Analyze', desc:'Analyze CSV, JSON, datasets' },
+                          { id:'desktop_commander', icon:'🖥', label:'Desktop Commander', desc:'Control desktop apps' },
+                          { id:'computer_use', icon:'🤖', label:'Computer Use', desc:'Full computer automation' },
+                          { id:'send_request', icon:'📡', label:'HTTP Request', desc:'GET/POST/PUT to any API' },
+                          { id:'read_process', icon:'📟', label:'Read Process Output', desc:'Capture process stdout/stderr' },
+                          { id:'commit_deploy', icon:'🚀', label:'Commit & Deploy', desc:'Git commit, push, deploy' },
+                          { id:'tool_search', icon:'🔧', label:'Tool Search', desc:'Find and load tools dynamically' },
+                          { id:'wait', icon:'⚡', label:'Wait / Delay', desc:'Pause execution, wait for events' },
+                          { id:'action', icon:'🎬', label:'Action', desc:'Trigger any automation action' },
                         ].map((t: {id:string;icon:string;label:string;desc:string}) => (
                           <div key={t.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: activeTools.has(t.id) ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${activeTools.has(t.id) ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:0 }}>
@@ -3771,16 +3771,16 @@ export default function ForgeApp() {
                         {/* HOOKS */}
                         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', margin:'12px 0 6px' }}>
                           <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:0, letterSpacing:'0.5px' }}>Hooks ({enabledHooks.length} active)</p>
-                          <button onClick={() => setMainTab('hooks')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Manage ΓåÆ</button>
+                          <button onClick={() => setMainTab('hooks')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:10, padding:0 }}>Manage →</button>
                         </div>
                         {hooks.length === 0 ? (
-                          <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 8px' }}>No hooks ΓÇö <button onClick={() => setMainTab('hooks')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:11, padding:0 }}>add one</button></p>
+                          <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 8px' }}>No hooks — <button onClick={() => setMainTab('hooks')} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', fontSize:11, padding:0 }}>add one</button></p>
                         ) : (
                           hooks.map(h => (
                             <div key={h.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 8px', background: h.enabled ? 'var(--fg-odim)' : 'var(--fg-bg3)', border:`1px solid ${h.enabled ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:4 }}>
                               <div style={{ minWidth:0 }}>
                                 <span style={{ fontSize:11, fontFamily:'var(--fg-font-mono)', color: h.enabled ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:600 }}>{h.event}</span>
-                                <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:5 }}>ΓåÆ {h.target}</span>
+                                <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:5 }}>→ {h.target}</span>
                               </div>
                               <button onClick={() => setHooks(prev => prev.map(x => x.id===h.id ? {...x, enabled:!x.enabled} : x))} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: h.enabled ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
                                 <span style={{ position:'absolute', top:2, left: h.enabled ? 16 : 2, width:14, height:14, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
@@ -3803,12 +3803,12 @@ export default function ForgeApp() {
                           <div key={h.id} style={{ padding:'8px 10px', background:'var(--fg-bg3)', border:`1px solid ${h.enabled ? 'var(--fg-border3)' : 'var(--fg-border)'}`, borderRadius:8, marginBottom:6 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
                               <span style={{ fontSize:11, fontFamily:'var(--fg-font-mono)', color:'var(--fg-orange)', fontWeight:600 }}>{h.event}</span>
-                              <span style={{ marginLeft:'auto', fontSize:10, color: h.enabled ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{h.enabled ? 'ΓùÅ on' : 'Γùï off'}</span>
+                              <span style={{ marginLeft:'auto', fontSize:10, color: h.enabled ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{h.enabled ? '⏺ on' : '⏸ off'}</span>
                             </div>
-                            <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>ΓåÆ {h.target || h.action}</p>
+                            <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>→ {h.target || h.action}</p>
                           </div>
                         ))}
-                        <button onClick={() => setMainTab('hooks')} style={{ width:'100%', padding:'7px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text2)', fontSize:11, cursor:'pointer', marginTop:4 }}>Manage hooks ΓåÆ</button>
+                        <button onClick={() => setMainTab('hooks')} style={{ width:'100%', padding:'7px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text2)', fontSize:11, cursor:'pointer', marginTop:4 }}>Manage hooks →</button>
                       </div>
                     )}
                     {/* RUNS */}
@@ -3828,7 +3828,7 @@ export default function ForgeApp() {
                             <p style={{ margin:0, fontSize:10, color:'var(--fg-text3)' }}>{new Date(r.created_at).toLocaleString()}</p>
                           </div>
                         ))}
-                        <button onClick={() => setMainTab('runs')} style={{ width:'100%', padding:'7px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text2)', fontSize:11, cursor:'pointer', marginTop:4 }}>View all runs ΓåÆ</button>
+                        <button onClick={() => setMainTab('runs')} style={{ width:'100%', padding:'7px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:7, color:'var(--fg-text2)', fontSize:11, cursor:'pointer', marginTop:4 }}>View all runs →</button>
                       </div>
                     )}
                     {/* ARTIFACTS */}
