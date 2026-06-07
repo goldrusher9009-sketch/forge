@@ -6905,12 +6905,79 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* ΓöÇΓöÇ Agent Swarm ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+        {/* -- ForgeASI ---------------------------------------------------- */}
+        {mainTab === 'forgeasi' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>🌌</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeASI</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Extended Parallel Intelligence Chains — run deep, multi-step reasoning across thousands of parallel paths.</p>
+                </div>
+              </div>
+              <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.15),rgba(99,102,241,0.04))', border:'1px solid #6366f1', borderRadius:16, padding:32, textAlign:'center', marginBottom:24 }}>
+                <div style={{ fontSize:48, marginBottom:12 }}>🧠</div>
+                <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:800, color:'var(--fg-text)' }}>EPIC — Extended Parallel Intelligence Chains</h2>
+                <p style={{ margin:'0 0 20px', fontSize:14, color:'var(--fg-text3)', maxWidth:520, marginLeft:'auto', marginRight:'auto' }}>
+                  ForgeASI decomposes complex goals into thousands of parallel reasoning threads, synthesizes results, and iterates until convergence — approaching AGI-level task completion.
+                </p>
+                <div style={{ display:'flex', gap:16, justifyContent:'center', flexWrap:'wrap', marginBottom:24 }}>
+                  {[['🔀 Parallel Chains','Run 100s of reasoning paths simultaneously'],['🔁 Auto-Iteration','Iterate until goal is fully satisfied'],['🧬 Self-Reflection','Agents critique and improve each other'],['🌐 Web-Augmented','Real-time knowledge retrieval per chain']].map(([title,desc])=>(
+                    <div key={title as string} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'14px 18px', maxWidth:200, textAlign:'left' }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:4 }}>{title}</div>
+                      <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{desc}</div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setMainTab('swarm')} style={{ padding:'12px 32px', background:'#6366f1', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>
+                  🌌 Launch ForgeASI via Agent Swarm
+                </button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+                {[['🎯 Goal Decomposition','Break any goal into atomic sub-tasks automatically'],['⚡ Sub-Second Parallel Exec','All chains run concurrently for maximum speed'],['🔬 Synthesis Engine','Best results merged into coherent output'],['📈 Convergence Tracking','Monitor progress toward goal completion in real time']].map(([title,desc])=>(
+                  <div key={title as string} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                    <div style={{ fontSize:15, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>{title}</div>
+                    <div style={{ fontSize:13, color:'var(--fg-text3)' }}>{desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* -- ForgeMULTI -------------------------------------------------- */}
+        {mainTab === 'forgemulti' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:36 }}>🔀</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeMulti</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Multi-model consensus — run the same prompt across all your models and compare outputs side by side.</p>
+                </div>
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
+                <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Prompt</label>
+                <textarea placeholder="Enter your prompt to run across all models…" style={{ width:'100%', minHeight:100, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:12 }} />
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
+                  {['claude-3-5-sonnet-20241022','gpt-4o','gemini-1.5-pro','llama-3.1-70b'].map(m=>(
+                    <span key={m} style={{ fontSize:11, padding:'4px 10px', background:'rgba(251,146,60,0.1)', border:'1px solid rgba(251,146,60,0.3)', borderRadius:20, color:'var(--fg-orange)', fontWeight:600 }}>{m}</span>
+                  ))}
+                </div>
+                <button onClick={()=>setMainTab('workspace')} style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>🔀 Run Multi-Model Comparison</button>
+              </div>
+              <div style={{ textAlign:'center', padding:'40px 0', color:'var(--fg-text3)', fontSize:13 }}>Run a prompt above to see side-by-side model outputs.</div>
+            </div>
+          </div>
+        )}
+
+        {/* -- Agent Swarm ------------------------------------------------- */}
         {mainTab === 'swarm' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:900, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>≡ƒÉ¥</span>
+                <span style={{ fontSize:36 }}>Γëí╞Æ├ë┬Ñ</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Agent Swarm</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Deploy a swarm of specialist AI agents in parallel, then synthesize their outputs into one unified response.</p>
@@ -6931,7 +6998,7 @@ export default function ForgeApp() {
                   </div>
                 </div>
                 <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Task for the Swarm</label>
-                <textarea value={swarmTask} onChange={e => setSwarmTask(e.target.value)} placeholder="Describe the task you want the swarm to work on in parallelΓÇª"
+                <textarea value={swarmTask} onChange={e => setSwarmTask(e.target.value)} placeholder="Describe the task you want the swarm to work on in parallel╬ô├ç┬¬"
                   style={{ width:'100%', minHeight:100, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:12 }} />
                 <button onClick={async () => {
                   if (!swarmTask.trim() || swarmRunning) return;
@@ -6960,7 +7027,7 @@ export default function ForgeApp() {
                   });
                 }} disabled={swarmRunning || !swarmTask.trim()}
                   style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(swarmRunning||!swarmTask.trim())?0.5:1 }}>
-                  {swarmRunning ? `≡ƒÉ¥ ${swarmResults.filter(r=>r.done).length}/${swarmAgentCount} agents doneΓÇª` : `≡ƒÉ¥ Launch ${swarmAgentCount}-Agent Swarm`}
+                  {swarmRunning ? `Γëí╞Æ├ë┬Ñ ${swarmResults.filter(r=>r.done).length}/${swarmAgentCount} agents done╬ô├ç┬¬` : `Γëí╞Æ├ë┬Ñ Launch ${swarmAgentCount}-Agent Swarm`}
                 </button>
               </div>
               {swarmResults.length > 0 && (
@@ -6969,20 +7036,20 @@ export default function ForgeApp() {
                     {swarmResults.map((r, i) => (
                       <div key={r.agentId} style={{ background:'var(--fg-bg2)', border:`1px solid ${r.done ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:16, opacity: r.done ? 1 : 0.6 }}>
                         <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
-                          <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)' }}>≡ƒÉ¥ {r.role}</span>
-                          <span style={{ fontSize:10, color: r.done ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{r.done ? `Γ£ô ${r.tokens} tok` : 'Γƒ│ RunningΓÇª'}</span>
+                          <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)' }}>Γëí╞Æ├ë┬Ñ {r.role}</span>
+                          <span style={{ fontSize:10, color: r.done ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{r.done ? `╬ô┬ú├┤ ${r.tokens} tok` : '╬ô╞ÆΓöé Running╬ô├ç┬¬'}</span>
                         </div>
                         {r.result ? (
                           <div style={{ fontSize:12, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:160, overflowY:'auto' }}>{r.result}</div>
                         ) : (
-                          <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Waiting for agent {i+1}ΓÇª</div>
+                          <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Waiting for agent {i+1}╬ô├ç┬¬</div>
                         )}
                       </div>
                     ))}
                   </div>
                   {swarmSynthesis && (
                     <div style={{ background:'linear-gradient(135deg,rgba(251,146,60,0.12),rgba(251,146,60,0.04))', border:'1px solid var(--fg-orange)', borderRadius:12, padding:24 }}>
-                      <h3 style={{ margin:'0 0 14px', fontSize:15, fontWeight:700, color:'var(--fg-orange)' }}>≡ƒÉ¥ Swarm Synthesis ΓÇö {swarmAgentCount} Agent{swarmAgentCount!==1?'s':''}</h3>
+                      <h3 style={{ margin:'0 0 14px', fontSize:15, fontWeight:700, color:'var(--fg-orange)' }}>Γëí╞Æ├ë┬Ñ Swarm Synthesis ╬ô├ç├╢ {swarmAgentCount} Agent{swarmAgentCount!==1?'s':''}</h3>
                       <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{swarmSynthesis}</div>
                     </div>
                   )}
