@@ -254,6 +254,13 @@ function renderContent(content: string): React.ReactNode[] {
     // Inline markdown: bold, inline code, links
     const lines = seg.split('\n');
     lines.forEach((line, li) => {
+      // Inline images: ![alt](url)
+      const imgMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+      if (imgMatch) {
+        const [, alt, url] = imgMatch;
+        parts.push(<div key={`img-${si}-${li}`} style={{ margin:'10px 0' }}><img src={url} alt={alt || 'Generated image'} style={{ maxWidth:'100%', maxHeight:480, borderRadius:8, display:'block', cursor:'pointer' }} onClick={() => window.open(url,'_blank')} /></div>);
+        return;
+      }
       // Headings
       if (line.startsWith('### ')) { parts.push(<h3 key={`h3-${si}-${li}`} style={{ margin:'14px 0 6px', fontSize:14, fontWeight:700, color:'var(--fg-text)', borderBottom:'1px solid var(--fg-border)' }}>{line.slice(4)}</h3>); return; }
       if (line.startsWith('## ')) { parts.push(<h2 key={`h2-${si}-${li}`} style={{ margin:'16px 0 8px', fontSize:16, fontWeight:800, color:'var(--fg-text)' }}>{line.slice(3)}</h2>); return; }
@@ -491,6 +498,44 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
       </div>
     </div>
   );
+}
+
+// --- Monaco Editor (lazy) -----------------------------------------------------
+function MonacoEditor({ code, lang, onChange }: { code: string; lang: string; onChange: (v: string) => void }) {
+  const [Editor, setEditor] = React.useState<any>(null);
+  React.useEffect(() => {
+    import('@monaco-editor/react').then(m => setEditor(() => m.default));
+  }, []);
+  if (!Editor) return <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--fg-text3)', fontSize:12, height:'100%' }}>Loading editor…</div>;
+  return (
+    <Editor
+      height="100%"
+      language={lang}
+      value={code}
+      onChange={(v: string | undefined) => onChange(v || '')}
+      theme="vs-dark"
+      options={{ fontSize: 13, minimap: { enabled: false }, scrollBeyondLastLine: false, wordWrap: 'on', automaticLayout: true }}
+    />
+  );
+}
+
+// --- Compute unified diff -----------------------------------------------------
+function computeDiff(oldText: string, newText: string): string {
+  const oldLines = oldText.split('\n');
+  const newLines = newText.split('\n');
+  const lines: string[] = ['--- before', '+++ after', `@@ -1,${oldLines.length} +1,${newLines.length} @@`];
+  let i = 0, j = 0;
+  while (i < oldLines.length || j < newLines.length) {
+    if (i < oldLines.length && j < newLines.length && oldLines[i] === newLines[j]) {
+      lines.push(' ' + oldLines[i]); i++; j++;
+    } else if (j < newLines.length && (i >= oldLines.length || oldLines[i] !== newLines[j])) {
+      lines.push('+' + newLines[j]); j++;
+    } else {
+      lines.push('-' + oldLines[i]); i++;
+    }
+    if (lines.length > 2000) { lines.push('… (truncated)'); break; }
+  }
+  return lines.join('\n');
 }
 
 // --- Main App -----------------------------------------------------------------
@@ -1048,7 +1093,25 @@ export default function ForgeApp() {
   // Attached folders/files (bottom bar)
   const [attachedFolders, setAttachedFolders] = useState<string[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<{name:string;content:string}[]>([]);
+  const [chatImages, setChatImages] = useState<{name:string;data:string;mediaType:string;preview:string}[]>([]);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const [editorCode, setEditorCode] = useState('// Start coding here...\n');
+  const [editorLang, setEditorLang] = useState('javascript');
+  const [editorFile, setEditorFile] = useState('untitled.js');
+  const [editorOutput, setEditorOutput] = useState('');
+  const [editorRunning, setEditorRunning] = useState(false);
+  const [canvasOpen, setCanvasOpen] = useState(false);
+  const [csvData, setCsvData] = useState<{headers:string[];rows:string[][]}|null>(null);
+  const [csvFile, setCsvFile] = useState<string>('');
+  const [csvAnalysis, setCsvAnalysis] = useState('');
+  const [csvAnalyzing, setCsvAnalyzing] = useState(false);
+  const [diffOld, setDiffOld] = useState('');
+  const [diffNew, setDiffNew] = useState('');
+  const [patchText, setPatchText] = useState('');
+  const [termSubTab, setTermSubTab] = useState<'terminal'|'editor'|'data'|'diff'>('terminal');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
@@ -1898,10 +1961,13 @@ export default function ForgeApp() {
     // Build content with attached files
     let userContent = input.trim();
     if (attachedFiles.length > 0) {
-      const fileContext = attachedFiles.map(f => `\n\n---\n≡ƒôÄ **${f.name}**:\n\`\`\`\n${f.content}\n\`\`\``).join('');
+      const fileContext = attachedFiles.map(f => `\n\n---\n📄 **${f.name}**:\n\`\`\`\n${f.content}\n\`\`\``).join('');
       userContent += fileContext;
       setAttachedFiles([]); // Clear after send
     }
+    // Capture image attachments for vision
+    const pendingImages = [...chatImages];
+    setChatImages([]);
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
     setAiElapsed(0);
@@ -1974,6 +2040,10 @@ export default function ForgeApp() {
         forge_mode: superMode === 'forgeMagic' ? 'magic' : 'ask',
       };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
+      // Attach images for vision
+      if (pendingImages.length > 0) {
+        body.attachments = pendingImages.map(img => ({ type: 'image', data: img.data, mediaType: img.mediaType, name: img.name }));
+      }
       // Inject stored website credentials so agent can auto-login
       if (webCreds.length > 0) body.web_creds = webCreds.map(c => ({ site: c.site, url: c.url, username: c.username, password: c.password }));
       // Inject desktop context (folder list + browser page) into system prompt when running in desktop app
@@ -2055,10 +2125,12 @@ export default function ForgeApp() {
           return updated;
         });
         applyResp(r);
+        // TTS: read AI response aloud if enabled
+        const aiContent: string = r?.data?.content || '';
+        if (ttsEnabled && aiContent) speakText(aiContent);
         // Track session cost
         if (r?.data?.cost_usd != null) setSessionCost(prev => prev + (r.data.cost_usd || 0) + (r.data.markup_usd || 0));
         // Auto-open sketch panel when AI produces code/HTML artifact
-        const aiContent: string = r?.data?.content || '';
         if (aiContent) {
           const ex = extractCodeBlock(aiContent);
           if (ex?.code && !sketchMode) { setPreviewCode(ex.code); setSketchMode(true); }
@@ -2203,12 +2275,36 @@ export default function ForgeApp() {
     setVoiceActive(true);
   };
 
-  // Speak response using Web Speech Synthesis
-  const speakText = (text: string) => {
-    if (!window.speechSynthesis) return;
-    const utter = new SpeechSynthesisUtterance(text.slice(0, 500));
-    utter.rate = 1.1;
-    window.speechSynthesis.speak(utter);
+  // Speak response — tries OpenAI TTS first, falls back to browser synthesis
+  const speakText = async (text: string) => {
+    if (!ttsEnabled) return;
+    const clean = text.replace(/!\[.*?\]\(.*?\)/g, '').replace(/[#*`_~]/g, '').slice(0, 1000);
+    if (!clean.trim()) return;
+    try {
+      const r = await apiFetch('/tts', { method:'POST', body: JSON.stringify({ text: clean, voice:'nova' }) }, user?.token || '');
+      // apiFetch returns parsed JSON — but TTS returns audio blob, so use raw fetch
+      throw new Error('use raw');
+    } catch {
+      // Raw fetch for binary audio
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app/api';
+        const r2 = await fetch(`${API_BASE}/tts`, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${user?.token||''}` }, body: JSON.stringify({ text: clean, voice:'nova' }) });
+        if (r2.ok) {
+          const blob = await r2.blob();
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          audio.onended = () => URL.revokeObjectURL(url);
+          audio.play();
+          return;
+        }
+      } catch {}
+      // Fallback to browser TTS
+      if (window.speechSynthesis) {
+        const utter = new SpeechSynthesisUtterance(clean.slice(0, 500));
+        utter.rate = 1.1;
+        window.speechSynthesis.speak(utter);
+      }
+    }
   };
 
   // -- Dispatch (multi-agent swarm) -------------------------------------------
@@ -3314,10 +3410,22 @@ export default function ForgeApp() {
                   {attachedFiles.length > 0 && (
                     <div style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:5, padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:16 }}>
-                        <span style={{ fontSize:11 }}>≡ƒôÄ</span>
+                        <span style={{ fontSize:11 }}>📄</span>
                         <span style={{ fontSize:11, color:'var(--fg-text2)' }}>{attachedFiles.length} file{attachedFiles.length!==1?'s':''} attached</span>
-                        <button onClick={() => setAttachedFiles([])} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0, lineHeight:1, marginLeft:2 }} title="Remove all">├ù</button>
+                        <button onClick={() => setAttachedFiles([])} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:0, lineHeight:1, marginLeft:2 }} title="Remove all">×</button>
                       </div>
+                    </div>
+                  )}
+                  {/* Image previews */}
+                  {chatImages.length > 0 && (
+                    <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8, flexWrap:'wrap' }}>
+                      {chatImages.map((img, idx) => (
+                        <div key={idx} style={{ position:'relative', width:60, height:60, borderRadius:8, overflow:'hidden', border:'1px solid var(--fg-border2)', flexShrink:0 }}>
+                          <img src={img.preview} alt={img.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                          <button onClick={() => setChatImages(prev => prev.filter((_,i) => i !== idx))} style={{ position:'absolute', top:2, right:2, background:'rgba(0,0,0,0.7)', border:'none', borderRadius:'50%', color:'#fff', cursor:'pointer', fontSize:11, width:18, height:18, display:'flex', alignItems:'center', justifyContent:'center', padding:0, lineHeight:1 }}>×</button>
+                        </div>
+                      ))}
+                      <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{chatImages.length} image{chatImages.length!==1?'s':''} — will be sent as vision</span>
                     </div>
                   )}
                   <div style={{ position:'relative', background:'var(--fg-bg3)', border:`1px solid ${slashOpen ? 'var(--fg-border3)' : 'var(--fg-border2)'}`, borderRadius:12, overflow:'visible' }}>
@@ -3417,12 +3525,40 @@ export default function ForgeApp() {
                         <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display:'none' }} onChange={async e => {
                           const files = Array.from(e.target.files || []);
                           for (const file of files) {
-                            const text = await file.text().catch(() => `[Binary file: ${file.name}]`);
-                            setAttachedFiles(prev => [...prev, { name: file.name, content: text.slice(0, 50000) }]);
+                            if (file.type.startsWith('image/')) {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                const dataUrl = ev.target?.result as string;
+                                const base64 = dataUrl.split(',')[1];
+                                setChatImages(prev => [...prev, { name: file.name, data: base64, mediaType: file.type, preview: dataUrl }]);
+                              };
+                              reader.readAsDataURL(file);
+                            } else {
+                              const text = await file.text().catch(() => `[Binary file: ${file.name}]`);
+                              setAttachedFiles(prev => [...prev, { name: file.name, content: text.slice(0, 50000) }]);
+                            }
                           }
                           e.target.value = '';
                         }} />
-                        <button onClick={() => fileInputRef.current?.click()} title="Attach files" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒôÄ {attachedFiles.length > 0 ? `${attachedFiles.length}` : 'Files'}</button>
+                        {/* Hidden image-only input */}
+                        <input ref={imageInputRef} type="file" multiple accept="image/*" style={{ display:'none' }} onChange={async e => {
+                          const files = Array.from(e.target.files || []);
+                          for (const file of files) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              const dataUrl = ev.target?.result as string;
+                              const base64 = dataUrl.split(',')[1];
+                              setChatImages(prev => [...prev, { name: file.name, data: base64, mediaType: file.type, preview: dataUrl }]);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                          e.target.value = '';
+                        }} />
+                        <button onClick={() => fileInputRef.current?.click()} title="Attach files / images" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📎 {(attachedFiles.length + chatImages.length) > 0 ? `${attachedFiles.length + chatImages.length}` : 'Files'}</button>
+                        {/* Image attach shortcut */}
+                        <button onClick={() => imageInputRef.current?.click()} title="Attach image for vision" style={{ padding:'4px 8px', background: chatImages.length > 0 ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${chatImages.length > 0 ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: chatImages.length > 0 ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>🖼️</button>
+                        {/* TTS toggle */}
+                        <button onClick={() => setTtsEnabled(p => !p)} title={ttsEnabled ? 'TTS on — click to disable' : 'Enable voice output'} style={{ padding:'4px 8px', background: ttsEnabled ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${ttsEnabled ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: ttsEnabled ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>🔊</button>
                         {/* Quick right panel buttons */}
                         <button onClick={() => { setRightTab('context'); setRightExpanded(true); }} title="Context usage" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>≡ƒôè</button>
                         <button onClick={() => { setRightTab('live'); setRightExpanded(true); }} title={liveEvents[0]?.message || 'Live activity'} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: sending ? 'var(--fg-odim)' : liveEvents.length > 0 ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${sending ? 'var(--fg-orange)' : liveEvents.length > 0 ? 'var(--fg-odim2)' : 'var(--fg-border2)'}`, borderRadius:6, color: sending ? 'var(--fg-orange2)' : liveEvents.length > 0 ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, maxWidth:160, overflow:'hidden' }}>
@@ -4168,27 +4304,147 @@ export default function ForgeApp() {
 
                     {/* TERMINAL -- Forge Terminal */}
                     {rightTab==='terminal' && (
-                      <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden', background:'var(--fg-bg)', fontFamily:'ui-monospace,monospace' }}>
-                        <div style={{ padding:'6px 10px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-                          <span style={{ fontSize:12, color:'var(--fg-green)', fontWeight:600 }}>ΓÜí Forge Terminal</span>
-                          <button onClick={() => setTerminalLines([{ text:'ΓÜí Forge Terminal -- cleared', type:'system' }])} style={{ marginLeft:'auto', padding:'2px 8px', background:'none', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>Clear</button>
-                        </div>
-                        <div style={{ flex:1, overflowY:'auto', padding:'8px 12px', display:'flex', flexDirection:'column', gap:2 }}>
-                          {terminalLines.map((line, i) => (
-                            <div key={i} style={{ fontSize:12, lineHeight:1.5, color: line.type === 'input' ? 'var(--fg-orange2)' : line.type === 'error' ? 'var(--fg-red)' : line.type === 'system' ? 'var(--fg-orange2)' : 'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-all' }}>{line.text}</div>
+                      <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden', background:'var(--fg-bg)' }}>
+                        {/* Sub-tab bar */}
+                        <div style={{ display:'flex', gap:0, background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', flexShrink:0 }}>
+                          {([['terminal','⚡ Terminal'],['editor','📝 Editor'],['data','📊 Data'],['diff','🔀 Diff']] as const).map(([tab, label]) => (
+                            <button key={tab} onClick={() => setTermSubTab(tab as any)} style={{ padding:'6px 12px', background: termSubTab===tab ? 'var(--fg-bg)' : 'transparent', border:'none', borderBottom: termSubTab===tab ? '2px solid var(--fg-orange)' : '2px solid transparent', color: termSubTab===tab ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600, transition:'all 0.15s' }}>{label}</button>
                           ))}
-                          {terminalRunning && <div style={{ fontSize:12, color:'var(--fg-orange)', animation:'pulse 1s infinite' }}>ΓÜí RunningΓÇª</div>}
-                          <div ref={terminalEndRef} />
                         </div>
-                        <div style={{ padding:'8px 12px', borderTop:'1px solid var(--fg-border)', display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
-                          <span style={{ fontSize:12, color:'var(--fg-green)', fontWeight:700, flexShrink:0 }}>$</span>
-                          <input ref={terminalInputRef} value={terminalInput} onChange={e => setTerminalInput(e.target.value)} onKeyDown={e => {
-                            if (e.key === 'Enter' && terminalInput.trim()) { runTerminalCommand(terminalInput); }
-                            else if (e.key === 'ArrowUp') { const idx = Math.min(terminalHistoryIdx + 1, terminalHistory.length - 1); setTerminalHistoryIdx(idx); setTerminalInput(terminalHistory[idx] || ''); e.preventDefault(); }
-                            else if (e.key === 'ArrowDown') { const idx = Math.max(terminalHistoryIdx - 1, -1); setTerminalHistoryIdx(idx); setTerminalInput(idx === -1 ? '' : terminalHistory[idx]); e.preventDefault(); }
-                          }} placeholder="type command..." disabled={terminalRunning} style={{ flex:1, background:'transparent', border:'none', color:'var(--fg-text)', fontSize:12, outline:'none', fontFamily:'ui-monospace,monospace' }} autoComplete="off" spellCheck={false} />
-                          <button onClick={() => runTerminalCommand(terminalInput)} disabled={!terminalInput.trim() || terminalRunning} style={{ padding:'4px 8px', background:'var(--fg-orange)', border:'none', borderRadius:4, color:'#fff', cursor:'pointer', fontSize:12, opacity: terminalInput.trim() && !terminalRunning ? 1 : 0.4 }}>Γåæ</button>
-                        </div>
+
+                        {/* TERMINAL */}
+                        {termSubTab==='terminal' && (
+                          <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', fontFamily:'ui-monospace,monospace' }}>
+                            <div style={{ flex:1, overflowY:'auto', padding:'8px 12px', display:'flex', flexDirection:'column', gap:2 }}>
+                              {terminalLines.map((line, i) => (
+                                <div key={i} style={{ fontSize:12, lineHeight:1.5, color: line.type === 'input' ? 'var(--fg-orange2)' : line.type === 'error' ? 'var(--fg-red)' : line.type === 'system' ? 'var(--fg-orange2)' : 'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-all' }}>{line.text}</div>
+                              ))}
+                              {terminalRunning && <div style={{ fontSize:12, color:'var(--fg-orange)', animation:'pulse 1s infinite' }}>⚡ Running…</div>}
+                              <div ref={terminalEndRef} />
+                            </div>
+                            <div style={{ padding:'8px 12px', borderTop:'1px solid var(--fg-border)', display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
+                              <span style={{ fontSize:12, color:'var(--fg-green)', fontWeight:700, flexShrink:0 }}>$</span>
+                              <input ref={terminalInputRef} value={terminalInput} onChange={e => setTerminalInput(e.target.value)} onKeyDown={e => {
+                                if (e.key === 'Enter' && terminalInput.trim()) { runTerminalCommand(terminalInput); }
+                                else if (e.key === 'ArrowUp') { const idx = Math.min(terminalHistoryIdx + 1, terminalHistory.length - 1); setTerminalHistoryIdx(idx); setTerminalInput(terminalHistory[idx] || ''); e.preventDefault(); }
+                                else if (e.key === 'ArrowDown') { const idx = Math.max(terminalHistoryIdx - 1, -1); setTerminalHistoryIdx(idx); setTerminalInput(idx === -1 ? '' : terminalHistory[idx]); e.preventDefault(); }
+                              }} placeholder="type command..." disabled={terminalRunning} style={{ flex:1, background:'transparent', border:'none', color:'var(--fg-text)', fontSize:12, outline:'none', fontFamily:'ui-monospace,monospace' }} autoComplete="off" spellCheck={false} />
+                              <button onClick={() => setTerminalLines([{ text:'⚡ Forge Terminal — cleared', type:'system' }])} style={{ padding:'3px 7px', background:'none', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>Clear</button>
+                              <button onClick={() => runTerminalCommand(terminalInput)} disabled={!terminalInput.trim() || terminalRunning} style={{ padding:'4px 8px', background:'var(--fg-orange)', border:'none', borderRadius:4, color:'#fff', cursor:'pointer', fontSize:12, opacity: terminalInput.trim() && !terminalRunning ? 1 : 0.4 }}>↵</button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* MONACO EDITOR */}
+                        {termSubTab==='editor' && (
+                          <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
+                            {/* Editor toolbar */}
+                            <div style={{ display:'flex', gap:6, padding:'6px 10px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', alignItems:'center', flexShrink:0, flexWrap:'wrap' }}>
+                              <input value={editorFile} onChange={e => setEditorFile(e.target.value)} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text)', fontSize:11, padding:'2px 8px', width:140 }} placeholder="filename.js" />
+                              <select value={editorLang} onChange={e => setEditorLang(e.target.value)} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text)', fontSize:11, padding:'2px 6px' }}>
+                                {['javascript','typescript','python','html','css','json','markdown','bash','rust','go','java','cpp','c','sql','yaml','dockerfile'].map(l => <option key={l} value={l}>{l}</option>)}
+                              </select>
+                              <button onClick={async () => {
+                                if (!user || editorRunning) return;
+                                setEditorRunning(true); setEditorOutput('Running…');
+                                try {
+                                  const r = await apiFetch('/terminal/exec', { method:'POST', body: JSON.stringify({ command: editorLang === 'python' ? `python3 -c ${JSON.stringify(editorCode)}` : `node -e ${JSON.stringify(editorCode)}` }) }, user.token);
+                                  setEditorOutput(r.output || r.error || '(no output)');
+                                } catch(e:any) { setEditorOutput(e.message); }
+                                setEditorRunning(false);
+                              }} disabled={editorRunning} style={{ padding:'3px 10px', background:'var(--fg-orange)', border:'none', borderRadius:4, color:'#fff', cursor:'pointer', fontSize:11, fontWeight:600, opacity:editorRunning?0.5:1 }}>▶ Run</button>
+                              <button onClick={() => { const blob = new Blob([editorCode],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=editorFile; a.click(); }} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>⬇ Save</button>
+                              <button onClick={() => { setInput(`Here is my ${editorLang} code:\n\`\`\`${editorLang}\n${editorCode}\n\`\`\`\n\nPlease review and improve.`); setMainTab('workspace'); }} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>→ Ask AI</button>
+                            </div>
+                            {/* Monaco editor lazy-loaded */}
+                            <div style={{ flex:1, overflow:'hidden', position:'relative' }}>
+                              <MonacoEditor code={editorCode} lang={editorLang} onChange={setEditorCode} />
+                            </div>
+                            {/* Output panel */}
+                            {editorOutput && (
+                              <div style={{ maxHeight:150, overflowY:'auto', padding:'8px 12px', background:'rgba(0,0,0,0.5)', borderTop:'1px solid var(--fg-border)', fontFamily:'ui-monospace,monospace', fontSize:11, color:'var(--fg-text)', whiteSpace:'pre-wrap' }}>
+                                <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:4 }}>OUTPUT</div>
+                                {editorOutput}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* DATA ANALYSIS (CSV/Excel) */}
+                        {termSubTab==='data' && (
+                          <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
+                            <div style={{ padding:'8px 12px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', display:'flex', gap:8, alignItems:'center', flexShrink:0 }}>
+                              <span style={{ fontSize:12, fontWeight:600, color:'var(--fg-text)' }}>📊 Data Analysis</span>
+                              <button onClick={() => { const inp = document.createElement('input'); inp.type='file'; inp.accept='.csv,.xlsx,.xls,.tsv'; inp.onchange = async (ev:any) => {
+                                const file = ev.target.files[0]; if (!file) return;
+                                const text = await file.text();
+                                setCsvFile(file.name);
+                                // Parse CSV
+                                const lines = text.split('\n').filter((l: string) => l.trim());
+                                const sep = text.includes('\t') ? '\t' : ',';
+                                const headers = lines[0].split(sep).map((h: string) => h.trim().replace(/^"|"$/g,''));
+                                const rows = lines.slice(1).map((l: string) => l.split(sep).map((c: string) => c.trim().replace(/^"|"$/g,'')));
+                                setCsvData({ headers, rows });
+                                setCsvAnalysis('');
+                              }; inp.click(); }} style={{ padding:'4px 10px', background:'var(--fg-orange)', border:'none', borderRadius:4, color:'#fff', cursor:'pointer', fontSize:11 }}>📂 Load CSV/Excel</button>
+                              {csvData && <button onClick={async () => {
+                                if (!user || csvAnalyzing || !csvData) return;
+                                setCsvAnalyzing(true);
+                                const preview = [csvData.headers.join(','), ...csvData.rows.slice(0,20).map(r => r.join(','))].join('\n');
+                                try {
+                                  const r = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages:[{role:'user',content:`Analyze this CSV data (${csvData.rows.length} rows):\n\`\`\`csv\n${preview}\n\`\`\`\n\nProvide: summary stats, key insights, anomalies, trends.`}], model: selectedModel }) }, user.token);
+                                  setCsvAnalysis(r?.data?.response || r?.choices?.[0]?.message?.content || 'No analysis');
+                                } catch(e:any) { setCsvAnalysis('Error: ' + e.message); }
+                                setCsvAnalyzing(false);
+                              }} disabled={csvAnalyzing} style={{ padding:'4px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11, opacity:csvAnalyzing?0.5:1 }}>🤖 {csvAnalyzing?'Analyzing…':'AI Analyze'}</button>}
+                              {csvData && <button onClick={() => { setInput(`Analyze this dataset:\n\`\`\`csv\n${[csvData.headers.join(','),...csvData.rows.slice(0,50).map(r=>r.join(','))].join('\n')}\n\`\`\``); setMainTab('workspace'); }} style={{ padding:'4px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>→ Chat</button>}
+                            </div>
+                            <div style={{ flex:1, overflow:'auto', padding:8 }}>
+                              {!csvData && <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>Load a CSV or Excel file to analyze</div>}
+                              {csvData && (
+                                <div>
+                                  <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:6 }}>{csvFile} — {csvData.rows.length} rows × {csvData.headers.length} cols</div>
+                                  <div style={{ overflowX:'auto' }}>
+                                    <table style={{ borderCollapse:'collapse', fontSize:11, width:'100%', minWidth:400 }}>
+                                      <thead><tr>{csvData.headers.map((h,i) => <th key={i} style={{ padding:'4px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', color:'var(--fg-orange)', fontWeight:700, textAlign:'left', whiteSpace:'nowrap' }}>{h}</th>)}</tr></thead>
+                                      <tbody>{csvData.rows.slice(0,100).map((row,ri) => <tr key={ri}>{row.map((cell,ci) => <td key={ci} style={{ padding:'3px 8px', border:'1px solid var(--fg-border)', color:'var(--fg-text2)', whiteSpace:'nowrap', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis' }}>{cell}</td>)}</tr>)}</tbody>
+                                    </table>
+                                  </div>
+                                  {csvAnalysis && <div style={{ marginTop:12, padding:10, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, fontSize:12, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.5 }}><div style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:700, marginBottom:6 }}>AI ANALYSIS</div>{csvAnalysis}</div>}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* DIFF / PATCH */}
+                        {termSubTab==='diff' && (
+                          <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
+                            <div style={{ padding:'6px 10px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', display:'flex', gap:8, alignItems:'center', flexShrink:0, fontSize:12, fontWeight:600, color:'var(--fg-text)' }}>
+                              🔀 File Diff & Patch
+                              <button onClick={() => { const d = computeDiff(diffOld, diffNew); setPatchText(d); }} style={{ marginLeft:'auto', padding:'3px 10px', background:'var(--fg-orange)', border:'none', borderRadius:4, color:'#fff', cursor:'pointer', fontSize:11 }}>Compute Diff</button>
+                              <button onClick={() => { if (patchText) navigator.clipboard.writeText(patchText); }} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>📋 Copy Patch</button>
+                            </div>
+                            <div style={{ flex:1, display:'flex', gap:0, overflow:'hidden' }}>
+                              <div style={{ flex:1, display:'flex', flexDirection:'column', borderRight:'1px solid var(--fg-border)', overflow:'hidden' }}>
+                                <div style={{ padding:'4px 8px', fontSize:10, color:'var(--fg-red)', fontWeight:600, background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)' }}>BEFORE</div>
+                                <textarea value={diffOld} onChange={e => setDiffOld(e.target.value)} style={{ flex:1, background:'var(--fg-bg)', border:'none', color:'var(--fg-text)', fontSize:11, padding:8, resize:'none', outline:'none', fontFamily:'ui-monospace,monospace', lineHeight:1.5 }} placeholder="Paste original code here…" />
+                              </div>
+                              <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+                                <div style={{ padding:'4px 8px', fontSize:10, color:'var(--fg-green)', fontWeight:600, background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)' }}>AFTER</div>
+                                <textarea value={diffNew} onChange={e => setDiffNew(e.target.value)} style={{ flex:1, background:'var(--fg-bg)', border:'none', color:'var(--fg-text)', fontSize:11, padding:8, resize:'none', outline:'none', fontFamily:'ui-monospace,monospace', lineHeight:1.5 }} placeholder="Paste new code here…" />
+                              </div>
+                            </div>
+                            {patchText && (
+                              <div style={{ maxHeight:200, overflowY:'auto', padding:8, background:'rgba(0,0,0,0.5)', borderTop:'1px solid var(--fg-border)', fontFamily:'ui-monospace,monospace', fontSize:11 }}>
+                                <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:4 }}>PATCH (unified diff)</div>
+                                {patchText.split('\n').map((line, i) => (
+                                  <div key={i} style={{ color: line.startsWith('+') ? 'var(--fg-green)' : line.startsWith('-') ? 'var(--fg-red)' : line.startsWith('@@') ? 'var(--fg-orange)' : 'var(--fg-text3)', whiteSpace:'pre' }}>{line}</div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -6875,19 +7131,20 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* ╬ô├╢├ç╬ô├╢├ç Intelligence ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç */}
+        {/* Intelligence Tab */}
+        {/* Intelligence Tab */}
         {mainTab === 'intelligence' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:860, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>Γëí╞Æ┬║├í</span>
+                <span style={{ fontSize:36 }}>🧠</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Intelligence Layer</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Your AI's knowledge graph ╬ô├ç├╢ harvest context, browse memories, and measure intelligence growth.</p>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Memory graph, context, and knowledge nodes.</p>
                 </div>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
-                {[{icon:'Γëí╞Æ├┤├¿',label:'Intelligence Score',value:'--',color:'var(--fg-orange)'},{icon:'Γëí╞Æ┬║ΓîÉ',label:'Memory Nodes',value:igNodes.length.toString(),color:'#6366f1'},{icon:'Γëí╞Æ├╢├╣',label:'Connections',value:(igNodes.length * 2).toString(),color:'#22c55e'}].map(s => (
+                {[{icon:'🧠',label:'Intelligence Score',value:'--',color:'var(--fg-orange)'},{icon:'💡',label:'Memory Nodes',value:igNodes.length.toString(),color:'#6366f1'},{icon:'🔗',label:'Connections',value:(igNodes.length*2).toString(),color:'#22c55e'}].map(s => (
                   <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, textAlign:'center' }}>
                     <div style={{ fontSize:28, marginBottom:6 }}>{s.icon}</div>
                     <div style={{ fontSize:26, fontWeight:800, color:s.color, marginBottom:4 }}>{s.value}</div>
@@ -6895,236 +7152,26 @@ export default function ForgeApp() {
                   </div>
                 ))}
               </div>
-              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Γëí╞Æ┬║ΓîÉ Memory Graph</h3>
-                  <div style={{ display:'flex', gap:8 }}>
-                    <input value={igQuery} onChange={e => setIgQuery(e.target.value)} placeholder="Search memories╬ô├ç┬¬"
-                      style={{ padding:'7px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12, width:180 }} />
-                    <button onClick={async () => {
-                      setIgLoading(true);
-                      try {
-                        const d = await apiFetch('/superagent/memory', {}, user?.token);
-                        const mems = d?.data || d || [];
-                        setIgNodes(Array.isArray(mems) ? mems.slice(0,40).map((m:any,i:number) => ({ id:`node-${i}`, label: m.key || m.content?.slice(0,40) || `Memory ${i+1}`, type: m.type || 'memory', weight: m.weight || 1 })) : []);
-                      } catch { setIgNodes([]); }
-                      setIgLoading(false);
-                    }} style={{ padding:'7px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>
-                      {igLoading ? '╬ô╞ÆΓöé' : 'Γëí╞Æ├╢├ñ Load'}
-                    </button>
-                  </div>
-                </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', marginBottom:12 }}>Knowledge Graph</div>
                 {igNodes.length === 0 ? (
-                  <div style={{ textAlign:'center', padding:'32px 0' }}>
-                    <div style={{ fontSize:32, marginBottom:10 }}>Γëí╞Æ┬║├í</div>
-                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No memory nodes loaded. Click Load to fetch your knowledge graph.</p>
-                  </div>
+                  <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)', fontSize:13 }}>No intelligence data yet. Start chatting to build your knowledge graph.</div>
                 ) : (
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:10 }}>
-                    {igNodes.filter(n => !igQuery || n.label.toLowerCase().includes(igQuery.toLowerCase())).slice(0,24).map(n => (
-                      <div key={n.id} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, padding:10, cursor:'pointer' }}
-                        onClick={() => setIgQuery(n.label)}>
-                        <div style={{ fontSize:10, fontWeight:700, color:'var(--fg-orange)', textTransform:'uppercase', marginBottom:4 }}>{n.type}</div>
-                        <div style={{ fontSize:12, color:'var(--fg-text)', lineHeight:1.4 }}>{n.label}</div>
-                      </div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                    {igNodes.map((n:any, i:number) => (
+                      <div key={i} style={{ padding:'6px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:20, fontSize:12, color:'var(--fg-text2)' }}>{n.label || n.id || String(n).slice(0,40)}</div>
                     ))}
                   </div>
                 )}
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
-                {[{icon:'Γëí╞Æ├«Γò¢',title:'Harvest Context',desc:'Extract and index knowledge from your recent conversations',action:'Harvest Now',color:'var(--fg-orange)'},{icon:'Γëí╞Æ├╢├╣',title:'Build Connections',desc:'Automatically link related memories and create knowledge clusters',action:'Auto-Link',color:'#6366f1'},{icon:'Γëí╞Æ├┤├æ',title:'Import Knowledge',desc:'Upload documents, PDFs, or paste text to add to your knowledge base',action:'Import',color:'#22c55e'},{icon:'Γëí╞Æ├┤├▒',title:'Export Graph',desc:'Download your knowledge graph as JSON or Markdown',action:'Export',color:'#f59e0b'}].map(f => (
-                  <div key={f.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16 }}>
-                    <div style={{ fontSize:22, marginBottom:8 }}>{f.icon}</div>
-                    <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>{f.title}</div>
-                    <div style={{ fontSize:12, color:'var(--fg-text3)', lineHeight:1.4, marginBottom:12 }}>{f.desc}</div>
-                    <button style={{ padding:'6px 14px', background:f.color, border:'none', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>{f.action}</button>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         )}
 
-        {/* ╬ô├╢├ç╬ô├╢├ç Agent Swarm ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç */}
-        {/* -- ForgeASI ---------------------------------------------------- */}
-        {mainTab === 'forgeasi' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:860, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
-                <span style={{ fontSize:36 }}>🌌</span>
-                <div>
-                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeASI</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Extended Parallel Intelligence Chains — run deep, multi-step reasoning across thousands of parallel paths.</p>
-                </div>
-              </div>
-              <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.15),rgba(99,102,241,0.04))', border:'1px solid #6366f1', borderRadius:16, padding:32, textAlign:'center', marginBottom:24 }}>
-                <div style={{ fontSize:48, marginBottom:12 }}>🧠</div>
-                <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:800, color:'var(--fg-text)' }}>EPIC — Extended Parallel Intelligence Chains</h2>
-                <p style={{ margin:'0 0 20px', fontSize:14, color:'var(--fg-text3)', maxWidth:520, marginLeft:'auto', marginRight:'auto' }}>
-                  ForgeASI decomposes complex goals into thousands of parallel reasoning threads, synthesizes results, and iterates until convergence.
-                </p>
-                <div style={{ display:'flex', gap:16, justifyContent:'center', flexWrap:'wrap', marginBottom:24 }}>
-                  {[['🔀 Parallel Chains','Run 100s of reasoning paths simultaneously'],['🔁 Auto-Iteration','Iterate until goal is fully satisfied'],['🧬 Self-Reflection','Agents critique and improve each other'],['🌐 Web-Augmented','Real-time knowledge retrieval per chain']].map(([title,desc])=>(
-                    <div key={title as string} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'14px 18px', maxWidth:200, textAlign:'left' }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:4 }}>{title}</div>
-                      <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{desc}</div>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => setMainTab('swarm')} style={{ padding:'12px 32px', background:'#6366f1', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>
-                  🌌 Launch ForgeASI via Agent Swarm
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* -- ForgeMULTI -------------------------------------------------- */}
-        {(mainTab as string) === 'forgemulti' && (() => {
-          const MULTI_MODELS = ['claude-3-5-sonnet-20241022','gpt-4o','gemini-1.5-pro','mistral-large-latest','llama-3.1-70b-versatile'];
-          return (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:1100, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
-                <span style={{ fontSize:36 }}>🔀</span>
-                <div>
-                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeMulti</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Multi-model consensus — run the same prompt across all your models and compare outputs side by side.</p>
-                </div>
-              </div>
-              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
-                <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Prompt</label>
-                <textarea value={multiComparePrompt} onChange={e => setMultiComparePrompt(e.target.value)} placeholder="Enter your prompt to run across all models…" style={{ width:'100%', minHeight:100, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' as any, marginBottom:12 }} />
-                <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
-                  {MULTI_MODELS.map(m=>(
-                    <span key={m} style={{ fontSize:11, padding:'4px 10px', background:'rgba(251,146,60,0.1)', border:'1px solid rgba(251,146,60,0.3)', borderRadius:20, color:'var(--fg-orange)', fontWeight:600 }}>{m}</span>
-                  ))}
-                </div>
-                <button onClick={async () => {
-                  if (!multiComparePrompt.trim() || !user) return;
-                  setMultiCompareResults([]);
-                  setMultiCompareLoading(true);
-                  const prompt = multiComparePrompt.trim();
-                  await Promise.all(MULTI_MODELS.map(async (model) => {
-                    try {
-                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ message: prompt, model, thread_id: null, stream: false }) }, user.token);
-                      const text = d?.response || d?.content || d?.message || JSON.stringify(d);
-                      setMultiCompareResults(prev => [...prev, { model, text, error: false }]);
-                    } catch (e: any) {
-                      setMultiCompareResults(prev => [...prev, { model, text: e.message || 'Error', error: true }]);
-                    }
-                  }));
-                  setMultiCompareLoading(false);
-                }} disabled={!multiComparePrompt.trim() || multiCompareLoading} style={{ padding:'10px 28px', background: multiModel.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor: multiModel.trim() ? 'pointer' : 'default' }}>
-                  {multiCompareLoading ? '⏳ Running…' : '🔀 Run Multi-Model Comparison'}
-                </button>
-              </div>
-              {multiCompareLoading && (
-                <div style={{ textAlign:'center', padding:'20px 0', color:'var(--fg-text3)', fontSize:13 }}>Running across {MULTI_MODELS.length} models in parallel…</div>
-              )}
-              {multiCompareResults.length > 0 && (
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px, 1fr))', gap:16 }}>
-                  {multiCompareResults.map((r, i) => (
-                    <div key={i} style={{ background:'var(--fg-bg2)', border:`1px solid ${r.error ? 'var(--fg-red,#ef4444)' : 'var(--fg-border)'}`, borderRadius:12, padding:16 }}>
-                      <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', marginBottom:8, textTransform:'uppercase', letterSpacing:'0.5px' }}>{r.model}</div>
-                      <div style={{ fontSize:13, color: r.error ? 'var(--fg-red,#ef4444)' : 'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{r.text}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {!multiCompareLoading && multiCompareResults.length === 0 && (
-                <div style={{ textAlign:'center', padding:'40px 0', color:'var(--fg-text3)', fontSize:13 }}>Run a prompt above to see side-by-side model outputs.</div>
-              )}
-            </div>
-          </div>
-          );
-        })()}
-
-        {/* -- Agent Swarm ------------------------------------------------- */}
-        {mainTab === 'swarm' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:900, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>Γëí╞Æ├ë┬Ñ</span>
-                <div>
-                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Agent Swarm</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Deploy a swarm of specialist AI agents in parallel, then synthesize their outputs into one unified response.</p>
-                </div>
-              </div>
-              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
-                <div style={{ display:'flex', gap:16, marginBottom:16, alignItems:'flex-end', flexWrap:'wrap' }}>
-                  <div style={{ flex:1, minWidth:200 }}>
-                    <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Number of Agents</label>
-                    <div style={{ display:'flex', gap:6 }}>
-                      {[3,5,8,12,20].map(n => (
-                        <button key={n} onClick={() => setSwarmAgentCount(n)}
-                          style={{ padding:'7px 13px', background: swarmAgentCount===n ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${swarmAgentCount===n?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:7, color: swarmAgentCount===n?'#fff':'var(--fg-text2)', fontSize:12, fontWeight: swarmAgentCount===n?700:400, cursor:'pointer' }}>
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Task for the Swarm</label>
-                <textarea value={swarmTask} onChange={e => setSwarmTask(e.target.value)} placeholder="Describe the task you want the swarm to work on in parallel╬ô├ç┬¬"
-                  style={{ width:'100%', minHeight:100, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:12 }} />
-                <button onClick={async () => {
-                  if (!swarmTask.trim() || swarmRunning) return;
-                  setSwarmRunning(true); setSwarmSynthesis(''); 
-                  const specialistRoles = ['Strategic Analyst','Creative Thinker','Devil\'s Advocate','Domain Expert','Risk Assessor','Implementation Specialist','User Advocate','Data Scientist','Systems Architect','Ethicist','Marketing Strategist','Financial Analyst','Legal Reviewer','Technical Lead','Product Manager','UX Designer','Security Expert','Operations Manager','Growth Hacker','Customer Success'];
-                  const roles = specialistRoles.slice(0, swarmAgentCount);
-                  const initial = roles.map((role, i) => ({ agentId:`agent-${i}`, role, result:'', tokens:0, done:false }));
-                  setSwarmResults(initial);
-                  await Promise.all(roles.map(async (role, i) => {
-                    const prompt = `You are a ${role}. Analyze the following task from your specific expertise as a ${role}:\n\n${swarmTask}\n\nProvide your expert analysis in 2-3 focused paragraphs. Be specific, actionable, and bring your unique ${role} perspective.`;
-                    try {
-                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: prompt}], model: selectedModel }) }, user?.token);
-                      const result = d?.choices?.[0]?.message?.content || d?.data?.content || 'No response';
-                      setSwarmResults(prev => prev.map((r,j) => j===i ? { ...r, result, done:true, tokens: result.length/4|0 } : r));
-                    } catch(e:any) {
-                      setSwarmResults(prev => prev.map((r,j) => j===i ? { ...r, result:`Error: ${e.message}`, done:true } : r));
-                    }
-                  }));
-                  setSwarmResults(prev => {
-                    const synPrompt = `You are a master synthesizer. ${prev.length} specialist agents have analyzed this task:\n\n"${swarmTask}"\n\nTheir outputs:\n${prev.map(r=>`## ${r.role}\n${r.result}`).join('\n\n')}\n\nSynthesize all perspectives into a single comprehensive response. Highlight consensus, key tensions, and the most important actionable insights.`;
-                    apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: synPrompt}], model: selectedModel }) }, user?.token)
-                      .then(d => setSwarmSynthesis(d?.choices?.[0]?.message?.content || d?.data?.content || ''))
-                      .catch(() => {})
-                      .finally(() => setSwarmRunning(false));
-                    return prev;
-                  });
-                }} disabled={swarmRunning || !swarmTask.trim()}
-                  style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(swarmRunning||!swarmTask.trim())?0.5:1 }}>
-                  {swarmRunning ? `Γëí╞Æ├ë┬Ñ ${swarmResults.filter(r=>r.done).length}/${swarmAgentCount} agents done╬ô├ç┬¬` : `Γëí╞Æ├ë┬Ñ Launch ${swarmAgentCount}-Agent Swarm`}
-                </button>
-              </div>
-              {swarmResults.length > 0 && (
-                <div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:14, marginBottom:20 }}>
-                    {swarmResults.map((r, i) => (
-                      <div key={r.agentId} style={{ background:'var(--fg-bg2)', border:`1px solid ${r.done ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:16, opacity: r.done ? 1 : 0.6 }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
-                          <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)' }}>Γëí╞Æ├ë┬Ñ {r.role}</span>
-                          <span style={{ fontSize:10, color: r.done ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{r.done ? `╬ô┬ú├┤ ${r.tokens} tok` : '╬ô╞ÆΓöé Running╬ô├ç┬¬'}</span>
-                        </div>
-                        {r.result ? (
-                          <div style={{ fontSize:12, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:160, overflowY:'auto' }}>{r.result}</div>
-                        ) : (
-                          <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Waiting for agent {i+1}╬ô├ç┬¬</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {swarmSynthesis && (
-                    <div style={{ background:'linear-gradient(135deg,rgba(251,146,60,0.12),rgba(251,146,60,0.04))', border:'1px solid var(--fg-orange)', borderRadius:12, padding:24 }}>
-                      <h3 style={{ margin:'0 0 14px', fontSize:15, fontWeight:700, color:'var(--fg-orange)' }}>Γëí╞Æ├ë┬Ñ Swarm Synthesis ╬ô├ç├╢ {swarmAgentCount} Agent{swarmAgentCount!==1?'s':''}</h3>
-                      <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{swarmSynthesis}</div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+      </div>
+    </div>
+  );
+}
         )}
 
       </div>

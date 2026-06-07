@@ -781,7 +781,7 @@ async function toolShellExec(command: string, cwd?: string, timeoutMs = 15000): 
   });
 }
 
-async function runForgeTool(toolName: string, args: Record<string, any>): Promise<string> {
+async function runForgeTool(toolName: string, args: Record<string, any>, userId?: string): Promise<string> {
   try {
     switch (toolName) {
       case 'web_search': {
@@ -840,6 +840,25 @@ async function runForgeTool(toolName: string, args: Record<string, any>): Promis
       case 'create_artifact': {
         return `Artifact created: ${args.title || 'untitled'}\n\`\`\`${args.language || ''}\n${args.content || ''}\n\`\`\``;
       }
+      case 'image_gen': {
+        const prompt = args.prompt || args.description || '';
+        if (!prompt) return 'No prompt provided';
+        const size = args.size || '1024x1024';
+        const quality = args.quality || 'standard';
+        // Try to get OpenAI key from DB for this user context (passed via closure not available here, use env)
+        const openaiKey = (userId ? getUserKey(userId, 'openai') : null) || process.env.OPENAI_API_KEY || '';
+        if (!openaiKey) return 'Image generation requires an OpenAI API key. Please add your OpenAI key in Settings.';
+        const imgRes = await fetchWithTimeout('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, quality, response_format: 'url' })
+        }, 30000);
+        const imgData: any = await imgRes.json();
+        if (imgData.error) return `Image generation error: ${imgData.error.message}`;
+        const url = imgData.data?.[0]?.url;
+        if (!url) return 'No image URL returned';
+        return `![Generated Image](${url})\n\n${imgData.data?.[0]?.revised_prompt ? `*Prompt: ${imgData.data[0].revised_prompt}*` : ''}`;
+      }
       case 'http_request': {
         const url = args.url || '';
         if (!url) return 'No URL provided';
@@ -866,6 +885,7 @@ const FORGE_TOOLS_ANTHROPIC = [
   { name: 'shell', description: 'Execute a shell command', input_schema: { type: 'object', properties: { command: { type: 'string' }, cwd: { type: 'string' } }, required: ['command'] } },
   { name: 'http_request', description: 'Make an HTTP request to any URL', input_schema: { type: 'object', properties: { url: { type: 'string' }, method: { type: 'string', enum: ['GET','POST','PUT','DELETE','PATCH'] }, headers: { type: 'object' }, body: {} }, required: ['url'] } },
   { name: 'create_artifact', description: 'Create a code or content artifact to display to the user', input_schema: { type: 'object', properties: { title: { type: 'string' }, language: { type: 'string' }, content: { type: 'string' } }, required: ['title', 'content'] } },
+  { name: 'image_gen', description: 'Generate an image using DALL-E 3 from a text prompt', input_schema: { type: 'object', properties: { prompt: { type: 'string', description: 'Detailed description of image to generate' }, size: { type: 'string', enum: ['1024x1024','1792x1024','1024x1792'], description: 'Image dimensions' }, quality: { type: 'string', enum: ['standard','hd'] } }, required: ['prompt'] } },
 ];
 
 // Convert Anthropic tool format to OpenAI function format
@@ -909,7 +929,8 @@ function humanizeToolStep(toolName: string, args: Record<string, any>): { icon: 
 
 async function callAnthropicWithTools(
   apiKey: string, model: string, messages: any[],
-  onToolCall: (name: string, args: any, result: string) => void
+  onToolCall: (name: string, args: any, result: string) => void,
+  userId?: string
 ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
   const msgs = [...messages];
   let promptTokens = 0, completionTokens = 0;
@@ -933,7 +954,7 @@ async function callAnthropicWithTools(
     const toolResults: any[] = [];
     for (const block of d.content) {
       if (block.type === 'tool_use') {
-        const result = await runForgeTool(block.name, block.input);
+        const result = await runForgeTool(block.name, block.input, userId);
         onToolCall(block.name, block.input, result);
         toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
       }
@@ -949,7 +970,9 @@ async function callAnthropicWithTools(
 async function callOpenAICompatWithTools(
   url: string, apiKey: string, model: string, messages: any[],
   extraHeaders: Record<string, string>,
-  onToolCall: (name: string, args: any, result: string) => void
+  onToolCall: (name: string, args: any, result: string) => void,
+  tools?: any[],
+  userId?: string
 ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
   const msgs = [...messages];
   let promptTokens = 0, completionTokens = 0;
@@ -988,7 +1011,7 @@ async function callOpenAICompatWithTools(
     for (const tc of msg.tool_calls) {
       let args: any = {};
       try { args = JSON.parse(tc.function.arguments || '{}'); } catch {}
-      const result = await runForgeTool(tc.function.name, args);
+      const result = await runForgeTool(tc.function.name, args, userId);
       onToolCall(tc.function.name, args, result);
       msgs.push({ role: 'tool', tool_call_id: tc.id, content: result });
     }
@@ -999,7 +1022,7 @@ async function callOpenAICompatWithTools(
 // ── Chat (also aliased as /api/chat/completions for OpenAI-compat clients) ──
 app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRequest, res) => {
   // Support both Forge format {messages,model} and OpenAI format {messages,model}
-  const { messages, model = 'forge-fast', language = 'English', channel = 'Chat' } = req.body;
+  const { messages, model = 'forge-fast', language = 'English', channel = 'Chat', attachments } = req.body;
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     res.status(400).json({ success: false, error: 'INVALID_INPUT', message: 'messages array required' }); return;
   }
@@ -1024,9 +1047,35 @@ app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRe
 
   try {
     // Add language/channel context to system message if needed
-    const systemMsg = language !== 'English' || channel !== 'Chat'
+    let systemMsg = language !== 'English' || channel !== 'Chat'
       ? [{ role: 'system', content: `You are a helpful AI assistant. Respond in ${language}. This is a ${channel} channel — keep format appropriate for that context.` }, ...messages]
-      : messages;
+      : [...messages];
+
+    // Inject image/file attachments into last user message as vision content
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      const lastUserIdx = systemMsg.map((m:any) => m.role).lastIndexOf('user');
+      if (lastUserIdx >= 0) {
+        const lastMsg = systemMsg[lastUserIdx];
+        const textContent = typeof lastMsg.content === 'string' ? lastMsg.content : '';
+        const contentParts: any[] = [];
+        // Add images
+        for (const att of attachments) {
+          if (att.type === 'image' && att.data) {
+            if (provider === 'anthropic') {
+              contentParts.push({ type: 'image', source: { type: 'base64', media_type: att.mediaType || 'image/jpeg', data: att.data } });
+            } else if (provider === 'openai') {
+              contentParts.push({ type: 'image_url', image_url: { url: `data:${att.mediaType || 'image/jpeg'};base64,${att.data}` } });
+            }
+          } else if (att.type === 'text' && att.content) {
+            contentParts.push(provider === 'anthropic' ? { type: 'text', text: att.content } : { type: 'text', text: att.content });
+          }
+        }
+        if (textContent) contentParts.push(provider === 'anthropic' ? { type: 'text', text: textContent } : { type: 'text', text: textContent });
+        if (contentParts.length > 0) {
+          systemMsg[lastUserIdx] = { ...lastMsg, content: contentParts };
+        }
+      }
+    }
 
     const result = await callLLM(provider, apiKey, actualModel, systemMsg, language);
     const totalTokens = result.promptTokens + result.completionTokens;
@@ -2213,7 +2262,8 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
             emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model });
             // Also emit a tool_call event so frontend can render inline
             try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500), label: step.message })}\n\n`); } catch {}
-          }
+          },
+          userId
         ),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Anthropic agent timed out after 60s')), 60000))
       ]);
@@ -2239,7 +2289,7 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
       if (pc) {
         const resolvedModel = pc.modelResolver ? pc.modelResolver(actualModel) : actualModel;
         result = await Promise.race([
-          callOpenAICompatWithTools(pc.url, apiKey, resolvedModel, llmMessages, pc.headers, onToolCall, provider === "openrouter" ? FORGE_TOOLS_OPENROUTER : undefined),
+          callOpenAICompatWithTools(pc.url, apiKey, resolvedModel, llmMessages, pc.headers, onToolCall, provider === "openrouter" ? FORGE_TOOLS_OPENROUTER : undefined, userId),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out`)), provider === 'openrouter' ? 90000 : 30000))
         ]);
       } else {
@@ -3105,14 +3155,33 @@ app.get('/api/userfiles', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data: rows });
 });
 
-app.post('/api/userfiles', requireAuth, (req: AuthRequest, res) => {
+app.post('/api/userfiles', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.sub;
   const { filename, content, mime_type = 'text/plain', thread_id } = req.body;
   if (!filename || content === undefined) { res.status(400).json({ success: false, error: 'filename and content required' }); return; }
   const id = uuidv4();
   const size = Buffer.byteLength(String(content), 'utf8');
-  db.prepare('INSERT INTO user_files (id,user_id,thread_id,filename,content,mime_type,size) VALUES (?,?,?,?,?,?,?)').run(id, userId, thread_id || null, filename, String(content), mime_type, size);
-  res.status(201).json({ success: true, data: { id, filename, mime_type, size } });
+  let extracted_text: string | null = null;
+  // Auto-extract text from PDFs and CSVs
+  try {
+    if (mime_type === 'application/pdf' || filename.toLowerCase().endsWith('.pdf')) {
+      const buf = Buffer.from(String(content), 'base64');
+      try {
+        const pdfParse = await import('pdf-parse');
+        const parsed = await pdfParse.default(buf);
+        extracted_text = parsed.text?.slice(0, 50000) || null;
+      } catch { extracted_text = null; }
+    } else if (mime_type === 'text/csv' || filename.toLowerCase().endsWith('.csv')) {
+      // CSV: store raw text
+      extracted_text = Buffer.from(String(content), 'base64').toString('utf8').slice(0, 50000);
+    } else if (mime_type === 'text/plain' || filename.toLowerCase().endsWith('.txt') || filename.toLowerCase().endsWith('.md')) {
+      extracted_text = Buffer.from(String(content), 'base64').toString('utf8').slice(0, 50000);
+    }
+  } catch {}
+  // Ensure extracted_text column exists
+  try { db.prepare("ALTER TABLE user_files ADD COLUMN extracted_text TEXT").run(); } catch {}
+  db.prepare('INSERT INTO user_files (id,user_id,thread_id,filename,content,mime_type,size,extracted_text) VALUES (?,?,?,?,?,?,?,?)').run(id, userId, thread_id || null, filename, String(content), mime_type, size, extracted_text);
+  res.status(201).json({ success: true, data: { id, filename, mime_type, size, has_text: !!extracted_text } });
 });
 
 app.get('/api/userfiles/:id', requireAuth, (req: AuthRequest, res) => {
@@ -3127,6 +3196,35 @@ app.get('/api/userfiles/:id/download', requireAuth, (req: AuthRequest, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
   res.setHeader('Content-Type', file.mime_type);
   res.send(file.content);
+});
+
+// ── Text-to-Speech ────────────────────────────────────────────────────────────
+app.post('/api/tts', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { text, voice = 'alloy', model: ttsModel = 'tts-1' } = req.body;
+  if (!text) { res.status(400).json({ success: false, error: 'text required' }); return; }
+  const openaiKey = getUserKey(userId, 'openai') || process.env.OPENAI_API_KEY || '';
+  if (!openaiKey) { res.status(400).json({ success: false, error: 'OpenAI key required for TTS' }); return; }
+  try {
+    const r = await fetchWithTimeout('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: ttsModel, input: text.slice(0, 4096), voice, response_format: 'mp3' })
+    }, 20000);
+    if (!r.ok) { const e = await r.text(); res.status(500).json({ success: false, error: e.slice(0, 200) }); return; }
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', buf.length);
+    res.send(buf);
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.get('/api/userfiles/:id/text', requireAuth, (req: AuthRequest, res) => {
+  const file = db.prepare('SELECT filename,extracted_text,mime_type FROM user_files WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
+  if (!file) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
+  res.json({ success: true, data: { filename: file.filename, extracted_text: file.extracted_text, mime_type: file.mime_type } });
 });
 
 app.delete('/api/userfiles/:id', requireAuth, (req: AuthRequest, res) => {
