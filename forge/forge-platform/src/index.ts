@@ -873,6 +873,8 @@ const FORGE_TOOLS_OPENAI = FORGE_TOOLS_ANTHROPIC.map(t => ({
   type: 'function' as const,
   function: { name: t.name, description: t.description, parameters: t.input_schema }
 }));
+const FORGE_TOOLS_OPENROUTER = FORGE_TOOLS_OPENAI.filter((t:any) => !["web_search","image_gen","cursor_edit"].includes(t.function?.name));
+
 
 // Turn a raw tool call into a warm, human first-person status line — used across ALL providers
 // so every model (Gemini, GPT, Claude, OpenRouter, Groq…) narrates work the same friendly way.
@@ -956,7 +958,7 @@ async function callOpenAICompatWithTools(
     const res = await fetchWithTimeout(url, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...extraHeaders },
-      body: JSON.stringify({ model, messages: msgs, tools: FORGE_TOOLS_OPENAI, tool_choice: 'auto', max_tokens: 4096 })
+      body: JSON.stringify({ model, messages: msgs, tools: tools || FORGE_TOOLS_OPENAI, tool_choice: 'auto', max_tokens: 4096 })
     }, 45000);
     const d: any = await res.json();
     if (!res.ok) {
@@ -2209,7 +2211,7 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
       if (pc) {
         const resolvedModel = pc.modelResolver ? pc.modelResolver(actualModel) : actualModel;
         result = await Promise.race([
-          callOpenAICompatWithTools(pc.url, apiKey, resolvedModel, llmMessages, pc.headers, onToolCall),
+          callOpenAICompatWithTools(pc.url, apiKey, resolvedModel, llmMessages, pc.headers, onToolCall, provider === "openrouter" ? FORGE_TOOLS_OPENROUTER : undefined),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out`)), provider === 'openrouter' ? 90000 : 30000))
         ]);
       } else {
@@ -3404,44 +3406,250 @@ try {
   console.warn('GraphQL not loaded:', e.message);
 }
 
+// ─── Marketplace ─────────────────────────────────────────────────────────────
+const MARKETPLACE_ITEMS = [
+  { id:'gpt-4o', name:'GPT-4o', provider:'openai', category:'model', description:'OpenAI flagship — fast, multimodal, 128k context', price_per_1m_tokens:5, rating:4.8, installs:12400, tags:['multimodal','fast','flagship'] },
+  { id:'claude-sonnet-4-6', name:'Claude Sonnet 4.6', provider:'anthropic', category:'model', description:'Anthropic best for coding + reasoning, 200k context', price_per_1m_tokens:3, rating:4.9, installs:9800, tags:['coding','reasoning','200k'] },
+  { id:'gemini-2.0-flash', name:'Gemini 2.0 Flash', provider:'google', category:'model', description:'Google fast multimodal model with 1M context', price_per_1m_tokens:0.075, rating:4.7, installs:8200, tags:['fast','multimodal','1M-context'] },
+  { id:'deepseek/deepseek-chat-v3-0324', name:'DeepSeek V3', provider:'openrouter', category:'model', description:'Best open-source model, near-GPT4 quality at fraction of cost', price_per_1m_tokens:0.28, rating:4.6, installs:15600, tags:['open-source','cheap','coding'] },
+  { id:'meta-llama/llama-3.3-70b-instruct', name:'Llama 3.3 70B', provider:'openrouter', category:'model', description:'Meta open-source powerhouse, free tier available', price_per_1m_tokens:0.12, rating:4.5, installs:22000, tags:['open-source','free','large'] },
+  { id:'google/gemini-2.5-pro-preview', name:'Gemini 2.5 Pro', provider:'openrouter', category:'model', description:'Google latest — best for long documents and analysis', price_per_1m_tokens:3.5, rating:4.8, installs:6100, tags:['long-context','analysis','latest'] },
+  { id:'mistralai/mistral-large-2411', name:'Mistral Large', provider:'openrouter', category:'model', description:'Mistral flagship, excellent for European languages', price_per_1m_tokens:2, rating:4.4, installs:4300, tags:['multilingual','coding','EU'] },
+  { id:'cohere/command-r-plus-08-2024', name:'Command R+', provider:'openrouter', category:'model', description:'Cohere RAG-optimized, best for enterprise search', price_per_1m_tokens:2.5, rating:4.3, installs:3200, tags:['RAG','enterprise','search'] },
+  { id:'perplexity/sonar-pro', name:'Sonar Pro', provider:'openrouter', category:'model', description:'Perplexity online model with real-time web search', price_per_1m_tokens:3, rating:4.6, installs:5700, tags:['web-search','realtime','online'] },
+  { id:'qwen/qwen-2.5-72b-instruct', name:'Qwen 2.5 72B', provider:'openrouter', category:'model', description:'Alibaba top model, excellent multilingual + math', price_per_1m_tokens:0.35, rating:4.5, installs:7800, tags:['multilingual','math','efficient'] },
+];
+db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (id TEXT PRIMARY KEY, user_id TEXT, item_id TEXT, installed_at TEXT DEFAULT (datetime('now')))`);
+app.get('/api/marketplace/items', requireAuth, (_req, res) => {
+  res.json({ success:true, data: MARKETPLACE_ITEMS });
+});
+app.get('/api/marketplace/items/:id', requireAuth, (req, res) => {
+  const item = MARKETPLACE_ITEMS.find(i => i.id === req.params.id);
+  if (!item) { res.status(404).json({ success:false, error:'NOT_FOUND' }); return; }
+  res.json({ success:true, data: item });
+});
+app.post('/api/marketplace/install/:id', requireAuth, (req: AuthRequest, res) => {
+  const item = MARKETPLACE_ITEMS.find(i => i.id === req.params.id);
+  if (!item) { res.status(404).json({ success:false, error:'NOT_FOUND' }); return; }
+  const existing = db.prepare('SELECT id FROM marketplace_installs WHERE user_id=? AND item_id=?').get(req.user!.sub, item.id);
+  if (!existing) db.prepare('INSERT INTO marketplace_installs (id,user_id,item_id) VALUES (?,?,?)').run(uuidv4(), req.user!.sub, item.id);
+  res.json({ success:true, message:`${item.name} installed` });
+});
+app.get('/api/marketplace/installed', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT item_id FROM marketplace_installs WHERE user_id=?').all(req.user!.sub) as any[];
+  const ids = rows.map(r => r.item_id);
+  res.json({ success:true, data: MARKETPLACE_ITEMS.filter(i => ids.includes(i.id)) });
+});
+
+// ─── Forge Router (OpenRouter clone) ─────────────────────────────────────────
+app.get('/api/router/stats', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere'];
+  const result: any[] = [];
+  for (const p of providers) {
+    const stats = db.prepare(`SELECT COUNT(*) as requests, COALESCE(SUM(total_tokens),0) as total_tokens, COALESCE(SUM(prompt_tokens),0) as prompt_tokens, COALESCE(SUM(completion_tokens),0) as completion_tokens, COALESCE(SUM(provider_cost),0) as cost, MAX(created_at) as last_used FROM usage_logs WHERE user_id=? AND provider=?`).get(userId, p) as any;
+    if (stats && stats.requests > 0) {
+      const byModel = db.prepare(`SELECT model, COUNT(*) as requests, COALESCE(SUM(total_tokens),0) as tokens, COALESCE(SUM(provider_cost),0) as cost FROM usage_logs WHERE user_id=? AND provider=? GROUP BY model ORDER BY tokens DESC LIMIT 10`).all(userId, p) as any[];
+      result.push({ provider: p, ...stats, models: byModel });
+    }
+  }
+  const totals = db.prepare(`SELECT COUNT(*) as requests, COALESCE(SUM(total_tokens),0) as total_tokens, COALESCE(SUM(provider_cost),0) as total_cost FROM usage_logs WHERE user_id=?`).get(userId) as any;
+  res.json({ success:true, data: { providers: result, totals } });
+});
+app.get('/api/router/models', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const keyRows = db.prepare('SELECT provider FROM api_keys WHERE user_id=?').all(userId) as any[];
+  const hasProviders = new Set(keyRows.map((r:any) => r.provider));
+  const staticModels: any[] = [
+    { id:'claude-opus-4-6', name:'Claude Opus 4.6', provider:'anthropic', context:200000, pricing:{prompt:'15',completion:'75'} },
+    { id:'claude-sonnet-4-6', name:'Claude Sonnet 4.6', provider:'anthropic', context:200000, pricing:{prompt:'3',completion:'15'} },
+    { id:'claude-haiku-4-5-20251001', name:'Claude Haiku 4.5', provider:'anthropic', context:200000, pricing:{prompt:'0.8',completion:'4'} },
+    { id:'gpt-4o', name:'GPT-4o', provider:'openai', context:128000, pricing:{prompt:'5',completion:'15'} },
+    { id:'gpt-4o-mini', name:'GPT-4o Mini', provider:'openai', context:128000, pricing:{prompt:'0.15',completion:'0.6'} },
+    { id:'gemini-2.0-flash', name:'Gemini 2.0 Flash', provider:'gemini', context:1000000, pricing:{prompt:'0.075',completion:'0.3'} },
+    { id:'gemini-2.5-pro', name:'Gemini 2.5 Pro', provider:'gemini', context:2000000, pricing:{prompt:'3.5',completion:'10.5'} },
+    { id:'llama-3.3-70b-versatile', name:'Llama 3.3 70B', provider:'groq', context:128000, pricing:{prompt:'0.59',completion:'0.79'} },
+    { id:'mistral-large-latest', name:'Mistral Large', provider:'mistral', context:128000, pricing:{prompt:'2',completion:'6'} },
+  ];
+  const available = staticModels.filter(m => hasProviders.has(m.provider));
+  if (hasProviders.has('openrouter')) {
+    try {
+      const key = getUserKey(userId, 'openrouter');
+      const headers: any = { 'HTTP-Referer':'https://forge-sand-two.vercel.app', 'X-Title':'Forge Studio' };
+      if (key) headers['Authorization'] = `Bearer ${key}`;
+      const r = await fetch('https://openrouter.ai/api/v1/models', { headers });
+      const d: any = await r.json();
+      const orModels = (d.data || []).slice(0, 200).map((m: any) => ({ id: m.id, name: m.name, provider:'openrouter', context: m.context_length || 0, pricing: { prompt: m.pricing?.prompt || '0', completion: m.pricing?.completion || '0' } }));
+      available.push(...orModels);
+    } catch {}
+  }
+  res.json({ success:true, data: { models: available, total: available.length } });
+});
+app.get('/api/router/usage', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const days = parseInt(req.query.days as string) || 30;
+  const rows = db.prepare(`SELECT date(created_at) as day, provider, model, SUM(total_tokens) as tokens, SUM(provider_cost) as cost, COUNT(*) as requests FROM usage_logs WHERE user_id=? AND created_at >= datetime('now',?) GROUP BY day,provider,model ORDER BY day DESC`).all(userId, `-${days} days`) as any[];
+  res.json({ success:true, data: rows });
+});
+
+// ─── Provider balance check ───────────────────────────────────────────────────
+app.get('/api/keys/:provider/balance', requireAuth, async (req: AuthRequest, res) => {
+  const { provider } = req.params;
+  const key = getUserKey(req.user!.sub, provider);
+  if (!key) { res.status(404).json({ success:false, error:'NO_KEY' }); return; }
+  try {
+    if (provider === 'openrouter') {
+      const r = await fetch('https://openrouter.ai/api/v1/auth/key', { headers: { Authorization:`Bearer ${key}`, 'HTTP-Referer':'https://forge-sand-two.vercel.app' } });
+      const d: any = await r.json();
+      res.json({ success:true, provider, balance: d.data?.limit_remaining ?? null, usage: d.data?.usage ?? null, limit: d.data?.limit ?? null, is_free_tier: d.data?.is_free_tier ?? false });
+    } else {
+      res.json({ success:true, provider, balance: null, note:'Balance not available for this provider' });
+    }
+  } catch(e:any) { res.status(500).json({ success:false, error: e.message }); }
+});
+
+// ─── Skills catalog ───────────────────────────────────────────────────────────
+const SKILLS_CATALOG = [
+  { id:'web-search', name:'Web Search', icon:'🔍', description:'Search the web for real-time information', category:'tools', enabled:true },
+  { id:'code-exec', name:'Code Execution', icon:'⚡', description:'Execute Python, JS, bash code snippets', category:'tools', enabled:true },
+  { id:'image-gen', name:'Image Generation', icon:'🎨', description:'Generate images with DALL-E or Stable Diffusion', category:'creative', enabled:false },
+  { id:'memory', name:'Persistent Memory', icon:'🧠', description:'Remember context across conversations', category:'intelligence', enabled:true },
+  { id:'rag', name:'RAG Search', icon:'📚', description:'Search your documents with semantic similarity', category:'intelligence', enabled:true },
+  { id:'calendar', name:'Calendar Integration', icon:'📅', description:'Read and create calendar events', category:'integrations', enabled:false },
+  { id:'github', name:'GitHub', icon:'🐙', description:'Read repos, PRs, issues via GitHub API', category:'integrations', enabled:false },
+  { id:'slack', name:'Slack', icon:'💬', description:'Send and read Slack messages', category:'integrations', enabled:false },
+  { id:'voice', name:'Voice Input/Output', icon:'🎤', description:'Speak to and hear from your AI', category:'tools', enabled:false },
+  { id:'multi-agent', name:'Multi-Agent Orchestration', icon:'🤝', description:'Spawn parallel agents for complex tasks', category:'intelligence', enabled:true },
+];
+app.get('/api/skills', requireAuth, (_req, res) => res.json({ success:true, data: SKILLS_CATALOG }));
+app.post('/api/skills/:id/toggle', requireAuth, (req: AuthRequest, res) => {
+  const skill = SKILLS_CATALOG.find(s => s.id === req.params.id);
+  if (!skill) { res.status(404).json({ success:false, error:'NOT_FOUND' }); return; }
+  skill.enabled = !skill.enabled;
+  res.json({ success:true, data: skill });
+});
+
+// ─── Forge Tools ──────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS user_tool_prefs (user_id TEXT NOT NULL, tool_id TEXT NOT NULL, enabled INTEGER DEFAULT 1, PRIMARY KEY (user_id, tool_id))`);
+
+const FORGE_TOOLS_CATALOG: any[] = [
+  { id:'web_search', name:'Web Search', icon:'🌐', category:'search', description:'Search the web for real-time information', providers:['anthropic','openai'], openrouter_safe:false, auto_launch:true, enabled_default:true,
+    openai_function:{name:'web_search',description:'Search the web',parameters:{type:'object',properties:{query:{type:'string'}},required:['query']}},
+    anthropic_tool:{name:'web_search',description:'Search the web for real-time information',input_schema:{type:'object',properties:{query:{type:'string',description:'Search query'}},required:['query']}} },
+  { id:'code_exec', name:'Code Execution', icon:'⚡', category:'compute', description:'Execute Python, JavaScript, bash code', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:true, enabled_default:true,
+    openai_function:{name:'code_exec',description:'Execute code',parameters:{type:'object',properties:{language:{type:'string',enum:['python','javascript','bash']},code:{type:'string'}},required:['language','code']}},
+    anthropic_tool:{name:'code_exec',description:'Execute code and return output',input_schema:{type:'object',properties:{language:{type:'string',enum:['python','javascript','bash']},code:{type:'string'}},required:['language','code']}} },
+  { id:'image_gen', name:'Image Generation', icon:'🎨', category:'creative', description:'Generate images with DALL-E 3', providers:['openai'], openrouter_safe:false, auto_launch:false, enabled_default:false,
+    openai_function:{name:'image_gen',description:'Generate an image',parameters:{type:'object',properties:{prompt:{type:'string'},size:{type:'string',enum:['1024x1024','1792x1024','1024x1792'],default:'1024x1024'}},required:['prompt']}},
+    anthropic_tool:{name:'image_gen',description:'Generate an image from a prompt',input_schema:{type:'object',properties:{prompt:{type:'string'},size:{type:'string'}},required:['prompt']}} },
+  { id:'browser', name:'Browser / Scrape', icon:'🌍', category:'search', description:'Fetch and parse web pages', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:true, enabled_default:true,
+    openai_function:{name:'browser',description:'Fetch a web page',parameters:{type:'object',properties:{url:{type:'string'},extract:{type:'string',enum:['text','links'],default:'text'}},required:['url']}},
+    anthropic_tool:{name:'browser',description:'Fetch and read the content of a web page',input_schema:{type:'object',properties:{url:{type:'string'},extract:{type:'string',enum:['text','links']}},required:['url']}} },
+  { id:'file_read', name:'File Read', icon:'📄', category:'files', description:'Read uploaded files (PDF, CSV, DOCX)', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:false, enabled_default:false,
+    openai_function:{name:'file_read',description:'Read a file',parameters:{type:'object',properties:{file_id:{type:'string'},format:{type:'string',enum:['text','json','summary'],default:'text'}},required:['file_id']}},
+    anthropic_tool:{name:'file_read',description:'Read an uploaded file',input_schema:{type:'object',properties:{file_id:{type:'string'},format:{type:'string'}},required:['file_id']}} },
+  { id:'calculator', name:'Calculator', icon:'🧮', category:'compute', description:'Precise math and financial calculations', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:true, enabled_default:true,
+    openai_function:{name:'calculator',description:'Evaluate a math expression',parameters:{type:'object',properties:{expression:{type:'string'}},required:['expression']}},
+    anthropic_tool:{name:'calculator',description:'Evaluate a mathematical expression',input_schema:{type:'object',properties:{expression:{type:'string',description:'Math expression'}},required:['expression']}} },
+  { id:'cursor_edit', name:'Cursor / Code Edit', icon:'✏️', category:'code', description:'Edit code files with diff precision (Cursor-style)', providers:['anthropic','openai'], openrouter_safe:false, auto_launch:false, enabled_default:false,
+    openai_function:{name:'cursor_edit',description:'Edit a code file',parameters:{type:'object',properties:{path:{type:'string'},old_code:{type:'string'},new_code:{type:'string'}},required:['path','old_code','new_code']}},
+    anthropic_tool:{name:'cursor_edit',description:'Edit a code file by replacing code',input_schema:{type:'object',properties:{path:{type:'string'},old_code:{type:'string'},new_code:{type:'string'}},required:['path','old_code','new_code']}} },
+  { id:'memory_store', name:'Memory Store', icon:'🧠', category:'intelligence', description:'Store and retrieve facts across conversations', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:true, enabled_default:true,
+    openai_function:{name:'memory_store',description:'Store or retrieve a memory',parameters:{type:'object',properties:{action:{type:'string',enum:['store','retrieve','list']},key:{type:'string'},value:{type:'string'}},required:['action']}},
+    anthropic_tool:{name:'memory_store',description:'Store or retrieve persistent memories',input_schema:{type:'object',properties:{action:{type:'string',enum:['store','retrieve','list']},key:{type:'string'},value:{type:'string'}},required:['action']}} },
+];
+
+function getUserTools(userId: string) {
+  const prefs = db.prepare('SELECT tool_id, enabled FROM user_tool_prefs WHERE user_id=?').all(userId) as any[];
+  const prefMap: Record<string,boolean> = {};
+  for (const p of prefs) prefMap[p.tool_id] = !!p.enabled;
+  return FORGE_TOOLS_CATALOG.map(t => ({ ...t, enabled: t.id in prefMap ? prefMap[t.id] : t.enabled_default }));
+}
+
+app.get('/api/forge-tools', requireAuth, (req: AuthRequest, res) => {
+  res.json({ success:true, data: getUserTools(req.user!.sub) });
+});
+app.patch('/api/forge-tools/:id', requireAuth, (req: AuthRequest, res) => {
+  const { id } = req.params;
+  const tool = FORGE_TOOLS_CATALOG.find(t => t.id === id);
+  if (!tool) { res.status(404).json({ success:false, error:'NOT_FOUND' }); return; }
+  const { enabled } = req.body;
+  db.prepare('INSERT OR REPLACE INTO user_tool_prefs (user_id,tool_id,enabled) VALUES (?,?,?)').run(req.user!.sub, id, enabled ? 1 : 0);
+  res.json({ success:true, data: { ...tool, enabled } });
+});
+app.post('/api/forge-tools/reset', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM user_tool_prefs WHERE user_id=?').run(req.user!.sub);
+  res.json({ success:true, message:'Reset to defaults' });
+});
+app.post('/api/forge-tools/:id/execute', requireAuth, async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  const input = req.body.input || req.body;
+  try {
+    if (id === 'web_search') {
+      const braveKey = process.env.BRAVE_API_KEY;
+      if (braveKey) {
+        const r = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(input.query)}&count=5`, { headers:{'Accept':'application/json','X-Subscription-Token':braveKey} });
+        const d: any = await r.json();
+        res.json({ success:true, output: (d.web?.results||[]).slice(0,5).map((x:any)=>({title:x.title,url:x.url,snippet:x.description})) });
+      } else {
+        const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(input.query)}&format=json&no_html=1&skip_disambig=1`);
+        const d: any = await r.json();
+        res.json({ success:true, output: { answer: d.AbstractText||d.Answer||'No result', source: d.AbstractURL } });
+      }
+    } else if (id === 'browser') {
+      const r = await fetch(input.url, { headers:{'User-Agent':'Mozilla/5.0 ForgeBot/1.0'}, signal: AbortSignal.timeout(8000) });
+      const html = await r.text();
+      const text = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi,'').replace(/<script[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().substring(0,4000);
+      res.json({ success:true, output: { url:input.url, content:text } });
+    } else if (id === 'calculator') {
+      const safe = input.expression.replace(/[^0-9+\-*/().%,\s]/g,'');
+      const result = Function(`"use strict";return(${safe})`)();
+      res.json({ success:true, output: { expression:input.expression, result } });
+    } else if (id === 'memory_store') {
+      if (input.action === 'store') {
+        db.prepare('INSERT OR REPLACE INTO forge_memory (id,user_id,content,source,created_at) VALUES (?,?,?,?,datetime("now"))').run(uuidv4(), req.user!.sub, `${input.key}: ${input.value}`, 'tool');
+        res.json({ success:true, output: { stored:true, key:input.key } });
+      } else if (input.action === 'retrieve') {
+        const rows = db.prepare('SELECT content FROM forge_memory WHERE user_id=? AND content LIKE ? LIMIT 5').all(req.user!.sub, `%${input.key||''}%`) as any[];
+        res.json({ success:true, output: rows.map((r:any)=>r.content) });
+      } else {
+        const rows = db.prepare('SELECT content,created_at FROM forge_memory WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.user!.sub) as any[];
+        res.json({ success:true, output: rows });
+      }
+    } else {
+      res.json({ success:false, error:'Server-side execution not available for: '+id });
+    }
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req, res) => res.json({ version:'v6.82', features:['sqlite','jwt','graphql','webhooks','rate-limiting','multi-model','personas','prompt-cache','search','analytics','forge-optimizer','superagent','harvest','billing','export'], built:new Date().toISOString() }));
+app.get('/api/version', (_req, res) => res.json({ version:'v6.82', build:'production', timestamp: new Date().toISOString() }));
 
+// ─── 404 fallback ─────────────────────────────────────────────────────────────
+app.use((_req, res) => res.status(404).json({ success:false, error:'NOT_FOUND' }));
 
-
-// ─── Socket.IO — real-time bidirectional ──────────────────────────────────────
+// ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
 try {
   const { Server } = require('socket.io');
   const io = new Server(httpServer, {
-    cors: { origin: FRONTEND_URL, methods: ['GET','POST'], credentials: true },
-    transports: ['websocket','polling'],
+    cors: { origin: FRONTEND_URL, methods:['GET','POST'], credentials:true },
+    transports: ['websocket','polling']
   });
   io.use((socket: any, next: any) => {
     const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
-    if (!token) { next(new Error('UNAUTHORIZED')); return; }
-    try { const d = jwt.verify(token, JWT_SECRET) as any; socket.userId = d.sub; next(); }
-    catch { next(new Error('INVALID_TOKEN')); }
+    if (!token) return next(new Error('No token'));
+    try { socket.user = jwt.verify(token, JWT_SECRET); next(); } catch { next(new Error('Invalid token')); }
   });
   io.on('connection', (socket: any) => {
-    const userId = socket.userId;
-    socket.join(`user:${userId}`);
-    socket.on('join_thread', (tid: string) => { socket.join(`thread:${tid}`); socket.to(`thread:${tid}`).emit('user_joined', { userId }); });
-    socket.on('leave_thread', (tid: string) => { socket.leave(`thread:${tid}`); });
-    socket.on('typing_start', ({ threadId }: any) => { socket.to(`thread:${threadId}`).emit('typing', { userId, typing: true }); });
-    socket.on('typing_stop', ({ threadId }: any) => { socket.to(`thread:${threadId}`).emit('typing', { userId, typing: false }); });
-    socket.on('thread_update', (data: any) => { io.to(`user:${userId}`).emit('thread_updated', data); });
-    socket.on('ping', () => socket.emit('pong', { time: Date.now() }));
-    socket.on('disconnect', () => { io.to(`user:${userId}`).emit('user_offline', { userId }); });
+    socket.on('join_thread', (tid: string) => socket.join(`thread:${tid}`));
+    socket.on('leave_thread', (tid: string) => socket.leave(`thread:${tid}`));
+    socket.on('typing_start', (tid: string) => socket.to(`thread:${tid}`).emit('typing', { userId: socket.user?.sub }));
+    socket.on('typing_stop', (tid: string) => socket.to(`thread:${tid}`).emit('typing_stop', { userId: socket.user?.sub }));
+    socket.on('thread_update', (data: any) => socket.to(`thread:${data.threadId}`).emit('thread_update', data));
+    socket.on('ping', () => socket.emit('pong'));
+    socket.on('disconnect', () => {});
   });
   (app as any).io = io;
-  console.log('✅ Socket.IO enabled');
-} catch(e: any) {
-  console.warn('⚠️ Socket.IO not loaded:', e.message);
-}
-
-// ── Start server ──────────────────────────────────────────────────────────────
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Forge Platform v6.82 running on port ${PORT} (${NODE_ENV})`);
-  console.log(`✅ SQLite + JWT + GraphQL + Socket.IO + Webhooks + Rate-limiting`);
-});
+} catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.82 running on port ${PORT}`); });
