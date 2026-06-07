@@ -14,6 +14,7 @@
     "declaration": false,
     "sourceMap": false,
     "moduleResolution": "node",
+    "ignoreDeprecations": "5.0",
     "allowSyntheticDefaultImports": true
   },
   "include": ["src/index.ts"],
