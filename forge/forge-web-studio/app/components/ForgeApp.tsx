@@ -6459,18 +6459,29 @@ export default function ForgeApp() {
         })()}
 
         {/* -- Runs ------------------------------------------------------- */}
-        {mainTab === 'runs' && (
+        {mainTab === 'runs' && (() => {
+          const completedRuns = dispatchRuns.filter(r => r.status === 'completed' || r.status === 'finished');
+          const runningRuns = dispatchRuns.filter(r => r.status === 'running');
+          const scheduledCount = schedules.filter(s => s.enabled).length;
+          return (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:860, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
-                <span style={{ fontSize:36 }}>🏃</span>
-                <div>
-                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Runs</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Scheduled and automated agent runs. Set tasks to execute on a schedule or trigger automatically.</p>
+            <div style={{ maxWidth:900, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                  <span style={{ fontSize:36 }}>🏃</span>
+                  <div>
+                    <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Runs</h1>
+                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Scheduled agent tasks — create, manage, and monitor automated runs.</p>
+                  </div>
                 </div>
+                <button onClick={() => setShowRunsScheduler(p => !p)} style={{ padding:'9px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ New Schedule</button>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
-                {[{icon:'✓',label:'Completed',count:'0',color:'#22c55e'},{icon:'⚡',label:'Running',count:'0',color:'var(--fg-orange)'},{icon:'⚡',label:'Scheduled',count:'0',color:'#6366f1'}].map(s => (
+                {[
+                  {icon:'✅',label:'Completed',count:String(completedRuns.length),color:'#22c55e'},
+                  {icon:'⚡',label:'Running',count:String(runningRuns.length),color:'var(--fg-orange)'},
+                  {icon:'📅',label:'Scheduled',count:String(scheduledCount),color:'#6366f1'},
+                ].map(s => (
                   <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, textAlign:'center' }}>
                     <div style={{ fontSize:24, marginBottom:4 }}>{s.icon}</div>
                     <div style={{ fontSize:22, fontWeight:800, color:s.color }}>{s.count}</div>
@@ -6478,25 +6489,176 @@ export default function ForgeApp() {
                   </div>
                 ))}
               </div>
-              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Recent Runs</h3>
-                  <button onClick={() => {
-                    const task = prompt('Task to run (e.g. "Summarize my emails every morning"):');
-                    if (!task) return;
-                    const schedule = prompt('Schedule (e.g. "daily at 9am", "every hour", "Mon/Wed/Fri"):');
-                    if (!schedule) return;
-                    showToast(`✓ Scheduled: "${task}" — ${schedule}`);
-                  }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>+ Schedule Run</button>
+              {showRunsScheduler && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-orange)', borderRadius:12, padding:20, marginBottom:20 }}>
+                  <h3 style={{ margin:'0 0 14px', fontSize:14, fontWeight:700, color:'var(--fg-orange)' }}>📅 New Scheduled Task</h3>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+                    <div>
+                      <label style={{ fontSize:11, color:'var(--fg-text3)', display:'block', marginBottom:4 }}>Task Name</label>
+                      <input value={schedName} onChange={e => setSchedName(e.target.value)} placeholder="e.g. Daily summary" style={{ width:'100%', padding:'8px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' as any }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize:11, color:'var(--fg-text3)', display:'block', marginBottom:4 }}>Schedule</label>
+                      <select value={schedCron} onChange={e => setSchedCron(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12 }}>
+                        <option value="0 9 * * 1-5">Weekdays at 9am</option>
+                        <option value="0 9 * * *">Daily at 9am</option>
+                        <option value="0 * * * *">Every hour</option>
+                        <option value="*/30 * * * *">Every 30 min</option>
+                        <option value="0 9 * * 1">Weekly — Mon 9am</option>
+                        <option value="0 0 1 * *">Monthly — 1st</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom:12 }}>
+                    <label style={{ fontSize:11, color:'var(--fg-text3)', display:'block', marginBottom:4 }}>Prompt to run</label>
+                    <textarea value={schedPrompt} onChange={e => setSchedPrompt(e.target.value)} rows={3} placeholder="e.g. Summarize the latest news about AI and write a brief report..."
+                      style={{ width:'100%', padding:'8px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12, resize:'vertical', boxSizing:'border-box' as any }} />
+                  </div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={async () => { await createSchedule(); setShowRunsScheduler(false); }} style={{ padding:'8px 20px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Save Schedule</button>
+                    <button onClick={() => setShowRunsScheduler(false)} style={{ padding:'8px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>Cancel</button>
+                  </div>
                 </div>
-                <div style={{ textAlign:'center', padding:'28px 0' }}>
-                  <div style={{ fontSize:28, marginBottom:8 }}>📁</div>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No runs yet. Schedule an agent to run automatically.</p>
+              )}
+              {schedules.length > 0 && (
+                <div style={{ marginBottom:24 }}>
+                  <h3 style={{ margin:'0 0 12px', fontSize:12, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.05em' }}>Active Schedules ({schedules.length})</h3>
+                  <div style={{ display:'grid', gap:10 }}>
+                    {schedules.map(s => (
+                      <div key={s.id} style={{ background:'var(--fg-bg2)', border:`1px solid ${s.enabled?'rgba(99,102,241,0.3)':'var(--fg-border)'}`, borderRadius:12, padding:16, display:'flex', alignItems:'center', gap:16 }}>
+                        <span style={{ fontSize:22 }}>📅</span>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
+                            <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{s.name}</span>
+                            <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:s.enabled?'rgba(99,102,241,0.15)':'var(--fg-bg4)', color:s.enabled?'#6366f1':'var(--fg-text3)', fontWeight:700 }}>{s.enabled?'⏺ ON':'⏸ OFF'}</span>
+                          </div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:2 }}>🕐 {(s as any).cron_expression||(s as any).cron}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:400 }}>{s.prompt}</div>
+                        </div>
+                        <div style={{ display:'flex', gap:6 }}>
+                          <button onClick={() => runScheduleNow(s)} style={{ padding:'6px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text2)', fontSize:11, cursor:'pointer' }}>▶ Run</button>
+                          <button onClick={() => toggleSchedule(s)} style={{ padding:'6px 12px', background:s.enabled?'var(--fg-bg4)':'#6366f1', border:'none', borderRadius:7, color:s.enabled?'var(--fg-text2)':'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>{s.enabled?'Pause':'Enable'}</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Recent Agent Runs</h3>
+                  <button onClick={loadDispatchRuns} style={{ padding:'5px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text2)', fontSize:11, cursor:'pointer' }}>↻ Refresh</button>
+                </div>
+                {dispatchRuns.length === 0 ? (
+                  <div style={{ textAlign:'center', padding:'32px 0' }}>
+                    <div style={{ fontSize:32, marginBottom:10 }}>📂</div>
+                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No runs yet. Create a schedule or dispatch a task from the workspace.</p>
+                  </div>
+                ) : (
+                  <div style={{ display:'grid', gap:8 }}>
+                    {dispatchRuns.slice(0,20).map(r => (
+                      <div key={r.id} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:'10px 14px', display:'flex', alignItems:'center', gap:12 }}>
+                        <span style={{ fontSize:16 }}>{r.status==='running'?'⚡':r.status==='completed'||r.status==='finished'?'✅':'❌'}</span>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:12, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:2 }}>{r.prompt}</div>
+                          <div style={{ fontSize:10, color:'var(--fg-text3)' }}>{new Date(r.created_at).toLocaleString()}</div>
+                        </div>
+                        <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, fontWeight:700,
+                          background:r.status==='running'?'rgba(249,115,22,0.15)':r.status==='completed'||r.status==='finished'?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)',
+                          color:r.status==='running'?'var(--fg-orange)':r.status==='completed'||r.status==='finished'?'#22c55e':'#ef4444' }}>{r.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
+
+        {/* -- Marketplace ----------------------------------------------- */}
+        {mainTab === 'marketplace' && (() => {
+          const mktItems = [
+            {id:'m1',icon:'🧠',name:'Memory Pro',desc:'Auto-summarize conversations and build persistent long-term memory across sessions.',category:'productivity',installs:1240,rating:4.8},
+            {id:'m2',icon:'📊',name:'Data Analyst',desc:'Upload CSVs, run statistical analysis, generate charts and reports with AI.',category:'data',installs:980,rating:4.7},
+            {id:'m3',icon:'🌐',name:'Web Scraper',desc:'Extract structured data from any website. Schedules, pagination, and export.',category:'tools',installs:2100,rating:4.6},
+            {id:'m4',icon:'📧',name:'Email Assistant',desc:'Draft, classify, and auto-reply to emails. Works with Gmail and Outlook.',category:'productivity',installs:3400,rating:4.9},
+            {id:'m5',icon:'📝',name:'Doc Writer',desc:'Generate reports, proposals, SOPs, and technical docs from a brief prompt.',category:'writing',installs:1870,rating:4.7},
+            {id:'m6',icon:'🔍',name:'Research Agent',desc:'Deep web research with citations. Summarizes sources, extracts key facts.',category:'research',installs:1560,rating:4.8},
+            {id:'m7',icon:'💻',name:'Code Review',desc:'Automated PR reviews, bug detection, security scanning, and refactor suggestions.',category:'developer',installs:890,rating:4.5},
+            {id:'m8',icon:'📈',name:'SEO Optimizer',desc:'Keyword research, content scoring, meta tags, and competitor analysis.',category:'marketing',installs:670,rating:4.4},
+            {id:'m9',icon:'🗂',name:'File Organizer',desc:'AI-powered file sorting, renaming, tagging, and duplicate detection.',category:'tools',installs:430,rating:4.3},
+            {id:'m10',icon:'🎙',name:'Meeting Notes',desc:'Transcribe meetings, extract action items, and send summaries automatically.',category:'productivity',installs:2800,rating:4.9},
+            {id:'m11',icon:'🔔',name:'Alert Monitor',desc:'Watch metrics, APIs, or websites — get notified when conditions are met.',category:'tools',installs:320,rating:4.2},
+            {id:'m12',icon:'🌍',name:'Translator Pro',desc:'Real-time translation with context awareness across 100+ languages.',category:'writing',installs:1100,rating:4.6},
+          ];
+          const cats = ['All','productivity','data','tools','writing','research','developer','marketing'];
+          const [mktCat, setMktCat] = (useState as any)<string>('All');
+          const [mktSearch, setMktSearch] = (useState as any)<string>('');
+          const [mktInstalled, setMktInstalled] = (useState as any)<Set<string>>(new Set<string>());
+          const filtered = mktItems.filter(m =>
+            (mktCat==='All'||m.category===mktCat) &&
+            (!mktSearch||m.name.toLowerCase().includes(mktSearch.toLowerCase())||m.desc.toLowerCase().includes(mktSearch.toLowerCase()))
+          );
+          return (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:960, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🛍</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Marketplace</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Extend Forge with community skills, agents, and integrations.</p>
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap' }}>
+                <input value={mktSearch} onChange={e => setMktSearch(e.target.value)} placeholder="🔍 Search marketplace..."
+                  style={{ flex:'1 1 200px', padding:'9px 14px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:9, color:'var(--fg-text)', fontSize:13 }} />
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                  {cats.map(c => (
+                    <button key={c} onClick={() => setMktCat(c)} style={{ padding:'7px 14px', background:mktCat===c?'var(--fg-orange)':'var(--fg-bg2)', border:`1px solid ${mktCat===c?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:8, color:mktCat===c?'#fff':'var(--fg-text2)', fontSize:12, fontWeight:mktCat===c?700:400, cursor:'pointer', textTransform:'capitalize' }}>{c}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ background:'linear-gradient(135deg,rgba(255,31,53,0.15),rgba(99,102,241,0.1))', border:'1px solid rgba(255,31,53,0.25)', borderRadius:14, padding:24, marginBottom:24, display:'flex', alignItems:'center', gap:20 }}>
+                <span style={{ fontSize:48 }}>🤖</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.08em' }}>⭐ Featured</div>
+                  <div style={{ fontSize:18, fontWeight:800, color:'var(--fg-text)', marginBottom:6 }}>Forge Agent Bundle</div>
+                  <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.5 }}>10 specialist agents — researcher, coder, writer, analyst, and more — all in one package.</div>
+                </div>
+                <button onClick={() => showToast('✅ Forge Agent Bundle installed!')} style={{ padding:'10px 22px', background:'var(--fg-orange)', border:'none', borderRadius:9, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', flexShrink:0 }}>Install Free</button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
+                {filtered.map(m => {
+                  const installed = mktInstalled.has(m.id);
+                  return (
+                  <div key={m.id} style={{ background:'var(--fg-bg2)', border:`1px solid ${installed?'rgba(34,197,94,0.3)':'var(--fg-border)'}`, borderRadius:12, padding:18, display:'flex', flexDirection:'column', gap:10 }}>
+                    <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
+                      <span style={{ fontSize:32 }}>{m.icon}</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:2 }}>{m.name}</div>
+                        <div style={{ fontSize:10, padding:'2px 8px', background:'var(--fg-bg4)', borderRadius:20, color:'var(--fg-text3)', display:'inline-block', textTransform:'capitalize' }}>{m.category}</div>
+                      </div>
+                      {installed && <span style={{ fontSize:18 }}>✅</span>}
+                    </div>
+                    <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', lineHeight:1.5 }}>{m.desc}</p>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:11, color:'var(--fg-text3)' }}>
+                      <span>⬇ {m.installs.toLocaleString()}</span>
+                      <span>⭐ {m.rating}</span>
+                      <span style={{ marginLeft:'auto', fontWeight:700, color:'#22c55e' }}>Free</span>
+                    </div>
+                    <button onClick={() => setMktInstalled((p: Set<string>) => { const n = new Set(p); if (n.has(m.id)) n.delete(m.id); else { n.add(m.id); showToast(`✅ ${m.name} installed!`); } return n; })}
+                      style={{ padding:'8px', background:installed?'var(--fg-bg4)':'var(--fg-orange)', border:installed?'1px solid var(--fg-border)':'none', borderRadius:8, color:installed?'var(--fg-text3)':'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>
+                      {installed?'✓ Installed — Remove':'+ Install'}
+                    </button>
+                  </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          );
+        })()}
 
 
         {/* -- ForgeAuto ----------------------------------------------- */}
