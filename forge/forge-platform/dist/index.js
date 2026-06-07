@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Forge Platform v6.81 — Full production: SQLite + GraphQL + webhooks + rate-limiting + multi-model
+ * Forge Platform v6.82 — Full production: SQLite + GraphQL + webhooks + rate-limiting + multi-model
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -165,7 +165,7 @@ app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 app.use((0, cookie_parser_1.default)());
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.81' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.82' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
@@ -3821,7 +3821,7 @@ try {
             res.status(500).json({ errors: [{ message: e.message }] });
         }
     });
-    app.get('/api/graphql', (_req, res) => res.json({ message: 'Forge GraphQL API v6.81', endpoint: 'POST /api/graphql', types: ['Thread', 'Message', 'Memory', 'User', 'Analytics', 'Persona', 'SearchResult'] }));
+    app.get('/api/graphql', (_req, res) => res.json({ message: 'Forge GraphQL API v6.82', endpoint: 'POST /api/graphql', types: ['Thread', 'Message', 'Memory', 'User', 'Analytics', 'Persona', 'SearchResult'] }));
     console.log('✅ GraphQL enabled at /api/graphql');
 }
 catch (e) {
@@ -3829,7 +3829,7 @@ catch (e) {
     console.warn('GraphQL not loaded:', e.message);
 }
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req, res) => res.json({ version: 'v6.81', features: ['sqlite', 'jwt', 'graphql', 'webhooks', 'rate-limiting', 'multi-model', 'personas', 'prompt-cache', 'search', 'analytics', 'forge-optimizer', 'superagent', 'harvest', 'billing', 'export'], built: new Date().toISOString() }));
+app.get('/api/version', (_req, res) => res.json({ version: 'v6.82', features: ['sqlite', 'jwt', 'graphql', 'webhooks', 'rate-limiting', 'multi-model', 'personas', 'prompt-cache', 'search', 'analytics', 'forge-optimizer', 'superagent', 'harvest', 'billing', 'export'], built: new Date().toISOString() }));
 // ─── Socket.IO — real-time bidirectional ──────────────────────────────────────
 const httpServer = require('http').createServer(app);
 try {
