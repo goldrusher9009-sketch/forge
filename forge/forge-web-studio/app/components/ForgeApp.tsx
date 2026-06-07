@@ -734,7 +734,19 @@ export default function ForgeApp() {
   const [newRunCron, setNewRunCron] = useState('0 9 * * 1-5');
   const [showAskModal, setShowAskModal] = useState(false);
   const [pendingAskMessage, setPendingAskMessage] = useState('');
-  const [showConnectModal, setShowConnectModal] = useState<{id:string;name:string;icon:string;desc:string;setupUrl?:string;envKey?:string} | null>(null);
+  const [showConnectModal, setShowConnectModal] = useState<{id:string;name:string;icon:string;desc:string;setupUrl?:string;envKey?:string;authType?:string} | null>(null);
+  const [connectorApiKeys, setConnectorApiKeys] = useState<Record<string,string>>({});
+  const [connectorConnected, setConnectorConnected] = useState<Set<string>>(new Set());
+  const [connectModalInput, setConnectModalInput] = useState('');
+  const [connectModalStep, setConnectModalStep] = useState<'input'|'success'>('input');
+  const [aiElapsed, setAiElapsed] = useState<number|null>(null);
+  const aiTimerRef = useRef<ReturnType<typeof setInterval>|null>(null);
+  const [skillCreatorOpen, setSkillCreatorOpen] = useState(false);
+  const [skillCreatorName, setSkillCreatorName] = useState('');
+  const [skillCreatorDesc, setSkillCreatorDesc] = useState('');
+  const [skillCreatorPrompt, setSkillCreatorPrompt] = useState('');
+  const [skillCreatorCategory, setSkillCreatorCategory] = useState('custom');
+  const [customSkills, setCustomSkills] = useState<{id:string;name:string;desc:string;prompt:string;category:string;icon:string}[]>([]);
   const [selectedAskSkills, setSelectedAskSkills] = useState<Set<string>>(new Set());
   const [selectedAskConnectors, setSelectedAskConnectors] = useState<Set<string>>(new Set());
   const superEndRef = useRef<HTMLDivElement>(null);
@@ -1042,6 +1054,12 @@ export default function ForgeApp() {
       if (lc) setLlmCreds(prev => ({ ...prev, ...JSON.parse(lc) }));
       const wc = localStorage.getItem('forge_web_creds');
       if (wc) setWebCreds(JSON.parse(wc));
+      const connKeys = localStorage.getItem('forge_connector_keys');
+      if (connKeys) setConnectorApiKeys(JSON.parse(connKeys));
+      const connConn = localStorage.getItem('forge_connector_connected');
+      if (connConn) setConnectorConnected(new Set(JSON.parse(connConn)));
+      const cs = localStorage.getItem('forge_custom_skills');
+      if (cs) setCustomSkills(JSON.parse(cs));
     } catch {}
   }, []);
 
@@ -1767,6 +1785,12 @@ export default function ForgeApp() {
     if (/enable.*(skill|skills|tool|tools)/i.test(lower) || /activate.*(skill|tool)/i.test(lower)) {
       setMainTab('skills'); addAgentStep('🛡', 'Opening Skills & Tools'); return true;
     }
+    if (/skill.?creator|create.*(skill|tool)|new skill|add skill|build skill/i.test(lower)) {
+      setMainTab('skills'); setSkillCreatorOpen(true); addAgentStep('🔨', 'Opening Skill Creator'); return true;
+    }
+    if (/connector.?creator|create.*connector|add connector|new connector/i.test(lower)) {
+      setMainTab('skills'); setSkillCat('conn_All'); addAgentStep('🔗', 'Opening Connectors — click "Connect" on any connector'); return true;
+    }
     if (/schedule.*(run|task|job)/i.test(lower) || /\bcron\b/i.test(lower) || /automat/i.test(lower)) {
       setMainTab('runs'); addAgentStep('🏃', 'Opening Runs — click "+ Schedule Run" to automate tasks'); return true;
     }
@@ -1845,6 +1869,10 @@ export default function ForgeApp() {
     }
     setInput(''); setVoiceTranscript('');
     setSending(true); setTyping(true);
+    setAiElapsed(0);
+    if (aiTimerRef.current) clearInterval(aiTimerRef.current);
+    const _aiStart = Date.now();
+    aiTimerRef.current = setInterval(() => setAiElapsed(Date.now() - _aiStart), 200);
     setAgentSteps([]); agentStepsRef.current = [];
     setLastThinkingSteps([]); setThinkingExpanded(false);
     setMultiResponses([]);
@@ -1855,6 +1883,7 @@ export default function ForgeApp() {
     // Hard safety timeout: abort + unstick UI after 30s (backend LLM timeout is 20s, Railway kills at 30s)
     const safetyTimer = setTimeout(() => {
       abortCtrl.abort(new DOMException('Request timed out — the model took too long to respond. Try a faster model.', 'TimeoutError'));
+      if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; }
       setSending(false); setTyping(false); sendAbortRef.current = null;
     }, 55000);
     // Don't auto-open live tab — user stays in chat view
@@ -1877,6 +1906,7 @@ export default function ForgeApp() {
         await loadMessages(currentThread!.id);
         await loadArtifacts();
       } catch {}
+      if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; }
       setSending(false); setTyping(false);
       return;
     }
@@ -1888,6 +1918,7 @@ export default function ForgeApp() {
         const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:'⚠️ No AI model selected. Go to **Settings → LLM Providers** and add an API key, then pick a model from the dropdown.', created_at:new Date().toISOString() };
         setMessages(prev => [...prev, errMsg]);
         clearTimeout(safetyTimer);
+        if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; }
         setSending(false); setTyping(false);
         return;
       }
@@ -2091,6 +2122,7 @@ export default function ForgeApp() {
       setMessages(prev => [...prev, errMsg]);
     } finally {
       clearTimeout(safetyTimer);
+      if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; }
       if (agentStepsRef.current.length > 0) setLastThinkingSteps([...agentStepsRef.current]);
       setSending(false); setTyping(false);
       sendAbortRef.current = null;
@@ -2983,6 +3015,7 @@ export default function ForgeApp() {
                             {[0,1,2].map(i => <div key={i} style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
                           </div>
                           <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', fontFamily:'var(--fg-font-mono)' }}>FORGE AGENT — WORKING</span>
+                          {aiElapsed !== null && <span style={{ marginLeft:'auto', fontSize:10, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{(aiElapsed/1000).toFixed(1)}s</span>}
                         </div>
                         {/* Live steps — each one shown in full */}
                         {agentSteps.length > 0 && (
@@ -3374,7 +3407,7 @@ export default function ForgeApp() {
                       <div style={{ display:'flex', gap:4, flexShrink:0 }}>
                         {sending && (
                           <button
-                            onClick={() => { sendAbortRef.current?.abort(); setSending(false); setTyping(false); sendAbortRef.current = null; }}
+                            onClick={() => { sendAbortRef.current?.abort(); if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; } setSending(false); setTyping(false); sendAbortRef.current = null; setAiElapsed(null); }}
                             title="Stop generation"
                             style={{ height:32, padding:'0 10px', background:'rgba(220,38,38,0.85)', border:'1px solid rgba(220,38,38,0.5)', borderRadius:8, color:'#fff', cursor:'pointer', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:4, whiteSpace:'nowrap' }}
                           >
@@ -5332,48 +5365,59 @@ export default function ForgeApp() {
             ],
             connectors: [
               // Communication
-              { id:'slack', icon:'🛠', name:'Slack', desc:'Send messages, read channels, manage threads', status:'coming', category:'communication' },
-              { id:'gmail', icon:'📧', name:'Gmail', desc:'Read/send emails, manage labels, search inbox', status:'coming', category:'communication' },
-              { id:'teams', icon:'💼', name:'Microsoft Teams', desc:'Messages, channels, meetings, files', status:'coming', category:'communication' },
-              { id:'discord', icon:'💬', name:'Discord', desc:'Send messages, manage servers, read channels', status:'coming', category:'communication' },
-              { id:'whatsapp', icon:'💬', name:'WhatsApp Business', desc:'Send messages, manage contacts, templates', status:'coming', category:'communication' },
+              { id:'slack', icon:'🟣', name:'Slack', desc:'Send messages, read channels, search threads, post to any channel', status:'active', category:'communication', authType:'oauth', setupUrl:'https://api.slack.com/apps', tools:['send_message','read_channel','search_messages','list_channels'] },
+              { id:'gmail', icon:'📧', name:'Gmail', desc:'Read/send emails, manage labels, search inbox, create drafts', status:'active', category:'communication', authType:'oauth', setupUrl:'https://console.cloud.google.com', tools:['send_email','read_inbox','search_emails','create_draft','list_labels'] },
+              { id:'discord', icon:'💬', name:'Discord', desc:'Send messages, manage servers, read channels, create webhooks', status:'active', category:'communication', authType:'apikey', envKey:'DISCORD_BOT_TOKEN', setupUrl:'https://discord.com/developers/applications', tools:['send_message','read_channel','create_webhook'] },
+              { id:'teams', icon:'💼', name:'Microsoft Teams', desc:'Messages, channels, meetings, file sharing via Graph API', status:'active', category:'communication', authType:'oauth', setupUrl:'https://portal.azure.com', tools:['send_message','read_channel','create_meeting'] },
+              { id:'whatsapp', icon:'💬', name:'WhatsApp Business', desc:'Send messages, manage contacts, use approved templates', status:'active', category:'communication', authType:'apikey', envKey:'WHATSAPP_TOKEN', setupUrl:'https://developers.facebook.com/docs/whatsapp', tools:['send_message','send_template','get_contacts'] },
+              { id:'telegram', icon:'✈️', name:'Telegram Bot', desc:'Send messages, handle commands, manage groups', status:'active', category:'communication', authType:'apikey', envKey:'TELEGRAM_BOT_TOKEN', setupUrl:'https://t.me/BotFather', tools:['send_message','send_photo','get_updates'] },
               // Project Management
-              { id:'linear', icon:'📋', name:'Linear', desc:'Create/update issues, manage sprints', status:'coming', category:'project' },
-              { id:'asana', icon:'✓', name:'Asana', desc:'Tasks, projects, teams, timelines', status:'coming', category:'project' },
-              { id:'jira', icon:'🎯', name:'Jira', desc:'Tickets, sprints, epics, bug tracking', status:'coming', category:'project' },
-              { id:'notion', icon:'📄', name:'Notion', desc:'Pages, databases, wikis, docs', status:'coming', category:'project' },
-              { id:'trello', icon:'📌', name:'Trello', desc:'Boards, cards, lists, automations', status:'coming', category:'project' },
-              { id:'monday', icon:'📅', name:'Monday.com', desc:'Workspaces, boards, automations', status:'coming', category:'project' },
+              { id:'linear', icon:'📐', name:'Linear', desc:'Create/update issues, manage sprints, triage bugs, roadmap tracking', status:'active', category:'project', authType:'apikey', envKey:'LINEAR_API_KEY', setupUrl:'https://linear.app/settings/api', tools:['create_issue','update_issue','list_issues','create_project'] },
+              { id:'notion', icon:'📄', name:'Notion', desc:'Create/edit pages, manage databases, search workspace', status:'active', category:'project', authType:'apikey', envKey:'NOTION_TOKEN', setupUrl:'https://www.notion.so/my-integrations', tools:['create_page','update_page','query_database','search'] },
+              { id:'asana', icon:'✅', name:'Asana', desc:'Tasks, projects, teams, timelines, dependencies', status:'active', category:'project', authType:'apikey', envKey:'ASANA_TOKEN', setupUrl:'https://app.asana.com/0/my-apps', tools:['create_task','update_task','list_tasks','create_project'] },
+              { id:'jira', icon:'🎯', name:'Jira', desc:'Tickets, sprints, epics, bug tracking, board management', status:'active', category:'project', authType:'apikey', envKey:'JIRA_API_TOKEN', setupUrl:'https://id.atlassian.com/manage-profile/security/api-tokens', tools:['create_issue','update_issue','search_issues','get_sprint'] },
+              { id:'trello', icon:'📌', name:'Trello', desc:'Boards, cards, lists, automations, Power-Ups', status:'active', category:'project', authType:'apikey', envKey:'TRELLO_API_KEY', setupUrl:'https://trello.com/app-key', tools:['create_card','move_card','list_boards','add_comment'] },
+              { id:'monday', icon:'📅', name:'Monday.com', desc:'Workspaces, boards, automations, dashboards', status:'active', category:'project', authType:'apikey', envKey:'MONDAY_API_KEY', setupUrl:'https://monday.com/developers/v2', tools:['create_item','update_item','list_boards','create_column'] },
+              { id:'clickup', icon:'🖊', name:'ClickUp', desc:'Tasks, docs, goals, sprints, time tracking', status:'active', category:'project', authType:'apikey', envKey:'CLICKUP_API_KEY', setupUrl:'https://app.clickup.com/settings/apps', tools:['create_task','update_task','list_spaces','create_doc'] },
               // Storage & Files
-              { id:'gdrive', icon:'📗', name:'Google Drive', desc:'Files, folders, sharing, collaboration', status:'coming', category:'storage' },
-              { id:'dropbox', icon:'📦', name:'Dropbox', desc:'Files, folders, sharing, sync', status:'coming', category:'storage' },
-              { id:'box', icon:'📦', name:'Box', desc:'Enterprise file storage and sharing', status:'coming', category:'storage' },
-              { id:'onedrive', icon:'🖱', name:'OneDrive', desc:'Microsoft file storage, SharePoint integration', status:'coming', category:'storage' },
-              { id:'s3', icon:'☁️', name:'AWS S3', desc:'Object storage, buckets, file operations', status:'coming', category:'storage' },
+              { id:'gdrive', icon:'📗', name:'Google Drive', desc:'Files, folders, search, sharing, Google Docs/Sheets/Slides', status:'active', category:'storage', authType:'oauth', setupUrl:'https://console.cloud.google.com', tools:['upload_file','download_file','search_files','create_folder','share_file'] },
+              { id:'dropbox', icon:'📦', name:'Dropbox', desc:'Files, folders, sharing, Paper docs, team namespaces', status:'active', category:'storage', authType:'apikey', envKey:'DROPBOX_TOKEN', setupUrl:'https://www.dropbox.com/developers/apps', tools:['upload_file','download_file','list_folder','share_link'] },
+              { id:'onedrive', icon:'🖥', name:'OneDrive', desc:'Microsoft file storage, SharePoint, Office 365 integration', status:'active', category:'storage', authType:'oauth', setupUrl:'https://portal.azure.com', tools:['upload_file','download_file','list_files','share_file'] },
+              { id:'s3', icon:'☁️', name:'AWS S3', desc:'Object storage, buckets, presigned URLs, versioning', status:'active', category:'storage', authType:'apikey', envKey:'AWS_ACCESS_KEY_ID', setupUrl:'https://console.aws.amazon.com/iam', tools:['put_object','get_object','list_objects','create_bucket','presign_url'] },
+              { id:'box', icon:'📦', name:'Box', desc:'Enterprise file storage, collaboration, metadata, workflows', status:'active', category:'storage', authType:'apikey', envKey:'BOX_CLIENT_ID', setupUrl:'https://app.box.com/developers/console', tools:['upload_file','download_file','list_folder','share_file'] },
               // Dev Tools
-              { id:'github', icon:'🐙', name:'GitHub', desc:'PRs, repos, issues, CI/CD, code review', status:'coming', category:'devtools' },
-              { id:'gitlab', icon:'🦊', name:'GitLab', desc:'Repos, MRs, pipelines, issues', status:'coming', category:'devtools' },
-              { id:'vercel', icon:'▲', name:'Vercel', desc:'Deployments, domains, environment variables', status:'coming', category:'devtools' },
-              { id:'railway', icon:'🚂', name:'Railway', desc:'Deploy services, manage environments', status:'coming', category:'devtools' },
-              { id:'supabase', icon:'⚡', name:'Supabase', desc:'Database, auth, storage, edge functions', status:'coming', category:'devtools' },
-              { id:'firebase', icon:'🔥', name:'Firebase', desc:'Realtime DB, auth, hosting, functions', status:'coming', category:'devtools' },
+              { id:'github', icon:'🐙', name:'GitHub', desc:'PRs, repos, issues, Actions, code review, releases', status:'active', category:'devtools', authType:'apikey', envKey:'GITHUB_TOKEN', setupUrl:'https://github.com/settings/tokens', tools:['create_issue','open_pr','list_repos','get_commit','create_release'] },
+              { id:'gitlab', icon:'🦊', name:'GitLab', desc:'Repos, MRs, pipelines, issues, CI/CD', status:'active', category:'devtools', authType:'apikey', envKey:'GITLAB_TOKEN', setupUrl:'https://gitlab.com/-/user_settings/personal_access_tokens', tools:['create_issue','open_mr','trigger_pipeline','list_repos'] },
+              { id:'vercel', icon:'▲', name:'Vercel', desc:'Deployments, domains, environment variables, logs', status:'active', category:'devtools', authType:'apikey', envKey:'VERCEL_TOKEN', setupUrl:'https://vercel.com/account/tokens', tools:['list_deployments','get_logs','add_env','create_project'] },
+              { id:'supabase', icon:'⚡', name:'Supabase', desc:'Database CRUD, auth, storage, edge functions, realtime', status:'active', category:'devtools', authType:'apikey', envKey:'SUPABASE_SERVICE_KEY', setupUrl:'https://supabase.com/dashboard/account/tokens', tools:['query','insert','update','delete','invoke_function'] },
+              { id:'firebase', icon:'🔥', name:'Firebase', desc:'Firestore, Auth, Storage, Cloud Functions, Realtime DB', status:'active', category:'devtools', authType:'apikey', envKey:'FIREBASE_SERVICE_ACCOUNT', setupUrl:'https://console.firebase.google.com', tools:['read_doc','write_doc','list_collection','call_function'] },
+              { id:'railway', icon:'🚂', name:'Railway', desc:'Deploy services, manage environments, view logs', status:'active', category:'devtools', authType:'apikey', envKey:'RAILWAY_TOKEN', setupUrl:'https://railway.app/account/tokens', tools:['deploy','list_services','get_logs','set_variable'] },
+              { id:'render', icon:'🌐', name:'Render', desc:'Web services, static sites, cron jobs, databases', status:'active', category:'devtools', authType:'apikey', envKey:'RENDER_API_KEY', setupUrl:'https://dashboard.render.com/u/settings#api-keys', tools:['list_services','deploy','get_logs'] },
               // CRM & Sales
-              { id:'hubspot', icon:'🏷', name:'HubSpot', desc:'Contacts, deals, emails, pipelines', status:'coming', category:'crm' },
-              { id:'salesforce', icon:'📗', name:'Salesforce', desc:'Leads, opportunities, accounts, reports', status:'coming', category:'crm' },
-              { id:'stripe', icon:'💳', name:'Stripe', desc:'Payments, subscriptions, customers, invoices', status:'coming', category:'crm' },
-              { id:'calendly', icon:'📅', name:'Calendly', desc:'Scheduling, meetings, availability', status:'coming', category:'crm' },
+              { id:'hubspot', icon:'🏷', name:'HubSpot', desc:'Contacts, deals, emails, pipelines, forms, analytics', status:'active', category:'crm', authType:'apikey', envKey:'HUBSPOT_API_KEY', setupUrl:'https://app.hubspot.com/api-key', tools:['create_contact','update_deal','search_contacts','send_email','get_analytics'] },
+              { id:'salesforce', icon:'☁️', name:'Salesforce', desc:'Leads, opportunities, accounts, reports, SOQL queries', status:'active', category:'crm', authType:'oauth', setupUrl:'https://login.salesforce.com', tools:['create_lead','update_opportunity','run_report','soql_query'] },
+              { id:'stripe', icon:'💳', name:'Stripe', desc:'Payments, subscriptions, customers, invoices, webhooks', status:'active', category:'crm', authType:'apikey', envKey:'STRIPE_SECRET_KEY', setupUrl:'https://dashboard.stripe.com/apikeys', tools:['create_payment','list_customers','create_invoice','cancel_subscription'] },
+              { id:'calendly', icon:'📅', name:'Calendly', desc:'Scheduling links, events, availability, webhooks', status:'active', category:'crm', authType:'apikey', envKey:'CALENDLY_TOKEN', setupUrl:'https://calendly.com/integrations/api_webhooks', tools:['list_events','get_availability','create_webhook'] },
+              { id:'intercom', icon:'💬', name:'Intercom', desc:'Customer messaging, inbox, conversations, user data', status:'active', category:'crm', authType:'apikey', envKey:'INTERCOM_TOKEN', setupUrl:'https://app.intercom.com/a/apps', tools:['send_message','create_conversation','search_contacts','tag_user'] },
               // Productivity
-              { id:'gcal', icon:'📅', name:'Google Calendar', desc:'Events, availability, scheduling', status:'coming', category:'productivity' },
-              { id:'zoom', icon:'📹', name:'Zoom', desc:'Meetings, recordings, transcripts', status:'coming', category:'productivity' },
-              { id:'airtable', icon:'📋', name:'Airtable', desc:'Bases, tables, views, automations', status:'coming', category:'productivity' },
-              { id:'zapier', icon:'⚡', name:'Zapier', desc:'Connect 5000+ apps with no-code automations', status:'coming', category:'productivity' },
-              { id:'make', icon:'🔄', name:'Make (Integromat)', desc:'Visual workflow automation platform', status:'coming', category:'productivity' },
+              { id:'gcal', icon:'📅', name:'Google Calendar', desc:'Events, scheduling, availability, recurring meetings', status:'active', category:'productivity', authType:'oauth', setupUrl:'https://console.cloud.google.com', tools:['create_event','list_events','check_availability','update_event'] },
+              { id:'zoom', icon:'📹', name:'Zoom', desc:'Meetings, webinars, recordings, transcripts, participants', status:'active', category:'productivity', authType:'apikey', envKey:'ZOOM_API_KEY', setupUrl:'https://marketplace.zoom.us', tools:['create_meeting','list_recordings','get_transcript','list_participants'] },
+              { id:'airtable', icon:'📋', name:'Airtable', desc:'Bases, tables, views, automations, forms', status:'active', category:'productivity', authType:'apikey', envKey:'AIRTABLE_API_KEY', setupUrl:'https://airtable.com/account', tools:['list_records','create_record','update_record','search','create_table'] },
+              { id:'zapier', icon:'⚡', name:'Zapier', desc:'Trigger 5000+ app automations via Webhook URLs', status:'active', category:'productivity', authType:'webhook', setupUrl:'https://zapier.com/app/zaps', tools:['trigger_webhook','list_zaps','run_action'], envKey:'ZAPIER_WEBHOOK_URL' },
+              { id:'make', icon:'🔄', name:'Make (Integromat)', desc:'Visual workflow automation, 1500+ app integrations', status:'active', category:'productivity', authType:'apikey', envKey:'MAKE_API_KEY', setupUrl:'https://www.make.com/en/api-documentation', tools:['run_scenario','list_scenarios','create_webhook'] },
+              { id:'n8n', icon:'🔧', name:'n8n', desc:'Self-hosted workflow automation, code-friendly', status:'active', category:'productivity', authType:'apikey', envKey:'N8N_API_KEY', setupUrl:'https://docs.n8n.io/api', tools:['trigger_webhook','list_workflows','execute_workflow'] },
+              { id:'todoist', icon:'✔', name:'Todoist', desc:'Tasks, projects, labels, reminders, karma tracking', status:'active', category:'productivity', authType:'apikey', envKey:'TODOIST_API_KEY', setupUrl:'https://app.todoist.com/app/settings/integrations/developer', tools:['create_task','complete_task','list_projects','add_comment'] },
               // AI & Data
-              { id:'openai', icon:'🤖', name:'OpenAI API', desc:'GPT-4, DALL-E, Whisper, embeddings', status:'coming', category:'ai' },
-              { id:'anthropic', icon:'🌟', name:'Anthropic API', desc:'Claude models, direct API access', status:'coming', category:'ai' },
-              { id:'pinecone', icon:'🌲', name:'Pinecone', desc:'Vector database for semantic search', status:'coming', category:'ai' },
-              { id:'snowflake', icon:'❄️', name:'Snowflake', desc:'Cloud data warehouse, SQL queries', status:'coming', category:'ai' },
-              { id:'bigquery', icon:'🔌', name:'BigQuery', desc:'Google analytics data warehouse', status:'coming', category:'ai' },
+              { id:'openai', icon:'🤖', name:'OpenAI API', desc:'GPT-4o, DALL-E 3, Whisper, embeddings, fine-tuning', status:'active', category:'ai', authType:'apikey', envKey:'OPENAI_API_KEY', setupUrl:'https://platform.openai.com/api-keys', tools:['chat','generate_image','transcribe','embed','fine_tune'] },
+              { id:'anthropic', icon:'🌟', name:'Anthropic API', desc:'Claude models, computer use, vision, tool use', status:'active', category:'ai', authType:'apikey', envKey:'ANTHROPIC_API_KEY', setupUrl:'https://console.anthropic.com', tools:['chat','vision','tool_use','batch'] },
+              { id:'pinecone', icon:'🌲', name:'Pinecone', desc:'Vector database for semantic search, RAG, embeddings', status:'active', category:'ai', authType:'apikey', envKey:'PINECONE_API_KEY', setupUrl:'https://app.pinecone.io', tools:['upsert','query','delete','list_indexes'] },
+              { id:'snowflake', icon:'❄️', name:'Snowflake', desc:'Cloud data warehouse, SQL queries, data sharing', status:'active', category:'ai', authType:'apikey', envKey:'SNOWFLAKE_ACCOUNT', setupUrl:'https://app.snowflake.com', tools:['run_query','list_tables','create_table','load_data'] },
+              { id:'bigquery', icon:'🔌', name:'BigQuery', desc:'Google analytics warehouse, streaming, ML models', status:'active', category:'ai', authType:'apikey', envKey:'GOOGLE_APPLICATION_CREDENTIALS', setupUrl:'https://console.cloud.google.com', tools:['run_query','list_datasets','create_table','export_data'] },
+              { id:'perplexity', icon:'🔮', name:'Perplexity AI', desc:'Real-time web search with AI synthesis and citations', status:'active', category:'ai', authType:'apikey', envKey:'PERPLEXITY_API_KEY', setupUrl:'https://www.perplexity.ai/settings/api', tools:['search','ask','get_citations'] },
+              // E-commerce
+              { id:'shopify', icon:'🛍', name:'Shopify', desc:'Products, orders, customers, inventory, analytics', status:'active', category:'ecommerce', authType:'apikey', envKey:'SHOPIFY_ACCESS_TOKEN', setupUrl:'https://partners.shopify.com', tools:['list_orders','update_product','get_customer','create_discount'] },
+              { id:'woocommerce', icon:'🛒', name:'WooCommerce', desc:'Orders, products, coupons, shipping, reports', status:'active', category:'ecommerce', authType:'apikey', envKey:'WC_CONSUMER_KEY', setupUrl:'https://woocommerce.com/document/woocommerce-rest-api', tools:['list_orders','create_product','update_inventory','get_report'] },
+              { id:'paypal', icon:'💰', name:'PayPal', desc:'Payments, invoices, subscriptions, disputes', status:'active', category:'ecommerce', authType:'apikey', envKey:'PAYPAL_CLIENT_ID', setupUrl:'https://developer.paypal.com/dashboard', tools:['create_payment','list_transactions','create_invoice','issue_refund'] },
             ]
           };
           return null;
@@ -5794,8 +5838,8 @@ export default function ForgeApp() {
               category: c.category || 'general',
             })),
           };
-          const SKILLS = catalogData.skills;
-          const CONNECTORS = catalogData.connectors;
+          const SKILLS = [...catalogData.skills, ...customSkills.map(cs => ({ ...cs, status:'active', prompt: cs.prompt }))];
+          const CONNECTORS = [...catalogData.connectors, ...Array.from(connectorConnected).filter(id => !catalogData.connectors.find((c:any)=>c.id===id)).map(id => ({ id, icon:'🔗', name:id, desc:'Custom connector', status:'active', category:'custom', tools:[] }))];
           const catIcons: Record<string,string> = { document:'📄', analytics:'📊', content:'✍️', engineering:'⚙️', design:'🎨', sales:'💼', product:'🗺', legal:'⚖️', finance:'💰', operations:'🔧', support:'🎨', enterprise:'✏️', seo:'🔌', integrations:'🔗', productivity:'⚡', smallbiz:'💼', ai:'🤖', general:'🧩' };
           const cats = ['All', ...Array.from(new Set(SKILLS.map((s:any) => s.category)))];
           const connCats = ['All', ...Array.from(new Set(CONNECTORS.map((c:any) => c.category)))];
@@ -5835,9 +5879,10 @@ export default function ForgeApp() {
             if (!genTopic.trim()) return;
             setGenLoading(true); setGenResult('');
             try {
+              const cleanModel = (selectedModel || '').startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
+              if (!cleanModel) { setGenResult('⚠️ No AI model selected. Go to Settings → LLM Providers and add an API key, then pick a model from the dropdown.'); setGenLoading(false); return; }
               const prompt = `You are a business AI consultant. Generate a detailed, actionable use-case for AI automation.\n\nBusiness/Topic: ${genTopic}\nIndustry: ${genIndustry || 'General'}\nGoal: ${genGoal || 'Improve efficiency and productivity'}\n\nProvide:\n1. Use Case Title\n2. Problem It Solves (2-3 sentences)\n3. AI Workflow (step-by-step)\n4. Tools/Skills Needed\n5. Expected Outcomes & ROI\n6. Implementation Steps (quick wins first)\n7. Sample prompt to get started immediately\n\nBe specific, practical, and focus on immediate value.`;
-              const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
-              const d = await apiFetch('/forge/chat', { method:'POST', body:JSON.stringify({ message: prompt, model: cleanModel || 'forge-pro' }) }, user.token);
+              const d = await apiFetch('/forge/chat', { method:'POST', body:JSON.stringify({ message: prompt, model: cleanModel }) }, user.token);
               setGenResult(d?.data?.content || d?.content || 'No response');
             } catch (e: any) { setGenResult('⚠️ ' + e.message); }
             setGenLoading(false);
@@ -5847,8 +5892,19 @@ export default function ForgeApp() {
               <div style={{ maxWidth:960, margin:'0 auto' }}>
                 {/* Header */}
                 <div style={{ marginBottom:32 }}>
-                  <h1 style={{ margin:'0 0 6px', fontSize:28, fontWeight:900, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.5px' }}>🧩 Skills & Tools</h1>
-                  <p style={{ margin:0, color:'var(--fg-text3)', fontSize:15 }}>Prebuilt AI skills, connectors, and a use-case generator for any business or workflow.</p>
+                  <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16 }}>
+                    <div>
+                      <h1 style={{ margin:'0 0 6px', fontSize:28, fontWeight:900, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)', letterSpacing:'-0.5px' }}>🧩 Skills & Tools</h1>
+                      <p style={{ margin:0, color:'var(--fg-text3)', fontSize:15 }}>Prebuilt AI skills, connectors, and a use-case generator for any business or workflow.</p>
+                    </div>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <span style={{ padding:'4px 12px', background:'rgba(249,115,22,0.13)', border:'1px solid var(--fg-orange)', borderRadius:20, fontSize:12, fontWeight:700, color:'var(--fg-orange)' }}>🧩 {activeSkills.size} skills active</span>
+                        <span style={{ padding:'4px 12px', background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.4)', borderRadius:20, fontSize:12, fontWeight:700, color:'var(--fg-green)' }}>🔗 {activeConnectors.size} connectors active</span>
+                      </div>
+                      <button onClick={() => setSkillCreatorOpen(true)} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>+ Create Skill</button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Use-Case Generator */}
@@ -5869,8 +5925,8 @@ export default function ForgeApp() {
                     <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Goal / Outcome</label>
                     <input value={genGoal} onChange={e => setGenGoal(e.target.value)} placeholder="e.g. Reduce response time, increase revenue, automate repetitive tasks" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
                   </div>
-                  <button onClick={generateUseCase} disabled={genLoading || !genTopic.trim()} style={{ padding:'11px 28px', background: genTopic.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: genLoading ? 0.7 : 1 }}>
-                    {genLoading ? '⚡ Generating…' : '⚡ Generate Use-Case Blueprint'}
+                  <button onClick={generateUseCase} disabled={genLoading || !genTopic.trim()} style={{ padding:'11px 28px', background: genTopic.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor: genTopic.trim() ? 'pointer' : 'default', opacity: genLoading ? 0.7 : 1, display:'inline-flex', alignItems:'center', gap:8 }}>
+                    {genLoading ? <><span style={{ animation:'forge-flash 0.8s infinite', display:'inline-block' }}>⚡</span> Generating…</> : '⚡ Generate Use-Case Blueprint'}
                   </button>
                   {genResult && (
                     <div style={{ marginTop:20, padding:'16px 20px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:12, fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap', maxHeight:400, overflowY:'auto' }}>
@@ -5929,17 +5985,20 @@ export default function ForgeApp() {
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:10 }}>
                     {CONNECTORS.filter((c:any) => skillCat === 'All' || skillCat === 'conn_All' || skillCat === 'conn_'+c.category || (!skillCat.startsWith('conn_') && skillCat === 'All')).map((c:any) => {
                       const isActive = activeConnectors.has(c.id);
-                      const isReady = c.status === 'active';
+                      const isConnected = connectorConnected.has(c.id);
+                      const isReady = c.status === 'active' || isConnected;
                       return (
-                      <div key={c.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${isActive ? 'var(--fg-orange)' : isReady ? 'rgba(34,197,94,0.3)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:8, position:'relative' }}>
+                      <div key={c.id} style={{ background:'var(--fg-bg3)', border:`1px solid ${isActive ? 'var(--fg-orange)' : isConnected ? 'rgba(34,197,94,0.5)' : isReady ? 'rgba(34,197,94,0.2)' : 'var(--fg-border)'}`, borderRadius:12, padding:'14px', display:'flex', flexDirection:'column', gap:8, position:'relative' }}>
                         {isActive && <div style={{ position:'absolute', top:8, right:8, fontSize:9, padding:'2px 8px', background:'rgba(249,115,22,0.18)', border:'1px solid var(--fg-orange)', borderRadius:10, color:'var(--fg-orange)', fontWeight:700 }}>ACTIVE</div>}
+                        {isConnected && !isActive && <div style={{ position:'absolute', top:8, right:8, fontSize:9, padding:'2px 8px', background:'rgba(34,197,94,0.15)', border:'1px solid rgba(34,197,94,0.5)', borderRadius:10, color:'var(--fg-green)', fontWeight:700 }}>CONNECTED</div>}
                         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                           <span style={{ fontSize:22 }}>{c.icon}</span>
                           <div style={{ flex:1, overflow:'hidden' }}>
                             <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{c.name}</div>
                             <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                              <span style={{ fontSize:10, color: isReady ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{isReady ? '⏺ Ready' : '⏸ Connect'}</span>
+                              <span style={{ fontSize:10, color: isConnected ? 'var(--fg-green)' : isReady ? 'var(--fg-green)' : 'var(--fg-text3)', fontWeight:600 }}>{isConnected ? '✅ Connected' : isReady ? '⏺ Ready' : '⏸ Setup required'}</span>
                               <span style={{ fontSize:9, color:'var(--fg-text3)', background:'var(--fg-bg4)', padding:'0 5px', borderRadius:4 }}>{c.category}</span>
+                              {c.authType && <span style={{ fontSize:9, color:'var(--fg-orange)', background:'rgba(249,115,22,0.1)', padding:'0 5px', borderRadius:4 }}>{c.authType}</span>}
                             </div>
                           </div>
                         </div>
@@ -5953,13 +6012,19 @@ export default function ForgeApp() {
                           </div>
                         )}
                         <div style={{ display:'flex', gap:6 }}>
-                          {isReady ? (
+                          {isConnected ? (
                             <>
                               <button onClick={() => { setActiveConnectors(prev => { const next = new Set(prev); next.add(c.id); try { localStorage.setItem('forge_active_connectors', JSON.stringify(Array.from(next))); } catch {} return next; }); setMainTab('workspace'); }} style={{ padding:'5px 10px', background:'var(--fg-green)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600, flex:1 }}>Use Now</button>
                               <button onClick={() => toggleConnector(c.id)} style={{ padding:'5px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>{isActive ? '✓ On' : '+ On'}</button>
+                              <button onClick={() => setShowConnectModal({ id:c.id, name:c.name, icon:c.icon, desc:c.desc, setupUrl: c.setupUrl, envKey: c.envKey, authType: c.authType })} style={{ padding:'5px 10px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>⚙️</button>
+                            </>
+                          ) : isReady ? (
+                            <>
+                              <button onClick={() => setShowConnectModal({ id:c.id, name:c.name, icon:c.icon, desc:c.desc, setupUrl: c.setupUrl, envKey: c.envKey, authType: c.authType })} style={{ padding:'5px 10px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', flex:1, fontWeight:600 }}>🔗 Connect →</button>
+                              <button onClick={() => toggleConnector(c.id)} style={{ padding:'5px 10px', background: isActive ? 'rgba(249,115,22,0.18)' : 'var(--fg-bg4)', border:`1px solid ${isActive ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: isActive ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600, flexShrink:0 }}>{isActive ? '✓ On' : '+ On'}</button>
                             </>
                           ) : (
-                            <button onClick={() => setShowConnectModal({ id:c.id, name:c.name, icon:c.icon, desc:c.desc, setupUrl: c.setupUrl, envKey: c.envKey })} style={{ padding:'5px 10px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', flex:1, fontWeight:600 }}>🔗 Connect →</button>
+                            <button onClick={() => setShowConnectModal({ id:c.id, name:c.name, icon:c.icon, desc:c.desc, setupUrl: c.setupUrl, envKey: c.envKey, authType: c.authType })} style={{ padding:'5px 10px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', flex:1, fontWeight:600 }}>🔗 Connect →</button>
                           )}
                         </div>
                       </div>
@@ -6012,6 +6077,111 @@ export default function ForgeApp() {
               <div style={{ display:'flex', gap:12 }}>
                 <button onClick={() => { setShowAskModal(false); setPendingAskMessage(''); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); }} style={{ flex:1, padding:12, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:14, fontWeight:600, cursor:'pointer' }}>Cancel</button>
                 <button onClick={async () => { if (pendingAskMessage.trim()) { setShowAskModal(false); setSuperInput(''); setSuperMessages(prev => [...prev, { role:'user', content: pendingAskMessage }]); setSuperSending(true); try { const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel; const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: pendingAskMessage, model: cleanModel, enabledSkills: Array.from(selectedAskSkills), enabledConnectors: Array.from(selectedAskConnectors) }) }, user.token); setSuperMessages(prev => [...prev, { role:'assistant', content: d?.data?.content || '' }]); loadTotalTokens(); try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {} } catch (e: any) { setSuperMessages(prev => [...prev, { role:'assistant', content:`⚠️ ${e.message}` }]); } finally { setSuperSending(false); setSelectedAskSkills(new Set()); setSelectedAskConnectors(new Set()); } } }} style={{ flex:1, padding:12, background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Send with Selected Tools</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* -- Connect Modal ----------------------------------------------- */}
+        {showConnectModal && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }} onClick={() => { setShowConnectModal(null); setConnectModalInput(''); setConnectModalStep('input'); }}>
+            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:18, padding:32, maxWidth:480, width:'90vw' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+                <span style={{ fontSize:32 }}>{showConnectModal.icon}</span>
+                <div>
+                  <h2 style={{ margin:0, fontSize:20, fontWeight:800, color:'var(--fg-text)' }}>{showConnectModal.name}</h2>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>{showConnectModal.desc}</p>
+                </div>
+              </div>
+              {connectModalStep === 'success' ? (
+                <div style={{ textAlign:'center', padding:'24px 0' }}>
+                  <div style={{ fontSize:48, marginBottom:12 }}>✅</div>
+                  <h3 style={{ margin:'0 0 8px', color:'var(--fg-green)' }}>Connected!</h3>
+                  <p style={{ margin:'0 0 20px', fontSize:13, color:'var(--fg-text3)' }}>{showConnectModal.name} is now active and available in your workspace.</p>
+                  <button onClick={() => { setShowConnectModal(null); setConnectModalInput(''); setConnectModalStep('input'); }} style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Done</button>
+                </div>
+              ) : (
+                <>
+                  {showConnectModal.authType === 'oauth' ? (
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:16, marginBottom:20 }}>
+                      <p style={{ margin:'0 0 12px', fontSize:13, color:'var(--fg-text2)' }}>This connector uses OAuth. Click the button below to authorize Forge:</p>
+                      <button onClick={() => { window.open(showConnectModal.setupUrl, '_blank'); }} style={{ width:'100%', padding:'11px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:8, color:'#333', fontSize:14, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                        <span>{showConnectModal.icon}</span> Authorize {showConnectModal.name} →
+                      </button>
+                      <p style={{ margin:'12px 0 0', fontSize:11, color:'var(--fg-text3)' }}>After authorizing, paste the token or callback code below:</p>
+                      <input value={connectModalInput} onChange={e => setConnectModalInput(e.target.value)} placeholder="Paste token or code here…" style={{ width:'100%', marginTop:8, padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                    </div>
+                  ) : showConnectModal.authType === 'webhook' ? (
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:16, marginBottom:20 }}>
+                      <p style={{ margin:'0 0 8px', fontSize:13, color:'var(--fg-text2)' }}>Paste your {showConnectModal.name} Webhook URL below:</p>
+                      <p style={{ margin:'0 0 12px', fontSize:11, color:'var(--fg-text3)' }}>Get it from: <a href={showConnectModal.setupUrl} target="_blank" rel="noreferrer" style={{ color:'var(--fg-orange)' }}>{showConnectModal.setupUrl}</a></p>
+                      <input value={connectModalInput} onChange={e => setConnectModalInput(e.target.value)} placeholder="https://hooks.zapier.com/…" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                    </div>
+                  ) : (
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:10, padding:16, marginBottom:20 }}>
+                      <p style={{ margin:'0 0 8px', fontSize:13, color:'var(--fg-text2)' }}>Enter your {showConnectModal.name} API Key:</p>
+                      <p style={{ margin:'0 0 12px', fontSize:11, color:'var(--fg-text3)' }}>Get it from: <a href={showConnectModal.setupUrl} target="_blank" rel="noreferrer" style={{ color:'var(--fg-orange)' }}>{showConnectModal.setupUrl}</a></p>
+                      <input value={connectModalInput} onChange={e => setConnectModalInput(e.target.value)} placeholder={`Paste your ${showConnectModal.envKey || 'API key'} here…`} type="password" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                    </div>
+                  )}
+                  <div style={{ display:'flex', gap:10 }}>
+                    <button onClick={() => { setShowConnectModal(null); setConnectModalInput(''); setConnectModalStep('input'); }} style={{ flex:1, padding:'11px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text2)', fontSize:14, fontWeight:600, cursor:'pointer' }}>Cancel</button>
+                    <button onClick={() => {
+                      if (!connectModalInput.trim()) return;
+                      const key = connectModalInput.trim();
+                      setConnectorApiKeys(prev => { const n = { ...prev, [showConnectModal!.id]: key }; try { localStorage.setItem('forge_connector_keys', JSON.stringify(n)); } catch {} return n; });
+                      setConnectorConnected(prev => { const n = new Set(prev); n.add(showConnectModal!.id); try { localStorage.setItem('forge_connector_connected', JSON.stringify(Array.from(n))); } catch {} return n; });
+                      setActiveConnectors(prev => { const n = new Set(prev); n.add(showConnectModal!.id); try { localStorage.setItem('forge_active_connectors', JSON.stringify(Array.from(n))); } catch {} return n; });
+                      setConnectModalStep('success');
+                    }} disabled={!connectModalInput.trim()} style={{ flex:2, padding:'11px', background: connectModalInput.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor: connectModalInput.trim() ? 'pointer' : 'default', opacity: connectModalInput.trim() ? 1 : 0.6 }}>
+                      🔗 Connect {showConnectModal.name}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* -- Skill Creator Modal ------------------------------------------ */}
+        {skillCreatorOpen && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }} onClick={() => setSkillCreatorOpen(false)}>
+            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:18, padding:32, maxWidth:560, width:'90vw', maxHeight:'90vh', overflowY:'auto' }} onClick={e => e.stopPropagation()}>
+              <h2 style={{ margin:'0 0 6px', fontSize:20, fontWeight:800, color:'var(--fg-orange)' }}>🔨 Create Custom Skill</h2>
+              <p style={{ margin:'0 0 24px', fontSize:13, color:'var(--fg-text3)' }}>Define a reusable AI skill with a name, description, and system prompt.</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                <div>
+                  <label style={{ fontSize:12, fontWeight:600, color:'var(--fg-text2)', display:'block', marginBottom:6 }}>Skill Name *</label>
+                  <input value={skillCreatorName} onChange={e => setSkillCreatorName(e.target.value)} placeholder="e.g. Legal Contract Analyzer" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:12, fontWeight:600, color:'var(--fg-text2)', display:'block', marginBottom:6 }}>Short Description *</label>
+                  <input value={skillCreatorDesc} onChange={e => setSkillCreatorDesc(e.target.value)} placeholder="e.g. Review contracts, flag risks, suggest redlines" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:12, fontWeight:600, color:'var(--fg-text2)', display:'block', marginBottom:6 }}>Category</label>
+                  <select value={skillCreatorCategory} onChange={e => setSkillCreatorCategory(e.target.value)} style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                    {['custom','document','finance','analytics','engineering','content','design','legal','product','research','marketing','sales','hr','operations'].map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize:12, fontWeight:600, color:'var(--fg-text2)', display:'block', marginBottom:6 }}>System Prompt * <span style={{ fontWeight:400, color:'var(--fg-text3)' }}>— how the AI should behave for this skill</span></label>
+                  <textarea value={skillCreatorPrompt} onChange={e => setSkillCreatorPrompt(e.target.value)} rows={6} placeholder="You are an expert at... Your job is to... When given a task, you should..." style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box', resize:'vertical', fontFamily:'var(--fg-font-mono)' }} />
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:10, marginTop:24 }}>
+                <button onClick={() => setSkillCreatorOpen(false)} style={{ flex:1, padding:'11px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text2)', fontSize:14, fontWeight:600, cursor:'pointer' }}>Cancel</button>
+                <button onClick={() => {
+                  if (!skillCreatorName.trim() || !skillCreatorDesc.trim() || !skillCreatorPrompt.trim()) return;
+                  const newSkill = { id: 'custom-' + Date.now(), name: skillCreatorName.trim(), desc: skillCreatorDesc.trim(), prompt: skillCreatorPrompt.trim(), category: skillCreatorCategory, icon: '🔨' };
+                  setCustomSkills(prev => { const n = [...prev, newSkill]; try { localStorage.setItem('forge_custom_skills', JSON.stringify(n)); } catch {} return n; });
+                  setActiveSkills(prev => { const n = new Set(prev); n.add(newSkill.id); return n; });
+                  setSkillCreatorName(''); setSkillCreatorDesc(''); setSkillCreatorPrompt(''); setSkillCreatorCategory('custom');
+                  setSkillCreatorOpen(false);
+                  showToast('Skill created and activated!', 'success');
+                }} disabled={!skillCreatorName.trim() || !skillCreatorDesc.trim() || !skillCreatorPrompt.trim()} style={{ flex:2, padding:'11px', background: skillCreatorName.trim() && skillCreatorDesc.trim() && skillCreatorPrompt.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>
+                  ✅ Create Skill
+                </button>
               </div>
             </div>
           </div>
@@ -6667,7 +6837,7 @@ export default function ForgeApp() {
                   setAsiRunning(false);
                 }} disabled={asiRunning || !asiPrompt.trim()}
                   style={{ marginTop:12, padding:'10px 24px', background:'#6366f1', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(asiRunning||!asiPrompt.trim())?0.5:1 }}>
-                  {asiRunning ? `🌌 Phase: ${asiCurrentPhase}…` : `🌌 Launch ${asiDepth}-Phase ASI Analysis`}
+                  {asiRunning ? `≡ƒîî Phase: ${asiCurrentPhase}ΓÇª` : `≡ƒîî Launch ${asiDepth}-Phase ASI Analysis`}
                 </button>
               </div>
               {asiLivePhases.length > 0 && (
@@ -6681,7 +6851,7 @@ export default function ForgeApp() {
                   {asiResult && (
                     <div style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.15),rgba(99,102,241,0.05))', border:'1px solid #6366f1', borderRadius:12, padding:20 }}>
                       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
-                        <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'#6366f1' }}>🌌 ASI Synthesis</h3>
+                        <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'#6366f1' }}>≡ƒîî ASI Synthesis</h3>
                         <span style={{ fontSize:11, color:'var(--fg-text3)' }}>~{asiResult.totalTokens.toLocaleString()} tokens ┬╖ {asiResult.model}</span>
                       </div>
                       <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{asiResult.synthesis}</div>
@@ -6693,12 +6863,12 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* -- MVP Builder --------------------------------------------- */}
+        {/* ΓöÇΓöÇ MVP Builder ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
         {mainTab === 'mvp' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:860, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>🏗</span>
+                <span style={{ fontSize:36 }}>≡ƒÅù∩╕Å</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>MVP Builder</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>From idea to blueprint in seconds. Get your spec, stack, roadmap, and pitch deck outline.</p>
@@ -6708,12 +6878,12 @@ export default function ForgeApp() {
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
                   <div>
                     <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Industry / Category</label>
-                    <input value={mvpIndustry} onChange={e => setMvpIndustry(e.target.value)} placeholder="e.g. FinTech, HealthTech, SaaS, E-commerce…"
+                    <input value={mvpIndustry} onChange={e => setMvpIndustry(e.target.value)} placeholder="e.g. FinTech, HealthTech, SaaS, E-commerceΓÇª"
                       style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} />
                   </div>
                   <div>
                     <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Target User</label>
-                    <input value={mvpTarget} onChange={e => setMvpTarget(e.target.value)} placeholder="e.g. Small businesses, Freelancers, Students…"
+                    <input value={mvpTarget} onChange={e => setMvpTarget(e.target.value)} placeholder="e.g. Small businesses, Freelancers, StudentsΓÇª"
                       style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} />
                   </div>
                 </div>
@@ -6723,7 +6893,7 @@ export default function ForgeApp() {
                 <button onClick={async () => {
                   if (!mvpIdea.trim() || mvpBuilding) return;
                   setMvpBuilding(true); setMvpResult(null);
-                  const prompt = `You are an expert startup CTO and product strategist. Build a detailed MVP blueprint for the following idea:\n\nIdea: ${mvpIdea}\nIndustry: ${mvpIndustry || 'General'}\nTarget User: ${mvpTarget || 'General consumers'}\n\nProvide a structured response with these exact sections:\n\n## SPEC\nCore features for v1 MVP (what to build, what NOT to build). Be specific.\n\n## STACK\nRecommended tech stack with justification. Include frontend, backend, database, hosting, key libraries.\n\n## ROADMAP\nWeek-by-week 8-week build plan. Concrete milestones.\n\n## PITCH\n3-sentence investor pitch. Problem → Solution → Market size.`;
+                  const prompt = `You are an expert startup CTO and product strategist. Build a detailed MVP blueprint for the following idea:\n\nIdea: ${mvpIdea}\nIndustry: ${mvpIndustry || 'General'}\nTarget User: ${mvpTarget || 'General consumers'}\n\nProvide a structured response with these exact sections:\n\n## SPEC\nCore features for v1 MVP (what to build, what NOT to build). Be specific.\n\n## STACK\nRecommended tech stack with justification. Include frontend, backend, database, hosting, key libraries.\n\n## ROADMAP\nWeek-by-week 8-week build plan. Concrete milestones.\n\n## PITCH\n3-sentence investor pitch. Problem ΓåÆ Solution ΓåÆ Market size.`;
                   try {
                     const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: prompt}], model: selectedModel || 'claude-sonnet-4-6' }) }, user?.token);
                     const raw = d?.choices?.[0]?.message?.content || d?.data?.content || '';
@@ -6733,12 +6903,12 @@ export default function ForgeApp() {
                   setMvpBuilding(false);
                 }} disabled={mvpBuilding || !mvpIdea.trim()}
                   style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(mvpBuilding||!mvpIdea.trim())?0.5:1 }}>
-                  {mvpBuilding ? '🏗 Building blueprint…' : '🏗 Build MVP Blueprint'}
+                  {mvpBuilding ? '≡ƒÅù∩╕Å Building blueprintΓÇª' : '≡ƒÅù∩╕Å Build MVP Blueprint'}
                 </button>
               </div>
               {mvpResult && (
                 <div style={{ display:'grid', gap:16 }}>
-                  {[{icon:'📋',label:'SPEC',color:'var(--fg-orange)',content:mvpResult.spec},{icon:'⚙️',label:'STACK',color:'#6366f1',content:mvpResult.stack},{icon:'🗺',label:'ROADMAP',color:'#22c55e',content:mvpResult.roadmap},{icon:'💡',label:'PITCH',color:'#f59e0b',content:mvpResult.pitch}].map(s => (
+                  {[{icon:'≡ƒôï',label:'SPEC',color:'var(--fg-orange)',content:mvpResult.spec},{icon:'ΓÜÖ∩╕Å',label:'STACK',color:'#6366f1',content:mvpResult.stack},{icon:'≡ƒùô∩╕Å',label:'ROADMAP',color:'#22c55e',content:mvpResult.roadmap},{icon:'≡ƒÆí',label:'PITCH',color:'#f59e0b',content:mvpResult.pitch}].map(s => (
                     <div key={s.label} style={{ background:'var(--fg-bg2)', border:`1px solid ${s.color}40`, borderRadius:12, padding:20 }}>
                       <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:s.color }}>{s.icon} {s.label}</h3>
                       <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{s.content}</div>
@@ -6747,19 +6917,19 @@ export default function ForgeApp() {
                   <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
                     <button onClick={() => { const txt = `MVP Blueprint\n\nSPEC:\n${mvpResult!.spec}\n\nSTACK:\n${mvpResult!.stack}\n\nROADMAP:\n${mvpResult!.roadmap}\n\nPITCH:\n${mvpResult!.pitch}`; navigator.clipboard.writeText(txt); }}
                       style={{ flex:1, padding:'10px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight:600 }}>
-                      📋 Copy Full Blueprint
+                      ≡ƒôï Copy Full Blueprint
                     </button>
                     <button onClick={() => { const msg = `Build this MVP:\n\n${mvpResult!.spec}\n\nStack: ${mvpResult!.stack}\n\nCreate a complete working implementation with all the core features. Start with project structure, then implement each component.`; setInput(msg); setMainTab('workspace'); }}
                       style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:700 }}>
-                      ⚡ Build It Now (Agent)
+                      ΓÜí Build It Now (Agent)
                     </button>
                     <button onClick={() => window.open(`https://railway.app/new?template=nextjs`, '_blank')}
                       style={{ flex:1, padding:'10px', background:'#0f172a', border:'1px solid #6366f1', borderRadius:8, color:'#6366f1', fontSize:12, cursor:'pointer', fontWeight:700 }}>
-                      🚂 Deploy to Railway
+                      ≡ƒÜé Deploy to Railway
                     </button>
                     <button onClick={() => window.open(`https://vercel.com/new`, '_blank')}
                       style={{ flex:1, padding:'10px', background:'#000', border:'1px solid #fff3', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:700 }}>
-                      ▲ Deploy to Vercel
+                      Γû▓ Deploy to Vercel
                     </button>
                   </div>
                 </div>
@@ -6768,19 +6938,19 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* -- Intelligence -------------------------------------------- */}
+        {/* ΓöÇΓöÇ Intelligence ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
         {mainTab === 'intelligence' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:860, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>🧠</span>
+                <span style={{ fontSize:36 }}>≡ƒºá</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Intelligence Layer</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Your AI's knowledge graph — harvest context, browse memories, and measure intelligence growth.</p>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Your AI's knowledge graph ΓÇö harvest context, browse memories, and measure intelligence growth.</p>
                 </div>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
-                {[{icon:'📊',label:'Intelligence Score',value:'--',color:'var(--fg-orange)'},{icon:'🧩',label:'Memory Nodes',value:igNodes.length.toString(),color:'#6366f1'},{icon:'🔙',label:'Connections',value:(igNodes.length * 2).toString(),color:'#22c55e'}].map(s => (
+                {[{icon:'≡ƒôè',label:'Intelligence Score',value:'--',color:'var(--fg-orange)'},{icon:'≡ƒº⌐',label:'Memory Nodes',value:igNodes.length.toString(),color:'#6366f1'},{icon:'≡ƒöù',label:'Connections',value:(igNodes.length * 2).toString(),color:'#22c55e'}].map(s => (
                   <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, textAlign:'center' }}>
                     <div style={{ fontSize:28, marginBottom:6 }}>{s.icon}</div>
                     <div style={{ fontSize:26, fontWeight:800, color:s.color, marginBottom:4 }}>{s.value}</div>
@@ -6790,9 +6960,9 @@ export default function ForgeApp() {
               </div>
               <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>🧩 Memory Graph</h3>
+                  <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>≡ƒº⌐ Memory Graph</h3>
                   <div style={{ display:'flex', gap:8 }}>
-                    <input value={igQuery} onChange={e => setIgQuery(e.target.value)} placeholder="Search memories…"
+                    <input value={igQuery} onChange={e => setIgQuery(e.target.value)} placeholder="Search memoriesΓÇª"
                       style={{ padding:'7px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text)', fontSize:12, width:180 }} />
                     <button onClick={async () => {
                       setIgLoading(true);
@@ -6803,13 +6973,13 @@ export default function ForgeApp() {
                       } catch { setIgNodes([]); }
                       setIgLoading(false);
                     }} style={{ padding:'7px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>
-                      {igLoading ? '⚡' : '🔄 Load'}
+                      {igLoading ? 'Γƒ│' : '≡ƒöä Load'}
                     </button>
                   </div>
                 </div>
                 {igNodes.length === 0 ? (
                   <div style={{ textAlign:'center', padding:'32px 0' }}>
-                    <div style={{ fontSize:32, marginBottom:10 }}>🧠</div>
+                    <div style={{ fontSize:32, marginBottom:10 }}>≡ƒºá</div>
                     <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No memory nodes loaded. Click Load to fetch your knowledge graph.</p>
                   </div>
                 ) : (
@@ -6825,7 +6995,7 @@ export default function ForgeApp() {
                 )}
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
-                {[{icon:'🌾',title:'Harvest Context',desc:'Extract and index knowledge from your recent conversations',action:'Harvest Now',color:'var(--fg-orange)'},{icon:'🔙',title:'Build Connections',desc:'Automatically link related memories and create knowledge clusters',action:'Auto-Link',color:'#6366f1'},{icon:'🤖',title:'Import Knowledge',desc:'Upload documents, PDFs, or paste text to add to your knowledge base',action:'Import',color:'#22c55e'},{icon:'📁',title:'Export Graph',desc:'Download your knowledge graph as JSON or Markdown',action:'Export',color:'#f59e0b'}].map(f => (
+                {[{icon:'≡ƒî╛',title:'Harvest Context',desc:'Extract and index knowledge from your recent conversations',action:'Harvest Now',color:'var(--fg-orange)'},{icon:'≡ƒöù',title:'Build Connections',desc:'Automatically link related memories and create knowledge clusters',action:'Auto-Link',color:'#6366f1'},{icon:'≡ƒôÑ',title:'Import Knowledge',desc:'Upload documents, PDFs, or paste text to add to your knowledge base',action:'Import',color:'#22c55e'},{icon:'≡ƒôñ',title:'Export Graph',desc:'Download your knowledge graph as JSON or Markdown',action:'Export',color:'#f59e0b'}].map(f => (
                   <div key={f.title} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16 }}>
                     <div style={{ fontSize:22, marginBottom:8 }}>{f.icon}</div>
                     <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>{f.title}</div>
@@ -6838,12 +7008,12 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* -- Agent Swarm --------------------------------------------- */}
+        {/* ΓöÇΓöÇ Agent Swarm ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
         {mainTab === 'swarm' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:900, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>🎉</span>
+                <span style={{ fontSize:36 }}>≡ƒÉ¥</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Agent Swarm</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Deploy a swarm of specialist AI agents in parallel, then synthesize their outputs into one unified response.</p>
@@ -6864,7 +7034,7 @@ export default function ForgeApp() {
                   </div>
                 </div>
                 <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Task for the Swarm</label>
-                <textarea value={swarmTask} onChange={e => setSwarmTask(e.target.value)} placeholder="Describe the task you want the swarm to work on in parallel…"
+                <textarea value={swarmTask} onChange={e => setSwarmTask(e.target.value)} placeholder="Describe the task you want the swarm to work on in parallelΓÇª"
                   style={{ width:'100%', minHeight:100, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:12 }} />
                 <button onClick={async () => {
                   if (!swarmTask.trim() || swarmRunning) return;
@@ -6893,7 +7063,7 @@ export default function ForgeApp() {
                   });
                 }} disabled={swarmRunning || !swarmTask.trim()}
                   style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(swarmRunning||!swarmTask.trim())?0.5:1 }}>
-                  {swarmRunning ? `🎉 ${swarmResults.filter(r=>r.done).length}/${swarmAgentCount} agents done…` : `🎉 Launch ${swarmAgentCount}-Agent Swarm`}
+                  {swarmRunning ? `≡ƒÉ¥ ${swarmResults.filter(r=>r.done).length}/${swarmAgentCount} agents doneΓÇª` : `≡ƒÉ¥ Launch ${swarmAgentCount}-Agent Swarm`}
                 </button>
               </div>
               {swarmResults.length > 0 && (
@@ -6902,20 +7072,20 @@ export default function ForgeApp() {
                     {swarmResults.map((r, i) => (
                       <div key={r.agentId} style={{ background:'var(--fg-bg2)', border:`1px solid ${r.done ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:16, opacity: r.done ? 1 : 0.6 }}>
                         <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
-                          <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)' }}>🎉 {r.role}</span>
-                          <span style={{ fontSize:10, color: r.done ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{r.done ? `✓ ${r.tokens} tok` : '⚡ Running…'}</span>
+                          <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)' }}>≡ƒÉ¥ {r.role}</span>
+                          <span style={{ fontSize:10, color: r.done ? 'var(--fg-green)' : 'var(--fg-text3)' }}>{r.done ? `Γ£ô ${r.tokens} tok` : 'Γƒ│ RunningΓÇª'}</span>
                         </div>
                         {r.result ? (
                           <div style={{ fontSize:12, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:160, overflowY:'auto' }}>{r.result}</div>
                         ) : (
-                          <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Waiting for agent {i+1}…</div>
+                          <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Waiting for agent {i+1}ΓÇª</div>
                         )}
                       </div>
                     ))}
                   </div>
                   {swarmSynthesis && (
                     <div style={{ background:'linear-gradient(135deg,rgba(251,146,60,0.12),rgba(251,146,60,0.04))', border:'1px solid var(--fg-orange)', borderRadius:12, padding:24 }}>
-                      <h3 style={{ margin:'0 0 14px', fontSize:15, fontWeight:700, color:'var(--fg-orange)' }}>🎉 Swarm Synthesis — {swarmAgentCount} Agent{swarmAgentCount!==1?'s':''}</h3>
+                      <h3 style={{ margin:'0 0 14px', fontSize:15, fontWeight:700, color:'var(--fg-orange)' }}>≡ƒÉ¥ Swarm Synthesis ΓÇö {swarmAgentCount} Agent{swarmAgentCount!==1?'s':''}</h3>
                       <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{swarmSynthesis}</div>
                     </div>
                   )}
