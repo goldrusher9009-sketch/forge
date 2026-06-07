@@ -6202,17 +6202,32 @@ export default function ForgeApp() {
                 <div style={{ fontSize:40, marginBottom:12 }}>📁</div>
                 <p style={{ margin:'0 0 16px', fontSize:15, color:'var(--fg-text2)', fontWeight:600 }}>Drop files here or click to upload</p>
                 <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>PDF, DOCX, CSV, TXT, PNG, JPG — up to 50MB each</p>
-                <button onClick={() => { const inp = document.createElement('input'); inp.type='file'; inp.multiple=true; inp.click(); }} style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Choose Files</button>
+                <button onClick={() => { const inp = document.createElement('input'); inp.type='file'; inp.multiple=true; inp.onchange = () => Array.from((inp.files||[]) as FileList).forEach(uploadFile); inp.click(); }} style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Choose Files</button>
               </div>
               <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
                   <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>📂 Your Files</h3>
-                  <span style={{ fontSize:11, color:'var(--fg-text3)' }}>0 files ┬╖ 0 MB used</span>
+                  <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{files.length} file{files.length!==1?'s':''} · {(files.reduce((a,f)=>a+f.size,0)/1024/1024).toFixed(1)} MB used</span>
                 </div>
-                <div style={{ textAlign:'center', padding:'32px 0' }}>
-                  <div style={{ fontSize:32, marginBottom:8 }}>📁</div>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No files uploaded yet. Upload files to reference them in chat.</p>
-                </div>
+                {files.length===0 ? (
+                  <div style={{ textAlign:'center', padding:'32px 0' }}>
+                    <div style={{ fontSize:32, marginBottom:8 }}>📁</div>
+                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>No files uploaded yet. Upload files to reference them in chat.</p>
+                  </div>
+                ) : (
+                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                    {files.map(f=>(
+                      <div key={f.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'var(--fg-bg)', borderRadius:8, border:'1px solid var(--fg-border)' }}>
+                        <span style={{ fontSize:20 }}>{f.type.startsWith('image/')? '🖼' : f.type.includes('pdf')? '📄' : f.type.includes('csv')? '📊' : '📎'}</span>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{(f.size/1024).toFixed(1)} KB · {new Date(f.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <button onClick={()=>setFiles(prev=>prev.filter(x=>x.id!==f.id))} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--fg-text3)', fontSize:16, padding:'4px' }}>🗑</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
