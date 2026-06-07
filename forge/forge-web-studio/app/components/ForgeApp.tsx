@@ -764,6 +764,9 @@ export default function ForgeApp() {
   const [multiResults, setMultiResults] = useState<{agents:{role:string;icon:string;content:string;elapsed:number}[];synthesis:string}|null>(null);
   const [multiLiveAgents, setMultiLiveAgents] = useState<{role:string;icon:string;content:string|null;elapsed:number|null;done:boolean}[]>([]);
   const [multiStartTime, setMultiStartTime] = useState<number>(0);
+  const [multiComparePrompt, setMultiComparePrompt] = useState('');
+  const [multiCompareResults, setMultiCompareResults] = useState<{model:string;text:string;error:boolean}[]>([]);
+  const [multiCompareLoading, setMultiCompareLoading] = useState(false);
   // Chat folder actions (hoisted ΓÇö can't use useState inside render IIFE)
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('forge_pinned_threads')||'[]')); } catch { return new Set(); }
@@ -6259,7 +6262,7 @@ export default function ForgeApp() {
                           <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</div>
                           <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{(f.size/1024).toFixed(1)} KB ┬╖ {new Date(f.created_at).toLocaleDateString()}</div>
                         </div>
-                        <button onClick={()=>setFiles(prev=>prev.filter(x=>x.id!==f.id))} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--fg-text3)', fontSize:16, padding:'4px' }}>≡ƒùæ</button>
+                        <button onClick={async()=>{ setFiles(prev=>prev.filter(x=>x.id!==f.id)); if(user){ try{ await apiFetch(`/userfiles/${f.id}`,{method:'DELETE'},user.token); }catch{} } }} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--fg-text3)', fontSize:16, padding:'4px' }}>≡ƒùæ</button>
                       </div>
                     ))}
                   </div>
@@ -6976,9 +6979,11 @@ export default function ForgeApp() {
         )}
 
         {/* -- ForgeMULTI -------------------------------------------------- */}
-        {mainTab === 'forgemulti' && (
+        {(mainTab as string) === 'forgemulti' && (() => {
+          const MULTI_MODELS = ['claude-3-5-sonnet-20241022','gpt-4o','gemini-1.5-pro','mistral-large-latest','llama-3.1-70b-versatile'];
+          return (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:860, margin:'0 auto' }}>
+            <div style={{ maxWidth:1100, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
                 <span style={{ fontSize:36 }}>🔀</span>
                 <div>
@@ -6988,18 +6993,51 @@ export default function ForgeApp() {
               </div>
               <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
                 <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Prompt</label>
-                <textarea placeholder="Enter your prompt to run across all models…" style={{ width:'100%', minHeight:100, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' as any, marginBottom:12 }} />
+                <textarea value={multiComparePrompt} onChange={e => setMultiComparePrompt(e.target.value)} placeholder="Enter your prompt to run across all models…" style={{ width:'100%', minHeight:100, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' as any, marginBottom:12 }} />
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
-                  {['claude-3-5-sonnet-20241022','gpt-4o','gemini-1.5-pro','llama-3.1-70b'].map(m=>(
+                  {MULTI_MODELS.map(m=>(
                     <span key={m} style={{ fontSize:11, padding:'4px 10px', background:'rgba(251,146,60,0.1)', border:'1px solid rgba(251,146,60,0.3)', borderRadius:20, color:'var(--fg-orange)', fontWeight:600 }}>{m}</span>
                   ))}
                 </div>
-                <button onClick={()=>setMainTab('workspace')} style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>🔀 Run Multi-Model Comparison</button>
+                <button onClick={async () => {
+                  if (!multiComparePrompt.trim() || !user) return;
+                  setMultiCompareResults([]);
+                  setMultiCompareLoading(true);
+                  const prompt = multiComparePrompt.trim();
+                  await Promise.all(MULTI_MODELS.map(async (model) => {
+                    try {
+                      const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ message: prompt, model, thread_id: null, stream: false }) }, user.token);
+                      const text = d?.response || d?.content || d?.message || JSON.stringify(d);
+                      setMultiCompareResults(prev => [...prev, { model, text, error: false }]);
+                    } catch (e: any) {
+                      setMultiCompareResults(prev => [...prev, { model, text: e.message || 'Error', error: true }]);
+                    }
+                  }));
+                  setMultiCompareLoading(false);
+                }} disabled={!multiComparePrompt.trim() || multiCompareLoading} style={{ padding:'10px 28px', background: multiModel.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor: multiModel.trim() ? 'pointer' : 'default' }}>
+                  {multiCompareLoading ? '⏳ Running…' : '🔀 Run Multi-Model Comparison'}
+                </button>
               </div>
-              <div style={{ textAlign:'center', padding:'40px 0', color:'var(--fg-text3)', fontSize:13 }}>Run a prompt above to see side-by-side model outputs.</div>
+              {multiCompareLoading && (
+                <div style={{ textAlign:'center', padding:'20px 0', color:'var(--fg-text3)', fontSize:13 }}>Running across {MULTI_MODELS.length} models in parallel…</div>
+              )}
+              {multiCompareResults.length > 0 && (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px, 1fr))', gap:16 }}>
+                  {multiCompareResults.map((r, i) => (
+                    <div key={i} style={{ background:'var(--fg-bg2)', border:`1px solid ${r.error ? 'var(--fg-red,#ef4444)' : 'var(--fg-border)'}`, borderRadius:12, padding:16 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', marginBottom:8, textTransform:'uppercase', letterSpacing:'0.5px' }}>{r.model}</div>
+                      <div style={{ fontSize:13, color: r.error ? 'var(--fg-red,#ef4444)' : 'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{r.text}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!multiCompareLoading && multiCompareResults.length === 0 && (
+                <div style={{ textAlign:'center', padding:'40px 0', color:'var(--fg-text3)', fontSize:13 }}>Run a prompt above to see side-by-side model outputs.</div>
+              )}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* -- Agent Swarm ------------------------------------------------- */}
         {mainTab === 'swarm' && (
