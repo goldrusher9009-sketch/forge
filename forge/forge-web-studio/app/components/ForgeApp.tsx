@@ -6592,6 +6592,7 @@ export default function ForgeApp() {
                         <div style={{ display:'flex', gap:6 }}>
                           <button onClick={() => runScheduleNow(s)} style={{ padding:'6px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text2)', fontSize:11, cursor:'pointer' }}>Γû╢ Run</button>
                           <button onClick={() => toggleSchedule(s)} style={{ padding:'6px 12px', background:s.enabled?'var(--fg-bg4)':'#6366f1', border:'none', borderRadius:7, color:s.enabled?'var(--fg-text2)':'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>{s.enabled?'Pause':'Enable'}</button>
+                          <button onClick={async () => { if (!user) return; setSchedules(prev => prev.filter(x => x.id !== s.id)); try { await apiFetch(`/schedules/${s.id}`, { method:'DELETE' }, user.token); } catch {} }} style={{ padding:'6px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-red,#ef4444)', fontSize:11, cursor:'pointer' }}>✕</button>
                         </div>
                       </div>
                     ))}
