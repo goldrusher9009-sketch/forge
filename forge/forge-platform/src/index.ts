@@ -2793,6 +2793,82 @@ app.post('/api/terminal/exec', requireAuth, async (req: AuthRequest, res) => {
   res.json({ output, exitCode: 0 });
 });
 
+// ─── Git integration ──────────────────────────────────────────────────────────
+const GIT_DIR = process.env.FORGE_GIT_DIR || process.cwd();
+function gitRun(args: string): Promise<string> {
+  return toolShellExec(`git -C "${GIT_DIR}" ${args}`, GIT_DIR, 20000);
+}
+// GET /api/git/status — branch + changed files (porcelain)
+app.get('/api/git/status', requireAuth, async (_req: AuthRequest, res) => {
+  try {
+    const branch = (await gitRun('rev-parse --abbrev-ref HEAD')).trim();
+    const raw = await gitRun('status --porcelain=v1');
+    const files = raw.split('\n').filter(Boolean).map(l => {
+      const x = l[0], y = l[1], file = l.slice(3);
+      const code = (x + y).trim();
+      let status = 'modified';
+      if (code.includes('?')) status = 'untracked';
+      else if (x === 'A' || code === 'A') status = 'added';
+      else if (x === 'D' || y === 'D') status = 'deleted';
+      else if (x === 'R') status = 'renamed';
+      const staged = x !== ' ' && x !== '?';
+      return { file, status, staged, code };
+    });
+    res.json({ success: true, branch, files, dir: GIT_DIR });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// GET /api/git/diff?file=... — unified diff for one file (or all if omitted)
+app.get('/api/git/diff', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const f = req.query.file ? `-- "${String(req.query.file).replace(/"/g, '')}"` : '';
+    let diff = await gitRun(`diff ${f}`);
+    if (!diff.trim()) diff = await gitRun(`diff --staged ${f}`);
+    res.json({ success: true, diff });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// POST /api/git/stage — stage files (paths[] or all)
+app.post('/api/git/stage', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { paths } = req.body;
+    const target = Array.isArray(paths) && paths.length
+      ? paths.map((p: string) => `"${p.replace(/"/g, '')}"`).join(' ') : '-A';
+    const out = await gitRun(`add ${target}`);
+    res.json({ success: true, output: out });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// POST /api/git/unstage
+app.post('/api/git/unstage', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { paths } = req.body;
+    const target = Array.isArray(paths) && paths.length
+      ? paths.map((p: string) => `"${p.replace(/"/g, '')}"`).join(' ') : '';
+    const out = await gitRun(`reset HEAD ${target}`);
+    res.json({ success: true, output: out });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// POST /api/git/commit — { message, stageAll? }
+app.post('/api/git/commit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { message, stageAll } = req.body;
+    if (!message || typeof message !== 'string') { res.status(400).json({ success: false, error: 'message required' }); return; }
+    if (stageAll) await gitRun('add -A');
+    const msg = message.replace(/"/g, '\\"').replace(/\n/g, ' ');
+    const out = await gitRun(`commit -m "${msg}"`);
+    res.json({ success: true, output: out });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// GET /api/git/log — recent commits
+app.get('/api/git/log', requireAuth, async (_req: AuthRequest, res) => {
+  try {
+    const raw = await gitRun('log -20 --pretty=format:%h|%an|%ar|%s');
+    const commits = raw.split('\n').filter(Boolean).map(l => {
+      const [hash, author, when, ...rest] = l.split('|');
+      return { hash, author, when, subject: rest.join('|') };
+    });
+    res.json({ success: true, commits });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 
 // ─── Direct tool execution endpoint ──────────────────────────────────────────
 // POST /api/tools/run — run any Forge tool directly from the frontend

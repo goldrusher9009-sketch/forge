@@ -1093,6 +1093,36 @@ export default function ForgeApp() {
   // Attached folders/files (bottom bar)
   const [attachedFolders, setAttachedFolders] = useState<string[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<{name:string;content:string}[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+  // Recursively read dropped folders/files via webkitGetAsEntry
+  const readDroppedEntries = async (items: DataTransferItemList) => {
+    const TEXT_RE = /\.(txt|md|js|jsx|ts|tsx|json|css|scss|html|py|java|c|cpp|h|go|rs|rb|php|sh|yml|yaml|toml|xml|sql|env|csv|vue|svelte|astro|gitignore|dockerfile)$/i;
+    const collected: {name:string;content:string}[] = [];
+    const readFile = (file: File, pathName: string) => new Promise<void>((resolve) => {
+      if (file.size > 200000 || (!TEXT_RE.test(pathName) && file.type && !file.type.startsWith('text'))) { resolve(); return; }
+      const r = new FileReader();
+      r.onload = () => { collected.push({ name: pathName, content: String(r.result).slice(0, 50000) }); resolve(); };
+      r.onerror = () => resolve();
+      r.readAsText(file);
+    });
+    const walk = (entry: any, prefix: string): Promise<void> => new Promise((resolve) => {
+      if (!entry) { resolve(); return; }
+      if (entry.isFile) { entry.file((f: File) => readFile(f, prefix + entry.name).then(resolve), () => resolve()); }
+      else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const all: any[] = [];
+        const readBatch = () => reader.readEntries(async (ents: any[]) => {
+          if (!ents.length) { for (const e of all) await walk(e, prefix + entry.name + '/'); resolve(); return; }
+          all.push(...ents); readBatch();
+        }, () => resolve());
+        readBatch();
+      } else resolve();
+    });
+    const entries: any[] = [];
+    for (let i=0;i<items.length;i++){ const it = items[i]; if (it.webkitGetAsEntry) { const e = it.webkitGetAsEntry(); if (e) entries.push(e); } }
+    for (const e of entries) await walk(e, '');
+    if (collected.length) setAttachedFiles(prev => [...prev, ...collected].slice(0, 80));
+  };
   const [chatImages, setChatImages] = useState<{name:string;data:string;mediaType:string;preview:string}[]>([]);
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [editorCode, setEditorCode] = useState('// Start coding here...\n');
@@ -1108,7 +1138,52 @@ export default function ForgeApp() {
   const [diffOld, setDiffOld] = useState('');
   const [diffNew, setDiffNew] = useState('');
   const [patchText, setPatchText] = useState('');
-  const [termSubTab, setTermSubTab] = useState<'terminal'|'editor'|'data'|'diff'>('terminal');
+  const [termSubTab, setTermSubTab] = useState<'terminal'|'editor'|'data'|'diff'|'git'>('terminal');
+  // Git integration state
+  const [gitBranch, setGitBranch] = useState('');
+  const [gitFiles, setGitFiles] = useState<{file:string;status:string;staged:boolean;code:string}[]>([]);
+  const [gitCommits, setGitCommits] = useState<{hash:string;author:string;when:string;subject:string}[]>([]);
+  const [gitDiff, setGitDiff] = useState('');
+  const [gitDiffFile, setGitDiffFile] = useState('');
+  const [gitMsg, setGitMsg] = useState('');
+  const [gitBusy, setGitBusy] = useState(false);
+  const [gitErr, setGitErr] = useState('');
+  const loadGit = async () => {
+    if (!user) return;
+    setGitBusy(true); setGitErr('');
+    try {
+      const s = await apiFetch('/git/status', {}, user.token);
+      if (s?.success) { setGitBranch(s.branch); setGitFiles(s.files || []); }
+      else setGitErr(s?.error || 'git status failed');
+      const lg = await apiFetch('/git/log', {}, user.token);
+      if (lg?.success) setGitCommits(lg.commits || []);
+    } catch (e:any) { setGitErr(e.message); }
+    setGitBusy(false);
+  };
+  const gitShowDiff = async (file: string) => {
+    if (!user) return;
+    setGitDiffFile(file);
+    try { const d = await apiFetch(`/git/diff?file=${encodeURIComponent(file)}`, {}, user.token); setGitDiff(d?.diff || '(no diff)'); }
+    catch (e:any) { setGitDiff('Error: ' + e.message); }
+  };
+  const gitStage = async (paths: string[]|null, stage: boolean) => {
+    if (!user) return;
+    setGitBusy(true);
+    try { await apiFetch(`/git/${stage?'stage':'unstage'}`, { method:'POST', body: JSON.stringify({ paths }) }, user.token); await loadGit(); }
+    catch (e:any) { setGitErr(e.message); }
+    setGitBusy(false);
+  };
+  const gitCommit = async () => {
+    if (!user || !gitMsg.trim()) return;
+    setGitBusy(true); setGitErr('');
+    try {
+      const r = await apiFetch('/git/commit', { method:'POST', body: JSON.stringify({ message: gitMsg.trim(), stageAll: true }) }, user.token);
+      if (r?.success) { setGitMsg(''); setGitDiff(''); setGitDiffFile(''); await loadGit(); }
+      else setGitErr(r?.error || 'commit failed');
+    } catch (e:any) { setGitErr(e.message); }
+    setGitBusy(false);
+  };
+  useEffect(() => { if (rightTab==='terminal' && termSubTab==='git' && user) loadGit(); /* eslint-disable-next-line */ }, [rightTab, termSubTab]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -3428,7 +3503,14 @@ export default function ForgeApp() {
                       <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{chatImages.length} image{chatImages.length!==1?'s':''} — will be sent as vision</span>
                     </div>
                   )}
-                  <div style={{ position:'relative', background:'var(--fg-bg3)', border:`1px solid ${slashOpen ? 'var(--fg-border3)' : 'var(--fg-border2)'}`, borderRadius:12, overflow:'visible' }}>
+                  <div
+                    onDragOver={e => { if (e.dataTransfer?.types?.includes('Files')) { e.preventDefault(); setDragOver(true); } }}
+                    onDragLeave={e => { if (e.currentTarget === e.target) setDragOver(false); }}
+                    onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer?.items?.length) readDroppedEntries(e.dataTransfer.items); }}
+                    style={{ position:'relative', background:'var(--fg-bg3)', border:`1px solid ${dragOver ? 'var(--fg-orange)' : slashOpen ? 'var(--fg-border3)' : 'var(--fg-border2)'}`, borderRadius:12, overflow:'visible', boxShadow: dragOver ? '0 0 0 3px var(--fg-odim)' : 'none', transition:'box-shadow 0.15s, border-color 0.15s' }}>
+                    {dragOver && (
+                      <div style={{ position:'absolute', inset:0, zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(8,8,9,0.82)', border:'2px dashed var(--fg-orange)', borderRadius:12, pointerEvents:'none', fontSize:13, fontWeight:700, color:'var(--fg-orange2)' }}>📁 Drop folder or files to add as context</div>
+                    )}
                     {/* Slash command dropdown */}
                     {slashOpen && (() => {
                       const q = slashQuery.toLowerCase();
@@ -4307,7 +4389,7 @@ export default function ForgeApp() {
                       <div style={{ display:'flex', flexDirection:'column', height:'100%', margin:-12, overflow:'hidden', background:'var(--fg-bg)' }}>
                         {/* Sub-tab bar */}
                         <div style={{ display:'flex', gap:0, background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', flexShrink:0 }}>
-                          {([['terminal','⚡ Terminal'],['editor','📝 Editor'],['data','📊 Data'],['diff','🔀 Diff']] as const).map(([tab, label]) => (
+                          {([['terminal','⚡ Terminal'],['editor','📝 Editor'],['data','📊 Data'],['diff','🔀 Diff'],['git','🌿 Git']] as const).map(([tab, label]) => (
                             <button key={tab} onClick={() => setTermSubTab(tab as any)} style={{ padding:'6px 12px', background: termSubTab===tab ? 'var(--fg-bg)' : 'transparent', border:'none', borderBottom: termSubTab===tab ? '2px solid var(--fg-orange)' : '2px solid transparent', color: termSubTab===tab ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600, transition:'all 0.15s' }}>{label}</button>
                           ))}
                         </div>
@@ -4440,6 +4522,59 @@ export default function ForgeApp() {
                                 <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:4 }}>PATCH (unified diff)</div>
                                 {patchText.split('\n').map((line, i) => (
                                   <div key={i} style={{ color: line.startsWith('+') ? 'var(--fg-green)' : line.startsWith('-') ? 'var(--fg-red)' : line.startsWith('@@') ? 'var(--fg-orange)' : 'var(--fg-text3)', whiteSpace:'pre' }}>{line}</div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* GIT */}
+                        {termSubTab==='git' && (
+                          <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
+                            <div style={{ padding:'6px 10px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', display:'flex', gap:8, alignItems:'center', flexShrink:0, fontSize:12, fontWeight:600, color:'var(--fg-text)' }}>
+                              🌿 {gitBranch ? <span style={{ color:'var(--fg-orange2)' }}>{gitBranch}</span> : 'Git'}
+                              <span style={{ fontSize:10, color:'var(--fg-text3)', fontWeight:500 }}>{gitFiles.length} changed</span>
+                              <button onClick={loadGit} disabled={gitBusy} style={{ marginLeft:'auto', padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>{gitBusy ? '…' : '↻ Refresh'}</button>
+                            </div>
+                            {gitErr && <div style={{ padding:'6px 10px', color:'var(--fg-red)', fontSize:11, background:'rgba(255,31,53,0.08)' }}>{gitErr}</div>}
+                            <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
+                              {/* changed files list */}
+                              <div style={{ width:'42%', borderRight:'1px solid var(--fg-border)', overflowY:'auto', display:'flex', flexDirection:'column' }}>
+                                {gitFiles.length===0 && <div style={{ padding:12, fontSize:11, color:'var(--fg-text3)' }}>✓ Clean — nothing to commit</div>}
+                                {gitFiles.map((f) => {
+                                  const col = f.status==='untracked'?'var(--fg-text3)':f.status==='added'?'var(--fg-green)':f.status==='deleted'?'var(--fg-red)':'var(--fg-amber)';
+                                  return (
+                                    <div key={f.file} onClick={() => gitShowDiff(f.file)} style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 8px', cursor:'pointer', fontSize:11, background: gitDiffFile===f.file?'var(--fg-odim)':'transparent', borderBottom:'1px solid var(--fg-border)' }}>
+                                      <span title={f.staged?'staged':'unstaged'} style={{ width:6, height:6, borderRadius:'50%', background: f.staged?'var(--fg-green)':'var(--fg-text3)', flexShrink:0 }} />
+                                      <span style={{ color:col, fontWeight:700, width:14, flexShrink:0 }}>{f.status[0].toUpperCase()}</span>
+                                      <span style={{ color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, fontFamily:'ui-monospace,monospace' }}>{f.file}</span>
+                                      <button onClick={(e)=>{e.stopPropagation();gitStage([f.file], !f.staged);}} style={{ padding:'1px 6px', background:f.staged?'var(--fg-bg4)':'var(--fg-orange)', border:'none', borderRadius:3, color:f.staged?'var(--fg-text3)':'#fff', cursor:'pointer', fontSize:9, flexShrink:0 }}>{f.staged?'−':'+'}</button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {/* diff view */}
+                              <div style={{ flex:1, overflowY:'auto', padding:8, fontFamily:'ui-monospace,monospace', fontSize:11, background:'var(--fg-bg)' }}>
+                                {!gitDiff && <div style={{ color:'var(--fg-text3)', fontSize:11 }}>Click a file to view diff</div>}
+                                {gitDiff && gitDiff.split('\n').map((line, i) => (
+                                  <div key={i} style={{ color: line.startsWith('+')&&!line.startsWith('+++')?'var(--fg-green)':line.startsWith('-')&&!line.startsWith('---')?'var(--fg-red)':line.startsWith('@@')?'var(--fg-orange)':'var(--fg-text3)', whiteSpace:'pre-wrap', wordBreak:'break-all', lineHeight:1.45 }}>{line}</div>
+                                ))}
+                              </div>
+                            </div>
+                            {/* commit bar */}
+                            <div style={{ padding:'8px 10px', borderTop:'1px solid var(--fg-border)', display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
+                              <input value={gitMsg} onChange={e=>setGitMsg(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'&&gitMsg.trim()) gitCommit(); }} placeholder="commit message…" style={{ flex:1, background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, padding:'6px 10px', outline:'none' }} />
+                              <button onClick={gitCommit} disabled={!gitMsg.trim()||gitBusy} style={{ padding:'6px 14px', background:'var(--fg-btn-grad)', border:'none', borderRadius:6, color:'#fff', cursor:'pointer', fontSize:12, fontWeight:700, opacity: gitMsg.trim()&&!gitBusy?1:0.4 }}>Commit All</button>
+                            </div>
+                            {/* recent commits */}
+                            {gitCommits.length>0 && (
+                              <div style={{ maxHeight:120, overflowY:'auto', borderTop:'1px solid var(--fg-border)', padding:'4px 0', flexShrink:0 }}>
+                                {gitCommits.map(c => (
+                                  <div key={c.hash} style={{ display:'flex', gap:8, padding:'3px 10px', fontSize:10, alignItems:'baseline' }}>
+                                    <span style={{ color:'var(--fg-orange2)', fontFamily:'ui-monospace,monospace', flexShrink:0 }}>{c.hash}</span>
+                                    <span style={{ color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{c.subject}</span>
+                                    <span style={{ color:'var(--fg-text3)', flexShrink:0 }}>{c.when}</span>
+                                  </div>
                                 ))}
                               </div>
                             )}
