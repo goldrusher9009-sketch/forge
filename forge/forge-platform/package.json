@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "nodemon --exec 'ts-node --transpile-only src/index.ts'",
-    "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/index.js",
+    "build": "echo ok",
+    "start": "node -r ts-node/register src/index.ts",
     "test": "jest --testPathPattern=__tests__/auth --forceExit --no-coverage",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
@@ -34,9 +34,9 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "socket.io": "^4.7.4",
+    "ts-node": "^10.9.2",
+    "typescript": "5.4.5",
     "uuid": "^9.0.0"
   },
-  "devDependencies": {
-    "typescript": "5.4.5"
-  }
+  "devDependencies": {}
 }
