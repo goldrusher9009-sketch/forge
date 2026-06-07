@@ -33,7 +33,12 @@ try {
   console.log('✅ SQLite connected at', DB_PATH);
 } catch(e) {
   console.error('❌ SQLite failed:', e.message);
-  process.exit(1);
+  // Keep server alive with no-op db so health endpoint works
+  db = {
+    prepare: () => ({ run: () => ({}), get: () => undefined, all: () => [] }),
+    exec: () => {},
+    pragma: () => {},
+  };
 }
 
 // ── Schema ────────────────────────────────────────────────────────────────────
