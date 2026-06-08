@@ -2791,7 +2791,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.84</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.85</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>
@@ -3373,7 +3373,7 @@ export default function ForgeApp() {
                           : agentSteps[agentSteps.length-1]?.text?.includes('run_code') ? '💻 Running code...'
                           : agentSteps[agentSteps.length-1]?.text || 'Thinking...'}
                       </span>
-                      <span>┬╖ {messages.length} in context</span>
+                      <span>· {messages.length} in context</span>
                     </div>
                   )}
                   {/* Subtle typing indicator — shows only while waiting for response */}
@@ -4966,7 +4966,7 @@ export default function ForgeApp() {
                     loginUrl:'https://chat.openai.com', signupUrl:'https://chat.openai.com/upgrade',
                     plans:[
                       { label:'Free', price:'$0/mo', desc:'GPT-4o mini, limited GPT-4o' },
-                      { label:'Plus', price:'$20/mo', desc:'Full GPT-4o, DALL┬╖E, browsing' },
+                      { label:'Plus', price:'$20/mo', desc:'Full GPT-4o, DALL·E, browsing' },
                       { label:'Team', price:'$25/mo', desc:'Workspace, admin, more messages' },
                     ],
                   },
@@ -5567,7 +5567,7 @@ export default function ForgeApp() {
                     <span style={{ fontSize:18 }}>{a.icon}</span>
                     <div style={{ flex:1 }}>
                       <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', fontWeight:500 }}>{a.name}</p>
-                      <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{a.model} {a.built_in ? '┬╖ built-in' : ''}</p>
+                      <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{a.model} {a.built_in ? '· built-in' : ''}</p>
                     </div>
                     <div style={{ width:8, height:8, borderRadius:'50%', background:a.enabled ? 'var(--fg-green)' : 'var(--fg-text3)' }} />
                   </div>
@@ -7201,12 +7201,12 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* ΓöÇΓöÇ MVP Builder ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+        {/* ── MVP Builder ───────────────────────────────────────────── */}
         {mainTab === 'mvp' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:860, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>🏗∩╕Å</span>
+                <span style={{ fontSize:36 }}>🏗️</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>MVP Builder</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>From idea to blueprint in seconds. Get your spec, stack, roadmap, and pitch deck outline.</p>
@@ -7241,12 +7241,12 @@ export default function ForgeApp() {
                   setMvpBuilding(false);
                 }} disabled={mvpBuilding || !mvpIdea.trim()}
                   style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(mvpBuilding||!mvpIdea.trim())?0.5:1 }}>
-                  {mvpBuilding ? '🏗∩╕Å Building blueprint…' : '🏗∩╕Å Build MVP Blueprint'}
+                  {mvpBuilding ? '🏗️ Building blueprint…' : '🏗️ Build MVP Blueprint'}
                 </button>
               </div>
               {mvpResult && (
                 <div style={{ display:'grid', gap:16 }}>
-                  {[{icon:'📋',label:'SPEC',color:'var(--fg-orange)',content:mvpResult.spec},{icon:'⚙️',label:'STACK',color:'#6366f1',content:mvpResult.stack},{icon:'≡ƒùô∩╕Å',label:'ROADMAP',color:'#22c55e',content:mvpResult.roadmap},{icon:'💡',label:'PITCH',color:'#f59e0b',content:mvpResult.pitch}].map(s => (
+                  {[{icon:'📋',label:'SPEC',color:'var(--fg-orange)',content:mvpResult.spec},{icon:'⚙️',label:'STACK',color:'#6366f1',content:mvpResult.stack},{icon:'🗓️',label:'ROADMAP',color:'#22c55e',content:mvpResult.roadmap},{icon:'💡',label:'PITCH',color:'#f59e0b',content:mvpResult.pitch}].map(s => (
                     <div key={s.label} style={{ background:'var(--fg-bg2)', border:`1px solid ${s.color}40`, borderRadius:12, padding:20 }}>
                       <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:s.color }}>{s.icon} {s.label}</h3>
                       <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{s.content}</div>
