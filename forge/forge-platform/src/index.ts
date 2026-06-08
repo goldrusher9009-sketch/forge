@@ -1,5 +1,5 @@
 /**
- * Forge Platform v6.82 — Full production: SQLite + GraphQL + webhooks + rate-limiting + multi-model
+ * Forge Platform v6.83 — Full production: SQLite + GraphQL + webhooks + rate-limiting + multi-model
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
  */
@@ -143,7 +143,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.82' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.83' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -3601,7 +3601,7 @@ try {
     try { res.json(await gql({ schema, source:query, rootValue:makeRoot(req.user!.sub), variableValues:variables, operationName })); }
     catch(e:any){ res.status(500).json({ errors:[{ message:e.message }] }); }
   });
-  app.get('/api/graphql', (_req, res) => res.json({ message:'Forge GraphQL API v6.82', endpoint:'POST /api/graphql', types:['Thread','Message','Memory','User','Analytics','Persona','SearchResult'] }));
+  app.get('/api/graphql', (_req, res) => res.json({ message:'Forge GraphQL API v6.83', endpoint:'POST /api/graphql', types:['Thread','Message','Memory','User','Analytics','Persona','SearchResult'] }));
   console.log('✅ GraphQL enabled at /api/graphql');
 } catch(e: any) {
   app.post('/api/graphql', (_req, res) => res.status(503).json({ error:'GraphQL not available. Run: npm install graphql' }));
@@ -3854,4 +3854,4 @@ try {
   });
   (app as any).io = io;
 } catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.82 running on port ${PORT}`); });
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.83 running on port ${PORT}`); });

@@ -1,6 +1,12 @@
 # Forge Platform — Version History
 
-## v6.82 — 2026-06-07 (current)
+## v6.83 — 2026-06-07 (current)
+### Interactive activity + Git UI + folder drag
+- **Clickable activity steps** — every agent step and live tool-call card in the working feed is now clickable; clicking jumps to the right-panel tab where that work happened (search/scrape → Browser, shell/code/git → Terminal, file/artifact → Artifacts). Hover highlight + ↗ open button.
+- **Git integration UI** — new 🌿 Git subtab in the Terminal panel: shows branch + changed files (color-coded by status), per-file stage/unstage, click-to-view live diff (green/red/orange), commit-all with message, recent commit log. Backed by 6 new backend routes: `/api/git/status|diff|stage|unstage|commit|log`.
+- **Multi-file folder drag-to-chat** — drag a whole folder or many files onto the composer; recursive `webkitGetAsEntry` read pulls in text/code files as chat context with an orange drop-zone overlay.
+
+## v6.82 — 2026-06-07
 ### Socket.IO + Empty state upgrade
 - **Socket.IO** backend: real-time bidirectional events — typing indicators, thread sync, user presence, ping/pong
 - **Socket.IO** frontend: auto-connects on login, joins thread rooms, handles thread_updated + typing events
