@@ -148,7 +148,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.87' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.88' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -628,6 +628,51 @@ function getUserLLMKey(userId: string): { provider: string; apiKey: string; mode
   return { provider: 'anthropic', apiKey: '', model: 'claude-haiku-4-5-20251001' };
 }
 
+// Magic-mode fallback chain: ordered list of every provider/model the user can actually use,
+// from most capable to fastest/cheapest. Used to auto-retry when a model errors or times out.
+// `difficulty` hints how hard the task is so we can start on a stronger model for complex work.
+function getFallbackChain(userId: string, preferred?: { provider: string; model: string }, difficulty: 'simple'|'medium'|'hard' = 'medium'): Array<{ provider: string; apiKey: string; model: string }> {
+  const tiers: Array<{ provider: string; model: string }> = [
+    { provider: 'anthropic',  model: 'claude-sonnet-4-6' },
+    { provider: 'openai',     model: 'gpt-4o' },
+    { provider: 'openrouter', model: 'deepseek/deepseek-chat' },
+    { provider: 'gemini',     model: 'gemini-2.0-flash' },
+    { provider: 'groq',       model: 'llama-3.3-70b' },
+    { provider: 'mistral',    model: 'mistral-large' },
+    // fast/cheap tail — always tried last so we "never fail" if anything has a key
+    { provider: 'anthropic',  model: 'claude-haiku-4-5-20251001' },
+    { provider: 'openai',     model: 'gpt-4o-mini' },
+    { provider: 'groq',       model: 'llama-3.1-8b' },
+    { provider: 'gemini',     model: 'gemini-1.5-flash' },
+  ];
+  const chain: Array<{ provider: string; apiKey: string; model: string }> = [];
+  const seen = new Set<string>();
+  const push = (provider: string, model: string) => {
+    const k = provider + '|' + model;
+    if (seen.has(k)) return;
+    const apiKey = getUserKey(userId, provider);
+    if (apiKey) { chain.push({ provider, apiKey, model }); seen.add(k); }
+  };
+  // honour the user's explicitly-chosen model first
+  if (preferred?.provider && preferred?.model) push(preferred.provider, preferred.model);
+  // for hard tasks prefer the strongest tier first; for simple tasks a fast model is fine
+  const ordered = difficulty === 'simple' ? [...tiers].reverse() : tiers;
+  for (const t of ordered) push(t.provider, t.model);
+  return chain;
+}
+
+// Heuristic task-difficulty estimate from the user's message — lets magic mode pick a
+// strong model for hard work and a fast one for trivial asks.
+function estimateDifficulty(text: string): 'simple'|'medium'|'hard' {
+  const t = (text || '').toLowerCase();
+  const len = t.length;
+  const hardSignals = ['build', 'implement', 'refactor', 'architecture', 'design a', 'debug', 'optimize', 'algorithm', 'full app', 'end to end', 'multi-step', 'analyze', 'prove', 'derive', 'migrate'];
+  const simpleSignals = ['hi', 'hello', 'thanks', 'what is', 'define', 'translate', 'summarize', 'rename', 'list '];
+  if (hardSignals.some(s => t.includes(s)) || len > 600) return 'hard';
+  if (simpleSignals.some(s => t.startsWith(s) || t.includes(s)) && len < 120) return 'simple';
+  return 'medium';
+}
+
 // Reliable timeout helper — AbortSignal.timeout has bugs in some Node 18 builds
 function fetchWithTimeout(url: string, opts: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
@@ -641,7 +686,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   // Anthropic
   if (provider === 'anthropic') {
     let res: Response;
-    try { res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}) }, 20000); }
+    try { res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}) }, 120000); }
     catch (e: any) { throw new Error(e?.name==='AbortError' ? 'Anthropic timed out after 20s — model may be overloaded, try again' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`Anthropic error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -650,7 +695,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   // OpenAI
   if (provider === 'openai') {
     let res: Response;
-    try { res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}) }, 20000); }
+    try { res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}) }, 120000); }
     catch (e: any) { throw new Error(e?.name==='AbortError' ? 'OpenAI timed out after 20s — model may be overloaded, try again' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`OpenAI error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
@@ -749,7 +794,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
   if (provider === 'openrouter') {
     const orModel = (model.startsWith('~') ? model.slice(1) : model).replace(/^openrouter\//, '');
     let res: Response;
-    try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 60000); }
+    try { res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio'}, body:JSON.stringify({model:orModel,messages,max_tokens:2048}) }, 150000); }
     catch (e: any) { throw new Error(e?.name==='AbortError' ? `Model "${orModel}" timed out. DeepSeek and some models can be slow under load — try again or switch to Claude/GPT-4o for faster responses.` : e.message); }
     if (!res.ok) {
       const e = await res.text();
@@ -2261,76 +2306,100 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
     return;
   }
   emitStep('🤖', `Spinning up ${model} — let me get to work…`);
-  try {
-    let result: { content: string; promptTokens: number; completionTokens: number; toolCalls?: Array<{name:string;args:any;result:string}> };
 
-    // For Anthropic models: use native tool_use agentic loop
-    if (provider === 'anthropic') {
-      const agentResult = await Promise.race([
-        callAnthropicWithTools(
-          apiKey, actualModel, llmMessages,
-          (toolName, toolArgs, toolResult) => {
-            // Emit each tool call as a warm, human live step
-            const step = humanizeToolStep(toolName, toolArgs);
-            emitStep(step.icon, step.message);
-            emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model });
-            // Also emit a tool_call event so frontend can render inline
-            try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500), label: step.message })}\n\n`); } catch {}
-          },
-          userId
-        ),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Anthropic agent timed out after 60s')), 60000))
+  // Tool-call event emitter shared by every provider attempt
+  const onToolCall = (toolName: string, toolArgs: any, toolResult: string, mdl: string) => {
+    const step = humanizeToolStep(toolName, toolArgs);
+    emitStep(step.icon, step.message);
+    emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model: mdl });
+    try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500), label: step.message })}\n\n`); } catch {}
+  };
+
+  const openAICompatProviders: Record<string, { url: string; headers: Record<string,string>; modelResolver?: (m:string)=>string }> = {
+    openai:     { url: 'https://api.openai.com/v1/chat/completions', headers: {} },
+    groq:       { url: 'https://api.groq.com/openai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'llama-3.3-70b':'llama-3.3-70b-versatile','llama-3.1-70b':'llama-3.1-70b-versatile','llama-3.1-8b':'llama-3.1-8b-instant','mixtral-8x7b':'mixtral-8x7b-32768','gemma2-9b':'gemma2-9b-it' })[m] || m },
+    mistral:    { url: 'https://api.mistral.ai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'mistral-large':'mistral-large-latest','mistral-small':'mistral-small-latest','mistral-medium':'mistral-medium-latest','codestral':'codestral-latest' })[m] || m },
+    openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', headers: { 'HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio' }, modelResolver: (m) => { let x = m.startsWith('~') ? m.slice(1) : m; return x.startsWith('openrouter/') ? x.slice('openrouter/'.length) : x; } },
+    morph:      { url: 'https://api.morphllm.com/v1/chat/completions', headers: {} },
+  };
+
+  // Run a single provider/model attempt (with its own generous timeout; heartbeats keep SSE alive)
+  const runModel = async (p: string, key: string, m: string) => {
+    if (p === 'anthropic') {
+      return await Promise.race([
+        callAnthropicWithTools(key, m, llmMessages, (tn, ta, tr) => onToolCall(tn, ta, tr, m), userId),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Anthropic timed out')), 150000))
       ]);
-      result = agentResult;
-    } else {
-      // OpenAI-compatible providers: use function calling tool loop
-      const onToolCall = (toolName: string, toolArgs: any, toolResult: string) => {
-        const step = humanizeToolStep(toolName, toolArgs);
-        emitStep(step.icon, step.message);
-        emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model });
-        try { res.write(`data: ${JSON.stringify({ type: 'tool_call', tool: toolName, args: toolArgs, result: toolResult.slice(0, 500), label: step.message })}\n\n`); } catch {}
-      };
-
-      const openAICompatProviders: Record<string, { url: string; headers: Record<string,string>; modelResolver?: (m:string)=>string }> = {
-        openai:     { url: 'https://api.openai.com/v1/chat/completions', headers: {} },
-        groq:       { url: 'https://api.groq.com/openai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'llama-3.3-70b':'llama-3.3-70b-versatile','llama-3.1-70b':'llama-3.1-70b-versatile','llama-3.1-8b':'llama-3.1-8b-instant','mixtral-8x7b':'mixtral-8x7b-32768','gemma2-9b':'gemma2-9b-it' })[m] || m },
-        mistral:    { url: 'https://api.mistral.ai/v1/chat/completions', headers: {}, modelResolver: (m) => ({ 'mistral-large':'mistral-large-latest','mistral-small':'mistral-small-latest','mistral-medium':'mistral-medium-latest','codestral':'codestral-latest' })[m] || m },
-        openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', headers: { 'HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio' }, modelResolver: (m) => { let x = m.startsWith('~') ? m.slice(1) : m; return x.startsWith('openrouter/') ? x.slice('openrouter/'.length) : x; } },
-        morph:      { url: 'https://api.morphllm.com/v1/chat/completions', headers: {} },
-      };
-
-      const pc = openAICompatProviders[provider];
-      if (pc) {
-        const resolvedModel = pc.modelResolver ? pc.modelResolver(actualModel) : actualModel;
-        result = await Promise.race([
-          callOpenAICompatWithTools(pc.url, apiKey, resolvedModel, llmMessages, pc.headers, onToolCall, provider === "openrouter" ? FORGE_TOOLS_OPENROUTER : undefined, userId),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out`)), provider === 'openrouter' ? 90000 : 30000))
-        ]);
-      } else {
-        // Fallback: plain call for Gemini and others without tool support
-        result = await Promise.race([
-          callLLM(provider, apiKey, actualModel, llmMessages),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${provider} timed out`)), 30000))
-        ]);
-      }
     }
+    const pc = openAICompatProviders[p];
+    if (pc) {
+      const resolved = pc.modelResolver ? pc.modelResolver(m) : m;
+      return await Promise.race([
+        callOpenAICompatWithTools(pc.url, key, resolved, llmMessages, pc.headers, (tn, ta, tr) => onToolCall(tn, ta, tr, m), p === 'openrouter' ? FORGE_TOOLS_OPENROUTER : undefined, userId),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${p} timed out`)), 150000))
+      ]);
+    }
+    // Gemini / others without tool loop
+    return await Promise.race([
+      callLLM(p, key, m, llmMessages),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${p} timed out`)), 120000))
+    ]);
+  };
 
+  // Build the attempt list. In MAGIC MODE we auto-fallback across every available model
+  // (sized to task difficulty) so the agent never just fails. In Ask mode we try the chosen
+  // model, then a couple of safety nets.
+  const difficulty = estimateDifficulty(content);
+  let attempts: Array<{ provider: string; apiKey: string; model: string }>;
+  if (isMagic) {
+    attempts = getFallbackChain(userId, { provider, model: actualModel }, difficulty);
+  } else {
+    attempts = [{ provider, apiKey, model: actualModel }, ...getFallbackChain(userId, undefined, difficulty).slice(0, 2)];
+  }
+  if (attempts.length === 0) attempts = [{ provider, apiKey, model: actualModel }];
+
+  let result: { content: string; promptTokens: number; completionTokens: number; toolCalls?: Array<{name:string;args:any;result:string}> } | null = null;
+  let usedModel = model;
+  let lastErr: any = null;
+  for (let i = 0; i < attempts.length; i++) {
+    const a = attempts[i];
+    try {
+      if (i > 0) emitStep('🔄', `Switching to ${a.model} to get this done…`);
+      const r = await runModel(a.provider, a.apiKey, a.model);
+      if (r && r.content && r.content.trim()) { result = r; usedModel = a.model; break; }
+      lastErr = new Error('empty response');
+    } catch (e: any) {
+      lastErr = e;
+      console.error(`Attempt ${i+1}/${attempts.length} (${a.provider}/${a.model}) failed:`, e?.message);
+      emitAgentActivity(userId, { type: 'thinking', message: `⚠️ ${a.model} hit a snag — trying another model…`, model: a.model });
+      // keep looping to the next fallback
+    }
+  }
+
+  if (!result) {
+    emitAgentActivity(userId, { type: 'error', message: `❌ All models failed: ${lastErr?.message || 'unknown'}`, model });
+    console.error('Thread chat error (all fallbacks exhausted):', lastErr?.message);
+    endSSE({ success: false, error: 'LLM_ERROR', message: lastErr?.message || 'All models failed' });
+    return;
+  }
+
+  try {
     const totalTokens = result.promptTokens + result.completionTokens;
-    const costs = MODEL_COSTS[model] || { input: 0.001, output: 0.001, markup: 1.3 };
+    const costs = MODEL_COSTS[usedModel] || { input: 0.001, output: 0.001, markup: 1.3 };
     const providerCost = (result.promptTokens/1000)*costs.input + (result.completionTokens/1000)*costs.output;
     const forgeRevenue = providerCost * (costs.markup || 1.3);
+    const usedProvider = (attempts.find(a => a.model === usedModel)?.provider) || provider;
     db.prepare('INSERT INTO usage_logs (id,user_id,model,provider,prompt_tokens,completion_tokens,total_tokens,provider_cost,forge_revenue,markup_multiplier) VALUES (?,?,?,?,?,?,?,?,?,?)')
-      .run(uuidv4(), userId, model, provider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup || 1.3);
+      .run(uuidv4(), userId, usedModel, usedProvider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup || 1.3);
     db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
     const asstMsgId = uuidv4();
-    db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens,model) VALUES (?,?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens, model);
+    db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens,model) VALUES (?,?,?,?,?,?)").run(asstMsgId, thread.id, 'assistant', result.content, totalTokens, usedModel);
     db.prepare("UPDATE threads SET updated_at=datetime('now'),total_tokens=total_tokens+? WHERE id=?").run(totalTokens, thread.id);
     const toolSummary = result.toolCalls?.length ? ` — ${result.toolCalls.length} tool${result.toolCalls.length > 1 ? 's' : ''} used` : '';
-    emitAgentActivity(userId, { type: 'done', message: `✅ Response ready — ${totalTokens} tokens${toolSummary}`, model, elapsed: 0 });
-    endSSE({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model, tokensUsed: totalTokens, toolCalls: result.toolCalls || [] } });
+    emitAgentActivity(userId, { type: 'done', message: `✅ Response ready — ${totalTokens} tokens${toolSummary}`, model: usedModel, elapsed: 0 });
+    endSSE({ success: true, data: { id: asstMsgId, role: 'assistant', content: result.content, model: usedModel, tokensUsed: totalTokens, toolCalls: result.toolCalls || [] } });
   } catch (err: any) {
-    emitAgentActivity(userId, { type: 'error', message: `❌ Error: ${err.message}`, model });
-    console.error('Thread chat error:', err.message);
+    console.error('Thread chat persist error:', err.message);
     endSSE({ success: false, error: 'LLM_ERROR', message: err.message });
   }
 });
@@ -2791,7 +2860,7 @@ app.get('/api/live/activity', (req: any, res: any) => {
   res.write(`data: ${JSON.stringify({ type: 'connected', message: '🟢 Connected to live activity feed' })}\n\n`);
   if (!agentActivityClients.has(userId)) agentActivityClients.set(userId, new Set());
   agentActivityClients.get(userId)!.add(res);
-  const hb = setInterval(() => { try { res.write(': heartbeat\n\n'); } catch { clearInterval(hb); } }, 20000);
+  const hb = setInterval(() => { try { res.write(': heartbeat\n\n'); } catch { clearInterval(hb); } }, 120000);
   req.on('close', () => {
     clearInterval(hb);
     agentActivityClients.get(userId)?.delete(res);
@@ -3300,7 +3369,7 @@ app.post('/api/tts', requireAuth, async (req: AuthRequest, res) => {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: ttsModel, input: text.slice(0, 4096), voice, response_format: 'mp3' })
-    }, 20000);
+    }, 120000);
     if (!r.ok) { const e = await r.text(); res.status(500).json({ success: false, error: e.slice(0, 200) }); return; }
     const buf = Buffer.from(await r.arrayBuffer());
     res.setHeader('Content-Type', 'audio/mpeg');
@@ -3868,4 +3937,4 @@ try {
   });
   (app as any).io = io;
 } catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.87 running on port ${PORT}`); });
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.88 running on port ${PORT}`); });
