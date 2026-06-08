@@ -926,6 +926,9 @@ export default function ForgeApp() {
   const [activeConnectors, setActiveConnectors] = useState<Set<string>>(() => {
     try { const s = localStorage.getItem('forge_active_connectors'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
   });
+  // Token-saver: remember which skill IDs we've already sent full prompts for, so we don't
+  // re-ship the same skill-prompt text on every message. Only send the delta when it changes.
+  const sentSkillPromptsRef = useRef<string>('');
   const [activeSkillPrompt, setActiveSkillPrompt] = useState('');
   const [activeAgentId, setActiveAgentId] = useState<string|null>(null);
   const [genTopic, setGenTopic] = useState('');
@@ -2177,10 +2180,16 @@ export default function ForgeApp() {
         setSending(false); setTyping(false);
         return;
       }
-      // Build skill prompt map from catalog so backend gets rich descriptions, not just IDs
-      const catalogSkills: any[] = (window as any).FORGE_CATALOG_DATA?.skills || [];
-      const skillPromptsMap: Record<string, string> = {};
-      catalogSkills.forEach((s: any) => { if (activeSkills.has(s.id)) skillPromptsMap[s.id] = s.prompt || s.name; });
+      // Token-saver: only ship full skill-prompt text when the active-skill set actually CHANGED
+      // since the last message. Otherwise the backend already has them — send IDs only.
+      const skillSig = Array.from(activeSkills).sort().join(',');
+      const skillsChanged = skillSig !== sentSkillPromptsRef.current;
+      let skillPromptsMap: Record<string, string> = {};
+      if (skillsChanged) {
+        const catalogSkills: any[] = (window as any).FORGE_CATALOG_DATA?.skills || [];
+        catalogSkills.forEach((s: any) => { if (activeSkills.has(s.id)) skillPromptsMap[s.id] = s.prompt || s.name; });
+        sentSkillPromptsRef.current = skillSig;
+      }
       const body: any = {
         content: userContent,
         model: cleanModel,
@@ -2863,7 +2872,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.86</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.87</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>

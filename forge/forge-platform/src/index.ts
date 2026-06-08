@@ -103,6 +103,11 @@ const signAccess  = (p: TokenPayload) => jwt.sign(p, JWT_SECRET, { expiresIn: JW
 const signRefresh = (p: TokenPayload) => jwt.sign(p, JWT_SECRET, { expiresIn: REFRESH_EXPIRES_IN } as jwt.SignOptions);
 const verifyToken = (t: string) => jwt.verify(t, JWT_SECRET) as TokenPayload;
 
+// Token-saver: per-user cache of skill-prompt text. The frontend ships the full skill
+// prompts only when the active-skill set changes; on subsequent messages it sends just IDs,
+// and we rehydrate the prompts from this cache instead of re-paying for them every turn.
+const skillPromptCache = new Map<string, Record<string, string>>();
+
 // ── Auth middleware ───────────────────────────────────────────
 interface AuthRequest extends Request { user?: TokenPayload; }
 
@@ -143,7 +148,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.86' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.87' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -2079,8 +2084,17 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   // Now safe to do DB work — connection is already alive
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!thread) { endSSE({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_skill_prompts = {}, active_connectors = [], enabled_hooks = [], forge_mode = 'ask', desktop_context } = req.body;
+  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_connectors = [], enabled_hooks = [], forge_mode = 'ask', desktop_context } = req.body;
   if (!content?.trim()) { endSSE({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
+  // Rehydrate skill prompts: use what the client sent (if any) and merge with the per-user cache.
+  // If the client sent prompts this turn, refresh the cache; otherwise reuse the cached prompts.
+  let active_skill_prompts: Record<string, string> = req.body.active_skill_prompts || {};
+  const _cacheKey = req.user!.sub;
+  if (Object.keys(active_skill_prompts).length > 0) {
+    skillPromptCache.set(_cacheKey, active_skill_prompts);
+  } else if (skillPromptCache.has(_cacheKey)) {
+    active_skill_prompts = skillPromptCache.get(_cacheKey)!;
+  }
   const userId = req.user!.sub;
   ensureSubscription(userId);
 
@@ -3854,4 +3868,4 @@ try {
   });
   (app as any).io = io;
 } catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.86 running on port ${PORT}`); });
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.87 running on port ${PORT}`); });
