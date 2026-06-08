@@ -148,7 +148,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.89' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.90' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -3705,6 +3705,105 @@ const MARKETPLACE_ITEMS = [
   { id:'qwen/qwen-2.5-72b-instruct', name:'Qwen 2.5 72B', provider:'openrouter', category:'model', description:'Alibaba top model, excellent multilingual + math', price_per_1m_tokens:0.35, rating:4.5, installs:7800, tags:['multilingual','math','efficient'] },
 ];
 db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (id TEXT PRIMARY KEY, user_id TEXT, item_id TEXT, installed_at TEXT DEFAULT (datetime('now')))`);
+
+// ─── ForgeCO — collaborative team workspace ──────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS co_teams (id TEXT PRIMARY KEY, name TEXT, owner_id TEXT, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS co_members (id TEXT PRIMARY KEY, team_id TEXT, user_id TEXT, email TEXT, name TEXT, role TEXT DEFAULT 'member', status TEXT DEFAULT 'invited', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS co_projects (id TEXT PRIMARY KEY, team_id TEXT, name TEXT, description TEXT, status TEXT DEFAULT 'active', progress INTEGER DEFAULT 0, created_by TEXT, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS co_messages (id TEXT PRIMARY KEY, team_id TEXT, user_id TEXT, author TEXT, text TEXT, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS co_docs (id TEXT PRIMARY KEY, team_id TEXT, name TEXT, content TEXT, size INTEGER DEFAULT 0, uploaded_by TEXT, created_at TEXT DEFAULT (datetime('now')))`);
+
+// Get (or lazily create) the caller's personal team
+function getOrCreateTeam(userId: string, email?: string, name?: string): any {
+  let team = db.prepare('SELECT * FROM co_teams WHERE owner_id=?').get(userId) as any;
+  if (!team) {
+    const id = uuidv4();
+    db.prepare('INSERT INTO co_teams (id,name,owner_id) VALUES (?,?,?)').run(id, (name || 'My') + "'s Team", userId);
+    db.prepare('INSERT INTO co_members (id,team_id,user_id,email,name,role,status) VALUES (?,?,?,?,?,?,?)')
+      .run(uuidv4(), id, userId, email || '', name || 'You', 'owner', 'active');
+    team = db.prepare('SELECT * FROM co_teams WHERE id=?').get(id);
+  }
+  return team;
+}
+
+// GET /api/co — full workspace snapshot (team, members, projects, messages, docs)
+app.get('/api/co', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const user = db.prepare('SELECT email,first_name FROM users WHERE id=?').get(userId) as any;
+  const team = getOrCreateTeam(userId, user?.email, user?.first_name);
+  const members = db.prepare('SELECT id,email,name,role,status,created_at FROM co_members WHERE team_id=? ORDER BY created_at').all(team.id);
+  const projects = db.prepare('SELECT * FROM co_projects WHERE team_id=? ORDER BY created_at DESC').all(team.id);
+  const messages = db.prepare('SELECT id,author,text,created_at FROM co_messages WHERE team_id=? ORDER BY created_at DESC LIMIT 100').all(team.id);
+  const docs = db.prepare('SELECT id,name,size,uploaded_by,created_at FROM co_docs WHERE team_id=? ORDER BY created_at DESC').all(team.id);
+  res.json({ success:true, data: { team, members, projects, messages: messages.reverse(), docs } });
+});
+// POST /api/co/invite — add a member by email
+app.post('/api/co/invite', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub; const { email, name, role } = req.body;
+  if (!email) { res.status(400).json({ success:false, error:'email required' }); return; }
+  const team = getOrCreateTeam(userId);
+  const existing = db.prepare('SELECT id FROM co_members WHERE team_id=? AND email=?').get(team.id, email);
+  if (existing) { res.json({ success:true, message:'Already a member' }); return; }
+  db.prepare('INSERT INTO co_members (id,team_id,user_id,email,name,role,status) VALUES (?,?,?,?,?,?,?)')
+    .run(uuidv4(), team.id, '', email, name || email.split('@')[0], role || 'member', 'invited');
+  res.json({ success:true });
+});
+app.delete('/api/co/members/:id', requireAuth, (req: AuthRequest, res) => {
+  const team = getOrCreateTeam(req.user!.sub);
+  db.prepare('DELETE FROM co_members WHERE id=? AND team_id=? AND role!=?').run(req.params.id, team.id, 'owner');
+  res.json({ success:true });
+});
+// POST /api/co/projects — create a shared project
+app.post('/api/co/projects', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub; const { name, description } = req.body;
+  if (!name) { res.status(400).json({ success:false, error:'name required' }); return; }
+  const team = getOrCreateTeam(userId);
+  const id = uuidv4();
+  db.prepare('INSERT INTO co_projects (id,team_id,name,description,created_by) VALUES (?,?,?,?,?)').run(id, team.id, name, description || '', userId);
+  res.json({ success:true, data: db.prepare('SELECT * FROM co_projects WHERE id=?').get(id) });
+});
+app.patch('/api/co/projects/:id', requireAuth, (req: AuthRequest, res) => {
+  const team = getOrCreateTeam(req.user!.sub); const { progress, status } = req.body;
+  if (progress != null) db.prepare('UPDATE co_projects SET progress=? WHERE id=? AND team_id=?').run(progress, req.params.id, team.id);
+  if (status) db.prepare('UPDATE co_projects SET status=? WHERE id=? AND team_id=?').run(status, req.params.id, team.id);
+  res.json({ success:true });
+});
+app.delete('/api/co/projects/:id', requireAuth, (req: AuthRequest, res) => {
+  const team = getOrCreateTeam(req.user!.sub);
+  db.prepare('DELETE FROM co_projects WHERE id=? AND team_id=?').run(req.params.id, team.id);
+  res.json({ success:true });
+});
+// POST /api/co/messages — post a team chat message
+app.post('/api/co/messages', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub; const { text } = req.body;
+  if (!text?.trim()) { res.status(400).json({ success:false, error:'text required' }); return; }
+  const user = db.prepare('SELECT first_name,email FROM users WHERE id=?').get(userId) as any;
+  const team = getOrCreateTeam(userId, user?.email, user?.first_name);
+  const id = uuidv4();
+  db.prepare('INSERT INTO co_messages (id,team_id,user_id,author,text) VALUES (?,?,?,?,?)').run(id, team.id, userId, user?.first_name || 'You', text.trim());
+  res.json({ success:true, data: db.prepare('SELECT id,author,text,created_at FROM co_messages WHERE id=?').get(id) });
+});
+// POST /api/co/docs — store a shared document (text content)
+app.post('/api/co/docs', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub; const { name, content } = req.body;
+  if (!name) { res.status(400).json({ success:false, error:'name required' }); return; }
+  const user = db.prepare('SELECT first_name FROM users WHERE id=?').get(userId) as any;
+  const team = getOrCreateTeam(userId);
+  const id = uuidv4();
+  const body = (content || '').slice(0, 200000);
+  db.prepare('INSERT INTO co_docs (id,team_id,name,content,size,uploaded_by) VALUES (?,?,?,?,?,?)').run(id, team.id, name, body, body.length, user?.first_name || 'You');
+  res.json({ success:true, data: db.prepare('SELECT id,name,size,uploaded_by,created_at FROM co_docs WHERE id=?').get(id) });
+});
+app.get('/api/co/docs/:id', requireAuth, (req: AuthRequest, res) => {
+  const team = getOrCreateTeam(req.user!.sub);
+  const doc = db.prepare('SELECT * FROM co_docs WHERE id=? AND team_id=?').get(req.params.id, team.id);
+  res.json({ success:true, data: doc });
+});
+app.delete('/api/co/docs/:id', requireAuth, (req: AuthRequest, res) => {
+  const team = getOrCreateTeam(req.user!.sub);
+  db.prepare('DELETE FROM co_docs WHERE id=? AND team_id=?').run(req.params.id, team.id);
+  res.json({ success:true });
+});
 app.get('/api/marketplace/items', requireAuth, (_req, res) => {
   res.json({ success:true, data: MARKETPLACE_ITEMS });
 });
@@ -3937,4 +4036,4 @@ try {
   });
   (app as any).io = io;
 } catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.89 running on port ${PORT}`); });
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.90 running on port ${PORT}`); });

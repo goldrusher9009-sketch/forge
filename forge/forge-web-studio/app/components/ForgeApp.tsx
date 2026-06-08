@@ -710,6 +710,7 @@ export default function ForgeApp() {
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [liveExpanded, setLiveExpanded] = useState(false);
   const [autoMenuOpen, setAutoMenuOpen] = useState(false);
+  useEffect(() => { if (mainTab === 'forgeco' && user) loadCo(); /* eslint-disable-next-line */ }, [mainTab]);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
   // Tool calls captured during the current SSE stream — map of msgId -> tool call list
@@ -882,6 +883,31 @@ export default function ForgeApp() {
   // ForgeCO hoisted state
   const [forgecoTab, setForgecoTab] = useState<'team'|'projects'|'docs'|'chat'>('team');
   const [forgecoChatMsg, setForgecoChatMsg] = useState('');
+  // ForgeCO real data
+  const [coData, setCoData] = useState<{team:any;members:any[];projects:any[];messages:any[];docs:any[]}|null>(null);
+  const [coLoading, setCoLoading] = useState(false);
+  const coDocInputRef = useRef<HTMLInputElement>(null);
+  const loadCo = async () => {
+    if (!user) return;
+    setCoLoading(true);
+    try { const d = await apiFetch('/co', {}, user.token); if (d?.success) setCoData(d.data); } catch {}
+    setCoLoading(false);
+  };
+  const coInvite = async () => {
+    if (!user) return;
+    const email = window.prompt('Invite teammate by email:'); if (!email) return;
+    try { await apiFetch('/co/invite', { method:'POST', body:JSON.stringify({ email }) }, user.token); showToast('✅ Invited '+email); await loadCo(); } catch (e:any) { showToast('Invite failed','err'); }
+  };
+  const coNewProject = async () => {
+    if (!user) return;
+    const name = window.prompt('New project name:'); if (!name) return;
+    try { await apiFetch('/co/projects', { method:'POST', body:JSON.stringify({ name }) }, user.token); await loadCo(); } catch {}
+  };
+  const coSendMsg = async () => {
+    if (!user || !forgecoChatMsg.trim()) return;
+    const text = forgecoChatMsg.trim(); setForgecoChatMsg('');
+    try { await apiFetch('/co/messages', { method:'POST', body:JSON.stringify({ text }) }, user.token); await loadCo(); } catch {}
+  };
   const [forgecoChatLog, setForgecoChatLog] = useState<{from:string;text:string;ts:number}[]>([
     { from:'Sarah Kim', text:'Just pushed the new onboarding flow — ready for review!', ts:Date.now()-3600000 },
     { from:'Alex Chen', text:'On it, will check after standup', ts:Date.now()-1800000 },
@@ -2967,7 +2993,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.89</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.90</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>
@@ -6280,31 +6306,19 @@ export default function ForgeApp() {
 
         {/* -- ForgeCO ------------------------------------------------ */}
         {mainTab === 'forgeco' && (() => {
-          const coMembers = [
-            { id:'m1', name:'Alex Chen', role:'Lead Developer', avatar:'👨"💻', status:'online', tasks:3 },
-            { id:'m2', name:'Sarah Kim', role:'Product Manager', avatar:'👩"💼', status:'online', tasks:5 },
-            { id:'m3', name:'Marcus Lee', role:'Designer', avatar:'🧪"🎨', status:'away', tasks:2 },
-            { id:'m4', name:'Priya Patel', role:'Data Analyst', avatar:'👩"🔬', status:'offline', tasks:1 },
-          ];
-          const coProjects = [
-            { id:'p1', name:'Platform v2.0', status:'active', progress:72, due:'Jun 15', members:3 },
-            { id:'p2', name:'Mobile App', status:'active', progress:45, due:'Jul 1', members:2 },
-            { id:'p3', name:'API Redesign', status:'planning', progress:12, due:'Aug 10', members:4 },
-          ];
-          const sendCoMsg = () => {
-            if (!forgecoChatMsg.trim()) return;
-            setForgecoChatLog(p => [...p, { from:'You', text:forgecoChatMsg, ts:Date.now() }]);
-            setForgecoChatMsg('');
-          };
-          const statusColor = (s:string) => s==='online'?'#22c55e':s==='away'?'#f59e0b':'var(--fg-text4)';
+          const members = coData?.members || [];
+          const projects = coData?.projects || [];
+          const messages = coData?.messages || [];
+          const docs = coData?.docs || [];
+          const fmtTime = (ts:string) => { try { return new Date(ts.includes('Z')||ts.includes('T')?ts:ts.replace(' ','T')+'Z').toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); } catch { return ts; } };
           return (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:1000, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>🧪"💻</span>
+                <span style={{ fontSize:36 }}>👥</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeCo</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Team workspace — manage projects, collaborate with your team, and get AI assistance across every task.</p>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>{coData?.team?.name || 'Team workspace'} — invite members, run projects together, chat, and share docs.</p>
                 </div>
                 <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
                   {(['team','projects','docs','chat'] as const).map(t => (
@@ -6312,29 +6326,23 @@ export default function ForgeApp() {
                   ))}
                 </div>
               </div>
+              {coLoading && <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:12 }}>Loading workspace…</div>}
 
               {forgecoTab === 'team' && (
-                <div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14, marginBottom:24 }}>
-                    {coMembers.map(m => (
-                      <div key={m.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, textAlign:'center' }}>
-                        <div style={{ fontSize:40, marginBottom:8 }}>{m.avatar}</div>
-                        <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:2 }}>{m.name}</div>
-                        <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:10 }}>{m.role}</div>
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, marginBottom:10 }}>
-                          <div style={{ width:7, height:7, borderRadius:'50%', background:statusColor(m.status) }} />
-                          <span style={{ fontSize:11, color:statusColor(m.status), textTransform:'capitalize' }}>{m.status}</span>
-                        </div>
-                        <div style={{ background:'var(--fg-bg3)', borderRadius:6, padding:'4px 8px', display:'inline-block', fontSize:11, color:'var(--fg-text3)' }}>
-                          {m.tasks} open tasks
-                        </div>
-                      </div>
-                    ))}
-                    <div style={{ background:'var(--fg-bg2)', border:'2px dashed var(--fg-border)', borderRadius:12, padding:18, textAlign:'center', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:160 }}
-                      onClick={() => showToast('Connect an HR or email tool in Platforms tab to invite colleagues','info')}>
-                      <div style={{ fontSize:28, marginBottom:8 }}>👥</div>
-                      <div style={{ fontSize:13, color:'var(--fg-text3)' }}>Invite Member</div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14 }}>
+                  {members.map((m:any) => (
+                    <div key={m.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, textAlign:'center', position:'relative' }}>
+                      {m.role!=='owner' && <button onClick={async()=>{ if(!user)return; await apiFetch(`/co/members/${m.id}`,{method:'DELETE'},user.token); await loadCo(); }} title="Remove" style={{ position:'absolute', top:8, right:8, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>×</button>}
+                      <div style={{ width:48, height:48, borderRadius:'50%', margin:'0 auto 8px', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:700, color:'var(--fg-orange2)' }}>{(m.name||m.email||'?').slice(0,1).toUpperCase()}</div>
+                      <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:2 }}>{m.name||m.email}</div>
+                      <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:8 }}>{m.email}</div>
+                      <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, textTransform:'capitalize', background: m.role==='owner'?'rgba(255,31,53,0.12)':'var(--fg-bg3)', color: m.role==='owner'?'var(--fg-orange)':'var(--fg-text3)', marginRight:6 }}>{m.role}</span>
+                      <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background: m.status==='active'?'rgba(34,197,94,0.12)':'rgba(245,158,11,0.12)', color: m.status==='active'?'#22c55e':'#f59e0b', textTransform:'capitalize' }}>{m.status}</span>
                     </div>
+                  ))}
+                  <div onClick={coInvite} style={{ background:'var(--fg-bg2)', border:'2px dashed var(--fg-border)', borderRadius:12, padding:18, textAlign:'center', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:150 }}>
+                    <div style={{ fontSize:28, marginBottom:8 }}>➕</div>
+                    <div style={{ fontSize:13, color:'var(--fg-text3)' }}>Invite Member</div>
                   </div>
                 </div>
               )}
@@ -6342,59 +6350,80 @@ export default function ForgeApp() {
               {forgecoTab === 'projects' && (
                 <div>
                   <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:14 }}>
-                    <button onClick={() => showToast('Use the + New Conversation button to create projects','info')} style={{ padding:'8px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ New Project</button>
+                    <button onClick={coNewProject} style={{ padding:'8px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ New Project</button>
                   </div>
-                  {coProjects.map(p => (
+                  {projects.length===0 && <div style={{ fontSize:13, color:'var(--fg-text3)', textAlign:'center', padding:30 }}>No projects yet — create one to start collaborating.</div>}
+                  {projects.map((p:any) => (
                     <div key={p.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:14 }}>
                       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                         <div>
                           <div style={{ fontSize:15, fontWeight:700, color:'var(--fg-text)', marginBottom:2 }}>{p.name}</div>
-                          <div style={{ fontSize:11, color:'var(--fg-text3)' }}>Due {p.due} · {p.members} members</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{p.description || 'Created '+fmtTime(p.created_at)}</div>
                         </div>
-                        <span style={{ padding:'3px 10px', background: p.status==='active'?'rgba(34,197,94,0.12)':'rgba(99,102,241,0.12)', border:`1px solid ${p.status==='active'?'#22c55e':'#6366f1'}`, borderRadius:20, fontSize:11, fontWeight:700, color: p.status==='active'?'#22c55e':'#6366f1', textTransform:'capitalize' }}>{p.status}</span>
+                        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                          <span style={{ padding:'3px 10px', background: p.status==='active'?'rgba(34,197,94,0.12)':'rgba(99,102,241,0.12)', border:`1px solid ${p.status==='active'?'#22c55e':'#6366f1'}`, borderRadius:20, fontSize:11, fontWeight:700, color: p.status==='active'?'#22c55e':'#6366f1', textTransform:'capitalize' }}>{p.status}</span>
+                          <button onClick={async()=>{ if(!user)return; await apiFetch(`/co/projects/${p.id}`,{method:'DELETE'},user.token); await loadCo(); }} title="Delete" style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>🗑</button>
+                        </div>
                       </div>
                       <div style={{ background:'var(--fg-bg)', borderRadius:4, height:8, overflow:'hidden', marginBottom:6 }}>
-                        <div style={{ height:'100%', background:'var(--fg-orange)', borderRadius:4, width:`${p.progress}%`, transition:'width 0.5s' }} />
+                        <div style={{ height:'100%', background:'var(--fg-orange)', borderRadius:4, width:`${p.progress||0}%`, transition:'width 0.5s' }} />
                       </div>
-                      <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{p.progress}% complete</div>
+                      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                        <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{p.progress||0}% complete</span>
+                        <input type="range" min={0} max={100} value={p.progress||0} onChange={async e=>{ if(!user)return; const v=parseInt(e.target.value); setCoData(d=>d?{...d,projects:d.projects.map((x:any)=>x.id===p.id?{...x,progress:v}:x)}:d); }} onMouseUp={async e=>{ if(!user)return; await apiFetch(`/co/projects/${p.id}`,{method:'PATCH',body:JSON.stringify({progress:parseInt((e.target as HTMLInputElement).value)})},user.token); }} style={{ flex:1, accentColor:'var(--fg-orange)' }} />
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
 
               {forgecoTab === 'docs' && (
-                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:28, textAlign:'center' }}>
-                  <div style={{ fontSize:40, marginBottom:12 }}>📄</div>
-                  <h3 style={{ margin:'0 0 8px', color:'var(--fg-text)' }}>Team Docs</h3>
-                  <p style={{ fontSize:13, color:'var(--fg-text3)', marginBottom:20 }}>Connect Google Drive, Notion, or Confluence to access and collaborate on team documents with AI assistance.</p>
-                  <button onClick={() => showToast('Go to Platforms tab to connect Google Drive, Notion, or Dropbox','info')} style={{ padding:'9px 22px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Connect Docs</button>
+                <div>
+                  <input ref={coDocInputRef} type="file" accept=".txt,.md,.csv,.json,.js,.ts,.html,.css,.py" style={{ display:'none' }} onChange={async e => {
+                    const file = e.target.files?.[0]; if (!file || !user) return;
+                    const text = await file.text();
+                    await apiFetch('/co/docs', { method:'POST', body:JSON.stringify({ name:file.name, content:text.slice(0,200000) }) }, user.token);
+                    showToast('📄 '+file.name+' shared'); await loadCo(); if (coDocInputRef.current) coDocInputRef.current.value='';
+                  }} />
+                  <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:14 }}>
+                    <button onClick={() => coDocInputRef.current?.click()} style={{ padding:'8px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>⬆ Upload Document</button>
+                  </div>
+                  {docs.length===0 && <div style={{ fontSize:13, color:'var(--fg-text3)', textAlign:'center', padding:30 }}>No shared docs yet — upload one for the team.</div>}
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:12 }}>
+                    {docs.map((d:any) => (
+                      <div key={d.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:6 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8 }}><span style={{ fontSize:22 }}>📄</span><span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{d.name}</span></div>
+                        <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{(d.size/1024).toFixed(1)} KB · by {d.uploaded_by} · {fmtTime(d.created_at)}</div>
+                        <button onClick={async()=>{ if(!user)return; await apiFetch(`/co/docs/${d.id}`,{method:'DELETE'},user.token); await loadCo(); }} style={{ alignSelf:'flex-start', background:'none', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'3px 10px' }}>Delete</button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {forgecoTab === 'chat' && (
                 <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, overflow:'hidden' }}>
                   <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8 }}>
-                    <span style={{ fontSize:16 }}>🛠</span>
+                    <span style={{ fontSize:16 }}>💬</span>
                     <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Team Chat</span>
-                    <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{coMembers.filter(m=>m.status==='online').length} online</span>
+                    <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{members.length} member{members.length!==1?'s':''}</span>
                   </div>
                   <div style={{ height:340, overflowY:'auto', padding:16, display:'flex', flexDirection:'column', gap:10 }}>
-                    {forgecoChatLog.map((msg, i) => (
-                      <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-                        <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0 }}>
-                          {msg.from==='You'?'👤':msg.from==='Forge AI'?'🌟':coMembers.find(m=>m.name===msg.from)?.avatar||'👤'}
-                        </div>
+                    {messages.length===0 && <div style={{ fontSize:12, color:'var(--fg-text3)', textAlign:'center', margin:'auto' }}>No messages yet — say hello to your team.</div>}
+                    {messages.map((msg:any, i:number) => (
+                      <div key={msg.id||i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                        <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0, color:'var(--fg-orange2)', fontWeight:700 }}>{(msg.author||'?').slice(0,1).toUpperCase()}</div>
                         <div>
-                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:2 }}>{msg.from} · {new Date(msg.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
-                          <div style={{ fontSize:13, color:'var(--fg-text)', background: msg.from==='You'?'var(--fg-bg4)':'transparent', padding: msg.from==='You'?'6px 10px':'0', borderRadius:8, display:'inline-block' }}>{msg.text}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:2 }}>{msg.author} · {fmtTime(msg.created_at)}</div>
+                          <div style={{ fontSize:13, color:'var(--fg-text)' }}>{msg.text}</div>
                         </div>
                       </div>
                     ))}
                   </div>
                   <div style={{ padding:'10px 16px', borderTop:'1px solid var(--fg-border)', display:'flex', gap:8 }}>
-                    <input value={forgecoChatMsg} onChange={e => setForgecoChatMsg(e.target.value)} onKeyDown={e => e.key==='Enter' && sendCoMsg()} placeholder="Message team…"
+                    <input value={forgecoChatMsg} onChange={e => setForgecoChatMsg(e.target.value)} onKeyDown={e => e.key==='Enter' && coSendMsg()} placeholder="Message team…"
                       style={{ flex:1, padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
-                    <button onClick={sendCoMsg} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Send</button>
+                    <button onClick={coSendMsg} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Send</button>
                   </div>
                 </div>
               )}
