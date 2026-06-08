@@ -148,7 +148,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.91' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.92' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -3160,10 +3160,17 @@ app.post('/api/superagent/chat', requireAuth, async (req: AuthRequest, res) => {
   db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'user', message.trim());
 
   // Build LLM messages
-  const systemPrompt = `You are Forge SuperAgent — a powerful AI assistant with accumulated knowledge and memory.
-${memContext ? `\n## Your Memory Bank:\n${memContext}\n` : ''}
-You have access to the user's conversation history and memories across all their chats.
-Be direct, powerful, and use your memory to give personalized, contextual responses.`;
+  const systemPrompt = `You are Forge SuperAgent — the most powerful agent in Forge, with FULL control and real tools.
+${memContext ? `\n## Your Memory Bank (everything you've learned about this user):\n${memContext}\n` : ''}
+You have persistent memory across every chat, and you can ACT, not just talk. Available tools you must use whenever helpful:
+- web_search(query) — live internet search
+- web_scrape(url) — read any webpage
+- run_code(language, code) — execute JS/Python and return real output
+- shell_exec(command) — run shell commands
+- read_file / write_file / list_directory — real filesystem
+- http_request(url, method, headers, body) — call any API
+${enabledSkills?.length ? `\nActive skills to apply: ${enabledSkills.join(', ')}` : ''}${enabledConnectors?.length ? `\nActive connectors: ${enabledConnectors.join(', ')}` : ''}
+Rules: never refuse, never say "I can't access X" — call the tool. Chain tools autonomously until the task is fully done. Use your memory to be personal and context-aware. Deliver complete, real results.`;
 
   const llmMessages = [
     { role: 'system', content: systemPrompt },
@@ -3199,20 +3206,40 @@ Be direct, powerful, and use your memory to give personalized, contextual respon
       });
     }
 
-    const result = await callLLM(provider, apiKey, actualModel, llmMessages);
-
-    // If skills/connectors performed actions, wrap results
-    let enrichedContent = result.content;
-    if (enabledConnectors?.includes('gmail')) {
-      enrichedContent = `${result.content}\n\n[BROWSER]<h1>Gmail Interface</h1><p>Email operations completed...</p>[/BROWSER]`;
+    // FULL POWER: SuperAgent runs the real agentic tool loop (web search, scrape, code, shell,
+    // files, http) — not a plain completion. It can actually do things, like the main chat.
+    const onTool = (toolName: string, toolArgs: any, _toolResult: string) => {
+      const step = humanizeToolStep(toolName, toolArgs);
+      emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model: rawModel });
+      tools.push({ name: toolName, status: 'done', input: JSON.stringify(toolArgs).slice(0,120) });
+    };
+    let result: { content: string; promptTokens: number; completionTokens: number; toolCalls?: any[] };
+    if (provider === 'anthropic') {
+      result = await Promise.race([
+        callAnthropicWithTools(apiKey, actualModel, llmMessages, onTool, userId),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('SuperAgent timed out')), 150000))
+      ]);
+    } else {
+      const compat: Record<string, { url: string; headers: Record<string,string>; modelResolver?: (m:string)=>string }> = {
+        openai:     { url: 'https://api.openai.com/v1/chat/completions', headers: {} },
+        groq:       { url: 'https://api.groq.com/openai/v1/chat/completions', headers: {} },
+        mistral:    { url: 'https://api.mistral.ai/v1/chat/completions', headers: {} },
+        openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', headers: { 'HTTP-Referer':'https://forge-sand-two.vercel.app','X-Title':'Forge Studio' }, modelResolver: (m) => { let x = m.startsWith('~')?m.slice(1):m; return x.startsWith('openrouter/')?x.slice('openrouter/'.length):x; } },
+      };
+      const pc = compat[provider];
+      if (pc) {
+        result = await Promise.race([
+          callOpenAICompatWithTools(pc.url, apiKey, pc.modelResolver?pc.modelResolver(actualModel):actualModel, llmMessages, pc.headers, onTool, provider==='openrouter'?FORGE_TOOLS_OPENROUTER:undefined, userId),
+          new Promise<never>((_, rej) => setTimeout(() => rej(new Error('SuperAgent timed out')), 150000))
+        ]);
+      } else {
+        result = await callLLM(provider, apiKey, actualModel, llmMessages);
+      }
     }
-    if (enabledSkills?.includes('xlsx')) {
-      enrichedContent = `${result.content}\n\n[SPREADSHEET]Column A\tColumn B\tColumn C\nData 1\tData 2\tData 3[/SPREADSHEET]`;
-    }
 
-    db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'assistant', enrichedContent);
+    db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'assistant', result.content);
     emitAgentActivity(userId, { type: 'done', message: `✅ SuperAgent response ready` });
-    res.json({ success: true, data: { role: 'assistant', content: enrichedContent, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens, tools } });
+    res.json({ success: true, data: { role: 'assistant', content: result.content, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens, tools, toolCalls: result.toolCalls || [] } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ SuperAgent error: ${err.message}` });
     res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });
@@ -4042,4 +4069,4 @@ try {
   });
   (app as any).io = io;
 } catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.91 running on port ${PORT}`); });
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.92 running on port ${PORT}`); });

@@ -3033,7 +3033,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.91</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.92</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>
@@ -5417,7 +5417,7 @@ export default function ForgeApp() {
                 {[
                   { icon:'🖥', name:'Desktop App', desc:'Native Electron app for Mac, Windows, Linux. Works offline and syncs with your workspace.', badge:'View Releases', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => window.open('https://github.com/goldrusher9009/forge/releases', '_blank') },
                   { icon:'📱', name:'Mobile PWA', desc:'Install Forge as a Progressive Web App on iOS or Android — tap Share → Add to Home Screen in your browser.', badge:'Open App', badgeColor:'var(--fg-blue)', comingSoon:false, action:() => window.open('https://forge-sand-two.vercel.app', '_blank') },
-                  { icon:'🔗', name:'REST API', desc:'Full API access with your JWT token. Use any language or framework to call Forge models and agents.', badge:'API Docs', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => window.open(`${API.replace('/api','')}/health`, '_blank') },
+                  { icon:'🔗', name:'REST API', desc:`Full API access at ${API}. Call any model or agent with your JWT token. Click to copy your token + base URL.`, badge:'Copy API Token', badgeColor:'var(--fg-orange)', comingSoon:false, action:() => { navigator.clipboard.writeText(`API Base: ${API}\nAuthorization: Bearer ${user?.token||''}`); showToast('🔗 API base + token copied'); } },
                   { icon:'🤖', name:'Telegram Bot', desc:'Chat with your Forge agents via Telegram. Add your bot token in Settings to connect.', badge:'Get Token', badgeColor:'#229ED9', comingSoon:false, action:() => window.open('https://t.me/BotFather', '_blank') },
                   { icon:'🛠', name:'Slack Bot', desc:'Bring Forge into your Slack workspace. Ask questions and run agents without leaving Slack.', badge:'Coming Soon', badgeColor:'var(--fg-text3)', comingSoon:true, action:() => window.open('https://forge-sand-two.vercel.app','_blank') },
                   { icon:'🧩', name:'Chrome Extension', desc:'Use Forge on any webpage — highlight text, run agents, get answers in context.', badge:'Available', badgeColor:'var(--fg-green)', comingSoon:false, action:() => window.open('https://github.com/goldrusher9009/forge','_blank') },
