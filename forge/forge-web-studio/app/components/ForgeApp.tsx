@@ -627,6 +627,15 @@ export default function ForgeApp() {
   const [typing, setTyping] = useState(false);
   const [agentSteps, setAgentSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
   const agentStepsRef = useRef<{icon:string;text:string;ts:number}[]>([]);
+  // Map an activity step / tool to the right-panel tab where its work lives, and open it
+  const jumpToWork = (hint: string) => {
+    const h = (hint || '').toLowerCase();
+    let tab: any = 'live';
+    if (/(web_search|web_scrape|browser|http_request|reading|searching|fetch|url)/.test(h)) tab = 'browser';
+    else if (/(shell|run_code|exec|terminal|command|npm|python|node|bash|git)/.test(h)) tab = 'terminal';
+    else if (/(artifact|file|wrote|created|generated)/.test(h)) tab = 'artifacts';
+    setRightTab(tab); setRightExpanded(true);
+  };
   const addAgentStep = (icon: string, text: string) => {
     setAgentSteps(prev => { const next = [...prev.slice(-20), { icon, text, ts: Date.now() }]; agentStepsRef.current = next; return next; });
     // Auto-add to Progress Tracker as a numbered step (crossed off when done)
@@ -3237,7 +3246,7 @@ export default function ForgeApp() {
                               const isShellStep = isToolStep && s.text.includes('shell_exec');
 
                               return (
-                                <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 14px', borderBottom: i < arr.length-1 ? '1px solid var(--fg-border)' : 'none', background: isLast ? 'rgba(249,115,22,0.04)' : 'transparent', transition:'background 0.2s' }}>
+                                <div key={i} onClick={() => jumpToWork(s.text)} title="Open where this work happened →" style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 14px', borderBottom: i < arr.length-1 ? '1px solid var(--fg-border)' : 'none', background: isLast ? 'rgba(249,115,22,0.04)' : 'transparent', transition:'background 0.2s', cursor:'pointer' }} onMouseEnter={e=>{e.currentTarget.style.background='var(--fg-odim)';}} onMouseLeave={e=>{e.currentTarget.style.background=isLast?'rgba(249,115,22,0.04)':'transparent';}}>
                                   {/* Timeline dot */}
                                   <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingTop:3, flexShrink:0 }}>
                                     <div style={{ width:8, height:8, borderRadius:'50%', background: isLast ? 'var(--fg-orange)' : 'var(--fg-green)', boxShadow: isLast ? '0 0 8px var(--fg-orange)' : 'none', animation: isLast ? 'pulse 1s ease-in-out infinite' : 'none' }} />
@@ -3278,6 +3287,7 @@ export default function ForgeApp() {
                                   <span style={{ fontSize:11, color:'var(--fg-orange2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                                     {tc.tool==='web_search' ? `"${tc.args?.query}"` : tc.tool==='web_scrape'||tc.tool==='browser_action' ? (tc.args?.url||tc.args?.action||'') : tc.tool==='run_code' ? `${tc.args?.language}` : tc.tool==='shell_exec' ? tc.args?.command?.slice(0,60) : tc.tool==='http_request' ? `${tc.args?.method||'GET'} ${tc.args?.url}` : JSON.stringify(tc.args||{}).slice(0,50)}
                                   </span>
+                                  <button onClick={(e)=>{e.stopPropagation();jumpToWork(tc.tool+' '+JSON.stringify(tc.args||{}));}} title="Open work panel" style={{ padding:'1px 6px', background:'var(--fg-odim)', border:'1px solid var(--fg-odim2)', borderRadius:4, color:'var(--fg-orange2)', cursor:'pointer', fontSize:10, flexShrink:0 }}>↗</button>
                                   <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{expandedTools[idx]?'Γû▓':'Γû╝'}</span>
                                 </div>
                                 {expandedTools[idx] && (
@@ -7170,7 +7180,7 @@ export default function ForgeApp() {
               </div>
               {autoResults.length > 0 && (
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(380px,1fr))', gap:16 }}>
-                  {autoResults.map((r, i) => (
+                  {autoResults.map((r) => (
                     <div key={r.model} style={{ background:'var(--fg-bg2)', border:`1px solid ${r.error ? '#ef4444' : r.content ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:12, padding:16 }}>
                       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
                         <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)' }}>{r.model.replace('openrouter/','').slice(0,40)}</span>
