@@ -711,6 +711,7 @@ export default function ForgeApp() {
   const [liveExpanded, setLiveExpanded] = useState(false);
   const [autoMenuOpen, setAutoMenuOpen] = useState(false);
   useEffect(() => { if (mainTab === 'forgeco' && user) loadCo(); /* eslint-disable-next-line */ }, [mainTab]);
+  useEffect(() => { if (mainTab === 'intelligence' && user) loadIntelligence(); /* eslint-disable-next-line */ }, [mainTab]);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
   // Tool calls captured during the current SSE stream — map of msgId -> tool call list
@@ -1076,13 +1077,16 @@ export default function ForgeApp() {
   useEffect(() => { loadFolderFiles(); }, [loadFolderFiles]);
   const uploadFile = async (file: File) => {
     if (!user) return;
-    const entry = { id: Date.now().toString(), name: file.name, size: file.size, type: file.type || 'application/octet-stream', created_at: new Date().toISOString() };
-    setFiles(prev => [...prev, entry]);
-    // Backend upload when endpoint exists
     try {
-      const fd = new FormData(); fd.append('file', file);
-      await fetch(`${API}/files`, { method:'POST', headers:{ Authorization:`Bearer ${user.token}` }, body: fd });
-    } catch { /* store locally if backend not ready */ }
+      // Read text content (works for text/code/csv/json). Binary falls back to a data URL.
+      const isText = /^(text\/|application\/(json|xml|javascript|x-)|$)/.test(file.type) || /\.(txt|md|csv|json|js|ts|tsx|jsx|html|css|py|yml|yaml|xml|sql|sh|log)$/i.test(file.name);
+      let content: string;
+      if (isText) content = await file.text();
+      else content = await new Promise<string>((res) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => res(''); r.readAsDataURL(file); });
+      const r = await apiFetch('/userfiles', { method:'POST', body: JSON.stringify({ filename: file.name, content, mime_type: file.type || 'text/plain', thread_id: activeThread?.id }) }, user.token);
+      if (r?.data) showToast('📄 '+file.name+' uploaded');
+      await loadFolderFiles();
+    } catch (e:any) { showToast('Upload failed: '+String(e?.message||e),'err'); }
   };
 
   // ForgeCo state
@@ -1715,6 +1719,42 @@ export default function ForgeApp() {
       setMvpResult({ spec: grab('SPEC')||full, stack: grab('STACK'), roadmap: grab('ROADMAP'), pitch: grab('PITCH') });
     } catch (e:any) { showToast('MVP build failed: '+String(e?.message||e),'err'); }
     finally { setMvpBuilding(false); }
+  };
+
+  // ── Agent Swarm: deploy N specialist agents in parallel + synthesize ──
+  const runSwarm = async () => {
+    if (!user || !swarmTask.trim() || swarmRunning) return;
+    setSwarmRunning(true); setSwarmSynthesis('');
+    const roles = ['Researcher','Analyst','Strategist','Writer','Critic','Engineer','Designer','Planner','Investigator','Synthesizer','Optimizer','Validator','Explorer','Architect','Specialist','Advisor','Reviewer','Builder','Scout','Expert'];
+    const n = Math.min(swarmAgentCount, 20);
+    const chosen = roles.slice(0, n);
+    setSwarmResults(chosen.map((r,i) => ({ agentId:`a${i}`, role:r, result:'', tokens:0, done:false })));
+    const outputs: {role:string;result:string}[] = [];
+    await Promise.allSettled(chosen.map(async (role, i) => {
+      let out = '';
+      try { out = await callOneModel(`You are the ${role} agent in a ${n}-agent swarm tackling one task. Give your specialist contribution only.\n\nTask: ${swarmTask}`); }
+      catch { out = '(failed)'; }
+      outputs.push({ role, result: out });
+      setSwarmResults(prev => prev.map(a => a.agentId===`a${i}` ? { ...a, result:out, tokens:Math.round(out.length/4), done:true } : a));
+    }));
+    try {
+      const combined = outputs.map(a => `## ${a.role}\n${a.result}`).join('\n\n');
+      const synth = await callOneModel(`You are the Swarm Synthesis agent. Merge all ${n} specialist outputs into one executive answer.\n\n${combined}\n\nDeliver the unified best answer to: ${swarmTask}`);
+      setSwarmSynthesis(synth);
+    } catch {}
+    setSwarmRunning(false);
+  };
+
+  // ── Intelligence Layer: load memory graph + IQ from harvested memory ──
+  const loadIntelligence = async () => {
+    if (!user) return;
+    setIgLoading(true);
+    try {
+      const d = await apiFetch('/superagent/memory', {}, user.token);
+      const mems = Array.isArray(d?.data) ? d.data : [];
+      setIgNodes(mems.slice(0, 60).map((m:any) => ({ id:m.id, label:m.topic, type:'memory', weight: m.strength || 1 })));
+    } catch {}
+    setIgLoading(false);
   };
 
   const loadTotalTokens = async () => {
@@ -2993,7 +3033,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.90</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.91</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>
@@ -7212,6 +7252,75 @@ export default function ForgeApp() {
           </div>
           );
         })()}
+
+        {/* -- Agent Swarm ----------------------------------------------- */}
+        {mainTab === 'swarm' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:960, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🐝</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Agent Swarm</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Deploy 2–20 parallel agents on one task, then synthesize. Model: <span style={{ color:'var(--fg-orange2)' }}>{selectedModel||'(pick a model)'}</span></p>
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:8, marginBottom:12, alignItems:'center', flexWrap:'wrap' }}>
+                <span style={{ fontSize:12, color:'var(--fg-text3)' }}>Agents:</span>
+                {[3,5,8,12,20].map(c => <button key={c} onClick={() => setSwarmAgentCount(c)} style={{ padding:'5px 14px', background:swarmAgentCount===c?'var(--fg-orange)':'var(--fg-bg3)', border:`1px solid ${swarmAgentCount===c?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:8, fontSize:12, color:swarmAgentCount===c?'#fff':'var(--fg-text2)', cursor:'pointer', fontWeight:swarmAgentCount===c?700:400 }}>{c}</button>)}
+              </div>
+              <textarea value={swarmTask} onChange={e => setSwarmTask(e.target.value)} placeholder="Describe the task for the swarm…" style={{ width:'100%', minHeight:90, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+              <button onClick={runSwarm} disabled={swarmRunning || !swarmTask.trim() || !selectedModel} style={{ marginTop:10, padding:'10px 22px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(swarmRunning||!swarmTask.trim()||!selectedModel)?0.5:1 }}>{swarmRunning ? `🐝 ${swarmAgentCount} agents working…` : `🐝 Deploy ${swarmAgentCount} Agents`}</button>
+              {swarmResults.length > 0 && (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:10, marginTop:20 }}>
+                  {swarmResults.map(a => (
+                    <div key={a.agentId} style={{ background:'var(--fg-bg2)', border:`1px solid ${a.done?'var(--fg-green)':'var(--fg-border)'}`, borderRadius:10, padding:12 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}><span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>{a.role}</span>{!a.done && <span style={{ marginLeft:'auto', fontSize:10, color:'var(--fg-orange)', animation:'pulse 1s infinite' }}>…</span>}{a.done && <span style={{ marginLeft:'auto', fontSize:10, color:'var(--fg-green)' }}>✓</span>}</div>
+                      {a.result && <div style={{ fontSize:11, color:'var(--fg-text2)', lineHeight:1.5, whiteSpace:'pre-wrap', maxHeight:140, overflowY:'auto' }}>{a.result}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {swarmSynthesis && (
+                <div style={{ marginTop:20, background:'linear-gradient(135deg,rgba(255,176,32,0.12),rgba(255,31,53,0.06))', border:'1px solid var(--fg-border2)', borderRadius:14, padding:20 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-amber)', marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>🐝 Swarm Synthesis</div>
+                  <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{swarmSynthesis}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* -- Intelligence Layer ---------------------------------------- */}
+        {mainTab === 'intelligence' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:960, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🧠</span>
+                <div style={{ flex:1 }}>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Intelligence Layer</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Forge's living memory — harvested across every module. The more you use Forge, the smarter it gets.</p>
+                </div>
+                <button onClick={harvestMemory} disabled={superHarvesting} style={{ padding:'9px 18px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', opacity:superHarvesting?0.5:1 }}>{superHarvesting ? '🧠 Harvesting…' : '🧠 Harvest Knowledge'}</button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:12, marginBottom:24 }}>
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, textAlign:'center' }}><div style={{ fontSize:28, fontWeight:800, color:'var(--fg-orange)' }}>{igNodes.length}</div><div style={{ fontSize:11, color:'var(--fg-text3)' }}>Memory nodes</div></div>
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, textAlign:'center' }}><div style={{ fontSize:28, fontWeight:800, color:'#6366f1' }}>{Math.floor(Math.pow(igNodes.length,1.3)*8).toLocaleString()}</div><div style={{ fontSize:11, color:'var(--fg-text3)' }}>Forge IQ</div></div>
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, textAlign:'center' }}><div style={{ fontSize:28, fontWeight:800, color:'#22c55e' }}>{activeSkills.size}</div><div style={{ fontSize:11, color:'var(--fg-text3)' }}>Active skills</div></div>
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, textAlign:'center' }}><div style={{ fontSize:28, fontWeight:800, color:'var(--fg-amber)' }}>{activeConnectors.size}</div><div style={{ fontSize:11, color:'var(--fg-text3)' }}>Connectors</div></div>
+              </div>
+              <h3 style={{ fontSize:14, color:'var(--fg-text)', margin:'0 0 12px' }}>🕸️ Knowledge Graph {igLoading && <span style={{ fontSize:11, color:'var(--fg-text3)' }}>loading…</span>}</h3>
+              {igNodes.length === 0 ? (
+                <div style={{ background:'var(--fg-bg2)', border:'1px dashed var(--fg-border)', borderRadius:12, padding:30, textAlign:'center', color:'var(--fg-text3)', fontSize:13 }}>No memory yet. Click <b style={{ color:'var(--fg-orange)' }}>Harvest Knowledge</b> to scan your threads, dispatches, and SuperAgent history.</div>
+              ) : (
+                <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                  {igNodes.map(n => (
+                    <div key={n.id} style={{ padding:'6px 12px', background:`rgba(255,31,53,${Math.min(0.05+n.weight*0.04,0.4)})`, border:'1px solid var(--fg-border2)', borderRadius:20, fontSize:11, color:'var(--fg-text2)' }} title={`strength ${n.weight}`}>{n.label}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* -- ForgeMulti — parallel specialist agents ------------------- */}
         {mainTab === 'forgemulti' && (

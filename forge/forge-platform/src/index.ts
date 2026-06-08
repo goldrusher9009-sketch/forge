@@ -148,7 +148,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.90' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v6.91' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -3097,40 +3097,46 @@ app.post('/api/superagent/harvest', requireAuth, async (req: AuthRequest, res) =
     }
   }
 
-  // 1. Thread memories (explicit per-thread memory saves)
-  const threadMems = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 300').all(userId) as any[];
-  for (const tm of threadMems) upsertMemory(tm.topic, tm.insight, tm.thread_id);
+  // Each source is wrapped so a missing table (Railway DB reset) never 500s the whole harvest.
+  const safe = <T,>(fn: () => T, fallback: T): T => { try { return fn(); } catch (e:any) { console.warn('harvest source skipped:', e?.message); return fallback; } };
+  let dispatchCount = 0;
 
-  // 2. Recent assistant messages from threads (auto-extract last AI reply per thread)
-  const recentThreads = db.prepare('SELECT DISTINCT thread_id FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND role="user" ORDER BY created_at DESC LIMIT 30').all(userId) as any[];
-  for (const rt of recentThreads) {
-    const pair = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at DESC LIMIT 4').all(rt.thread_id) as any[];
-    const userMsg = pair.find((m:any) => m.role === 'user');
-    const aiMsg = pair.find((m:any) => m.role === 'assistant');
-    if (userMsg && aiMsg) upsertMemory(userMsg.content.slice(0,100), aiMsg.content.slice(0,400), rt.thread_id);
-  }
+  // 1. Thread memories
+  safe(() => {
+    const rows = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 300').all(userId) as any[];
+    for (const tm of rows) upsertMemory(tm.topic, tm.insight, tm.thread_id);
+  }, null);
 
-  // 3. Completed dispatch runs (what was done + output snippet)
-  const dispatches = db.prepare("SELECT prompt,output FROM dispatch_runs WHERE user_id=? AND status='done' ORDER BY updated_at DESC LIMIT 50").all(userId) as any[];
-  for (const d of dispatches) {
-    if (d.output?.trim()) upsertMemory(`Dispatch: ${d.prompt.slice(0,80)}`, d.output.slice(0,400));
-  }
-
-  // 4. SuperAgent own conversation history (what it was taught / told)
-  const superHistory = db.prepare("SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 60").all(userId) as any[];
-  for (let i = 0; i < superHistory.length - 1; i++) {
-    const u = superHistory[i], a = superHistory[i+1];
-    if (u.role === 'user' && a.role === 'assistant') {
-      upsertMemory(`SuperAgent: ${u.content.slice(0,80)}`, a.content.slice(0,400));
+  // 2. Recent user/assistant pairs from threads
+  safe(() => {
+    const recentThreads = db.prepare('SELECT DISTINCT thread_id FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND role="user" ORDER BY created_at DESC LIMIT 30').all(userId) as any[];
+    for (const rt of recentThreads) {
+      const pair = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at DESC LIMIT 4').all(rt.thread_id) as any[];
+      const userMsg = pair.find((m:any) => m.role === 'user');
+      const aiMsg = pair.find((m:any) => m.role === 'assistant');
+      if (userMsg && aiMsg) upsertMemory(userMsg.content.slice(0,100), aiMsg.content.slice(0,400), rt.thread_id);
     }
-  }
+  }, null);
 
-  const newMemCount = (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
-  const threadMemCount = (db.prepare('SELECT COUNT(*) as c FROM thread_memories WHERE user_id=?').get(userId) as any).c;
-  // Intelligence score: non-linear — grows faster as memory compounds
-  const intelligenceScore = Math.min(99999, Math.floor(
-    Math.pow(newMemCount, 1.3) * 8 + threadMemCount * 5 + dispatches.length * 20
-  ));
+  // 3. Completed dispatch runs
+  safe(() => {
+    const dispatches = db.prepare("SELECT prompt,output FROM dispatch_runs WHERE user_id=? AND status='done' ORDER BY updated_at DESC LIMIT 50").all(userId) as any[];
+    dispatchCount = dispatches.length;
+    for (const d of dispatches) { if (d.output?.trim()) upsertMemory(`Dispatch: ${d.prompt.slice(0,80)}`, d.output.slice(0,400)); }
+  }, null);
+
+  // 4. SuperAgent conversation history
+  safe(() => {
+    const superHistory = db.prepare("SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 60").all(userId) as any[];
+    for (let i = 0; i < superHistory.length - 1; i++) {
+      const u = superHistory[i], a = superHistory[i+1];
+      if (u.role === 'user' && a.role === 'assistant') upsertMemory(`SuperAgent: ${u.content.slice(0,80)}`, a.content.slice(0,400));
+    }
+  }, null);
+
+  const newMemCount = safe(() => (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c, 0);
+  const threadMemCount = safe(() => (db.prepare('SELECT COUNT(*) as c FROM thread_memories WHERE user_id=?').get(userId) as any).c, 0);
+  const intelligenceScore = Math.min(99999, Math.floor(Math.pow(newMemCount, 1.3) * 8 + threadMemCount * 5 + dispatchCount * 20));
   res.json({ success: true, data: { harvested, totalMemory: newMemCount + threadMemCount, intelligenceScore,
     message: `🧠 Harvested ${harvested} new memories from all modules. Intelligence: ${intelligenceScore.toLocaleString()}` } });
 });
@@ -4036,4 +4042,4 @@ try {
   });
   (app as any).io = io;
 } catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.90 running on port ${PORT}`); });
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.91 running on port ${PORT}`); });
