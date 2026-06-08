@@ -68,6 +68,12 @@ body, #__next {
 h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font-weight: 700; }
 /* Multicolor accent helpers usable anywhere */
 .fg-accent-bar { height:3px; background:var(--fg-accent-grad); background-size:200% auto; animation:fg-sheen 6s linear infinite; border-radius:3px; }
+/* Always-visible slim scrollbar for the recent-chats list */
+.fg-chats-scroll { scrollbar-width: thin; scrollbar-color: var(--fg-orange) var(--fg-bg3); }
+.fg-chats-scroll::-webkit-scrollbar { width: 9px; }
+.fg-chats-scroll::-webkit-scrollbar-track { background: var(--fg-bg3); border-radius: 6px; }
+.fg-chats-scroll::-webkit-scrollbar-thumb { background: linear-gradient(var(--fg-orange),var(--fg-btn-grad)); border-radius: 6px; border: 2px solid var(--fg-bg3); }
+.fg-chats-scroll::-webkit-scrollbar-thumb:hover { background: var(--fg-orange2); }
 .fg-glass { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); backdrop-filter: blur(6px); }
 
 ::-webkit-scrollbar { width: 3px; height: 3px; }
@@ -703,6 +709,7 @@ export default function ForgeApp() {
   const [lastThinkingSteps, setLastThinkingSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [liveExpanded, setLiveExpanded] = useState(false);
+  const [autoMenuOpen, setAutoMenuOpen] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
   // Tool calls captured during the current SSE stream — map of msgId -> tool call list
@@ -885,6 +892,10 @@ export default function ForgeApp() {
 
   const [autoFeatEnabled, setAutoFeatEnabled] = React.useState<Record<string,boolean>>({'Smart Model Select':true,'Chain of Thought':true,'Self-Correction':false,'Parallel Execution':true,'Goal Tracking':false,'Auto Memory':true});
   const [multiSelectedRoles, setMultiSelectedRoles] = useState<string[]>(['Analyst','Creative','Critic','Strategist','Researcher']);
+  // Marketplace state (hoisted — must NOT be useState inside the render IIFE, that crashes hooks)
+  const [mktCat, setMktCat] = useState('All');
+  const [mktSearch, setMktSearch] = useState('');
+  const [mktInstalled, setMktInstalled] = useState<Set<string>>(new Set());
 
   // ForgeASI state
   const [asiPrompt, setAsiPrompt] = useState('');
@@ -1595,6 +1606,89 @@ export default function ForgeApp() {
       await runForgeOptimizer(tid); // re-analyze
     } catch (e:any) { showToast('Apply failed: '+String(e?.message||e),'err'); }
     finally { setOptimizerRunning(false); }
+  };
+
+  // Shared one-shot LLM call for ForgeMulti / ForgeASI / MVP — always uses the active model.
+  const callOneModel = async (prompt: string, modelOverride?: string): Promise<string> => {
+    if (!user) return '';
+    const m = (modelOverride || selectedModel || 'claude-sonnet-4-6');
+    const cleanModel = m.startsWith('openrouter/') ? m.slice('openrouter/'.length) : m;
+    const d = await apiFetch('/chat', { method:'POST', body: JSON.stringify({ messages:[{ role:'user', content: prompt }], model: cleanModel }) }, user.token);
+    return d?.choices?.[0]?.message?.content || d?.data?.content || d?.content || 'No response';
+  };
+
+  // ── ForgeMulti: run several specialist agents in parallel, then synthesize ──
+  const runForgeMulti = async () => {
+    if (!user || !multiPrompt.trim() || multiRunning) return;
+    setMultiRunning(true); setMultiResults(null);
+    const roleMeta: Record<string,{icon:string;sys:string}> = {
+      Analyst:    { icon:'📊', sys:'You are a sharp data/analysis expert. Give concrete, structured analysis.' },
+      Creative:   { icon:'🎨', sys:'You are a bold creative thinker. Offer original, imaginative angles.' },
+      Critic:     { icon:'🔍', sys:'You are a rigorous critic. Find flaws, risks, and counterarguments.' },
+      Strategist: { icon:'♟️', sys:'You are a strategic planner. Give a clear plan with priorities.' },
+      Researcher: { icon:'📚', sys:'You are a thorough researcher. Surface facts, context, and sources.' },
+      Engineer:   { icon:'💻', sys:'You are a senior engineer. Give technical, implementable detail.' },
+    };
+    const roles = multiSelectedRoles.length ? multiSelectedRoles : ['Analyst','Creative','Critic','Strategist','Researcher'];
+    setMultiLiveAgents(roles.map(r => ({ role:r, icon:roleMeta[r]?.icon||'🤖', content:null, elapsed:null, done:false })));
+    const t0 = Date.now();
+    const settled = await Promise.allSettled(roles.map(async (r) => {
+      const meta = roleMeta[r] || { icon:'🤖', sys:'You are a helpful expert.' };
+      const content = await callOneModel(`${meta.sys}\n\nTask: ${multiPrompt}`);
+      setMultiLiveAgents(prev => prev.map(a => a.role===r ? { ...a, content, elapsed: Date.now()-t0, done:true } : a));
+      return { role:r, icon:meta.icon, content, elapsed: Date.now()-t0 };
+    }));
+    const agents = settled.map((s,i) => s.status==='fulfilled' ? s.value : { role:roles[i], icon:roleMeta[roles[i]]?.icon||'🤖', content:'(failed)', elapsed:0 });
+    let synthesis = '';
+    try {
+      synthesis = await callOneModel(`You are a synthesis agent. Combine these expert perspectives into one clear, actionable answer.\n\n${agents.map(a=>`## ${a.role}\n${a.content}`).join('\n\n')}\n\nGive the unified best answer to: ${multiPrompt}`);
+    } catch {}
+    setMultiResults({ agents, synthesis });
+    setMultiRunning(false);
+  };
+
+  // ── ForgeASI: multi-phase deep reasoning chain, then synthesize ──
+  const runForgeASI = async () => {
+    if (!user || !asiPrompt.trim() || asiRunning) return;
+    setAsiRunning(true); setAsiResult(null);
+    const phaseSets: Record<number,string[]> = {
+      2: ['Explore','Conclude'],
+      3: ['Decompose','Reason','Synthesize'],
+      5: ['Frame','Explore','Critique','Refine','Conclude'],
+      7: ['Frame','Decompose','Research','Reason','Critique','Refine','Conclude'],
+    };
+    const phases = phaseSets[asiDepth] || phaseSets[3];
+    setAsiLivePhases(phases.map(p => ({ phase:p, content:'', done:false })));
+    const steps: {phase:string;content:string;tokens:number}[] = [];
+    let prior = '';
+    for (const phase of phases) {
+      setAsiCurrentPhase(phase);
+      let content = '';
+      try {
+        content = await callOneModel(`You are running the "${phase}" phase of an extended reasoning chain for this task:\n\n${asiPrompt}\n\n${prior ? `Prior phases:\n${prior}\n\n` : ''}Produce only the "${phase}" phase output — focused and concrete.`);
+      } catch (e:any) { content = '(phase failed: '+(e?.message||'error')+')'; }
+      steps.push({ phase, content, tokens: Math.round(content.length/4) });
+      prior += `\n## ${phase}\n${content}`;
+      setAsiLivePhases(prev => prev.map(p => p.phase===phase ? { ...p, content, done:true } : p));
+    }
+    let synthesis = '';
+    try { synthesis = await callOneModel(`Synthesize the full reasoning chain into a final, complete answer to: ${asiPrompt}\n\n${prior}`); } catch {}
+    setAsiCurrentPhase('');
+    setAsiResult({ steps, synthesis, totalTokens: steps.reduce((a,s)=>a+s.tokens,0), model: selectedModel });
+    setAsiRunning(false);
+  };
+
+  // ── MVP Builder: spec + stack + roadmap + pitch from the active model ──
+  const buildMvp = async () => {
+    if (!user || !mvpIdea.trim() || mvpBuilding) return;
+    setMvpBuilding(true); setMvpResult(null);
+    const prompt = `You are an expert startup CTO and product strategist. Build a detailed MVP blueprint.\n\nIdea: ${mvpIdea}\nIndustry: ${mvpIndustry || 'General'}\nTarget User: ${mvpTarget || 'General consumers'}\n\nRespond with these EXACT sections using these headers:\n## SPEC\n(core v1 features, what to build and NOT build)\n## STACK\n(recommended tech stack with justification)\n## ROADMAP\n(week-by-week 8-week plan)\n## PITCH\n(3-sentence investor pitch: problem, solution, market)`;
+    try {
+      const full = await callOneModel(prompt);
+      const grab = (tag: string) => { const re = new RegExp(`##\\s*${tag}([\\s\\S]*?)(?=##\\s|$)`, 'i'); const m = full.match(re); return m ? m[1].trim() : ''; };
+      setMvpResult({ spec: grab('SPEC')||full, stack: grab('STACK'), roadmap: grab('ROADMAP'), pitch: grab('PITCH') });
+    } catch (e:any) { showToast('MVP build failed: '+String(e?.message||e),'err'); }
+    finally { setMvpBuilding(false); }
   };
 
   const loadTotalTokens = async () => {
@@ -2737,7 +2831,7 @@ export default function ForgeApp() {
             <div style={{ padding:'12px 12px 4px', flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
               <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 8px' }}>{activeProject ? activeProject.name : 'Recent'}</p>
               <input value={threadSearch} onChange={e => setThreadSearch(e.target.value)} placeholder="🔌 Search threads..." style={{ flex:'0 0 auto', marginBottom:8, padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, outline:'none' }} />
-              <div style={{ flex:1, overflowY:'auto' }}>
+              <div className="fg-chats-scroll" style={{ flex:1, overflowY:'auto' }}>
                 {/* Pinned threads first */}
                 {threads.filter(t => t.pinned && !t.archived && t.title.toLowerCase().includes(threadSearch.toLowerCase())).map(t => (
                   <div key={t.id} style={{ position:'relative' }}
@@ -2873,7 +2967,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.88</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.89</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>
@@ -2991,6 +3085,30 @@ export default function ForgeApp() {
               {/* EPIC button */}
               {!isMobile && (
                 <button onClick={() => setMainTab('forgeasi')} title="EPIC: Extended Parallel Intelligence Chains" style={{ padding:'4px 8px', background: (mainTab as string)==='forgeasi' ? '#6366f1' : 'var(--fg-bg4)', border:`1px solid ${(mainTab as string)==='forgeasi' ? '#6366f1' : 'var(--fg-border2)'}`, borderRadius:6, color: (mainTab as string)==='forgeasi' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>🌌 EPIC</button>
+              )}
+              {/* ForgeAuto button + 6-module popover */}
+              {!isMobile && (
+                <div style={{ position:'relative' }}>
+                  <button onClick={() => setAutoMenuOpen(v=>!v)} title="ForgeAuto — 6 autonomous modules" style={{ padding:'4px 8px', background: autoMenuOpen ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${autoMenuOpen ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: autoMenuOpen ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>⚡ Auto</button>
+                  {autoMenuOpen && (
+                    <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:300, width:230, background:'var(--fg-bg2)', border:'1px solid var(--fg-border3)', borderRadius:10, boxShadow:'0 8px 32px rgba(0,0,0,0.6)', padding:10 }}>
+                      <div style={{ fontSize:10, fontWeight:700, color:'var(--fg-orange)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>ForgeAuto Modules</div>
+                      <div style={{ fontSize:10, color: superMode==='forgeMagic' ? 'var(--fg-green)' : 'var(--fg-text3)', marginBottom:8 }}>{superMode==='forgeMagic' ? '✨ Magic mode — auto-managed by the agent' : 'Ask mode — toggle manually'}</div>
+                      {['Smart Model Select','Chain of Thought','Self-Correction','Parallel Execution','Goal Tracking','Auto Memory'].map(f => {
+                        const on = superMode==='forgeMagic' ? true : (autoFeatEnabled[f] ?? false);
+                        return (
+                          <div key={f} onClick={() => { if (superMode!=='forgeMagic') setAutoFeatEnabled(p => ({ ...p, [f]: !p[f] })); }} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 6px', borderRadius:6, cursor: superMode==='forgeMagic'?'default':'pointer', opacity: superMode==='forgeMagic'?0.85:1 }}>
+                            <div style={{ width:30, height:16, borderRadius:10, background: on ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', transition:'background 0.15s', flexShrink:0 }}>
+                              <div style={{ width:12, height:12, borderRadius:'50%', background:'#fff', position:'absolute', top:2, left: on ? 16 : 2, transition:'left 0.15s' }} />
+                            </div>
+                            <span style={{ fontSize:11, color:'var(--fg-text2)' }}>{f}</span>
+                          </div>
+                        );
+                      })}
+                      <button onClick={() => { setMainTab('forgeauto'); setAutoMenuOpen(false); }} style={{ width:'100%', marginTop:8, padding:'6px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text2)', fontSize:11, cursor:'pointer' }}>Open ForgeAuto →</button>
+                    </div>
+                  )}
+                </div>
               )}
               {/* Sketch toggle */}
               {!isMobile && <button onClick={() => setSketchMode(!sketchMode)} title="Live Preview" style={{ padding:'4px 8px', background:sketchMode ? 'var(--fg-border)' : 'transparent', border:`1px solid ${sketchMode ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:sketchMode ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, flexShrink:0 }}>📝</button>}
@@ -7066,6 +7184,117 @@ export default function ForgeApp() {
           );
         })()}
 
+        {/* -- ForgeMulti — parallel specialist agents ------------------- */}
+        {mainTab === 'forgemulti' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:920, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🤖</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeMulti</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Deploy specialist agents in parallel on one task, then synthesize the best answer. Model: <span style={{ color:'var(--fg-orange2)' }}>{selectedModel||'(pick a model)'}</span></p>
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
+                {['Analyst','Creative','Critic','Strategist','Researcher','Engineer'].map(r => {
+                  const on = multiSelectedRoles.includes(r);
+                  return <button key={r} onClick={() => setMultiSelectedRoles(p => on ? p.filter(x=>x!==r) : [...p, r])} style={{ padding:'5px 12px', background:on?'var(--fg-orange)':'var(--fg-bg3)', border:`1px solid ${on?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:20, fontSize:11, color:on?'#fff':'var(--fg-text2)', cursor:'pointer', fontWeight:on?700:400 }}>{r}</button>;
+                })}
+              </div>
+              <textarea value={multiPrompt} onChange={e => setMultiPrompt(e.target.value)} placeholder="Describe the task — every selected agent will tackle it in parallel…" style={{ width:'100%', minHeight:90, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+              <button onClick={runForgeMulti} disabled={multiRunning || !multiPrompt.trim() || !selectedModel} style={{ marginTop:10, padding:'10px 22px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(multiRunning||!multiPrompt.trim()||!selectedModel)?0.5:1 }}>{multiRunning ? '🤖 Running agents…' : '🤖 Run Multi-Agent'}</button>
+              {multiLiveAgents.length > 0 && (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:12, marginTop:20 }}>
+                  {multiLiveAgents.map(a => (
+                    <div key={a.role} style={{ background:'var(--fg-bg2)', border:`1px solid ${a.done?'var(--fg-green)':'var(--fg-border)'}`, borderRadius:12, padding:14 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}><span style={{ fontSize:18 }}>{a.icon}</span><span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{a.role}</span>{!a.done && <span style={{ marginLeft:'auto', fontSize:11, color:'var(--fg-orange)', animation:'pulse 1s infinite' }}>working…</span>}{a.done && <span style={{ marginLeft:'auto', fontSize:11, color:'var(--fg-green)' }}>✓ {((a.elapsed||0)/1000).toFixed(1)}s</span>}</div>
+                      {a.content && <div style={{ fontSize:12, color:'var(--fg-text2)', lineHeight:1.55, whiteSpace:'pre-wrap', maxHeight:200, overflowY:'auto' }}>{a.content}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {multiResults?.synthesis && (
+                <div style={{ marginTop:20, background:'linear-gradient(135deg,rgba(255,31,53,0.1),rgba(99,102,241,0.08))', border:'1px solid var(--fg-border2)', borderRadius:14, padding:20 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)', marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>✨ Synthesis</div>
+                  <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{multiResults.synthesis}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* -- ForgeASI — extended parallel intelligence chains ---------- */}
+        {mainTab === 'forgeasi' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:920, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🌌</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>ForgeASI</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Extended Parallel Intelligence Chains — multi-phase deep reasoning. Model: <span style={{ color:'var(--fg-orange2)' }}>{selectedModel||'(pick a model)'}</span></p>
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:8, marginBottom:12, alignItems:'center' }}>
+                <span style={{ fontSize:12, color:'var(--fg-text3)' }}>Depth:</span>
+                {[2,3,5,7].map(d => <button key={d} onClick={() => setAsiDepth(d)} style={{ padding:'5px 14px', background:asiDepth===d?'#6366f1':'var(--fg-bg3)', border:`1px solid ${asiDepth===d?'#6366f1':'var(--fg-border)'}`, borderRadius:8, fontSize:12, color:asiDepth===d?'#fff':'var(--fg-text2)', cursor:'pointer', fontWeight:asiDepth===d?700:400 }}>{d} phases</button>)}
+              </div>
+              <textarea value={asiPrompt} onChange={e => setAsiPrompt(e.target.value)} placeholder="Enter a complex problem for deep multi-phase reasoning…" style={{ width:'100%', minHeight:90, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+              <button onClick={runForgeASI} disabled={asiRunning || !asiPrompt.trim() || !selectedModel} style={{ marginTop:10, padding:'10px 22px', background:'#6366f1', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(asiRunning||!asiPrompt.trim()||!selectedModel)?0.5:1 }}>{asiRunning ? `🌌 ${asiCurrentPhase||'Reasoning'}…` : '🌌 Run Intelligence Chain'}</button>
+              {asiLivePhases.length > 0 && (
+                <div style={{ marginTop:20, display:'flex', flexDirection:'column', gap:10 }}>
+                  {asiLivePhases.map((p, i) => (
+                    <div key={i} style={{ background:'var(--fg-bg2)', border:`1px solid ${p.done?'#6366f1':'var(--fg-border)'}`, borderRadius:12, padding:14 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:p.content?8:0 }}><span style={{ width:22, height:22, borderRadius:'50%', background:p.done?'#6366f1':'var(--fg-bg4)', color:'#fff', fontSize:11, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700 }}>{i+1}</span><span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>{p.phase}</span>{!p.done && asiCurrentPhase===p.phase && <span style={{ marginLeft:'auto', fontSize:11, color:'#818cf8', animation:'pulse 1s infinite' }}>thinking…</span>}</div>
+                      {p.content && <div style={{ fontSize:12, color:'var(--fg-text2)', lineHeight:1.55, whiteSpace:'pre-wrap', maxHeight:180, overflowY:'auto' }}>{p.content}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {asiResult?.synthesis && (
+                <div style={{ marginTop:20, background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(255,31,53,0.06))', border:'1px solid var(--fg-border2)', borderRadius:14, padding:20 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:'#818cf8', marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>🌌 Final Synthesis · ~{asiResult.totalTokens} tok</div>
+                  <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{asiResult.synthesis}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* -- MVP Builder ----------------------------------------------- */}
+        {mainTab === 'mvp' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:880, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🏗️</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>MVP Builder</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Idea → spec, stack, roadmap, pitch in seconds. Model: <span style={{ color:'var(--fg-orange2)' }}>{selectedModel||'(pick a model)'}</span></p>
+                </div>
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+                  <div><label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Industry / Category</label><input value={mvpIndustry} onChange={e => setMvpIndustry(e.target.value)} placeholder="e.g. FinTech, SaaS, E-commerce" style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} /></div>
+                  <div><label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Target User</label><input value={mvpTarget} onChange={e => setMvpTarget(e.target.value)} placeholder="e.g. Small businesses, Students" style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} /></div>
+                </div>
+                <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Your Idea</label>
+                <textarea value={mvpIdea} onChange={e => setMvpIdea(e.target.value)} placeholder="Describe your product idea in a sentence or two…" style={{ width:'100%', minHeight:80, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+                <button onClick={buildMvp} disabled={mvpBuilding || !mvpIdea.trim() || !selectedModel} style={{ marginTop:12, padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(mvpBuilding||!mvpIdea.trim()||!selectedModel)?0.5:1 }}>{mvpBuilding ? '🏗️ Building blueprint…' : '🏗️ Build MVP Blueprint'}</button>
+              </div>
+              {mvpResult && (
+                <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                  {([['SPEC','📋',mvpResult.spec],['STACK','🛠️',mvpResult.stack],['ROADMAP','🗓️',mvpResult.roadmap],['PITCH','🎤',mvpResult.pitch]] as const).filter(([,,v])=>v).map(([t,ic,v]) => (
+                    <div key={t} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-orange)', marginBottom:8 }}>{ic} {t}</div>
+                      <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{v}</div>
+                    </div>
+                  ))}
+                  <button onClick={() => { const txt=`MVP Blueprint\n\nSPEC:\n${mvpResult.spec}\n\nSTACK:\n${mvpResult.stack}\n\nROADMAP:\n${mvpResult.roadmap}\n\nPITCH:\n${mvpResult.pitch}`; navigator.clipboard.writeText(txt); showToast('📋 Blueprint copied'); }} style={{ alignSelf:'flex-start', padding:'8px 16px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>📋 Copy Full Blueprint</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* -- Marketplace ----------------------------------------------- */}
         {mainTab === 'marketplace' && (() => {
           const mktItems = [
@@ -7083,9 +7312,6 @@ export default function ForgeApp() {
             {id:'m12',icon:'🌍',name:'Translator Pro',desc:'Real-time translation with context awareness across 100+ languages.',category:'writing',installs:1100,rating:4.6},
           ];
           const cats = ['All','productivity','data','tools','writing','research','developer','marketing'];
-          const [mktCat, setMktCat] = useState('All');
-          const [mktSearch, setMktSearch] = useState('');
-          const [mktInstalled, setMktInstalled] = useState(new Set<string>());
           const filtered = mktItems.filter(m =>
             (mktCat==='All'||m.category===mktCat) &&
             (!mktSearch||m.name.toLowerCase().includes(mktSearch.toLowerCase())||m.desc.toLowerCase().includes(mktSearch.toLowerCase()))
