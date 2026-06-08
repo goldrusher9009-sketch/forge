@@ -56,6 +56,12 @@ body, #__next {
   background-attachment: fixed !important;
   color: var(--fg-text) !important;
   font-family: var(--fg-font-ui) !important;
+}
+/* Interactive cursor-following glow — sits behind all content, reacts to mouse */
+#fg-cursor-glow {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(360px 360px at var(--mx, 50%) var(--my, 40%), rgba(255,31,53,0.10) 0%, rgba(255,31,53,0.04) 35%, transparent 70%);
+  transition: background 0.18s ease-out; will-change: background;
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility; font-feature-settings: 'ss01','cv01','cv11'; letter-spacing: -0.01em;
 }
@@ -307,14 +313,50 @@ interface Subscription { plan: string; tokens_used: number; token_limit: number;
 
 // --- API Helper ---------------------------------------------------------------
 let _onSessionExpired: (() => void) | null = null;
-async function apiFetch(path: string, opts: RequestInit = {}, token?: string): Promise<any> {
+let _onTokenRefreshed: ((token: string) => void) | null = null;
+
+// Try to silently mint a new access token using the httpOnly refresh cookie.
+// Returns the new token on success, or null. De-duped so concurrent 401s share one refresh.
+let _refreshInFlight: Promise<string | null> | null = null;
+async function tryRefreshToken(): Promise<string | null> {
+  if (_refreshInFlight) return _refreshInFlight;
+  _refreshInFlight = (async () => {
+    try {
+      const r = await fetch(`${API}/auth/refresh`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }, body: '{}',
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!r.ok) return null;
+      const d = await r.json().catch(() => ({}));
+      const t = d?.data?.accessToken || d?.accessToken || '';
+      if (t) {
+        try {
+          const stored = JSON.parse(localStorage.getItem('forge_user') || '{}');
+          stored.token = t; localStorage.setItem('forge_user', JSON.stringify(stored));
+        } catch {}
+        if (_onTokenRefreshed) _onTokenRefreshed(t);
+        return t;
+      }
+      return null;
+    } catch { return null; }
+    finally { setTimeout(() => { _refreshInFlight = null; }, 0); }
+  })();
+  return _refreshInFlight;
+}
+
+async function apiFetch(path: string, opts: RequestInit = {}, token?: string, _retry = false): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(60000) : undefined);
-  const res = await fetch(`${API}${path}`, { ...opts, headers, ...(signal ? { signal } : {}) });
+  const res = await fetch(`${API}${path}`, { ...opts, headers, credentials: 'include', ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
-    if (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN') {
+    // On the FIRST 401, try to refresh the access token and replay once before giving up.
+    if (!_retry && (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN')) {
+      const fresh = await tryRefreshToken();
+      if (fresh) return apiFetch(path, opts, fresh, true);
+      // Refresh failed -> session truly gone
       localStorage.removeItem('forge_user');
       if (_onSessionExpired) _onSessionExpired();
     }
@@ -326,14 +368,16 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string): P
 
 // SSE fetch: reads text/event-stream response, returns the payload from the last "result" event.
 // Used for /api/threads/:id/messages which uses SSE to keep Railway connection alive.
-async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string, onEvent?: (evt: any) => void): Promise<any> {
+async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string, onEvent?: (evt: any) => void, _retry = false): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const signal = opts.signal ?? AbortSignal.timeout(28000);
-  const res = await fetch(`${API}${path}`, { ...opts, headers, signal });
+  const res = await fetch(`${API}${path}`, { ...opts, headers, credentials: 'include', signal });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
-    if (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN') {
+    if (!_retry && (err.error === 'AUTHENTICATION_REQUIRED' || err.error === 'INVALID_TOKEN')) {
+      const fresh = await tryRefreshToken();
+      if (fresh) return apiFetchSSE(path, opts, fresh, onEvent, true);
       localStorage.removeItem('forge_user');
       if (_onSessionExpired) _onSessionExpired();
     }
@@ -658,6 +702,7 @@ export default function ForgeApp() {
   };
   const [lastThinkingSteps, setLastThinkingSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
+  const [liveExpanded, setLiveExpanded] = useState(false);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
   // Tool calls captured during the current SSE stream — map of msgId -> tool call list
@@ -1226,6 +1271,28 @@ export default function ForgeApp() {
   // Register session-expiry handler so apiFetch can auto-logout on 401
   useEffect(() => { _onSessionExpired = handleLogout; return () => { _onSessionExpired = null; }; }, [handleLogout]);
 
+  // When the access token is silently refreshed, update in-memory user so later calls use it
+  useEffect(() => {
+    _onTokenRefreshed = (t: string) => setUser(prev => prev ? { ...prev, token: t } : prev);
+    return () => { _onTokenRefreshed = null; };
+  }, []);
+
+  // Interactive cursor-following background glow (throttled via rAF)
+  useEffect(() => {
+    let raf = 0, px = 0, py = 0, pending = false;
+    const onMove = (e: MouseEvent) => {
+      px = (e.clientX / window.innerWidth) * 100;
+      py = (e.clientY / window.innerHeight) * 100;
+      if (!pending) { pending = true; raf = requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--mx', px + '%');
+        document.documentElement.style.setProperty('--my', py + '%');
+        pending = false;
+      }); }
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => { window.removeEventListener('mousemove', onMove); cancelAnimationFrame(raf); };
+  }, []);
+
   // Restore credentials from localStorage on mount (client-only)
   useEffect(() => {
     try {
@@ -1494,17 +1561,20 @@ export default function ForgeApp() {
       const d = await apiFetch(`/forge-optimizer/${tid}/analyze`, {}, user.token);
       if (d?.data) {
         setOptimizerData(d.data);
-        setOptimizerOpen(true);
-        if (autoApply && d.data.autoApplyCount > 0 && d.data.savingsPct >= 30) {
-          // Auto-apply if savings > 30%
-          const r = await apiFetch(`/forge-optimizer/${tid}/apply`, { method:'POST' }, user.token);
-          if (r?.data?.message) showToast(r.data.message);
-          await loadMessages(tid);
-          await loadThreadTokenStats(tid);
-          setOptimizerData(null); // reset to re-analyze
+        // Claude-style: when auto, stay minimized + silently compress. Only open the panel on a manual run.
+        if (autoApply) {
+          if (d.data.autoApplyCount > 0 && d.data.savingsPct >= 30) {
+            addAgentStep('🗜', `Optimizing context — saving ~${d.data.savingsPct}%`);
+            await apiFetch(`/forge-optimizer/${tid}/apply`, { method:'POST' }, user.token);
+            await loadMessages(tid);
+            await loadThreadTokenStats(tid);
+            setOptimizerData(null);
+          }
+        } else {
+          setOptimizerOpen(true); // manual click → show full panel
         }
       }
-    } catch (e:any) { showToast('Optimizer error: '+String(e?.message||e),'err'); }
+    } catch (e:any) { if (!autoApply) showToast('Optimizer error: '+String(e?.message||e),'err'); }
     finally { setOptimizerRunning(false); }
   };
 
@@ -2542,6 +2612,8 @@ export default function ForgeApp() {
   return (
     <div style={{ display:'flex', height:'100vh', background:'var(--fg-bg)', color:'var(--fg-text)', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow:'hidden', position:'relative' }} onClick={() => { setThreadMenu(null); setProjectMenu(null); if(isMobile) setMobileDrawerOpen(false); }}>
 
+      <div id="fg-cursor-glow" aria-hidden="true" />
+
       {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:9999, padding:'12px 24px', borderRadius:12, background: toast.type==='err' ? '#ef4444' : toast.type==='info' ? 'var(--fg-bg3)' : '#16a34a', color:'#fff', fontSize:14, fontWeight:600, boxShadow:'0 4px 24px rgba(0,0,0,0.5)', maxWidth:440, textAlign:'center', pointerEvents:'none', animation:'forge-flash 0.2s ease' }}>{toast.msg}</div>}
 
       {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); }} />}
@@ -2791,7 +2863,7 @@ export default function ForgeApp() {
                 <p style={{ margin:0, fontSize:13, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name || user.email}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   {subscription && <p style={{ margin:0, fontSize:11, color:'var(--fg-orange)' }}>{subscription.plan} plan</p>}
-                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.85</span>
+                  <span style={{ fontSize:10, color:'var(--fg-border2)', background:'var(--fg-bg4)', padding:'1px 5px', borderRadius:4, border:'1px solid var(--fg-border2)', fontFamily:'monospace' }}>v6.86</span>
                   {isDesktop && <span style={{ fontSize:10, color:'var(--fg-green)', background:'rgba(34,197,94,0.1)', padding:'1px 6px', borderRadius:4, border:'1px solid rgba(34,197,94,0.3)', fontWeight:600 }}>🖥 Desktop</span>}
                 </div>
               </div>
@@ -3219,90 +3291,42 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
-                  {typing && (
+                  {typing && (() => {
+                    // Claude-style: ONE collapsing line. Shows the latest step; click to expand full trace.
+                    const last = agentSteps.length ? agentSteps[agentSteps.length-1] : null;
+                    const liveTool = liveToolCalls.length ? liveToolCalls[liveToolCalls.length-1] : null;
+                    const lineIcon = liveTool ? (liveTool.tool==='web_search'?'🔌':liveTool.tool==='web_scrape'?'🌐':liveTool.tool==='run_code'?'💻':liveTool.tool==='shell_exec'?'🖥':liveTool.tool==='browser_action'?'🖱':liveTool.tool==='http_request'?'📡':'🔧') : (last?.icon || '⚡');
+                    const lineText = liveTool ? `${liveTool.tool} ${liveTool.tool==='web_search'?`"${liveTool.args?.query||''}"`:liveTool.tool==='shell_exec'?(liveTool.args?.command||'').slice(0,50):liveTool.args?.url||''}` : (last?.text || 'Working…');
+                    return (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:680 }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--fg-orange)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0, boxShadow:'0 0 12px rgba(249,115,22,0.4)' }}>⚡</div>
-                      {/* Manus-style full activity feed */}
                       <div style={{ flex:1, borderRadius:'4px 18px 18px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', overflow:'hidden' }}>
-                        {/* Header */}
-                        <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderBottom: agentSteps.length > 0 ? '1px solid var(--fg-border)' : 'none', background:'var(--fg-bg3)' }}>
-                          <div style={{ display:'flex', gap:3 }}>
-                            {[0,1,2].map(i => <div key={i} style={{ width:5, height:5, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                        {/* Single live line — collapses everything like Claude */}
+                        <div onClick={() => setLiveExpanded(v=>!v)} title="Click for full activity" style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 12px', cursor:'pointer' }}>
+                          <div style={{ display:'flex', gap:3, flexShrink:0 }}>
+                            {[0,1,2].map(i => <div key={i} style={{ width:4, height:4, borderRadius:'50%', background:'var(--fg-orange)', animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
                           </div>
-                          <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700, letterSpacing:'0.5px', fontFamily:'var(--fg-font-mono)' }}>FORGE AGENT — WORKING</span>
-                          {aiElapsed !== null && <span style={{ marginLeft:'auto', fontSize:10, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{(aiElapsed/1000).toFixed(1)}s</span>}
+                          <span style={{ fontSize:13, flexShrink:0 }}>{lineIcon}</span>
+                          <span style={{ fontSize:12.5, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', animation:'forge-text-flash 2.2s ease-in-out infinite' }}>{lineText}</span>
+                          {aiElapsed !== null && <span style={{ fontSize:10, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)', flexShrink:0 }}>{(aiElapsed/1000).toFixed(1)}s</span>}
+                          {(agentSteps.length>1 || liveToolCalls.length>0) && <span style={{ fontSize:10, color:'var(--fg-text3)', flexShrink:0 }}>{liveExpanded?'▲':'▼'}</span>}
                         </div>
-                        {/* Live steps — each one shown in full */}
-                        {agentSteps.length > 0 && (
-                          <div style={{ display:'flex', flexDirection:'column' }}>
-                            {agentSteps.slice(-12).map((s, i, arr) => {
-                              const isLast = i === arr.length - 1;
-                              // Parse tool details out of step text
-                              const isToolStep = s.text.startsWith('Tool:');
-                              const isSearchStep = s.icon === '🔌' || (isToolStep && s.text.includes('web_search'));
-                              const isScrapeStep = s.icon === '🌐' || (isToolStep && s.text.includes('web_scrape'));
-                              const isBrowserStep = s.icon === '🖥' || (isToolStep && s.text.includes('browser'));
-                              const isCodeStep = isToolStep && s.text.includes('run_code');
-                              const isShellStep = isToolStep && s.text.includes('shell_exec');
-
-                              return (
-                                <div key={i} onClick={() => jumpToWork(s.text)} title="Open where this work happened →" style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 14px', borderBottom: i < arr.length-1 ? '1px solid var(--fg-border)' : 'none', background: isLast ? 'rgba(249,115,22,0.04)' : 'transparent', transition:'background 0.2s', cursor:'pointer' }} onMouseEnter={e=>{e.currentTarget.style.background='var(--fg-odim)';}} onMouseLeave={e=>{e.currentTarget.style.background=isLast?'rgba(249,115,22,0.04)':'transparent';}}>
-                                  {/* Timeline dot */}
-                                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingTop:3, flexShrink:0 }}>
-                                    <div style={{ width:8, height:8, borderRadius:'50%', background: isLast ? 'var(--fg-orange)' : 'var(--fg-green)', boxShadow: isLast ? '0 0 8px var(--fg-orange)' : 'none', animation: isLast ? 'pulse 1s ease-in-out infinite' : 'none' }} />
-                                    {i < arr.length-1 && <div style={{ width:1, height:16, background:'var(--fg-border)', marginTop:3 }} />}
-                                  </div>
-                                  <div style={{ flex:1, minWidth:0 }}>
-                                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                                      <span style={{ fontSize:13 }}>{s.icon}</span>
-                                      <span style={{ fontSize:12, color: isLast ? 'var(--fg-text)' : 'var(--fg-text3)', fontWeight: isLast ? 600 : 400, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', animation: isLast ? 'forge-text-flash 2s ease-in-out infinite' : 'none' }}>{s.text}</span>
-                                      {!isLast && <span style={{ fontSize:10, color:'var(--fg-green)', flexShrink:0, fontWeight:700 }}>✓</span>}
-                                    </div>
-                                    {/* Show extracted detail for tool steps */}
-                                    {isToolStep && (
-                                      <div style={{ marginTop:4, fontSize:11, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)', background:'var(--fg-bg)', padding:'4px 8px', borderRadius:6, wordBreak:'break-all' }}>
-                                        {isSearchStep && <span>🔌 Searching: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_search(','').replace(')','').replace(/[{}"query:]/g,'').slice(0,80)}</span></span>}
-                                        {isScrapeStep && <span>🌐 Reading: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: web_scrape(','').replace(')','').replace(/[{}"url:]/g,'').slice(0,80)}</span></span>}
-                                        {isBrowserStep && <span>🖥 Browser: <span style={{ color:'var(--fg-orange2)' }}>{s.text.slice(0,80)}</span></span>}
-                                        {isCodeStep && <span>💻 Executing code…</span>}
-                                        {isShellStep && <span>🖥 Shell: <span style={{ color:'var(--fg-orange2)' }}>{s.text.replace('Tool: shell_exec(','').replace(')','').replace(/[{}"command:]/g,'').slice(0,80)}</span></span>}
-                                        {!isSearchStep && !isScrapeStep && !isBrowserStep && !isCodeStep && !isShellStep && <span>{s.text.slice(0,100)}</span>}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                        {/* Live tool calls inline during thinking */}
-                        {liveToolCalls.length > 0 && (
-                          <div style={{ padding:'8px 14px', borderTop:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', gap:4 }}>
-                            <div style={{ fontSize:10, color:'var(--fg-text3)', fontWeight:700, letterSpacing:'0.5px', marginBottom:2 }}>⚡ TOOLS ACTIVE ({liveToolCalls.length})</div>
-                            {liveToolCalls.map((tc, idx) => (
-                              <div key={idx} style={{ borderRadius:6, border:'1px solid var(--fg-border2)', overflow:'hidden', background:'var(--fg-bg3)' }}>
-                                <div onClick={() => setExpandedTools(p => ({ ...p, [idx]: !p[idx] }))} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', cursor:'pointer' }}>
-                                  <span style={{ fontSize:12 }}>{tc.tool==='web_search'?'🔌':tc.tool==='web_scrape'?'🌐':tc.tool==='run_code'?'💻':tc.tool==='shell_exec'?'🖥':tc.tool==='browser_action'?'🖱':tc.tool==='http_request'?'📡':'🔧'}</span>
-                                  <span style={{ fontSize:11, color:'var(--fg-text)', fontFamily:'var(--fg-font-mono)', fontWeight:600 }}>{tc.tool}</span>
-                                  <span style={{ fontSize:11, color:'var(--fg-orange2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                                    {tc.tool==='web_search' ? `"${tc.args?.query}"` : tc.tool==='web_scrape'||tc.tool==='browser_action' ? (tc.args?.url||tc.args?.action||'') : tc.tool==='run_code' ? `${tc.args?.language}` : tc.tool==='shell_exec' ? tc.args?.command?.slice(0,60) : tc.tool==='http_request' ? `${tc.args?.method||'GET'} ${tc.args?.url}` : JSON.stringify(tc.args||{}).slice(0,50)}
-                                  </span>
-                                  <button onClick={(e)=>{e.stopPropagation();jumpToWork(tc.tool+' '+JSON.stringify(tc.args||{}));}} title="Open work panel" style={{ padding:'1px 6px', background:'var(--fg-odim)', border:'1px solid var(--fg-odim2)', borderRadius:4, color:'var(--fg-orange2)', cursor:'pointer', fontSize:10, flexShrink:0 }}>↗</button>
-                                  <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{expandedTools[idx]?'▲':'▼'}</span>
-                                </div>
-                                {expandedTools[idx] && (
-                                  <div style={{ borderTop:'1px solid var(--fg-border)', padding:'6px 8px', display:'flex', flexDirection:'column', gap:4 }}>
-                                    <pre style={{ margin:0, fontSize:11, color:'var(--fg-text2)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'4px 6px', borderRadius:4, maxHeight:80, overflowY:'auto' }}>{JSON.stringify(tc.args,null,2)}</pre>
-                                    {tc.result && <pre style={{ margin:0, fontSize:11, color:'var(--fg-green)', fontFamily:'var(--fg-font-mono)', whiteSpace:'pre-wrap', wordBreak:'break-all', background:'var(--fg-bg)', padding:'4px 6px', borderRadius:4, maxHeight:120, overflowY:'auto' }}>{tc.result.slice(0,600)}{tc.result.length>600?'\n…':''}</pre>}
-                                  </div>
-                                )}
+                        {/* Expanded full trace (only when user clicks) */}
+                        {liveExpanded && agentSteps.length > 0 && (
+                          <div style={{ display:'flex', flexDirection:'column', borderTop:'1px solid var(--fg-border)' }}>
+                            {agentSteps.slice(-12).map((s, i, arr) => (
+                              <div key={i} onClick={() => jumpToWork(s.text)} title="Open where this work happened →" style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 12px', borderBottom: i < arr.length-1 ? '1px solid var(--fg-border)' : 'none', cursor:'pointer', fontSize:11.5 }} onMouseEnter={e=>{e.currentTarget.style.background='var(--fg-odim)';}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';}}>
+                                <span style={{ fontSize:12 }}>{s.icon}</span>
+                                <span style={{ color:'var(--fg-text3)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.text}</span>
+                                {i < arr.length-1 && <span style={{ fontSize:9, color:'var(--fg-green)', flexShrink:0 }}>✓</span>}
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Multi-response cards */}
                   {multiResponses.length > 0 && (
