@@ -677,6 +677,7 @@ export default function ForgeApp() {
   const [typing, setTyping] = useState(false);
   const [agentSteps, setAgentSteps] = useState<{icon:string;text:string;ts:number}[]>([]);
   const agentStepsRef = useRef<{icon:string;text:string;ts:number}[]>([]);
+  const seenLiveTs = useRef<Set<number>>(new Set());
   // Map an activity step / tool to the right-panel tab where its work lives, and open it
   const jumpToWork = (hint: string) => {
     const h = (hint || '').toLowerCase();
@@ -1426,15 +1427,19 @@ export default function ForgeApp() {
       try {
         const data = JSON.parse(ev.data);
         if (data.type === 'connected') return;
+        const evTs = data.ts || Date.now();
         // Feed thinking/tool events directly into the Manus agent steps panel
         if (data.type === 'thinking' || data.type === 'tool' || data.type === 'start') {
           const icon = data.type === 'start' ? '🚀' : data.type === 'tool' ? '🔧' : '💬';
-          addAgentStep(icon, data.message || '');
+          if (!seenLiveTs.current.has(evTs)) {
+            seenLiveTs.current.add(evTs);
+            addAgentStep(icon, data.message || '');
+          }
         }
         setLiveEvents(prev => {
-          const exists = prev.some(e => e.ts === data.ts);
+          const exists = prev.some(e => e.ts === evTs);
           if (exists) return prev;
-          return [{ ...data, ts: data.ts || Date.now() }, ...prev].slice(0, 100);
+          return [{ ...data, ts: evTs }, ...prev].slice(0, 100);
         });
       } catch {}
     };
@@ -1447,11 +1452,14 @@ export default function ForgeApp() {
         if (d?.data?.length) {
           const newEvs = (d.data as any[]).filter((e: any) => e.ts > lastTs);
           if (newEvs.length) {
-            // Feed new thinking/tool steps into the Manus panel
+            // Feed new thinking/tool steps into the Manus panel (skip if SSE already handled)
             newEvs.forEach((e: any) => {
               if (e.type === 'thinking' || e.type === 'tool' || e.type === 'start') {
                 const icon = e.type === 'start' ? '🚀' : e.type === 'tool' ? '🔧' : '💬';
-                addAgentStep(icon, e.message || '');
+                if (!seenLiveTs.current.has(e.ts)) {
+                  seenLiveTs.current.add(e.ts);
+                  addAgentStep(icon, e.message || '');
+                }
               }
             });
             setLiveEvents(prev => {
@@ -2143,14 +2151,50 @@ export default function ForgeApp() {
     setSuperMessages(prev => [...prev, { role:'user', content }]);
     try {
       const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
-      const d = await apiFetch('/superagent/chat', { method:'POST', body:JSON.stringify({ message: content, model: cleanModel, enabledSkills: Array.from(activeSkills), enabledConnectors: Array.from(activeConnectors || new Set()) }) }, user.token);
-
-      // Parse tool visibility from response
+      // Use SSE stream so long tasks (kanban, complex agents) survive Railway's 60s HTTP timeout
+      const resp = await fetch(`${API}/superagent/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
+        body: JSON.stringify({ message: content, model: cleanModel, enabledSkills: Array.from(activeSkills), enabledConnectors: Array.from(activeConnectors || new Set()) }),
+        signal: AbortSignal.timeout(300000),
+      });
+      if (!resp.ok || !resp.body) throw new Error(`SuperAgent error ${resp.status}`);
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      let finalData: any = null;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() || '';
+        let curEvent = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) { curEvent = line.slice(7).trim(); }
+          else if (line.startsWith('data: ')) {
+            try {
+              const d = JSON.parse(line.slice(6));
+              if (curEvent === 'tool') {
+                addAgentStep('🔧', d.message || d.name || '');
+                setToolVisibility(prev => [...prev, { tool: d.name || 'tool', status: 'done', input: '', output: '' }]);
+              } else if (curEvent === 'status') {
+                addAgentStep('💬', d.message || '');
+              } else if (curEvent === 'result') {
+                finalData = d;
+              }
+            } catch {}
+            curEvent = '';
+          }
+        }
+      }
+      if (!finalData) throw new Error('No response from SuperAgent');
+      if (!finalData.success) throw new Error(finalData.message || finalData.error || 'SuperAgent failed');
+      const d = finalData;
       if (d?.data?.tools) {
         const tools = Array.isArray(d.data.tools) ? d.data.tools : [d.data.tools];
         setToolVisibility(tools.map((t: any) => ({ tool: t.name || t.id || 'unknown', status: t.status || 'done', input: t.input, output: t.output })));
       }
-
       setSuperMessages(prev => [...prev, { role:'assistant', content: String(d?.data?.content || d?.message || '(no response)') }]);
       loadTotalTokens();
       try { const s = await apiFetch('/superagent/stats', {}, user.token); if (s?.data) setSuperStats(s.data); } catch {}
@@ -2291,7 +2335,7 @@ export default function ForgeApp() {
     if (aiTimerRef.current) clearInterval(aiTimerRef.current);
     const _aiStart = Date.now();
     aiTimerRef.current = setInterval(() => setAiElapsed(Date.now() - _aiStart), 200);
-    setAgentSteps([]); agentStepsRef.current = [];
+    setAgentSteps([]); agentStepsRef.current = []; seenLiveTs.current.clear();
     setLastThinkingSteps([]); setThinkingExpanded(false);
     setMultiResponses([]);
     addAgentStep('🧠', 'Processing your message…');

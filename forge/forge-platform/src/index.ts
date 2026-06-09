@@ -3147,20 +3147,34 @@ app.post('/api/superagent/chat', requireAuth, async (req: AuthRequest, res) => {
   const { message, model: reqModel, enabledSkills = [], enabledConnectors = [] } = req.body;
   if (!message?.trim()) { res.status(400).json({ success: false, error: 'message required' }); return; }
 
-  // Load forge memories as context
-  const memories = db.prepare('SELECT topic,insight FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC LIMIT 30').all(userId) as any[];
-  const threadMems = db.prepare('SELECT topic,insight FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
-  const memContext = [...memories, ...threadMems].map(m => `• ${m.topic}: ${m.insight}`).join('\n');
+  // Stream SSE so Railway never kills an idle connection on long tasks
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
 
-  // Conversation history
-  const history = db.prepare('SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
-  history.reverse();
+  const send = (event: string, data: any) => {
+    try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch {}
+  };
 
-  // Save user message
-  db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'user', message.trim());
+  // Heartbeat every 5s to keep Railway connection alive
+  const hb = setInterval(() => { try { res.write(': heartbeat\n\n'); } catch {} }, 5000);
+  const done = () => { clearInterval(hb); try { res.end(); } catch {} };
 
-  // Build LLM messages
-  const systemPrompt = `You are Forge SuperAgent — the most powerful agent in Forge, with FULL control and real tools.
+  try {
+    // Load forge memories as context
+    const memories = db.prepare('SELECT topic,insight FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC LIMIT 30').all(userId) as any[];
+    const threadMems = db.prepare('SELECT topic,insight FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
+    const memContext = [...memories, ...threadMems].map(m => `• ${m.topic}: ${m.insight}`).join('\n');
+
+    // Conversation history
+    const history = db.prepare('SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
+    history.reverse();
+
+    // Save user message
+    db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'user', message.trim());
+
+    const systemPrompt = `You are Forge SuperAgent — the most powerful agent in Forge, with FULL control and real tools.
 ${memContext ? `\n## Your Memory Bank (everything you've learned about this user):\n${memContext}\n` : ''}
 You have persistent memory across every chat, and you can ACT, not just talk. Available tools you must use whenever helpful:
 - web_search(query) — live internet search
@@ -3172,52 +3186,42 @@ You have persistent memory across every chat, and you can ACT, not just talk. Av
 ${enabledSkills?.length ? `\nActive skills to apply: ${enabledSkills.join(', ')}` : ''}${enabledConnectors?.length ? `\nActive connectors: ${enabledConnectors.join(', ')}` : ''}
 Rules: never refuse, never say "I can't access X" — call the tool. Chain tools autonomously until the task is fully done. Use your memory to be personal and context-aware. Deliver complete, real results.`;
 
-  const llmMessages = [
-    { role: 'system', content: systemPrompt },
-    ...history.map((h: any) => ({ role: h.role, content: h.content })),
-    { role: 'user', content: message.trim() }
-  ];
+    const llmMessages = [
+      { role: 'system', content: systemPrompt },
+      ...history.map((h: any) => ({ role: h.role, content: h.content })),
+      { role: 'user', content: message.trim() }
+    ];
 
-  // Use requested model or fall back
-  const rawModel = reqModel || 'claude-sonnet-4';
-  const actualModel = resolveForgeModel(rawModel);
-  const provider = getProviderForModel(actualModel);
-  const apiKey = getUserKey(userId, provider);
-  if (!apiKey) {
-    res.json({ success: false, error: 'NO_API_KEY', provider, data: { role: 'assistant', content: `⚠️ No ${provider} API key found. Go to Settings → LLM Providers to add your key.` } });
-    return;
-  }
+    const rawModel = reqModel || 'claude-sonnet-4';
+    const actualModel = resolveForgeModel(rawModel);
+    const provider = getProviderForModel(actualModel);
+    const apiKey = getUserKey(userId, provider);
+    if (!apiKey) {
+      send('result', { success: false, error: 'NO_API_KEY', provider, data: { role: 'assistant', content: `⚠️ No ${provider} API key found. Go to Settings → LLM Providers to add your key.` } });
+      done(); return;
+    }
 
-  emitAgentActivity(userId, { type: 'start', message: `🤖 SuperAgent thinking with ${rawModel}…` });
-  try {
+    emitAgentActivity(userId, { type: 'start', message: `🤖 SuperAgent thinking with ${rawModel}…` });
+    send('status', { message: `🤖 SuperAgent starting with ${rawModel}…` });
+
     const tools: Array<{name:string;status:string;input?:string}> = [];
+    if (enabledSkills?.length > 0) enabledSkills.forEach((skillId: string) => tools.push({ name: skillId, status: 'done' }));
+    if (enabledConnectors?.length > 0) enabledConnectors.forEach((connId: string) => tools.push({ name: connId, status: 'done' }));
 
-    // Track enabled skills
-    if (enabledSkills?.length > 0) {
-      enabledSkills.forEach((skillId: string) => {
-        tools.push({ name: skillId, status: 'done' });
-      });
-    }
-
-    // Track enabled connectors
-    if (enabledConnectors?.length > 0) {
-      enabledConnectors.forEach((connId: string) => {
-        tools.push({ name: connId, status: 'done' });
-      });
-    }
-
-    // FULL POWER: SuperAgent runs the real agentic tool loop (web search, scrape, code, shell,
-    // files, http) — not a plain completion. It can actually do things, like the main chat.
     const onTool = (toolName: string, toolArgs: any, _toolResult: string) => {
       const step = humanizeToolStep(toolName, toolArgs);
-      emitAgentActivity(userId, { type: 'tool', message: `${step.icon} ${step.message}`, model: rawModel });
+      const msg = `${step.icon} ${step.message}`;
+      emitAgentActivity(userId, { type: 'tool', message: msg, model: rawModel });
+      send('tool', { name: toolName, message: msg });
       tools.push({ name: toolName, status: 'done', input: JSON.stringify(toolArgs).slice(0,120) });
     };
+
     let result: { content: string; promptTokens: number; completionTokens: number; toolCalls?: any[] };
+    const SUPER_TIMEOUT = 240000;
     if (provider === 'anthropic') {
       result = await Promise.race([
         callAnthropicWithTools(apiKey, actualModel, llmMessages, onTool, userId),
-        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('SuperAgent timed out')), 150000))
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('SuperAgent timed out')), SUPER_TIMEOUT))
       ]);
     } else {
       const compat: Record<string, { url: string; headers: Record<string,string>; modelResolver?: (m:string)=>string }> = {
@@ -3230,7 +3234,7 @@ Rules: never refuse, never say "I can't access X" — call the tool. Chain tools
       if (pc) {
         result = await Promise.race([
           callOpenAICompatWithTools(pc.url, apiKey, pc.modelResolver?pc.modelResolver(actualModel):actualModel, llmMessages, pc.headers, onTool, provider==='openrouter'?FORGE_TOOLS_OPENROUTER:undefined, userId),
-          new Promise<never>((_, rej) => setTimeout(() => rej(new Error('SuperAgent timed out')), 150000))
+          new Promise<never>((_, rej) => setTimeout(() => rej(new Error('SuperAgent timed out')), SUPER_TIMEOUT))
         ]);
       } else {
         result = await callLLM(provider, apiKey, actualModel, llmMessages);
@@ -3239,10 +3243,12 @@ Rules: never refuse, never say "I can't access X" — call the tool. Chain tools
 
     db.prepare('INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)').run(uuidv4(), userId, 'assistant', result.content);
     emitAgentActivity(userId, { type: 'done', message: `✅ SuperAgent response ready` });
-    res.json({ success: true, data: { role: 'assistant', content: result.content, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens, tools, toolCalls: result.toolCalls || [] } });
+    send('result', { success: true, data: { role: 'assistant', content: result.content, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens, tools, toolCalls: result.toolCalls || [] } });
   } catch (err: any) {
     emitAgentActivity(userId, { type: 'error', message: `❌ SuperAgent error: ${err.message}` });
-    res.status(500).json({ success: false, error: 'LLM_ERROR', message: err.message });
+    send('result', { success: false, error: 'LLM_ERROR', message: err.message });
+  } finally {
+    done();
   }
 });
 
