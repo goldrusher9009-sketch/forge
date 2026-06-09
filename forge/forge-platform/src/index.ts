@@ -3360,27 +3360,27 @@ app.post('/api/userfiles', requireAuth, async (req: AuthRequest, res) => {
   const { filename, content, mime_type = 'text/plain', thread_id } = req.body;
   if (!filename || content === undefined) { res.status(400).json({ success: false, error: 'filename and content required' }); return; }
   const id = uuidv4();
-  const size = Buffer.byteLength(String(content), 'utf8');
+  const contentStr = String(content);
+  // Detect if content is plain text or base64 binary
+  const isTextMime = /^text\//.test(mime_type) || /\.(txt|md|csv|json|js|ts|tsx|jsx|html|css|py|yml|yaml|xml|sql|sh|log)$/i.test(filename);
+  const size = isTextMime ? Buffer.byteLength(contentStr, 'utf8') : Buffer.from(contentStr, 'base64').length;
   let extracted_text: string | null = null;
-  // Auto-extract text from PDFs and CSVs
+  // Auto-extract text
   try {
     if (mime_type === 'application/pdf' || filename.toLowerCase().endsWith('.pdf')) {
-      const buf = Buffer.from(String(content), 'base64');
+      const buf = Buffer.from(contentStr, 'base64');
       try {
         const pdfParse = await import('pdf-parse');
         const parsed = await pdfParse.default(buf);
         extracted_text = parsed.text?.slice(0, 50000) || null;
       } catch { extracted_text = null; }
-    } else if (mime_type === 'text/csv' || filename.toLowerCase().endsWith('.csv')) {
-      // CSV: store raw text
-      extracted_text = Buffer.from(String(content), 'base64').toString('utf8').slice(0, 50000);
-    } else if (mime_type === 'text/plain' || filename.toLowerCase().endsWith('.txt') || filename.toLowerCase().endsWith('.md')) {
-      extracted_text = Buffer.from(String(content), 'base64').toString('utf8').slice(0, 50000);
+    } else if (isTextMime) {
+      extracted_text = contentStr.slice(0, 50000);
     }
   } catch {}
   // Ensure extracted_text column exists
   try { db.prepare("ALTER TABLE user_files ADD COLUMN extracted_text TEXT").run(); } catch {}
-  db.prepare('INSERT INTO user_files (id,user_id,thread_id,filename,content,mime_type,size,extracted_text) VALUES (?,?,?,?,?,?,?,?)').run(id, userId, thread_id || null, filename, String(content), mime_type, size, extracted_text);
+  db.prepare('INSERT INTO user_files (id,user_id,thread_id,filename,content,mime_type,size,extracted_text) VALUES (?,?,?,?,?,?,?,?)').run(id, userId, thread_id || null, filename, contentStr, mime_type, size, extracted_text);
   res.status(201).json({ success: true, data: { id, filename, mime_type, size, has_text: !!extracted_text } });
 });
 
@@ -3394,8 +3394,15 @@ app.get('/api/userfiles/:id/download', requireAuth, (req: AuthRequest, res) => {
   const file = db.prepare('SELECT * FROM user_files WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!file) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
   res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
-  res.setHeader('Content-Type', file.mime_type);
-  res.send(file.content);
+  res.setHeader('Content-Type', file.mime_type || 'application/octet-stream');
+  const isTextMime = /^text\//.test(file.mime_type) || /\.(txt|md|csv|json|js|ts|tsx|jsx|html|css|py|yml|yaml|xml|sql|sh|log)$/i.test(file.filename);
+  if (isTextMime) {
+    res.send(file.content);
+  } else {
+    // Binary stored as base64 — decode before sending
+    try { res.send(Buffer.from(file.content, 'base64')); }
+    catch { res.send(file.content); }
+  }
 });
 
 // ── Text-to-Speech ────────────────────────────────────────────────────────────

@@ -1103,12 +1103,25 @@ export default function ForgeApp() {
   const uploadFile = async (file: File) => {
     if (!user) return;
     try {
-      // Read text content (works for text/code/csv/json). Binary falls back to a data URL.
       const isText = /^(text\/|application\/(json|xml|javascript|x-)|$)/.test(file.type) || /\.(txt|md|csv|json|js|ts|tsx|jsx|html|css|py|yml|yaml|xml|sql|sh|log)$/i.test(file.name);
       let content: string;
-      if (isText) content = await file.text();
-      else content = await new Promise<string>((res) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => res(''); r.readAsDataURL(file); });
-      const r = await apiFetch('/userfiles', { method:'POST', body: JSON.stringify({ filename: file.name, content, mime_type: file.type || 'text/plain', thread_id: activeThread?.id }) }, user.token);
+      if (isText) {
+        content = await file.text();
+      } else {
+        // Read as raw base64 (no data URL prefix — backend expects pure base64)
+        content = await new Promise<string>((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => {
+            const dataUrl = String(r.result);
+            // Strip "data:...;base64," prefix
+            const b64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+            res(b64);
+          };
+          r.onerror = () => rej(new Error('read error'));
+          r.readAsDataURL(file);
+        });
+      }
+      const r = await apiFetch('/userfiles', { method:'POST', body: JSON.stringify({ filename: file.name, content, mime_type: file.type || 'application/octet-stream', thread_id: activeThread?.id }) }, user.token);
       if (r?.data) showToast('📄 '+file.name+' uploaded');
       await loadFolderFiles();
     } catch (e:any) { showToast('Upload failed: '+String(e?.message||e),'err'); }
@@ -6487,10 +6500,13 @@ export default function ForgeApp() {
 
               {forgecoTab === 'docs' && (
                 <div>
-                  <input ref={coDocInputRef} type="file" accept=".txt,.md,.csv,.json,.js,.ts,.html,.css,.py" style={{ display:'none' }} onChange={async e => {
+                  <input ref={coDocInputRef} type="file" accept=".txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.pdf,.png,.jpg,.jpeg,.gif,.zip" style={{ display:'none' }} onChange={async e => {
                     const file = e.target.files?.[0]; if (!file || !user) return;
-                    const text = await file.text();
-                    await apiFetch('/co/docs', { method:'POST', body:JSON.stringify({ name:file.name, content:text.slice(0,200000) }) }, user.token);
+                    const isText = /^text\//.test(file.type) || /\.(txt|md|csv|json|js|ts|html|css|py)$/i.test(file.name);
+                    let content: string;
+                    if (isText) { content = (await file.text()).slice(0, 200000); }
+                    else { content = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => { const d = String(r.result); res(d.includes(',') ? d.split(',')[1] : d); }; r.onerror = rej; r.readAsDataURL(file); }); }
+                    await apiFetch('/co/docs', { method:'POST', body:JSON.stringify({ name:file.name, content, mime_type: file.type || 'application/octet-stream' }) }, user.token);
                     showToast('📄 '+file.name+' shared'); await loadCo(); if (coDocInputRef.current) coDocInputRef.current.value='';
                   }} />
                   <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:14 }}>
