@@ -889,12 +889,34 @@ export default function ForgeApp() {
   const [coData, setCoData] = useState<{team:any;members:any[];projects:any[];messages:any[];docs:any[]}|null>(null);
   const [coLoading, setCoLoading] = useState(false);
   const coDocInputRef = useRef<HTMLInputElement>(null);
+  const coSocketRef = useRef<any>(null);
   const loadCo = async () => {
     if (!user) return;
     setCoLoading(true);
     try { const d = await apiFetch('/co', {}, user.token); if (d?.success) setCoData(d.data); } catch {}
     setCoLoading(false);
   };
+  // Connect Socket.IO for ForgeCO realtime when CO tab is open
+  useEffect(() => {
+    if (mainTab !== 'forgeco' || !user || !coData?.team?.id) return;
+    if (coSocketRef.current) return; // already connected
+    try {
+      const { io } = require('socket.io-client');
+      const sock = io(API.replace('/api', ''), { auth: { token: user.token }, transports: ['websocket','polling'] });
+      sock.on('connect', () => sock.emit('co_join', coData.team.id));
+      sock.on('co_message', (msg: any) => {
+        setCoData(prev => prev ? { ...prev, messages: [...(prev.messages || []), msg] } : prev);
+      });
+      sock.on('co_project_update', (proj: any) => {
+        setCoData(prev => prev ? { ...prev, projects: prev.projects.map((p:any) => p.id === proj.id ? proj : p) } : prev);
+      });
+      coSocketRef.current = sock;
+    } catch {}
+    return () => {
+      coSocketRef.current?.disconnect();
+      coSocketRef.current = null;
+    };
+  }, [mainTab, user, coData?.team?.id]);
   const coInvite = async () => {
     if (!user) return;
     const email = window.prompt('Invite teammate by email:'); if (!email) return;
@@ -908,7 +930,9 @@ export default function ForgeApp() {
   const coSendMsg = async () => {
     if (!user || !forgecoChatMsg.trim()) return;
     const text = forgecoChatMsg.trim(); setForgecoChatMsg('');
-    try { await apiFetch('/co/messages', { method:'POST', body:JSON.stringify({ text }) }, user.token); await loadCo(); } catch {}
+    // Optimistic update
+    setCoData(prev => prev ? { ...prev, messages: [...(prev.messages||[]), { id:'tmp-'+Date.now(), author:'You', text, created_at: new Date().toISOString() }] } : prev);
+    try { await apiFetch('/co/messages', { method:'POST', body:JSON.stringify({ text }) }, user.token); } catch {}
   };
   const [forgecoChatLog, setForgecoChatLog] = useState<{from:string;text:string;ts:number}[]>([
     { from:'Sarah Kim', text:'Just pushed the new onboarding flow — ready for review!', ts:Date.now()-3600000 },

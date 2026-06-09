@@ -125,6 +125,8 @@ function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): void
 
 // ── App ───────────────────────────────────────────────────────
 const app = express();
+// Shared Socket.IO ref — set during bootstrap, used by routes for realtime push
+let ioRef: any = null;
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
@@ -3805,7 +3807,9 @@ app.patch('/api/co/projects/:id', requireAuth, (req: AuthRequest, res) => {
   const team = getOrCreateTeam(req.user!.sub); const { progress, status } = req.body;
   if (progress != null) db.prepare('UPDATE co_projects SET progress=? WHERE id=? AND team_id=?').run(progress, req.params.id, team.id);
   if (status) db.prepare('UPDATE co_projects SET status=? WHERE id=? AND team_id=?').run(status, req.params.id, team.id);
-  res.json({ success:true });
+  const updated = db.prepare('SELECT * FROM co_projects WHERE id=?').get(req.params.id);
+  if (ioRef) ioRef.to(`co_team:${team.id}`).emit('co_project_update', updated);
+  res.json({ success:true, data: updated });
 });
 app.delete('/api/co/projects/:id', requireAuth, (req: AuthRequest, res) => {
   const team = getOrCreateTeam(req.user!.sub);
@@ -3820,7 +3824,10 @@ app.post('/api/co/messages', requireAuth, (req: AuthRequest, res) => {
   const team = getOrCreateTeam(userId, user?.email, user?.first_name);
   const id = uuidv4();
   db.prepare('INSERT INTO co_messages (id,team_id,user_id,author,text) VALUES (?,?,?,?,?)').run(id, team.id, userId, user?.first_name || 'You', text.trim());
-  res.json({ success:true, data: db.prepare('SELECT id,author,text,created_at FROM co_messages WHERE id=?').get(id) });
+  const newMsg = db.prepare('SELECT id,author,text,created_at FROM co_messages WHERE id=?').get(id);
+  // Push to all team members in realtime
+  if (ioRef) ioRef.to(`co_team:${team.id}`).emit('co_message', newMsg);
+  res.json({ success:true, data: newMsg });
 });
 // POST /api/co/docs — store a shared document (text content)
 app.post('/api/co/docs', requireAuth, (req: AuthRequest, res) => {
@@ -4045,8 +4052,72 @@ app.post('/api/forge-tools/:id/execute', requireAuth, async (req: AuthRequest, r
   } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
 });
 
+// ─── User Settings (auto-harvest, personality, prefs) ─────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS user_settings (
+  user_id TEXT PRIMARY KEY,
+  auto_harvest_enabled INTEGER NOT NULL DEFAULT 0,
+  harvest_interval_mins INTEGER NOT NULL DEFAULT 30,
+  last_auto_harvest TEXT,
+  personality_notes TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
+
+app.get('/api/settings/harvest', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  let row = db.prepare('SELECT * FROM user_settings WHERE user_id=?').get(userId) as any;
+  if (!row) { db.prepare('INSERT OR IGNORE INTO user_settings (user_id) VALUES (?)').run(userId); row = db.prepare('SELECT * FROM user_settings WHERE user_id=?').get(userId) as any; }
+  const memCount = (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
+  res.json({ success:true, data: { enabled: !!row.auto_harvest_enabled, intervalMins: row.harvest_interval_mins, lastRun: row.last_auto_harvest, memCount } });
+});
+
+app.post('/api/settings/harvest', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { enabled, intervalMins } = req.body;
+  db.prepare('INSERT INTO user_settings (user_id,auto_harvest_enabled,harvest_interval_mins) VALUES (?,?,?) ON CONFLICT(user_id) DO UPDATE SET auto_harvest_enabled=excluded.auto_harvest_enabled,harvest_interval_mins=excluded.harvest_interval_mins,updated_at=datetime("now")')
+    .run(userId, enabled ? 1 : 0, intervalMins || 30);
+  res.json({ success:true, data: { enabled: !!enabled } });
+});
+
+// ─── Background auto-harvest worker ──────────────────────────────────────────
+// Runs every 5 minutes, checks which users have auto_harvest enabled and are due
+function runAutoHarvestForUser(userId: string) {
+  let harvested = 0;
+  function upsertMem(topic: string, insight: string, srcId?: string) {
+    if (!topic?.trim() || !insight?.trim()) return;
+    const t = topic.trim().slice(0, 120); const ins = insight.trim().slice(0, 500);
+    const ex = db.prepare('SELECT id FROM forge_memory WHERE user_id=? AND topic=?').get(userId, t) as any;
+    if (ex) { db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.1,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(ins, ex.id); }
+    else { db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)').run(uuidv4(), userId, t, ins, srcId || null); harvested++; }
+  }
+  const safe = <T,>(fn: () => T, fb: T): T => { try { return fn(); } catch { return fb; } };
+  // Thread memories
+  safe(() => { const rows = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(userId) as any[]; for (const r of rows) upsertMem(r.topic, r.insight, r.thread_id); }, null);
+  // Recent thread Q&A
+  safe(() => { const threads = db.prepare('SELECT DISTINCT thread_id FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND role="user" ORDER BY created_at DESC LIMIT 20').all(userId) as any[]; for (const t of threads) { const pair = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at DESC LIMIT 4').all(t.thread_id) as any[]; const u = pair.find((m:any) => m.role==='user'); const a = pair.find((m:any) => m.role==='assistant'); if (u && a) upsertMem(u.content.slice(0,100), a.content.slice(0,400), t.thread_id); } }, null);
+  // SuperAgent history
+  safe(() => { const msgs = db.prepare("SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 40").all(userId) as any[]; for (let i=0;i<msgs.length-1;i++) { const u=msgs[i],a=msgs[i+1]; if (u.role==='user'&&a.role==='assistant') upsertMem(`SuperAgent: ${u.content.slice(0,80)}`,a.content.slice(0,400)); } }, null);
+  // Dispatch runs
+  safe(() => { const dispatches = db.prepare("SELECT prompt,output FROM dispatch_runs WHERE user_id=? AND status='done' ORDER BY updated_at DESC LIMIT 30").all(userId) as any[]; for (const d of dispatches) { if (d.output?.trim()) upsertMem(`Dispatch: ${d.prompt.slice(0,80)}`, d.output.slice(0,400)); } }, null);
+  db.prepare("UPDATE user_settings SET last_auto_harvest=datetime('now'),updated_at=datetime('now') WHERE user_id=?").run(userId);
+  if (harvested > 0) console.log(`[auto-harvest] user ${userId}: +${harvested} new memories`);
+}
+
+setInterval(() => {
+  try {
+    const now = new Date();
+    const users = db.prepare("SELECT user_id,harvest_interval_mins,last_auto_harvest FROM user_settings WHERE auto_harvest_enabled=1").all() as any[];
+    for (const u of users) {
+      const intervalMs = (u.harvest_interval_mins || 30) * 60 * 1000;
+      const lastRun = u.last_auto_harvest ? new Date(u.last_auto_harvest).getTime() : 0;
+      if (now.getTime() - lastRun >= intervalMs) {
+        runAutoHarvestForUser(u.user_id);
+      }
+    }
+  } catch (e: any) { console.warn('[auto-harvest] worker error:', e.message); }
+}, 5 * 60 * 1000); // check every 5 minutes
+
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req, res) => res.json({ version:'v6.82', build:'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req, res) => res.json({ version:'v6.94', build:'production', timestamp: new Date().toISOString() }));
 
 // ─── 404 fallback ─────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success:false, error:'NOT_FOUND' }));
@@ -4064,15 +4135,31 @@ try {
     if (!token) return next(new Error('No token'));
     try { socket.user = jwt.verify(token, JWT_SECRET); next(); } catch { next(new Error('Invalid token')); }
   });
+  ioRef = io;
   io.on('connection', (socket: any) => {
+    const userId = socket.user?.sub;
     socket.on('join_thread', (tid: string) => socket.join(`thread:${tid}`));
     socket.on('leave_thread', (tid: string) => socket.leave(`thread:${tid}`));
-    socket.on('typing_start', (tid: string) => socket.to(`thread:${tid}`).emit('typing', { userId: socket.user?.sub }));
-    socket.on('typing_stop', (tid: string) => socket.to(`thread:${tid}`).emit('typing_stop', { userId: socket.user?.sub }));
+    socket.on('typing_start', (tid: string) => socket.to(`thread:${tid}`).emit('typing', { userId }));
+    socket.on('typing_stop', (tid: string) => socket.to(`thread:${tid}`).emit('typing_stop', { userId }));
     socket.on('thread_update', (data: any) => socket.to(`thread:${data.threadId}`).emit('thread_update', data));
+    // ForgeCO realtime — join team room on connect
+    socket.on('co_join', (teamId: string) => socket.join(`co_team:${teamId}`));
+    socket.on('co_leave', (teamId: string) => socket.leave(`co_team:${teamId}`));
+    // Auto-join own team room if user is in a team
+    if (userId) {
+      try {
+        const team = db.prepare('SELECT id FROM co_teams WHERE owner_id=?').get(userId) as any;
+        if (team) socket.join(`co_team:${team.id}`);
+        else {
+          const membership = db.prepare('SELECT team_id FROM co_members WHERE user_id=?').get(userId) as any;
+          if (membership) socket.join(`co_team:${membership.team_id}`);
+        }
+      } catch {}
+    }
     socket.on('ping', () => socket.emit('pong'));
     socket.on('disconnect', () => {});
   });
   (app as any).io = io;
 } catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.93 running on port ${PORT}`); });
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.95 running on port ${PORT}`); });
