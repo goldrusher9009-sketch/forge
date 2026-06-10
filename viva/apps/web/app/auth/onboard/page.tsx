@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore, mockUser, RING_META, TIER_META } from '@/lib/store'
+import { auth, setTokens } from '@/lib/api'
 import clsx from 'clsx'
 
 const STEPS = [
@@ -23,6 +24,9 @@ export default function Onboard() {
   const [walletConnected, setWalletConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [launching, setLaunching] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [apiError, setApiError] = useState('')
 
   const progress = ((step + 1) / STEPS.length) * 100
   const current = STEPS[step]
@@ -39,14 +43,40 @@ export default function Onboard() {
 
   async function launch() {
     setLaunching(true)
-    await new Promise(r => setTimeout(r, 800))
-    const user = {
-      ...mockUser(),
-      handle: handle || 'sovereign',
-      displayName: displayName || 'Sovereign',
-      rings: { ...mockUser().rings, ...rings },
+    setApiError('')
+    try {
+      const res = await auth.register({
+        handle: handle || 'sovereign',
+        displayName: displayName || 'Sovereign',
+        email: email || `${handle}@viva.app`,
+        password: password || 'demo1234',
+        sleepRing: rings.sleep,
+        nutritionRing: rings.nutrition,
+        activityRing: rings.activity,
+        socialRing: rings.social,
+        wealthRing: rings.wealth,
+      })
+      setTokens(res.accessToken, res.refreshToken)
+      setUser({
+        ...mockUser(),
+        handle: res.user.handle,
+        displayName: res.user.displayName,
+        id: res.user.id,
+        rings: {
+          sleep: res.user.sleepRing ?? rings.sleep,
+          nutrition: res.user.nutritionRing ?? rings.nutrition,
+          activity: res.user.activityRing ?? rings.activity,
+          social: res.user.socialRing ?? rings.social,
+          wealth: res.user.wealthRing ?? rings.wealth,
+        },
+        vScore: res.user.vScore ?? 300,
+        tier: res.user.tier?.toLowerCase() ?? 'rising',
+      })
+    } catch (e: any) {
+      // Fallback to mock if API unavailable
+      console.warn('API unavailable, using mock:', e.message)
+      setUser({ ...mockUser(), handle: handle || 'sovereign', displayName: displayName || 'Sovereign' })
     }
-    setUser(user)
     setOnboarded(true)
     router.push('/home')
   }
@@ -104,6 +134,8 @@ export default function Onboard() {
               <StepIdentity
                 handle={handle} setHandle={setHandle}
                 displayName={displayName} setDisplayName={setDisplayName}
+                email={email} setEmail={setEmail}
+                password={password} setPassword={setPassword}
               />
             )}
             {step === 2 && <StepRings rings={rings} setRings={setRings} />}
@@ -144,14 +176,19 @@ export default function Onboard() {
                 Continue →
               </button>
             ) : (
-              <button
-                onClick={launch}
-                disabled={launching}
-                className="px-8 py-3 font-semibold text-sm tracking-wide text-black transition-all duration-200 hover:opacity-90"
-                style={{ background: 'var(--v)', color: 'white', boxShadow: '0 0 24px rgba(124,58,237,0.4)' }}
-              >
-                {launching ? 'Initializing…' : 'Enter VIVA →'}
-              </button>
+              <div className="flex flex-col items-end gap-2">
+                {apiError && (
+                  <p className="text-xs" style={{ color: 'var(--ring-wealth)' }}>{apiError}</p>
+                )}
+                <button
+                  onClick={launch}
+                  disabled={launching}
+                  className="px-8 py-3 font-semibold text-sm tracking-wide transition-all duration-200 hover:opacity-90"
+                  style={{ background: 'var(--v)', color: 'white', boxShadow: '0 0 24px rgba(124,58,237,0.4)' }}
+                >
+                  {launching ? 'Initializing…' : 'Enter VIVA →'}
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -214,7 +251,7 @@ function StepWelcome() {
   )
 }
 
-function StepIdentity({ handle, setHandle, displayName, setDisplayName }: any) {
+function StepIdentity({ handle, setHandle, displayName, setDisplayName, email, setEmail, password, setPassword }: any) {
   return (
     <div className="space-y-4">
       <div>
@@ -247,6 +284,28 @@ function StepIdentity({ handle, setHandle, displayName, setDisplayName }: any) {
         {handle.length >= 2 && (
           <p className="text-xs mt-1.5" style={{ color: 'var(--ring-activity)' }}>✓ Available</p>
         )}
+      </div>
+      <div>
+        <label className="t-caption block mb-2" style={{ fontSize: '0.625rem' }}>Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="w-full bg-white/4 border border-white/10 px-4 py-3 text-white placeholder-white/25 outline-none transition-all focus:border-violet-500/50 font-medium"
+          style={{ borderRadius: 'var(--radius)' }}
+        />
+      </div>
+      <div>
+        <label className="t-caption block mb-2" style={{ fontSize: '0.625rem' }}>Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Min 8 characters"
+          className="w-full bg-white/4 border border-white/10 px-4 py-3 text-white placeholder-white/25 outline-none transition-all focus:border-violet-500/50 font-medium"
+          style={{ borderRadius: 'var(--radius)' }}
+        />
       </div>
       <p className="text-xs text-white/30 mt-2">
         Your handle becomes your on-chain identity. Choose wisely.

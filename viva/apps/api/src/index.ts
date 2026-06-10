@@ -27,7 +27,11 @@ const httpServer = createServer(app)
 // ── Middleware ──────────────────────────────────────────
 app.use(helmet())
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, cb) => {
+    const allowed = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',').map(s => s.trim())
+    if (!origin || allowed.some(a => origin.startsWith(a))) return cb(null, true)
+    cb(new Error('CORS'))
+  },
   credentials: true,
 }))
 app.use(morgan('dev'))

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, TIER_META } from '@/lib/store'
+import { rooms as roomsApi } from '@/lib/api'
 import clsx from 'clsx'
 
 const LIVE_ROOMS = [
@@ -35,7 +36,8 @@ const UPCOMING_ROOMS = [
 export default function RoomsPage() {
   const { user, setUser } = useAppStore()
   const [mounted, setMounted] = useState(false)
-  const [activeRoom, setActiveRoom] = useState<typeof LIVE_ROOMS[0] | null>(null)
+  const [liveRooms, setLiveRooms] = useState(LIVE_ROOMS)
+  const [activeRoom, setActiveRoom] = useState<any | null>(null)
   const [handRaised, setHandRaised] = useState(false)
   const [muted, setMuted] = useState(true)
   const [speaking, setSpeaking] = useState(false)
@@ -44,23 +46,49 @@ export default function RoomsPage() {
   useEffect(() => {
     setMounted(true)
     if (!user) setUser(mockUser())
+    loadRooms()
     const waveInterval = setInterval(() => {
       setWaveform(Array.from({ length: 20 }, () => Math.random() * 40 + 10))
     }, 180)
     return () => clearInterval(waveInterval)
   }, [])
 
+  async function loadRooms() {
+    try {
+      const data = await roomsApi.list()
+      if (Array.isArray(data) && data.length) {
+        setLiveRooms(data.map((r: any) => ({
+          id: r.id,
+          title: r.title,
+          topic: r.topic ?? r.category ?? '',
+          host: r.host?.handle ?? r.hostId ?? 'unknown',
+          hostScore: r.host?.vScore ?? 0,
+          tier: r.host?.tier?.toLowerCase() ?? 'rising',
+          speakers: (r.speakers ?? []).map((s: any) => s.user?.handle ?? s),
+          listeners: r.listenerCount ?? r.listeners ?? 0,
+          live: r.status === 'LIVE' || r.live,
+          started: r.startedAt ? new Date(r.startedAt).getTime() : Date.now(),
+          minVScore: r.minVScore ?? 0,
+        })))
+      }
+    } catch { /* keep mock */ }
+  }
+
   if (!mounted) return null
   const u = user || mockUser()
 
-  function joinRoom(room: typeof LIVE_ROOMS[0]) {
+  async function joinRoom(room: any) {
     if (u.vscore < room.minVScore) return
     setActiveRoom(room)
     setMuted(true)
     setSpeaking(false)
+    try { await roomsApi.join(room.id) } catch { /* offline ok */ }
   }
 
-  function leaveRoom() {
+  async function leaveRoom() {
+    if (activeRoom) {
+      try { await roomsApi.leave(activeRoom.id) } catch { /* offline ok */ }
+    }
     setActiveRoom(null)
     setHandRaised(false)
     setMuted(true)
@@ -87,7 +115,7 @@ export default function RoomsPage() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--ring-wealth)', boxShadow: '0 0 6px var(--ring-wealth)', animation: 'glowPulse 1.5s ease infinite' }} />
-              <span className="text-xs text-white/40">3 live</span>
+              <span className="text-xs text-white/40">{liveRooms.length} live</span>
             </div>
             <button
               className="px-4 py-2 text-xs font-semibold border border-white/15 text-white/60 hover:border-white/30 hover:text-white transition-all"
@@ -257,9 +285,9 @@ export default function RoomsPage() {
           <div className="max-w-2xl space-y-8">
             {/* Live rooms */}
             <section>
-              <p className="t-caption mb-5" style={{ fontSize: '0.625rem' }}>LIVE NOW · {LIVE_ROOMS.length} ROOMS</p>
+              <p className="t-caption mb-5" style={{ fontSize: '0.625rem' }}>LIVE NOW · {liveRooms.length} ROOMS</p>
               <div className="space-y-3">
-                {LIVE_ROOMS.map(room => {
+                {liveRooms.map(room => {
                   const canJoin = u.vscore >= room.minVScore
                   const tierColor = TIER_META[room.tier as keyof typeof TIER_META]?.color || 'var(--v)'
                   return (

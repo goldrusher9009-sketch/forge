@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, RING_META } from '@/lib/store'
+import { health as healthApi } from '@/lib/api'
 import clsx from 'clsx'
 
 const ZK_PROOFS = [
@@ -57,23 +58,65 @@ export default function HealthPage() {
   const [generating, setGenerating] = useState<string | null>(null)
   const [logEntry, setLogEntry] = useState({ type: 'sleep', value: '' })
   const [tab, setTab] = useState<'rings' | 'proofs' | 'log'>('rings')
+  const [healthLog, setHealthLog] = useState(HEALTH_LOG)
+  const [logging, setLogging] = useState(false)
 
   useEffect(() => {
     setMounted(true)
     if (!user) setUser(mockUser())
+    loadLog()
   }, [])
+
+  async function loadLog() {
+    try {
+      const data = await healthApi.logs()
+      if (Array.isArray(data) && data.length) {
+        setHealthLog(data.map((e: any) => ({
+          ts: new Date(e.createdAt ?? Date.now()).getTime(),
+          type: e.metric ?? e.type ?? 'sleep',
+          value: e.value,
+          unit: e.unit ?? '',
+          ring: e.ring ?? e.metric ?? 'sleep',
+        })))
+      }
+    } catch { /* keep mock */ }
+  }
 
   if (!mounted) return null
   const u = user || mockUser()
 
+  async function logHealthEntry() {
+    if (!logEntry.value || logging) return
+    setLogging(true)
+    try {
+      await healthApi.log({ metric: logEntry.type, value: +logEntry.value })
+      setHealthLog(prev => [{ ts: Date.now(), type: logEntry.type, value: +logEntry.value, unit: '', ring: logEntry.type }, ...prev])
+      setLogEntry(prev => ({ ...prev, value: '' }))
+    } catch {
+      setHealthLog(prev => [{ ts: Date.now(), type: logEntry.type, value: +logEntry.value, unit: '', ring: logEntry.type }, ...prev])
+      setLogEntry(prev => ({ ...prev, value: '' }))
+    } finally {
+      setLogging(false)
+    }
+  }
+
   async function generateProof(proofId: string) {
     setGenerating(proofId)
-    await new Promise(r => setTimeout(r, 2200))
-    setProofs(prev => prev.map(p =>
-      p.id === proofId
-        ? { ...p, status: 'active', expires: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10) }
-        : p
-    ))
+    try {
+      await healthApi.generateProof({ proofType: proofId })
+      setProofs(prev => prev.map(p =>
+        p.id === proofId
+          ? { ...p, status: 'active', expires: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10) }
+          : p
+      ))
+    } catch {
+      await new Promise(r => setTimeout(r, 2200))
+      setProofs(prev => prev.map(p =>
+        p.id === proofId
+          ? { ...p, status: 'active', expires: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10) }
+          : p
+      ))
+    }
     setGenerating(null)
   }
 
@@ -184,11 +227,12 @@ export default function HealthPage() {
                   style={{ borderRadius: 'var(--radius)' }}
                 />
                 <button
-                  disabled={!logEntry.value}
+                  onClick={logHealthEntry}
+                  disabled={!logEntry.value || logging}
                   className="px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-30 transition-opacity"
                   style={{ background: 'var(--ring-activity)', borderRadius: 'var(--radius)' }}
                 >
-                  Log
+                  {logging ? 'Logging…' : 'Log'}
                 </button>
               </div>
             </section>
@@ -280,7 +324,7 @@ export default function HealthPage() {
           <div className="max-w-xl">
             <p className="t-caption mb-5" style={{ fontSize: '0.625rem' }}>RECENT HEALTH EVENTS</p>
             <div className="space-y-2">
-              {HEALTH_LOG.map((entry, i) => {
+              {healthLog.map((entry, i) => {
                 const meta = RING_META[entry.ring as keyof typeof RING_META]
                 return (
                   <div

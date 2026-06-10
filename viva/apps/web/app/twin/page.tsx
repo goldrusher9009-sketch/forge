@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, RING_META } from '@/lib/store'
+import { twin as twinApi } from '@/lib/api'
 import clsx from 'clsx'
 
 type AutonomyLevel = 'L1' | 'L2' | 'L3'
@@ -46,11 +47,30 @@ export default function TwinPage() {
   const [mounted, setMounted] = useState(false)
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null)
   const [twinMsg, setTwinMsg] = useState<string | null>(null)
+  const [chatHistory, setChatHistory] = useState<{ role: string; content: string }[]>([])
 
   useEffect(() => {
     setMounted(true)
     if (!user) setUser(mockUser())
+    loadTasks()
   }, [])
+
+  async function loadTasks() {
+    try {
+      const tasks = await twinApi.tasks()
+      if (Array.isArray(tasks) && tasks.length) {
+        const apiLogs: AgentLog[] = tasks.map((t: any) => ({
+          id: t.id,
+          agent: t.agentType ?? 'Agent',
+          action: t.description ?? t.goal ?? '',
+          ts: new Date(t.createdAt ?? Date.now()).getTime(),
+          status: t.status === 'DONE' ? 'completed' : t.status === 'FLAGGED' ? 'flagged' : 'pending',
+          ring: t.ring,
+        }))
+        setLogs(apiLogs)
+      }
+    } catch { /* keep mock */ }
+  }
 
   if (!mounted) return null
   const u = user || mockUser()
@@ -60,14 +80,22 @@ export default function TwinPage() {
     setThinking(true)
     const q = prompt
     setPrompt('')
-    await new Promise(r => setTimeout(r, 1800))
-    const responses: Record<string, string> = {
-      default: `Based on your current rings — Activity 91, Sleep 82, Nutrition 67 — your weakest signal is nutrition. I recommend a 16:8 eating window. Your calendar shows 3 afternoon meetings tomorrow; I can block 12-1pm as meal time. Shall I proceed?`,
-      sleep: `Your sleep ring is at 82. Average this week: 7.2h. Pattern shows weekend deficit (-1.4h). Recommend consistent 10:30pm bedtime. Schedule Agent can set a reminder.`,
-      money: `Finance Agent tracking: 3 open positions, total stake 750 $VIVA. Highest risk: GPT-5 AGI market at 29% odds. Recommend partial hedge if stake >500. Current wealth ring: 58.`,
+    const newHistory = [...chatHistory, { role: 'user', content: q }]
+    setChatHistory(newHistory)
+    try {
+      const res = await twinApi.chat(q, newHistory)
+      const reply = res.response ?? res.message ?? res.content ?? ''
+      setTwinMsg(reply)
+      setChatHistory([...newHistory, { role: 'assistant', content: reply }])
+    } catch {
+      const responses: Record<string, string> = {
+        default: `Based on your current rings — Activity 91, Sleep 82, Nutrition 67 — your weakest signal is nutrition. I recommend a 16:8 eating window. Your calendar shows 3 afternoon meetings tomorrow; I can block 12-1pm as meal time. Shall I proceed?`,
+        sleep: `Your sleep ring is at 82. Average this week: 7.2h. Pattern shows weekend deficit (-1.4h). Recommend consistent 10:30pm bedtime. Schedule Agent can set a reminder.`,
+        money: `Finance Agent tracking: 3 open positions, total stake 750 $VIVA. Highest risk: GPT-5 AGI market at 29% odds. Recommend partial hedge if stake >500. Current wealth ring: 58.`,
+      }
+      const key = q.toLowerCase().includes('sleep') ? 'sleep' : q.toLowerCase().includes('money') || q.toLowerCase().includes('market') ? 'money' : 'default'
+      setTwinMsg(responses[key])
     }
-    const key = q.toLowerCase().includes('sleep') ? 'sleep' : q.toLowerCase().includes('money') || q.toLowerCase().includes('market') ? 'money' : 'default'
-    setTwinMsg(responses[key])
     setThinking(false)
     const newLog: AgentLog = {
       id: `l${Date.now()}`,

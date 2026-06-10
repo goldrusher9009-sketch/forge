@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, TIER_META } from '@/lib/store'
+import { tokens as tokensApi } from '@/lib/api'
 import clsx from 'clsx'
 
 const MARKETPLACE_LISTINGS = [
@@ -21,11 +22,31 @@ export default function TokenPage() {
   const [minting, setMinting] = useState(false)
   const [buyTarget, setBuyTarget] = useState<string | null>(null)
   const [txAmt, setTxAmt] = useState('10')
+  const [marketListings, setMarketListings] = useState(MARKETPLACE_LISTINGS)
 
   useEffect(() => {
     setMounted(true)
     if (!user) setUser(mockUser())
+    loadTokens()
   }, [])
+
+  async function loadTokens() {
+    try {
+      const list = await tokensApi.list()
+      if (Array.isArray(list) && list.length) {
+        setMarketListings(list.map((t: any) => ({
+          id: t.id,
+          creator: t.creator?.handle ?? t.creatorId ?? 'unknown',
+          symbol: t.symbol,
+          price: t.price ?? 0.1,
+          supply: t.totalSupply ?? 10000,
+          holders: t.holders ?? 0,
+          change: t.priceChange24h ?? 0,
+          desc: t.description ?? '',
+        })))
+      }
+    } catch { /* keep mock */ }
+  }
 
   if (!mounted) return null
   const u = user || mockUser()
@@ -38,13 +59,25 @@ export default function TokenPage() {
 
   async function mint() {
     setMinting(true)
-    await new Promise(r => setTimeout(r, 1800))
+    try {
+      const myToken = await tokensApi.mine()
+      if (myToken?.id) {
+        await tokensApi.mint(myToken.id, +mintAmt)
+      }
+    } catch {
+      await new Promise(r => setTimeout(r, 1800))
+    }
     setMinting(false)
   }
 
   async function buyToken() {
+    if (!buyTarget) return
     setBuying(true)
-    await new Promise(r => setTimeout(r, 1400))
+    try {
+      await tokensApi.buy(buyTarget, +txAmt)
+    } catch {
+      await new Promise(r => setTimeout(r, 1400))
+    }
     setBuying(false)
     setBuyTarget(null)
   }
@@ -224,9 +257,9 @@ export default function TokenPage() {
 
       {tab === 'marketplace' && (
         <div className="container-editorial py-8">
-          <p className="t-caption mb-6" style={{ fontSize: '0.625rem' }}>PERSONAL TOKEN MARKETPLACE · {MARKETPLACE_LISTINGS.length} TOKENS</p>
+          <p className="t-caption mb-6" style={{ fontSize: '0.625rem' }}>PERSONAL TOKEN MARKETPLACE · {marketListings.length} TOKENS</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {MARKETPLACE_LISTINGS.map(l => {
+            {marketListings.map(l => {
               const isPositive = l.change >= 0
               return (
                 <div
@@ -280,7 +313,7 @@ export default function TokenPage() {
         >
           <div className="w-full max-w-sm p-6 border border-white/10" style={{ background: 'var(--ink-dim)', borderRadius: '4px' }}>
             {(() => {
-              const l = MARKETPLACE_LISTINGS.find(x => x.id === buyTarget)!
+              const l = marketListings.find(x => x.id === buyTarget)!
               return (
                 <>
                   <div className="flex items-center justify-between mb-5">

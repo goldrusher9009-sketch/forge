@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAppStore, mockUser, RING_META, TIER_META } from '@/lib/store'
+import { auth } from '@/lib/api'
 import clsx from 'clsx'
 
 export default function HomeCanvas() {
@@ -14,8 +15,29 @@ export default function HomeCanvas() {
 
   useEffect(() => {
     setMounted(true)
-    if (!user) setUser(mockUser())
     const tick = setInterval(() => setTime(new Date()), 60000)
+    // Fetch real user from API; fallback to mock
+    auth.me().then(me => {
+      setUser({
+        ...mockUser(),
+        id: me.id,
+        handle: me.handle,
+        displayName: me.displayName,
+        avatarUrl: me.avatarUrl,
+        bio: me.bio,
+        vScore: me.vScore ?? 300,
+        tier: me.tier?.toLowerCase() ?? 'rising',
+        rings: {
+          sleep: me.sleepRing ?? 70,
+          nutrition: me.nutritionRing ?? 60,
+          activity: me.activityRing ?? 80,
+          social: me.socialRing ?? 65,
+          wealth: me.wealthRing ?? 50,
+        },
+      })
+    }).catch(() => {
+      if (!user) setUser(mockUser())
+    })
     return () => clearInterval(tick)
   }, [])
 

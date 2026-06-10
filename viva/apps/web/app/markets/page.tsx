@@ -1,16 +1,17 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, MOCK_MARKETS, type Market } from '@/lib/store'
+import { markets as marketsApi } from '@/lib/api'
 import clsx from 'clsx'
 
 const CATEGORIES = ['All', 'Crypto', 'Macro', 'AI', 'Tech', 'VIVA']
 
 export default function MarketsPage() {
   const { user, setUser } = useAppStore()
-  const [markets, setMarkets] = useState(MOCK_MARKETS)
+  const [markets, setMarkets] = useState<any[]>([])
   const [cat, setCat] = useState('All')
-  const [selected, setSelected] = useState<Market | null>(null)
-  const [side, setSide] = useState<'yes' | 'no'>('yes')
+  const [selected, setSelected] = useState<any | null>(null)
+  const [side, setSide] = useState<'YES' | 'NO'>('YES')
   const [amount, setAmount] = useState('100')
   const [staking, setStaking] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -19,33 +20,50 @@ export default function MarketsPage() {
   useEffect(() => {
     setMounted(true)
     if (!user) setUser(mockUser())
+    loadMarkets()
   }, [])
+
+  async function loadMarkets() {
+    try {
+      const data = await marketsApi.list()
+      setMarkets(data)
+    } catch {
+      setMarkets(MOCK_MARKETS as any)
+    }
+  }
 
   if (!mounted) return null
   const u = user || mockUser()
 
   const filtered = markets
-    .filter(m => cat === 'All' || m.category === cat)
-    .sort((a, b) => {
-      if (sort === 'volume') return b.volume - a.volume
-      if (sort === 'prob') return Math.abs(b.yesProb - 0.5) - Math.abs(a.yesProb - 0.5)
-      return new Date(a.closes).getTime() - new Date(b.closes).getTime()
+    .filter((m: any) => cat === 'All' || m.category === cat)
+    .sort((a: any, b: any) => {
+      if (sort === 'volume') return (b.totalVolume ?? b.volume ?? 0) - (a.totalVolume ?? a.volume ?? 0)
+      if (sort === 'prob') return Math.abs((b.yesProb ?? 0.5) - 0.5) - Math.abs((a.yesProb ?? 0.5) - 0.5)
+      return new Date(a.closesAt ?? a.closes ?? 0).getTime() - new Date(b.closesAt ?? b.closes ?? 0).getTime()
     })
 
   async function stake() {
     if (!selected || !amount) return
     setStaking(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setMarkets(prev => prev.map(m => m.id === selected.id
-      ? { ...m, myStake: (m.myStake || 0) + +amount, volume: m.volume + +amount }
-      : m
-    ))
+    try {
+      const res = await marketsApi.stake(selected.id, side, +amount)
+      setMarkets(prev => prev.map((m: any) => m.id === selected.id
+        ? { ...m, yesProb: res.newYesProb ?? m.yesProb, totalVolume: (m.totalVolume ?? 0) + +amount }
+        : m
+      ))
+    } catch {
+      setMarkets(prev => prev.map((m: any) => m.id === selected.id
+        ? { ...m, totalVolume: (m.totalVolume ?? m.volume ?? 0) + +amount }
+        : m
+      ))
+    }
     setStaking(false)
     setSelected(null)
   }
 
-  const totalStaked = markets.reduce((acc, m) => acc + (m.myStake || 0), 0)
-  const openPositions = markets.filter(m => m.myStake).length
+  const totalStaked = markets.reduce((acc: number, m: any) => acc + (m.myStake || 0), 0)
+  const openPositions = markets.filter((m: any) => m.myStake).length
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--ink)' }}>
@@ -195,7 +213,7 @@ export default function MarketsPage() {
 
             {/* YES/NO toggle */}
             <div className="flex gap-2 mb-5">
-              {(['yes', 'no'] as const).map(s => (
+              {(['YES', 'NO'] as const).map(s => (
                 <button
                   key={s}
                   onClick={() => setSide(s)}
@@ -203,13 +221,13 @@ export default function MarketsPage() {
                   style={{
                     borderRadius: 'var(--radius)',
                     background: side === s
-                      ? (s === 'yes' ? 'var(--ring-activity)' : 'var(--ring-wealth)')
+                      ? (s === 'YES' ? 'var(--ring-activity)' : 'var(--ring-wealth)')
                       : 'rgba(255,255,255,0.04)',
                     border: `1px solid ${side === s ? 'transparent' : 'rgba(255,255,255,0.1)'}`,
                     color: side === s ? 'white' : 'rgba(245,244,240,0.4)',
                   }}
                 >
-                  {s} — {s === 'yes' ? Math.round(selected.yesProb * 100) : Math.round((1 - selected.yesProb) * 100)}%
+                  {s} — {s === 'YES' ? Math.round(selected.yesProb * 100) : Math.round((1 - selected.yesProb) * 100)}%
                 </button>
               ))}
             </div>
@@ -245,7 +263,7 @@ export default function MarketsPage() {
               <div className="flex justify-between text-white/50">
                 <span>Potential payout</span>
                 <span className="font-semibold text-white/70">
-                  {(+amount / (side === 'yes' ? selected.yesProb : 1 - selected.yesProb)).toFixed(0)} $VIVA
+                  {(+amount / (side === 'YES' ? selected.yesProb : 1 - selected.yesProb)).toFixed(0)} $VIVA
                 </span>
               </div>
             </div>
@@ -254,7 +272,7 @@ export default function MarketsPage() {
               onClick={stake}
               disabled={!amount || staking}
               className="w-full py-3.5 font-semibold text-sm text-white transition-all disabled:opacity-40"
-              style={{ background: side === 'yes' ? 'var(--ring-activity)' : 'var(--ring-wealth)', borderRadius: 'var(--radius)' }}
+              style={{ background: side === 'YES' ? 'var(--ring-activity)' : 'var(--ring-wealth)', borderRadius: 'var(--radius)' }}
             >
               {staking ? 'Staking…' : `Stake ${amount} $VIVA on ${side.toUpperCase()}`}
             </button>
