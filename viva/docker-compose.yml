@@ -1,0 +1,186 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: viva_postgres
+    environment:
+      POSTGRES_DB: vivadb
+      POSTGRES_USER: viva
+      POSTGRES_PASSWORD: viva_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U viva -d vivadb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Backend API (Node/Express + Prisma) ───────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: viva_api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://viva:viva_password@postgres:5432/vivadb
+      JWT_ACCESS_SECRET: viva_access_jwt_secret_change_in_prod
+      JWT_REFRESH_SECRET: viva_refresh_jwt_secret_change_in_prod
+      PORT: 4000
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Frontend (Next.js) ────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    container_name: viva_web
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:4000
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api-gateway:
+    build: ./backend/api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-prod
+      MESSENGER_URL: http://messenger:3001
+      SOCIAL_URL: http://social:3002
+      MARKETPLACE_URL: http://marketplace:3003
+      FINANCE_URL: http://finance:3004
+      VSCORE_URL: http://vscore:3005
+      TWIN_URL: http://twin:3006
+      HEALTH_URL: http://health:3007
+      DATING_URL: http://dating:3008
+      ROOMS_URL: http://rooms:3009
+      NOTIFICATIONS_URL: http://notifications:3010
+    depends_on:
+      - redis
+      - postgres
+
+  messenger:
+    build: ./backend/messenger
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+    depends_on: [postgres, redis]
+
+  social:
+    build: ./backend/social
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+      IPFS_URL: https://ipfs.infura.io:5001
+    depends_on: [postgres, redis]
+
+  marketplace:
+    build: ./backend/marketplace
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+    depends_on: [postgres, redis]
+
+  finance:
+    build: ./backend/finance
+    environment:
+      PORT: 3004
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+      BASE_RPC_URL: https://sepolia.base.org
+    depends_on: [postgres, redis]
+
+  vscore:
+    build: ./backend/vscore
+    environment:
+      PORT: 3005
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+    depends_on: [postgres, redis]
+
+  twin:
+    build: ./backend/twin
+    environment:
+      PORT: 3006
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on: [postgres, redis]
+
+  health:
+    build: ./backend/health
+    environment:
+      PORT: 3007
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+    depends_on: [postgres, redis]
+
+  dating:
+    build: ./backend/dating
+    environment:
+      PORT: 3008
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+    depends_on: [postgres, redis]
+
+  rooms:
+    build: ./backend/rooms
+    environment:
+      PORT: 3009
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_SECRET: ${LIVEKIT_SECRET}
+    depends_on: [postgres, redis]
+
+  notifications:
+    build: ./backend/notifications
+    environment:
+      PORT: 3010
+      DATABASE_URL: postgresql://viva:vivadev@postgres:5432/viva
+      REDIS_URL: redis://redis:6379
+    depends_on: [postgres, redis]
+
+volumes:
+  postgres_data:
+  redis_data:

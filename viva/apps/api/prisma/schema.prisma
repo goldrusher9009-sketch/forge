@@ -1,0 +1,346 @@
+// VIVA Database Schema — Prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS & IDENTITY ───────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(uuid())
+  handle        String   @unique
+  displayName   String
+  email         String   @unique
+  passwordHash  String
+  avatarUrl     String?
+  bio           String?
+  walletAddress String?  @unique
+  vScore        Int      @default(0)
+  tier          Tier     @default(SEED)
+
+  // Ring values 0-100
+  sleepRing      Int @default(0)
+  nutritionRing  Int @default(0)
+  activityRing   Int @default(0)
+  socialRing     Int @default(0)
+  wealthRing     Int @default(0)
+
+  // Token
+  tokenSymbol    String?
+  tokenSupply    Int     @default(0)
+  tokenPrice     Float   @default(0.01)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  posts         Post[]
+  sentMessages  Message[]    @relation("SentMessages")
+  threads       ThreadMember[]
+  healthLogs    HealthLog[]
+  zkProofs      ZKProof[]
+  stakePositions MarketPosition[]
+  tokenHoldings TokenHolding[]
+  ownedToken    Token?
+  likedPosts    PostLike[]
+  roomMembers   RoomMember[]
+  matchesA      Match[]      @relation("MatchUserA")
+  matchesB      Match[]      @relation("MatchUserB")
+  agentTasks    AgentTask[]
+  refreshTokens RefreshToken[]
+}
+
+enum Tier {
+  SEED
+  RISING
+  STABLE
+  GUARDIAN
+  SOVEREIGN
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── FEED / POSTS ────────────────────────────────────────────────────
+
+model Post {
+  id          String   @id @default(uuid())
+  authorId    String
+  content     String
+  mediaUrl    String?
+  category    String   @default("general")
+  attentionScore Int   @default(0)
+  reachCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes  PostLike[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model PostLike {
+  userId String
+  postId String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+}
+
+// ─── MESSAGING ───────────────────────────────────────────────────────
+
+model Thread {
+  id        String   @id @default(uuid())
+  name      String?
+  isGroup   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  ThreadMember[]
+  messages Message[]
+}
+
+model ThreadMember {
+  threadId  String
+  userId    String
+  joinedAt  DateTime @default(now())
+  lastReadAt DateTime?
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, userId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  threadId  String
+  senderId  String
+  content   String
+  encrypted Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User   @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+}
+
+// ─── DATING / MATCHING ───────────────────────────────────────────────
+
+model Match {
+  id            String      @id @default(uuid())
+  userAId       String
+  userBId       String
+  status        MatchStatus @default(PENDING)
+  compatibility Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  userA User @relation("MatchUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User @relation("MatchUserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+enum MatchStatus {
+  PENDING
+  MATCHED
+  PASSED
+}
+
+// ─── PREDICTION MARKETS ──────────────────────────────────────────────
+
+model Market {
+  id          String       @id @default(uuid())
+  title       String
+  description String
+  category    String       @default("general")
+  yesProb     Float        @default(0.5)
+  totalVolume Int          @default(0)
+  closesAt    DateTime
+  resolvedAt  DateTime?
+  resolution  Boolean?
+  createdAt   DateTime     @default(now())
+
+  positions   MarketPosition[]
+
+  @@index([category])
+  @@index([closesAt])
+}
+
+model MarketPosition {
+  id        String   @id @default(uuid())
+  marketId  String
+  userId    String
+  side      String   // "YES" | "NO"
+  amount    Int
+  price     Float
+  payout    Float?
+  settledAt DateTime?
+  createdAt DateTime @default(now())
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([marketId])
+  @@index([userId])
+}
+
+// ─── HEALTH / ZK PROOFS ──────────────────────────────────────────────
+
+model HealthLog {
+  id          String   @id @default(uuid())
+  userId      String
+  ring        String   // sleep/nutrition/activity/social/wealth
+  value       Float
+  unit        String?
+  note        String?
+  loggedAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, ring])
+  @@index([loggedAt])
+}
+
+model ZKProof {
+  id          String    @id @default(uuid())
+  userId      String
+  proofType   String    // health/income/location/identity
+  status      ProofStatus @default(PENDING)
+  commitment  String?   // ZK commitment hash
+  sbtTokenId  String?   // on-chain SBT token ID
+  mintedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, proofType])
+}
+
+enum ProofStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+// ─── TOKENS / MARKETPLACE ────────────────────────────────────────────
+
+model Token {
+  id          String   @id @default(uuid())
+  ownerId     String   @unique
+  symbol      String   @unique
+  name        String
+  supply      Int      @default(0)
+  price       Float    @default(0.01)
+  contractAddr String?
+  createdAt   DateTime @default(now())
+
+  owner    User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  holdings TokenHolding[]
+
+  @@index([symbol])
+}
+
+model TokenHolding {
+  id        String   @id @default(uuid())
+  tokenId   String
+  userId    String
+  amount    Int
+  avgPrice  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  token Token @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tokenId, userId])
+}
+
+// ─── AUDIO ROOMS ─────────────────────────────────────────────────────
+
+model Room {
+  id            String     @id @default(uuid())
+  title         String
+  hostId        String
+  topic         String?
+  isLive        Boolean    @default(false)
+  minVScore     Int        @default(0)
+  scheduledFor  DateTime?
+  endedAt       DateTime?
+  createdAt     DateTime   @default(now())
+
+  members   RoomMember[]
+
+  @@index([isLive])
+  @@index([scheduledFor])
+}
+
+model RoomMember {
+  roomId    String
+  userId    String
+  role      RoomRole @default(LISTENER)
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  isMuted   Boolean  @default(true)
+  handRaised Boolean @default(false)
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+}
+
+enum RoomRole {
+  HOST
+  SPEAKER
+  LISTENER
+}
+
+// ─── AI TWIN / AGENTS ────────────────────────────────────────────────
+
+model AgentTask {
+  id          String      @id @default(uuid())
+  userId      String
+  agentType   String      // schedule/finance/health/social/market/search
+  title       String
+  description String?
+  status      TaskStatus  @default(PENDING)
+  autonomy    Int         @default(1) // L1/L2/L3
+  result      String?
+  scheduledFor DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}

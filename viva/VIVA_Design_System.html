@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIVA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#04040A;
+  --paper:#F5F4F0;
+  --smoke:#E8E7E2;
+  --ash:#C4C3BC;
+  --fog:#8A8980;
+  --ghost:rgba(4,4,10,.06);
+  --v:#7C3AED;
+  --c:#0891B2;
+  --g:#059669;
+  --a:#D97706;
+  --r:#E11D48;
+  --o:#EA580C;
+  --w:#FFFFFF;
+  /* ring colors */
+  --ring-sleep:#7C3AED;
+  --ring-nutrition:#0891B2;
+  --ring-activity:#059669;
+  --ring-social:#D97706;
+  --ring-wealth:#E11D48;
+  --sp:cubic-bezier(.34,1.56,.64,1);
+  --out:cubic-bezier(.16,1,.3,1);
+  --time:.22s;
+}
+
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--v);color:#fff}
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12)}
+
+/* ── CURSOR ── */
+#cur{
+  position:fixed;width:10px;height:10px;border-radius:50%;
+  background:var(--paper);pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);transition:transform .08s,width .25s var(--out),height .25s var(--out),opacity .25s;
+  mix-blend-mode:difference;
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:56px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  background:rgba(4,4,10,.92);
+  backdrop-filter:blur(24px);
+}
+.logo{
+  font-size:13px;font-weight:700;letter-spacing:6px;text-transform:uppercase;
+  color:var(--paper);opacity:.9;flex-shrink:0;
+}
+.nav-tabs{display:flex;gap:0;overflow:hidden}
+.nt{
+  padding:8px 14px;font-size:10.5px;font-weight:500;letter-spacing:1.5px;
+  text-transform:uppercase;color:rgba(245,244,240,.55);cursor:pointer;
+  transition:color var(--time);border:none;background:none;
+  position:relative;white-space:nowrap;
+}
+.nt::after{
+  content:'';position:absolute;bottom:0;left:14px;right:14px;height:1px;
+  background:var(--v);transform:scaleX(0);transform-origin:left;
+  transition:transform .3s var(--out);
+}
+.nt:hover{color:rgba(245,244,240,.8)}
+.nt.on{color:var(--paper)}
+.nt.on::after{transform:scaleX(1)}
+
+/* overflow "more" button */
+.nav-more{
+  position:relative;flex-shrink:0;margin-left:4px;
+}
+.nav-more-btn{
+  padding:8px 14px;font-size:10.5px;font-weight:600;letter-spacing:1.5px;
+  color:rgba(245,244,240,.55);cursor:pointer;background:none;border:none;
+  white-space:nowrap;transition:color .2s;
+}
+.nav-more-btn:hover,.nav-more.open .nav-more-btn{color:var(--paper)}
+.nav-drawer{
+  display:none;position:absolute;top:100%;right:0;
+  background:rgba(4,4,10,.97);border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(24px);min-width:160px;
+  flex-direction:column;
+}
+.nav-more.open .nav-drawer{display:flex}
+.nd-item{
+  padding:13px 20px;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(245,244,240,.55);cursor:pointer;transition:all .15s;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.nd-item:last-child{border-bottom:none}
+.nd-item:hover{color:var(--paper);background:rgba(255,255,255,.04)}
+.nd-item.on{color:var(--paper)}
+
+/* ── MOBILE BOTTOM NAV ── */
+#mob-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(4,4,10,.96);
+  border-top:1px solid rgba(255,255,255,.09);
+  backdrop-filter:blur(24px);
+  height:68px;padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.mob-tabs{display:flex;height:68px}
+.mt{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;cursor:pointer;transition:all .2s;
+  color:rgba(245,244,240,.38);border:none;background:none;
+  padding:0;
+}
+.mt.on{color:var(--paper)}
+.mt-ico{font-size:20px;line-height:1}
+.mt-lbl{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600}
+
+/* ── PAGES ── */
+.page{display:none;min-height:100vh;padding-top:56px}
+.page.on{display:block}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  nav{padding:0 20px}
+  .nt.hide-900{display:none}
+}
+@media(max-width:640px){
+  nav{display:none}
+  #mob-nav{display:block}
+  .page{padding-top:0;padding-bottom:68px}
+  .hero-inner{grid-template-columns:1fr}
+  .hero-left{padding:48px 24px;border-right:none;border-bottom:1px solid rgba(255,255,255,.07)}
+  .hero-right{padding:48px 24px}
+  .ed-shell{grid-template-columns:1fr}
+  .ed-aside{display:none}
+  .ed-main{padding:32px 20px 60px}
+  .ed-title{font-size:clamp(36px,10vw,56px)}
+  .dating-split{grid-template-columns:1fr}
+  .twin-grid{grid-template-columns:1fr 1fr}
+  .zk-panels{grid-template-columns:1fr}
+  .mkt-grid{grid-template-columns:1fr 1fr}
+  .audio-stage{grid-template-columns:repeat(3,1fr)}
+  .msg-grid{grid-template-columns:1fr}
+  .msg-left{display:none}
+  .yt-header{grid-template-columns:1fr}
+  .vring-wrap{width:220px;height:220px}
+  .vring-num{font-size:52px}
+  .modules-strip{display:none}
+  .hero-title{font-size:clamp(52px,13vw,80px)}
+}
+
+/* ══════════════════════════════════════════
+   01 — HERO / MANIFESTO
+══════════════════════════════════════════ */
+#p-home{
+  display:none;min-height:100vh;padding-top:56px;
+  position:relative;overflow:hidden;
+}
+#p-home.on{display:block}
+
+.hero-inner{
+  display:grid;grid-template-columns:1fr 1fr;
+  min-height:calc(100vh - 56px);
+  position:relative;
+}
+
+/* Left: manifesto text */
+.hero-left{
+  padding:80px 48px 80px 72px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  border-right:1px solid rgba(255,255,255,.07);
+}
+.hero-eyebrow{
+  font-size:9px;letter-spacing:4px;text-transform:uppercase;
+  color:rgba(245,244,240,.32);margin-bottom:auto;
+}
+.hero-title{
+  font-size:clamp(64px,7.5vw,120px);
+  font-weight:800;line-height:.88;letter-spacing:-4px;
+  margin:auto 0;
+}
+.hero-title em{
+  font-style:italic;font-weight:300;letter-spacing:-2px;
+  color:rgba(245,244,240,.38);
+}
+.hero-sub-row{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:24px;margin-top:64px;
+}
+.hero-sub{
+  font-size:14px;line-height:1.65;color:rgba(245,244,240,.52);
+  max-width:320px;font-weight:400;
+}
+.hero-cta{
+  padding:13px 28px;border-radius:0;
+  font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  background:var(--paper);color:var(--ink);border:none;cursor:pointer;
+  white-space:nowrap;flex-shrink:0;
+  transition:all .2s;
+}
+.hero-cta:hover{background:#fff;transform:translateY(-2px)}
+
+/* Right: rotating ring + modules */
+.hero-right{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:80px 48px;position:relative;overflow:hidden;
+}
+
+/* Giant V ring */
+.vring-wrap{position:relative;width:280px;height:280px;margin-bottom:48px}
+.vring-svg{width:100%;height:100%;transform:rotate(-90deg)}
+.vr-track{fill:none;stroke:rgba(245,244,240,.06);stroke-width:1}
+.vr-fill{fill:none;stroke-linecap:butt;transition:stroke-dashoffset 2s var(--out)}
+.vring-center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.vring-num{
+  font-size:72px;font-weight:800;letter-spacing:-4px;line-height:1;
+  color:var(--paper);text-shadow:0 0 40px rgba(124,58,237,.5);
+}
+.vring-label{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(245,244,240,.32);margin-top:4px}
+
+/* 9 modules strip */
+.modules-strip{
+  display:flex;gap:0;border:1px solid rgba(255,255,255,.08);
+  width:100%;overflow-x:auto;
+}
+.mod-pill{
+  padding:14px 16px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(245,244,240,.28);cursor:pointer;white-space:nowrap;
+  border-right:1px solid rgba(255,255,255,.06);
+  transition:all .2s;flex:1;text-align:center;
+}
+.mod-pill:last-child{border-right:none}
+.mod-pill:hover,.mod-pill.on{color:var(--paper);background:rgba(255,255,255,.04)}
+
+/* ══════════════════════════════════════════
+   02 — MODULE SCREENS (shared shell)
+══════════════════════════════════════════ */
+.mod-screen{
+  display:none;min-height:100vh;padding-top:56px;
+}
+.mod-screen.on{display:block}
+
+/* editorial layout: left label column + right content */
+.ed-shell{
+  display:grid;grid-template-columns:200px 1fr;
+  min-height:calc(100vh - 56px);
+}
+@media(max-width:700px){.ed-shell{grid-template-columns:1fr}}
+
+.ed-aside{
+  padding:60px 32px 60px 48px;
+  border-right:1px solid rgba(255,255,255,.07);
+  display:flex;flex-direction:column;gap:0;
+  position:sticky;top:56px;height:calc(100vh - 56px);overflow:hidden;
+}
+.ed-mod-num{font-size:72px;font-weight:800;letter-spacing:-3px;line-height:1;color:rgba(255,255,255,.06)}
+.ed-mod-name{
+  font-size:9px;letter-spacing:4px;text-transform:uppercase;
+  color:rgba(245,244,240,.32);margin-top:auto;writing-mode:vertical-rl;
+  transform:rotate(180deg);white-space:nowrap;
+}
+
+.ed-main{padding:60px 64px 80px}
+@media(max-width:900px){.ed-main{padding:40px 28px 60px}}
+
+.ed-title{
+  font-size:clamp(44px,6vw,88px);
+  font-weight:800;letter-spacing:-3px;line-height:.9;
+  margin-bottom:8px;
+}
+.ed-em{
+  font-style:italic;font-weight:300;
+  color:rgba(245,244,240,.35);letter-spacing:-1px;
+}
+.ed-rule{
+  width:48px;height:1px;background:rgba(255,255,255,.18);margin:28px 0;
+}
+.ed-desc{
+  font-size:15px;line-height:1.7;color:rgba(245,244,240,.5);
+  max-width:520px;margin-bottom:56px;font-weight:400;
+}
+
+/* ── CANVAS MODULE (01) ── */
+.canvas-rings{display:flex;flex-direction:column;gap:0;border:1px solid rgba(255,255,255,.07)}
+.cr-row{
+  display:grid;grid-template-columns:120px 1fr 56px;align-items:center;gap:24px;
+  padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.06);
+  transition:background .2s;cursor:pointer;
+}
+.cr-row:last-child{border-bottom:none}
+.cr-row:hover{background:rgba(255,255,255,.02)}
+.cr-name{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,244,240,.38)}
+.cr-bar{height:2px;background:rgba(255,255,255,.07);position:relative;overflow:visible;border-radius:0}
+.cr-fill{position:absolute;top:0;left:0;height:2px;transition:width 1.6s var(--out)}
+.cr-dot{
+  position:absolute;top:50%;right:-2px;transform:translateY(-50%);
+  width:6px;height:6px;border-radius:50%;
+}
+.cr-val{font-size:22px;font-weight:800;text-align:right;letter-spacing:-1px}
+
+.vscore-row{
+  display:flex;align-items:center;gap:32px;
+  padding:32px 24px;border:1px solid rgba(255,255,255,.07);
+  border-top:none;margin-top:0;
+}
+.vs-big{font-size:80px;font-weight:800;letter-spacing:-4px;line-height:1;color:var(--v)}
+.vs-info{display:flex;flex-direction:column;gap:4px}
+.vs-tier{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(245,244,240,.32)}
+.vs-rank{font-size:13px;color:rgba(245,244,240,.45)}
+
+/* ── FEED MODULE (02) ── */
+.feed-list{display:flex;flex-direction:column;gap:0;border:1px solid rgba(255,255,255,.07)}
+.fi{
+  padding:28px 24px;border-bottom:1px solid rgba(255,255,255,.06);
+  cursor:pointer;transition:background .2s;position:relative;
+}
+.fi:last-child{border-bottom:none}
+.fi:hover{background:rgba(255,255,255,.02)}
+.fi-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;gap:12px}
+.fi-who{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,244,240,.38)}
+.fi-earn{font-size:11px;letter-spacing:1px;color:rgba(245,244,240,.38)}
+.fi-body{font-size:18px;line-height:1.5;font-weight:500;letter-spacing:-.3px;margin-bottom:20px}
+.fi-body em{font-style:italic;color:rgba(245,244,240,.5)}
+.fi-track{height:1px;background:rgba(255,255,255,.07);position:relative;margin-bottom:16px}
+.fi-prog{position:absolute;top:0;left:0;height:1px;background:var(--paper);transition:width 1.2s var(--out)}
+.fi-foot{display:flex;align-items:center;justify-content:space-between}
+.fi-pct{font-size:10px;letter-spacing:2px;color:rgba(245,244,240,.28)}
+.fi-btn{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+  padding:8px 20px;background:var(--paper);color:var(--ink);
+  border:none;cursor:pointer;transition:all .2s;
+}
+.fi-btn:hover{background:#fff;transform:translateY(-1px)}
+.fi-ghost{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(245,244,240,.28);padding:8px 0;cursor:pointer;
+  transition:color .2s;
+}
+.fi-ghost:hover{color:var(--paper)}
+
+/* ── DATING MODULE (03) ── */
+.dating-split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.07)}
+@media(max-width:700px){.dating-split{grid-template-columns:1fr}}
+.date-panel{background:var(--ink);padding:36px 32px}
+.dp-label{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(245,244,240,.28);margin-bottom:20px}
+.dp-name{font-size:48px;font-weight:800;letter-spacing:-2px;line-height:.9;margin-bottom:6px}
+.dp-sub{font-size:13px;color:rgba(245,244,240,.38);margin-bottom:28px}
+.dp-vs{
+  display:inline-flex;align-items:baseline;gap:8px;
+  padding:10px 16px;border:1px solid rgba(255,255,255,.1);margin-bottom:24px;
+}
+.dp-vsn{font-size:28px;font-weight:800;letter-spacing:-1px}
+.dp-vsl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(245,244,240,.32)}
+.dp-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px}
+.dp-tag{
+  padding:6px 12px;border:1px solid rgba(255,255,255,.1);
+  font-size:10px;letter-spacing:1px;color:rgba(245,244,240,.45);
+}
+.dp-match-num{font-size:80px;font-weight:800;letter-spacing:-4px;line-height:1;margin-bottom:4px}
+.dp-match-label{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(245,244,240,.28);margin-bottom:24px}
+.dp-bars{display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.dpb-row{display:flex;align-items:center;gap:12px}
+.dpb-nm{font-size:10px;letter-spacing:1px;color:rgba(245,244,240,.32);width:56px}
+.dpb-track{flex:1;height:1px;background:rgba(255,255,255,.08)}
+.dpb-fill{height:1px;background:var(--paper);transition:width 1.4s var(--out)}
+.dp-actions{display:flex;gap:8px}
+.dp-act{
+  flex:1;padding:14px;text-align:center;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+  cursor:pointer;transition:all .2s;border:none;
+}
+.dp-pass{background:rgba(255,255,255,.05);color:rgba(245,244,240,.45)}
+.dp-pass:hover{background:rgba(255,255,255,.1);color:var(--paper)}
+.dp-like{background:var(--paper);color:var(--ink)}
+.dp-like:hover{background:#fff;transform:translateY(-1px)}
+
+/* ── AI TWIN MODULE (04) ── */
+.twin-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,.07)}
+@media(max-width:800px){.twin-grid{grid-template-columns:1fr 1fr}}
+.twin-cell{background:var(--ink);padding:28px 24px;position:relative}
+.tc-num{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(245,244,240,.2);margin-bottom:12px}
+.tc-name{font-size:17px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+.tc-status{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
+.tc-desc{font-size:12px;line-height:1.6;color:rgba(245,244,240,.4)}
+.tc-dot{
+  position:absolute;top:28px;right:24px;
+  width:6px;height:6px;border-radius:50%;
+}
+.dot-on{background:#10B981;box-shadow:0 0 8px #10B981}
+.dot-semi{background:#F59E0B;box-shadow:0 0 8px #F59E0B}
+.dot-off{background:rgba(255,255,255,.2)}
+
+.twin-autonomy{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:rgba(255,255,255,.07);border-top:1px solid rgba(255,255,255,.07);
+  margin-top:1px;
+}
+.ta-cell{
+  background:var(--ink);padding:24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  gap:8px;cursor:pointer;transition:background .2s;
+}
+.ta-cell:hover,.ta-cell.on{background:rgba(255,255,255,.03)}
+.ta-cell.on .ta-lvl{color:var(--paper)}
+.ta-lvl{font-size:28px;font-weight:800;letter-spacing:-1px;color:rgba(245,244,240,.25);transition:color .2s}
+.ta-name{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(245,244,240,.28)}
+.ta-desc{font-size:11px;color:rgba(245,244,240,.35);line-height:1.5}
+
+/* ── PREDICTION MODULE (05) ── */
+.pred-list{display:flex;flex-direction:column;gap:0;border:1px solid rgba(255,255,255,.07)}
+.pi{padding:28px 24px;border-bottom:1px solid rgba(255,255,255,.06);transition:background .2s;cursor:pointer}
+.pi:last-child{border-bottom:none}
+.pi:hover{background:rgba(255,255,255,.02)}
+.pi-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.pi-q{font-size:18px;font-weight:600;letter-spacing:-.4px;flex:1}
+.pi-odds{font-size:32px;font-weight:800;letter-spacing:-1px}
+.pi-sub{font-size:11px;color:rgba(245,244,240,.35);letter-spacing:.3px;margin-bottom:16px}
+.pi-bar{height:2px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}
+.pi-yes{position:absolute;top:0;left:0;height:100%;background:var(--paper);transition:width 1.4s var(--out)}
+.pi-foot{display:flex;justify-content:space-between;margin-top:12px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,244,240,.3)}
+
+/* ── YOUTOKEN MODULE (06) ── */
+.yt-header{
+  display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  background:rgba(255,255,255,.07);margin-bottom:1px;
+}
+.yt-cell{background:var(--ink);padding:28px 32px}
+.yt-label{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(245,244,240,.28);margin-bottom:8px}
+.yt-big{font-size:56px;font-weight:800;letter-spacing:-3px;line-height:1}
+.yt-sub{font-size:12px;color:rgba(245,244,240,.38);margin-top:6px}
+.curve-wrap{
+  border:1px solid rgba(255,255,255,.07);padding:32px;
+  position:relative;background:var(--ink);
+}
+.curve-svg{width:100%;height:140px;overflow:visible}
+.curve-line{fill:none;stroke:var(--paper);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.curve-fill{fill:url(#curvGrad)}
+.holders-list{display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(255,255,255,.07);margin-top:1px}
+.hl-row{
+  display:grid;grid-template-columns:28px 1fr auto auto;align-items:center;gap:16px;
+  padding:16px 32px;border-bottom:1px solid rgba(255,255,255,.05);
+}
+.hl-row:last-child{border-bottom:none}
+.hl-rank{font-size:10px;color:rgba(245,244,240,.25);text-align:right}
+.hl-name{font-size:13px;font-weight:500}
+.hl-amt{font-size:13px;font-weight:700}
+.hl-pct{font-size:10px;color:rgba(245,244,240,.35)}
+
+/* ── HEALTH / ZK (07) ── */
+.zk-panels{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.07)}
+@media(max-width:700px){.zk-panels{grid-template-columns:1fr}}
+.zk-cell{background:var(--ink);padding:36px 32px}
+.zk-n{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(245,244,240,.28);margin-bottom:16px}
+.zk-big{font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;margin-bottom:8px}
+.zk-desc{font-size:12px;color:rgba(245,244,240,.38);line-height:1.6;margin-bottom:24px}
+.zk-proof{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;border:1px solid rgba(255,255,255,.1);
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,244,240,.38);
+  width:fit-content;
+}
+.zk-tick{color:var(--paper)}
+
+/* ── MARKETPLACE (08) ── */
+.mkt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.07)}
+@media(max-width:800px){.mkt-grid{grid-template-columns:repeat(2,1fr)}}
+.mkt-item{
+  background:var(--ink);padding:24px;cursor:pointer;
+  transition:background .2s;
+}
+.mkt-item:hover{background:rgba(255,255,255,.03)}
+.mkt-cat{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(245,244,240,.25);margin-bottom:12px}
+.mkt-name{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+.mkt-seller{font-size:11px;color:rgba(245,244,240,.35);margin-bottom:16px}
+.mkt-price{font-size:28px;font-weight:800;letter-spacing:-1px}
+.mkt-unit{font-size:10px;color:rgba(245,244,240,.35);margin-top:2px;letter-spacing:1px}
+
+/* ── AUDIO ROOM (09) ── */
+.audio-wrap{display:flex;flex-direction:column;gap:1px}
+.audio-stage{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:1px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.07);
+}
+.spk{
+  background:var(--ink);padding:24px 16px;text-align:center;
+  position:relative;cursor:pointer;transition:background .2s;
+}
+.spk:hover{background:rgba(255,255,255,.03)}
+.spk-av{
+  width:52px;height:52px;border-radius:50%;margin:0 auto 12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:800;
+  border:1px solid rgba(255,255,255,.1);
+  position:relative;
+}
+.spk-wave{
+  position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.15);
+  animation:wave 1.8s ease-in-out infinite;
+}
+.spk-wave2{animation-delay:.5s;inset:-8px}
+@keyframes wave{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:0;transform:scale(1.1)}}
+.spk-name{font-size:11px;font-weight:600;margin-bottom:3px}
+.spk-role{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,244,240,.28)}
+.spk-earn{font-size:10px;color:rgba(245,244,240,.35);margin-top:6px}
+
+.audio-controls{
+  border:1px solid rgba(255,255,255,.07);border-top:none;
+  padding:20px 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+}
+.ac-info{flex:1}
+.ac-title{font-size:15px;font-weight:600;letter-spacing:-.3px;margin-bottom:2px}
+.ac-sub{font-size:11px;color:rgba(245,244,240,.35)}
+.ac-btns{display:flex;gap:8px}
+.ac-btn{
+  padding:10px 20px;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  font-weight:700;border:none;cursor:pointer;transition:all .2s;
+}
+.ac-pri{background:var(--paper);color:var(--ink)}
+.ac-pri:hover{background:#fff}
+.ac-sec{background:rgba(255,255,255,.06);color:rgba(245,244,240,.55)}
+.ac-sec:hover{background:rgba(255,255,255,.1);color:var(--paper)}
+.ac-earn{
+  font-size:24px;font-weight:800;letter-spacing:-1px;
+  white-space:nowrap;color:rgba(245,244,240,.38);
+}
+
+/* ── MESSENGER (10 / bonus) ── */
+.msg-grid{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 56px);gap:0}
+@media(max-width:700px){.msg-grid{grid-template-columns:1fr}}
+.msg-left{border-right:1px solid rgba(255,255,255,.07);overflow-y:auto}
+.msg-head{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.07);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(245,244,240,.3)}
+.msg-item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.04);
+  cursor:pointer;transition:background .15s;
+}
+.msg-item:hover,.msg-item.on{background:rgba(255,255,255,.03)}
+.msg-av{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.1);
+}
+.msg-who{font-size:12px;font-weight:600;margin-bottom:2px}
+.msg-preview{font-size:11px;color:rgba(245,244,240,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.msg-right{display:flex;flex-direction:column}
+.msg-thread{flex:1;padding:28px 32px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.bubble{max-width:360px;padding:12px 16px;font-size:14px;line-height:1.5}
+.bub-them{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);align-self:flex-start}
+.bub-me{background:var(--paper);color:var(--ink);align-self:flex-end}
+.bub-earn{
+  align-self:center;
+  padding:8px 16px;border:1px solid rgba(255,255,255,.12);
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,244,240,.38);
+}
+.msg-compose{
+  border-top:1px solid rgba(255,255,255,.07);padding:16px 24px;
+  display:flex;align-items:center;gap:12px;
+}
+.msg-input{
+  flex:1;background:none;border:none;outline:none;
+  font-size:14px;color:var(--paper);
+  font-family:inherit;
+}
+.msg-input::placeholder{color:rgba(245,244,240,.2)}
+.msg-send{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+  padding:9px 18px;background:var(--paper);color:var(--ink);border:none;cursor:pointer;
+  transition:all .2s;
+}
+.msg-send:hover{background:#fff}
+
+/* ── DESIGN SYSTEM (tokens) ── */
+.tok-wrap{max-width:100%;display:flex;flex-direction:column;gap:1px}
+.tok-row{display:grid;gap:1px;background:rgba(255,255,255,.07)}
+
+/* ── NOTIFICATIONS ── */
+#toast-wrap{position:fixed;bottom:32px;right:40px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 20px;
+  background:rgba(245,244,240,.95);color:var(--ink);
+  animation:tin .32s var(--sp) forwards,tout .28s var(--out) 3.6s forwards;
+  pointer-events:all;min-width:240px;
+}
+@keyframes tin{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:1;transform:none}}
+@keyframes tout{0%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+.t-ico{font-size:16px}
+.t-body{flex:1}
+.t-title{font-size:12px;font-weight:700;letter-spacing:.3px}
+.t-sub{font-size:11px;color:rgba(4,4,10,.5);margin-top:1px}
+.t-amt{font-size:14px;font-weight:800;letter-spacing:-.5px}
+
+/* ── PARTICLES ── */
+#ptc{position:fixed;pointer-events:none;z-index:9998}
+.pt{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--paper);animation:pfl .9s var(--out) forwards}
+@keyframes pfl{0%{opacity:1;transform:translate(0,0)}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="toast-wrap"></div>
+<div id="ptc"></div>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="logo">VIVA</div>
+  <div class="nav-tabs" id="nav-tabs">
+    <div class="nt on" data-page="home" onclick="go('home')">Index</div>
+    <div class="nt" data-page="canvas" onclick="go('canvas')">Canvas</div>
+    <div class="nt" data-page="feed" onclick="go('feed')">Feed</div>
+    <div class="nt" data-page="dating" onclick="go('dating')">Dating</div>
+    <div class="nt" data-page="twin" onclick="go('twin')">Twin</div>
+    <div class="nt hide-900" data-page="predict" onclick="go('predict')">Markets</div>
+    <div class="nt hide-900" data-page="youtoken" onclick="go('youtoken')">YouToken</div>
+    <div class="nt hide-900" data-page="health" onclick="go('health')">Health</div>
+    <div class="nt hide-900" data-page="market" onclick="go('market')">Shop</div>
+    <div class="nt hide-900" data-page="audio" onclick="go('audio')">Audio</div>
+    <div class="nt hide-900" data-page="msg" onclick="go('msg')">Messages</div>
+  </div>
+  <!-- overflow drawer -->
+  <div class="nav-more" id="nav-more">
+    <button class="nav-more-btn" onclick="toggleMore()">···</button>
+    <div class="nav-drawer" id="nav-drawer">
+      <div class="nd-item" data-page="predict" onclick="go('predict');toggleMore()">Markets</div>
+      <div class="nd-item" data-page="youtoken" onclick="go('youtoken');toggleMore()">YouToken</div>
+      <div class="nd-item" data-page="health" onclick="go('health');toggleMore()">Health</div>
+      <div class="nd-item" data-page="market" onclick="go('market');toggleMore()">Shop</div>
+      <div class="nd-item" data-page="audio" onclick="go('audio');toggleMore()">Audio</div>
+      <div class="nd-item" data-page="msg" onclick="go('msg');toggleMore()">Messages</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ MOBILE BOTTOM NAV ══ -->
+<div id="mob-nav">
+  <div class="mob-tabs">
+    <button class="mt on" data-page="home" onclick="go('home')">
+      <div class="mt-ico">⌂</div><div class="mt-lbl">Home</div>
+    </button>
+    <button class="mt" data-page="canvas" onclick="go('canvas')">
+      <div class="mt-ico">◎</div><div class="mt-lbl">Canvas</div>
+    </button>
+    <button class="mt" data-page="feed" onclick="go('feed')">
+      <div class="mt-ico">⚡</div><div class="mt-lbl">Feed</div>
+    </button>
+    <button class="mt" data-page="twin" onclick="go('twin')">
+      <div class="mt-ico">◈</div><div class="mt-lbl">Twin</div>
+    </button>
+    <button class="mt" data-page="more-mob" onclick="openMobMore()">
+      <div class="mt-ico">···</div><div class="mt-lbl">More</div>
+    </button>
+  </div>
+</div>
+
+<!-- mobile more sheet -->
+<div id="mob-sheet" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(4,4,10,.97);padding:56px 24px 96px;overflow-y:auto">
+  <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(245,244,240,.32);margin-bottom:32px">All Modules</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.07)">
+    <div onclick="go('dating');closeMobSheet()" style="background:var(--ink);padding:24px 20px;cursor:pointer"><div style="font-size:22px;margin-bottom:8px">💘</div><div style="font-size:13px;font-weight:600">Dating</div></div>
+    <div onclick="go('predict');closeMobSheet()" style="background:var(--ink);padding:24px 20px;cursor:pointer"><div style="font-size:22px;margin-bottom:8px">📈</div><div style="font-size:13px;font-weight:600">Markets</div></div>
+    <div onclick="go('youtoken');closeMobSheet()" style="background:var(--ink);padding:24px 20px;cursor:pointer"><div style="font-size:22px;margin-bottom:8px">🪙</div><div style="font-size:13px;font-weight:600">YouToken</div></div>
+    <div onclick="go('health');closeMobSheet()" style="background:var(--ink);padding:24px 20px;cursor:pointer"><div style="font-size:22px;margin-bottom:8px">🧬</div><div style="font-size:13px;font-weight:600">Health</div></div>
+    <div onclick="go('market');closeMobSheet()" style="background:var(--ink);padding:24px 20px;cursor:pointer"><div style="font-size:22px;margin-bottom:8px">🛒</div><div style="font-size:13px;font-weight:600">Shop</div></div>
+    <div onclick="go('audio');closeMobSheet()" style="background:var(--ink);padding:24px 20px;cursor:pointer"><div style="font-size:22px;margin-bottom:8px">🎙</div><div style="font-size:13px;font-weight:600">Audio</div></div>
+    <div onclick="go('msg');closeMobSheet()" style="background:var(--ink);padding:24px 20px;cursor:pointer"><div style="font-size:22px;margin-bottom:8px">💬</div><div style="font-size:13px;font-weight:600">Messages</div></div>
+  </div>
+  <button onclick="closeMobSheet()" style="margin-top:32px;width:100%;padding:16px;background:rgba(255,255,255,.06);border:none;color:rgba(245,244,240,.55);font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer">Close</button>
+</div>
+
+<!-- ══ HOME ══ -->
+<div id="p-home" class="page on">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-eyebrow">VIVA · Life Operating System · 2026</div>
+      <h1 class="hero-title">
+        Own<br>
+        Your<br>
+        <em>Existence</em>
+      </h1>
+      <div class="hero-sub-row">
+        <p class="hero-sub">One protocol. Every dimension of your life — connected, tokenized, and owned entirely by you. Your attention earns. Your health earns. Your presence earns.</p>
+        <button class="hero-cta" onclick="go('canvas')">Enter →</button>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="vring-wrap">
+        <svg class="vring-svg" viewBox="0 0 280 280">
+          <defs>
+            <!-- Sleep = violet, Activity = green, Wealth = rose -->
+            <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7C3AED" stop-opacity=".9"/><stop offset="100%" stop-color="#7C3AED" stop-opacity=".25"/></linearGradient>
+            <linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#059669" stop-opacity=".8"/><stop offset="100%" stop-color="#059669" stop-opacity=".2"/></linearGradient>
+            <linearGradient id="rg3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#E11D48" stop-opacity=".7"/><stop offset="100%" stop-color="#E11D48" stop-opacity=".15"/></linearGradient>
+          </defs>
+          <circle class="vr-track" cx="140" cy="140" r="126" stroke-width="1"/>
+          <circle class="vr-fill" cx="140" cy="140" r="126" stroke-width="2" stroke="url(#rg1)" stroke-dasharray="792" stroke-dashoffset="792" id="rA" filter="url(#glow1)"/>
+          <circle class="vr-track" cx="140" cy="140" r="104" stroke-width="1"/>
+          <circle class="vr-fill" cx="140" cy="140" r="104" stroke-width="2" stroke="url(#rg2)" stroke-dasharray="653" stroke-dashoffset="653" id="rB"/>
+          <circle class="vr-track" cx="140" cy="140" r="82" stroke-width="1"/>
+          <circle class="vr-fill" cx="140" cy="140" r="82" stroke-width="2" stroke="url(#rg3)" stroke-dasharray="515" stroke-dashoffset="515" id="rC"/>
+        </svg>
+        <div class="vring-center">
+          <div class="vring-num" id="hvsn">0</div>
+          <div class="vring-label">V-Score</div>
+        </div>
+      </div>
+
+      <div class="modules-strip">
+        <div class="mod-pill on" onclick="go('canvas')">Canvas</div>
+        <div class="mod-pill" onclick="go('feed')">Feed</div>
+        <div class="mod-pill" onclick="go('dating')">Dating</div>
+        <div class="mod-pill" onclick="go('twin')">Twin</div>
+        <div class="mod-pill" onclick="go('predict')">Markets</div>
+        <div class="mod-pill" onclick="go('youtoken')">Token</div>
+        <div class="mod-pill" onclick="go('health')">Health</div>
+        <div class="mod-pill" onclick="go('market')">Shop</div>
+        <div class="mod-pill" onclick="go('audio')">Audio</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 01 — HOME CANVAS ══ -->
+<div id="p-canvas" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">01</div>
+      <div class="ed-mod-name">Home Canvas · V-Score · 5 Rings</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">Home<br><em>Canvas</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">Five domains. One score. Your life rendered as data — sleep, nutrition, activity, social, wealth — aggregated into a single verifiable identity number.</p>
+
+      <div class="canvas-rings">
+        <div class="cr-row">
+          <div class="cr-name" style="color:var(--ring-sleep)">Sleep</div>
+          <div class="cr-bar"><div class="cr-fill" style="width:0;background:var(--ring-sleep)" data-w="78" id="ring-s"><div class="cr-dot" style="background:var(--ring-sleep);box-shadow:0 0 8px var(--ring-sleep)"></div></div></div>
+          <div class="cr-val" style="color:var(--ring-sleep)" id="rv-s">0</div>
+        </div>
+        <div class="cr-row">
+          <div class="cr-name" style="color:var(--ring-nutrition)">Nutrition</div>
+          <div class="cr-bar"><div class="cr-fill" style="width:0;background:var(--ring-nutrition)" data-w="65" id="ring-n"><div class="cr-dot" style="background:var(--ring-nutrition);box-shadow:0 0 8px var(--ring-nutrition)"></div></div></div>
+          <div class="cr-val" style="color:var(--ring-nutrition)" id="rv-n">0</div>
+        </div>
+        <div class="cr-row">
+          <div class="cr-name" style="color:var(--ring-activity)">Activity</div>
+          <div class="cr-bar"><div class="cr-fill" style="width:0;background:var(--ring-activity)" data-w="82" id="ring-a"><div class="cr-dot" style="background:var(--ring-activity);box-shadow:0 0 8px var(--ring-activity)"></div></div></div>
+          <div class="cr-val" style="color:var(--ring-activity)" id="rv-a">0</div>
+        </div>
+        <div class="cr-row">
+          <div class="cr-name" style="color:var(--ring-social)">Social</div>
+          <div class="cr-bar"><div class="cr-fill" style="width:0;background:var(--ring-social)" data-w="71" id="ring-c"><div class="cr-dot" style="background:var(--ring-social);box-shadow:0 0 8px var(--ring-social)"></div></div></div>
+          <div class="cr-val" style="color:var(--ring-social)" id="rv-c">0</div>
+        </div>
+        <div class="cr-row">
+          <div class="cr-name" style="color:var(--ring-wealth)">Wealth</div>
+          <div class="cr-bar"><div class="cr-fill" style="width:0;background:var(--ring-wealth)" data-w="59" id="ring-w"><div class="cr-dot" style="background:var(--ring-wealth);box-shadow:0 0 8px var(--ring-wealth)"></div></div></div>
+          <div class="cr-val" style="color:var(--ring-wealth)" id="rv-w">0</div>
+        </div>
+      </div>
+
+      <div class="vscore-row">
+        <div class="vs-big" id="cvs">0</div>
+        <div class="vs-info">
+          <div class="vs-tier">Stable Tier</div>
+          <div class="vs-rank">Rank #4,821 global</div>
+          <div class="vs-rank" style="margin-top:4px;font-size:11px;color:rgba(245,244,240,.28)">ZK-SBT verified · Base L2</div>
+        </div>
+        <div style="margin-left:auto;font-size:13px;color:rgba(245,244,240,.28)">+24.8 $VIVA today →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 02 — FEED ══ -->
+<div id="p-feed" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">02</div>
+      <div class="ed-mod-name">Feed · Attention Economy</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">Attention<br><em>Economy</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">Watch. Engage. Earn. Every second of verified attention is tokenized on-chain. Your V-Score unlocks higher-yield content.</p>
+
+      <div class="feed-list">
+        <div class="fi">
+          <div class="fi-head">
+            <div class="fi-who">@alexk · Guardian · 2m ago</div>
+            <div class="fi-earn">+0.14 $VIVA</div>
+          </div>
+          <div class="fi-body">Morning routine unlocked a new level. <em>Sleep ring hit 91</em> — ZK-verified, earned 3.2 $VIVA overnight while my Twin handled two marketplace trades.</div>
+          <div class="fi-track"><div class="fi-prog" style="width:0" id="fp1" data-w="67"></div></div>
+          <div class="fi-foot">
+            <div class="fi-pct">67% watched</div>
+            <div class="fi-ghost">V-Score 200+ to claim</div>
+          </div>
+        </div>
+
+        <div class="fi" style="border-left:2px solid rgba(245,244,240,.3)">
+          <div class="fi-head">
+            <div class="fi-who">@mia_v · Rising · 18m ago</div>
+            <div class="fi-earn" style="color:var(--paper)">READY TO CLAIM</div>
+          </div>
+          <div class="fi-body">The <em>5-Ring system changed my body</em>. I didn't track calories — I tracked balance. My ZK health proof this week: all rings above 70 for the first time.</div>
+          <div class="fi-track"><div class="fi-prog" style="width:0" id="fp2" data-w="100"></div></div>
+          <div class="fi-foot">
+            <div class="fi-pct">100% · Verified complete</div>
+            <button class="fi-btn" onclick="toast('Claimed +0.18 $VIVA','Feed reward · @mia_v post','0.18')">Claim +0.18 $VIVA</button>
+          </div>
+        </div>
+
+        <div class="fi">
+          <div class="fi-head">
+            <div class="fi-who">@jasonr · Stable · 1h ago</div>
+            <div class="fi-earn">+0.09 $VIVA</div>
+          </div>
+          <div class="fi-body">Twin closed a prediction market position while I slept. <em>+4.2 $VIVA</em>. Full-auto mode. Woke up richer. Passive ownership is not a metaphor.</div>
+          <div class="fi-track"><div class="fi-prog" style="width:0" id="fp3" data-w="23"></div></div>
+          <div class="fi-foot">
+            <div class="fi-pct">23% watched</div>
+            <div class="fi-ghost">Continue watching →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 03 — DATING ══ -->
+<div id="p-dating" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">03</div>
+      <div class="ed-mod-name">Dating · Verified Connections</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">Verified<br><em>Connections</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">V-Score gates access. World ID verifies humanity. GNN algorithms match on lifestyle alignment — not algorithms that optimize for engagement.</p>
+
+      <div class="dating-split">
+        <div class="date-panel">
+          <div class="dp-label">Profile</div>
+          <div class="dp-name">Sofia M.</div>
+          <div class="dp-sub">2.4km · São Paulo · World ID ✓</div>
+          <div class="dp-vs">
+            <span class="dp-vsn">634</span>
+            <span class="dp-vsl">Guardian Tier</span>
+          </div>
+          <div class="dp-tags">
+            <div class="dp-tag">Music</div>
+            <div class="dp-tag">Mindfulness</div>
+            <div class="dp-tag">Web3</div>
+            <div class="dp-tag">Sustainability</div>
+            <div class="dp-tag">Philosophy</div>
+          </div>
+        </div>
+        <div class="date-panel">
+          <div class="dp-label">Match Analysis</div>
+          <div class="dp-match-num" id="dmn">0</div>
+          <div class="dp-match-label">Compatibility</div>
+          <div class="dp-bars">
+            <div class="dpb-row"><div class="dpb-nm">Lifestyle</div><div class="dpb-track"><div class="dpb-fill" style="width:0" id="db1" data-w="92%"></div></div></div>
+            <div class="dpb-row"><div class="dpb-nm">Values</div><div class="dpb-track"><div class="dpb-fill" style="width:0" id="db2" data-w="85%"></div></div></div>
+            <div class="dpb-row"><div class="dpb-nm">V-Score</div><div class="dpb-track"><div class="dpb-fill" style="width:0" id="db3" data-w="78%"></div></div></div>
+          </div>
+          <div class="dp-actions">
+            <button class="dp-act dp-pass">Pass</button>
+            <button class="dp-act dp-like" onclick="toast('It\'s a Match!','Sofia M. liked you back · +0.5 $VIVA','0.5')">Like →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 04 — AI TWIN ══ -->
+<div id="p-twin" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">04</div>
+      <div class="ed-mod-name">AI Twin · HyperAgent</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">Hyper<br><em>Agent</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">MetaAgent + 6 TaskAgents. Your digital self acts when you can't. Three autonomy levels — from suggestions to fully autonomous operation.</p>
+
+      <div class="twin-grid">
+        <div class="twin-cell">
+          <div class="tc-num">Domain 01</div>
+          <div class="tc-name">Commerce</div>
+          <div class="tc-status" style="color:#10B981">● Running</div>
+          <div class="tc-desc">Monitoring 3 marketplace listings. Auto-relisted 2 items. Closed 1 prediction position at +4.2 $VIVA.</div>
+          <div class="tc-dot dot-on"></div>
+        </div>
+        <div class="twin-cell">
+          <div class="tc-num">Domain 02</div>
+          <div class="tc-name">Health</div>
+          <div class="tc-status" style="color:#10B981">● Running</div>
+          <div class="tc-desc">Sleep ring tracked. ZK proof generated for last 7 days. Nutrition suggestion queued.</div>
+          <div class="tc-dot dot-on"></div>
+        </div>
+        <div class="twin-cell">
+          <div class="tc-num">Domain 03</div>
+          <div class="tc-name">Social</div>
+          <div class="tc-status" style="color:#F59E0B">◐ Semi-Auto</div>
+          <div class="tc-desc">Draft replies to 4 messages. Awaiting your approval before sending. Audio room queued.</div>
+          <div class="tc-dot dot-semi"></div>
+        </div>
+        <div class="twin-cell">
+          <div class="tc-num">Domain 04</div>
+          <div class="tc-name">Finance</div>
+          <div class="tc-status" style="color:#10B981">● Running</div>
+          <div class="tc-desc">$VIVA staking optimized. YouToken price alert set at 0.048 V. 2 prediction positions open.</div>
+          <div class="tc-dot dot-on"></div>
+        </div>
+        <div class="twin-cell">
+          <div class="tc-num">Domain 05</div>
+          <div class="tc-name">Dating</div>
+          <div class="tc-status" style="color:#F59E0B">◐ Semi-Auto</div>
+          <div class="tc-desc">Pre-screened 12 profiles. 3 shortlisted above 80% match. Awaiting swipe confirmation.</div>
+          <div class="tc-dot dot-semi"></div>
+        </div>
+        <div class="twin-cell">
+          <div class="tc-num">Domain 06</div>
+          <div class="tc-name">Learning</div>
+          <div class="tc-status" style="color:rgba(245,244,240,.3)">○ Manual</div>
+          <div class="tc-desc">3 content pieces curated to your V-Score profile. Scheduled for evening attention window.</div>
+          <div class="tc-dot dot-off"></div>
+        </div>
+      </div>
+
+      <div class="twin-autonomy">
+        <div class="ta-cell on">
+          <div class="ta-lvl">L1</div>
+          <div class="ta-name">Suggestions</div>
+          <div class="ta-desc">Proposes actions. You approve each.</div>
+        </div>
+        <div class="ta-cell">
+          <div class="ta-lvl">L2</div>
+          <div class="ta-name">Semi-Auto</div>
+          <div class="ta-desc">Acts within rules you set. Alerts on edge cases.</div>
+        </div>
+        <div class="ta-cell">
+          <div class="ta-lvl">L3</div>
+          <div class="ta-name">Full-Auto</div>
+          <div class="ta-desc">Fully autonomous. Requires Guardian tier.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 05 — PREDICTION MARKETS ══ -->
+<div id="p-predict" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">05</div>
+      <div class="ed-mod-name">Prediction Markets</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">Predict<br><em>Everything</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">Real-money forecasting markets. Stake $VIVA on outcomes. Your V-Score determines position size limits and fee tiers.</p>
+
+      <div class="pred-list">
+        <div class="pi">
+          <div class="pi-head">
+            <div class="pi-q">BTC above $120k before Q3 2026?</div>
+            <div class="pi-odds">74%</div>
+          </div>
+          <div class="pi-sub">142K $VIVA staked · Closes Jul 1, 2026</div>
+          <div class="pi-bar"><div class="pi-yes" style="width:0" id="pb1" data-w="74%"></div></div>
+          <div class="pi-foot"><div>YES · 74%</div><div>NO · 26%</div></div>
+        </div>
+        <div class="pi">
+          <div class="pi-head">
+            <div class="pi-q">VIVA reaches 1M active users by Dec 2026?</div>
+            <div class="pi-odds">58%</div>
+          </div>
+          <div class="pi-sub">89K $VIVA staked · Closes Dec 31, 2026</div>
+          <div class="pi-bar"><div class="pi-yes" style="width:0" id="pb2" data-w="58%"></div></div>
+          <div class="pi-foot"><div>YES · 58%</div><div>NO · 42%</div></div>
+        </div>
+        <div class="pi">
+          <div class="pi-head">
+            <div class="pi-q">ETH flips BTC market cap in 2026?</div>
+            <div class="pi-odds">31%</div>
+          </div>
+          <div class="pi-sub">61K $VIVA staked · Closes Dec 31, 2026</div>
+          <div class="pi-bar"><div class="pi-yes" style="width:0" id="pb3" data-w="31%"></div></div>
+          <div class="pi-foot"><div>YES · 31%</div><div>NO · 69%</div></div>
+        </div>
+        <div class="pi">
+          <div class="pi-head">
+            <div class="pi-q">São Paulo V-Score avg exceeds 500 by Sept?</div>
+            <div class="pi-odds">82%</div>
+          </div>
+          <div class="pi-sub">34K $VIVA staked · Closes Sep 1, 2026</div>
+          <div class="pi-bar"><div class="pi-yes" style="width:0" id="pb4" data-w="82%"></div></div>
+          <div class="pi-foot"><div>YES · 82%</div><div>NO · 18%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 06 — YOUTOKEN ══ -->
+<div id="p-youtoken" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">06</div>
+      <div class="ed-mod-name">YouToken · Personal Economy</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">You<br><em>Token</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">Your own ERC-20 on a bonding curve. Followers buy in. Your influence has a live market price. Identity meets DeFi.</p>
+
+      <div class="yt-header">
+        <div class="yt-cell">
+          <div class="yt-label">Current Price</div>
+          <div class="yt-big">0.042</div>
+          <div class="yt-sub">VIVA per token · +12.4% this week</div>
+        </div>
+        <div class="yt-cell">
+          <div class="yt-label">Market Cap</div>
+          <div class="yt-big">9.8K</div>
+          <div class="yt-sub">$VIVA · 234 holders · 1M supply</div>
+        </div>
+      </div>
+
+      <div class="curve-wrap">
+        <svg class="curve-svg" viewBox="0 0 600 140" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="curvGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(245,244,240,.15)"/>
+              <stop offset="100%" stop-color="rgba(245,244,240,0)"/>
+            </linearGradient>
+          </defs>
+          <path class="curve-fill" d="M0,140 C40,138 80,135 120,128 C160,120 200,108 240,95 C280,80 320,62 360,48 C400,34 440,22 480,14 C520,6 560,2 600,0 L600,140 Z"/>
+          <path class="curve-line" d="M0,138 C40,136 80,133 120,126 C160,118 200,106 240,93 C280,78 320,60 360,46 C400,32 440,20 480,12 C520,4 560,1 600,0"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,244,240,.25)">
+          <span>Genesis</span><span>Now</span>
+        </div>
+      </div>
+
+      <div class="holders-list">
+        <div class="hl-row">
+          <div class="hl-rank">#1</div>
+          <div class="hl-name">@cryptonative</div>
+          <div class="hl-amt">2,400</div>
+          <div class="hl-pct">24.0%</div>
+        </div>
+        <div class="hl-row">
+          <div class="hl-rank">#2</div>
+          <div class="hl-name">@mia_v</div>
+          <div class="hl-amt">1,200</div>
+          <div class="hl-pct">12.0%</div>
+        </div>
+        <div class="hl-row">
+          <div class="hl-rank">#3</div>
+          <div class="hl-name">@alexk</div>
+          <div class="hl-amt">800</div>
+          <div class="hl-pct">8.0%</div>
+        </div>
+        <div class="hl-row" style="opacity:.5">
+          <div class="hl-rank">···</div>
+          <div class="hl-name">231 more holders</div>
+          <div class="hl-amt"></div>
+          <div class="hl-pct"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 07 — HEALTH ZK ══ -->
+<div id="p-health" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">07</div>
+      <div class="ed-mod-name">Health · ZK Proofs</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">Zero<br><em>Knowledge</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">Your health data stays yours. ZK proofs verify your ring scores on-chain without revealing the underlying biometrics. Nobody sees your data. Everyone trusts your score.</p>
+
+      <div class="zk-panels">
+        <div class="zk-cell">
+          <div class="zk-n">Active Proof</div>
+          <div class="zk-big">Sleep<br>Ring 91</div>
+          <div class="zk-desc">7-day rolling average. Wearable sync via encrypted relay. Proof generated nightly at 04:00 UTC.</div>
+          <div class="zk-proof"><span class="zk-tick">✓</span> Verified on Base · 3h ago</div>
+        </div>
+        <div class="zk-cell">
+          <div class="zk-n">Proof Architecture</div>
+          <div class="zk-big">ZK-<br>SBT</div>
+          <div class="zk-desc">Soulbound token holds your verified health score. Non-transferable. GNN-aggregated. Readable by any VIVA module without data exposure.</div>
+          <div class="zk-proof"><span class="zk-tick">↗</span> View on-chain</div>
+        </div>
+        <div class="zk-cell">
+          <div class="zk-n">This Week</div>
+          <div class="zk-big">+18.4<br>$VIVA</div>
+          <div class="zk-desc">Earned from Health ring proofs. All rings above 60 for 5 consecutive days. Streak multiplier: ×1.4</div>
+          <div class="zk-proof"><span class="zk-tick">⚡</span> Claim pending</div>
+        </div>
+        <div class="zk-cell">
+          <div class="zk-n">Data Sources</div>
+          <div class="zk-big">4<br>Devices</div>
+          <div class="zk-desc">Apple Watch, Oura Ring, Whoop, iPhone motion. Aggregated via encrypted bridge. None stored on VIVA servers.</div>
+          <div class="zk-proof"><span class="zk-tick">⊕</span> Add device</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 08 — MARKETPLACE ══ -->
+<div id="p-market" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">08</div>
+      <div class="ed-mod-name">Marketplace · V-Score Gated</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">Peer<br><em>Commerce</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">$VIVA-native marketplace. V-Score determines seller visibility and buyer fee tier. Your reputation is your credit score.</p>
+
+      <div class="mkt-grid">
+        <div class="mkt-item">
+          <div class="mkt-cat">Digital · Template</div>
+          <div class="mkt-name">Notion Life OS Kit</div>
+          <div class="mkt-seller">@alexk · V-Score 487</div>
+          <div class="mkt-price">4.2</div>
+          <div class="mkt-unit">$VIVA</div>
+        </div>
+        <div class="mkt-item">
+          <div class="mkt-cat">Health · Protocol</div>
+          <div class="mkt-name">Sleep Stack Guide</div>
+          <div class="mkt-seller">@mia_v · V-Score 612</div>
+          <div class="mkt-price">8.0</div>
+          <div class="mkt-unit">$VIVA</div>
+        </div>
+        <div class="mkt-item">
+          <div class="mkt-cat">AI · Prompt Pack</div>
+          <div class="mkt-name">Twin Training Set v2</div>
+          <div class="mkt-seller">@jasonr · V-Score 534</div>
+          <div class="mkt-price">12.5</div>
+          <div class="mkt-unit">$VIVA</div>
+        </div>
+        <div class="mkt-item">
+          <div class="mkt-cat">Physical · São Paulo</div>
+          <div class="mkt-name">Cold Brew Monthly</div>
+          <div class="mkt-seller">@cafe_ona · V-Score 701</div>
+          <div class="mkt-price">28.0</div>
+          <div class="mkt-unit">$VIVA / month</div>
+        </div>
+        <div class="mkt-item">
+          <div class="mkt-cat">Finance · Strategy</div>
+          <div class="mkt-name">Prediction Market Alpha</div>
+          <div class="mkt-seller">@cryptonative · V-Score 890</div>
+          <div class="mkt-price">50.0</div>
+          <div class="mkt-unit">$VIVA · Sovereign only</div>
+        </div>
+        <div class="mkt-item" style="display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.35" onclick="toast('Marketplace','List your first item · V-Score 200+ required','→')">
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,244,240,.5);text-align:center">+ List Item<br><span style="font-size:9px;color:rgba(245,244,240,.25)">V-Score 200+ req.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 09 — AUDIO ROOMS ══ -->
+<div id="p-audio" class="page mod-screen">
+  <div class="ed-shell">
+    <div class="ed-aside">
+      <div class="ed-mod-num">09</div>
+      <div class="ed-mod-name">Audio Rooms · Live</div>
+    </div>
+    <div class="ed-main">
+      <h2 class="ed-title">Live<br><em>Audio</em></h2>
+      <div class="ed-rule"></div>
+      <p class="ed-desc">Speakers earn $VIVA per minute. Listeners earn for verified attention. V-Score determines speaking access and earn multiplier.</p>
+
+      <div class="audio-wrap">
+        <div class="audio-stage">
+          <div class="spk">
+            <div class="spk-av" style="background:rgba(245,244,240,.06)">
+              A
+              <div class="spk-wave"></div>
+              <div class="spk-wave spk-wave2"></div>
+            </div>
+            <div class="spk-name">@alexk</div>
+            <div class="spk-role">Host · Speaking</div>
+            <div class="spk-earn">+0.4/min</div>
+          </div>
+          <div class="spk">
+            <div class="spk-av" style="background:rgba(245,244,240,.04)">M</div>
+            <div class="spk-name">@mia_v</div>
+            <div class="spk-role">Speaker</div>
+            <div class="spk-earn">+0.2/min</div>
+          </div>
+          <div class="spk">
+            <div class="spk-av" style="background:rgba(245,244,240,.04)">J</div>
+            <div class="spk-name">@jasonr</div>
+            <div class="spk-role">Speaker</div>
+            <div class="spk-earn">+0.2/min</div>
+          </div>
+          <div class="spk">
+            <div class="spk-av" style="background:rgba(245,244,240,.03)">S</div>
+            <div class="spk-name">@sofia_m</div>
+            <div class="spk-role">Listener</div>
+            <div class="spk-earn">+0.05/min</div>
+          </div>
+          <div class="spk">
+            <div class="spk-av" style="background:rgba(245,244,240,.03);font-size:13px">+84</div>
+            <div class="spk-name">Listeners</div>
+            <div class="spk-role">Audience</div>
+            <div class="spk-earn">+0.05/min</div>
+          </div>
+        </div>
+        <div class="audio-controls">
+          <div class="ac-info">
+            <div class="ac-title">The Future of Ownership — Web3 Lifestyle in 2026</div>
+            <div class="ac-sub">88 participants · 42m live · Room #1,204</div>
+          </div>
+          <div class="ac-btns">
+            <button class="ac-btn ac-sec">🎙 Request</button>
+            <button class="ac-btn ac-pri" onclick="toast('Joined Room','Earning +0.05 $VIVA per minute · Attention verified','0.05/min')">Join Room</button>
+          </div>
+          <div class="ac-earn">+2.1 $VIVA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MESSENGER (bonus) ══ -->
+<div id="p-msg" class="page mod-screen">
+  <div style="padding:40px 64px 12px;display:flex;align-items:baseline;gap:16px">
+    <h2 class="ed-title" style="font-size:40px;margin:0">Messages</h2>
+    <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(245,244,240,.28)">E2E Encrypted · $VIVA Tipping</div>
+  </div>
+  <div class="msg-grid">
+    <div class="msg-left">
+      <div class="msg-head">Conversations</div>
+      <div class="msg-item on">
+        <div class="msg-av">M</div>
+        <div><div class="msg-who">@mia_v</div><div class="msg-preview">The sleep ring data is wild...</div></div>
+      </div>
+      <div class="msg-item">
+        <div class="msg-av">A</div>
+        <div><div class="msg-who">@alexk</div><div class="msg-preview">Twin closed the position 🔥</div></div>
+      </div>
+      <div class="msg-item">
+        <div class="msg-av">J</div>
+        <div><div class="msg-who">@jasonr</div><div class="msg-preview">Which prediction market you in?</div></div>
+      </div>
+      <div class="msg-item">
+        <div class="msg-av" style="font-size:10px">+81</div>
+        <div><div class="msg-who">Contacts</div><div class="msg-preview">84 connections on VIVA</div></div>
+      </div>
+    </div>
+    <div class="msg-right">
+      <div class="msg-thread">
+        <div class="bubble bub-them">Sleep ring hit 91 last night. ZK proof verified this morning 🧬</div>
+        <div class="bubble bub-me">How? I'm stuck at 74. What changed?</div>
+        <div class="bubble bub-earn">⚡ @mia_v sent you 0.5 $VIVA · Tip for the intro</div>
+        <div class="bubble bub-them">Stopped phone use 2h before bed + Oura calibration. The ring system is insane once you get momentum.</div>
+        <div class="bubble bub-me">Guardian tier unlock anything different for you?</div>
+        <div class="bubble bub-them">Twin has full-auto on health domain now. It scheduled my Oura ring sync and submitted 3 ZK proofs while I slept.</div>
+      </div>
+      <div class="msg-compose">
+        <input class="msg-input" placeholder="Message @mia_v..." />
+        <button class="msg-send">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── CURSOR ── */
+const cur = document.getElementById('cur');
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX + 'px';
+  cur.style.top = e.clientY + 'px';
+});
+document.addEventListener('mousedown', () => { cur.style.width='6px'; cur.style.height='6px'; });
+document.addEventListener('mouseup', () => { cur.style.width='10px'; cur.style.height='10px'; });
+
+/* ── NAV ── */
+const pgMap = {
+  home:'p-home', canvas:'p-canvas', feed:'p-feed', dating:'p-dating',
+  twin:'p-twin', predict:'p-predict', youtoken:'p-youtoken',
+  health:'p-health', market:'p-market', audio:'p-audio', msg:'p-msg'
+};
+
+function go(id) {
+  Object.values(pgMap).forEach(p => document.getElementById(p).classList.remove('on'));
+  // desktop nav tabs
+  document.querySelectorAll('.nt').forEach(t => t.classList.remove('on'));
+  const match = document.querySelector(`.nt[data-page="${id}"]`);
+  if(match) match.classList.add('on');
+  // drawer items
+  document.querySelectorAll('.nd-item').forEach(t => t.classList.remove('on'));
+  const dmatch = document.querySelector(`.nd-item[data-page="${id}"]`);
+  if(dmatch) dmatch.classList.add('on');
+  // mobile tabs
+  document.querySelectorAll('.mt').forEach(t => t.classList.remove('on'));
+  const mmatch = document.querySelector(`.mt[data-page="${id}"]`);
+  if(mmatch) mmatch.classList.add('on');
+  // show page
+  const pg = document.getElementById(pgMap[id]);
+  if(pg) pg.classList.add('on');
+  // scroll to top
+  window.scrollTo(0,0);
+  // init animations
+  setTimeout(() => {
+    if(id==='home') initHome();
+    if(id==='canvas') initCanvas();
+    if(id==='feed') initFeed();
+    if(id==='dating') initDating();
+    if(id==='predict') initPredict();
+  }, 60);
+}
+
+/* ── MORE DRAWER ── */
+function toggleMore() {
+  document.getElementById('nav-more').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const nm = document.getElementById('nav-more');
+  if(nm && !nm.contains(e.target)) nm.classList.remove('open');
+});
+
+/* ── MOBILE SHEET ── */
+function openMobMore() {
+  document.getElementById('mob-sheet').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeMobSheet() {
+  document.getElementById('mob-sheet').style.display='none';
+  document.body.style.overflow='';
+}
+
+/* ── HOME INIT ── */
+function initHome() {
+  const el = document.getElementById('hvsn');
+  counter(el, 487, 1800);
+  setTimeout(() => {
+    document.getElementById('rA').style.strokeDashoffset = 792*(1-.487);
+    document.getElementById('rB').style.strokeDashoffset = 653*(1-.74);
+    document.getElementById('rC').style.strokeDashoffset = 515*(1-.59);
+  }, 100);
+}
+initHome();
+
+/* ── CANVAS ── */
+const ringColors = {
+  's':'#7C3AED','n':'#0891B2','a':'#059669','c':'#D97706','w':'#E11D48'
+};
+function initCanvas() {
+  const rings = [
+    {bar:'ring-s',val:'rv-s',v:78,k:'s'}, {bar:'ring-n',val:'rv-n',v:65,k:'n'},
+    {bar:'ring-a',val:'rv-a',v:82,k:'a'}, {bar:'ring-c',val:'rv-c',v:71,k:'c'},
+    {bar:'ring-w',val:'rv-w',v:59,k:'w'}
+  ];
+  rings.forEach((r,i) => {
+    const bar = document.getElementById(r.bar);
+    if(bar) {
+      bar.style.width='0';
+      bar.style.background = ringColors[r.k];
+      bar.style.boxShadow = `0 0 10px ${ringColors[r.k]}80`;
+      const dot = bar.querySelector('.cr-dot');
+      if(dot){ dot.style.background=ringColors[r.k]; dot.style.boxShadow=`0 0 8px ${ringColors[r.k]}`; }
+      setTimeout(()=>bar.style.width=r.v+'%', 100 + i*80);
+    }
+    const val = document.getElementById(r.val);
+    if(val) counter(val, r.v, 1400);
+  });
+  const cv = document.getElementById('cvs');
+  if(cv) counter(cv, 487, 1800);
+}
+
+/* ── FEED ── */
+function initFeed() {
+  [['fp1',67],['fp2',100],['fp3',23]].forEach(([id,w]) => {
+    const el = document.getElementById(id);
+    if(el) { el.style.width='0'; setTimeout(()=>el.style.width=w+'%',200); }
+  });
+}
+
+/* ── DATING ── */
+function initDating() {
+  const dmn = document.getElementById('dmn');
+  if(dmn) counter(dmn, 87, 1200);
+  [['db1','92%'],['db2','85%'],['db3','78%']].forEach(([id,w]) => {
+    const el = document.getElementById(id);
+    if(el) { el.style.width='0'; setTimeout(()=>el.style.width=w,200); }
+  });
+}
+
+/* ── PREDICT ── */
+function initPredict() {
+  [['pb1','74%'],['pb2','58%'],['pb3','31%'],['pb4','82%']].forEach(([id,w]) => {
+    const el = document.getElementById(id);
+    if(el) { el.style.width='0'; setTimeout(()=>el.style.width=w,150); }
+  });
+}
+
+/* ── COUNTER ── */
+function counter(el, target, dur=1400) {
+  let v=0, start=null;
+  const run = ts => {
+    if(!start) start=ts;
+    const prog = Math.min((ts-start)/dur, 1);
+    const ease = 1-Math.pow(1-prog,3);
+    v = Math.round(target*ease);
+    el.textContent = v;
+    if(prog<1) requestAnimationFrame(run);
+    else el.textContent = target;
+  };
+  requestAnimationFrame(run);
+}
+
+/* ── AUTONOMY TOGGLE ── */
+document.querySelectorAll('.ta-cell').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.ta-cell').forEach(x=>x.classList.remove('on'));
+    c.classList.add('on');
+  });
+});
+
+/* ── TOAST ── */
+function toast(title, sub, amt) {
+  const tw = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`<div class="t-ico">⚡</div><div class="t-body"><div class="t-title">${title}</div><div class="t-sub">${sub}</div></div><div class="t-amt">${amt}</div>`;
+  tw.appendChild(t);
+  burst();
+  setTimeout(()=>t.remove(),4100);
+}
+
+/* ── PARTICLES ── */
+function burst() {
+  const pc=document.getElementById('ptc');
+  const ox=window.innerWidth-160, oy=window.innerHeight-80;
+  for(let i=0;i<14;i++){
+    const p=document.createElement('div');
+    p.className='pt';
+    const a=(Math.PI*2*i)/14;
+    const d=40+Math.random()*60;
+    p.style.cssText=`left:${ox+(Math.random()-.5)*14}px;top:${oy+(Math.random()-.5)*14}px;--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d-40}px;animation-delay:${Math.random()*.1}s;opacity:${.4+Math.random()*.6}`;
+    pc.appendChild(p);
+    setTimeout(()=>p.remove(),950);
+  }
+}
+</script>
+</body>
+</html>

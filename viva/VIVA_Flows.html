@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIVA — Interactive Flow Diagrams</title>
+<style>
+  :root {
+    --bg: #0A0E1A; --panel: #111827; --card: #1A2336; --border: #1E2D45;
+    --accent1: #7C3AED; --accent2: #06B6D4; --accent3: #10B981;
+    --accent4: #F59E0B; --accent5: #EF4444; --purple: #8B5CF6;
+    --white: #FFFFFF; --muted: #94A3B8; --dim: #475569;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--white); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* ── NAV ── */
+  nav { background: var(--panel); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 0; position: sticky; top: 0; z-index: 100; overflow-x: auto; }
+  .nav-logo { font-size: 18px; font-weight: 800; color: var(--accent1); padding: 14px 20px 14px 0; border-right: 1px solid var(--border); margin-right: 12px; white-space: nowrap; letter-spacing: 2px; }
+  .nav-tab { padding: 14px 14px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; transition: all .2s; letter-spacing: .5px; }
+  .nav-tab:hover { color: var(--white); }
+  .nav-tab.active { color: var(--white); border-bottom-color: var(--accent2); }
+
+  /* ── MAIN ── */
+  main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+  .flow-page { display: none; }
+  .flow-page.active { display: block; }
+
+  /* ── FLOW HEADER ── */
+  .flow-header { margin-bottom: 32px; }
+  .flow-label { font-size: 10px; font-weight: 700; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  .flow-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+  .flow-desc { font-size: 14px; color: var(--muted); max-width: 700px; line-height: 1.6; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow-diagram { display: flex; flex-direction: column; gap: 0; position: relative; }
+  .flow-row { display: flex; align-items: flex-start; gap: 0; }
+
+  /* step node */
+  .step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-width: 220px;
+    max-width: 260px;
+    position: relative;
+    transition: transform .15s, box-shadow .15s;
+    cursor: default;
+  }
+  .step:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+  .step.accent1 { border-color: var(--accent1); }
+  .step.accent2 { border-color: var(--accent2); }
+  .step.accent3 { border-color: var(--accent3); }
+  .step.accent4 { border-color: var(--accent4); }
+  .step.accent5 { border-color: var(--accent5); }
+  .step.purple  { border-color: var(--purple); }
+
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800;
+    margin-bottom: 10px;
+    background: var(--panel);
+  }
+  .step.accent1 .step-num { color: var(--accent1); border: 1.5px solid var(--accent1); }
+  .step.accent2 .step-num { color: var(--accent2); border: 1.5px solid var(--accent2); }
+  .step.accent3 .step-num { color: var(--accent3); border: 1.5px solid var(--accent3); }
+  .step.accent4 .step-num { color: var(--accent4); border: 1.5px solid var(--accent4); }
+  .step.accent5 .step-num { color: var(--accent5); border: 1.5px solid var(--accent5); }
+  .step.purple  .step-num { color: var(--purple);  border: 1.5px solid var(--purple); }
+
+  .step-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .step.accent1 .step-title { color: var(--accent1); }
+  .step.accent2 .step-title { color: var(--accent2); }
+  .step.accent3 .step-title { color: var(--accent3); }
+  .step.accent4 .step-title { color: var(--accent4); }
+  .step.accent5 .step-title { color: var(--accent5); }
+  .step.purple  .step-title { color: var(--purple); }
+
+  .step-body { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .step-code { font-family: 'Consolas', monospace; font-size: 11px; color: #9CDCFE; background: #080D14; border-radius: 6px; padding: 6px 8px; margin-top: 8px; white-space: pre-wrap; word-break: break-all; }
+  .step-earn { font-size: 11px; font-weight: 700; color: var(--accent3); margin-top: 8px; padding: 4px 8px; background: rgba(16,185,129,.12); border-radius: 4px; display: inline-block; }
+
+  /* arrows */
+  .arrow-down {
+    width: 2px; height: 32px;
+    background: linear-gradient(180deg, var(--border) 0%, var(--dim) 100%);
+    margin: 0 auto;
+    position: relative;
+  }
+  .arrow-down::after {
+    content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 7px solid var(--dim);
+  }
+  .arrow-right {
+    width: 40px; height: 2px; background: var(--dim);
+    align-self: center; flex-shrink: 0; position: relative;
+  }
+  .arrow-right::after {
+    content: ''; position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+    border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+    border-left: 7px solid var(--dim);
+  }
+
+  /* branch */
+  .branch-container { display: flex; gap: 24px; margin: 0; }
+  .branch-line { display: flex; flex-direction: column; align-items: center; }
+  .branch-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 8px; border-radius: 4px; margin-bottom: 8px; }
+  .branch-yes { background: rgba(16,185,129,.15); color: var(--accent3); }
+  .branch-no  { background: rgba(100,116,139,.15); color: var(--muted); }
+
+  /* decision diamond */
+  .diamond {
+    width: 120px; height: 60px; background: var(--card);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; text-align: center;
+    margin: 0 auto;
+  }
+
+  /* info panel */
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 40px; }
+  .info-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .info-card-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .info-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .info-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .info-text { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  /* pill */
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+  /* responsive */
+  @media (max-width: 700px) {
+    .flow-row { flex-direction: column; }
+    .arrow-right { display: none; }
+    .branch-container { flex-direction: column; }
+  }
+
+  /* overview grid */
+  .overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .overview-grid { grid-template-columns: 1fr; } }
+  .overview-card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); cursor: pointer; transition: all .2s; }
+  .overview-card:hover { border-color: var(--accent2); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+  .ov-num { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+  .ov-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+  .ov-steps { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .ov-step { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--panel); color: var(--muted); }
+  .ov-earn { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: rgba(16,185,129,.12); color: var(--accent3); display: inline-block; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">VIVA</div>
+  <div class="nav-tab active" onclick="showFlow('overview')">Overview</div>
+  <div class="nav-tab" onclick="showFlow('onboarding')">1 · Onboarding</div>
+  <div class="nav-tab" onclick="showFlow('attention')">2 · Attention</div>
+  <div class="nav-tab" onclick="showFlow('adslot')">3 · Ad Slot</div>
+  <div class="nav-tab" onclick="showFlow('twin')">4 · AI Twin</div>
+  <div class="nav-tab" onclick="showFlow('dating')">5 · Dating</div>
+  <div class="nav-tab" onclick="showFlow('youtoken')">6 · YouToken</div>
+  <div class="nav-tab" onclick="showFlow('health')">7 · Health ZK</div>
+  <div class="nav-tab" onclick="showFlow('prediction')">8 · Prediction</div>
+  <div class="nav-tab" onclick="showFlow('rooms')">9 · Rooms</div>
+</nav>
+
+<main>
+
+<!-- ══════════════ OVERVIEW ══════════════ -->
+<div id="flow-overview" class="flow-page active">
+  <div class="flow-header">
+    <div class="flow-label">VIVA · Life Operating System</div>
+    <div class="flow-title">9 Feature Flows</div>
+    <div class="flow-desc">Every user journey — from onboarding to earning $VIVA. Click any card to explore the full flow.</div>
+  </div>
+  <div class="overview-grid">
+    <div class="overview-card" onclick="showFlow('onboarding')" style="border-top:3px solid var(--accent1)">
+      <div class="ov-num">FLOW 01</div>
+      <div class="ov-title" style="color:var(--accent1)">User Onboarding</div>
+      <div class="ov-steps">
+        <span class="ov-step">World ID</span><span class="ov-step">Wallet</span><span class="ov-step">ZK-SBT</span><span class="ov-step">V-Score</span><span class="ov-step">Referral</span>
+      </div>
+      <span class="ov-earn">$5 VIVA referral both sides</span>
+    </div>
+    <div class="overview-card" onclick="showFlow('attention')" style="border-top:3px solid var(--accent2)">
+      <div class="ov-num">FLOW 02</div>
+      <div class="ov-title" style="color:var(--accent2)">Attention Reward</div>
+      <div class="ov-steps">
+        <span class="ov-step">Feed</span><span class="ov-step">Watch 100%</span><span class="ov-step">Claim</span><span class="ov-step">$VIVA</span>
+      </div>
+      <span class="ov-earn">Earn per post watched</span>
+    </div>
+    <div class="overview-card" onclick="showFlow('adslot')" style="border-top:3px solid var(--accent4)">
+      <div class="ov-num">FLOW 03</div>
+      <div class="ov-title" style="color:var(--accent4)">Ad Slot</div>
+      <div class="ov-steps">
+        <span class="ov-step">Open slot</span><span class="ov-step">Bid</span><span class="ov-step">Approve</span><span class="ov-step">Split</span>
+      </div>
+      <span class="ov-earn">70% creator · 20% treasury · 10% viewers</span>
+    </div>
+    <div class="overview-card" onclick="showFlow('twin')" style="border-top:3px solid var(--accent1)">
+      <div class="ov-num">FLOW 04</div>
+      <div class="ov-title" style="color:var(--accent1)">AI Twin Task</div>
+      <div class="ov-steps">
+        <span class="ov-step">Trigger</span><span class="ov-step">MetaAgent</span><span class="ov-step">TaskAgent</span><span class="ov-step">Earn</span><span class="ov-step">Learn</span>
+      </div>
+      <span class="ov-earn">Earn $VIVA autonomously</span>
+    </div>
+    <div class="overview-card" onclick="showFlow('dating')" style="border-top:3px solid var(--accent5)">
+      <div class="ov-num">FLOW 05</div>
+      <div class="ov-title" style="color:var(--accent5)">Dating Match</div>
+      <div class="ov-steps">
+        <span class="ov-step">Discover</span><span class="ov-step">pgvector</span><span class="ov-step">Swipe</span><span class="ov-step">Match</span>
+      </div>
+      <span class="ov-earn">Match reward + V-Score boost</span>
+    </div>
+    <div class="overview-card" onclick="showFlow('youtoken')" style="border-top:3px solid var(--accent4)">
+      <div class="ov-num">FLOW 06</div>
+      <div class="ov-title" style="color:var(--accent4)">YouToken Buy</div>
+      <div class="ov-steps">
+        <span class="ov-step">Profile</span><span class="ov-step">Curve price</span><span class="ov-step">Buy</span><span class="ov-step">5% fee</span>
+      </div>
+      <span class="ov-earn">5% fee to creator instantly</span>
+    </div>
+    <div class="overview-card" onclick="showFlow('health')" style="border-top:3px solid var(--accent3)">
+      <div class="ov-num">FLOW 07</div>
+      <div class="ov-title" style="color:var(--accent3)">Health ZK</div>
+      <div class="ov-steps">
+        <span class="ov-step">HealthKit</span><span class="ov-step">ZK-Proof</span><span class="ov-step">Store hash</span><span class="ov-step">Ring</span>
+      </div>
+      <span class="ov-earn">Raw data never leaves device</span>
+    </div>
+    <div class="overview-card" onclick="showFlow('prediction')" style="border-top:3px solid var(--accent2)">
+      <div class="ov-num">FLOW 08</div>
+      <div class="ov-title" style="color:var(--accent2)">Prediction Market</div>
+      <div class="ov-steps">
+        <span class="ov-step">Create</span><span class="ov-step">Bet</span><span class="ov-step">Oracle</span><span class="ov-step">Claim</span>
+      </div>
+      <span class="ov-earn">2% platform + 1% creator fee</span>
+    </div>
+    <div class="overview-card" onclick="showFlow('rooms')" style="border-top:3px solid var(--purple)">
+      <div class="ov-num">FLOW 09</div>
+      <div class="ov-title" style="color:var(--purple)">Audio Room</div>
+      <div class="ov-steps">
+        <span class="ov-step">Create</span><span class="ov-step">Stake gate</span><span class="ov-step">LiveKit</span><span class="ov-step">Host earns</span>
+      </div>
+      <span class="ov-earn">Host earns per listener-minute</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 1: ONBOARDING ══════════════ -->
+<div id="flow-onboarding" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 01 · Entry Point</div>
+    <div class="flow-title" style="color:var(--accent1)">User Onboarding</div>
+    <div class="flow-desc">Every new user goes through World ID verification, gets an embedded wallet (no seed phrase), an on-chain ZK-SoulBound Token, and a V-Score starting at seed tier. Referrals give $5 to both sides.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row" style="justify-content:flex-start">
+      <div class="step accent1">
+        <div class="step-num">1</div>
+        <div class="step-title">App Launch</div>
+        <div class="step-body">User opens VIVA. Checks for existing session/wallet.</div>
+        <div class="step-code">screens/Auth/Landing.tsx</div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row" style="justify-content:flex-start">
+      <div class="step accent1">
+        <div class="step-num">2</div>
+        <div class="step-title">World ID Verify</div>
+        <div class="step-body">Proof-of-human via World ID Orb or Device credential. Prevents bots. One account per human.</div>
+        <div class="step-code">POST /v1/auth/world-id-verify
+{ nullifier_hash, proof, merkle_root }</div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row" style="justify-content:flex-start">
+      <div class="step accent1">
+        <div class="step-num">3</div>
+        <div class="step-title">Embedded Wallet Created</div>
+        <div class="step-body">Dynamic.xyz / Privy creates wallet silently. No seed phrase shown to user. Wallet address stored.</div>
+        <div class="step-code">Dynamic.createEmbeddedWallet()
+→ wallet_address saved to users table</div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row" style="justify-content:flex-start">
+      <div class="step accent1">
+        <div class="step-num">4</div>
+        <div class="step-title">ZK-SBT Issued On-Chain</div>
+        <div class="step-body">Non-transferable SoulBound Token minted on Base L2. Tier = SEED. Linked to wallet forever.</div>
+        <div class="step-code">ZKSBT.issue(wallet_address)
+→ tier: SEED, tokenId: auto
+→ tx_hash saved</div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row" style="justify-content:flex-start">
+      <div class="step accent1">
+        <div class="step-num">5</div>
+        <div class="step-title">V-Score Initialized</div>
+        <div class="step-body">V-Score = 0, tier = seed. All 5 rings at 0. GNN model registers new user node.</div>
+        <div class="step-code">POST /v1/vscore/init
+{ userId, tier: "seed", score: 0 }
+rings: {social:0, wealth:0, activity:0,
+        sleep:0, nutrition:0}</div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row" style="justify-content:flex-start">
+      <div class="step accent3">
+        <div class="step-num">6</div>
+        <div class="step-title">Referral Check</div>
+        <div class="step-body">If user joined via referral link — $5 VIVA credited to both new user and referrer instantly.</div>
+        <div class="step-code">VIVAToken.mint(newUser, 5e18, REFERRAL)
+VIVAToken.mint(referrer, 5e18, REFERRAL)
+referrals table: { referee_id, referrer_id,
+  reward_claimed: true }</div>
+        <div class="step-earn">+$5 VIVA both sides</div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row" style="justify-content:flex-start">
+      <div class="step accent1">
+        <div class="step-num">7</div>
+        <div class="step-title">AI Twin Onboarding</div>
+        <div class="step-body">User sets autonomy level: suggest / semi-auto / full-auto. Twin profile created.</div>
+        <div class="step-code">PUT /v1/twin/autonomy
+{ level: "suggest" }
+twin_profiles INSERT</div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row" style="justify-content:flex-start">
+      <div class="step accent1">
+        <div class="step-num">8</div>
+        <div class="step-title">HomeCanvas Shown</div>
+        <div class="step-body">5-ring biometric dashboard displays. All rings at 0. User sees their earning potential.</div>
+        <div class="step-code">screens/HomeCanvas/index.tsx
+→ useVScoreStore().score = 0
+→ useVScoreStore().rings = all zeros</div>
+      </div>
+    </div>
+
+    <div class="info-grid" style="margin-top:40px">
+      <div class="info-card">
+        <div class="info-card-title">Services Involved</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent1)"></div><div class="info-text">api-gateway (JWT issue)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">vscore (init score)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent1)"></div><div class="info-text">twin (create profile)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">finance (referral mint)</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Smart Contracts Called</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">ZKSBT.issue() — SoulBound NFT</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">VIVAToken.mint() — referral $5</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">DB Tables Written</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent2)"></div><div class="info-text">users (INSERT)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">vscore + vscore_rings</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent1)"></div><div class="info-text">twin_profiles</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">referrals</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 2: ATTENTION ══════════════ -->
+<div id="flow-attention" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 02 · Core Loop</div>
+    <div class="flow-title" style="color:var(--accent2)">Attention Reward</div>
+    <div class="flow-desc">Watch a post 100% and earn $VIVA. The attention economy — advertisers fund the pool, creators 70%, viewers earn from the remaining 10%.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">1</div><div class="step-title">Open Feed Tab</div><div class="step-body">User navigates to Feed. First page loads with cursor pagination.</div><div class="step-code">GET /v1/social/feed?cursor=null
+→ FeedPost[20]</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">2</div><div class="step-title">Video Auto-Plays</div><div class="step-body">expo-av renders FeedItem. Video plays automatically when in viewport. Muted by default.</div><div class="step-code">// FeedItem.tsx
+&lt;Video source={{uri: post.videoUrl}}
+  shouldPlay={inViewport}
+  isMuted={true} /&gt;</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">3</div><div class="step-title">AttentionRing Tracks 0→100%</div><div class="step-body">Progress ring animates as watch time accumulates. Each second of play = progress. Must reach 100% to claim.</div><div class="step-code">// stores/feedStore.ts
+updateAttention(postId, progress%)
+if progress >= 100: showClaimButton()</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">4</div><div class="step-title">User Claims Reward</div><div class="step-body">Tap ✓ or auto-claim on scroll-away. POST fires to social service.</div><div class="step-code">POST /v1/social/posts/{postId}/attention
+Headers: X-User-Id, X-V-Score</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">5</div><div class="step-title">Backend: Compute Reward</div><div class="step-body">Social service checks if post has active ad slot. If yes → call AdMarketplace.distributeAttention.</div><div class="step-code">// social/src/handlers/attention.go
+if post.ad_slot_active:
+  AdMarketplace.distributeAttention(
+    postId, [viewerId], [share])
+else:
+  viva.mint(viewerId, BASE_REWARD)</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">6</div><div class="step-title">$VIVA Credited</div><div class="step-body">Wallet balance updated. Earn event logged. V-Score social ring bumped.</div><div class="step-code">wallet_transactions INSERT
+{ type: "attention_reward",
+  amount_viva: 0.12, tx_hash }
+
+POST /v1/vscore/score/{id}/event
+{ type: "social.attention" }</div>
+        <div class="step-earn">+0.05–0.20 $VIVA per post</div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">7</div><div class="step-title">UI Updates</div><div class="step-body">Wallet balance increments. Earn animation fires. V-Score ring pulses.</div><div class="step-code">useWalletStore().vivaBalance += earned
+useWalletStore().earnedToday += earned
+useVScoreStore().rings.social += delta</div></div></div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">Revenue Source</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Ad slot bid funds attention pool (10% of bid)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Base reward: protocol mint from community 40%</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">V-Score Impact</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent1)"></div><div class="info-text">Social ring +delta on claim</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Streak bonus if 10+ posts/day</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Anti-Abuse</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">One claim per post per user</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">V-Score gate: must be Rising+ for full reward</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">World ID verified = one reward per human</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 3: AD SLOT ══════════════ -->
+<div id="flow-adslot" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 03 · Monetization</div>
+    <div class="flow-title" style="color:var(--accent4)">Ad Slot</div>
+    <div class="flow-desc">Creators open permissioned ad slots on their posts. Advertisers bid $VIVA. Creator approves or rejects. Revenue splits: 70% creator / 20% treasury / 10% viewer attention pool.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row" style="gap:40px">
+      <div style="display:flex;flex-direction:column;align-items:flex-start">
+        <div style="font-size:11px;font-weight:700;color:var(--accent4);letter-spacing:2px;margin-bottom:12px">CREATOR</div>
+        <div class="step accent4"><div class="step-num">1</div><div class="step-title">Open Ad Slot</div><div class="step-body">Creator taps "Open Ad Slot" on their post. Sets min bid amount.</div><div class="step-code">POST /v1/social/posts/{id}/ad-slot
+→ AdMarketplace.openSlot(postId, minBid)
+→ listings.ad_slot_open = true</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-start;margin-top:46px">
+        <div style="font-size:11px;font-weight:700;color:var(--accent2);letter-spacing:2px;margin-bottom:12px">ADVERTISER</div>
+        <div class="step accent2"><div class="step-num">2</div><div class="step-title">Discover Open Slot</div><div class="step-body">Advertiser browses open slots in Marketplace. Sees reach, V-Score of audience, min bid.</div><div class="step-code">GET /v1/marketplace/ads/slots
+→ slots with post stats</div></div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">3</div><div class="step-title">Advertiser Places Bid</div><div class="step-body">$VIVA locked in smart contract escrow. Creator gets push notification.</div><div class="step-code">POST /v1/marketplace/ads/slots/{postId}
+{ bidAmount: 500 } // VIVA
+→ AdMarketplace.placeBid(postId, 500e18)
+→ $VIVA locked in contract</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent4"><div class="step-num">4</div><div class="step-title">Creator Gets Notified</div><div class="step-body">Push notification: "New ad bid: 500 $VIVA". Creator reviews advertiser profile + content.</div><div class="step-code">notify_earn(creator_id,
+  "New ad bid: 500 VIVA on your post")</div></div></div>
+    <div class="arrow-down"></div>
+
+    <!-- Decision -->
+    <div style="display:flex;flex-direction:column;align-items:flex-start">
+      <div class="diamond" style="--accent:var(--accent4);border:2px solid var(--accent4);background:var(--card)">
+        <span style="color:var(--accent4);font-size:10px">Creator<br>Decision</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:60px;margin-top:16px">
+      <div class="branch-line">
+        <span class="branch-label branch-yes">✓ APPROVE</span>
+        <div class="step accent3"><div class="step-num">5a</div><div class="step-title">Revenue Distributed</div><div class="step-body">Smart contract splits $VIVA instantly.</div><div class="step-code">AdMarketplace.approveAd(postId)
+→ creator  ← 70% (350 VIVA)
+→ treasury ← 20% (100 VIVA)
+→ attnPool ← 10% (50 VIVA)</div><div class="step-earn">+350 VIVA to creator</div></div>
+      </div>
+      <div class="branch-line">
+        <span class="branch-label branch-no">✗ REJECT</span>
+        <div class="step" style="border-color:var(--dim)"><div class="step-num" style="border-color:var(--dim);color:var(--dim)">5b</div><div class="step-title" style="color:var(--dim)">Bid Refunded</div><div class="step-body">$VIVA returned to advertiser in full. No fee.</div><div class="step-code">AdMarketplace.rejectAd(postId)
+→ advertiser ← 100% refund</div></div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">6</div><div class="step-title">Viewers Earn From Pool</div><div class="step-body">The 10% attention pool distributes to viewers who watch 100% of the ad-tagged post.</div><div class="step-code">AdMarketplace.distributeAttention(
+  postId, viewers[], amounts[])
+// called by oracle after view period ends</div><div class="step-earn">Viewers share 50 VIVA pool</div></div></div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">Revenue Split (500 VIVA bid)</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Creator: 350 VIVA (70%)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent2)"></div><div class="info-text">Treasury: 100 VIVA (20%)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Viewers attention pool: 50 VIVA (10%)</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Contract: AdMarketplace.sol</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">openSlot() → stores slot on-chain</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">placeBid() → escrows $VIVA</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">approveAd() → distributes split</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">distributeAttention() → viewers earn</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 4: AI TWIN ══════════════ -->
+<div id="flow-twin" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 04 · Autonomous Earning</div>
+    <div class="flow-title" style="color:var(--accent1)">AI Twin Task</div>
+    <div class="flow-desc">HyperAgent architecture: MetaAgent orchestrates, TaskAgent executes across 6 domains (Commerce, Dating, Food, Freelance, Finance, Health). Twin learns from every result.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row"><div class="step accent1"><div class="step-num">1</div><div class="step-title">Trigger Task</div><div class="step-body">User manually triggers domain, or scheduled/semi-auto fires automatically.</div><div class="step-code">POST /v1/twin/tasks/trigger
+{ domain: "commerce",
+  context: { budget: 50 } }</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent1"><div class="step-num">2</div><div class="step-title">MetaAgent Plans</div><div class="step-body">Queries user preference vector DB. Plans subtasks. Selects TaskAgent strategy.</div><div class="step-code">// twin/src/agents/meta_agent.py
+prefs = await vector_db.query(userId)
+plan = await gpt4.plan(domain, prefs, ctx)
+tasks = plan.decompose()
+await task_queue.push(tasks)</div></div></div>
+    <div class="arrow-down"></div>
+
+    <!-- Autonomy branch -->
+    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:2px;margin-bottom:8px">AUTONOMY LEVEL CHECK</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px">
+      <div class="step accent3" style="min-width:180px"><div class="step-num">3a</div><div class="step-title">SUGGEST</div><div class="step-body">Twin shows plan. User must tap approve.</div><div class="step-code">PUT /v1/twin/tasks/{id}/approve</div></div>
+      <div class="step accent4" style="min-width:180px"><div class="step-num">3b</div><div class="step-title">SEMI-AUTO</div><div class="step-body">Twin executes + sends push notification with result.</div><div class="step-code">BackgroundTask executes
+→ notify_earn(userId, result)</div></div>
+      <div class="step accent5" style="min-width:180px"><div class="step-num">3c</div><div class="step-title">FULL-AUTO</div><div class="step-body">Twin runs silently. Daily summary pushed at 8pm.</div><div class="step-code">Cron: daily_summary(userId)</div></div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent1"><div class="step-num">4</div><div class="step-title">TaskAgent Executes</div><div class="step-body">Domain-specific action. Example: commerce → find best listing → buy → resell.</div><div class="step-code">// twin/src/agents/task_agent.py
+result = await agent.execute(
+  domain="commerce",
+  action="buy_listing",
+  params=plan.params)
+earned = result.viva_earned</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">5</div><div class="step-title">$VIVA Earned</div><div class="step-body">Earn event logged. Wallet updated. V-Score wealth ring bumped.</div><div class="step-code">earn_events INSERT
+{ source: "twin_task",
+  domain: "commerce",
+  amount_viva: 2.4 }
+VIVAToken.mint(userId, 2.4e18, TWIN)</div><div class="step-earn">+2.4 $VIVA average</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent1"><div class="step-num">6</div><div class="step-title">MetaAgent Learns</div><div class="step-body">Result stored as feedback. MetaAgent improves future plans for this domain.</div><div class="step-code">await meta_agent.feedback(
+  domain, result, earned_viva)
+// updates preference vector
+await vector_db.upsert(userId, prefs)</div></div></div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">6 Domains</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Commerce — buy/sell marketplace</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">Dating — send icebreakers, boost</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Food — nutrition recommendations</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent2)"></div><div class="info-text">Freelance — bid on jobs</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent1)"></div><div class="info-text">Finance — predict markets, stake</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">Health — log streaks, reminders</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Earn Per Domain (avg)</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Commerce: 1–5 VIVA / task</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent1)"></div><div class="info-text">Finance: 0.5–10 VIVA / prediction</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent2)"></div><div class="info-text">Freelance: 5–50 VIVA / project</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 5: DATING ══════════════ -->
+<div id="flow-dating" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 05 · Social Discovery</div>
+    <div class="flow-title" style="color:var(--accent5)">Dating Match</div>
+    <div class="flow-desc">ML-powered profile discovery using pgvector cosine similarity on 384-dim embeddings. V-Score gated filters. Mutual match creates conversation + earns $VIVA for both.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row"><div class="step accent5"><div class="step-num">1</div><div class="step-title">Open Dating Tab</div><div class="step-body">Profile stack loads. V-Score checked: Stable+ unlocks distance filters.</div><div class="step-code">GET /v1/dating/discover
+?lat=40.7&lon=-74.0&maxKm=50
+X-V-Score: 487 (→ Stable, filters unlocked)</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent5"><div class="step-num">2</div><div class="step-title">ML Matching Engine</div><div class="step-body">pgvector cosine similarity on user embeddings (384-dim). Weighted by V-Score compatibility + location radius.</div><div class="step-code">SELECT *, embedding &lt;=&gt; $userEmbed as dist
+FROM dating_profiles
+WHERE is_visible = true
+  AND vscore_gate &lt;= $myScore
+  AND ST_Distance(location, $point) &lt; $km
+ORDER BY embedding &lt;=&gt; $userEmbed
+LIMIT 20
+-- ivfflat index (100 lists, cosine)</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent5"><div class="step-num">3</div><div class="step-title">Profile Card Stack</div><div class="step-body">Cards rendered with V-Score tier badge, shared interests, distance. Swipe actions visible.</div><div class="step-code">screens/Dating/DiscoverScreen.tsx
+ProfileCard: { vscore_tier, distance,
+  interests, bio, photos[] }</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent5"><div class="step-num">4</div><div class="step-title">User Swipes</div><div class="step-body">Like / Pass / SuperLike. Stored as swipe event (hypertable). Anti-spam: SuperLike limited per day by tier.</div><div class="step-code">POST /v1/dating/swipe/like/{targetId}
+// or /pass or /superlike
+swipes INSERT { action, swiper, target,
+  created_at }  ← TimescaleDB</div></div></div>
+    <div class="arrow-down"></div>
+
+    <!-- Decision diamond -->
+    <div style="display:flex;flex-direction:column;align-items:flex-start">
+      <div class="diamond" style="border:2px solid var(--accent5);background:var(--card)">
+        <span style="color:var(--accent5);font-size:10px">Mutual<br>Like?</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:60px;margin-top:16px">
+      <div class="branch-line">
+        <span class="branch-label branch-yes">YES</span>
+        <div class="step accent3"><div class="step-num">5a</div><div class="step-title">Match Created</div><div class="step-body">Match record + conversation + push both users + $VIVA earn.</div><div class="step-code">matches INSERT
+{ user_a_id, user_b_id,
+  match_score, conversation_id }
+conversation INSERT (messenger)
+notify_match(userA, userB)
+VIVAToken.mint(both, MATCH_REWARD)</div><div class="step-earn">+0.5 VIVA both users</div></div>
+      </div>
+      <div class="branch-line">
+        <span class="branch-label branch-no">NO</span>
+        <div class="step" style="border-color:var(--dim)"><div class="step-num" style="border-color:var(--dim);color:var(--dim)">5b</div><div class="step-title" style="color:var(--dim)">Store Swipe</div><div class="step-body">Swipe logged. Next profile shown. Twin learns preference signal.</div><div class="step-code">// swipe stored for ML training
+// embedding updated based on pass</div></div>
+      </div>
+    </div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent5"><div class="step-num">6</div><div class="step-title">AI Icebreaker (Optional)</div><div class="step-body">AI Twin can generate personalized opening message based on shared interests.</div><div class="step-code">POST /v1/dating/matches/{id}/icebreaker
+→ AI Twin domain "dating" generates
+→ message pre-filled in chat</div></div></div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">V-Score Gates</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Seed: basic discover, 10km only</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent2)"></div><div class="info-text">Rising: 50km, 5 SuperLikes/day</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Stable+: distance filter, SuperLikes unlocked</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">ML Stack</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">pgvector: ivfflat, 100 lists, cosine</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">Embeddings: 384-dim (all-MiniLM-L6)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">Swipe feedback → re-embed nightly</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 6: YOUTOKEN ══════════════ -->
+<div id="flow-youtoken" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 06 · Creator Economy</div>
+    <div class="flow-title" style="color:var(--accent4)">YouToken Buy</div>
+    <div class="flow-desc">Every creator has a personal ERC-20 on a bonding curve. Buy → price goes up, creator earns 5% fee instantly. Sell → price drops. Creator exposure is literally tradeable.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row"><div class="step accent4"><div class="step-num">1</div><div class="step-title">View Creator Profile</div><div class="step-body">Buyer taps creator. Profile shows current token price, market cap, holder count.</div><div class="step-code">GET /v1/wallet/youtoken/price/{creatorId}
+→ { price: 0.042 VIVA, mktCap: 4200,
+    holders: 100, totalSupply: 100000 }</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent4"><div class="step-num">2</div><div class="step-title">Bonding Curve Price</div><div class="step-body">Price = reserveBalance × 2 / totalSupply. Increases with each buy. Sqrt-based curve.</div><div class="step-code">// YouToken.sol
+function currentPrice() public view {
+  return reserveBalance * 2 / totalSupply;
+}
+// Buy 50 VIVA → receive X tokens
+// where X = f(reserveBalance, totalSupply)</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent4"><div class="step-num">3</div><div class="step-title">Buyer Taps Buy</div><div class="step-body">Inputs VIVA amount. Preview shows tokens received + new price after purchase.</div><div class="step-code">POST /v1/wallet/youtoken/buy/{creatorId}
+{ vivaAmount: 50 }
+→ preview: { tokensOut: 892, newPrice: 0.046 }</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent4"><div class="step-num">4</div><div class="step-title">On-Chain Buy Executes</div><div class="step-body">$VIVA split: 5% to creator, 2% to treasury, 93% to bonding curve reserve.</div><div class="step-code">YouToken.buy(50e18)
+// inside contract:
+fee = 50 * 500 / 10000  // 2.5 VIVA creator
+trsy = 50 * 200 / 10000 // 1.0 VIVA treasury
+net = 50 - fee - trsy   // 46.5 VIVA to curve
+tokens = _buyTokensForViva(net)
+balanceOf[buyer] += tokens
+totalSupply += tokens
+reserveBalance += net</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">5</div><div class="step-title">Creator Earns Fee Instantly</div><div class="step-body">2.5 VIVA hits creator wallet. No delay. Every buy = passive income for creator.</div><div class="step-code">youtoken_holdings UPSERT
+{ holder_id, creator_id, amount }
+wallet_tx INSERT: creator +2.5 VIVA
+wallet_tx INSERT: buyer   +892 $CREATOR</div><div class="step-earn">+2.5 VIVA instant fee to creator</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent4"><div class="step-num">6</div><div class="step-title">Price Increases</div><div class="step-body">New price visible on creator profile. Early holders see unrealized gain. Can sell any time.</div><div class="step-code">currentPrice() = new reserveBalance*2
+                 / new totalSupply
+// 0.042 → 0.046 VIVA (after 50 VIVA buy)</div></div></div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">Fee Structure</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Creator: 5% (CREATOR_FEE_BPS=500)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent2)"></div><div class="info-text">Treasury: 2% (TREASURY_FEE_BPS=200)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Curve reserve: 93%</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Sell Flow</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--muted)"></div><div class="info-text">POST /v1/wallet/youtoken/sell/{creatorId}</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--muted)"></div><div class="info-text">YouToken.sell(tokenAmount) → VIVA returned</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">Price decreases on sell</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 7: HEALTH ZK ══════════════ -->
+<div id="flow-health" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 07 · Privacy-First Health</div>
+    <div class="flow-title" style="color:var(--accent3)">Health ZK</div>
+    <div class="flow-desc">Raw biometric data <strong style="color:var(--accent5)">never leaves the device</strong>. ZK-proof (Iden3 / Groth16) proves statements like "slept 7–9 hrs" without revealing the exact value. Server stores only hash + score.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">1</div><div class="step-title">HealthKit / Google Fit</div><div class="step-body">Native health data read on-device. Raw values: sleep duration, steps, calories, macros. Never serialized to network.</div><div class="step-code">// health/HealthKitService.ts
+const sleep = await HealthKit.getSleepSamples()
+// stays in memory on device only</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">2</div><div class="step-title">ZK-Proof Generated On-Device</div><div class="step-body">Iden3 Groth16 circuit proves the statement without revealing raw data. Proof = ~256 bytes.</div><div class="step-code">// iden3 circuit (simplified):
+// Private input: durationMinutes = 454
+// Public input: min=420, max=540
+// Proves: 420 ≤ 454 ≤ 540
+// WITHOUT revealing 454
+zkProof = await iden3.prove(circuit, inputs)
+// proof: { pi_a, pi_b, pi_c, publicSignals }</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">3</div><div class="step-title">POST With Proof (No Raw Data)</div><div class="step-body">Request contains: date, ZK-proof, aggregate category (e.g. steps "8000–8999"). No exact values.</div><div class="step-code">POST /v1/health/sleep
+{
+  date: "2026-06-08",
+  durationMinutes: 450,  // ← bucketed/rounded
+  quality: 0.82,          // ← derived score
+  zkProof: "0x3a7f..."   // ← proof bytes
+}</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">4</div><div class="step-title">Server Verifies Proof</div><div class="step-body">Health service verifies ZK proof signature using Iden3 verifier. If invalid → 400. If valid → compute score.</div><div class="step-code"># health/src/routers/biometrics.py
+result = iden3.verify(zkProof, publicSignals)
+if not result.valid:
+    raise HTTPException(400, "Invalid proof")
+score = _sleep_score(durationMinutes, quality)
+# score = 0-100 based on WHO guidelines</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">5</div><div class="step-title">Store: Hash + Score Only</div><div class="step-body">Database stores proof hash + computed score. Raw duration/steps/macros are NEVER written to DB.</div><div class="step-code">health_sleep INSERT {
+  user_id, date,
+  sleep_score: 78.4,      -- computed
+  zk_proof_hash: sha256(proof)  -- hash only
+  -- NO durationMinutes stored!
+  -- NO quality stored!
+}</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">6</div><div class="step-title">Ring Score Updated</div><div class="step-body">Sleep ring on HomeCanvas updates. V-Score event pushed. Streak tracked.</div><div class="step-code">GET /v1/health/summary
+→ { sleep: 78.4, activity: 62.0,
+    nutrition: 55.0 }
+POST /v1/vscore/.../event
+{ type: "health.sleep", delta: +3.2 }</div></div></div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">Privacy Guarantees</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">Raw biometrics: device-only, never transmitted</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">Server stores: score + proof hash only</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent5)"></div><div class="info-text">30-day history: aggregate only, no raw values</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">3 Biometric Types</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Sleep: duration + quality → sleep_score</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Activity: steps bucketed ("8000–8999")</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Nutrition: macro ratio → nutrition_score</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 8: PREDICTION ══════════════ -->
+<div id="flow-prediction" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 08 · Prediction Markets</div>
+    <div class="flow-title" style="color:var(--accent2)">Prediction Market</div>
+    <div class="flow-desc">Binary prediction markets on-chain. Anyone creates a market. Users bet $VIVA on outcome A or B. Oracle resolves at deadline. 2% platform + 1% creator fee. Winners claim proportional payout.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">1</div><div class="step-title">Create Market</div><div class="step-body">Creator defines question, two outcomes, and resolution deadline.</div><div class="step-code">POST /v1/predictions/markets
+{ title: "BTC > $100k by Dec 2026?",
+  outcomeA: "Yes",
+  outcomeB: "No",
+  resolveAt: "2026-12-31T00:00:00Z" }
+→ PredictionMarket.createMarket()</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">2</div><div class="step-title">Users Discover & Bet</div><div class="step-body">Market listed in Predictions tab. Users bet $VIVA on A or B. $VIVA locked in contract.</div><div class="step-code">POST /v1/predictions/markets/{id}/bet
+{ outcome: "a", amount: 50.0 }
+→ PredictionMarket.bet(mktId, A, 50e18)
+→ $VIVA locked: poolA += 50 VIVA
+→ bets[mktId][user][A] += 50</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">3</div><div class="step-title">Market Closes</div><div class="step-body">At resolveAt, no new bets accepted. Oracle watches for deadline.</div><div class="step-code">require(block.timestamp >= m.resolveAt)
+// market.status = Status.Pending</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent2"><div class="step-num">4</div><div class="step-title">VIVA Oracle Resolves</div><div class="step-body">Off-chain oracle (Chainlink / VIVA validator) calls resolve with winning outcome.</div><div class="step-code">PredictionMarket.resolve(mktId, Outcome.A)
+// or: cancelMarket(mktId) → full refunds
+market.status = Status.Resolved
+market.winner = Outcome.A</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">5</div><div class="step-title">Winners Claim</div><div class="step-body">Winners claim proportional share of loser pool minus fees.</div><div class="step-code">POST /v1/predictions/markets/{id}/claim
+→ PredictionMarket.claimWinnings()
+
+totalPool = poolA + poolB = 10000 VIVA
+platformFee = 10000 * 200 / 10000 = 200
+creatorFee  = 10000 * 100 / 10000 = 100
+winnerPool  = 9700 VIVA
+
+// My 50 VIVA bet out of 6000 poolA:
+payout = 50/6000 * 9700 = 80.8 VIVA</div><div class="step-earn">+30.8 VIVA profit on 50 VIVA bet</div></div></div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">Fee Structure</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent2)"></div><div class="info-text">Platform: 2% (PLATFORM_FEE_BPS=200)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Creator: 1% (CREATOR_FEE_BPS=100)</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent3)"></div><div class="info-text">Winners: 97% of total pool</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Cancel = Full Refund</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--muted)"></div><div class="info-text">Oracle can call cancelMarket()</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--muted)"></div><div class="info-text">All bets refunded 100%</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--muted)"></div><div class="info-text">No fees on cancellation</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FLOW 9: ROOMS ══════════════ -->
+<div id="flow-rooms" class="flow-page">
+  <div class="flow-header">
+    <div class="flow-label">FLOW 09 · Live Audio</div>
+    <div class="flow-title" style="color:var(--purple)">Audio Room</div>
+    <div class="flow-desc">LiveKit-powered WebRTC audio rooms. Hosts set stake gates and V-Score requirements. Host earns $VIVA per listener-minute. Listeners can raise hand to become speakers.</div>
+  </div>
+  <div class="flow-diagram">
+
+    <div class="flow-row"><div class="step purple"><div class="step-num">1</div><div class="step-title">Host Creates Room</div><div class="step-body">Host sets title, optional stake gate (lock X VIVA to join), V-Score gate, and privacy.</div><div class="step-code">POST /v1/rooms
+{ title: "Web3 Alpha Talk",
+  stakeGate: 10,    // 10 VIVA to join
+  vscoreGate: 200,  // Rising+ required
+  isPrivate: false }
+→ LiveKit.createRoom(roomId)
+→ rooms INSERT</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step purple"><div class="step-num">2</div><div class="step-title">Listener Joins</div><div class="step-body">Listener taps Join. System checks V-Score gate and stake gate. If stake required → $VIVA locked.</div><div class="step-code">POST /v1/rooms/{id}/join
+// Checks:
+if vscore < room.vscore_gate → 403
+if stakeGate > 0:
+  stakes INSERT { user_id, amount: 10,
+    purpose: "room", lock_until: room.end }
+  VIVAToken.transferFrom(user, contract, 10e18)</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step purple"><div class="step-num">3</div><div class="step-title">Get LiveKit Token</div><div class="step-body">Backend issues signed LiveKit JWT. Token encodes room, user, and role (listener by default).</div><div class="step-code">GET /v1/rooms/{id}/token
+→ livekit.AccessToken{
+    apiKey, apiSecret,
+    identity: userId,
+    grants: { roomJoin: true,
+              canPublish: false } // listener
+  }.toJwt()</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step purple"><div class="step-num">4</div><div class="step-title">WebRTC Connect</div><div class="step-body">React Native LiveKit SDK connects to SFU server. Audio streaming begins. Low-latency (&lt;200ms).</div><div class="step-code">// screens/Rooms/RoomScreen.tsx
+import { useRoom } from '@livekit/react-native-sdk'
+room.connect(livekitUrl, token)
+room.on('participantConnected', ...)
+room.on('trackPublished', ...)</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step purple"><div class="step-num">5</div><div class="step-title">Listener Raises Hand</div><div class="step-body">Listener requests speaker slot. Host sees request in panel.</div><div class="step-code">POST /v1/rooms/{id}/raise-hand
+// room_participants UPDATE: raised_hand=true
+// push notification to host</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step purple"><div class="step-num">6</div><div class="step-title">Host Promotes to Speaker</div><div class="step-body">Host promotes listener. LiveKit grants publish permission. User can now speak.</div><div class="step-code">POST /v1/rooms/{id}/speakers/{userId}/promote
+→ livekit.RemoteParticipant.setPermissions(
+    { canPublish: true })
+room_participants UPDATE: role='speaker'</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step accent3"><div class="step-num">7</div><div class="step-title">Host Earns Per Listener-Minute</div><div class="step-body">Earnings calculated: listeners × minutes × rate. Credited from room stake pool + protocol mint.</div><div class="step-code">// Cron: every 60s while room active
+listeners = room_participants.count
+earn_per_min = listeners * 0.01 VIVA
+VIVAToken.mint(hostId, earn_per_min, ROOM)
+earn_events INSERT { source: "room_host",
+  amount: earn_per_min }</div><div class="step-earn">+0.01 VIVA / listener / minute</div></div></div>
+    <div class="arrow-down"></div>
+
+    <div class="flow-row"><div class="step purple"><div class="step-num">8</div><div class="step-title">Room Ends</div><div class="step-body">Host ends room. Stakes returned. Recording (if opted-in) saved to IPFS. Summary pushed.</div><div class="step-code">DELETE /v1/rooms/{id}
+→ stakes refunded to all participants
+→ if recording: IPFS.pin(recording)
+→ room_participants: all left
+→ summary push notification</div></div></div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-title">Tech Stack</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">LiveKit Cloud: WebRTC SFU</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">React Native LiveKit SDK</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--purple)"></div><div class="info-text">Go/Chi rooms service :3009</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Stake Gate</div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Optional: lock 10+ VIVA to join</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Reduces low-quality participation</div></div>
+        <div class="info-item"><div class="info-dot" style="background:var(--accent4)"></div><div class="info-text">Returned on room end</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+function showFlow(name) {
+  document.querySelectorAll('.flow-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('flow-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = {overview:0,onboarding:1,attention:2,adslot:3,twin:4,dating:5,youtoken:6,health:7,prediction:8,rooms:9};
+  if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+}
+</script>
+</body>
+</html>
