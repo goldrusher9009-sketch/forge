@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAppStore, mockUser, RING_META, TIER_META } from '@/lib/store'
+import { useAppStore, mockUser, mapApiUser, RING_META, TIER_META } from '@/lib/store'
 import { auth, setTokens } from '@/lib/api'
 import clsx from 'clsx'
 
@@ -57,21 +57,7 @@ export default function Onboard() {
         wealthRing: rings.wealth,
       })
       setTokens(res.accessToken, res.refreshToken)
-      setUser({
-        ...mockUser(),
-        handle: res.user.handle,
-        displayName: res.user.displayName,
-        id: res.user.id,
-        rings: {
-          sleep: res.user.sleepRing ?? rings.sleep,
-          nutrition: res.user.nutritionRing ?? rings.nutrition,
-          activity: res.user.activityRing ?? rings.activity,
-          social: res.user.socialRing ?? rings.social,
-          wealth: res.user.wealthRing ?? rings.wealth,
-        },
-        vScore: res.user.vScore ?? 300,
-        tier: res.user.tier?.toLowerCase() ?? 'rising',
-      })
+      setUser(mapApiUser(res.user, mockUser()))
     } catch (e: any) {
       // Fallback to mock if API unavailable
       console.warn('API unavailable, using mock:', e.message)

@@ -2,6 +2,7 @@
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { OnboardingFlow } from './OnboardingFlow';
+import { ForgeAutonomyHub, OnboardingWizard, CreditBadge, LIVING_STYLES } from './ForgeAutonomy';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -648,6 +649,28 @@ export default function ForgeApp() {
     try { localStorage.setItem('forge_right_expanded', rightExpanded ? 'true' : 'false'); } catch {}
   }, [rightExpanded]);
 
+  // ── Tool catalog cache — runs ONCE on mount ──────────────────────────────
+  // Serves tools from localStorage instantly, then refreshes from the public
+  // /api/forge-tools/catalog endpoint (Cache-Control: 1h on server).
+  // This means zero token cost — tools never travel in system prompts.
+  useEffect(() => {
+    const CACHE_KEY = 'forge_tools_catalog_v1';
+    const CACHE_TTL = 3600 * 1000; // 1 hour
+    const cached = (() => { try { const s = localStorage.getItem(CACHE_KEY); if (!s) return null; const p = JSON.parse(s); if (Date.now() - p.ts < CACHE_TTL) return p.data; } catch {} return null; })();
+    if (cached && !(window as any).FORGE_CATALOG_DATA?.tools) {
+      (window as any).FORGE_CATALOG_DATA = { ...((window as any).FORGE_CATALOG_DATA || {}), tools: cached };
+    }
+    // Always revalidate in background (server has 1h cache anyway)
+    fetch(`${typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : ''}/api/forge-tools/catalog`)
+      .then(r => r.json())
+      .then(d => {
+        if (d?.data) {
+          (window as any).FORGE_CATALOG_DATA = { ...((window as any).FORGE_CATALOG_DATA || {}), tools: d.data };
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: d.data })); } catch {}
+        }
+      }).catch(() => {});
+  }, []);
+
   // Desktop app: load state + listen for browser events from Chrome extension
   useEffect(() => {
     if (!isDesktop) return;
@@ -725,6 +748,9 @@ export default function ForgeApp() {
   const [voiceActive, setVoiceActive] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const recognitionRef = useRef<any>(null);
+  const wakeRef = useRef<any>(null); // background "Hey Forge" listener
+  const [wakeListening, setWakeListening] = useState(false);
+  const [heyForgeActive, setHeyForgeActive] = useState(false); // wake word triggered
 
   // Sketch / Live Preview
   const [sketchMode, setSketchMode] = useState(false);
@@ -834,6 +860,11 @@ export default function ForgeApp() {
   const [superTab, setSuperTab] = useState<'chat'|'memory'>('chat');
   const [superStats, setSuperStats] = useState<{memoryCount:number;intelligenceScore:number;threadCount:number}>({memoryCount:0,intelligenceScore:0,threadCount:0});
   const [superMode, setSuperMode] = useState<'forgeAsk'|'forgeMagic'>('forgeAsk');
+  const [agentMode, setAgentMode] = useState<string>(() => { try { return (localStorage.getItem('forge_agent_mode') as any) || 'auto'; } catch { return 'auto'; } });
+  const [showAutonomy, setShowAutonomy] = useState(false);
+  const [showBizWizard, setShowBizWizard] = useState(false);
+  const [forgeMode, setForgeMode] = useState<string>(() => { try { return localStorage.getItem('forge_mode') || 'default'; } catch { return 'default'; } });
+  const autonomyApi = useCallback((path: string, opts: RequestInit = {}) => apiFetch(path, opts, user?.token), [user]);
   const [language, setLanguage] = useState('en');
   const [renamingThreadInput, setRenamingThreadInput] = useState('');
   const [showRunsScheduler, setShowRunsScheduler] = useState(false);
@@ -900,18 +931,21 @@ export default function ForgeApp() {
   useEffect(() => {
     if (mainTab !== 'forgeco' || !user || !coData?.team?.id) return;
     if (coSocketRef.current) return; // already connected
-    try {
-      const { io } = require('socket.io-client');
-      const sock = io(API.replace('/api', ''), { auth: { token: user.token }, transports: ['websocket','polling'] });
-      sock.on('connect', () => sock.emit('co_join', coData.team.id));
-      sock.on('co_message', (msg: any) => {
-        setCoData(prev => prev ? { ...prev, messages: [...(prev.messages || []), msg] } : prev);
-      });
-      sock.on('co_project_update', (proj: any) => {
-        setCoData(prev => prev ? { ...prev, projects: prev.projects.map((p:any) => p.id === proj.id ? proj : p) } : prev);
-      });
-      coSocketRef.current = sock;
-    } catch {}
+    const teamId = coData.team.id;
+    (async () => {
+      try {
+        const { io } = await import('socket.io-client');
+        const sock = io(API.replace('/api', ''), { auth: { token: user.token }, transports: ['websocket','polling'] });
+        sock.on('connect', () => sock.emit('co_join', teamId));
+        sock.on('co_message', (msg: any) => {
+          setCoData(prev => prev ? { ...prev, messages: [...(prev.messages || []), msg] } : prev);
+        });
+        sock.on('co_project_update', (proj: any) => {
+          setCoData(prev => prev ? { ...prev, projects: prev.projects.map((p:any) => p.id === proj.id ? proj : p) } : prev);
+        });
+        coSocketRef.current = sock;
+      } catch {}
+    })();
     return () => {
       coSocketRef.current?.disconnect();
       coSocketRef.current = null;
@@ -1334,7 +1368,7 @@ export default function ForgeApp() {
   useEffect(() => {
     const id = 'forge-global-styles';
     if (!document.getElementById(id)) {
-      const s = document.createElement('style'); s.id = id; s.textContent = GLOBAL_STYLES;
+      const s = document.createElement('style'); s.id = id; s.textContent = GLOBAL_STYLES + LIVING_STYLES;
       document.head.appendChild(s);
     }
     // Wake Railway backend on mount so it's warm when user sends first message
@@ -1597,7 +1631,7 @@ export default function ForgeApp() {
       Object.keys(confirmed).forEach(p => { if (confirmed[p]) loadProviderModels(p); });
       // Always load OR models (public list available even without key; key gives full access)
       loadOpenRouterModels();
-      // Auto-select best available model based on keys user has actually saved
+      // Auto-select best available model — preserve any saved model preference
       setSelectedModel(prev => {
         // Helper: which provider does a model belong to?
         const provOf = (m: string) => {
@@ -1611,17 +1645,18 @@ export default function ForgeApp() {
           if (m.includes('/')) return 'openrouter';
           return null;
         };
-        // Keep current selection only if user has a key for that provider
+        // ALWAYS keep saved model if user has a valid key for its provider
         if (prev && confirmed[provOf(prev) || '']) return prev;
-        // Pick first provider user actually has a key for (priority order — no morph)
+        // Keep OpenRouter models too (OR key may lag behind confirmed)
+        if (prev && prev.includes('/')) return prev;
+        // Only auto-pick if no valid saved model
         if (confirmed['anthropic']) return 'claude-sonnet-4-6';
         if (confirmed['openai']) return 'gpt-4o';
         if (confirmed['gemini']) return 'gemini-2.0-flash';
         if (confirmed['groq']) return 'llama-3.1-8b-instant';
         if (confirmed['mistral']) return 'mistral-small-latest';
-        if (confirmed['openrouter']) return (prev && !prev.endsWith(':free')) ? prev : 'deepseek/deepseek-chat-v3-0324'; // prefer paid model — free models rate-limit even with own key
-        // No keys at all — leave empty so UI shows the warning
-        return '';
+        if (confirmed['openrouter']) return (prev && !prev.endsWith(':free')) ? prev : 'deepseek/deepseek-chat-v3-0324';
+        return prev || '';
       });
     } catch {}
   };
@@ -1685,11 +1720,13 @@ export default function ForgeApp() {
 
   // Shared one-shot LLM call for ForgeMulti / ForgeASI / MVP — always uses the active model.
   const callOneModel = async (prompt: string, modelOverride?: string): Promise<string> => {
-    if (!user) return '';
-    const m = (modelOverride || selectedModel || 'claude-sonnet-4-6');
+    if (!user) throw new Error('Not logged in');
+    const m = (modelOverride || selectedModel || 'claude-haiku-4-5-20251001');
     const cleanModel = m.startsWith('openrouter/') ? m.slice('openrouter/'.length) : m;
     const d = await apiFetch('/chat', { method:'POST', body: JSON.stringify({ messages:[{ role:'user', content: prompt }], model: cleanModel }) }, user.token);
-    return d?.choices?.[0]?.message?.content || d?.data?.content || d?.content || 'No response';
+    const content = d?.choices?.[0]?.message?.content || d?.data?.content || d?.content;
+    if (!content) throw new Error(d?.error || 'No response from model');
+    return content;
   };
 
   // ── ForgeMulti: run several specialist agents in parallel, then synthesize ──
@@ -1738,6 +1775,7 @@ export default function ForgeApp() {
     let prior = '';
     for (const phase of phases) {
       setAsiCurrentPhase(phase);
+      await new Promise(r => setTimeout(r, 0)); // yield to renderer
       let content = '';
       try {
         content = await callOneModel(`You are running the "${phase}" phase of an extended reasoning chain for this task:\n\n${asiPrompt}\n\n${prior ? `Prior phases:\n${prior}\n\n` : ''}Produce only the "${phase}" phase output — focused and concrete.`);
@@ -1745,6 +1783,7 @@ export default function ForgeApp() {
       steps.push({ phase, content, tokens: Math.round(content.length/4) });
       prior += `\n## ${phase}\n${content}`;
       setAsiLivePhases(prev => prev.map(p => p.phase===phase ? { ...p, content, done:true } : p));
+      await new Promise(r => setTimeout(r, 0)); // yield after state update
     }
     let synthesis = '';
     try { synthesis = await callOneModel(`Synthesize the full reasoning chain into a final, complete answer to: ${asiPrompt}\n\n${prior}`); } catch {}
@@ -2443,6 +2482,7 @@ export default function ForgeApp() {
         active_connectors: Array.from(activeConnectors),
         enabled_hooks: hooks.filter(h => h.enabled).map(h => ({ event: h.event, action: h.action, target: h.target })),
         forge_mode: superMode === 'forgeMagic' ? 'magic' : 'ask',
+        agent_mode: agentMode,
       };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
       // Attach images for vision
@@ -2680,6 +2720,41 @@ export default function ForgeApp() {
     setVoiceActive(true);
   };
 
+  // ── "Hey Forge" wake word listener ────────────────────────────────────────
+  const startWakeListener = () => {
+    if (typeof window === 'undefined') return;
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US';
+    rec.onresult = (event: any) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript.toLowerCase().trim();
+        if (t.includes('hey forge') || t.includes('forge help') || t.includes('ok forge')) {
+          // Wake word detected — start full voice mode
+          setHeyForgeActive(true);
+          setWakeListening(false);
+          rec.stop();
+          showToast('👂 Hey Forge — listening!', 'info');
+          // Auto-enable TTS so results are read back
+          setTtsEnabled(true);
+          // Start capture recognition
+          setTimeout(() => { toggleVoice(); }, 400);
+        }
+      }
+    };
+    rec.onend = () => { if (wakeListening) { try { rec.start(); } catch {} } };
+    rec.onerror = () => {};
+    wakeRef.current = rec;
+    try { rec.start(); setWakeListening(true); } catch {}
+  };
+
+  const stopWakeListener = () => {
+    try { wakeRef.current?.stop(); } catch {}
+    setWakeListening(false);
+    setHeyForgeActive(false);
+  };
+
   // Speak response — tries OpenAI TTS first, falls back to browser synthesis
   const speakText = async (text: string) => {
     if (!ttsEnabled) return;
@@ -2811,9 +2886,9 @@ export default function ForgeApp() {
     if (!user || !routerTestPrompt.trim() || routerTesting) return;
     setRouterTesting(true); setRouterTestResult('');
     try {
-      const body = { content:routerTestPrompt, model:routerTestModel };
+      const body = { messages:[{ role:'user', content:routerTestPrompt }], model:routerTestModel };
       const data = await apiFetch('/forge/chat', { method:'POST', body:JSON.stringify(body) }, user.token);
-      setRouterTestResult(data?.content || data?.result || JSON.stringify(data));
+      setRouterTestResult(data?.content || data?.result || (data?.error ? `Error: ${data.error}` : JSON.stringify(data)));
     } catch (e: any) { setRouterTestResult(`Error: ${e.message}`); }
     finally { setRouterTesting(false); }
   };
@@ -2867,7 +2942,9 @@ export default function ForgeApp() {
 
       {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:9999, padding:'12px 24px', borderRadius:12, background: toast.type==='err' ? '#ef4444' : toast.type==='info' ? 'var(--fg-bg3)' : '#16a34a', color:'#fff', fontSize:14, fontWeight:600, boxShadow:'0 4px 24px rgba(0,0,0,0.5)', maxWidth:440, textAlign:'center', pointerEvents:'none', animation:'forge-flash 0.2s ease' }}>{toast.msg}</div>}
 
-      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); }} />}
+      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); if (user) setShowBizWizard(true); }} />}
+      {showBizWizard && user && <OnboardingWizard api={autonomyApi} onClose={() => setShowBizWizard(false)} onDone={() => { setShowBizWizard(false); setShowAutonomy(true); }} />}
+      {showAutonomy && user && <ForgeAutonomyHub api={autonomyApi} username={user?.name || user?.email} onClose={() => setShowAutonomy(false)} onOpenOnboarding={() => { setShowAutonomy(false); setShowBizWizard(true); }} onModeChange={(m) => { setForgeMode(m); try { localStorage.setItem('forge_mode', m); } catch {} }} />}
 
       {/* Mobile overlay */}
       {isMobile && mobileDrawerOpen && <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:98 }} onClick={() => setMobileDrawerOpen(false)} />}
@@ -2922,6 +2999,7 @@ export default function ForgeApp() {
             { id:'marketplace', icon:'🛍', label:'Marketplace' },
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🎉', label:'Agent Swarm' },
+            { id:'forgevoyage', icon:'🚢', label:'ForgeVoyage' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -2980,7 +3058,7 @@ export default function ForgeApp() {
               <input value={threadSearch} onChange={e => setThreadSearch(e.target.value)} placeholder="🔌 Search threads..." style={{ flex:'0 0 auto', marginBottom:8, padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, outline:'none' }} />
               <div className="fg-chats-scroll" style={{ flex:1, overflowY:'auto' }}>
                 {/* Pinned threads first */}
-                {threads.filter(t => t.pinned && !t.archived && t.title.toLowerCase().includes(threadSearch.toLowerCase())).map(t => (
+                {threads.filter(t => t.pinned && !t.archived && (t.title||'').toLowerCase().includes(threadSearch.toLowerCase())).map(t => (
                   <div key={t.id} style={{ position:'relative' }}
                     onContextMenu={e => { e.preventDefault(); setThreadMenu({ threadId:t.id, x:e.clientX, y:e.clientY }); }}>
                     <div onClick={() => selectThread(t)}
@@ -3012,7 +3090,7 @@ export default function ForgeApp() {
                 ))}
                 {/* Grouped threads — Today / Yesterday / This week / Older */}
                 {(() => {
-                  const unpinned = threads.filter(t => !t.pinned && !t.archived && t.title.toLowerCase().includes(threadSearch.toLowerCase()));
+                  const unpinned = threads.filter(t => !t.pinned && !t.archived && (t.title||'').toLowerCase().includes(threadSearch.toLowerCase()));
                   const now = new Date(); const today = now.toDateString();
                   const yesterday = new Date(now.getTime()-86400000).toDateString();
                   const weekAgo = new Date(now.getTime()-7*86400000);
@@ -3198,6 +3276,44 @@ export default function ForgeApp() {
                   </button>
                 </div>
               )}
+              {/* 🤖 Agent Mode Switcher */}
+              {!isMobile && (
+                <div style={{ display:'flex', alignItems:'center', gap:2, padding:'3px', background:'var(--fg-bg4)', borderRadius:8, border:'1px solid var(--fg-border2)', flexShrink:0 }}>
+                  {([
+                    { key:'auto',    icon:'⚡', label:'Auto',    title:'Auto — smart model routing based on task complexity', color:'var(--fg-orange)' },
+                    { key:'cheap',   icon:'💸', label:'Cheap',   title:'Cheap — fastest & cheapest model for simple tasks',   color:'var(--fg-green)' },
+                    { key:'quality', icon:'💎', label:'Quality', title:'Quality — best available model for top-tier output',  color:'var(--fg-blue)' },
+                    { key:'complex', icon:'🧠', label:'Complex', title:'Complex — large context model for heavy workloads',   color:'#a78bfa' },
+                    { key:'raw',     icon:'🔓', label:'Raw',     title:'Raw — uncensored model, no system restrictions',      color:'#f87171' },
+                    { key:'solo',    icon:'🎯', label:'Solo',    title:'Solo — single focused agent, no orchestration',       color:'#38bdf8' },
+                    { key:'swarm',   icon:'🐝', label:'Swarm',   title:'Swarm — 5-10 agents in parallel, results merged',     color:'#facc15' },
+                    { key:'pipeline',icon:'⛓️', label:'Pipeline',title:'Pipeline — agents run sequentially, each builds on last', color:'#34d399' },
+                    { key:'debate',  icon:'⚔️', label:'Debate',  title:'Debate — two agents argue, best answer wins',          color:'#fb923c' },
+                    { key:'review',  icon:'🔍', label:'Review',  title:'Review — one agent works, a second critiques',         color:'#c084fc' },
+                    { key:'stealth', icon:'🥷', label:'Stealth', title:'Stealth — silent until done, output only',             color:'#94a3b8' },
+                    { key:'draft',   icon:'📝', label:'Draft',   title:'Draft — rough output fast, approval before final',     color:'#f472b6' },
+                    { key:'teach',   icon:'🎓', label:'Teach',   title:'Teach — explains every step, shows full reasoning',    color:'#4ade80' },
+                  ] as {key:string;icon:string;label:string;title:string;color:string}[]).map(m => (
+                    <button key={m.key} onClick={() => { setAgentMode(m.key as any); try { localStorage.setItem('forge_agent_mode', m.key); } catch {} }}
+                      title={m.title}
+                      style={{ padding:'3px 7px', background: agentMode===m.key ? m.color : 'transparent', border:'none', borderRadius:6, color: agentMode===m.key ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.15s' }}>
+                      {m.icon} {m.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* 🪙 Credits + 🌅 Autonomy hub */}
+              {!isMobile && user && <CreditBadge api={autonomyApi} onTopup={async () => { try { const d = await autonomyApi('/billing/topup', { method:'POST', body: JSON.stringify({ amount: 50 }) }); if (d?.data?.checkoutUrl) window.open(d.data.checkoutUrl, '_blank'); } catch {} }} />}
+              {!isMobile && user && (
+                <button onClick={() => setShowAutonomy(true)} title="Forge Autonomy — morning dashboard, approvals, agents, voice, magic reply, marketplace, modes"
+                  className="fg-living"
+                  style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 10px', background:'linear-gradient(135deg,rgba(255,31,53,0.18),rgba(14,165,233,0.12))', border:'1px solid var(--fg-border3)', borderRadius:8, color:'var(--fg-text)', fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                  🌅 Forge OS
+                  {forgeMode !== 'default' && <span style={{ fontSize:9, padding:'1px 5px', borderRadius:4, background:'var(--fg-orange,#ff1f35)', color:'#fff', marginLeft:2 }}>
+                    {forgeMode==='focus'?'🎯':forgeMode==='warroom'?'⚔️':forgeMode==='overnight'?'🌙':'🤝'}
+                  </span>}
+                </button>
+              )}
               {/* 🧠 IQ score */}
               {!isMobile && (
                 <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: superStats.intelligenceScore > 100 ? 'linear-gradient(135deg,rgba(139,92,246,0.15),rgba(56,189,248,0.1))' : 'var(--fg-bg4)', borderRadius:8, border:`1px solid ${superStats.intelligenceScore > 100 ? 'rgba(139,92,246,0.4)' : 'var(--fg-border2)'}`, flexShrink:0, cursor:'pointer' }} onClick={() => setMainTab('super')} title="SuperAgent IQ — click to open">
@@ -3371,8 +3487,8 @@ export default function ForgeApp() {
                           </select>
                         )}
                       </div>
-                      {sketchArtifact?.type === 'html' || sketchArtifact?.type === 'react' ? (
-                        <iframe srcDoc={previewCode} style={{ flex:1, border:'1px solid var(--fg-border)', borderRadius:8, background:'#fff' }} title="Live Preview" />
+                      {previewCode && (previewCode.includes('<') || sketchArtifact?.type === 'html' || sketchArtifact?.type === 'react') ? (
+                        <iframe srcDoc={previewCode.includes('<!DOCTYPE') || previewCode.includes('<html') ? previewCode : wrapCodeForPreview(previewCode)} style={{ flex:1, border:'1px solid var(--fg-border)', borderRadius:8, background:'#fff' }} title="Live Preview" />
                       ) : (
                         <textarea value={previewCode} onChange={e => setPreviewCode(e.target.value)} style={{ flex:1, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, padding:10, resize:'none', fontFamily:'monospace' }} placeholder="Artifact preview will appear here. Ask AI to create HTML, React, or code artifacts." />
                       )}
@@ -3381,7 +3497,7 @@ export default function ForgeApp() {
                 )}
 
                 {/* Messages canvas */}
-                <div onScroll={e=>{const el=e.currentTarget;const b=el.scrollHeight-el.scrollTop-el.clientHeight<80;setShowScrollDown(!b);setUserScrolledUp(!b);}} style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16 }}>
+                <div onScroll={e=>{const el=e.currentTarget;const b=el.scrollHeight-el.scrollTop-el.clientHeight<80;setShowScrollDown(!b);setUserScrolledUp(!b);}} className={sending ? 'fg-living-active' : ''} style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 12px' : '24px 32px', display:'flex', flexDirection:'column', gap:16, transition:'background 0.3s' }}>
                   {messages.length === 0 && !activeThread && (
                     <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20 }}>
                       <div style={{ fontSize:56 }}>⚡</div>
@@ -3504,7 +3620,7 @@ export default function ForgeApp() {
                               <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, marginRight:4 }}>⚡ Live Preview</span>
                               <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'code' }))} style={{ padding:'3px 10px', background: previewMode==='code' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='code' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Code</button>
                               <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'preview' }))} style={{ padding:'3px 10px', background: previewMode==='preview' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='preview' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Preview</button>
-                              <button onClick={() => { navigator.clipboard.writeText(codeBlock); }} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>📋 Copy</button>
+                              <button onClick={() => { navigator.clipboard.writeText(codeBlock); showToast('📋 Code copied'); }} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>📋 Copy</button>
                               <button onClick={() => downloadCode(codeBlock, extracted?.suggestedFilename || (isHtml ? 'output.html' : 'output.txt'))} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Download file">💾 Download</button>
                               <button onClick={() => { setPreviewCode(codeBlock); setSketchMode(true); }} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Open in Sketch panel">× Expand</button>
                             </div>
@@ -3524,7 +3640,7 @@ export default function ForgeApp() {
                         <div style={{ display:'flex', gap:4, marginTop:6, opacity:0.5, transition:'opacity 0.15s' }}
                           onMouseEnter={e => (e.currentTarget.style.opacity='1')}
                           onMouseLeave={e => (e.currentTarget.style.opacity='0.5')}>
-                          <button onClick={() => { navigator.clipboard.writeText(m.content); }} title="Copy"
+                          <button onClick={() => { navigator.clipboard.writeText(m.content); showToast('📋 Copied'); }} title="Copy"
                             style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
                             onMouseEnter={e => (e.currentTarget.style.background='var(--fg-border)')}
                             onMouseLeave={e => (e.currentTarget.style.background='none')}>
@@ -3675,13 +3791,21 @@ export default function ForgeApp() {
                       <span>· {messages.length} in context</span>
                     </div>
                   )}
-                  {/* Subtle typing indicator — shows only while waiting for response */}
+                  {/* Living typing indicator — shows active tool name */}
                   {typing && (
-                    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 16px' }}>
-                      <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>🤖</div>
+                    <div className="fg-living-active" style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 16px', borderRadius:8 }}>
+                      <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0, animation:'fg-breathe 2s ease-in-out infinite' }}>🤖</div>
                       <div style={{ display:'flex', gap:4, alignItems:'center' }}>
                         {[0,1,2].map(i => <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--fg-orange)', opacity:0.7, animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
                       </div>
+                      {liveEvents.length > 0 && (() => {
+                        const last = liveEvents[liveEvents.length-1];
+                        const toolLabels: Record<string,string> = { web_search:'🔍 Searching web', browser:'🌐 Reading page', run_code:'💻 Running code', shell:'⚡ Running shell', write_file:'📝 Writing file', read_file:'📖 Reading file', image_gen:'🎨 Generating image', create_artifact:'🧱 Creating artifact', spawn_agent:'🤖 Spawning agent', memory_store:'🧠 Storing memory', pdf_gen:'📄 Building PDF', spreadsheet:'📊 Building spreadsheet', presentation:'📑 Building deck', email_draft:'✉️ Drafting email', diagram:'📐 Drawing diagram', multi_agent:'🔀 Running agents', data_viz:'📈 Visualizing data', calculator:'🔢 Calculating', cursor_edit:'✏️ Editing code', http_request:'🌐 Fetching data' };
+                        const msg = last.message || '';
+                        const toolKey = Object.keys(toolLabels).find(k => msg.toLowerCase().includes(k));
+                        const label = toolKey ? toolLabels[toolKey] : last.type === 'tool' ? `🔧 ${msg.slice(0,40)}` : null;
+                        return label ? <span style={{ fontSize:11, color:'var(--fg-orange2)', fontWeight:600, marginLeft:4, animation:'fg-ghost-blink 1.8s ease-in-out infinite' }}>{label}</span> : null;
+                      })()}
                     </div>
                   )}
                   {/* Token optimization hint — shown after conversation has tokens */}
@@ -3863,6 +3987,25 @@ export default function ForgeApp() {
                         </div>
                       );
                     })()}
+                    {/* Co-Pilot mode suggestion strip */}
+                    {forgeMode === 'copilot' && messages.length > 0 && (
+                      <div style={{ display:'flex', gap:6, padding:'4px 0 6px', flexWrap:'wrap' }}>
+                        {['Follow up on this','Summarize key points','Draft a reply','What should I do next?','Ask a clarifying question'].map(s => (
+                          <button key={s} onClick={() => { setInput(s); textareaRef.current?.focus(); }}
+                            style={{ fontSize:10, padding:'3px 8px', borderRadius:12, background:'rgba(99,102,241,0.15)', border:'1px solid rgba(99,102,241,0.3)', color:'#a5b4fc', cursor:'pointer' }}>
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {/* War Room mode indicator */}
+                    {forgeMode === 'warroom' && (
+                      <div style={{ fontSize:10, color:'#ef4444', padding:'2px 0 4px', fontWeight:600 }}>⚔️ War Room — agents will run in parallel on this message</div>
+                    )}
+                    {/* Overnight mode indicator */}
+                    {forgeMode === 'overnight' && (
+                      <div style={{ fontSize:10, color:'#8b5cf6', padding:'2px 0 4px', fontWeight:600 }}>🌙 Overnight Mode — message queued for 2am agent run</div>
+                    )}
                     <textarea ref={textareaRef} value={input}
                       onChange={e => {
                         const val = e.target.value;
@@ -3912,6 +4055,7 @@ export default function ForgeApp() {
                         <button onClick={() => { setSlashOpen(true); textareaRef.current?.focus(); }} title="Commands" style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:'5px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', cursor:'pointer', fontSize:14, fontWeight:700 }}>/</button>
                         {/* Voice button */}
                         <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background:voiceActive ? 'var(--fg-orange)' : 'var(--fg-odim)', border:`1px solid ${voiceActive ? 'var(--fg-orange2)' : 'var(--fg-odim2)'}`, borderRadius:8, color:voiceActive ? '#fff' : 'var(--fg-orange2)', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>🎤 {voiceActive ? '⏺ Rec' : 'Voice'}</button>
+                        <button onClick={() => wakeListening ? stopWakeListener() : startWakeListener()} title={wakeListening ? '"Hey Forge" wake word active — click to stop' : 'Enable "Hey Forge" wake word'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background: heyForgeActive ? 'rgba(99,102,241,0.25)' : wakeListening ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${wakeListening ? '#818cf8' : 'var(--fg-border2)'}`, borderRadius:8, color: wakeListening ? '#818cf8' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight:600, animation: wakeListening ? 'pulse 2s ease-in-out infinite' : 'none' }}>👂 {wakeListening ? 'Awake' : 'Hey Forge'}</button>
                         {/* Attach file */}
                         <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display:'none' }} onChange={async e => {
                           const files = Array.from(e.target.files || []);
@@ -3995,8 +4139,8 @@ export default function ForgeApp() {
                 </div>
               </div>
 
-              {/* Right panel */}
-              {rightExpanded && !isMobile && (
+              {/* Right panel — hidden in Focus mode */}
+              {rightExpanded && !isMobile && forgeMode !== 'focus' && (
                 <div style={{ width:360, background:'var(--fg-bg)', borderLeft:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0 }}>
                   <div style={{ display:'flex', borderBottom:'1px solid var(--fg-border)', padding:'0 2px', overflowX:'auto' }}>
                     {([
@@ -4358,7 +4502,7 @@ export default function ForgeApp() {
                                 <span style={{ fontSize:11, fontFamily:'var(--fg-font-mono)', color: h.enabled ? 'var(--fg-orange)' : 'var(--fg-text3)', fontWeight:600 }}>{h.event}</span>
                                 <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:5 }}>→ {h.target}</span>
                               </div>
-                              <button onClick={() => setHooks(prev => prev.map(x => x.id===h.id ? {...x, enabled:!x.enabled} : x))} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: h.enabled ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
+                              <button onClick={() => toggleHook(h.id)} style={{ width:34, height:18, borderRadius:9, border:'none', cursor:'pointer', background: h.enabled ? 'var(--fg-orange)' : 'var(--fg-bg5)', position:'relative', flexShrink:0, transition:'background 0.2s' }}>
                                 <span style={{ position:'absolute', top:2, left: h.enabled ? 16 : 2, width:14, height:14, borderRadius:'50%', background:'#fff', transition:'left 0.2s' }} />
                               </button>
                             </div>
@@ -4676,7 +4820,7 @@ export default function ForgeApp() {
                                 <pre style={{ fontSize:13, color:'var(--fg-text)', whiteSpace:'pre-wrap', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', lineHeight:1.6, margin:0 }}>{browserPage.text}</pre>
                                 {/* Copy button */}
                                 <div style={{ marginTop:12, paddingTop:12, borderTop:'1px solid var(--fg-border)', display:'flex', gap:8 }}>
-                                  <button onClick={() => navigator.clipboard.writeText(browserPage.text)} style={{ padding:'6px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-orange)', cursor:'pointer', fontSize:12 }}>📋 Copy text</button>
+                                  <button onClick={() => { navigator.clipboard.writeText(browserPage.text); showToast('📋 Text copied'); }} style={{ padding:'6px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-orange)', cursor:'pointer', fontSize:12 }}>📋 Copy text</button>
                                   <button onClick={() => { const q = `Content from ${browserPage.url}:\n\n${browserPage.text.slice(0,4000)}`; setInput(prev => prev + (prev ? '\n\n' : '') + q); setMainTab('workspace'); }} style={{ padding:'6px 12px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', cursor:'pointer', fontSize:12 }}>🛠 Send to chat</button>
                                 </div>
                               </div>
@@ -4739,12 +4883,12 @@ export default function ForgeApp() {
                                 if (!user || editorRunning) return;
                                 setEditorRunning(true); setEditorOutput('Running…');
                                 try {
-                                  const r = await apiFetch('/terminal/exec', { method:'POST', body: JSON.stringify({ command: editorLang === 'python' ? `python3 -c ${JSON.stringify(editorCode)}` : `node -e ${JSON.stringify(editorCode)}` }) }, user.token);
-                                  setEditorOutput(r.output || r.error || '(no output)');
+                                  const r = await apiFetch('/run-code', { method:'POST', body: JSON.stringify({ language: editorLang === 'python' ? 'python' : 'javascript', code: editorCode }) }, user.token);
+                                  setEditorOutput(r.result || r.output || r.error || '(no output)');
                                 } catch(e:any) { setEditorOutput(e.message); }
                                 setEditorRunning(false);
                               }} disabled={editorRunning} style={{ padding:'3px 10px', background:'var(--fg-orange)', border:'none', borderRadius:4, color:'#fff', cursor:'pointer', fontSize:11, fontWeight:600, opacity:editorRunning?0.5:1 }}>▶ Run</button>
-                              <button onClick={() => { const blob = new Blob([editorCode],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=editorFile; a.click(); }} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>⬇ Save</button>
+                              <button onClick={() => { const blob = new Blob([editorCode],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=editorFile; a.click(); showToast('💾 File saved'); }} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>⬇ Save</button>
                               <button onClick={() => { setInput(`Here is my ${editorLang} code:\n\`\`\`${editorLang}\n${editorCode}\n\`\`\`\n\nPlease review and improve.`); setMainTab('workspace'); }} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>→ Ask AI</button>
                             </div>
                             {/* Monaco editor lazy-loaded */}
@@ -4814,7 +4958,7 @@ export default function ForgeApp() {
                             <div style={{ padding:'6px 10px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)', display:'flex', gap:8, alignItems:'center', flexShrink:0, fontSize:12, fontWeight:600, color:'var(--fg-text)' }}>
                               🔀 File Diff & Patch
                               <button onClick={() => { const d = computeDiff(diffOld, diffNew); setPatchText(d); }} style={{ marginLeft:'auto', padding:'3px 10px', background:'var(--fg-orange)', border:'none', borderRadius:4, color:'#fff', cursor:'pointer', fontSize:11 }}>Compute Diff</button>
-                              <button onClick={() => { if (patchText) navigator.clipboard.writeText(patchText); }} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>📋 Copy Patch</button>
+                              <button onClick={() => { if (patchText) { navigator.clipboard.writeText(patchText); showToast('📋 Patch copied'); } }} style={{ padding:'3px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:4, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>📋 Copy Patch</button>
                             </div>
                             <div style={{ flex:1, display:'flex', gap:0, overflow:'hidden' }}>
                               <div style={{ flex:1, display:'flex', flexDirection:'column', borderRight:'1px solid var(--fg-border)', overflow:'hidden' }}>
@@ -5025,9 +5169,9 @@ export default function ForgeApp() {
               <h2 style={{ color:'var(--fg-orange)', margin:'0 0 4px', fontSize:22, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.3px' }}>⚡ ForgeRouter</h2>
               <p style={{ color:'var(--fg-text3)', margin:'0 0 24px', fontSize:14 }}>Route prompts across 400+ AI models with configurable markup</p>
 
-              <div style={{ display:'flex', gap:8, marginBottom:24 }}>
-                {(['forge','direct','openrouter','custom'] as const).map(t => (
-                  <button key={t} onClick={() => setRouterTab(t)} style={{ padding:'8px 16px', background:routerTab===t ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${routerTab===t ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color:routerTab===t ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:500, textTransform:'capitalize' }}>{t === 'openrouter' ? 'OpenRouter' : t === 'forge' ? '⚡ Forge Models' : t}</button>
+              <div style={{ display:'flex', gap:8, marginBottom:24, flexWrap:'wrap' }}>
+                {(['forge','direct','openrouter','providers','custom'] as const).map(t => (
+                  <button key={t} onClick={() => setRouterTab(t as any)} style={{ padding:'8px 16px', background:routerTab===t ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:`1px solid ${routerTab===t ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:8, color:routerTab===t ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:500, textTransform:'capitalize' }}>{t === 'openrouter' ? 'OpenRouter' : t === 'forge' ? '⚡ Forge Models' : t === 'providers' ? '🔑 API Keys' : t}</button>
                 ))}
               </div>
 
@@ -5141,6 +5285,117 @@ export default function ForgeApp() {
                   {!orLoading && openRouterModels.length > 0 && filteredOrModels.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:13, textAlign:'center', padding:32 }}>No models match your search.</p>}
                 </div>
               )}
+
+              {/* API Keys — all LLM providers */}
+              {(routerTab as string)==='providers' && (() => {
+                const LLM_PROVIDERS = [
+                  { key:'anthropic',    icon:'🟣', label:'Anthropic (Claude)',    color:'#c96442', placeholder:'sk-ant-api03-...',     signup:'https://console.anthropic.com/settings/keys',    models:['claude-opus-4-5','claude-sonnet-4-5','claude-haiku-4-5'],   hint:'Powers all Claude models. Required for Forge defaults.' },
+                  { key:'openai',       icon:'🟢', label:'OpenAI',                color:'#10a37f', placeholder:'sk-proj-...',           signup:'https://platform.openai.com/api-keys',            models:['gpt-4o','gpt-4o-mini','o1','o3-mini'],                       hint:'GPT-4o, o3, vision, DALL·E image generation.' },
+                  { key:'gemini',       icon:'🔵', label:'Google Gemini',         color:'#4285f4', placeholder:'AIza...',               signup:'https://aistudio.google.com/app/apikey',          models:['gemini-2.0-flash','gemini-2.5-pro','gemini-1.5-pro'],        hint:'Google\'s fastest and most capable multimodal models.' },
+                  { key:'groq',         icon:'⚡', label:'Groq',                  color:'#f04444', placeholder:'gsk_...',              signup:'https://console.groq.com/keys',                   models:['llama-3.3-70b-versatile','mixtral-8x7b-32768','gemma2-9b'], hint:'Ultra-fast inference. Best for low-latency use cases.' },
+                  { key:'mistral',      icon:'🌊', label:'Mistral AI',            color:'#ff7000', placeholder:'...',                   signup:'https://console.mistral.ai/api-keys/',            models:['mistral-large-latest','mistral-small-latest','codestral'],  hint:'European open-weight models. Strong coding and reasoning.' },
+                  { key:'openrouter',   icon:'🔀', label:'OpenRouter',            color:'#6366f1', placeholder:'sk-or-v1-...',          signup:'https://openrouter.ai/keys',                      models:['400+ models via single key'],                               hint:'Access 400+ models from one key. Unified billing.' },
+                  { key:'together',     icon:'🤝', label:'Together AI',           color:'#22c55e', placeholder:'...',                   signup:'https://api.together.xyz/signin',                 models:['Llama 3.3 70B','Qwen 2.5 72B','DeepSeek R1'],               hint:'Open-source model hosting at scale. Low cost.' },
+                  { key:'perplexity',   icon:'🔮', label:'Perplexity',            color:'#8b5cf6', placeholder:'pplx-...',              signup:'https://www.perplexity.ai/settings/api',          models:['sonar-pro','sonar','sonar-reasoning'],                       hint:'Real-time web search + AI synthesis. Best for research.' },
+                  { key:'cohere',       icon:'🌀', label:'Cohere',                color:'#39d353', placeholder:'...',                   signup:'https://dashboard.cohere.com/api-keys',           models:['command-r-plus','command-r','command-nightly'],              hint:'Enterprise RAG, embeddings, and rerank specialists.' },
+                  { key:'hermes',       icon:'🏛', label:'Hermes (NousResearch)', color:'#f59e0b', placeholder:'sk-...',               signup:'https://openrouter.ai/keys',                      models:['Hermes 3 70B','Hermes 3 8B','Hermes 2 Pro'],                 hint:'Nous Research\'s fine-tuned Hermes models via OpenRouter. Add your OpenRouter key to access.' },
+                  { key:'deepseek',     icon:'🐋', label:'DeepSeek',             color:'#06b6d4', placeholder:'sk-...',               signup:'https://platform.deepseek.com/api_keys',          models:['deepseek-chat','deepseek-reasoner'],                         hint:'Top-tier reasoning at fraction of cost. Popular for coding.' },
+                  { key:'xai',          icon:'𝕏',  label:'xAI (Grok)',           color:'#fff',    placeholder:'xai-...',              signup:'https://console.x.ai/',                           models:['grok-4','grok-3','grok-3-mini'],                             hint:'Elon Musk\'s Grok — real-time X/Twitter data access.' },
+                ];
+                return (
+                <div>
+                  <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 20px' }}>Enter your API keys to unlock each provider's models across Forge. Keys are stored securely per-user.</p>
+                  <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                    {LLM_PROVIDERS.map(prov => {
+                      const saved = savedProviders[prov.key];
+                      const val = apiKeys[prov.key] || '';
+                      const creds = (llmCreds as any)[prov.key] || { username:'', password:'', connected:false };
+                      const credConnected = creds.connected;
+                      const isConnected = saved || credConnected;
+                      const useCredMode = !!(llmExpanded as any)[`cred_${prov.key}`];
+                      return (
+                      <div key={prov.key} style={{ background:'var(--fg-bg3)', border:`1px solid ${isConnected ? 'rgba(34,197,94,0.35)' : 'var(--fg-border)'}`, borderRadius:14, padding:18, position:'relative' }}>
+                        {isConnected && <span style={{ position:'absolute', top:14, right:14, fontSize:10, fontWeight:700, color:'#22c55e', background:'rgba(34,197,94,0.13)', padding:'2px 8px', borderRadius:20 }}>✓ CONNECTED</span>}
+                        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                          <span style={{ fontSize:22 }}>{prov.icon}</span>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{prov.label}</div>
+                            <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2 }}>{prov.hint}</div>
+                          </div>
+                        </div>
+                        <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:12 }}>
+                          {prov.models.map(m => <span key={m} style={{ fontSize:10, padding:'2px 8px', background:'var(--fg-bg4)', borderRadius:20, color:'var(--fg-text3)' }}>{m}</span>)}
+                        </div>
+                        {/* Mode toggle */}
+                        <div style={{ display:'flex', gap:4, marginBottom:12, background:'var(--fg-bg)', borderRadius:8, padding:3, width:'fit-content' }}>
+                          <button onClick={() => setLlmExpanded((p:any) => ({ ...p, [`cred_${prov.key}`]: false }))}
+                            style={{ padding:'5px 12px', border:'none', borderRadius:6, fontSize:12, fontWeight:600, cursor:'pointer', background:!useCredMode?'var(--fg-orange)':'transparent', color:!useCredMode?'#fff':'var(--fg-text3)' }}>
+                            🔑 API Key
+                          </button>
+                          <button onClick={() => setLlmExpanded((p:any) => ({ ...p, [`cred_${prov.key}`]: true }))}
+                            style={{ padding:'5px 12px', border:'none', borderRadius:6, fontSize:12, fontWeight:600, cursor:'pointer', background:useCredMode?'var(--fg-orange)':'transparent', color:useCredMode?'#fff':'var(--fg-text3)' }}>
+                            👤 Login
+                          </button>
+                        </div>
+                        {!useCredMode ? (
+                          <div style={{ display:'flex', gap:8 }}>
+                            <input type="password" placeholder={prov.placeholder} value={val} onChange={e => setApiKeys(prev => ({ ...prev, [prov.key]: e.target.value }))}
+                              style={{ flex:1, padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+                            <button onClick={async () => { await saveOneKey(prov.key, val); if (prov.key==='openrouter') loadOpenRouterModels(); showToast(`✓ ${prov.label} key saved`); }}
+                              style={{ padding:'9px 18px', background:saved?'rgba(34,197,94,0.15)':'var(--fg-orange)', border:`1px solid ${saved?'rgba(34,197,94,0.4)':'var(--fg-orange)'}`, borderRadius:8, color:saved?'#22c55e':'#fff', fontSize:13, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>
+                              {saved ? '✓ Update' : 'Save Key'}
+                            </button>
+                            <button onClick={() => window.open(prov.signup, '_blank')}
+                              style={{ padding:'9px 12px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:12, cursor:'pointer', whiteSpace:'nowrap' }}>
+                              Get key →
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <input type="text" placeholder="Email or username"
+                              value={creds.username}
+                              onChange={e => setLlmCreds((p:any) => ({ ...p, [prov.key]: { ...(p[prov.key]||{}), username:e.target.value } }))}
+                              style={{ width:'100%', padding:'9px 12px', marginBottom:8, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                            <input type="password" placeholder="Password"
+                              value={creds.password}
+                              onChange={e => setLlmCreds((p:any) => ({ ...p, [prov.key]: { ...(p[prov.key]||{}), password:e.target.value } }))}
+                              style={{ width:'100%', padding:'9px 12px', marginBottom:10, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                            <div style={{ display:'flex', gap:8 }}>
+                              {!credConnected ? (
+                                <button onClick={() => {
+                                  if (!creds.username) return;
+                                  const updated = { ...creds, connected:true };
+                                  setLlmCreds((p:any) => ({ ...p, [prov.key]: updated }));
+                                  try { localStorage.setItem('llmCreds', JSON.stringify({ ...llmCreds, [prov.key]: updated })); } catch{}
+                                  showToast(`✓ ${prov.label} credentials saved`);
+                                }} style={{ flex:1, padding:'9px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                                  Connect
+                                </button>
+                              ) : (
+                                <button onClick={() => {
+                                  const reset = { username:'', password:'', connected:false };
+                                  setLlmCreds((p:any) => ({ ...p, [prov.key]: reset }));
+                                  try { localStorage.setItem('llmCreds', JSON.stringify({ ...llmCreds, [prov.key]: reset })); } catch{}
+                                  showToast(`Disconnected ${prov.label}`);
+                                }} style={{ flex:1, padding:'9px', background:'transparent', border:'1px solid var(--fg-red)', borderRadius:8, color:'var(--fg-red)', fontSize:13, cursor:'pointer' }}>
+                                  Disconnect
+                                </button>
+                              )}
+                              <button onClick={() => window.open(prov.signup, '_blank')}
+                                style={{ padding:'9px 12px', background:'transparent', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:12, cursor:'pointer', whiteSpace:'nowrap' }}>
+                                Sign up →
+                              </button>
+                            </div>
+                            {credConnected && <p style={{ margin:'8px 0 0', fontSize:11, color:'var(--fg-text3)' }}>Signed in as {creds.username}. Credentials stored locally.</p>}
+                          </div>
+                        )}
+                      </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                );
+              })()}
 
               {/* Custom Providers */}
               {routerTab==='custom' && (
@@ -5448,7 +5703,7 @@ export default function ForgeApp() {
                   <div style={{ flex:1, minWidth:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:'10px 14px', fontFamily:'monospace', fontSize:13, color:'var(--fg-orange)' }}>
                     {`https://forge-sand-two.vercel.app?ref=${user?.email?.split('@')[0] || 'user'}`}
                   </div>
-                  <button onClick={() => { navigator.clipboard.writeText(`https://forge-sand-two.vercel.app?ref=${user?.email?.split('@')[0] || 'user'}`); }}
+                  <button onClick={() => { navigator.clipboard.writeText(`https://forge-sand-two.vercel.app?ref=${user?.email?.split('@')[0] || 'user'}`); showToast('🔗 Referral link copied'); }}
                     style={{ padding:'10px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
                     📋 Copy Link
                   </button>
@@ -6042,9 +6297,9 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* Skills & Connectors catalog (available to super + skills tabs) */}
+        {/* Skills & Connectors catalog — skip rebuild if already populated by useEffect cache */}
         {(() => {
-          (window as any).FORGE_CATALOG_DATA = {
+          if (!(window as any).FORGE_CATALOG_DATA?.skills) (window as any).FORGE_CATALOG_DATA = {
             skills: [
               // Documents
               { id:'pdf', icon:'📄', name:'PDF Tools', category:'document', desc:'Extract, create, merge, split, fill PDF forms', prompt:'You are a PDF processing expert. Handle all PDF operations: extract text, merge documents, fill forms, and create new PDFs.' },
@@ -6677,7 +6932,7 @@ export default function ForgeApp() {
                       {genResult}
                       <div style={{ marginTop:12, display:'flex', gap:8 }}>
                         <button onClick={() => { setMainTab('workspace'); setTimeout(() => { setInput(genResult.slice(0,200)); textareaRef.current?.focus(); }, 100); }} style={{ padding:'6px 14px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer' }}>🛠 Open in Chat</button>
-                        <button onClick={() => navigator.clipboard.writeText(genResult)} style={{ padding:'6px 14px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>📋 Copy</button>
+                        <button onClick={() => { navigator.clipboard.writeText(genResult); showToast('📋 Copied'); }} style={{ padding:'6px 14px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>📋 Copy</button>
                       </div>
                     </div>
                   )}
@@ -6780,6 +7035,68 @@ export default function ForgeApp() {
             </div>
           );
         })()}
+
+        {/* -- Thread Context Menu ------------------------------------------------ */}
+        {threadMenu && (() => {
+          const t = threads.find(x => x.id === threadMenu.threadId);
+          if (!t) return null;
+          return (
+            <div style={{ position:'fixed', top:threadMenu.y, left:threadMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,0.4)', zIndex:99999, minWidth:160, padding:4 }} onClick={e => e.stopPropagation()}>
+              {[
+                { label:'✏️ Rename', action: () => { setRenamingThread({ id:t.id, title:t.title||'' }); setRenamingThreadInput(t.title||''); setThreadMenu(null); } },
+                { label: t.pinned ? '📌 Unpin' : '📌 Pin', action: () => { pinThread(t); setThreadMenu(null); } },
+                { label: t.archived ? '📂 Unarchive' : '🗃️ Archive', action: () => { archiveThread(t); setThreadMenu(null); } },
+                { label:'🗑️ Delete', action: () => { if(confirm('Delete this thread?')) deleteThread(t.id); setThreadMenu(null); }, danger: true },
+              ].map(item => (
+                <button key={item.label} onClick={item.action} style={{ display:'block', width:'100%', textAlign:'left', padding:'8px 12px', background:'none', border:'none', color: (item as any).danger ? '#ff6b6b' : 'var(--fg-text)', fontSize:13, cursor:'pointer', borderRadius:6 }}
+                  onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg2)')}
+                  onMouseLeave={e => (e.currentTarget.style.background='none')}>{item.label}</button>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* -- Project Context Menu ----------------------------------------------- */}
+        {projectMenu && (() => {
+          const p = projects.find(x => x.id === projectMenu.projectId);
+          if (!p) return null;
+          return (
+            <div style={{ position:'fixed', top:projectMenu.y, left:projectMenu.x, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,0.4)', zIndex:99999, minWidth:160, padding:4 }} onClick={e => e.stopPropagation()}>
+              {[
+                { label:'✏️ Rename', action: () => { setRenamingProject({ id:p.id, name:p.name||'' }); setProjectMenu(null); } },
+                { label:'🗑️ Delete', action: () => { if(confirm('Delete this project and all its threads?')) deleteProject(p.id); setProjectMenu(null); }, danger: true },
+              ].map(item => (
+                <button key={item.label} onClick={item.action} style={{ display:'block', width:'100%', textAlign:'left', padding:'8px 12px', background:'none', border:'none', color: (item as any).danger ? '#ff6b6b' : 'var(--fg-text)', fontSize:13, cursor:'pointer', borderRadius:6 }}
+                  onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg2)')}
+                  onMouseLeave={e => (e.currentTarget.style.background='none')}>{item.label}</button>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* -- New Task Modal ----------------------------------------------------- */}
+        {showNewTask && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }} onClick={() => setShowNewTask(false)}>
+            <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:14, padding:28, maxWidth:420, width:'90vw' }} onClick={e => e.stopPropagation()}>
+              <h2 style={{ margin:'0 0 18px', fontSize:18, fontWeight:800, color:'var(--fg-orange)' }}>✓ New Task</h2>
+              <input
+                value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') createTask(); }}
+                placeholder="Task title…" autoFocus
+                style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box', marginBottom:12 }}
+              />
+              <div style={{ display:'flex', gap:8, marginBottom:18 }}>
+                {(['low','medium','high'] as const).map(p => (
+                  <button key={p} onClick={() => setNewTaskPriority(p)} style={{ flex:1, padding:'6px', background: newTaskPriority===p ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${newTaskPriority===p ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: newTaskPriority===p ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight:600 }}>{p}</button>
+                ))}
+              </div>
+              <div style={{ display:'flex', gap:10 }}>
+                <button onClick={() => setShowNewTask(false)} style={{ flex:1, padding:10, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, fontWeight:600, cursor:'pointer' }}>Cancel</button>
+                <button onClick={createTask} disabled={!newTaskTitle.trim()} style={{ flex:2, padding:10, background: newTaskTitle.trim() ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor: newTaskTitle.trim() ? 'pointer' : 'default', opacity: newTaskTitle.trim() ? 1 : 0.6 }}>Create Task</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* -- ForgeAsk Modal ----------------------------------------------------- */}
         {showAskModal && (
@@ -7683,82 +8000,6 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* ── MVP Builder ───────────────────────────────────────────── */}
-        {mainTab === 'mvp' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:860, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>🏗️</span>
-                <div>
-                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>MVP Builder</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>From idea to blueprint in seconds. Get your spec, stack, roadmap, and pitch deck outline.</p>
-                </div>
-              </div>
-              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:16 }}>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
-                  <div>
-                    <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Industry / Category</label>
-                    <input value={mvpIndustry} onChange={e => setMvpIndustry(e.target.value)} placeholder="e.g. FinTech, HealthTech, SaaS, E-commerce…"
-                      style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Target User</label>
-                    <input value={mvpTarget} onChange={e => setMvpTarget(e.target.value)} placeholder="e.g. Small businesses, Freelancers, Students…"
-                      style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box' }} />
-                  </div>
-                </div>
-                <label style={{ fontSize:12, color:'var(--fg-text3)', display:'block', marginBottom:6 }}>Your Idea</label>
-                <textarea value={mvpIdea} onChange={e => setMvpIdea(e.target.value)} placeholder="Describe your product idea. What problem does it solve? What's the core value proposition?"
-                  style={{ width:'100%', minHeight:120, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:12 }} />
-                <button onClick={async () => {
-                  if (!mvpIdea.trim() || mvpBuilding) return;
-                  setMvpBuilding(true); setMvpResult(null);
-                  const prompt = `You are an expert startup CTO and product strategist. Build a detailed MVP blueprint for the following idea:\n\nIdea: ${mvpIdea}\nIndustry: ${mvpIndustry || 'General'}\nTarget User: ${mvpTarget || 'General consumers'}\n\nProvide a structured response with these exact sections:\n\n## SPEC\nCore features for v1 MVP (what to build, what NOT to build). Be specific.\n\n## STACK\nRecommended tech stack with justification. Include frontend, backend, database, hosting, key libraries.\n\n## ROADMAP\nWeek-by-week 8-week build plan. Concrete milestones.\n\n## PITCH\n3-sentence investor pitch. Problem → Solution → Market size.`;
-                  try {
-                    const d = await apiFetch('/chat', { method:'POST', body:JSON.stringify({ messages: [{role:'user', content: prompt}], model: selectedModel || 'claude-sonnet-4-6' }) }, user?.token);
-                    const raw = d?.choices?.[0]?.message?.content || d?.data?.content || '';
-                    const extract = (label: string) => { const m = raw.match(new RegExp(`## ${label}\\n([\\s\\S]*?)(?=\\n## |$)`)); return m?.[1]?.trim() || ''; };
-                    setMvpResult({ spec: extract('SPEC'), stack: extract('STACK'), roadmap: extract('ROADMAP'), pitch: extract('PITCH') });
-                  } catch(e:any) { showToast('Error: '+String(e?.message||e),'err'); }
-                  setMvpBuilding(false);
-                }} disabled={mvpBuilding || !mvpIdea.trim()}
-                  style={{ padding:'10px 28px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(mvpBuilding||!mvpIdea.trim())?0.5:1 }}>
-                  {mvpBuilding ? '🏗️ Building blueprint…' : '🏗️ Build MVP Blueprint'}
-                </button>
-              </div>
-              {mvpResult && (
-                <div style={{ display:'grid', gap:16 }}>
-                  {[{icon:'📋',label:'SPEC',color:'var(--fg-orange)',content:mvpResult.spec},{icon:'⚙️',label:'STACK',color:'#6366f1',content:mvpResult.stack},{icon:'🗓️',label:'ROADMAP',color:'#22c55e',content:mvpResult.roadmap},{icon:'💡',label:'PITCH',color:'#f59e0b',content:mvpResult.pitch}].map(s => (
-                    <div key={s.label} style={{ background:'var(--fg-bg2)', border:`1px solid ${s.color}40`, borderRadius:12, padding:20 }}>
-                      <h3 style={{ margin:'0 0 12px', fontSize:14, fontWeight:700, color:s.color }}>{s.icon} {s.label}</h3>
-                      <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{s.content}</div>
-                    </div>
-                  ))}
-                  <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-                    <button onClick={() => { const txt = `MVP Blueprint\n\nSPEC:\n${mvpResult!.spec}\n\nSTACK:\n${mvpResult!.stack}\n\nROADMAP:\n${mvpResult!.roadmap}\n\nPITCH:\n${mvpResult!.pitch}`; navigator.clipboard.writeText(txt); }}
-                      style={{ flex:1, padding:'10px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight:600 }}>
-                      📋 Copy Full Blueprint
-                    </button>
-                    <button onClick={() => { const msg = `Build this MVP:\n\n${mvpResult!.spec}\n\nStack: ${mvpResult!.stack}\n\nCreate a complete working implementation with all the core features. Start with project structure, then implement each component.`; setInput(msg); setMainTab('workspace'); }}
-                      style={{ flex:1, padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:700 }}>
-                      ⚡ Build It Now (Agent)
-                    </button>
-                    <button onClick={() => window.open(`https://railway.app/new?template=nextjs`, '_blank')}
-                      style={{ flex:1, padding:'10px', background:'#0f172a', border:'1px solid #6366f1', borderRadius:8, color:'#6366f1', fontSize:12, cursor:'pointer', fontWeight:700 }}>
-                      🚂 Deploy to Railway
-                    </button>
-                    <button onClick={() => window.open(`https://vercel.com/new`, '_blank')}
-                      style={{ flex:1, padding:'10px', background:'#000', border:'1px solid #fff3', borderRadius:8, color:'#fff', fontSize:12, cursor:'pointer', fontWeight:700 }}>
-                      ▲ Deploy to Vercel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Intelligence Tab */}
         {/* Intelligence Tab */}
         {mainTab === 'intelligence' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
@@ -7794,6 +8035,36 @@ export default function ForgeApp() {
             </div>
           </div>
         )}
+
+        {/* -- ForgeVoyage -------------------------------------------- */}
+        {(mainTab as string) === 'forgevoyage' && (() => {
+          const [vt, setVt] = React.useState('research');
+          const tabs = [
+            {id:'research',icon:'🔭',label:'Deep Research'},
+            {id:'compare',icon:'⚖️',label:'Compare'},
+            {id:'notes',icon:'📝',label:'Notes & Tasks'},
+            {id:'docs',icon:'📄',label:'Documents'},
+            {id:'gallery',icon:'🖼',label:'Gallery'},
+            {id:'memory',icon:'🧠',label:'Memory'},
+            {id:'skills',icon:'⚙️',label:'Skills'},
+          ];
+          return (
+          <div style={{ flex:1, overflowY:'auto', background:'var(--fg-bg)', display:'flex', flexDirection:'column' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--fg-border)' }}>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {tabs.map(t => (
+                  <button key={t.id} onClick={() => setVt(t.id)} style={{ padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: vt === t.id ? 'var(--fg-orange,#ff1f35)' : 'var(--fg-bg3)', color: vt === t.id ? '#fff' : 'var(--fg-text3)' }}>{t.icon} {t.label}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
+              <div style={{ textAlign: 'center', padding: 60, color: 'var(--fg-text3)', fontSize: 14 }}>
+                {tabs.find(t => t.id === vt)?.icon} {tabs.find(t => t.id === vt)?.label} — coming soon
+              </div>
+            </div>
+          </div>
+          );
+        })()}
 
       </div>
     </div>

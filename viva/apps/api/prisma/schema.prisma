@@ -1,6 +1,7 @@
 // VIVA Database Schema — Prisma
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -20,7 +21,7 @@ model User {
   bio           String?
   walletAddress String?  @unique
   vScore        Int      @default(0)
-  tier          Tier     @default(SEED)
+  tier          String     @default("SEED")
 
   // Ring values 0-100
   sleepRing      Int @default(0)
@@ -54,13 +55,6 @@ model User {
   refreshTokens RefreshToken[]
 }
 
-enum Tier {
-  SEED
-  RISING
-  STABLE
-  GUARDIAN
-  SOVEREIGN
-}
 
 model RefreshToken {
   id        String   @id @default(uuid())
@@ -147,7 +141,7 @@ model Match {
   id            String      @id @default(uuid())
   userAId       String
   userBId       String
-  status        MatchStatus @default(PENDING)
+  status        String @default("PENDING")
   compatibility Int         @default(0)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -160,11 +154,6 @@ model Match {
   @@index([userBId])
 }
 
-enum MatchStatus {
-  PENDING
-  MATCHED
-  PASSED
-}
 
 // ─── PREDICTION MARKETS ──────────────────────────────────────────────
 
@@ -225,7 +214,7 @@ model ZKProof {
   id          String    @id @default(uuid())
   userId      String
   proofType   String    // health/income/location/identity
-  status      ProofStatus @default(PENDING)
+  status      String @default("PENDING")
   commitment  String?   // ZK commitment hash
   sbtTokenId  String?   // on-chain SBT token ID
   mintedAt    DateTime?
@@ -237,12 +226,6 @@ model ZKProof {
   @@index([userId, proofType])
 }
 
-enum ProofStatus {
-  PENDING
-  ACTIVE
-  EXPIRED
-  REVOKED
-}
 
 // ─── TOKENS / MARKETPLACE ────────────────────────────────────────────
 
@@ -299,7 +282,7 @@ model Room {
 model RoomMember {
   roomId    String
   userId    String
-  role      RoomRole @default(LISTENER)
+  role      String @default("LISTENER")
   joinedAt  DateTime @default(now())
   leftAt    DateTime?
   isMuted   Boolean  @default(true)
@@ -311,11 +294,6 @@ model RoomMember {
   @@id([roomId, userId])
 }
 
-enum RoomRole {
-  HOST
-  SPEAKER
-  LISTENER
-}
 
 // ─── AI TWIN / AGENTS ────────────────────────────────────────────────
 
@@ -325,7 +303,7 @@ model AgentTask {
   agentType   String      // schedule/finance/health/social/market/search
   title       String
   description String?
-  status      TaskStatus  @default(PENDING)
+  status      String  @default("PENDING")
   autonomy    Int         @default(1) // L1/L2/L3
   result      String?
   scheduledFor DateTime?
@@ -337,10 +315,3 @@ model AgentTask {
   @@index([userId, status])
 }
 
-enum TaskStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-  FAILED
-  CANCELLED
-}

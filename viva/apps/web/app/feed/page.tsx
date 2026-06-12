@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useAppStore, mockUser, MOCK_POSTS } from '@/lib/store'
+import { useAppStore, mockUser, mapApiUser, MOCK_POSTS } from '@/lib/store'
 import { feed as feedApi, auth } from '@/lib/api'
 
 const FILTERS = ['All', 'Health', 'Markets', 'Twin', 'ZKP', 'YouToken']
@@ -17,7 +17,7 @@ export default function FeedPage() {
 
   useEffect(() => {
     setMounted(true)
-    if (!user) auth.me().then(me => setUser({ ...mockUser(), ...me })).catch(() => setUser(mockUser()))
+    if (!user) auth.me().then(me => setUser(mapApiUser(me, mockUser()))).catch(() => setUser(mockUser()))
     loadFeed()
   }, [])
 

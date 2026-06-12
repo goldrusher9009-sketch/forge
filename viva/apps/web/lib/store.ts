@@ -5,8 +5,13 @@ export interface User {
   id: string
   handle: string
   displayName: string
-  avatar: string
+  // API returns avatarUrl; alias avatar for convenience
+  avatar?: string
+  avatarUrl?: string
+  bio?: string
+  // Both spellings kept; vscore is canonical for UI
   vscore: number
+  vScore?: number
   tier: 'seed' | 'rising' | 'stable' | 'guardian' | 'sovereign'
   rings: {
     sleep: number     // 0–100
@@ -22,8 +27,40 @@ export interface User {
     holders: number
   }
   zkProofs: string[]  // proof type slugs
-  walletAddress: string
-  joinedAt: string
+  walletAddress?: string
+  joinedAt?: string
+}
+
+/** Map raw API user response to store User */
+export function mapApiUser(me: any, fallback?: User): User {
+  return {
+    ...(fallback ?? mockUser()),
+    id: me.id,
+    handle: me.handle,
+    displayName: me.displayName,
+    avatar: me.avatarUrl ?? me.avatar,
+    avatarUrl: me.avatarUrl ?? me.avatar,
+    bio: me.bio,
+    vscore: me.vScore ?? me.vscore ?? 0,
+    vScore: me.vScore ?? me.vscore ?? 0,
+    tier: (me.tier?.toLowerCase() ?? 'seed') as User['tier'],
+    rings: {
+      sleep:     me.sleepRing     ?? me.rings?.sleep     ?? 0,
+      nutrition: me.nutritionRing ?? me.rings?.nutrition ?? 0,
+      activity:  me.activityRing  ?? me.rings?.activity  ?? 0,
+      social:    me.socialRing    ?? me.rings?.social    ?? 0,
+      wealth:    me.wealthRing    ?? me.rings?.wealth    ?? 0,
+    },
+    youtoken: {
+      symbol:  me.tokenSymbol  ?? fallback?.youtoken.symbol  ?? 'YOU',
+      price:   me.tokenPrice   ?? fallback?.youtoken.price   ?? 0.01,
+      supply:  me.tokenSupply  ?? fallback?.youtoken.supply  ?? 0,
+      holders: me.tokenHolders ?? fallback?.youtoken.holders ?? 0,
+    },
+    zkProofs:      me.zkProofs      ?? fallback?.zkProofs      ?? [],
+    walletAddress: me.walletAddress ?? fallback?.walletAddress ?? '',
+    joinedAt:      me.createdAt     ?? fallback?.joinedAt      ?? '',
+  }
 }
 
 export interface Message {

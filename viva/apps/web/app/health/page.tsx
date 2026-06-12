@@ -89,7 +89,7 @@ export default function HealthPage() {
     if (!logEntry.value || logging) return
     setLogging(true)
     try {
-      await healthApi.log({ metric: logEntry.type, value: +logEntry.value })
+      await healthApi.logEntry({ ring: logEntry.type, value: +logEntry.value })
       setHealthLog(prev => [{ ts: Date.now(), type: logEntry.type, value: +logEntry.value, unit: '', ring: logEntry.type }, ...prev])
       setLogEntry(prev => ({ ...prev, value: '' }))
     } catch {
@@ -103,7 +103,7 @@ export default function HealthPage() {
   async function generateProof(proofId: string) {
     setGenerating(proofId)
     try {
-      await healthApi.generateProof({ proofType: proofId })
+      await healthApi.generateProof(proofId)
       setProofs(prev => prev.map(p =>
         p.id === proofId
           ? { ...p, status: 'active', expires: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10) }

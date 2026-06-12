@@ -64,10 +64,10 @@ export default function RoomsPage() {
           host: r.host?.handle ?? r.hostId ?? 'unknown',
           hostScore: r.host?.vScore ?? 0,
           tier: r.host?.tier?.toLowerCase() ?? 'rising',
-          speakers: (r.speakers ?? []).map((s: any) => s.user?.handle ?? s),
-          listeners: r.listenerCount ?? r.listeners ?? 0,
-          live: r.status === 'LIVE' || r.live,
-          started: r.startedAt ? new Date(r.startedAt).getTime() : Date.now(),
+          speakers: (r.members ?? []).filter((m: any) => m.role === 'SPEAKER' || m.role === 'HOST').map((m: any) => m.user?.handle ?? m.userId),
+          listeners: r._count?.members ?? r.listenerCount ?? r.listeners ?? 0,
+          live: r.isLive ?? r.status === 'LIVE' ?? false,
+          started: r.createdAt ? new Date(r.createdAt).getTime() : Date.now(),
           minVScore: r.minVScore ?? 0,
         })))
       }

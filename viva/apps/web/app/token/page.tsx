@@ -36,13 +36,13 @@ export default function TokenPage() {
       if (Array.isArray(list) && list.length) {
         setMarketListings(list.map((t: any) => ({
           id: t.id,
-          creator: t.creator?.handle ?? t.creatorId ?? 'unknown',
+          creator: t.owner?.handle ?? t.creator?.handle ?? t.ownerId ?? 'unknown',
           symbol: t.symbol,
           price: t.price ?? 0.1,
-          supply: t.totalSupply ?? 10000,
-          holders: t.holders ?? 0,
+          supply: t.supply ?? t.totalSupply ?? 0,
+          holders: t._count?.holdings ?? t.holders ?? 0,
           change: t.priceChange24h ?? 0,
-          desc: t.description ?? '',
+          desc: t.name ?? t.description ?? '',
         })))
       }
     } catch { /* keep mock */ }

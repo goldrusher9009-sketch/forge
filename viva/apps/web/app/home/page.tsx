@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAppStore, mockUser, RING_META, TIER_META } from '@/lib/store'
+import { useAppStore, mockUser, mapApiUser, RING_META, TIER_META } from '@/lib/store'
 import { auth } from '@/lib/api'
 import clsx from 'clsx'
 
@@ -18,23 +18,7 @@ export default function HomeCanvas() {
     const tick = setInterval(() => setTime(new Date()), 60000)
     // Fetch real user from API; fallback to mock
     auth.me().then(me => {
-      setUser({
-        ...mockUser(),
-        id: me.id,
-        handle: me.handle,
-        displayName: me.displayName,
-        avatarUrl: me.avatarUrl,
-        bio: me.bio,
-        vScore: me.vScore ?? 300,
-        tier: me.tier?.toLowerCase() ?? 'rising',
-        rings: {
-          sleep: me.sleepRing ?? 70,
-          nutrition: me.nutritionRing ?? 60,
-          activity: me.activityRing ?? 80,
-          social: me.socialRing ?? 65,
-          wealth: me.wealthRing ?? 50,
-        },
-      })
+      setUser(mapApiUser(me, mockUser()))
     }).catch(() => {
       if (!user) setUser(mockUser())
     })
@@ -82,7 +66,7 @@ export default function HomeCanvas() {
           {/* LEFT: V-Score + Rings SVG */}
           <div className="lg:col-span-5">
             <div className="relative flex items-center justify-center" style={{ minHeight: '420px' }}>
-              <RingCanvas rings={u.rings} vscore={u.vscore} tier={u.tier} hovered={hovered} setHovered={setHovered} />
+              <RingCanvas rings={u.rings} vscore={u.vscore ?? (u as any).vScore ?? 0} tier={u.tier} hovered={hovered} setHovered={setHovered} />
             </div>
 
             {/* Tier badge */}
@@ -165,7 +149,7 @@ export default function HomeCanvas() {
                 { label: 'YouToken', value: `$${u.youtoken.price}`, sub: u.youtoken.symbol, color: 'var(--ring-wealth)' },
                 { label: 'Holders', value: String(u.youtoken.holders), sub: 'token holders', color: 'var(--ring-social)' },
                 { label: 'ZK Proofs', value: String(u.zkProofs.length), sub: 'verified', color: 'var(--ring-activity)' },
-                { label: 'V-Score', value: String(u.vscore), sub: `${tier.label} tier`, color: 'var(--v)' },
+                { label: 'V-Score', value: String(u.vscore ?? (u as any).vScore ?? 0), sub: `${tier.label} tier`, color: 'var(--v)' },
               ].map(({ label, value, sub, color }) => (
                 <div
                   key={label}

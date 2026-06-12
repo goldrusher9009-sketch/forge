@@ -71,7 +71,7 @@ router.post('/:id/stake', requireAuth, async (req: AuthRequest, res, next) => {
       data: { yesProb: newProb, totalVolume: { increment: amount } },
     })
 
-    res.status(201).json({ position, newProbability: newProb })
+    res.status(201).json({ position, newProbability: newProb, newYesProb: newProb })
   } catch (e) { next(e) }
 })
 

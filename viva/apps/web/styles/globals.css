@@ -59,6 +59,22 @@ body::after {
 /* Selection */
 ::selection { background: var(--v); color: var(--paper); }
 
+/* Input base reset — ensure text is always visible on dark bg */
+input, textarea, select {
+  color: var(--paper);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Autofill — prevent browser from overriding input bg/text with yellow/white */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0d0d14 inset !important;
+  -webkit-text-fill-color: #F5F4F0 !important;
+  caret-color: #F5F4F0;
+}
+
 /* Typography scale */
 .t-display {
   font-size: clamp(3rem, 8vw, 7rem);

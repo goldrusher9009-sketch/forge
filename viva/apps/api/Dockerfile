@@ -1,10 +1,6 @@
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 WORKDIR /app
-RUN apk add --no-cache curl
-
-FROM base AS deps
-COPY package*.json ./
-RUN npm ci --only=production
+RUN apt-get update && apt-get install -y openssl curl && rm -rf /var/lib/apt/lists/*
 
 FROM base AS build
 COPY package*.json ./
@@ -14,14 +10,11 @@ RUN npx prisma generate
 RUN npm run build
 
 FROM base AS runner
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma
-COPY .env* ./
+COPY start.sh ./start.sh
+RUN chmod +x start.sh
 
 EXPOSE 4000
-
-# Run migrations then start
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "start.sh"]

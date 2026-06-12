@@ -35,7 +35,7 @@ export default function MessagesPage() {
   async function openThread(thread: any) {
     setActiveThread(thread)
     try {
-      const data = await messagesApi.thread(thread.id)
+      const data = await messagesApi.getMessages(thread.id)
       setMsgs(data.messages ?? data)
     } catch {
       setMsgs(thread.messages ?? [])

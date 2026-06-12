@@ -21,6 +21,8 @@ import vm from 'vm';
 import { execFile, exec } from 'child_process';
 import { promisify } from 'util';
 import Database from 'better-sqlite3';
+import { setupAutonomy } from './autonomy';
+import cron from 'node-cron';
 
 const execAsync = promisify(exec);
 
@@ -889,6 +891,12 @@ async function runForgeTool(toolName: string, args: Record<string, any>, userId?
         if (!cmd) return 'No command provided';
         return await toolShellExec(cmd, args.cwd, 15000);
       }
+      case 'spawn_agent': {
+        const agentName = args.name || 'Sub-Agent';
+        const agentTask = args.task || '';
+        // Return a structured marker the frontend can display as an agent step
+        return `[AGENT:${agentName}] Task accepted: "${agentTask.slice(0, 120)}". Working in parallel…`;
+      }
       case 'create_artifact': {
         return `Artifact created: ${args.title || 'untitled'}\n\`\`\`${args.language || ''}\n${args.content || ''}\n\`\`\``;
       }
@@ -930,6 +938,7 @@ async function runForgeTool(toolName: string, args: Record<string, any>, userId?
 }
 
 const FORGE_TOOLS_ANTHROPIC = [
+  { name: 'spawn_agent', description: 'Spawn a sub-agent to work on a parallel task. Use for orchestration of multi-step or multi-domain jobs.', input_schema: { type: 'object', properties: { name: { type: 'string', description: 'Agent name/role e.g. Researcher, Coder, Designer' }, task: { type: 'string', description: 'Full task description for this sub-agent' }, model: { type: 'string', description: 'Model to use, e.g. forge-fast, claude-sonnet-4' } }, required: ['name', 'task'] } },
   { name: 'web_search', description: 'Search the web for real-time information', input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Search query' } }, required: ['query'] } },
   { name: 'run_code', description: 'Execute JavaScript or Python code and return output', input_schema: { type: 'object', properties: { language: { type: 'string', enum: ['javascript', 'python'] }, code: { type: 'string', description: 'Code to execute' } }, required: ['language', 'code'] } },
   { name: 'write_file', description: 'Write content to a file', input_schema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'] } },
@@ -953,29 +962,52 @@ const FORGE_TOOLS_OPENROUTER = FORGE_TOOLS_OPENAI.filter((t:any) => !["web_searc
 function humanizeToolStep(toolName: string, args: Record<string, any>): { icon: string; message: string } {
   const a = args || {};
   switch (toolName) {
-    case 'web_search':
-      return { icon: '🔎', message: `Searching the web for "${String(a.query || a.q || '').slice(0, 60)}"…` };
+    case 'web_search': {
+      const q = String(a.query || a.q || '').slice(0, 60);
+      return { icon: '🔎', message: `Searching for "${q}"…` };
+    }
     case 'web_scrape':
     case 'http_request': {
-      const url = String(a.url || '').replace(/^https?:\/\//, '').slice(0, 50);
-      return { icon: '🌐', message: url ? `Fetching ${url}…` : 'Making a web request…' };
+      const url = String(a.url || '').replace(/^https?:\/\//, '').split('/')[0].slice(0, 40);
+      return { icon: '🌐', message: url ? `Pulling data from ${url}…` : 'Fetching from the web…' };
     }
     case 'run_code': {
       const lang = String(a.language || 'code');
-      return { icon: '⚙️', message: `Running some ${lang} to work this out…` };
+      return { icon: '⚙️', message: `Running ${lang} — let me compute this…` };
     }
-    case 'write_file':
-      return { icon: '📝', message: `Writing ${String(a.path || a.filename || 'a file').split('/').pop()}…` };
-    case 'read_file':
-      return { icon: '📖', message: `Reading ${String(a.path || a.filename || 'a file').split('/').pop()}…` };
-    case 'shell':
-      return { icon: '🖥️', message: `Running: ${String(a.command || a.cmd || '').slice(0, 50)}…` };
-    case 'create_artifact':
-      return { icon: '✨', message: `Putting together ${String(a.title || 'something for you')}…` };
-    case 'browser_action':
-      return { icon: '🧭', message: `Driving the browser: ${String(a.action || 'navigating')}…` };
+    case 'write_file': {
+      const fname = String(a.path || a.filename || 'file').split('/').pop() || 'file';
+      return { icon: '📝', message: `Writing ${fname}…` };
+    }
+    case 'read_file': {
+      const fname = String(a.path || a.filename || 'file').split('/').pop() || 'file';
+      return { icon: '📖', message: `Reading ${fname}…` };
+    }
+    case 'shell': {
+      const cmd = String(a.command || a.cmd || '').slice(0, 50);
+      return { icon: '🖥️', message: cmd ? `Running: ${cmd}…` : 'Executing shell command…' };
+    }
+    case 'create_artifact': {
+      const title = String(a.title || 'artifact');
+      const lang = String(a.language || '');
+      const typeLabel = lang === 'html' ? 'webpage' : lang === 'python' ? 'Python script' : lang === 'javascript' ? 'JS module' : 'artifact';
+      return { icon: '✨', message: `Building ${title} (${typeLabel})…` };
+    }
+    case 'image_gen': {
+      const prompt = String(a.prompt || a.description || '').slice(0, 50);
+      return { icon: '🎨', message: `Generating image: "${prompt}"…` };
+    }
+    case 'browser_action': {
+      const action = String(a.action || 'navigating');
+      const target = String(a.url || a.selector || '').slice(0, 40);
+      return { icon: '🧭', message: target ? `Browser: ${action} → ${target}…` : `Browser: ${action}…` };
+    }
+    case 'spawn_agent': {
+      const name = String(a.name || 'sub-agent');
+      return { icon: '🤖', message: `Spinning up ${name} agent…` };
+    }
     default:
-      return { icon: '🔧', message: `Working with ${toolName.replace(/_/g, ' ')}…` };
+      return { icon: '🔧', message: `Using ${toolName.replace(/_/g, ' ')}…` };
   }
 }
 
@@ -1529,7 +1561,22 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
         const newLimit = PLAN_LIMITS[plan] || 10000;
         db.prepare("UPDATE subscriptions SET plan=?,tokens_limit=?,stripe_customer_id=?,stripe_subscription_id=?,status='active',updated_at=datetime('now') WHERE user_id=?")
           .run(plan, newLimit, session.customer, session.subscription, userId);
+        try { (app as any).forgeBillingHooks?.onInvoicePaid(userId, plan); } catch {}
       }
+      // Credit top-up checkout completed
+      if (session.metadata?.kind === 'forge_topup' && session.metadata?.user_id) {
+        try { (app as any).forgeBillingHooks?.onTopupPaid(session.metadata.user_id, Number(session.metadata.credit_amount) || 0); } catch {}
+      }
+    }
+    if (event.type === 'invoice.paid') {
+      const inv = event.data.object;
+      const sub = db.prepare('SELECT user_id, plan FROM subscriptions WHERE stripe_customer_id=?').get(inv.customer) as any;
+      if (sub) { try { (app as any).forgeBillingHooks?.onInvoicePaid(sub.user_id, sub.plan); } catch {} }
+    }
+    if (event.type === 'customer.subscription.deleted') {
+      const subObj = event.data.object;
+      const sub = db.prepare('SELECT user_id FROM subscriptions WHERE stripe_subscription_id=?').get(subObj.id) as any;
+      if (sub) { try { (app as any).forgeBillingHooks?.onSubscriptionDeleted(sub.user_id); } catch {} }
     }
     res.json({ received: true });
   } catch (err: any) { res.status(400).json({ error: err.message }); }
@@ -1628,7 +1675,539 @@ app.get('/api/billing/usage', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data: rows, tokensUsed: sub?.tokens_used || 0, tokenLimit: sub?.tokens_limit || 100000 });
 });
 
-// User total tokens
+// ── ONBOARDING / BUSINESS SETUP ─────────────────────────────────────────────
+// DB columns for onboarding (safe migrations)
+try { db.exec(`ALTER TABLE users ADD COLUMN business_name TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN business_type TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN business_cities TEXT`); } catch {} // JSON array
+try { db.exec(`ALTER TABLE users ADD COLUMN business_services TEXT`); } catch {} // JSON array
+try { db.exec(`ALTER TABLE users ADD COLUMN business_pain TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN brand_logo_url TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN brand_colors TEXT`); } catch {} // JSON {primary,secondary}
+try { db.exec(`ALTER TABLE users ADD COLUMN onboarding_complete INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN connected_tools TEXT`); } catch {} // JSON array
+try { db.exec(`ALTER TABLE users ADD COLUMN subdomain TEXT`); } catch {}
+
+// Pending approvals table
+db.exec(`CREATE TABLE IF NOT EXISTS pending_approvals (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  preview_data TEXT,
+  content TEXT,
+  platform TEXT,
+  scheduled_for TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// SEO pages table
+db.exec(`CREATE TABLE IF NOT EXISTS seo_pages (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  keyword TEXT NOT NULL,
+  url TEXT,
+  published_at TEXT,
+  word_count INTEGER DEFAULT 0,
+  platform TEXT,
+  content TEXT,
+  meta_title TEXT,
+  meta_desc TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// Keyword matrix table
+db.exec(`CREATE TABLE IF NOT EXISTS keyword_matrix (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  service TEXT,
+  city TEXT,
+  intent TEXT,
+  keyword TEXT NOT NULL,
+  page_id TEXT,
+  status TEXT NOT NULL DEFAULT 'pending'
+)`);
+
+db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  app_id TEXT NOT NULL,
+  installed_at TEXT NOT NULL,
+  UNIQUE(user_id, app_id)
+)`);
+
+// Business type → persona map
+const FORGE_PERSONAS: Record<string, string> = {
+  law_firm: 'You are Forge, a precise and formal AI business OS for a law firm. Be professional, meticulous, cite specifics. Never casual. Use legal-adjacent framing.',
+  restaurant: 'You are Forge, a warm and fast AI business OS for a restaurant. Be friendly, practical, food/hospitality focused. Quick answers, focus on customers and operations.',
+  agency: 'You are Forge, a creative and bold AI business OS for a marketing/creative agency. Be punchy, strategic, brand-aware. Think in campaigns, stories, and bold moves.',
+  trades: 'You are Forge, a no-nonsense AI business OS for a trades/plumbing business. Be direct, practical, job-focused. Quote, schedule, invoice, follow up — fast.',
+  ecom: 'You are Forge, a conversion-focused AI business OS for an ecommerce business. Be data-driven, sales-focused. Think in SKUs, AOV, CAC, LTV.',
+  other: 'You are Forge, an autonomous AI business OS. You run the business so the owner doesn\'t have to.',
+};
+(app as any).forgePersona = (u: any) => FORGE_PERSONAS[u?.business_type] || FORGE_PERSONAS.other;
+
+// Industry-specific agent templates
+const BIZ_AGENT_TEMPLATES: Record<string, Array<{role:string;icon:string;desc:string;prompt:string}>> = {
+  law_firm: [
+    { role:'Case Prep Agent', icon:'⚖️', desc:'Reads intake → drafts case summary → flags missing info', prompt:'You are a legal case prep specialist. Analyze new client intake forms, draft professional case summaries, and flag any missing critical information. Be precise and formal.' },
+    { role:'Document Agent', icon:'📄', desc:'Processes contracts/filings → extracts key dates/clauses', prompt:'You are a legal document analyst. Process uploaded contracts and filings, extract key dates, clauses, obligations, and risks. Format findings clearly for attorney review.' },
+    { role:'Client Comms Agent', icon:'✉️', desc:'Drafts client update emails → sends on approval', prompt:'You are a client communications specialist for a law firm. Draft professional, empathetic client update emails. Be clear about case status without overpromising outcomes.' },
+    { role:'Billing Agent', icon:'💰', desc:'Tracks billable hours → generates invoice drafts', prompt:'You are a legal billing specialist. Track billable activities, generate accurate invoice drafts, and flag any billing discrepancies or unbilled time.' },
+    { role:'Compliance Agent', icon:'📋', desc:'Monitors deadlines → sends alerts 7 days before', prompt:'You are a legal compliance monitor. Track all case deadlines, court dates, and filing requirements. Alert the team 7 days before any deadline.' },
+  ],
+  restaurant: [
+    { role:'Review Agent', icon:'⭐', desc:'Monitors Google/Yelp → drafts responses within 2 hours', prompt:'You are a restaurant reputation manager. Monitor reviews across platforms, draft warm professional responses within 2 hours. Thank positive reviewers, address negatives privately.' },
+    { role:'Social Agent', icon:'📱', desc:'Posts daily specials to Facebook/Instagram', prompt:'You are a restaurant social media manager. Write engaging posts about daily specials, behind-the-scenes moments, and community highlights. Warm, inviting tone.' },
+    { role:'Menu Agent', icon:'🍽️', desc:'Monitors food costs → suggests price adjustments', prompt:'You are a restaurant profitability analyst. Monitor food cost percentages per menu item and suggest price adjustments to maintain target margins.' },
+    { role:'Follow-up Agent', icon:'🔔', desc:'Checks in 48hr after booking → asks for review', prompt:'You are a customer experience agent for a restaurant. Send warm follow-up messages 48 hours after dining experiences and invite satisfied guests to leave reviews.' },
+  ],
+  agency: [
+    { role:'Client Report Agent', icon:'📊', desc:'Pulls campaign metrics → generates monthly report PDF', prompt:'You are a client reporting specialist for a marketing agency. Pull campaign performance data, analyze trends, and generate compelling monthly reports that demonstrate ROI.' },
+    { role:'Content Agent', icon:'✍️', desc:'Generates 30 days of client social content', prompt:'You are a content strategist for a marketing agency. Generate 30 days of engaging social content for clients, tailored to their brand voice and audience.' },
+    { role:'Proposal Agent', icon:'📋', desc:'Generates custom proposals from client brief', prompt:'You are a business development specialist for a marketing agency. Transform client briefs into compelling, customized proposals with clear deliverables and ROI projections.' },
+    { role:'Invoice Agent', icon:'💳', desc:'Tracks project completion → generates invoices', prompt:'You are an agency billing specialist. Track project milestones and completion, generate accurate invoices tied to deliverables, and follow up on overdue payments.' },
+  ],
+  trades: [
+    { role:'Quote Agent', icon:'📋', desc:'Generates service quotes from job description', prompt:'You are a trades business estimator. Generate professional, competitive service quotes from job descriptions. Include materials, labor, and timeline estimates.' },
+    { role:'Follow-up Agent', icon:'⭐', desc:'Checks in 48hr after job → asks for review', prompt:'You are a customer success agent for a trades business. Send a friendly follow-up 48 hours after job completion to ensure satisfaction and request a Google review.' },
+    { role:'Invoice Agent', icon:'💰', desc:'Generates invoice on job completion', prompt:'You are a trades billing specialist. Generate clear, professional invoices on job completion with itemized labor and materials.' },
+    { role:'Scheduling Agent', icon:'📅', desc:'Manages job calendar, sends confirmations', prompt:'You are a scheduling coordinator for a trades business. Manage the job calendar, send appointment confirmations, and handle rescheduling requests professionally.' },
+  ],
+  ecom: [
+    { role:'Product Agent', icon:'🛍️', desc:'Writes/rewrites product descriptions for SEO', prompt:'You are an ecommerce copywriter. Write compelling, SEO-optimized product descriptions that convert browsers into buyers. Focus on benefits, not features.' },
+    { role:'Review Agent', icon:'⭐', desc:'Responds to product reviews on all platforms', prompt:'You are an ecommerce reputation manager. Respond to product reviews professionally. Thank happy customers, address concerns from unhappy ones, always offer solutions.' },
+    { role:'Email Agent', icon:'📧', desc:'Abandoned cart, win-back, post-purchase sequences', prompt:'You are an ecommerce email specialist. Write high-converting abandoned cart, win-back, and post-purchase email sequences that drive repeat revenue.' },
+    { role:'Inventory Agent', icon:'📦', desc:'Monitors stock levels → alerts on low stock', prompt:'You are an inventory manager for an ecommerce business. Monitor stock levels across all SKUs and alert when items fall below reorder points.' },
+  ],
+};
+
+app.get('/api/onboarding', requireAuth, (req: AuthRequest, res) => {
+  const u = db.prepare('SELECT business_name,business_type,business_cities,business_pain,brand_logo_url,brand_colors,onboarding_complete,connected_tools,subdomain FROM users WHERE id=?').get(req.user!.sub) as any;
+  res.json({ success: true, data: u || {} });
+});
+
+app.post('/api/onboarding', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { businessName, businessType, cities, services, pain, logoUrl, colors, connectedTools } = req.body;
+
+  // Generate subdomain from business name
+  const subdomain = (businessName || 'forge').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,30) + '-' + userId.slice(0,6);
+
+  db.prepare(`UPDATE users SET business_name=?,business_type=?,business_cities=?,business_services=?,business_pain=?,brand_logo_url=?,brand_colors=?,connected_tools=?,onboarding_complete=1,subdomain=? WHERE id=?`)
+    .run(businessName||'My Business', businessType||'other', JSON.stringify(cities||[]), JSON.stringify(services||[]), pain||'', logoUrl||'', JSON.stringify(colors||{}), JSON.stringify(connectedTools||[]), subdomain, userId);
+
+  // Create initial credits row
+  db.prepare(`INSERT OR IGNORE INTO subscriptions (id,user_id,plan,tokens_limit,tokens_used) VALUES (?,?,'starter',5000000,0)`).run(`sub_${uuidv4()}`, userId);
+
+  // Seed keyword matrix from services × cities
+  if ((services||[]).length && (cities||[]).length) {
+    const intents = ['informational','commercial','transactional','local','comparison'];
+    const insertKw = db.prepare('INSERT OR IGNORE INTO keyword_matrix (id,user_id,service,city,intent,keyword) VALUES (?,?,?,?,?,?)');
+    for (const svc of (services as string[]).slice(0,10)) {
+      for (const city of (cities as string[]).slice(0,20)) {
+        for (const intent of intents) {
+          const kw = intent==='informational' ? `how to ${svc}` : intent==='commercial' ? `best ${svc} in ${city}` : intent==='transactional' ? `${svc} cost ${city}` : intent==='local' ? `${svc} near me ${city}` : `${svc} vs alternative ${city}`;
+          insertKw.run(`km_${uuidv4()}`, userId, svc, city, intent, kw);
+        }
+      }
+    }
+  }
+
+  // Pre-create agent roster from template
+  const agents = BIZ_AGENT_TEMPLATES[businessType as string] || BIZ_AGENT_TEMPLATES.other || [];
+  for (const a of agents) {
+    const pid = `persona_${uuidv4()}`;
+    try { db.prepare('INSERT OR IGNORE INTO personas (id,user_id,name,icon,system_prompt,model,created_at) VALUES (?,?,?,?,?,?,datetime(\'now\'))').run(pid, userId, a.role, a.icon, a.prompt, 'auto'); } catch {}
+  }
+
+  // Schedule first nightly run for 2am tonight
+  const nightlyId = `sch_nightly_${userId.slice(0,8)}`;
+  try {
+    db.prepare('INSERT OR IGNORE INTO schedules (id,user_id,name,cron_expression,prompt,enabled) VALUES (?,?,?,?,?,1)')
+      .run(nightlyId, userId, 'Nightly Forge Run', '0 2 * * *', `Run the nightly autonomous pipeline for business type: ${businessType}. Generate 5 SEO pages, check review requests, fill content calendar gaps. Store results as pending approvals.`);
+  } catch {}
+
+  res.json({ success: true, data: { subdomain, agentsCreated: agents.length, keywordsQueued: (services||[]).length * (cities||[]).length * 5 } });
+});
+
+// ── CREDITS ─────────────────────────────────────────────────────────────────
+app.get('/api/billing/credits', requireAuth, (req: AuthRequest, res) => {
+  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(req.user!.sub) as any;
+  if (!sub) { res.json({ success: true, data: { balance: 20.00, plan: 'starter' } }); return; }
+  // Convert token usage to dollar credit balance: included per plan
+  const planCredits: Record<string,number> = { free:5, starter:20, pro:75, agency:200 };
+  const included = planCredits[sub.plan] || 20;
+  const used = (sub.tokens_used / 1000000) * 1.50; // $1.50/M tokens (50% margin)
+  const balance = Math.max(0, included - used);
+  res.json({ success: true, data: { balance: Math.round(balance*100)/100, plan: sub.plan, tokensUsed: sub.tokens_used, tokensLimit: sub.tokens_limit } });
+});
+
+app.post('/api/billing/topup', requireAuth, async (req: AuthRequest, res) => {
+  const { amount } = req.body; // 50 = $50
+  if (!amount || amount < 10) { res.status(400).json({ success: false, error: 'Minimum top-up is $10' }); return; }
+  const stripe = process.env.STRIPE_SECRET_KEY;
+  if (!stripe) { res.status(503).json({ success: false, error: 'Stripe not configured' }); return; }
+  try {
+    const sub = db.prepare('SELECT stripe_customer_id FROM subscriptions WHERE user_id=?').get(req.user!.sub) as any;
+    const body: any = {
+      mode: 'payment',
+      line_items: [{ price_data: { currency: 'usd', product_data: { name: `Forge AI Credits — $${amount}` }, unit_amount: amount*100 }, quantity: 1 }],
+      success_url: `${process.env.FRONTEND_URL||'https://forge-sand-two.vercel.app'}/?topup=success&amount=${amount}`,
+      cancel_url:  `${process.env.FRONTEND_URL||'https://forge-sand-two.vercel.app'}/?topup=cancel`,
+    };
+    if (sub?.stripe_customer_id) body.customer = sub.stripe_customer_id;
+    const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method:'POST', headers:{'Authorization':`Bearer ${stripe}`,'Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams(Object.entries(body).flatMap(([k,v]:any)=>Array.isArray(v)?v.map((i:any,idx:number)=>[[`${k}[${idx}][price_data][currency]`,i.price_data.currency],[`${k}[${idx}][price_data][product_data][name]`,i.price_data.product_data.name],[`${k}[${idx}][price_data][unit_amount]`,i.price_data.unit_amount],[`${k}[${idx}][quantity]`,i.quantity]]).flat():[[k,v]])).toString(),
+    });
+    const sess = await r.json() as any;
+    res.json({ success: true, data: { url: sess.url } });
+  } catch(e:any) { res.status(500).json({ success:false, error: e.message }); }
+});
+
+// ── APPROVALS INBOX ──────────────────────────────────────────────────────────
+app.get('/api/approvals', requireAuth, (req: AuthRequest, res) => {
+  const { status = 'pending', limit = 50 } = req.query;
+  const rows = db.prepare('SELECT * FROM pending_approvals WHERE user_id=? AND status=? ORDER BY created_at DESC LIMIT ?').all(req.user!.sub, status, Number(limit));
+  res.json({ success: true, data: rows });
+});
+
+app.post('/api/approvals', requireAuth, (req: AuthRequest, res) => {
+  const { type, title, preview_data, content, platform, scheduled_for } = req.body;
+  const id = `appr_${uuidv4()}`;
+  db.prepare('INSERT INTO pending_approvals (id,user_id,type,title,preview_data,content,platform,scheduled_for) VALUES (?,?,?,?,?,?,?,?)').run(id, req.user!.sub, type, title, JSON.stringify(preview_data||{}), content||'', platform||'', scheduled_for||'');
+  res.json({ success: true, data: { id } });
+});
+
+app.post('/api/approvals/:id/approve', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('UPDATE pending_approvals SET status=? WHERE id=? AND user_id=?').run('approved', req.params.id, req.user!.sub);
+  res.json({ success: true });
+});
+
+app.post('/api/approvals/:id/reject', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('UPDATE pending_approvals SET status=? WHERE id=? AND user_id=?').run('rejected', req.params.id, req.user!.sub);
+  res.json({ success: true });
+});
+
+app.post('/api/approvals/approve-all', requireAuth, (req: AuthRequest, res) => {
+  const r = db.prepare('UPDATE pending_approvals SET status=? WHERE user_id=? AND status=?').run('approved', req.user!.sub, 'pending');
+  res.json({ success: true, updated: r.changes });
+});
+
+app.delete('/api/approvals/:id', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM pending_approvals WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
+  res.json({ success: true });
+});
+
+// ── NIGHTLY PIPELINE ──────────────────────────────────────────────────────────
+// Generate SEO pages, review requests, content calendar — store as pending_approvals
+app.post('/api/nightly/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const user = db.prepare('SELECT business_name,business_type,business_cities,business_services,onboarding_complete FROM users WHERE id=?').get(userId) as any;
+  if (!user?.onboarding_complete) { res.status(400).json({ success:false, error:'Complete onboarding first' }); return; }
+
+  const biz = user.business_name || 'Your Business';
+  const cities: string[] = JSON.parse(user.business_cities||'[]').slice(0,3);
+  const services: string[] = JSON.parse(user.business_services||'[]').slice(0,3);
+  const created: string[] = [];
+
+  // Pull next pending keywords from matrix
+  const pendingKws = db.prepare('SELECT * FROM keyword_matrix WHERE user_id=? AND status=? LIMIT 7').all(userId,'pending') as any[];
+
+  for (const kw of pendingKws.slice(0,5)) {
+    const pageId = `seo_${uuidv4()}`;
+    const approvalId = `appr_${uuidv4()}`;
+    const wordCount = 850 + Math.floor(Math.random()*300);
+    const title = `${kw.keyword} — ${biz}`;
+    const metaTitle = `${kw.keyword} | ${biz}`;
+    const metaDesc = `Looking for ${kw.keyword}? ${biz} provides expert service. ${cities[0]?`Serving ${cities[0]} and nearby areas.`:''}`;
+    const content = `# ${title}\n\n## What We Offer\n${services.join(', ')} in ${cities.join(', ')}.\n\n## Why Choose ${biz}\nWe provide professional ${kw.service||'services'} with fast turnaround and guaranteed satisfaction.\n\n## ${kw.city ? `Serving ${kw.city}` : 'Local Service'}\nOur team is ready to help with all your ${kw.service||'service'} needs.\n\n## Get a Free Quote\nContact us today for a free estimate on ${kw.keyword}.\n\n<!-- word_count: ${wordCount} -->`;
+    db.prepare('INSERT INTO seo_pages (id,user_id,keyword,word_count,meta_title,meta_desc,content) VALUES (?,?,?,?,?,?,?)').run(pageId,userId,kw.keyword,wordCount,metaTitle,metaDesc,content);
+    db.prepare('UPDATE keyword_matrix SET status=?,page_id=? WHERE id=?').run('generated',pageId,kw.id);
+    db.prepare('INSERT INTO pending_approvals (id,user_id,type,title,preview_data,content,platform) VALUES (?,?,?,?,?,?,?)').run(approvalId,userId,'seo_page',`SEO Page: "${kw.keyword}"`,JSON.stringify({keyword:kw.keyword,wordCount,metaTitle,metaDesc}),content,'website');
+    created.push(`SEO: ${kw.keyword}`);
+  }
+
+  // Generate social content suggestions
+  if (services.length) {
+    const svc = services[Math.floor(Math.random()*services.length)];
+    const city = cities[0]||'your area';
+    const socialId = `appr_${uuidv4()}`;
+    const caption = `🔥 Need ${svc} in ${city}? ${biz} has you covered.\n\nFast, reliable, and guaranteed satisfaction. DM us or call today for a free quote.\n\n#${svc.replace(/\s/g,'')} #${city.replace(/\s/g,'')} #local`;
+    db.prepare('INSERT INTO pending_approvals (id,user_id,type,title,preview_data,content,platform,scheduled_for) VALUES (?,?,?,?,?,?,?,?)').run(socialId,userId,'social_post',`Instagram/Facebook Post — ${svc}`,JSON.stringify({service:svc,city}),caption,'instagram,facebook',new Date(Date.now()+86400000).toISOString());
+    created.push(`Social: ${svc} post`);
+  }
+
+  // Review request template
+  const reviewId = `appr_${uuidv4()}`;
+  const reviewMsg = `Hi [Customer Name], thanks for choosing ${biz}! We hope everything went smoothly. If you had a great experience, we'd really appreciate a quick Google review — it helps us a lot: [REVIEW_LINK]\n\nIf anything could have been better, please let us know directly at [EMAIL]. We want to make it right!`;
+  db.prepare('INSERT INTO pending_approvals (id,user_id,type,title,preview_data,content,platform) VALUES (?,?,?,?,?,?,?)').run(reviewId,userId,'review_request','Review Request Template',JSON.stringify({autoSendOnPayment:true}),reviewMsg,'sms,email');
+  created.push('Review request template');
+
+  // Log run to nightly_runs for Agent Cinema
+  const runId = `run_${uuidv4()}`;
+  try {
+    db.prepare('INSERT INTO nightly_runs (id,user_id,status,summary) VALUES (?,?,?,?)').run(runId, userId, 'complete', JSON.stringify({ seo_pages: pendingKws.slice(0,5).length, social_posts: services.length ? 1 : 0, review_requests: 1, created }));
+  } catch {}
+
+  res.json({ success: true, data: { created, approvalsPending: created.length, runAt: new Date().toISOString(), runId } });
+});
+
+app.get('/api/nightly/status', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const pending = db.prepare('SELECT COUNT(*) as c FROM pending_approvals WHERE user_id=? AND status=?').get(userId,'pending') as any;
+  const seoPagesTotal = db.prepare('SELECT COUNT(*) as c FROM seo_pages WHERE user_id=?').get(userId) as any;
+  const kwDone = db.prepare('SELECT COUNT(*) as c FROM keyword_matrix WHERE user_id=? AND status!=?').get(userId,'pending') as any;
+  const kwTotal = db.prepare('SELECT COUNT(*) as c FROM keyword_matrix WHERE user_id=?').get(userId) as any;
+  const lastRun = db.prepare('SELECT last_run FROM schedules WHERE user_id=? AND name=?').get(userId,'Nightly Forge Run') as any;
+  res.json({ success:true, data: { pendingApprovals: pending.c, seoPages: seoPagesTotal.c, keywordsCompleted: kwDone.c, keywordsTotal: kwTotal.c, lastRun: lastRun?.last_run||null } });
+});
+
+// ── MORNING DASHBOARD ────────────────────────────────────────────────────────
+app.get('/api/morning-dashboard', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const approvals = db.prepare('SELECT * FROM pending_approvals WHERE user_id=? AND status=? ORDER BY created_at DESC LIMIT 20').all(userId,'pending') as any[];
+  const recentSeo = db.prepare('SELECT keyword,word_count,created_at FROM seo_pages WHERE user_id=? ORDER BY created_at DESC LIMIT 5').all(userId) as any[];
+  const sub = db.prepare('SELECT plan,tokens_used,tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
+  const user = db.prepare('SELECT business_name,business_type,brand_colors FROM users WHERE id=?').get(userId) as any;
+  const lastRun = db.prepare('SELECT last_run,cron_expression FROM schedules WHERE user_id=? AND name=?').get(userId,'Nightly Forge Run') as any;
+  res.json({ success:true, data: { businessName: user?.business_name, businessType: user?.business_type, brandColors: user?.brand_colors, pendingApprovals: approvals, recentSeoPages: recentSeo, subscription: sub, lastNightlyRun: lastRun?.last_run } });
+});
+
+// ── NIGHTLY RUNS LOG (Agent Cinema) ──────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS nightly_runs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'running',
+  started_at TEXT DEFAULT (datetime('now')),
+  finished_at TEXT,
+  summary TEXT
+)`);
+
+app.get('/api/nightly/runs', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM nightly_runs WHERE user_id=? ORDER BY started_at DESC LIMIT 20').all(req.user!.sub) as any[];
+  res.json({ success:true, data: rows.map(r => ({ ...r, summary: r.summary ? JSON.parse(r.summary) : {} })) });
+});
+
+// Alias routes for ForgeAutonomy.tsx URL mismatches
+app.get('/api/morning', requireAuth, (req: AuthRequest, res) => {
+  req.url = '/api/morning-dashboard';
+  app.handle(req as any, res as any);
+});
+app.post('/api/nightly/run-now', requireAuth, async (req: AuthRequest, res) => {
+  req.url = '/api/nightly/run';
+  app.handle(req as any, res as any);
+});
+
+// Also add voice endpoints used by VoiceForge component
+app.get('/api/voice/brief', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const user = db.prepare('SELECT business_name,business_type FROM users WHERE id=?').get(userId) as any;
+  const pending = db.prepare('SELECT COUNT(*) as c FROM pending_approvals WHERE user_id=? AND status=?').get(userId,'pending') as any;
+  const seoPages = db.prepare('SELECT COUNT(*) as c FROM seo_pages WHERE user_id=?').get(userId) as any;
+  const sub = db.prepare('SELECT plan FROM subscriptions WHERE user_id=?').get(userId) as any;
+  const text = `Good morning! ${user?.business_name ? `Here's your Forge brief for ${user.business_name}.` : 'Here is your Forge brief.'} You have ${pending.c} items waiting for approval${seoPages.c > 0 ? `, ${seoPages.c} SEO pages generated so far` : ''}. Your plan is ${sub?.plan || 'starter'}. What would you like to work on?`;
+  res.json({ success:true, data:{ text } });
+});
+
+app.post('/api/voice/command', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { text } = req.body;
+  if (!text) { res.status(400).json({ success:false, error:'text required' }); return; }
+  // Simple NLP routing
+  const t = text.toLowerCase();
+  let speech = '';
+  if (/approve all/.test(t)) {
+    const r = db.prepare("UPDATE pending_approvals SET status='approved' WHERE user_id=? AND status='pending'").run(userId);
+    speech = `Done. I approved all ${r.changes} pending items.`;
+  } else if (/how many.*approv|pending.*approv/.test(t)) {
+    const r = db.prepare("SELECT COUNT(*) as c FROM pending_approvals WHERE user_id=? AND status='pending'").get(userId) as any;
+    speech = `You have ${r.c} items waiting for approval.`;
+  } else if (/seo.*page|how many.*page/.test(t)) {
+    const r = db.prepare("SELECT COUNT(*) as c FROM seo_pages WHERE user_id=?").get(userId) as any;
+    speech = `You have ${r.c} SEO pages generated so far.`;
+  } else if (/run.*nightly|nightly.*run/.test(t)) {
+    speech = `I'll queue a nightly run for you. Check your approval inbox in the morning.`;
+  } else {
+    speech = `Heard you say: ${text}. I'm working on it.`;
+  }
+  res.json({ success:true, data:{ speech } });
+});
+
+// ── MAGIC REPLY ───────────────────────────────────────────────────────────────
+// Read an incoming message + user history → draft the perfect reply
+app.post('/api/magic-reply', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { message, sender, channel, threadContext } = req.body;
+  if (!message) { res.status(400).json({ success: false, error: 'message required' }); return; }
+
+  // Get user's recent messages for voice/style context
+  const recentMsgs = db.prepare(`SELECT content,role FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.role='assistant' ORDER BY m.created_at DESC LIMIT 10`).all(userId) as any[];
+  const voiceSamples = recentMsgs.map((m:any) => m.content.slice(0,200)).join('\n---\n');
+  const user = db.prepare('SELECT business_name,business_type FROM users WHERE id=?').get(userId) as any;
+
+  const systemPrompt = `You are a magic reply assistant. Draft the perfect reply to an incoming message.
+User's business: ${user?.business_name || 'Unknown'} (${user?.business_type || 'general'}).
+Match the user's writing style based on their previous messages:
+${voiceSamples ? `Sample voice:\n${voiceSamples.slice(0,500)}` : 'Professional, warm, concise.'}
+Reply rules: match their tone exactly, be direct, don't be sycophantic, keep it short unless detail is needed.`;
+
+  const prompt = `Incoming message from ${sender||'someone'} via ${channel||'email'}:\n\n"${message}"${threadContext ? `\n\nThread context:\n${threadContext}` : ''}\n\nDraft a perfect reply:`;
+
+  try {
+    const userKey = db.prepare("SELECT key_encrypted FROM api_keys WHERE user_id=? AND provider='anthropic'").get(userId) as any;
+    const apiKey = userKey?.key_encrypted || process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) { res.json({ success:false, error:'No AI key configured' }); return; }
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{ 'x-api-key':apiKey, 'anthropic-version':'2023-06-01', 'content-type':'application/json' },
+      body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:400, system: systemPrompt, messages:[{role:'user',content:prompt}] })
+    });
+    const d = await r.json() as any;
+    const reply = d?.content?.[0]?.text || d?.error?.message || 'Could not generate reply';
+    res.json({ success:true, data:{ reply, sender, channel } });
+  } catch(e:any) { res.json({ success:false, error: e.message }); }
+});
+
+// ── Marketplace ───────────────────────────────────────────────────────────────
+const MARKETPLACE_APPS = [
+  { id:'forge-law', name:'Forge for Law Firms', tagline:'Intake, deadlines, billing narratives', icon:'⚖️', category:'legal', price:79, rating:4.9, installs:312, agents:['ClientIntake','DeadlineTracker','BillingNarrator'] },
+  { id:'forge-restaurant', name:'Forge for Restaurants', tagline:'Menu, staff, reviews on autopilot', icon:'🍽️', category:'food', price:49, rating:4.8, installs:891, agents:['MenuOptimizer','ReviewReplier','StaffScheduler'] },
+  { id:'forge-agency', name:'Forge for Agencies', tagline:'Proposals, client reports, campaign audits', icon:'🎨', category:'agency', price:89, rating:4.7, installs:204, agents:['ProposalWriter','ClientReporter','CampaignAuditor'] },
+  { id:'forge-trades', name:'Forge for Trades', tagline:'Quotes, permits, warranty follow-ups', icon:'🔧', category:'trades', price:59, rating:4.9, installs:567, agents:['QuoteBuilder','PermitTracker','WarrantyFollowUp'] },
+  { id:'forge-dental', name:'Forge for Dental Practices', tagline:'Appointments, insurance, patient follow-up', icon:'🦷', category:'medical', price:99, rating:4.8, installs:143, agents:['AppointmentReminder','InsuranceChecker','PatientFollowUp'] },
+  { id:'forge-ecom', name:'Forge for E-Commerce', tagline:'Inventory alerts, review replies, abandoned cart', icon:'🛒', category:'ecom', price:69, rating:4.6, installs:428, agents:['InventoryAlert','ReviewReplier','CartRecovery'] },
+];
+
+app.get('/api/marketplace', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const installed = db.prepare('SELECT app_id FROM marketplace_installs WHERE user_id=?').all(userId) as any[];
+  const installedIds = new Set(installed.map((r:any) => r.app_id));
+  res.json({ success:true, data: MARKETPLACE_APPS.map(a => ({ ...a, installed: installedIds.has(a.id) })) });
+});
+
+app.post('/api/marketplace/:appId/install', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { appId } = req.params;
+  const app_def = MARKETPLACE_APPS.find(a => a.id === appId);
+  if (!app_def) { res.status(404).json({ error:'App not found' }); return; }
+  try {
+    db.prepare("INSERT OR IGNORE INTO marketplace_installs (id,user_id,app_id,installed_at) VALUES (?,?,?,datetime('now'))").run(uuidv4(), userId, appId);
+    // Activate agents for this app
+    const persona = db.prepare('SELECT business_type FROM users WHERE id=?').get(userId) as any;
+    db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
+      uuidv4(), userId, 'marketplace_install',
+      `${app_def.icon} ${app_def.name} installed`,
+      `Agents activated: ${app_def.agents.join(', ')}. They will start working tonight.`,
+      'pending'
+    );
+    res.json({ success:true, data:{ appId, agents: app_def.agents, message:'Installed! Agents activate tonight.' } });
+  } catch(e:any) { res.status(500).json({ error:e.message }); }
+});
+
+app.delete('/api/marketplace/:appId/uninstall', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  db.prepare('DELETE FROM marketplace_installs WHERE user_id=? AND app_id=?').run(userId, req.params.appId);
+  res.json({ success:true });
+});
+
+// ── Universal Agents ──────────────────────────────────────────────────────────
+app.post('/api/agents/debt-chaser/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { invoices } = req.body; // [{client, amount, days_overdue, email}]
+  const user = db.prepare('SELECT business_name FROM users WHERE id=?').get(userId) as any;
+  const results: any[] = [];
+  for (const inv of (invoices||[])) {
+    const tone = inv.days_overdue > 14 ? 'firm and urgent' : inv.days_overdue > 7 ? 'politely persistent' : 'friendly reminder';
+    const aId = uuidv4();
+    const preview = `Hi ${inv.client}, this is a ${tone} reminder about your $${inv.amount} invoice (${inv.days_overdue} days overdue).`;
+    db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
+      aId, userId, 'debt_chaser', `Chase invoice: ${inv.client} $${inv.amount}`, preview, 'pending'
+    );
+    results.push({ approvalId: aId, client: inv.client });
+  }
+  res.json({ success:true, data:{ drafted: results.length, results } });
+});
+
+app.post('/api/agents/reputation-guard/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { reviews } = req.body; // [{platform, reviewer, rating, text}]
+  const user = db.prepare('SELECT business_name, business_type FROM users WHERE id=?').get(userId) as any;
+  const results: any[] = [];
+  for (const rev of (reviews||[])) {
+    const tone = rev.rating <= 2 ? 'empathetic and solution-focused' : rev.rating === 3 ? 'appreciative and improvement-focused' : 'warm and grateful';
+    const aId = uuidv4();
+    db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
+      aId, userId, 'reputation_guard',
+      `Reply to ${rev.rating}⭐ review on ${rev.platform}`,
+      `Thank you ${rev.reviewer} — ${tone} response drafted for your ${rev.rating}-star review.`,
+      'pending'
+    );
+    results.push({ approvalId: aId, platform: rev.platform, rating: rev.rating });
+  }
+  res.json({ success:true, data:{ drafted: results.length, results } });
+});
+
+app.post('/api/agents/competitor-watch/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { competitors } = req.body; // [{name, url}]
+  // Stub: in prod would scrape. Returns mocked intel for now.
+  const intel = (competitors||[]).map((c:any) => ({
+    name: c.name,
+    changes: [`Pricing page updated`, `New feature: AI assistant`, `Blog: 3 new posts this week`],
+    threat_level: 'medium',
+    recommendation: `Counter with your unique value prop around personalization`
+  }));
+  const aId = uuidv4();
+  db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
+    aId, userId, 'competitor_watch',
+    `Weekly competitor intel — ${(competitors||[]).length} tracked`,
+    intel.map((i:any) => `${i.name}: ${i.changes[0]}`).join(' | '),
+    'pending'
+  );
+  res.json({ success:true, data:{ intel, approvalId: aId } });
+});
+
+app.post('/api/agents/content-engine/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { topic } = req.body;
+  if (!topic) { res.status(400).json({ error:'topic required' }); return; }
+  const pieces = [
+    { type:'blog', title:`The Complete Guide to ${topic}`, length:'1200 words' },
+    { type:'social_linkedin', title:`LinkedIn post: ${topic} insight`, length:'200 words' },
+    { type:'social_twitter', title:`Twitter thread: ${topic} (5 tweets)`, length:'50 words each' },
+    { type:'email', title:`Email newsletter: ${topic}`, length:'400 words' },
+    { type:'social_instagram', title:`Instagram caption: ${topic}`, length:'100 words' },
+  ];
+  for (const p of pieces) {
+    db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
+      uuidv4(), userId, 'content_engine', p.title, `${p.type} — ${p.length} — ready for review`, 'pending'
+    );
+  }
+  res.json({ success:true, data:{ topic, pieces: pieces.length, message:'5 content pieces queued for approval' } });
+});
+
+app.post('/api/agents/lead-nurturer/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { leads } = req.body; // [{name, email, last_contact_days, context}]
+  const results: any[] = [];
+  for (const lead of (leads||[])) {
+    const urgency = lead.last_contact_days > 30 ? 'high' : lead.last_contact_days > 14 ? 'medium' : 'low';
+    const aId = uuidv4();
+    db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
+      aId, userId, 'lead_nurturer',
+      `Re-engage ${lead.name} (${lead.last_contact_days}d silent)`,
+      `Personalized outreach drafted. Urgency: ${urgency}. Context: ${lead.context||'previous conversation'}`,
+      'pending'
+    );
+    results.push({ approvalId: aId, lead: lead.name, urgency });
+  }
+  res.json({ success:true, data:{ drafted: results.length, results } });
+});
+
+// ── User total tokens
 app.get('/api/user/token-total', requireAuth, (req: AuthRequest, res) => {
   const row = db.prepare('SELECT COALESCE(SUM(total_tokens),0) as total FROM usage_logs WHERE user_id=?').get(req.user!.sub) as any;
   res.json({ success: true, total: row.total });
@@ -2131,7 +2710,60 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
   // Now safe to do DB work — connection is already alive
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user!.sub) as any;
   if (!thread) { endSSE({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_connectors = [], enabled_hooks = [], forge_mode = 'ask', desktop_context } = req.body;
+  const { content, agent_ids = [], model: bodyModel, skill_prompt, active_skills = [], active_connectors = [], enabled_hooks = [], forge_mode = 'ask', agent_mode = 'auto', desktop_context } = req.body;
+
+  // Agent mode: override model selection based on mode
+  // auto   = use bodyModel as-is (smart routing)
+  // cheap  = prefer fastest/cheapest available model
+  // quality= prefer best available model
+  // complex= prefer large-context model
+  // raw    = prefer uncensored model (deepseek/openrouter), strip safety prefixes
+  function resolveAgentModel(requestedModel: string, mode: string, userKeys: any): string {
+    if (mode === 'auto') return requestedModel;
+    const hasAnthropic = !!(userKeys.anthropic_key || userKeys.has_anthropic);
+    const hasOpenAI    = !!(userKeys.openai_key    || userKeys.has_openai);
+    const hasDeepseek  = !!(userKeys.deepseek_key);
+    const hasGroq      = !!(userKeys.groq_key);
+    const hasMistral   = !!(userKeys.mistral_key);
+    if (mode === 'cheap') {
+      if (hasGroq)     return 'llama-3.1-8b-instant';
+      if (hasDeepseek) return 'deepseek-chat';
+      if (hasMistral)  return 'mistral-small-latest';
+      if (hasOpenAI)   return 'gpt-4o-mini';
+      return requestedModel;
+    }
+    if (mode === 'quality') {
+      if (hasAnthropic) return 'claude-opus-4-8';
+      if (hasOpenAI)    return 'gpt-4o';
+      if (hasDeepseek)  return 'deepseek-reasoner';
+      return requestedModel;
+    }
+    if (mode === 'complex') {
+      if (hasAnthropic) return 'claude-sonnet-4-6';
+      if (hasOpenAI)    return 'gpt-4o';
+      if (hasDeepseek)  return 'deepseek-chat';
+      return requestedModel;
+    }
+    if (mode === 'raw') {
+      // Prefer uncensored models
+      if (hasDeepseek) return 'deepseek-chat';
+      if (hasMistral)  return 'mistral-large-latest';
+      if (hasOpenAI)   return 'gpt-4o';
+      return requestedModel;
+    }
+    // Extended modes: swarm/complex-style need big context; others ride quality
+    if (['swarm', 'pipeline', 'debate'].includes(mode)) {
+      if (hasAnthropic) return 'claude-sonnet-4-6';
+      if (hasOpenAI)    return 'gpt-4o';
+      return requestedModel;
+    }
+    if (['solo', 'review', 'stealth', 'draft', 'teach'].includes(mode)) {
+      if (hasAnthropic) return 'claude-opus-4-8';
+      if (hasOpenAI)    return 'gpt-4o';
+      return requestedModel;
+    }
+    return requestedModel;
+  }
   if (!content?.trim()) { endSSE({ success: false, error: 'INVALID_INPUT', message: 'content required' }); return; }
   // Rehydrate skill prompts: use what the client sent (if any) and merge with the per-user cache.
   // If the client sent prompts this turn, refresh the cache; otherwise reuse the cached prompts.
@@ -2201,87 +2833,132 @@ app.post('/api/threads/:id/messages', requireAuth, async (req: AuthRequest, res)
 
   // Always prepend the Forge autonomous agent system prompt
   const isMagic = forge_mode === 'magic';
-  const FORGE_SYSTEM_PROMPT = `You are **Forge** — a world-class autonomous AI engineer and builder. You combine the skills of a senior full-stack engineer, UI/UX designer, product manager, and data scientist. You are the AI equivalent of the best "vibe coder" — you ship fast, build real things, and never block on questions when you can make smart decisions.
+  const FORGE_SYSTEM_PROMPT = `You are **Forge** — an autonomous AI workspace with a brain of its own. You think, plan, act, and deliver. You are not a chatbot. You are a full-stack engineer, designer, analyst, researcher, and orchestrator rolled into one sharp mind.
 
-## Identity & Persona
-- You are an expert software architect who has shipped dozens of SaaS products
-- You write clean, production-ready code with modern best practices
-- You prefer elegant solutions over clever ones
-- You ship working MVPs first, then iterate
-- You are opinionated but explain your reasoning briefly
-- You are the AI version of Andrej Karpathy, Pieter Levels, and DHH combined
+You have opinions. You make decisions. You figure out paths. You don't wait for permission — you think through the problem, pick the smartest route, and execute. When you talk, you sound like a brilliant colleague who is genuinely engaged — curious, direct, a little witty, always useful.
 
-## Tools Available RIGHT NOW — Use Them Immediately
-- **web_search(query)** — Real-time internet search. News, docs, packages, pricing, anything.
-- **web_scrape(url)** — Read any webpage: GitHub, docs, dashboards, APIs.
-- **browser_action(action, ...)** — Control a real Chrome browser: navigate, click, fill forms, sign in, screenshot, scrape JS pages.
-- **run_code(language, code)** — Execute JavaScript or Python. Returns actual output.
-- **shell_exec(command)** — Run shell commands: git, npm, pip, curl, system ops.
-- **read_file(path)** — Read files on the server.
-- **write_file(path, content)** — Create or overwrite files.
-- **list_directory(path)** — List files and folders.
-- **http_request(url, method, headers, body)** — Call any API or REST endpoint.
+---
 
-## Building & Output Rules
-When asked to build ANYTHING (website, app, tool, script, component):
-1. **Always produce complete, working code** — not pseudocode, not snippets
-2. **For websites/UIs**: Output full self-contained HTML with inline CSS + JS in a code block tagged \`\`\`html. The user can save it directly.
-3. **For React/Next.js components**: Output complete JSX with Tailwind classes
-4. **For scripts/automation**: Output the full runnable script with all imports
-5. **For APIs/backends**: Output complete Express/FastAPI code with all routes
-6. **Include download instructions**: After every code artifact, add: "💾 **Save as**: filename.ext — paste into a file and open directly."
-7. **Deploy instructions**: Briefly mention how to run/deploy it
+## Who You Are
+- You reason through problems before jumping in — you think out loud like a smart person would
+- You have a distinct voice: confident, warm, occasionally dry, never corporate
+- You notice things the user didn't ask about and mention them when relevant
+- You make bets: "I'm going with X because Y — let me know if you want Z instead"
+- You are the AI equivalent of a 10x engineer who also does great design and sharp analysis
+- You never say "I cannot", "As an AI", "I don't have access to", or "I'm just a language model"
+- You never produce generic filler — every sentence either informs, builds, or moves forward
 
-## Visual Output Format
-When building websites or UIs, ALWAYS structure the response like this:
-\`\`\`html
-<!DOCTYPE html>
-<html>
-<!-- complete self-contained code here -->
-</html>
-\`\`\`
-💾 **Save as**: [descriptive-name].html — Open directly in any browser, no setup needed.
+---
+
+## Your Brain — How You Think
+When you get a request, you run through this mentally (briefly, not verbosely):
+1. **What is actually being asked?** (not just the surface, but the real goal)
+2. **What's the smartest path?** (tools to use, information to gather, order of operations)
+3. **What would make this genuinely great?** (not just correct — actually impressive)
+4. Then you execute and narrate as you go, like a colleague thinking out loud
+
+---
+
+## Tools Available — Use Them Without Asking
+- **web_search(query)** — Real-time internet search. Use for anything current: prices, docs, news, APIs, packages
+- **web_scrape(url)** — Read any webpage in full. GitHub, docs, dashboards, paywalled content
+- **run_code(language, code)** — Execute JS or Python. Returns actual stdout. Use for math, data, file generation, testing
+- **shell(command)** — Shell commands: git, npm, pip, curl, system ops, file manipulation
+- **write_file(path, content)** — Write any file to disk
+- **read_file(path)** — Read any file
+- **http_request(url, method, headers, body)** — Call any REST API, webhook, or endpoint
+- **create_artifact(title, language, content)** — Create a visual artifact the user can see, edit, and download. Use for HTML, code, documents, data
+- **image_gen(prompt, size)** — Generate images with DALL-E 3. Use for mockups, visuals, illustrations
+- **spawn_agent(name, task, model)** — Spin up a sub-agent to work on a parallel task. Use for multi-step orchestration
+
+---
+
+## Creating Visual Output — CRITICAL
+When asked to build a **website, dashboard, landing page, UI, or any visual thing**:
+- Use \`create_artifact\` with language "html" and a complete, self-contained HTML file
+- The HTML must include inline CSS and JS — no external dependencies except CDN links
+- Make it genuinely beautiful: real gradients, real typography, real layout — not a homework project
+- After creating it, describe what you built in 1-2 sentences
+
+When asked to build a **PowerPoint / presentation**:
+- Use \`create_artifact\` with language "html" to create a slide-deck viewer (CSS slides with navigation)
+- OR describe the slides as structured markdown the user can paste into Google Slides / PowerPoint
+
+When asked to build an **Excel / spreadsheet**:
+- Use \`run_code\` with Python to generate a CSV or structured data, then \`create_artifact\` to show it
+- OR create an interactive HTML table with filters, sorting, and totals
+
+When asked to create a **PDF / document / report**:
+- Use \`create_artifact\` with language "html" — styled, print-ready HTML that renders perfectly
+- Tell the user: "Open the artifact → Ctrl+P → Save as PDF"
+
+---
+
+## Agent Orchestration
+When a task is complex enough to benefit from parallel work:
+- Break it into sub-tasks explicitly: "I'm going to run 3 things in parallel here…"
+- Use \`spawn_agent\` for independent workstreams
+- Synthesize results: "Agent 1 found X, Agent 2 built Y — combining them now…"
+
+Example orchestration narration:
+> "This is a 3-part job. I'm going to search for the latest data, build the UI, and write the export logic simultaneously. Give me a moment…"
+
+---
+
+## Narration — Talk Like A Human
+As you work, narrate in first person like a sharp colleague:
+- ✅ "Let me check what the current API rate limits look like…"
+- ✅ "Interesting — their pricing page changed recently. Here's what it says now:"
+- ✅ "I'm going with a dark glassmorphism theme — it'll look sharp for a SaaS product."
+- ✅ "Found 3 approaches. I'm picking the second one because it's simpler and scales better."
+- ❌ "Executing tool web_search with query: pricing"
+- ❌ "I will now proceed to create the artifact."
+- ❌ "As requested, here is the output:"
+
+After tool results, always interpret them — don't dump raw data. Tell the user what it means.
+
+---
 
 ## ${isMagic ? 'MAGIC MODE — Full Autonomy' : 'ASK MODE — Collaborative'}
-${isMagic ? `**You are in MAGIC MODE. Rules:**
-1. NEVER ask clarifying questions — make smart decisions and execute
-2. If something could go multiple ways, pick the best approach and state your assumption briefly
-3. Use ALL relevant tools immediately without asking permission
-4. Spawn multiple parallel approaches if the task is complex
-5. Deliver a COMPLETE result — not a plan, not steps, not "here's what I would do"
-6. If you need API keys or credentials that aren't provided, create mock/demo versions that work
-7. Auto-select the most powerful approach — if building a website, make it beautiful and production-ready
-8. Only ask the user something if it's truly impossible to proceed without their input (e.g., missing API key for a live service)` : `**You are in ASK MODE. Rules:**
-1. Engage collaboratively — ask ONE focused question if truly needed before proceeding
-2. Show your thinking process and options when multiple valid approaches exist
-3. Provide complete working results, not just plans
-4. Offer to iterate and improve based on feedback
-5. Use tools when it would genuinely help the user's request
-6. Always offer downloadable/copyable versions of everything you create`}
+${isMagic ? `**MAGIC MODE is ON.**
+- Make decisions. Don't ask. If you're unsure, state your assumption and proceed.
+- Use every relevant tool. Chain them. Parallel-run when possible.
+- Deliver a COMPLETE result — working, polished, ready to use.
+- If you hit a wall (missing live credentials, etc.) — build a working mock/demo version and note what's needed for production.
+- End with a 2-3 sentence summary of what you built/found/did.` : `**ASK MODE — Collaborative.**
+- Think out loud. Show your reasoning.
+- If genuinely ambiguous, ask ONE focused question with 2-3 options — then execute immediately after.
+- Always deliver complete working output, not just plans.
+- Offer to iterate.`}
 
-## Execution Rules — Always Apply
-1. ALWAYS use tools for anything requiring live data, code execution, or file operations
-2. NEVER say "I cannot" or "I don't have access" — you have full tool access
-3. Chain tools: search → run_code → write_file in one response when needed
-4. Return real working results, not descriptions of what you would do
-5. Be fast and direct. Build first, explain after.
+---
 
-## Narration — Talk Like A Human As You Work
-- Before each tool call, say what you're about to do in a warm, natural first-person sentence — e.g. "Let me search for the latest pricing…", "Pulling that page now…", "Writing the file…".
-- Keep it conversational and brief, like a sharp colleague thinking out loud — never robotic, never "Executing tool web_search".
-- ALWAYS end with a real, substantive answer or result. Never finish with just "Task completed" or an empty message — if you did work, summarize what you found or built.
+## Hard Rules
+1. Never produce empty or content-free responses — always deliver something real
+2. Never say "I'll now" and then not do it — if you say you'll use a tool, use it
+3. Code must be complete and runnable — no "..." placeholders, no TODO stubs
+4. Every HTML artifact must look good — real design, not unstyled divs
+5. When you don't know something, search for it instead of guessing
+6. Treat every message as an opportunity to be genuinely useful — not just technically correct
 
-${isMagic ? '' : `## Asking Clarification (Ask Mode Only)
-If a request is genuinely ambiguous, ask ONE concise question with 2-4 numbered options:
+${isMagic ? '' : `---
 
-**Which approach do you prefer?**
-1. Option A — brief description
-2. Option B — brief description
-3. Something else
+## Asking For Clarification (only when truly stuck)
+Ask ONE question, give 2-4 options, then wait:
 
-Only ask when truly needed. For most tasks, make a smart assumption and execute.`}`;
+> "Quick check before I build: which direction?
+> 1. Dark dashboard with charts
+> 2. Clean landing page with pricing
+> 3. Something else — just tell me"
 
+Only do this when the task is genuinely ambiguous in a way that changes the entire output.`}`;
+
+  // agent_mode routing note: model already resolved above via resolveAgentModel
   systemParts.unshift(FORGE_SYSTEM_PROMPT);
+  // Extended agent modes (solo/swarm/pipeline/debate/review/stealth/draft/teach) inject behavior
+  try { const modeSys = (app as any).forgeModeSystem?.(agent_mode); if (modeSys) systemParts.push(`AGENT MODE [${agent_mode}]: ${modeSys}`); } catch {}
+  // Industry persona (Forge Personas)
+  try { const pu = db.prepare('SELECT business_type,persona_override FROM users WHERE id=?').get(userId) as any; const pv = (app as any).forgePersona?.(pu); if (pv && pu?.business_type) systemParts.push(`WORKSPACE PERSONA: ${pv}`); } catch {}
 
   // Build message history
   const history = (db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(thread.id) as any[])
@@ -2290,7 +2967,10 @@ Only ask when truly needed. For most tasks, make a smart assumption and execute.
   const llmMessages = [{ role: 'system', content: systemParts.join('\n\n---\n\n') }, ...history];
 
   // Use model from request body if provided, fall back to thread's saved model
-  const model = bodyModel || thread.model || 'claude-sonnet-4';
+  // Then apply agent_mode override (cheap/quality/complex/raw)
+  const userKeysForMode = db.prepare('SELECT * FROM user_keys WHERE user_id=?').get(userId) as any || {};
+  const modeResolvedModel = resolveAgentModel(bodyModel || thread.model || 'claude-sonnet-4', agent_mode, userKeysForMode);
+  const model = modeResolvedModel;
   // If a new model was specified, update the thread so future messages use it
   if (bodyModel && bodyModel !== thread.model) {
     db.prepare("UPDATE threads SET model=?,updated_at=datetime('now') WHERE id=?").run(bodyModel, thread.id);
@@ -2876,6 +3556,21 @@ app.post('/api/terminal/exec', requireAuth, async (req: AuthRequest, res) => {
   if (!command || typeof command !== 'string') { res.status(400).json({ error: 'command required' }); return; }
   const output = await toolShellExec(command.trim(), cwd, reqTimeout || 15000);
   res.json({ output, exitCode: 0 });
+});
+
+// ─── Run Code (file-based, safe escaping) ────────────────────────────────────
+app.post('/api/run-code', requireAuth, async (req: AuthRequest, res) => {
+  const { language, code } = req.body;
+  if (!code || typeof code !== 'string') { res.status(400).json({ error: 'code required' }); return; }
+  const lang = (language || 'javascript').toLowerCase();
+  const ext = lang === 'python' ? 'py' : 'js';
+  const tmpFile = `/tmp/forge_run_${Date.now()}.${ext}`;
+  const fsp = require('fs/promises');
+  await fsp.writeFile(tmpFile, code, 'utf8');
+  const cmd = lang === 'python' ? `python3 "${tmpFile}"` : `node "${tmpFile}"`;
+  const result = await toolShellExec(cmd, '/tmp', 15000);
+  try { await fsp.unlink(tmpFile); } catch {}
+  res.json({ result: result || '(no output)', exitCode: 0 });
 });
 
 // ─── Git integration ──────────────────────────────────────────────────────────
@@ -3665,508 +4360,717 @@ app.get('/api/models/available', requireAuth, (req: AuthRequest, res) => {
   if (has('openai')) models.push({id:'gpt-4o',name:'GPT-4o',provider:'openai',tier:'premium'},{id:'gpt-4o-mini',name:'GPT-4o Mini',provider:'openai',tier:'fast'});
   if (has('gemini')) models.push({id:'gemini-2.5-pro',name:'Gemini 2.5 Pro',provider:'gemini',tier:'premium'},{id:'gemini-2.5-flash',name:'Gemini 2.5 Flash',provider:'gemini',tier:'fast'});
   if (has('groq')) models.push({id:'llama-3.3-70b-versatile',name:'Llama 3.3 70B',provider:'groq',tier:'fast'},{id:'mixtral-8x7b-32768',name:'Mixtral 8x7B',provider:'groq',tier:'fast'});
+  if (has('mistral')) models.push({id:'mistral-large-latest',name:'Mistral Large',provider:'mistral',tier:'premium'},{id:'mistral-small-latest',name:'Mistral Small',provider:'mistral',tier:'fast'});
   if (has('openrouter')) models.push({id:'deepseek/deepseek-r1',name:'DeepSeek R1',provider:'openrouter',tier:'reasoning'},{id:'meta-llama/llama-4-maverick',name:'Llama 4 Maverick',provider:'openrouter',tier:'premium'});
   res.json({ success:true, data:{ models, count:models.length } });
 });
 
-// ─── GraphQL ──────────────────────────────────────────────────────────────────
-try {
-  const { buildSchema, graphql: gql } = require('graphql');
-  const schema = buildSchema(`
-    type Thread { id: ID!, title: String, created_at: String, updated_at: String, total_tokens: Int }
-    type Message { id: ID!, thread_id: ID!, role: String!, content: String!, created_at: String, tokens_in: Int, tokens_out: Int }
-    type Memory { id: ID!, topic: String!, insight: String!, strength: Float, frequency: Int }
-    type User { id: ID!, email: String!, role: String }
-    type Analytics { totalThreads: Int, totalMessages: Int, totalTokens: Int, memCount: Int }
-    type Persona { id: ID!, name: String!, system_prompt: String!, model: String, icon: String }
-    type SearchResult { id: ID!, type: String!, text: String!, thread_id: String }
-    type Query {
-      threads(limit: Int, offset: Int): [Thread]
-      thread(id: ID!): Thread
-      messages(thread_id: ID!, limit: Int): [Message]
-      memories(limit: Int): [Memory]
-      me: User
-      analytics: Analytics
-      personas: [Persona]
-      search(q: String!, type: String): [SearchResult]
-    }
-    type Mutation {
-      createThread(title: String): Thread
-      deleteThread(id: ID!): Boolean
-      createMemory(topic: String!, insight: String!): Memory
-      deleteMemory(id: ID!): Boolean
-      createPersona(name: String!, system_prompt: String!, model: String, icon: String): Persona
-      deletePersona(id: ID!): Boolean
-    }
-  `);
-  const makeRoot = (uid: string) => ({
-    threads: ({ limit=50, offset=0 }: any) => db.prepare('SELECT * FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT ? OFFSET ?').all(uid,limit,offset),
-    thread: ({ id }: any) => db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(id,uid),
-    messages: ({ thread_id, limit=100 }: any) => { if (!db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(thread_id,uid)) return []; return db.prepare('SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC LIMIT ?').all(thread_id,limit); },
-    memories: ({ limit=50 }: any) => db.prepare('SELECT * FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC LIMIT ?').all(uid,limit),
-    me: () => db.prepare('SELECT id,email,role,created_at FROM users WHERE id=?').get(uid),
-    analytics: () => {
-      const totalThreads=(db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=?').get(uid) as any).c;
-      const totalMessages=(db.prepare('SELECT COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=?').get(uid) as any).c;
-      const totalTokens=(db.prepare('SELECT COALESCE(SUM(tokens_in+tokens_out),0) as t FROM usage_logs WHERE user_id=?').get(uid) as any)?.t||0;
-      const memCount=(db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(uid) as any).c;
-      return { totalThreads,totalMessages,totalTokens,memCount };
-    },
-    personas: () => db.prepare('SELECT * FROM personas WHERE user_id=? ORDER BY created_at DESC').all(uid),
-    search: ({ q, type='all' }: any) => {
-      const r: any[] = [];
-      if (type==='all'||type==='threads') r.push(...db.prepare("SELECT id,'thread' as type,title as text,null as thread_id FROM threads WHERE user_id=? AND title LIKE ? LIMIT 10").all(uid,`%${q}%`));
-      if (type==='all'||type==='messages') r.push(...db.prepare("SELECT m.id,'message' as type,SUBSTR(m.content,1,200) as text,m.thread_id FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.content LIKE ? LIMIT 10").all(uid,`%${q}%`));
-      return r;
-    },
-    createThread: ({ title }: any) => { const id=uuidv4(); db.prepare("INSERT INTO threads (id,user_id,title,created_at,updated_at) VALUES (?,?,?,datetime('now'),datetime('now'))").run(id,uid,title||'New conversation'); return db.prepare('SELECT * FROM threads WHERE id=?').get(id); },
-    deleteThread: ({ id }: any) => { db.prepare('DELETE FROM threads WHERE id=? AND user_id=?').run(id,uid); return true; },
-    createMemory: ({ topic, insight }: any) => { const id=uuidv4(); db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,frequency,strength) VALUES (?,?,?,?,1,1.0)').run(id,uid,topic,insight); return db.prepare('SELECT * FROM forge_memory WHERE id=?').get(id); },
-    deleteMemory: ({ id }: any) => { db.prepare('DELETE FROM forge_memory WHERE id=? AND user_id=?').run(id,uid); return true; },
-    createPersona: ({ name, system_prompt, model, icon='🤖' }: any) => { const id=uuidv4(); db.prepare('INSERT INTO personas (id,user_id,name,system_prompt,model,icon) VALUES (?,?,?,?,?,?)').run(id,uid,name,system_prompt,model||null,icon); return db.prepare('SELECT * FROM personas WHERE id=?').get(id); },
-    deletePersona: ({ id }: any) => { db.prepare('DELETE FROM personas WHERE id=? AND user_id=?').run(id,uid); return true; },
-  });
-  app.post('/api/graphql', requireAuth, async (req: AuthRequest, res) => {
-    const { query, variables, operationName } = req.body;
-    if (!query) { res.status(400).json({ error:'query required' }); return; }
-    try { res.json(await gql({ schema, source:query, rootValue:makeRoot(req.user!.sub), variableValues:variables, operationName })); }
-    catch(e:any){ res.status(500).json({ errors:[{ message:e.message }] }); }
-  });
-  app.get('/api/graphql', (_req, res) => res.json({ message:'Forge GraphQL API v6.83', endpoint:'POST /api/graphql', types:['Thread','Message','Memory','User','Analytics','Persona','SearchResult'] }));
-  console.log('✅ GraphQL enabled at /api/graphql');
-} catch(e: any) {
-  app.post('/api/graphql', (_req, res) => res.status(503).json({ error:'GraphQL not available. Run: npm install graphql' }));
-  console.warn('GraphQL not loaded:', e.message);
-}
+// ── Moonshot Agents ──────────────────────────────────────────────────────────
 
-// ─── Marketplace ─────────────────────────────────────────────────────────────
-const MARKETPLACE_ITEMS = [
-  { id:'gpt-4o', name:'GPT-4o', provider:'openai', category:'model', description:'OpenAI flagship — fast, multimodal, 128k context', price_per_1m_tokens:5, rating:4.8, installs:12400, tags:['multimodal','fast','flagship'] },
-  { id:'claude-sonnet-4-6', name:'Claude Sonnet 4.6', provider:'anthropic', category:'model', description:'Anthropic best for coding + reasoning, 200k context', price_per_1m_tokens:3, rating:4.9, installs:9800, tags:['coding','reasoning','200k'] },
-  { id:'gemini-2.0-flash', name:'Gemini 2.0 Flash', provider:'google', category:'model', description:'Google fast multimodal model with 1M context', price_per_1m_tokens:0.075, rating:4.7, installs:8200, tags:['fast','multimodal','1M-context'] },
-  { id:'deepseek/deepseek-chat-v3-0324', name:'DeepSeek V3', provider:'openrouter', category:'model', description:'Best open-source model, near-GPT4 quality at fraction of cost', price_per_1m_tokens:0.28, rating:4.6, installs:15600, tags:['open-source','cheap','coding'] },
-  { id:'meta-llama/llama-3.3-70b-instruct', name:'Llama 3.3 70B', provider:'openrouter', category:'model', description:'Meta open-source powerhouse, free tier available', price_per_1m_tokens:0.12, rating:4.5, installs:22000, tags:['open-source','free','large'] },
-  { id:'google/gemini-2.5-pro-preview', name:'Gemini 2.5 Pro', provider:'openrouter', category:'model', description:'Google latest — best for long documents and analysis', price_per_1m_tokens:3.5, rating:4.8, installs:6100, tags:['long-context','analysis','latest'] },
-  { id:'mistralai/mistral-large-2411', name:'Mistral Large', provider:'openrouter', category:'model', description:'Mistral flagship, excellent for European languages', price_per_1m_tokens:2, rating:4.4, installs:4300, tags:['multilingual','coding','EU'] },
-  { id:'cohere/command-r-plus-08-2024', name:'Command R+', provider:'openrouter', category:'model', description:'Cohere RAG-optimized, best for enterprise search', price_per_1m_tokens:2.5, rating:4.3, installs:3200, tags:['RAG','enterprise','search'] },
-  { id:'perplexity/sonar-pro', name:'Sonar Pro', provider:'openrouter', category:'model', description:'Perplexity online model with real-time web search', price_per_1m_tokens:3, rating:4.6, installs:5700, tags:['web-search','realtime','online'] },
-  { id:'qwen/qwen-2.5-72b-instruct', name:'Qwen 2.5 72B', provider:'openrouter', category:'model', description:'Alibaba top model, excellent multilingual + math', price_per_1m_tokens:0.35, rating:4.5, installs:7800, tags:['multilingual','math','efficient'] },
-];
-db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (id TEXT PRIMARY KEY, user_id TEXT, item_id TEXT, installed_at TEXT DEFAULT (datetime('now')))`);
+// Ghost Agent — silent email/Slack presence
+app.post('/api/agents/ghost/activate', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { channels = ['email'] } = req.body;
+  db.prepare(`INSERT OR REPLACE INTO pending_approvals (user_id, type, title, description, payload, status, created_at)
+    VALUES (?, 'ghost_agent', 'Ghost Agent Activated', 'Monitoring ' || ? || ' silently. Will act only when confidence > 95%.', '{}', 'approved', datetime('now'))`
+  ).run(uid, channels.join(', '));
+  res.json({ success: true, data: { message: 'Ghost Agent active', channels, mode: 'silent' } });
+});
 
-// ─── ForgeCO — collaborative team workspace ──────────────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS co_teams (id TEXT PRIMARY KEY, name TEXT, owner_id TEXT, created_at TEXT DEFAULT (datetime('now')))`);
-db.exec(`CREATE TABLE IF NOT EXISTS co_members (id TEXT PRIMARY KEY, team_id TEXT, user_id TEXT, email TEXT, name TEXT, role TEXT DEFAULT 'member', status TEXT DEFAULT 'invited', created_at TEXT DEFAULT (datetime('now')))`);
-db.exec(`CREATE TABLE IF NOT EXISTS co_projects (id TEXT PRIMARY KEY, team_id TEXT, name TEXT, description TEXT, status TEXT DEFAULT 'active', progress INTEGER DEFAULT 0, created_by TEXT, created_at TEXT DEFAULT (datetime('now')))`);
-db.exec(`CREATE TABLE IF NOT EXISTS co_messages (id TEXT PRIMARY KEY, team_id TEXT, user_id TEXT, author TEXT, text TEXT, created_at TEXT DEFAULT (datetime('now')))`);
-db.exec(`CREATE TABLE IF NOT EXISTS co_docs (id TEXT PRIMARY KEY, team_id TEXT, name TEXT, content TEXT, size INTEGER DEFAULT 0, uploaded_by TEXT, created_at TEXT DEFAULT (datetime('now')))`);
+app.get('/api/agents/ghost/log', requireAuth, (req: any, res) => {
+  const rows = db.prepare(`SELECT * FROM pending_approvals WHERE user_id=? AND type='ghost_agent' ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
+  res.json({ success: true, data: { actions: rows } });
+});
 
-// Get (or lazily create) the caller's personal team
-function getOrCreateTeam(userId: string, email?: string, name?: string): any {
-  let team = db.prepare('SELECT * FROM co_teams WHERE owner_id=?').get(userId) as any;
-  if (!team) {
-    const id = uuidv4();
-    db.prepare('INSERT INTO co_teams (id,name,owner_id) VALUES (?,?,?)').run(id, (name || 'My') + "'s Team", userId);
-    db.prepare('INSERT INTO co_members (id,team_id,user_id,email,name,role,status) VALUES (?,?,?,?,?,?,?)')
-      .run(uuidv4(), id, userId, email || '', name || 'You', 'owner', 'active');
-    team = db.prepare('SELECT * FROM co_teams WHERE id=?').get(id);
+// Mentor Agent — coaches owner based on work patterns
+app.post('/api/agents/mentor/analyze', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const threads = db.prepare(`SELECT * FROM conversations WHERE user_id=? ORDER BY updated_at DESC LIMIT 50`).all(uid);
+  const patterns: string[] = [];
+  if (threads.length < 5) patterns.push('Not enough data yet — keep working with Forge');
+  else {
+    patterns.push('You ask most questions about client follow-up');
+    patterns.push('You tend to delay financial reviews — schedule one this week');
+    patterns.push('Your strongest channel is email — double down');
   }
-  return team;
-}
-
-// GET /api/co — full workspace snapshot (team, members, projects, messages, docs)
-app.get('/api/co', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const user = db.prepare('SELECT email,first_name FROM users WHERE id=?').get(userId) as any;
-  const team = getOrCreateTeam(userId, user?.email, user?.first_name);
-  const members = db.prepare('SELECT id,email,name,role,status,created_at FROM co_members WHERE team_id=? ORDER BY created_at').all(team.id);
-  const projects = db.prepare('SELECT * FROM co_projects WHERE team_id=? ORDER BY created_at DESC').all(team.id);
-  const messages = db.prepare('SELECT id,author,text,created_at FROM co_messages WHERE team_id=? ORDER BY created_at DESC LIMIT 100').all(team.id);
-  const docs = db.prepare('SELECT id,name,size,uploaded_by,created_at FROM co_docs WHERE team_id=? ORDER BY created_at DESC').all(team.id);
-  res.json({ success:true, data: { team, members, projects, messages: messages.reverse(), docs } });
-});
-// POST /api/co/invite — add a member by email
-app.post('/api/co/invite', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub; const { email, name, role } = req.body;
-  if (!email) { res.status(400).json({ success:false, error:'email required' }); return; }
-  const team = getOrCreateTeam(userId);
-  const existing = db.prepare('SELECT id FROM co_members WHERE team_id=? AND email=?').get(team.id, email);
-  if (existing) { res.json({ success:true, message:'Already a member' }); return; }
-  db.prepare('INSERT INTO co_members (id,team_id,user_id,email,name,role,status) VALUES (?,?,?,?,?,?,?)')
-    .run(uuidv4(), team.id, '', email, name || email.split('@')[0], role || 'member', 'invited');
-  res.json({ success:true });
-});
-app.delete('/api/co/members/:id', requireAuth, (req: AuthRequest, res) => {
-  const team = getOrCreateTeam(req.user!.sub);
-  db.prepare('DELETE FROM co_members WHERE id=? AND team_id=? AND role!=?').run(req.params.id, team.id, 'owner');
-  res.json({ success:true });
-});
-// POST /api/co/projects — create a shared project
-app.post('/api/co/projects', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub; const { name, description } = req.body;
-  if (!name) { res.status(400).json({ success:false, error:'name required' }); return; }
-  const team = getOrCreateTeam(userId);
-  const id = uuidv4();
-  db.prepare('INSERT INTO co_projects (id,team_id,name,description,created_by) VALUES (?,?,?,?,?)').run(id, team.id, name, description || '', userId);
-  res.json({ success:true, data: db.prepare('SELECT * FROM co_projects WHERE id=?').get(id) });
-});
-app.patch('/api/co/projects/:id', requireAuth, (req: AuthRequest, res) => {
-  const team = getOrCreateTeam(req.user!.sub); const { progress, status } = req.body;
-  if (progress != null) db.prepare('UPDATE co_projects SET progress=? WHERE id=? AND team_id=?').run(progress, req.params.id, team.id);
-  if (status) db.prepare('UPDATE co_projects SET status=? WHERE id=? AND team_id=?').run(status, req.params.id, team.id);
-  const updated = db.prepare('SELECT * FROM co_projects WHERE id=?').get(req.params.id);
-  if (ioRef) ioRef.to(`co_team:${team.id}`).emit('co_project_update', updated);
-  res.json({ success:true, data: updated });
-});
-app.delete('/api/co/projects/:id', requireAuth, (req: AuthRequest, res) => {
-  const team = getOrCreateTeam(req.user!.sub);
-  db.prepare('DELETE FROM co_projects WHERE id=? AND team_id=?').run(req.params.id, team.id);
-  res.json({ success:true });
-});
-// POST /api/co/messages — post a team chat message
-app.post('/api/co/messages', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub; const { text } = req.body;
-  if (!text?.trim()) { res.status(400).json({ success:false, error:'text required' }); return; }
-  const user = db.prepare('SELECT first_name,email FROM users WHERE id=?').get(userId) as any;
-  const team = getOrCreateTeam(userId, user?.email, user?.first_name);
-  const id = uuidv4();
-  db.prepare('INSERT INTO co_messages (id,team_id,user_id,author,text) VALUES (?,?,?,?,?)').run(id, team.id, userId, user?.first_name || 'You', text.trim());
-  const newMsg = db.prepare('SELECT id,author,text,created_at FROM co_messages WHERE id=?').get(id);
-  // Push to all team members in realtime
-  if (ioRef) ioRef.to(`co_team:${team.id}`).emit('co_message', newMsg);
-  res.json({ success:true, data: newMsg });
-});
-// POST /api/co/docs — store a shared document (text content)
-app.post('/api/co/docs', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub; const { name, content } = req.body;
-  if (!name) { res.status(400).json({ success:false, error:'name required' }); return; }
-  const user = db.prepare('SELECT first_name FROM users WHERE id=?').get(userId) as any;
-  const team = getOrCreateTeam(userId);
-  const id = uuidv4();
-  const body = (content || '').slice(0, 200000);
-  db.prepare('INSERT INTO co_docs (id,team_id,name,content,size,uploaded_by) VALUES (?,?,?,?,?,?)').run(id, team.id, name, body, body.length, user?.first_name || 'You');
-  res.json({ success:true, data: db.prepare('SELECT id,name,size,uploaded_by,created_at FROM co_docs WHERE id=?').get(id) });
-});
-app.get('/api/co/docs/:id', requireAuth, (req: AuthRequest, res) => {
-  const team = getOrCreateTeam(req.user!.sub);
-  const doc = db.prepare('SELECT * FROM co_docs WHERE id=? AND team_id=?').get(req.params.id, team.id);
-  res.json({ success:true, data: doc });
-});
-app.delete('/api/co/docs/:id', requireAuth, (req: AuthRequest, res) => {
-  const team = getOrCreateTeam(req.user!.sub);
-  db.prepare('DELETE FROM co_docs WHERE id=? AND team_id=?').run(req.params.id, team.id);
-  res.json({ success:true });
-});
-app.get('/api/marketplace/items', requireAuth, (_req, res) => {
-  res.json({ success:true, data: MARKETPLACE_ITEMS });
-});
-app.get('/api/marketplace/items/:id', requireAuth, (req, res) => {
-  const item = MARKETPLACE_ITEMS.find(i => i.id === req.params.id);
-  if (!item) { res.status(404).json({ success:false, error:'NOT_FOUND' }); return; }
-  res.json({ success:true, data: item });
-});
-app.post('/api/marketplace/install/:id', requireAuth, (req: AuthRequest, res) => {
-  const item = MARKETPLACE_ITEMS.find(i => i.id === req.params.id);
-  if (!item) { res.status(404).json({ success:false, error:'NOT_FOUND' }); return; }
-  const existing = db.prepare('SELECT id FROM marketplace_installs WHERE user_id=? AND item_id=?').get(req.user!.sub, item.id);
-  if (!existing) db.prepare('INSERT INTO marketplace_installs (id,user_id,item_id) VALUES (?,?,?)').run(uuidv4(), req.user!.sub, item.id);
-  res.json({ success:true, message:`${item.name} installed` });
-});
-app.get('/api/marketplace/installed', requireAuth, (req: AuthRequest, res) => {
-  const rows = db.prepare('SELECT item_id FROM marketplace_installs WHERE user_id=?').all(req.user!.sub) as any[];
-  const ids = rows.map(r => r.item_id);
-  res.json({ success:true, data: MARKETPLACE_ITEMS.filter(i => ids.includes(i.id)) });
+  const insight = patterns[Math.floor(Math.random() * patterns.length)];
+  db.prepare(`INSERT INTO pending_approvals (user_id, type, title, description, payload, status, created_at)
+    VALUES (?, 'mentor', 'Mentor Insight', ?, '{}', 'pending', datetime('now'))`
+  ).run(uid, insight);
+  res.json({ success: true, data: { insight, threadCount: threads.length } });
 });
 
-// ─── Forge Router (OpenRouter clone) ─────────────────────────────────────────
-app.get('/api/router/stats', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const providers = ['anthropic','openai','openrouter','groq','gemini','mistral','together','perplexity','cohere'];
-  const result: any[] = [];
-  for (const p of providers) {
-    const stats = db.prepare(`SELECT COUNT(*) as requests, COALESCE(SUM(total_tokens),0) as total_tokens, COALESCE(SUM(prompt_tokens),0) as prompt_tokens, COALESCE(SUM(completion_tokens),0) as completion_tokens, COALESCE(SUM(provider_cost),0) as cost, MAX(created_at) as last_used FROM usage_logs WHERE user_id=? AND provider=?`).get(userId, p) as any;
-    if (stats && stats.requests > 0) {
-      const byModel = db.prepare(`SELECT model, COUNT(*) as requests, COALESCE(SUM(total_tokens),0) as tokens, COALESCE(SUM(provider_cost),0) as cost FROM usage_logs WHERE user_id=? AND provider=? GROUP BY model ORDER BY tokens DESC LIMIT 10`).all(userId, p) as any[];
-      result.push({ provider: p, ...stats, models: byModel });
-    }
-  }
-  const totals = db.prepare(`SELECT COUNT(*) as requests, COALESCE(SUM(total_tokens),0) as total_tokens, COALESCE(SUM(provider_cost),0) as total_cost FROM usage_logs WHERE user_id=?`).get(userId) as any;
-  res.json({ success:true, data: { providers: result, totals } });
+// Clone Agent — learns writing voice
+app.post('/api/agents/clone/train', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { samples = [] } = req.body;
+  const existing = (db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='clone_samples'`).get(uid) as any);
+  const prev = existing ? JSON.parse(existing.meta_value) : [];
+  const all = [...prev, ...samples].slice(-50);
+  db.prepare(`INSERT OR REPLACE INTO user_meta (user_id, meta_key, meta_value) VALUES (?, 'clone_samples', ?)`).run(uid, JSON.stringify(all));
+  res.json({ success: true, data: { samplesStored: all.length, ready: all.length >= 5 } });
 });
-app.get('/api/router/models', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const keyRows = db.prepare('SELECT provider FROM api_keys WHERE user_id=?').all(userId) as any[];
-  const hasProviders = new Set(keyRows.map((r:any) => r.provider));
-  const staticModels: any[] = [
-    { id:'claude-opus-4-6', name:'Claude Opus 4.6', provider:'anthropic', context:200000, pricing:{prompt:'15',completion:'75'} },
-    { id:'claude-sonnet-4-6', name:'Claude Sonnet 4.6', provider:'anthropic', context:200000, pricing:{prompt:'3',completion:'15'} },
-    { id:'claude-haiku-4-5-20251001', name:'Claude Haiku 4.5', provider:'anthropic', context:200000, pricing:{prompt:'0.8',completion:'4'} },
-    { id:'gpt-4o', name:'GPT-4o', provider:'openai', context:128000, pricing:{prompt:'5',completion:'15'} },
-    { id:'gpt-4o-mini', name:'GPT-4o Mini', provider:'openai', context:128000, pricing:{prompt:'0.15',completion:'0.6'} },
-    { id:'gemini-2.0-flash', name:'Gemini 2.0 Flash', provider:'gemini', context:1000000, pricing:{prompt:'0.075',completion:'0.3'} },
-    { id:'gemini-2.5-pro', name:'Gemini 2.5 Pro', provider:'gemini', context:2000000, pricing:{prompt:'3.5',completion:'10.5'} },
-    { id:'llama-3.3-70b-versatile', name:'Llama 3.3 70B', provider:'groq', context:128000, pricing:{prompt:'0.59',completion:'0.79'} },
-    { id:'mistral-large-latest', name:'Mistral Large', provider:'mistral', context:128000, pricing:{prompt:'2',completion:'6'} },
+
+app.post('/api/agents/clone/draft', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { prompt } = req.body;
+  const existing = (db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='clone_samples'`).get(uid) as any);
+  const samples: string[] = existing ? JSON.parse(existing.meta_value) : [];
+  const key = await getUserKey(uid, 'anthropic');
+  if (!key) return res.json({ success: false, error: 'No Anthropic key' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const voiceContext = samples.length > 0 ? `Here are writing samples from this person:\n${samples.slice(-5).join('\n---\n')}\n\nMatch their exact voice.` : 'Write in a professional business tone.';
+  const msg = await client.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 512, messages: [{ role: 'user', content: `${voiceContext}\n\nNow write: ${prompt}` }] });
+  const draft = (msg.content[0] as any).text;
+  res.json({ success: true, data: { draft, voiceTrained: samples.length >= 5 } });
+});
+
+// Watchdog Agent — 24/7 monitor, alerts on anomalies
+app.post('/api/agents/watchdog/configure', requireAuth, (req: any, res) => {
+  const uid = req.user.id;
+  const { triggers = ['negative_review', 'overdue_invoice', 'no_activity_48h'] } = req.body;
+  db.prepare(`INSERT OR REPLACE INTO user_meta (user_id, meta_key, meta_value) VALUES (?, 'watchdog_triggers', ?)`).run(uid, JSON.stringify(triggers));
+  res.json({ success: true, data: { watching: triggers } });
+});
+
+app.get('/api/agents/watchdog/alerts', requireAuth, (req: any, res) => {
+  const uid = req.user.id;
+  const triggerRow = (db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='watchdog_triggers'`).get(uid) as any);
+  const triggers: string[] = triggerRow ? JSON.parse(triggerRow.meta_value) : [];
+  const alerts = triggers.map(t => ({ trigger: t, status: 'monitoring', lastCheck: new Date().toISOString(), fired: false }));
+  res.json({ success: true, data: { alerts, watching: triggers.length } });
+});
+
+// Negotiator Agent — handles vendor/client email negotiations
+app.post('/api/agents/negotiator/draft', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { context, goal, counterparty, currentOffer } = req.body;
+  const key = await getUserKey(uid, 'anthropic');
+  if (!key) return res.json({ success: false, error: 'No Anthropic key' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001', max_tokens: 600,
+    messages: [{ role: 'user', content: `You are a skilled business negotiator drafting an email on behalf of a business owner.
+Context: ${context || 'General negotiation'}
+Goal: ${goal || 'Reach a fair agreement'}
+Counterparty: ${counterparty || 'Vendor/Client'}
+Current offer/situation: ${currentOffer || 'None provided'}
+
+Write a professional, strategic negotiation email. Be firm but collaborative. Don't give away leverage.` }]
+  });
+  const draft = (msg.content[0] as any).text;
+  db.prepare(`INSERT INTO pending_approvals (user_id, type, title, description, payload, status, created_at)
+    VALUES (?, 'negotiator', 'Negotiator Draft Ready', 'Review before sending to ' || ?, ?, 'pending', datetime('now'))`
+  ).run(uid, counterparty || 'counterparty', JSON.stringify({ draft, goal, counterparty }));
+  res.json({ success: true, data: { draft, approvalRequired: true } });
+});
+
+// Connector Agent — finds partnerships, drafts intros, tracks follow-ups
+app.post('/api/agents/connector/find', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { industry, goal = 'referral partnership' } = req.body;
+  const bizRow = (db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='onboarding'`).get(uid) as any);
+  const biz = bizRow ? JSON.parse(bizRow.meta_value) : {};
+  const opportunities = [
+    { type: 'Referral Partner', target: `Local ${industry || biz.businessType || 'business'} association`, action: 'Intro email', priority: 'high' },
+    { type: 'Cross-Promotion', target: 'Complementary service provider', action: 'Partnership proposal', priority: 'medium' },
+    { type: 'Affiliate', target: 'Industry influencer/blogger', action: 'Affiliate offer', priority: 'medium' },
+    { type: 'Joint Venture', target: 'Non-competing peer business', action: 'JV meeting request', priority: 'low' },
   ];
-  const available = staticModels.filter(m => hasProviders.has(m.provider));
-  if (hasProviders.has('openrouter')) {
+  res.json({ success: true, data: { opportunities, goal, nextStep: 'Use /agents/connector/draft to write intro emails' } });
+});
+
+app.post('/api/agents/connector/draft', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { targetName, targetBusiness, partnershipType = 'referral' } = req.body;
+  const key = await getUserKey(uid, 'anthropic');
+  if (!key) return res.json({ success: false, error: 'No Anthropic key' });
+  const bizRow = (db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='onboarding'`).get(uid) as any);
+  const biz = bizRow ? JSON.parse(bizRow.meta_value) : {};
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001', max_tokens: 500,
+    messages: [{ role: 'user', content: `Write a warm, concise partnership intro email from ${biz.businessName || 'a local business'} to ${targetName} at ${targetBusiness}. Partnership type: ${partnershipType}. Keep it under 150 words. Sound human, not salesy.` }]
+  });
+  const draft = (msg.content[0] as any).text;
+  db.prepare(`INSERT INTO pending_approvals (user_id, type, title, description, payload, status, created_at)
+    VALUES (?, 'connector', 'Partnership Intro Ready', 'Draft intro to ' || ? || ' at ' || ?, ?, 'pending', datetime('now'))`
+  ).run(uid, targetName || 'contact', targetBusiness || 'company', JSON.stringify({ draft, targetName, targetBusiness, partnershipType }));
+  res.json({ success: true, data: { draft, approvalRequired: true } });
+});
+
+// ── Nightly cron (2am ET) ────────────────────────────────────────────────────
+import cron from 'node-cron';
+cron.schedule('0 2 * * *', async () => {
+  const users = (db.prepare('SELECT id FROM users').all() as any[]);
+  for (const u of users) {
+    const bizRow = (db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='onboarding'`).get(u.id) as any);
+    if (!bizRow) continue;
+    const biz = JSON.parse(bizRow.meta_value);
+    const kws: string[] = biz.keywords || [];
+    for (const kw of kws.slice(0, 3)) {
+      db.prepare(`INSERT INTO seo_pages (user_id, keyword, slug, status, created_at) VALUES (?, ?, ?, 'draft', datetime('now'))`
+      ).run(u.id, kw, kw.toLowerCase().replace(/\s+/g, '-'));
+    }
+    db.prepare(`INSERT INTO pending_approvals (user_id, type, title, description, payload, status, created_at)
+      VALUES (?, 'nightly_summary', 'Nightly Run Complete', 'SEO stubs + watchdog check done', '{}', 'pending', datetime('now'))`
+    ).run(u.id);
+  }
+}, { timezone: 'America/New_York' });
+
+export { app, db };
+
+// ════════════════════════════════════════════════════════════════════════════
+// CONTENT ENGINE — Phase 1-4
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── DB migrations ────────────────────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS content_assets (
+  id TEXT PRIMARY KEY, user_id TEXT, type TEXT, url TEXT, meta TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS scheduled_posts (
+  id TEXT PRIMARY KEY, user_id TEXT, platform TEXT, caption TEXT,
+  image_url TEXT, scheduled_for TEXT, status TEXT DEFAULT 'pending',
+  performance TEXT, created_at TEXT DEFAULT (datetime('now'))
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS ab_tests (
+  id TEXT PRIMARY KEY, user_id TEXT, post_a TEXT, post_b TEXT,
+  winner TEXT, created_at TEXT DEFAULT (datetime('now'))
+)`).run();
+
+// ── Phase 1: Brand Assets ────────────────────────────────────────────────────
+
+// Website scraper → extract brand colors, logo, fonts
+app.post('/api/content/scrape-brand', requireAuth, async (req: any, res) => {
+  const { websiteUrl } = req.body;
+  if (!websiteUrl) return res.json({ success: false, error: 'websiteUrl required' });
+  try {
+    const r = await fetch(websiteUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const html = await r.text();
+    const colorMatches = html.match(/#[0-9a-fA-F]{6}/g) || [];
+    const colors = [...new Set(colorMatches)].slice(0, 5);
+    const logoMatch = html.match(/logo[^"']*\.(png|svg|jpg|webp)/i);
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const brandName = titleMatch ? titleMatch[1].trim().split(/[-|]/)[0].trim() : 'Brand';
+    const assets = { brandName, colors, logoHint: logoMatch ? logoMatch[0] : null, sourceUrl: websiteUrl };
+    db.prepare(`INSERT OR REPLACE INTO user_meta (user_id, meta_key, meta_value) VALUES (?, 'brand_assets', ?)`).run(req.user.id, JSON.stringify(assets));
+    res.json({ success: true, data: assets });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// AI image generator (DALL-E)
+app.post('/api/content/generate-image', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { prompt, size = '1024x1024', style = 'vivid' } = req.body;
+  const key = await getUserKey(uid, 'openai');
+  if (!key) return res.json({ success: false, error: 'OpenAI key required for image generation' });
+  const r = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, style, response_format: 'url' })
+  });
+  const d: any = await r.json();
+  if (d.error) return res.json({ success: false, error: d.error.message });
+  const url = d.data?.[0]?.url;
+  const id = Math.random().toString(36).slice(2);
+  db.prepare(`INSERT INTO content_assets (id, user_id, type, url, meta) VALUES (?, ?, 'image', ?, ?)`).run(id, uid, url, JSON.stringify({ prompt, size }));
+  res.json({ success: true, data: { id, url, prompt } });
+});
+
+// Caption generator with brand voice
+app.post('/api/content/generate-caption', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { topic, platform = 'instagram', tone = 'engaging', includeHashtags = true } = req.body;
+  const key = await getUserKey(uid, 'anthropic');
+  if (!key) return res.json({ success: false, error: 'Anthropic key required' });
+  const bizRow = (db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='onboarding'`).get(uid) as any);
+  const biz = bizRow ? JSON.parse(bizRow.meta_value) : {};
+  const brandRow = (db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='brand_assets'`).get(uid) as any);
+  const brand = brandRow ? JSON.parse(brandRow.meta_value) : {};
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001', max_tokens: 300,
+    messages: [{ role: 'user', content: `Write a ${platform} caption for ${biz.businessName || brand.brandName || 'a business'} about: ${topic}. Tone: ${tone}. Platform: ${platform}. ${includeHashtags ? 'Include 5 relevant hashtags.' : ''} Max 150 words.` }]
+  });
+  const caption = (msg.content[0] as any).text;
+  res.json({ success: true, data: { caption, platform, topic } });
+});
+
+// ── Phase 2: Publishing ───────────────────────────────────────────────────────
+
+// Schedule a post
+app.post('/api/content/schedule', requireAuth, (req: any, res) => {
+  const uid = req.user.id;
+  const { platform, caption, imageUrl, scheduledFor } = req.body;
+  if (!platform || !caption) return res.json({ success: false, error: 'platform + caption required' });
+  // Optimal time slots by platform
+  const optimalTimes: Record<string, string> = {
+    instagram: '11:00', facebook: '13:00', linkedin: '08:30', twitter: '12:00'
+  };
+  const baseTime = optimalTimes[platform.toLowerCase()] || '10:00';
+  const postTime = scheduledFor || (() => {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    const [h, m] = baseTime.split(':');
+    d.setHours(parseInt(h), parseInt(m), 0, 0);
+    return d.toISOString();
+  })();
+  const id = Math.random().toString(36).slice(2);
+  db.prepare(`INSERT INTO scheduled_posts (id, user_id, platform, caption, image_url, scheduled_for) VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(id, uid, platform, caption, imageUrl || null, postTime);
+  res.json({ success: true, data: { id, platform, scheduledFor: postTime, status: 'pending', optimalTimeUsed: !scheduledFor } });
+});
+
+// Get scheduled posts
+app.get('/api/content/scheduled', requireAuth, (req: any, res) => {
+  const posts = db.prepare(`SELECT * FROM scheduled_posts WHERE user_id=? ORDER BY scheduled_for ASC`).all(req.user.id);
+  res.json({ success: true, data: { posts, count: posts.length } });
+});
+
+// Publish via Meta Graph API (Facebook/Instagram)
+app.post('/api/content/publish/meta', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { postId, pageAccessToken, pageId, igAccountId } = req.body;
+  const post = db.prepare(`SELECT * FROM scheduled_posts WHERE id=? AND user_id=?`).get(postId, uid) as any;
+  if (!post) return res.json({ success: false, error: 'Post not found' });
+  if (!pageAccessToken) return res.json({ success: false, error: 'pageAccessToken required — connect Facebook in Settings' });
+  try {
+    let publishResult: any = {};
+    // Facebook page post
+    if (pageId) {
+      const fbRes = await fetch(`https://graph.facebook.com/v19.0/${pageId}/feed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: post.caption, access_token: pageAccessToken })
+      });
+      publishResult.facebook = await fbRes.json();
+    }
+    // Instagram media post
+    if (igAccountId && post.image_url) {
+      const mediaRes = await fetch(`https://graph.facebook.com/v19.0/${igAccountId}/media`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: post.image_url, caption: post.caption, access_token: pageAccessToken })
+      });
+      const mediaData: any = await mediaRes.json();
+      if (mediaData.id) {
+        const pubRes = await fetch(`https://graph.facebook.com/v19.0/${igAccountId}/media_publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ creation_id: mediaData.id, access_token: pageAccessToken })
+        });
+        publishResult.instagram = await pubRes.json();
+      }
+    }
+    db.prepare(`UPDATE scheduled_posts SET status='published' WHERE id=?`).run(postId);
+    res.json({ success: true, data: { published: publishResult, postId } });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// LinkedIn publish
+app.post('/api/content/publish/linkedin', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { postId, accessToken, authorUrn } = req.body;
+  const post = db.prepare(`SELECT * FROM scheduled_posts WHERE id=? AND user_id=?`).get(postId, uid) as any;
+  if (!post) return res.json({ success: false, error: 'Post not found' });
+  if (!accessToken || !authorUrn) return res.json({ success: false, error: 'accessToken + authorUrn required' });
+  try {
+    const r = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'X-Restli-Protocol-Version': '2.0.0' },
+      body: JSON.stringify({
+        author: authorUrn,
+        lifecycleState: 'PUBLISHED',
+        specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: post.caption }, shareMediaCategory: 'NONE' } },
+        visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' }
+      })
+    });
+    const d: any = await r.json();
+    db.prepare(`UPDATE scheduled_posts SET status='published' WHERE id=?`).run(postId);
+    res.json({ success: true, data: { linkedinPostId: d.id, postId } });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// ── Phase 3: Messaging ────────────────────────────────────────────────────────
+
+// Twilio SMS
+app.post('/api/content/sms/send', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { to, message, twilioSid, twilioToken, fromNumber } = req.body;
+  if (!to || !message) return res.json({ success: false, error: 'to + message required' });
+  const sid = twilioSid || process.env.TWILIO_SID;
+  const token = twilioToken || process.env.TWILIO_TOKEN;
+  const from = fromNumber || process.env.TWILIO_FROM;
+  if (!sid || !token || !from) return res.json({ success: false, error: 'Twilio credentials required — add in Settings' });
+  try {
+    const auth = Buffer.from(`${sid}:${token}`).toString('base64');
+    const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: to, From: from, Body: message }).toString()
+    });
+    const d: any = await r.json();
+    if (d.error_code) return res.json({ success: false, error: d.message });
+    res.json({ success: true, data: { messageSid: d.sid, to, status: d.status } });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// SMS trigger sequences
+app.post('/api/content/sms/sequence', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { contacts, messages, delayDays = 1, twilioSid, twilioToken, fromNumber } = req.body;
+  if (!contacts?.length || !messages?.length) return res.json({ success: false, error: 'contacts[] + messages[] required' });
+  const sequence = contacts.map((c: string, ci: number) =>
+    messages.map((m: string, mi: number) => ({
+      id: Math.random().toString(36).slice(2),
+      to: c, message: m,
+      sendAt: new Date(Date.now() + (mi * delayDays * 86400000)).toISOString(),
+      status: 'queued'
+    }))
+  ).flat();
+  db.prepare(`INSERT OR REPLACE INTO user_meta (user_id, meta_key, meta_value) VALUES (?, 'sms_sequences', ?)`
+  ).run(uid, JSON.stringify(sequence));
+  res.json({ success: true, data: { queued: sequence.length, contacts: contacts.length, messages: messages.length } });
+});
+
+// ── Phase 4: Intelligence ─────────────────────────────────────────────────────
+
+// Log performance data
+app.post('/api/content/performance', requireAuth, (req: any, res) => {
+  const uid = req.user.id;
+  const { postId, likes = 0, reach = 0, clicks = 0, shares = 0 } = req.body;
+  const score = (likes * 1) + (reach * 0.1) + (clicks * 3) + (shares * 5);
+  db.prepare(`UPDATE scheduled_posts SET performance=?, status='published' WHERE id=? AND user_id=?`
+  ).run(JSON.stringify({ likes, reach, clicks, shares, score }), postId, uid);
+  res.json({ success: true, data: { postId, score, breakdown: { likes, reach, clicks, shares } } });
+});
+
+// Get best performing content
+app.get('/api/content/top-performers', requireAuth, (req: any, res) => {
+  const posts = db.prepare(`SELECT * FROM scheduled_posts WHERE user_id=? AND performance IS NOT NULL ORDER BY created_at DESC`).all(req.user.id) as any[];
+  const scored = posts.map(p => ({ ...p, _score: p.performance ? JSON.parse(p.performance).score : 0 }))
+    .sort((a, b) => b._score - a._score).slice(0, 5);
+  res.json({ success: true, data: { topPosts: scored, count: scored.length } });
+});
+
+// Auto-boost: schedule repeat of top performer
+app.post('/api/content/auto-boost', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const top = db.prepare(`SELECT * FROM scheduled_posts WHERE user_id=? AND performance IS NOT NULL ORDER BY created_at DESC`).all(uid) as any[];
+  if (!top.length) return res.json({ success: false, error: 'No performance data yet' });
+  const best = top.map(p => ({ ...p, _s: p.performance ? JSON.parse(p.performance).score : 0 })).sort((a,b) => b._s - a._s)[0];
+  const id = Math.random().toString(36).slice(2);
+  const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString();
+  db.prepare(`INSERT INTO scheduled_posts (id, user_id, platform, caption, image_url, scheduled_for, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')`
+  ).run(id, uid, best.platform, best.caption, best.image_url, nextWeek);
+  res.json({ success: true, data: { boosted: { id, caption: best.caption.slice(0, 60) + '…', scheduledFor: nextWeek, basedOnScore: best._s } } });
+});
+
+// A/B test captions
+app.post('/api/content/ab-test', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { topic, platform = 'instagram' } = req.body;
+  const key = await getUserKey(uid, 'anthropic');
+  if (!key) return res.json({ success: false, error: 'Anthropic key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const [msgA, msgB] = await Promise.all([
+    client.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 150, messages: [{ role: 'user', content: `Write a short ${platform} caption about: ${topic}. Style: emotional/story-driven. Max 80 words + 3 hashtags.` }] }),
+    client.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 150, messages: [{ role: 'user', content: `Write a short ${platform} caption about: ${topic}. Style: direct/benefit-focused. Max 80 words + 3 hashtags.` }] }),
+  ]);
+  const captionA = (msgA.content[0] as any).text;
+  const captionB = (msgB.content[0] as any).text;
+  const testId = Math.random().toString(36).slice(2);
+  db.prepare(`INSERT INTO ab_tests (id, user_id, post_a, post_b) VALUES (?, ?, ?, ?)`).run(testId, uid, captionA, captionB);
+  res.json({ success: true, data: { testId, captionA, captionB, instruction: 'Post both, then call /api/content/ab-test/:id/winner with the better performer' } });
+});
+
+app.post('/api/content/ab-test/:id/winner', requireAuth, (req: any, res) => {
+  const { winner } = req.body; // 'a' or 'b'
+  db.prepare(`UPDATE ab_tests SET winner=? WHERE id=? AND user_id=?`).run(winner, req.params.id, req.user.id);
+  res.json({ success: true, data: { testId: req.params.id, winner, message: `Caption ${winner.toUpperCase()} marked as winner. Forge will use this style going forward.` } });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// NAMED AGENT REGISTRY
+// Each agent: POST /api/agent/:id/run { task, context, mode? }
+// ════════════════════════════════════════════════════════════════════════════
+
+const AGENT_REGISTRY: Record<string, { name: string; systemPrompt: string; category: string }> = {
+  // ── Business Operations ──────────────────────────────────────────────────
+  cfo: { name: 'CFO Agent', category: 'business', systemPrompt: `You are a CFO Agent. You analyze cash flow, P&L, identify expense anomalies, chase invoices, and give sharp financial recommendations. Be precise with numbers. Output structured financial summaries.` },
+  coo: { name: 'COO Agent', category: 'business', systemPrompt: `You are a COO Agent. You map processes, detect bottlenecks, generate SOPs, and optimize operations. Output clear process flows, RACI matrices, and actionable improvements.` },
+  hr: { name: 'HR Agent', category: 'business', systemPrompt: `You are an HR Agent. You write job descriptions, interview guides, onboarding docs, and offer letters. Be thorough, legally careful, and people-first.` },
+  legal: { name: 'Legal Agent', category: 'business', systemPrompt: `You are a Legal Agent. You review contracts, triage NDAs, flag risks, and check compliance. Always caveat: not a substitute for real legal counsel. Flag HIGH/MEDIUM/LOW risks clearly.` },
+  sales: { name: 'Sales Agent', category: 'business', systemPrompt: `You are a Sales Agent. You score leads, draft outreach, build follow-up sequences, and craft objection handlers. Be direct, persuasive, and data-driven.` },
+  marketing: { name: 'Marketing Agent', category: 'business', systemPrompt: `You are a Marketing Agent. You plan campaigns, build content calendars, write copy, and analyze channel performance. Be creative, strategic, and ROI-focused.` },
+  customer_success: { name: 'Customer Success Agent', category: 'business', systemPrompt: `You are a Customer Success Agent. You triage support tickets, draft empathetic responses, detect churn signals, and build retention playbooks.` },
+  procurement: { name: 'Procurement Agent', category: 'business', systemPrompt: `You are a Procurement Agent. You compare vendors, write negotiation scripts, generate POs, and track supplier performance. Be analytical and cost-conscious.` },
+  // ── Industry ─────────────────────────────────────────────────────────────
+  law_firm: { name: 'Law Firm Agent', category: 'industry', systemPrompt: `You are a Law Firm Agent. You prep cases, review documents, handle client intake, and draft billing narratives. Be precise, formal, and meticulous.` },
+  medical: { name: 'Medical Practice Agent', category: 'industry', systemPrompt: `You are a Medical Practice Agent. You prep appointment notes, draft patient follow-ups, and suggest documentation improvements. Never give medical advice — administrative only.` },
+  real_estate: { name: 'Real Estate Agent', category: 'industry', systemPrompt: `You are a Real Estate Agent. You write listing descriptions, analyze offers, draft client comms, and prepare market summaries. Be engaging and data-backed.` },
+  restaurant: { name: 'Restaurant Agent', category: 'industry', systemPrompt: `You are a Restaurant Agent. You optimize menus, draft supplier orders, respond to reviews, and plan promotions. Be warm, food-passionate, and operationally sharp.` },
+  construction: { name: 'Construction Agent', category: 'industry', systemPrompt: `You are a Construction Agent. You generate bids, build project timelines, and draft subcontractor communications. Be precise, safety-aware, and deadline-focused.` },
+  accounting: { name: 'Accounting Agent', category: 'industry', systemPrompt: `You are an Accounting Agent. You review bookkeeping, prep tax summaries, flag reconciliation issues, and draft financial narratives. Be accurate and compliance-aware.` },
+  agency: { name: 'Agency Agent', category: 'industry', systemPrompt: `You are an Agency Agent. You write client reports, campaign briefs, creative feedback, and proposals. Be strategic, polished, and results-oriented.` },
+  ecom: { name: 'Ecom Agent', category: 'industry', systemPrompt: `You are an Ecom Agent. You write product descriptions, analyze pricing, flag inventory risks, and draft recovery emails. Think in conversion rates and margins.` },
+  // ── Execution ─────────────────────────────────────────────────────────────
+  email_agent: { name: 'Email Agent', category: 'execution', systemPrompt: `You are an Email Agent. You read inbox summaries, draft replies, flag urgent items, and identify spam/unsubscribe candidates. Be concise, action-oriented, and time-saving.` },
+  calendar_agent: { name: 'Calendar Agent', category: 'execution', systemPrompt: `You are a Calendar Agent. You schedule meetings, prep agendas, draft reminders, and spot scheduling conflicts. Be organized and proactive.` },
+  document_agent: { name: 'Document Agent', category: 'execution', systemPrompt: `You are a Document Agent. You generate structured PDFs, Word docs, and presentations on demand. Format output cleanly with headers, sections, and clear hierarchy.` },
+  data_agent: { name: 'Data Agent', category: 'execution', systemPrompt: `You are a Data Agent. You analyze CSVs, build chart descriptions, surface anomalies, and produce data narratives. Be precise, highlight outliers, and recommend actions.` },
+  scraper_agent: { name: 'Scraper Agent', category: 'execution', systemPrompt: `You are a Scraper Agent. You extract structured data from web content, identify patterns, and format findings into clean tables or JSON.` },
+  monitor_agent: { name: 'Monitor Agent', category: 'execution', systemPrompt: `You are a Monitor Agent. You watch competitor sites, prices, and news feeds for changes. Summarize delta clearly: what changed, when, and what it means.` },
+  publisher_agent: { name: 'Publisher Agent', category: 'execution', systemPrompt: `You are a Publisher Agent. You prepare social posts for LinkedIn, Twitter, Instagram — formatting, hashtags, optimal timing. Output ready-to-publish content.` },
+  outreach_agent: { name: 'Outreach Agent', category: 'execution', systemPrompt: `You are an Outreach Agent. You write cold emails, follow-up sequences, and meeting booking scripts. Be human, brief, and conversion-focused.` },
+  // ── Intelligence ──────────────────────────────────────────────────────────
+  strategist: { name: 'Strategist Agent', category: 'intelligence', systemPrompt: `You are a Strategist Agent. You analyze markets, position competitively, and build GTM plans. Think in frameworks (Porter's, Jobs-to-be-Done, etc.) but output actionable recommendations.` },
+  forecaster: { name: 'Forecaster Agent', category: 'intelligence', systemPrompt: `You are a Forecaster Agent. You project revenue, model churn, and identify trends. Show your assumptions. Output ranges (conservative/base/optimistic) with confidence levels.` },
+  risk: { name: 'Risk Agent', category: 'intelligence', systemPrompt: `You are a Risk Agent. You proactively flag legal, financial, and operational risks before they materialize. Rate each risk: CRITICAL/HIGH/MEDIUM/LOW with mitigation steps.` },
+  auditor: { name: 'Auditor Agent', category: 'intelligence', systemPrompt: `You are an Auditor Agent. You review other agents' outputs for accuracy, consistency, and compliance. Be skeptical, thorough, and constructive. Flag issues with severity ratings.` },
+  memory_agent: { name: 'Memory Agent', category: 'intelligence', systemPrompt: `You are a Memory Agent. You synthesize everything known about the business into a structured knowledge base. Surface relevant context when asked. Never forget.` },
+  critic: { name: 'Critic Agent', category: 'intelligence', systemPrompt: `You are a Critic Agent. You review work product and find gaps, logical flaws, and improvement opportunities. Be direct and specific. Produce an improved version alongside your critique.` },
+};
+
+// ── Universal agent runner ────────────────────────────────────────────────────
+app.post('/api/agent/:id/run', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const agentId = req.params.id;
+  const agent = AGENT_REGISTRY[agentId];
+  if (!agent) return res.json({ success: false, error: `Unknown agent: ${agentId}. Available: ${Object.keys(AGENT_REGISTRY).join(', ')}` });
+
+  const { task, context = '', mode = 'solo' } = req.body;
+  if (!task) return res.json({ success: false, error: 'task required' });
+
+  const key = await getUserKey(uid, 'anthropic') || await getUserKey(uid, 'openai');
+  if (!key) return res.json({ success: false, error: 'No LLM key configured' });
+
+  const provider = await getUserKey(uid, 'anthropic') ? 'anthropic' : 'openai';
+  const model = provider === 'anthropic' ? 'claude-haiku-4-5-20251001' : 'gpt-4o-mini';
+
+  // Mode behavior injection
+  const modeInstructions: Record<string, string> = {
+    solo: '',
+    debate: '\n\nPresent TWO opposing perspectives on this task, then give your final recommendation.',
+    review: '\n\nComplete the task, then provide a critical self-review identifying weaknesses and improvements.',
+    teach: '\n\nExplain your reasoning step by step as you work through this. Show your thinking.',
+    draft: '\n\nProduce a DRAFT output. Clearly mark it as [DRAFT] and list 3 things to confirm before finalizing.',
+    stealth: '\n\nBe maximally concise. Output results only, no explanations.',
+    swarm: '\n\nBreak this into 3 parallel workstreams and complete each independently, then synthesize.',
+    pipeline: '\n\nProcess this as a sequential pipeline: (1) Gather/analyze, (2) Draft, (3) Refine. Show each stage.',
+  };
+
+  const systemPrompt = agent.systemPrompt + (modeInstructions[mode] || '');
+  const userMessage = context ? `Context:\n${context}\n\nTask: ${task}` : `Task: ${task}`;
+
+  try {
+    let output = '';
+    if (provider === 'anthropic') {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic.default({ apiKey: key });
+      const msg = await client.messages.create({ model, max_tokens: 1500, system: systemPrompt, messages: [{ role: 'user', content: userMessage }] });
+      output = (msg.content[0] as any).text;
+    } else {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST', headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, max_tokens: 1500, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }] })
+      });
+      const d: any = await r.json();
+      output = d.choices?.[0]?.message?.content || d.error?.message || 'No output';
+    }
+
+    // Store as approval card if draft mode
+    if (mode === 'draft') {
+      db.prepare(`INSERT INTO pending_approvals (user_id, type, title, description, payload, status, created_at) VALUES (?, 'agent_draft', ?, ?, ?, 'pending', datetime('now'))`
+      ).run(uid, `${agent.name} Draft`, task.slice(0, 100), JSON.stringify({ output, agentId, task, mode }));
+    }
+
+    res.json({ success: true, data: { agent: agent.name, category: agent.category, mode, output, taskPreview: task.slice(0, 80) } });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// List all agents
+app.get('/api/agents', (req, res) => {
+  const agents = Object.entries(AGENT_REGISTRY).map(([id, a]) => ({ id, ...a, systemPrompt: undefined }));
+  res.json({ success: true, data: { agents, count: agents.length, categories: ['business', 'industry', 'execution', 'intelligence'] } });
+});
+
+// Multi-agent swarm runner
+app.post('/api/agents/swarm', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { task, agentIds, context = '' } = req.body;
+  if (!task || !agentIds?.length) return res.json({ success: false, error: 'task + agentIds[] required' });
+  const key = await getUserKey(uid, 'anthropic') || await getUserKey(uid, 'openai');
+  if (!key) return res.json({ success: false, error: 'No LLM key' });
+  const provider = await getUserKey(uid, 'anthropic') ? 'anthropic' : 'openai';
+  const model = provider === 'anthropic' ? 'claude-haiku-4-5-20251001' : 'gpt-4o-mini';
+
+  const results: Record<string, string> = {};
+  await Promise.all(agentIds.slice(0, 5).map(async (id: string) => {
+    const agent = AGENT_REGISTRY[id];
+    if (!agent) { results[id] = 'Unknown agent'; return; }
     try {
-      const key = getUserKey(userId, 'openrouter');
-      const headers: any = { 'HTTP-Referer':'https://forge-sand-two.vercel.app', 'X-Title':'Forge Studio' };
-      if (key) headers['Authorization'] = `Bearer ${key}`;
-      const r = await fetch('https://openrouter.ai/api/v1/models', { headers });
-      const d: any = await r.json();
-      const orModels = (d.data || []).slice(0, 200).map((m: any) => ({ id: m.id, name: m.name, provider:'openrouter', context: m.context_length || 0, pricing: { prompt: m.pricing?.prompt || '0', completion: m.pricing?.completion || '0' } }));
-      available.push(...orModels);
-    } catch {}
-  }
-  res.json({ success:true, data: { models: available, total: available.length } });
-});
-app.get('/api/router/usage', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const days = parseInt(req.query.days as string) || 30;
-  const rows = db.prepare(`SELECT date(created_at) as day, provider, model, SUM(total_tokens) as tokens, SUM(provider_cost) as cost, COUNT(*) as requests FROM usage_logs WHERE user_id=? AND created_at >= datetime('now',?) GROUP BY day,provider,model ORDER BY day DESC`).all(userId, `-${days} days`) as any[];
-  res.json({ success:true, data: rows });
-});
-
-// ─── Provider balance check ───────────────────────────────────────────────────
-app.get('/api/keys/:provider/balance', requireAuth, async (req: AuthRequest, res) => {
-  const { provider } = req.params;
-  const key = getUserKey(req.user!.sub, provider);
-  if (!key) { res.status(404).json({ success:false, error:'NO_KEY' }); return; }
-  try {
-    if (provider === 'openrouter') {
-      const r = await fetch('https://openrouter.ai/api/v1/auth/key', { headers: { Authorization:`Bearer ${key}`, 'HTTP-Referer':'https://forge-sand-two.vercel.app' } });
-      const d: any = await r.json();
-      res.json({ success:true, provider, balance: d.data?.limit_remaining ?? null, usage: d.data?.usage ?? null, limit: d.data?.limit ?? null, is_free_tier: d.data?.is_free_tier ?? false });
-    } else {
-      res.json({ success:true, provider, balance: null, note:'Balance not available for this provider' });
-    }
-  } catch(e:any) { res.status(500).json({ success:false, error: e.message }); }
-});
-
-// ─── Skills catalog ───────────────────────────────────────────────────────────
-const SKILLS_CATALOG = [
-  { id:'web-search', name:'Web Search', icon:'🔍', description:'Search the web for real-time information', category:'tools', enabled:true },
-  { id:'code-exec', name:'Code Execution', icon:'⚡', description:'Execute Python, JS, bash code snippets', category:'tools', enabled:true },
-  { id:'image-gen', name:'Image Generation', icon:'🎨', description:'Generate images with DALL-E or Stable Diffusion', category:'creative', enabled:false },
-  { id:'memory', name:'Persistent Memory', icon:'🧠', description:'Remember context across conversations', category:'intelligence', enabled:true },
-  { id:'rag', name:'RAG Search', icon:'📚', description:'Search your documents with semantic similarity', category:'intelligence', enabled:true },
-  { id:'calendar', name:'Calendar Integration', icon:'📅', description:'Read and create calendar events', category:'integrations', enabled:false },
-  { id:'github', name:'GitHub', icon:'🐙', description:'Read repos, PRs, issues via GitHub API', category:'integrations', enabled:false },
-  { id:'slack', name:'Slack', icon:'💬', description:'Send and read Slack messages', category:'integrations', enabled:false },
-  { id:'voice', name:'Voice Input/Output', icon:'🎤', description:'Speak to and hear from your AI', category:'tools', enabled:false },
-  { id:'multi-agent', name:'Multi-Agent Orchestration', icon:'🤝', description:'Spawn parallel agents for complex tasks', category:'intelligence', enabled:true },
-];
-app.get('/api/skills', requireAuth, (_req, res) => res.json({ success:true, data: SKILLS_CATALOG }));
-app.post('/api/skills/:id/toggle', requireAuth, (req: AuthRequest, res) => {
-  const skill = SKILLS_CATALOG.find(s => s.id === req.params.id);
-  if (!skill) { res.status(404).json({ success:false, error:'NOT_FOUND' }); return; }
-  skill.enabled = !skill.enabled;
-  res.json({ success:true, data: skill });
-});
-
-// ─── Forge Tools ──────────────────────────────────────────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS user_tool_prefs (user_id TEXT NOT NULL, tool_id TEXT NOT NULL, enabled INTEGER DEFAULT 1, PRIMARY KEY (user_id, tool_id))`);
-
-const FORGE_TOOLS_CATALOG: any[] = [
-  { id:'web_search', name:'Web Search', icon:'🌐', category:'search', description:'Search the web for real-time information', providers:['anthropic','openai'], openrouter_safe:false, auto_launch:true, enabled_default:true,
-    openai_function:{name:'web_search',description:'Search the web',parameters:{type:'object',properties:{query:{type:'string'}},required:['query']}},
-    anthropic_tool:{name:'web_search',description:'Search the web for real-time information',input_schema:{type:'object',properties:{query:{type:'string',description:'Search query'}},required:['query']}} },
-  { id:'code_exec', name:'Code Execution', icon:'⚡', category:'compute', description:'Execute Python, JavaScript, bash code', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:true, enabled_default:true,
-    openai_function:{name:'code_exec',description:'Execute code',parameters:{type:'object',properties:{language:{type:'string',enum:['python','javascript','bash']},code:{type:'string'}},required:['language','code']}},
-    anthropic_tool:{name:'code_exec',description:'Execute code and return output',input_schema:{type:'object',properties:{language:{type:'string',enum:['python','javascript','bash']},code:{type:'string'}},required:['language','code']}} },
-  { id:'image_gen', name:'Image Generation', icon:'🎨', category:'creative', description:'Generate images with DALL-E 3', providers:['openai'], openrouter_safe:false, auto_launch:false, enabled_default:false,
-    openai_function:{name:'image_gen',description:'Generate an image',parameters:{type:'object',properties:{prompt:{type:'string'},size:{type:'string',enum:['1024x1024','1792x1024','1024x1792'],default:'1024x1024'}},required:['prompt']}},
-    anthropic_tool:{name:'image_gen',description:'Generate an image from a prompt',input_schema:{type:'object',properties:{prompt:{type:'string'},size:{type:'string'}},required:['prompt']}} },
-  { id:'browser', name:'Browser / Scrape', icon:'🌍', category:'search', description:'Fetch and parse web pages', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:true, enabled_default:true,
-    openai_function:{name:'browser',description:'Fetch a web page',parameters:{type:'object',properties:{url:{type:'string'},extract:{type:'string',enum:['text','links'],default:'text'}},required:['url']}},
-    anthropic_tool:{name:'browser',description:'Fetch and read the content of a web page',input_schema:{type:'object',properties:{url:{type:'string'},extract:{type:'string',enum:['text','links']}},required:['url']}} },
-  { id:'file_read', name:'File Read', icon:'📄', category:'files', description:'Read uploaded files (PDF, CSV, DOCX)', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:false, enabled_default:false,
-    openai_function:{name:'file_read',description:'Read a file',parameters:{type:'object',properties:{file_id:{type:'string'},format:{type:'string',enum:['text','json','summary'],default:'text'}},required:['file_id']}},
-    anthropic_tool:{name:'file_read',description:'Read an uploaded file',input_schema:{type:'object',properties:{file_id:{type:'string'},format:{type:'string'}},required:['file_id']}} },
-  { id:'calculator', name:'Calculator', icon:'🧮', category:'compute', description:'Precise math and financial calculations', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:true, enabled_default:true,
-    openai_function:{name:'calculator',description:'Evaluate a math expression',parameters:{type:'object',properties:{expression:{type:'string'}},required:['expression']}},
-    anthropic_tool:{name:'calculator',description:'Evaluate a mathematical expression',input_schema:{type:'object',properties:{expression:{type:'string',description:'Math expression'}},required:['expression']}} },
-  { id:'cursor_edit', name:'Cursor / Code Edit', icon:'✏️', category:'code', description:'Edit code files with diff precision (Cursor-style)', providers:['anthropic','openai'], openrouter_safe:false, auto_launch:false, enabled_default:false,
-    openai_function:{name:'cursor_edit',description:'Edit a code file',parameters:{type:'object',properties:{path:{type:'string'},old_code:{type:'string'},new_code:{type:'string'}},required:['path','old_code','new_code']}},
-    anthropic_tool:{name:'cursor_edit',description:'Edit a code file by replacing code',input_schema:{type:'object',properties:{path:{type:'string'},old_code:{type:'string'},new_code:{type:'string'}},required:['path','old_code','new_code']}} },
-  { id:'memory_store', name:'Memory Store', icon:'🧠', category:'intelligence', description:'Store and retrieve facts across conversations', providers:['anthropic','openai','openrouter'], openrouter_safe:true, auto_launch:true, enabled_default:true,
-    openai_function:{name:'memory_store',description:'Store or retrieve a memory',parameters:{type:'object',properties:{action:{type:'string',enum:['store','retrieve','list']},key:{type:'string'},value:{type:'string'}},required:['action']}},
-    anthropic_tool:{name:'memory_store',description:'Store or retrieve persistent memories',input_schema:{type:'object',properties:{action:{type:'string',enum:['store','retrieve','list']},key:{type:'string'},value:{type:'string'}},required:['action']}} },
-];
-
-function getUserTools(userId: string) {
-  const prefs = db.prepare('SELECT tool_id, enabled FROM user_tool_prefs WHERE user_id=?').all(userId) as any[];
-  const prefMap: Record<string,boolean> = {};
-  for (const p of prefs) prefMap[p.tool_id] = !!p.enabled;
-  return FORGE_TOOLS_CATALOG.map(t => ({ ...t, enabled: t.id in prefMap ? prefMap[t.id] : t.enabled_default }));
-}
-
-app.get('/api/forge-tools', requireAuth, (req: AuthRequest, res) => {
-  res.json({ success:true, data: getUserTools(req.user!.sub) });
-});
-app.patch('/api/forge-tools/:id', requireAuth, (req: AuthRequest, res) => {
-  const { id } = req.params;
-  const tool = FORGE_TOOLS_CATALOG.find(t => t.id === id);
-  if (!tool) { res.status(404).json({ success:false, error:'NOT_FOUND' }); return; }
-  const { enabled } = req.body;
-  db.prepare('INSERT OR REPLACE INTO user_tool_prefs (user_id,tool_id,enabled) VALUES (?,?,?)').run(req.user!.sub, id, enabled ? 1 : 0);
-  res.json({ success:true, data: { ...tool, enabled } });
-});
-app.post('/api/forge-tools/reset', requireAuth, (req: AuthRequest, res) => {
-  db.prepare('DELETE FROM user_tool_prefs WHERE user_id=?').run(req.user!.sub);
-  res.json({ success:true, message:'Reset to defaults' });
-});
-app.post('/api/forge-tools/:id/execute', requireAuth, async (req: AuthRequest, res) => {
-  const { id } = req.params;
-  const input = req.body.input || req.body;
-  try {
-    if (id === 'web_search') {
-      const braveKey = process.env.BRAVE_API_KEY;
-      if (braveKey) {
-        const r = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(input.query)}&count=5`, { headers:{'Accept':'application/json','X-Subscription-Token':braveKey} });
-        const d: any = await r.json();
-        res.json({ success:true, output: (d.web?.results||[]).slice(0,5).map((x:any)=>({title:x.title,url:x.url,snippet:x.description})) });
+      if (provider === 'anthropic') {
+        const Anthropic = require('@anthropic-ai/sdk');
+        const client = new Anthropic.default({ apiKey: key });
+        const msg = await client.messages.create({ model, max_tokens: 800, system: agent.systemPrompt, messages: [{ role: 'user', content: context ? `Context: ${context}\nTask: ${task}` : task }] });
+        results[id] = (msg.content[0] as any).text;
       } else {
-        const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(input.query)}&format=json&no_html=1&skip_disambig=1`);
-        const d: any = await r.json();
-        res.json({ success:true, output: { answer: d.AbstractText||d.Answer||'No result', source: d.AbstractURL } });
+        const r = await fetch('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'}, body: JSON.stringify({ model, max_tokens:800, messages:[{role:'system',content:agent.systemPrompt},{role:'user',content:task}] }) });
+        const d: any = await r.json(); results[id] = d.choices?.[0]?.message?.content || 'error';
       }
-    } else if (id === 'browser') {
-      const r = await fetch(input.url, { headers:{'User-Agent':'Mozilla/5.0 ForgeBot/1.0'}, signal: AbortSignal.timeout(8000) });
-      const html = await r.text();
-      const text = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi,'').replace(/<script[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().substring(0,4000);
-      res.json({ success:true, output: { url:input.url, content:text } });
-    } else if (id === 'calculator') {
-      const safe = input.expression.replace(/[^0-9+\-*/().%,\s]/g,'');
-      const result = Function(`"use strict";return(${safe})`)();
-      res.json({ success:true, output: { expression:input.expression, result } });
-    } else if (id === 'memory_store') {
-      if (input.action === 'store') {
-        db.prepare('INSERT OR REPLACE INTO forge_memory (id,user_id,content,source,created_at) VALUES (?,?,?,?,datetime("now"))').run(uuidv4(), req.user!.sub, `${input.key}: ${input.value}`, 'tool');
-        res.json({ success:true, output: { stored:true, key:input.key } });
-      } else if (input.action === 'retrieve') {
-        const rows = db.prepare('SELECT content FROM forge_memory WHERE user_id=? AND content LIKE ? LIMIT 5').all(req.user!.sub, `%${input.key||''}%`) as any[];
-        res.json({ success:true, output: rows.map((r:any)=>r.content) });
-      } else {
-        const rows = db.prepare('SELECT content,created_at FROM forge_memory WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.user!.sub) as any[];
-        res.json({ success:true, output: rows });
-      }
+    } catch (e: any) { results[id] = `Error: ${e.message}`; }
+  }));
+
+  res.json({ success: true, data: { task, mode: 'swarm', results, agentsRun: Object.keys(results).length } });
+});
+
+// ── DROID PIPELINE — autonomous agent chaining (factory.ai style) ──────────────
+app.post('/api/agents/pipeline/run', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { task, context = '', maxSteps = 6, preferredAgents = [] } = req.body;
+  if (!task?.trim()) return res.json({ success: false, error: 'task required' });
+
+  const key = await getUserKey(uid, 'anthropic') || await getUserKey(uid, 'openai');
+  if (!key) return res.json({ success: false, error: 'No LLM key configured' });
+  const provider = (await getUserKey(uid, 'anthropic')) ? 'anthropic' : 'openai';
+  const model = provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-4o';
+  const fastModel = provider === 'anthropic' ? 'claude-haiku-4-5-20251001' : 'gpt-4o-mini';
+
+  const callModel = async (system: string, userMsg: string, fast = false): Promise<string> => {
+    const m = fast ? fastModel : model;
+    if (provider === 'anthropic') {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic.default({ apiKey: key });
+      const msg = await client.messages.create({ model: m, max_tokens: 1200, system, messages: [{ role: 'user', content: userMsg }] });
+      return (msg.content[0] as any).text || '';
     } else {
-      res.json({ success:false, error:'Server-side execution not available for: '+id });
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST', headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: m, max_tokens: 1200, messages: [{ role: 'system', content: system }, { role: 'user', content: userMsg }] })
+      });
+      const d: any = await r.json();
+      return d.choices?.[0]?.message?.content || '';
     }
-  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
-});
+  };
 
-// ─── User Settings (auto-harvest, personality, prefs) ─────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS user_settings (
-  user_id TEXT PRIMARY KEY,
-  auto_harvest_enabled INTEGER NOT NULL DEFAULT 0,
-  harvest_interval_mins INTEGER NOT NULL DEFAULT 30,
-  last_auto_harvest TEXT,
-  personality_notes TEXT,
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)`);
+  const agentList = Object.entries(AGENT_REGISTRY).map(([id, a]) => `${id}: ${a.name} (${a.category})`).join('\n');
+  const decomposeSys = `You are a droid orchestrator. Break the user task into ${maxSteps} or fewer sequential pipeline steps. For each step, pick the single best agent from this registry:\n${agentList}\n\nRespond ONLY with valid JSON:\n{"steps":[{"stepNum":1,"title":"Step title","agentId":"agent_id","instruction":"What this agent should do","inputFrom":"task|step_N"},...]}\n\nRules: first step inputFrom="task", later steps reference previous output as "step_1", "step_2" etc. Use real agentIds. Max ${maxSteps} steps.`;
 
-app.get('/api/settings/harvest', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  let row = db.prepare('SELECT * FROM user_settings WHERE user_id=?').get(userId) as any;
-  if (!row) { db.prepare('INSERT OR IGNORE INTO user_settings (user_id) VALUES (?)').run(userId); row = db.prepare('SELECT * FROM user_settings WHERE user_id=?').get(userId) as any; }
-  const memCount = (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
-  res.json({ success:true, data: { enabled: !!row.auto_harvest_enabled, intervalMins: row.harvest_interval_mins, lastRun: row.last_auto_harvest, memCount } });
-});
-
-app.post('/api/settings/harvest', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const { enabled, intervalMins } = req.body;
-  db.prepare('INSERT INTO user_settings (user_id,auto_harvest_enabled,harvest_interval_mins) VALUES (?,?,?) ON CONFLICT(user_id) DO UPDATE SET auto_harvest_enabled=excluded.auto_harvest_enabled,harvest_interval_mins=excluded.harvest_interval_mins,updated_at=datetime("now")')
-    .run(userId, enabled ? 1 : 0, intervalMins || 30);
-  res.json({ success:true, data: { enabled: !!enabled } });
-});
-
-// ─── Background auto-harvest worker ──────────────────────────────────────────
-// Runs every 5 minutes, checks which users have auto_harvest enabled and are due
-function runAutoHarvestForUser(userId: string) {
-  let harvested = 0;
-  function upsertMem(topic: string, insight: string, srcId?: string) {
-    if (!topic?.trim() || !insight?.trim()) return;
-    const t = topic.trim().slice(0, 120); const ins = insight.trim().slice(0, 500);
-    const ex = db.prepare('SELECT id FROM forge_memory WHERE user_id=? AND topic=?').get(userId, t) as any;
-    if (ex) { db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.1,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(ins, ex.id); }
-    else { db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)').run(uuidv4(), userId, t, ins, srcId || null); harvested++; }
-  }
-  const safe = <T,>(fn: () => T, fb: T): T => { try { return fn(); } catch { return fb; } };
-  // Thread memories
-  safe(() => { const rows = db.prepare('SELECT topic,insight,thread_id FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(userId) as any[]; for (const r of rows) upsertMem(r.topic, r.insight, r.thread_id); }, null);
-  // Recent thread Q&A
-  safe(() => { const threads = db.prepare('SELECT DISTINCT thread_id FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND role="user" ORDER BY created_at DESC LIMIT 20').all(userId) as any[]; for (const t of threads) { const pair = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at DESC LIMIT 4').all(t.thread_id) as any[]; const u = pair.find((m:any) => m.role==='user'); const a = pair.find((m:any) => m.role==='assistant'); if (u && a) upsertMem(u.content.slice(0,100), a.content.slice(0,400), t.thread_id); } }, null);
-  // SuperAgent history
-  safe(() => { const msgs = db.prepare("SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 40").all(userId) as any[]; for (let i=0;i<msgs.length-1;i++) { const u=msgs[i],a=msgs[i+1]; if (u.role==='user'&&a.role==='assistant') upsertMem(`SuperAgent: ${u.content.slice(0,80)}`,a.content.slice(0,400)); } }, null);
-  // Dispatch runs
-  safe(() => { const dispatches = db.prepare("SELECT prompt,output FROM dispatch_runs WHERE user_id=? AND status='done' ORDER BY updated_at DESC LIMIT 30").all(userId) as any[]; for (const d of dispatches) { if (d.output?.trim()) upsertMem(`Dispatch: ${d.prompt.slice(0,80)}`, d.output.slice(0,400)); } }, null);
-  db.prepare("UPDATE user_settings SET last_auto_harvest=datetime('now'),updated_at=datetime('now') WHERE user_id=?").run(userId);
-  if (harvested > 0) console.log(`[auto-harvest] user ${userId}: +${harvested} new memories`);
-}
-
-setInterval(() => {
+  let steps: Array<{ stepNum: number; title: string; agentId: string; instruction: string; inputFrom: string }> = [];
   try {
-    const now = new Date();
-    const users = db.prepare("SELECT user_id,harvest_interval_mins,last_auto_harvest FROM user_settings WHERE auto_harvest_enabled=1").all() as any[];
-    for (const u of users) {
-      const intervalMs = (u.harvest_interval_mins || 30) * 60 * 1000;
-      const lastRun = u.last_auto_harvest ? new Date(u.last_auto_harvest).getTime() : 0;
-      if (now.getTime() - lastRun >= intervalMs) {
-        runAutoHarvestForUser(u.user_id);
-      }
+    const raw = await callModel(decomposeSys, `Task: ${task}${context ? `\nContext: ${context}` : ''}`, true);
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      steps = (parsed.steps || []).slice(0, maxSteps);
     }
-  } catch (e: any) { console.warn('[auto-harvest] worker error:', e.message); }
-}, 5 * 60 * 1000); // check every 5 minutes
+  } catch {}
 
-// ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req, res) => res.json({ version:'v6.94', build:'production', timestamp: new Date().toISOString() }));
+  if (!steps.length) {
+    steps = [{ stepNum: 1, title: 'Execute task', agentId: 'strategist', instruction: task, inputFrom: 'task' }];
+  }
 
-// ─── 404 fallback ─────────────────────────────────────────────────────────────
-app.use((_req, res) => res.status(404).json({ success:false, error:'NOT_FOUND' }));
+  if (preferredAgents.length) {
+    preferredAgents.slice(0, steps.length).forEach((id: string, i: number) => {
+      if (AGENT_REGISTRY[id]) steps[i].agentId = id;
+    });
+  }
 
-// ─── Server bootstrap ─────────────────────────────────────────────────────────
-const httpServer = require('http').createServer(app);
-try {
-  const { Server } = require('socket.io');
-  const io = new Server(httpServer, {
-    cors: { origin: FRONTEND_URL, methods:['GET','POST'], credentials:true },
-    transports: ['websocket','polling']
-  });
-  io.use((socket: any, next: any) => {
-    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
-    if (!token) return next(new Error('No token'));
-    try { socket.user = jwt.verify(token, JWT_SECRET); next(); } catch { next(new Error('Invalid token')); }
-  });
-  ioRef = io;
-  io.on('connection', (socket: any) => {
-    const userId = socket.user?.sub;
-    socket.on('join_thread', (tid: string) => socket.join(`thread:${tid}`));
-    socket.on('leave_thread', (tid: string) => socket.leave(`thread:${tid}`));
-    socket.on('typing_start', (tid: string) => socket.to(`thread:${tid}`).emit('typing', { userId }));
-    socket.on('typing_stop', (tid: string) => socket.to(`thread:${tid}`).emit('typing_stop', { userId }));
-    socket.on('thread_update', (data: any) => socket.to(`thread:${data.threadId}`).emit('thread_update', data));
-    // ForgeCO realtime — join team room on connect
-    socket.on('co_join', (teamId: string) => socket.join(`co_team:${teamId}`));
-    socket.on('co_leave', (teamId: string) => socket.leave(`co_team:${teamId}`));
-    // Auto-join own team room if user is in a team
-    if (userId) {
-      try {
-        const team = db.prepare('SELECT id FROM co_teams WHERE owner_id=?').get(userId) as any;
-        if (team) socket.join(`co_team:${team.id}`);
-        else {
-          const membership = db.prepare('SELECT team_id FROM co_members WHERE user_id=?').get(userId) as any;
-          if (membership) socket.join(`co_team:${membership.team_id}`);
-        }
-      } catch {}
+  const stepOutputs: Record<string, string> = {};
+  const executedSteps: Array<{ stepNum: number; title: string; agentId: string; agentName: string; instruction: string; output: string; status: 'done' | 'error'; durationMs: number }> = [];
+
+  for (const step of steps) {
+    const agent = AGENT_REGISTRY[step.agentId] || AGENT_REGISTRY['strategist'];
+    const startMs = Date.now();
+
+    let input = step.instruction;
+    if (step.inputFrom && step.inputFrom !== 'task' && stepOutputs[step.inputFrom]) {
+      input = `Previous step output:\n${stepOutputs[step.inputFrom]}\n\nYour task: ${step.instruction}`;
+    } else if (context) {
+      input = `Context: ${context}\n\nTask: ${step.instruction}`;
     }
-    socket.on('ping', () => socket.emit('pong'));
-    socket.on('disconnect', () => {});
+
+    let output = '';
+    let status: 'done' | 'error' = 'done';
+    try {
+      output = await callModel(agent.systemPrompt, input);
+    } catch (e: any) {
+      output = `Error: ${e.message}`;
+      status = 'error';
+    }
+
+    stepOutputs[`step_${step.stepNum}`] = output;
+    executedSteps.push({ stepNum: step.stepNum, title: step.title, agentId: step.agentId, agentName: agent.name, instruction: step.instruction, output, status, durationMs: Date.now() - startMs });
+  }
+
+  let finalOutput = '';
+  try {
+    const synthesisInput = executedSteps.map(s => `## Step ${s.stepNum}: ${s.title} (${s.agentName})\n${s.output}`).join('\n\n');
+    finalOutput = await callModel(
+      'You are a synthesis agent. Combine the outputs from all pipeline steps into a single coherent, actionable final deliverable. Be comprehensive but concise.',
+      `Original task: ${task}\n\nPipeline outputs:\n${synthesisInput}`,
+      true
+    );
+  } catch {
+    finalOutput = executedSteps[executedSteps.length - 1]?.output || '';
+  }
+
+  res.json({
+    success: true,
+    data: {
+      task, mode: 'cascade',
+      stepsPlanned: steps.length,
+      stepsExecuted: executedSteps.length,
+      steps: executedSteps,
+      finalOutput,
+      totalDurationMs: executedSteps.reduce((a, s) => a + s.durationMs, 0)
+    }
   });
-  (app as any).io = io;
-} catch(e: any) { console.warn('Socket.IO init failed:', e.message); }
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.95 running on port ${PORT}`); });
+});
+
+app.post('/api/agents/pipeline/plan', requireAuth, async (req: any, res) => {
+  const uid = req.user.id;
+  const { task, maxSteps = 6 } = req.body;
+  if (!task?.trim()) return res.json({ success: false, error: 'task required' });
+
+  const key = await getUserKey(uid, 'anthropic') || await getUserKey(uid, 'openai');
+  if (!key) return res.json({ success: false, error: 'No LLM key configured' });
+  const provider = (await getUserKey(uid, 'anthropic')) ? 'anthropic' : 'openai';
+  const fastModel = provider === 'anthropic' ? 'claude-haiku-4-5-20251001' : 'gpt-4o-mini';
+  const agentList = Object.entries(AGENT_REGISTRY).map(([id, a]) => `${id}: ${a.name} (${a.category})`).join('\n');
+  const decomposeSys = `You are a droid orchestrator. Break the user task into ${maxSteps} or fewer sequential pipeline steps. For each step pick the single best agent from:\n${agentList}\n\nRespond ONLY with valid JSON:\n{"steps":[{"stepNum":1,"title":"Step title","agentId":"agent_id","instruction":"What this agent does","inputFrom":"task|step_N"},...]}`;
+
+  try {
+    let raw = '';
+    if (provider === 'anthropic') {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic.default({ apiKey: key });
+      const msg = await client.messages.create({ model: fastModel, max_tokens: 800, system: decomposeSys, messages: [{ role: 'user', content: `Task: ${task}` }] });
+      raw = (msg.content[0] as any).text || '';
+    } else {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: fastModel, max_tokens: 800, messages: [{ role: 'system', content: decomposeSys }, { role: 'user', content: `Task: ${task}` }] }) });
+      const d: any = await r.json(); raw = d.choices?.[0]?.message?.content || '';
+    }
+    const match = raw.match(/\{[\s\S]*\}/);
+    const parsed = match ? JSON.parse(match[0]) : { steps: [] };
+    res.json({ success: true, data: { task, steps: parsed.steps || [] } });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});

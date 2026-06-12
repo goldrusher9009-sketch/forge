@@ -4,7 +4,7 @@ import { useAppStore, mockUser, MOCK_MARKETS, type Market } from '@/lib/store'
 import { markets as marketsApi } from '@/lib/api'
 import clsx from 'clsx'
 
-const CATEGORIES = ['All', 'Crypto', 'Macro', 'AI', 'Tech', 'VIVA']
+const CATEGORIES = ['All', 'Crypto', 'Tech', 'Health', 'Social', 'Macro', 'AI']
 
 export default function MarketsPage() {
   const { user, setUser } = useAppStore()
@@ -26,7 +26,15 @@ export default function MarketsPage() {
   async function loadMarkets() {
     try {
       const data = await marketsApi.list()
-      setMarkets(data)
+      // Normalize API shape → unified shape
+      setMarkets(data.map((m: any) => ({
+        ...m,
+        question: m.title ?? m.question,
+        closes: m.closesAt ?? m.closes,
+        volume: m.totalVolume ?? m.volume ?? 0,
+        // normalize category to Title Case for filter
+        category: m.category ? m.category.charAt(0).toUpperCase() + m.category.slice(1).toLowerCase() : 'General',
+      })))
     } catch {
       setMarkets(MOCK_MARKETS as any)
     }
@@ -36,11 +44,11 @@ export default function MarketsPage() {
   const u = user || mockUser()
 
   const filtered = markets
-    .filter((m: any) => cat === 'All' || m.category === cat)
+    .filter((m: any) => cat === 'All' || (m.category ?? '').toLowerCase() === cat.toLowerCase())
     .sort((a: any, b: any) => {
-      if (sort === 'volume') return (b.totalVolume ?? b.volume ?? 0) - (a.totalVolume ?? a.volume ?? 0)
+      if (sort === 'volume') return (b.volume ?? 0) - (a.volume ?? 0)
       if (sort === 'prob') return Math.abs((b.yesProb ?? 0.5) - 0.5) - Math.abs((a.yesProb ?? 0.5) - 0.5)
-      return new Date(a.closesAt ?? a.closes ?? 0).getTime() - new Date(b.closesAt ?? b.closes ?? 0).getTime()
+      return new Date(a.closes ?? 0).getTime() - new Date(b.closes ?? 0).getTime()
     })
 
   async function stake() {
@@ -49,12 +57,12 @@ export default function MarketsPage() {
     try {
       const res = await marketsApi.stake(selected.id, side, +amount)
       setMarkets(prev => prev.map((m: any) => m.id === selected.id
-        ? { ...m, yesProb: res.newYesProb ?? m.yesProb, totalVolume: (m.totalVolume ?? 0) + +amount }
+        ? { ...m, yesProb: res.newYesProb ?? m.yesProb, volume: (m.volume ?? 0) + +amount }
         : m
       ))
     } catch {
       setMarkets(prev => prev.map((m: any) => m.id === selected.id
-        ? { ...m, totalVolume: (m.totalVolume ?? m.volume ?? 0) + +amount }
+        ? { ...m, volume: (m.volume ?? 0) + +amount }
         : m
       ))
     }
@@ -132,7 +140,8 @@ export default function MarketsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(m => {
             const yesColor = m.yesProb > 0.6 ? 'var(--ring-activity)' : m.yesProb < 0.4 ? 'var(--ring-wealth)' : 'var(--ring-social)'
-            const daysLeft = Math.ceil((new Date(m.closes).getTime() - Date.now()) / 86400000)
+            const closeDate = m.closes ?? m.closesAt
+            const daysLeft = closeDate ? Math.ceil((new Date(closeDate).getTime() - Date.now()) / 86400000) : 0
             return (
               <button
                 key={m.id}
@@ -153,9 +162,9 @@ export default function MarketsPage() {
                   </span>
                 </div>
 
-                {/* Question */}
+                {/* Title */}
                 <p className="text-sm font-medium text-white/80 leading-snug mb-4 group-hover:text-white/95 transition-colors">
-                  {m.question}
+                  {m.question ?? m.title}
                 </p>
 
                 {/* Probability bar */}
@@ -179,7 +188,7 @@ export default function MarketsPage() {
                 {/* Volume + stake */}
                 <div className="flex items-center justify-between">
                   <span className="t-mono text-xs text-white/25">
-                    ${(m.volume / 1000).toFixed(0)}K vol
+                    ${((m.volume ?? 0) / 1000).toFixed(0)}K vol
                   </span>
                   {m.myStake && (
                     <span className="text-xs px-2 py-0.5" style={{ background: 'rgba(124,58,237,0.15)', color: 'var(--v)', borderRadius: '3px' }}>
@@ -209,7 +218,7 @@ export default function MarketsPage() {
               <button onClick={() => setSelected(null)} className="text-white/30 hover:text-white text-xl">×</button>
             </div>
 
-            <p className="text-sm font-medium text-white/80 mb-5 leading-snug">{selected.question}</p>
+            <p className="text-sm font-medium text-white/80 mb-5 leading-snug">{selected.question ?? selected.title}</p>
 
             {/* YES/NO toggle */}
             <div className="flex gap-2 mb-5">

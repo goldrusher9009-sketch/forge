@@ -1,6 +1,21 @@
 # Forge Platform — Version History
 
-## v6.83 — 2026-06-07 (current)
+## v6.84 — 2026-06-10 (current)
+### Bug fixes — overnight session
+- **Thread/Project context menus** — ⋮ dots and right-click now show dropdown with Rename, Pin, Archive, Delete actions (both threads and projects)
+- **Live Preview** — iframe now renders HTML/code correctly instead of showing raw code; auto-wraps non-HTML in `wrapCodeForPreview()`
+- **Hook toggle persisted** — toggle switch now calls `toggleHook()` API instead of only updating local state
+- **Thread search** — fixed crash when `t.title` is null; search now uses `(t.title||'').toLowerCase()`
+- **ForgeRouter** — fixed INVALID_INPUT error: test now sends `{ messages:[...] }` format, not `{ content }`
+- **MVP Builder duplicate** — removed duplicate MVP Builder block that was causing double-render
+- **ForgeCO Socket.IO** — fixed `require()` error in useEffect with async IIFE + dynamic `import()`
+- **callOneModel errors** — now throws proper errors so ForgeMulti/ForgeASI/Swarm can display them
+- **Editor Run** — new `/api/run-code` backend endpoint writes code to temp file before executing (fixes shell-escape failures)
+- **New Task modal** — added full modal with title input, priority selector, Cancel/Create buttons
+- **Toast feedback** — added `showToast()` to 7 copy/save actions (Editor Save, Copy Patch, ForgeBrowser Copy, Code block copy, Message copy, Gen result copy, Referral link copy)
+- **Referral copy toast** — added missing `showToast('🔗 Referral link copied')`
+
+## v6.83 — 2026-06-07
 ### Interactive activity + Git UI + folder drag
 - **Clickable activity steps** — every agent step and live tool-call card in the working feed is now clickable; clicking jumps to the right-panel tab where that work happened (search/scrape → Browser, shell/code/git → Terminal, file/artifact → Artifacts). Hover highlight + ↗ open button.
 - **Git integration UI** — new 🌿 Git subtab in the Terminal panel: shows branch + changed files (color-coded by status), per-file stage/unstage, click-to-view live diff (green/red/orange), commit-all with message, recent commit log. Backed by 6 new backend routes: `/api/git/status|diff|stage|unstage|commit|log`.
