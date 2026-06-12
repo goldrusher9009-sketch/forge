@@ -26,6 +26,10 @@ import cron from 'node-cron';
 
 const execAsync = promisify(exec);
 
+// ── Crash visibility: never die silently; surface the real error in Railway logs ──
+process.on('uncaughtException', (e: any) => { console.error('🔴 UNCAUGHT EXCEPTION:', e?.stack || e?.message || e); });
+process.on('unhandledRejection', (e: any) => { console.error('🔴 UNHANDLED REJECTION:', e?.stack || e?.message || e); });
+
 // ── Config ────────────────────────────────────────────────────
 const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -522,10 +526,12 @@ function previewKey(key: string): string {
 const PLAN_LIMITS: Record<string, number> = { free: 10000, starter: 500000, pro: 2000000, enterprise: 10000000 };
 const MODEL_COSTS: Record<string, { input: number; output: number; provider: string; markup: number }> = {
   'forge-ultra':      { input: 0.015,   output: 0.075,  provider: 'anthropic', markup: 1.5  },
+  'forge-fable':      { input: 0.010,   output: 0.050,  provider: 'anthropic', markup: 1.5  },
   'forge-pro':        { input: 0.003,   output: 0.015,  provider: 'anthropic', markup: 1.5  },
   'forge-fast':       { input: 0.00015, output: 0.0006, provider: 'groq',      markup: 2.0  },
   'forge-code':       { input: 0.0025,  output: 0.010,  provider: 'anthropic', markup: 1.5  },
   'forge-creative':   { input: 0.003,   output: 0.015,  provider: 'openai',    markup: 1.5  },
+  'claude-fable-5':   { input: 0.010,   output: 0.050,  provider: 'anthropic', markup: 1.35 },
   'claude-opus-4':    { input: 0.015,   output: 0.075,  provider: 'anthropic', markup: 1.35 },
   'claude-sonnet-4':  { input: 0.003,   output: 0.015,  provider: 'anthropic', markup: 1.35 },
   'claude-haiku-4':   { input: 0.0008,  output: 0.004,  provider: 'anthropic', markup: 1.4  },
@@ -544,6 +550,7 @@ const MODEL_COSTS: Record<string, { input: number; output: number; provider: str
 
 // Canonical Anthropic model IDs (as of 2025)
 const ANTHROPIC_MODEL_MAP: Record<string,string> = {
+  'claude-fable-5':             'claude-fable-5',
   'claude-opus-4-6':            'claude-opus-4-6',
   'claude-sonnet-4-6':          'claude-sonnet-4-6',
   'claude-opus-4-5':            'claude-opus-4-5',
@@ -565,6 +572,7 @@ const ANTHROPIC_MODEL_MAP: Record<string,string> = {
 
 function resolveForgeModel(modelId: string): string {
   const forgeMap: Record<string,string> = {
+    'forge-fable':    'claude-fable-5',
     'forge-ultra':    'claude-opus-4-6',
     'forge-pro':      'claude-sonnet-4-6',
     'forge-flash':    'claude-haiku-4-5-20251001',
@@ -686,15 +694,41 @@ function fetchWithTimeout(url: string, opts: RequestInit, timeoutMs: number): Pr
     .catch(e => { clearTimeout(timer); throw e; });
 }
 
-async function callLLM(provider: string, apiKey: string, model: string, messages: any[], _language?: string): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
+// Fable 5 model IDs — require special headers and refusal handling
+const FABLE5_MODELS = new Set(['claude-fable-5', 'claude-mythos-5', 'forge-fable']);
+
+// Effort levels for Fable 5 adaptive thinking
+const EFFORT_MAP: Record<string, string> = { low: 'low', medium: 'medium', high: 'high' };
+
+async function callLLM(provider: string, apiKey: string, model: string, messages: any[], _language?: string, opts?: { effort?: string; maxTokens?: number; taskBudget?: number }): Promise<{ content: string; promptTokens: number; completionTokens: number; refused?: boolean; refusedReason?: string }> {
+  const isFable5 = FABLE5_MODELS.has(model);
   // Anthropic
   if (provider === 'anthropic') {
+    const maxTokens = opts?.maxTokens || (isFable5 ? 16000 : 4096);
+    const body: any = { model, messages, max_tokens: maxTokens };
+    // Fable 5: add effort param for adaptive thinking depth
+    if (isFable5 && opts?.effort) {
+      body.thinking = { type: 'adaptive', effort: EFFORT_MAP[opts.effort] || 'medium' };
+    }
+    const headers: Record<string,string> = {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    };
+    // Task budgets beta header
+    if (opts?.taskBudget) headers['anthropic-beta'] = 'task-budgets-2026-03-13';
+    if (opts?.taskBudget) body['task_budget'] = { max_tokens: opts.taskBudget };
     let res: Response;
-    try { res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({model,messages,max_tokens:4096}) }, 120000); }
-    catch (e: any) { throw new Error(e?.name==='AbortError' ? 'Anthropic timed out after 20s — model may be overloaded, try again' : e.message); }
+    try { res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', { method:'POST', headers, body:JSON.stringify(body) }, 180000); }
+    catch (e: any) { throw new Error(e?.name==='AbortError' ? 'Anthropic timed out — model may be overloaded, try again' : e.message); }
     if (!res.ok) { const e = await res.text(); throw new Error(`Anthropic error: ${e.slice(0,200)}`); }
     const d: any = await res.json();
-    return { content: d.content?.[0]?.text || '', promptTokens: d.usage?.input_tokens || 0, completionTokens: d.usage?.output_tokens || 0 };
+    // Fable 5 refusal handling: stop_reason === 'refusal'
+    if (d.stop_reason === 'refusal') {
+      return { content: '', promptTokens: d.usage?.input_tokens || 0, completionTokens: 0, refused: true, refusedReason: d.refusal_classifier || 'policy' };
+    }
+    const text = d.content?.find((b: any) => b.type === 'text')?.text || d.content?.[0]?.text || '';
+    return { content: text, promptTokens: d.usage?.input_tokens || 0, completionTokens: d.usage?.output_tokens || 0 };
   }
   // OpenAI
   if (provider === 'openai') {
@@ -823,6 +857,34 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
     return { content: d.choices?.[0]?.message?.content || '', promptTokens: d.usage?.prompt_tokens || 0, completionTokens: d.usage?.completion_tokens || 0 };
   }
   throw new Error(`Unknown provider: ${provider}`);
+}
+
+// ─── Fable 5 fallback chain ───────────────────────────────────────────────────
+
+const FALLBACK_CHAIN = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
+
+async function callLLMWithFallback(
+  provider: string,
+  apiKey: string,
+  model: string,
+  messages: any[],
+  language?: string,
+  opts?: { effort?: string; maxTokens?: number; taskBudget?: number }
+): Promise<{ content: string; promptTokens: number; completionTokens: number; usedModel?: string }> {
+  const result = await callLLM(provider, apiKey, model, messages, language, opts);
+  if (!result.refused) return { ...result, usedModel: model };
+
+  // Fable 5 refused — try fallback chain
+  for (const fallbackModel of FALLBACK_CHAIN) {
+    if (fallbackModel === model) continue;
+    try {
+      const fb = await callLLM(provider, apiKey, fallbackModel, messages, language, {});
+      if (!fb.refused) return { ...fb, usedModel: fallbackModel };
+    } catch (_e) {
+      continue;
+    }
+  }
+  throw new Error(`All models refused request (classifier: ${result.refusedReason || 'policy'})`);
 }
 
 // ─── Tool infrastructure ──────────────────────────────────────────────────────
@@ -1161,7 +1223,13 @@ app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRe
       }
     }
 
-    const result = await callLLM(provider, apiKey, actualModel, systemMsg, language);
+    // Fable 5 effort/budget opts from request
+    const effortOpts = FABLE5_MODELS.has(actualModel) ? {
+      effort: req.body.effort || 'medium',
+      maxTokens: req.body.maxTokens,
+      taskBudget: req.body.taskBudget
+    } : undefined;
+    const result = await callLLMWithFallback(provider, apiKey, actualModel, systemMsg, language, effortOpts);
     const totalTokens = result.promptTokens + result.completionTokens;
 
     // Cost calculation
@@ -2292,8 +2360,8 @@ app.post('/api/forge/chat', requireAuth, async (req: AuthRequest, res) => {
   const apiKey = getUserKey(userId, provider);
   if (!apiKey) { res.json({ success: false, error: 'NO_API_KEY', provider }); return; }
   try {
-    const result = await callLLM(provider, apiKey, actualModel, messages);
-    res.json({ success: true, content: result.content, usage: { prompt_tokens: result.promptTokens, completion_tokens: result.completionTokens } });
+    const result = await callLLMWithFallback(provider, apiKey, actualModel, messages);
+    res.json({ success: true, content: result.content, usedModel: result.usedModel, usage: { prompt_tokens: result.promptTokens, completion_tokens: result.completionTokens } });
   } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -2341,6 +2409,8 @@ if (modelCount === 0) {
     { id:'forge-flash',      provider:'anthropic', label:'Forge Flash (Haiku 4.5)',   is_forge:1, markup:1.5 },
     { id:'forge-gpt',        provider:'openai',    label:'Forge GPT (GPT-4o)',        is_forge:1, markup:2.0 },
     { id:'forge-gemini',     provider:'gemini',    label:'Forge Gemini (Flash 2.0)',  is_forge:1, markup:1.5 },
+    { id:'forge-fable',      provider:'anthropic', label:'Forge Fable (Fable 5)',     is_forge:1, markup:1.5 },
+    { id:'claude-fable-5',   provider:'anthropic', label:'Claude Fable 5 ✦',          is_forge:0, markup:1.0 },
     { id:'claude-opus-4-6',  provider:'anthropic', label:'Claude Opus 4.6',           is_forge:0, markup:1.0 },
     { id:'claude-sonnet-4-6',provider:'anthropic', label:'Claude Sonnet 4.6',         is_forge:0, markup:1.0 },
     { id:'claude-opus-4-5',  provider:'anthropic', label:'Claude Opus 4.5',           is_forge:0, markup:1.0 },
@@ -3965,6 +4035,144 @@ app.get('/api/superagent/history', requireAuth, (req: AuthRequest, res) => {
   } catch {
     // Table may not exist yet — return empty history
     res.json({ success: true, data: [] });
+  }
+});
+
+// ─── Forge Brain API ──────────────────────────────────────────────────────────
+
+// GET /api/brain — list all memories, sorted by strength
+app.get('/api/brain', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const mems = db.prepare('SELECT id,topic,insight,frequency,strength,created_at,updated_at FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC').all(userId);
+  res.json({ success: true, data: mems });
+});
+
+// POST /api/brain — add or reinforce a memory
+app.post('/api/brain', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { topic, insight, source_thread_id } = req.body;
+  if (!topic || !insight) { res.status(400).json({ success: false, error: 'topic and insight required' }); return; }
+  const existing = db.prepare('SELECT id FROM forge_memory WHERE user_id=? AND topic=?').get(userId, topic) as any;
+  if (existing) {
+    db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.2,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(insight, existing.id);
+    res.json({ success: true, id: existing.id, reinforced: true });
+  } else {
+    const id = uuidv4();
+    db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)').run(id, userId, topic, insight, source_thread_id || null);
+    res.json({ success: true, id, reinforced: false });
+  }
+});
+
+// PUT /api/brain/:id — update memory insight
+app.put('/api/brain/:id', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { insight } = req.body;
+  if (!insight) { res.status(400).json({ success: false, error: 'insight required' }); return; }
+  const r = db.prepare("UPDATE forge_memory SET insight=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(insight, req.params.id, userId);
+  res.json({ success: true, updated: r.changes > 0 });
+});
+
+// DELETE /api/brain/:id — forget a memory
+app.delete('/api/brain/:id', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  db.prepare('DELETE FROM forge_memory WHERE id=? AND user_id=?').run(req.params.id, userId);
+  res.json({ success: true });
+});
+
+// POST /api/brain/auto-extract — LLM scans last N messages and extracts memories
+app.post('/api/brain/auto-extract', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { thread_id, limit = 20 } = req.body;
+  try {
+    const whereClause = thread_id ? 'AND thread_id=?' : '';
+    const params: any[] = thread_id ? [userId, thread_id, limit] : [userId, limit];
+    const msgs = db.prepare(`SELECT role,content FROM messages WHERE user_id=? ${whereClause} ORDER BY created_at DESC LIMIT ?`).all(...params) as any[];
+    if (!msgs.length) { res.json({ success: true, extracted: 0 }); return; }
+
+    const provider = 'anthropic';
+    const apiKey = getUserKey(userId, provider);
+    if (!apiKey) { res.json({ success: false, error: 'NO_API_KEY' }); return; }
+
+    const transcript = msgs.reverse().map((m: any) => `${m.role}: ${m.content}`).join('\n');
+    const extractResult = await callLLM(provider, apiKey, 'claude-haiku-4-5-20251001', [
+      { role: 'user', content: `Extract factual memories about the user from this conversation. Return JSON array of {topic, insight} objects. Only extract durable facts (preferences, goals, context, constraints) — not ephemeral details. Max 10 items.\n\nConversation:\n${transcript.slice(0, 4000)}` }
+    ]);
+    let items: any[] = [];
+    try { items = JSON.parse(extractResult.content.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { items = []; }
+
+    let count = 0;
+    for (const item of items) {
+      if (!item.topic || !item.insight) continue;
+      const existing = db.prepare('SELECT id FROM forge_memory WHERE user_id=? AND topic=?').get(userId, item.topic) as any;
+      if (existing) {
+        db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.15,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(item.insight, existing.id);
+      } else {
+        db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)').run(uuidv4(), userId, item.topic, item.insight, thread_id || null);
+      }
+      count++;
+    }
+    res.json({ success: true, extracted: count });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Forge Sandbox API ───────────────────────────────────────────────────────
+
+// POST /api/sandbox/run — execute code, return stdout/stderr + duration
+app.post('/api/sandbox/run', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { code, language = 'javascript', timeout = 10000 } = req.body;
+  if (!code) { res.status(400).json({ success: false, error: 'code required' }); return; }
+  const lang = language.toLowerCase();
+  if (!['javascript', 'js', 'python', 'python3', 'py'].includes(lang)) {
+    res.status(400).json({ success: false, error: `Language '${lang}' not supported. Use javascript or python.` });
+    return;
+  }
+  const clampedTimeout = Math.min(Math.max(Number(timeout) || 10000, 1000), 30000);
+  const start = Date.now();
+  try {
+    const { writeFileSync } = await import('fs');
+    let output = '';
+    if (lang === 'javascript' || lang === 'js') {
+      const tmpFile = `/tmp/forge_sb_${userId.slice(0,8)}_${Date.now()}.js`;
+      writeFileSync(tmpFile, code);
+      output = await toolShellExec(`node ${tmpFile}`, '/tmp', clampedTimeout);
+    } else {
+      const tmpFile = `/tmp/forge_sb_${userId.slice(0,8)}_${Date.now()}.py`;
+      writeFileSync(tmpFile, code);
+      output = await toolShellExec(`python3 ${tmpFile}`, '/tmp', clampedTimeout);
+    }
+    res.json({ success: true, output, durationMs: Date.now() - start, language: lang });
+  } catch (err: any) {
+    res.json({ success: false, output: err.message, durationMs: Date.now() - start, language: lang });
+  }
+});
+
+// POST /api/sandbox/ask — LLM writes + runs code to answer a question
+app.post('/api/sandbox/ask', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { question, language = 'python' } = req.body;
+  if (!question) { res.status(400).json({ success: false, error: 'question required' }); return; }
+  const provider = 'anthropic';
+  const apiKey = getUserKey(userId, provider);
+  if (!apiKey) { res.json({ success: false, error: 'NO_API_KEY' }); return; }
+  try {
+    const genResult = await callLLM(provider, apiKey, 'claude-sonnet-4-6', [
+      { role: 'user', content: `Write a self-contained ${language} script that answers this question and prints the result. Return ONLY the code, no explanation.\n\nQuestion: ${question}` }
+    ]);
+    const codeMatch = genResult.content.match(/```(?:python|javascript|js)?\n?([\s\S]*?)```/) || [null, genResult.content];
+    const code = codeMatch[1]?.trim() || genResult.content.trim();
+    const { writeFileSync } = await import('fs');
+    const ext = language === 'python' || language === 'py' ? 'py' : 'js';
+    const tmpFile = `/tmp/forge_ask_${userId.slice(0,8)}_${Date.now()}.${ext}`;
+    writeFileSync(tmpFile, code);
+    const runner = ext === 'py' ? 'python3' : 'node';
+    const start = Date.now();
+    const output = await toolShellExec(`${runner} ${tmpFile}`, '/tmp', 15000);
+    res.json({ success: true, code, output, durationMs: Date.now() - start });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
