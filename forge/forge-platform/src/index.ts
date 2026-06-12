@@ -5282,3 +5282,38 @@ app.post('/api/agents/pipeline/plan', requireAuth, async (req: any, res) => {
     res.json({ success: false, error: e.message });
   }
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// SERVER BOOTSTRAP — start HTTP server + Socket.IO + Autonomy OS  (RESTORED)
+// Without this, routes register but the process never listens → Railway
+// healthcheck on /health times out and the deploy is marked failed.
+// ════════════════════════════════════════════════════════════════════════════
+process.on('uncaughtException', (e: any) => console.error('🔴 UNCAUGHT EXCEPTION:', e?.stack || e?.message || e));
+process.on('unhandledRejection', (e: any) => console.error('🔴 UNHANDLED REJECTION:', e?.stack || e?.message || e));
+
+const httpServer = http.createServer(app);
+
+try {
+  if (typeof setupAutonomy === 'function') {
+    setupAutonomy(app, db, {
+      requireAuth,
+      getUserLLMKey: (typeof getUserLLMKey === 'function' ? getUserLLMKey : (() => ({ provider: '', apiKey: '', model: '' }))) as any,
+      callLLM: (typeof callLLM === 'function' ? callLLM : (async () => ({ content: '', promptTokens: 0, completionTokens: 0 }))) as any,
+      uuidv4,
+    });
+  }
+} catch (e: any) { console.warn('Autonomy setup skipped:', e?.message); }
+
+try {
+  const { Server } = require('socket.io');
+  const io = new Server(httpServer, { cors: { origin: '*', methods: ['GET', 'POST'] }, path: '/socket.io' });
+  (app as any).io = io;
+  io.on('connection', (socket: any) => {
+    socket.on('join', (room: string) => { try { socket.join(room); } catch {} });
+    socket.on('ping', () => socket.emit('pong'));
+  });
+} catch (e: any) { console.warn('Socket.IO init skipped:', e?.message); }
+
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Forge Platform v6.98 running on port ${PORT} (${NODE_ENV})`);
+});
