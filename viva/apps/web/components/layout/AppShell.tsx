@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAppStore } from '@/lib/store'
+import { notifications as notifApi } from '@/lib/api'
 import clsx from 'clsx'
 
 const NAV_PRIMARY = [
@@ -14,17 +15,28 @@ const NAV_PRIMARY = [
 ]
 
 const NAV_MORE = [
-  { id: 'messages', label: 'Messages',   path: '/messages', icon: MsgIcon },
-  { id: 'dating',   label: 'Match',      path: '/dating',   icon: MatchIcon },
-  { id: 'health',   label: 'Health ZK',  path: '/health',   icon: HealthIcon },
-  { id: 'token',    label: 'YouToken',   path: '/token',    icon: TokenIcon },
+  { id: 'messages',      label: 'Messages',     path: '/messages',      icon: MsgIcon },
+  { id: 'dating',        label: 'Match',        path: '/dating',        icon: MatchIcon },
+  { id: 'health',        label: 'Health ZK',    path: '/health',        icon: HealthIcon },
+  { id: 'token',         label: 'YouToken',     path: '/token',         icon: TokenIcon },
+  { id: 'notifications', label: 'Notifications',path: '/notifications', icon: BellIcon },
+  { id: 'settings',      label: 'Settings',     path: '/settings',      icon: GearIcon },
 ]
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [moreSheetOpen, setMoreSheetOpen] = useState(false)
+  const [unreadNotifs, setUnreadNotifs] = useState(0)
   const { user } = useAppStore()
+
+  useEffect(() => {
+    notifApi.unreadCount().then(d => setUnreadNotifs(d.count ?? 0)).catch(() => {})
+    const iv = setInterval(() => {
+      notifApi.unreadCount().then(d => setUnreadNotifs(d.count ?? 0)).catch(() => {})
+    }, 60000)
+    return () => clearInterval(iv)
+  }, [])
 
   const activeId = [...NAV_PRIMARY, ...NAV_MORE].find(n => pathname.startsWith(n.path))?.id
 
@@ -155,7 +167,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onClick={() => setMoreSheetOpen(true)}
           className="press flex flex-col items-center gap-1 py-2 px-4 min-w-[56px]"
         >
-          <MoreIcon size={22} className="text-white/30" />
+          <div className="relative">
+            <MoreIcon size={22} className="text-white/30" />
+            {unreadNotifs > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                style={{ background: 'var(--v)', fontSize: '0.45rem', fontWeight: 700, color: 'white' }}>
+                {unreadNotifs > 9 ? '9+' : unreadNotifs}
+              </span>
+            )}
+          </div>
           <span style={{ fontSize: '0.55rem', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600, color: 'rgba(245,244,240,0.3)' }}>
             More
           </span>
@@ -301,6 +321,24 @@ function MoreIcon({ size = 20, className = '' }) {
       <circle cx="5" cy="10" r="1.5" fill="currentColor"/>
       <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
       <circle cx="15" cy="10" r="1.5" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function BellIcon({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" className={className}>
+      <path d="M10 3a5 5 0 0 1 5 5v3l1.5 2.5H3.5L5 11V8a5 5 0 0 1 5-5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M8 15.5a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.5"/>
+    </svg>
+  )
+}
+
+function GearIcon({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" className={className}>
+      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M10 3v2M10 15v2M3 10h2M15 10h2M5.05 5.05l1.41 1.41M13.54 13.54l1.41 1.41M14.95 5.05l-1.41 1.41M6.46 13.54l-1.41 1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   )
 }
