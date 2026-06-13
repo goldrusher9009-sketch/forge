@@ -10,7 +10,8 @@
     "dev": "nodemon --exec 'ts-node --transpile-only src/index.ts'",
     "build": "echo 'no build — start runs ts-node on source'",
     "start": "ts-node --transpile-only src/index.ts",
-    "test": "jest --testPathPattern=__tests__/auth --forceExit --no-coverage",
+    "test": "jest --testPathPattern='__tests__/(auth|route-manifest)' --forceExit --no-coverage",
+    "test:routes": "jest --testPathPattern=route-manifest --forceExit --no-coverage",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },

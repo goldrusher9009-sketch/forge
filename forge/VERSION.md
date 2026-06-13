@@ -1,5 +1,19 @@
 # Forge Platform — Version History
 
+## v7.0 — 2026-06-13 — PHASE 0: Truth & Stability
+### Route-gap closers (frontend called these → backend 404'd; now real handlers)
+- **POST /api/agent/run** — SSE agent stream (tool_call/tool_result/response/error events) the agent UI expects
+- **GET /api/analytics/summary** — range-aware summary shape for AnalyticsDashboard
+- **GET/POST /api/billing/tiers** — list + create custom tiers (SubscriptionTiers)
+- **GET /api/billing/invoices** — usage-derived invoice list (BillingPage)
+- **POST /api/billing/subscribe** — plan subscribe alias (BillingPage)
+- **GET /api/forge-tools/catalog** — public, cached tool catalog (ForgeApp, zero-token tools)
+- **POST /api/marketplace/install** — flat install alias ({productId}) for MarketplaceDetail
+- **GET /api/orgs, POST /api/orgs/:orgId/invite, DELETE /api/orgs/members/:id** — team mgmt (TeamDashboard) + orgs/org_members tables
+- **GET /api/tokens/balance, POST /api/tokens/stake** — staking ledger (StakingPage) + token_stakes table
+### Demo guard
+- **route-manifest.test.ts** — asserts every frontend API call has a backend handler (param-aware, Express 4/5 proof). Fails BEFORE a 404 hits a demo. Wired into `npm test`.
+
 ## v6.84 — 2026-06-10 (current)
 ### Bug fixes — overnight session
 - **Thread/Project context menus** — ⋮ dots and right-click now show dropdown with Rename, Pin, Archive, Delete actions (both threads and projects)

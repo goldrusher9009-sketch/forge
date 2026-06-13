@@ -4798,6 +4798,202 @@ cron.schedule('0 2 * * *', async () => {
   }
 }, { timezone: 'America/New_York' });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PHASE 0 — Route-gap closers. Frontend called these; backend lacked them → 404.
+// Real handlers, persisted tables, shapes matched to the exact fetch() callers.
+// ═══════════════════════════════════════════════════════════════════════════
+db.exec(`
+  CREATE TABLE IF NOT EXISTS orgs (
+    id TEXT PRIMARY KEY,
+    owner_id TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT 'My Team',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS org_members (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member',
+    joined_date TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(org_id, email)
+  );
+  CREATE TABLE IF NOT EXISTS token_stakes (
+    user_id TEXT PRIMARY KEY,
+    balance REAL NOT NULL DEFAULT 1000,
+    staked REAL NOT NULL DEFAULT 0,
+    rewards REAL NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS billing_tiers (
+    id TEXT PRIMARY KEY,
+    owner_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    price REAL NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
+// ── /api/agent/run — SSE agent stream (alias the frontend expects) ───────────
+app.post('/api/agent/run', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt, model = 'forge-pro' } = req.body || {};
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  const send = (o: any) => res.write(`data: ${JSON.stringify(o)}\n\n`);
+  if (!prompt || !String(prompt).trim()) { send({ type: 'error', message: 'EMPTY_PROMPT' }); res.end(); return; }
+  try {
+    const userId = req.user!.sub;
+    const actualModel = resolveForgeModel(model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model);
+    const provider = getProviderForModel(actualModel);
+    const apiKey = getUserKey(userId, provider);
+    if (!apiKey) { send({ type: 'error', message: `No API key for ${provider}. Add one in Settings → Keys.` }); res.end(); return; }
+    send({ type: 'tool_call', tool: 'reasoning', reasoning: 'Planning a response' });
+    const result = await callLLMWithFallback(provider, apiKey, actualModel, [{ role: 'user', content: String(prompt) }]);
+    send({ type: 'tool_result', tool: 'reasoning', result: 'Done' });
+    send({ type: 'response', content: result.content });
+    try {
+      db.prepare('INSERT INTO usage_logs (id,user_id,model,tokens_in,tokens_out,created_at) VALUES (?,?,?,?,?,datetime(\'now\'))')
+        .run(crypto.randomUUID(), userId, result.usedModel || actualModel, result.promptTokens || 0, result.completionTokens || 0);
+    } catch {}
+  } catch (err: any) {
+    send({ type: 'error', message: err?.message || 'Agent failed' });
+  }
+  res.end();
+});
+
+// ── /api/analytics/summary — alias of /api/analytics with summary shape ──────
+app.get('/api/analytics/summary', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  const range = String((req.query as any).range || '30d');
+  const days = range === '7d' ? 7 : range === '90d' ? 90 : 30;
+  try {
+    const totalThreads = (db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=?').get(uid) as any).c;
+    const totalMessages = (db.prepare('SELECT COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=?').get(uid) as any).c;
+    const totalTokens = (db.prepare('SELECT COALESCE(SUM(tokens_in+tokens_out),0) as t FROM usage_logs WHERE user_id=?').get(uid) as any)?.t || 0;
+    const topModels = db.prepare('SELECT model,COUNT(*) as requests,SUM(tokens_in+tokens_out) as tokens FROM usage_logs WHERE user_id=? GROUP BY model ORDER BY requests DESC LIMIT 5').all(uid);
+    const dailyUsage = db.prepare(`SELECT DATE(created_at) as date,COUNT(*) as requests,SUM(tokens_in+tokens_out) as tokens FROM usage_logs WHERE user_id=? AND created_at >= datetime('now','-${days} days') GROUP BY DATE(created_at) ORDER BY date ASC`).all(uid);
+    res.json({ success: true, totalThreads, totalMessages, totalTokens, topModels, dailyUsage, range });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ── /api/forge-tools/catalog — public tool catalog (no auth, 1h cache) ───────
+app.get('/api/forge-tools/catalog', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  const tools = [
+    { id: 'web_search', name: 'Web Search', category: 'research', description: 'Search the live web.' },
+    { id: 'browser_fetch', name: 'Browser Fetch', category: 'research', description: 'Fetch and read any URL.' },
+    { id: 'run_code', name: 'Code Runner', category: 'dev', description: 'Execute code in a sandbox.' },
+    { id: 'image_gen', name: 'Image Generation', category: 'create', description: 'Generate images from prompts.' },
+    { id: 'memory', name: 'Forge Brain', category: 'core', description: 'Persistent cross-session memory.' },
+    { id: 'scheduler', name: 'Scheduler', category: 'automation', description: 'Run tasks on a cadence.' },
+    { id: 'webhooks', name: 'Webhooks', category: 'automation', description: 'Trigger flows from external events.' },
+    { id: 'docs', name: 'Document Generation', category: 'create', description: 'Produce docx, pdf, xlsx, pptx.' },
+  ];
+  res.json({ success: true, data: tools });
+});
+
+// ── /api/billing/invoices + subscribe + tiers ────────────────────────────────
+app.get('/api/billing/invoices', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  try {
+    const rows = db.prepare(`SELECT DATE(created_at) as date, model, (tokens_in+tokens_out) as tokens FROM usage_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(uid) as any[];
+    const invoices = rows.map((r, i) => ({ id: `inv_${i}`, date: r.date, description: `${r.model} usage`, amount: +((r.tokens / 1000) * 0.002).toFixed(4), status: 'paid' }));
+    res.json({ success: true, invoices });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message, invoices: [] }); }
+});
+app.post('/api/billing/subscribe', requireAuth, async (req: AuthRequest, res) => {
+  const { tier } = req.body || {};
+  const plan = ['free','starter','pro','enterprise'].includes(tier) ? tier : 'free';
+  const userId = req.user!.sub;
+  ensureSubscription(userId);
+  db.prepare("UPDATE subscriptions SET plan=?,tokens_limit=?,status='active',updated_at=datetime('now') WHERE user_id=?").run(plan, PLAN_LIMITS[plan], userId);
+  res.json({ success: true, plan, message: `Subscribed to ${plan}` });
+});
+app.get('/api/billing/tiers', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  let rows = db.prepare('SELECT id,name,price FROM billing_tiers WHERE owner_id=? ORDER BY price ASC').all(uid) as any[];
+  if (!rows.length) rows = [
+    { id: 'free', name: 'Free', price: 0 },
+    { id: 'starter', name: 'Starter', price: 19 },
+    { id: 'pro', name: 'Pro', price: 49 },
+    { id: 'enterprise', name: 'Enterprise', price: 199 },
+  ];
+  res.json({ success: true, data: rows });
+});
+app.post('/api/billing/tiers', requireAuth, (req: AuthRequest, res) => {
+  const { name, price } = req.body || {};
+  if (!name) { res.status(400).json({ success: false, error: 'NAME_REQUIRED' }); return; }
+  const id = crypto.randomUUID();
+  db.prepare('INSERT INTO billing_tiers (id,owner_id,name,price,created_at) VALUES (?,?,?,?,datetime(\'now\'))').run(id, req.user!.sub, String(name), Number(price) || 0);
+  res.json({ success: true, data: { id, name, price: Number(price) || 0 } });
+});
+
+// ── /api/marketplace/install — flat alias (frontend posts {productId}) ───────
+app.post('/api/marketplace/install', requireAuth, (req: AuthRequest, res) => {
+  const { productId } = req.body || {};
+  if (!productId) { res.status(400).json({ success: false, error: 'PRODUCT_ID_REQUIRED' }); return; }
+  try {
+    db.prepare('INSERT OR IGNORE INTO marketplace_installs (id,user_id,app_id,installed_at) VALUES (?,?,?,datetime(\'now\'))')
+      .run(crypto.randomUUID(), req.user!.sub, String(productId));
+    res.json({ success: true, installed: productId });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ── /api/orgs — team management ──────────────────────────────────────────────
+function ensureOrg(userId: string): any {
+  let org = db.prepare('SELECT * FROM orgs WHERE owner_id=?').get(userId) as any;
+  if (!org) {
+    const id = crypto.randomUUID();
+    db.prepare('INSERT INTO orgs (id,owner_id,name,created_at) VALUES (?,?,?,datetime(\'now\'))').run(id, userId, 'My Team');
+    org = db.prepare('SELECT * FROM orgs WHERE id=?').get(id);
+  }
+  return org;
+}
+app.get('/api/orgs', requireAuth, (req: AuthRequest, res) => {
+  const org = ensureOrg(req.user!.sub);
+  const members = db.prepare('SELECT id,email,role,joined_date as joinedDate FROM org_members WHERE org_id=? ORDER BY joined_date ASC').all(org.id);
+  res.json({ success: true, org: { id: org.id, name: org.name }, members });
+});
+app.post('/api/orgs/:orgId/invite', requireAuth, (req: AuthRequest, res) => {
+  const { email, role } = req.body || {};
+  if (!email) { res.status(400).json({ success: false, error: 'EMAIL_REQUIRED' }); return; }
+  const org = ensureOrg(req.user!.sub);
+  const id = crypto.randomUUID();
+  try {
+    db.prepare('INSERT OR IGNORE INTO org_members (id,org_id,email,role,joined_date) VALUES (?,?,?,?,datetime(\'now\'))')
+      .run(id, org.id, String(email), String(role || 'member'));
+    res.json({ success: true, member: { id, email, role: role || 'member', joinedDate: new Date().toISOString() } });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/orgs/members/:memberId', requireAuth, (req: AuthRequest, res) => {
+  const org = ensureOrg(req.user!.sub);
+  db.prepare('DELETE FROM org_members WHERE id=? AND org_id=?').run(req.params.memberId, org.id);
+  res.json({ success: true });
+});
+
+// ── /api/tokens — staking ledger ─────────────────────────────────────────────
+function ensureStake(userId: string): any {
+  let s = db.prepare('SELECT * FROM token_stakes WHERE user_id=?').get(userId) as any;
+  if (!s) {
+    db.prepare('INSERT INTO token_stakes (user_id,balance,staked,rewards) VALUES (?,1000,0,0)').run(userId);
+    s = db.prepare('SELECT * FROM token_stakes WHERE user_id=?').get(userId);
+  }
+  return s;
+}
+app.get('/api/tokens/balance', requireAuth, (req: AuthRequest, res) => {
+  const s = ensureStake(req.user!.sub);
+  res.json({ success: true, data: { balance: s.balance, staked: s.staked, rewards: s.rewards } });
+});
+app.post('/api/tokens/stake', requireAuth, (req: AuthRequest, res) => {
+  const amount = parseFloat(req.body?.amount);
+  if (!(amount > 0)) { res.status(400).json({ success: false, error: 'INVALID_AMOUNT' }); return; }
+  const s = ensureStake(req.user!.sub);
+  if (amount > s.balance) { res.status(400).json({ success: false, error: 'INSUFFICIENT_BALANCE' }); return; }
+  db.prepare("UPDATE token_stakes SET balance=balance-?,staked=staked+?,updated_at=datetime('now') WHERE user_id=?").run(amount, amount, req.user!.sub);
+  const u = db.prepare('SELECT * FROM token_stakes WHERE user_id=?').get(req.user!.sub) as any;
+  res.json({ success: true, data: { balance: u.balance, staked: u.staked, rewards: u.rewards } });
+});
+
 export { app, db };
 
 // ════════════════════════════════════════════════════════════════════════════
