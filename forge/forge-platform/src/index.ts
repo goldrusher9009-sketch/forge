@@ -4980,5 +4980,17 @@ app.post('/api/content/auto-boost', requireAuth, async (req: any, res) => {
   if (!top.length) return res.json({ success: false, error: 'No performance data yet' });
   const best = top.map(p => ({ ...p, _s: p.performance ? JSON.parse(p.performance).score : 0 })).sort((a,b) => b._s - a._s)[0];
   const id = Math.random().toString(36).slice(2);
-  const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString();
-  db.prepare(`INSERT INTO scheduled_posts (id, user_id, platform, caption, image_url, sche
+  db.prepare(`INSERT INTO scheduled_posts (id, user_id, platform, caption, image_url, scheduled_at, status) VALUES (?,?,?,?,?,?,?)`).run(id, uid, best.platform, best.caption, best.image_url, nextWeek, 'pending');
+  res.json({ success: true, data: { postId: id, platform: best.platform, scheduledAt: nextWeek } });
+});
+
+// ── Server Bootstrap ──────────────────────────────────────────────────────
+const httpServer = require('http').createServer(app);
+const io = require('socket.io')(httpServer, { cors: { origin: '*', methods: ['GET','POST'] } });
+io.on('connection', (socket: any) => {
+  socket.on('join', (userId: string) => socket.join(`user:${userId}`));
+});
+(app as any).io = io;
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Forge Platform v6.99 running on port ${PORT} (${NODE_ENV})`);
+});
