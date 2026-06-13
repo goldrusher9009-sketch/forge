@@ -98,14 +98,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto relative">
+      <main className="flex-1 overflow-y-auto relative pb-16 lg:pb-0">
         {children}
       </main>
 
       {/* MOBILE BOTTOM NAV */}
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-20 border-t border-white/5 flex items-center justify-around px-2 pb-safe"
-        style={{ background: 'rgba(4,4,10,0.95)', backdropFilter: 'blur(20px)', height: '64px' }}
+        style={{ background: 'rgba(4,4,10,0.97)', backdropFilter: 'blur(20px)', minHeight: '64px', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {NAV_PRIMARY.slice(0, 4).map(({ id, label, path, icon: Icon }) => (
           <Link
