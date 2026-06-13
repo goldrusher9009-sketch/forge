@@ -4984,6 +4984,14 @@ app.post('/api/content/auto-boost', requireAuth, async (req: any, res) => {
   res.json({ success: true, data: { postId: id, platform: best.platform, scheduledAt: nextWeek } });
 });
 
+// ── Autonomy module routes (was imported but never wired — fixes 404s on /api/workspace/branding etc.) ──
+try {
+  setupAutonomy(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
+  console.log('✅ setupAutonomy wired');
+} catch (e: any) {
+  console.error('setupAutonomy failed:', e?.message || e);
+}
+
 // ── Server Bootstrap ──────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
 const io = require('socket.io')(httpServer, { cors: { origin: '*', methods: ['GET','POST'] } });

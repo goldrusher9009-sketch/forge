@@ -63,5 +63,32 @@ Honest ratings. "Build now" = doable + high impact. "Later" = real but multi-ses
 5. Smoke-test headline backend endpoints, log results
 6. (If time) repo cleanup into `/archive`
 
+## 7. Session results (2026-06-13)
+**Done:**
+- ✅ ForgeOS landing v2 — 3D canvas hero + interactive module explorer w/ video slots; fabricated stats/testimonials removed. Type-checks clean.
+- ✅ Backend smoke-test (live). Findings below.
+- ✅ Backend bug fix: `setupAutonomy` was imported but **never called** → entire autonomy module's routes were dead (404). Wired it in before server bootstrap. Compiles clean against project tsconfig.
+- ✅ Repo cleanup: archived 105 throwaway files (78 .bat/.ps1/.cmd dev scripts, 27 log/txt dumps, 2 `index.ts.broken*`, stale `index.js` v6.82) into `/archive/old-scripts`. Root is now clean.
+
+**Smoke-test findings (live backend, 530 routes):**
+| Endpoint | Result | Note |
+|---|---|---|
+| /health | ✅ 200 v6.99 | |
+| /api/openrouter/models/public | ✅ 200 | returns model list |
+| /api/agents/*/run, /api/content/* | ✅ 401 | route exists, auth works correctly |
+| /api/billing/subscription, /usage | ✅ 401 | work (defined inline in index.ts) |
+| /api/workspace/branding | ⚠️→fixed | was 404 — autonomy not wired; now fixed |
+| /api/leads | ❌ 404 | **does not exist in source** — "leads CRUD" from session summary was never actually built |
+| /api/billing/status | ❌ 404 | only in `billing.ts`, which is **never imported** into index.ts |
+| /api/version | ❌ 404 | only existed in dead `index.js` (now archived) |
+
+**Still open (next session):**
+- `billing.ts` module is dead code (never imported) — either wire it or delete it.
+- "Leads CRUD" / draft-outreach / content-multiplier from the v6.99 session summary are **not in source** — reconcile the summary with reality or build them.
+- Onboarding "one prompt → live agent" flow (the real retention hook).
+- Update CLAUDE.md: index.ts is 4996 lines (not 2350); note `/archive` exists.
+
+**Deploy:** `PUSH_LANDING_V2.bat` (Windows-side) ships landing + backend fix + cleanup in one commit. Railway rebuilds backend, Vercel rebuilds frontend.
+
 ---
-_One thing done world-class beats ten half-built. We build the landing right, ship it, then move down the list._
+_One thing done world-class beats ten half-built. Landing shipped, real bug found and fixed, repo cleaned._

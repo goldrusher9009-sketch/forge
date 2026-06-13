@@ -1,11 +1,24 @@
 @echo off
-REM Deploy ForgeOS landing v2 — run from repo root on Windows
+REM === Forge deploy: landing v2 + backend autonomy fix + repo cleanup ===
+REM Run from anywhere on Windows. Pushes to main; Vercel + Railway auto-deploy.
 cd /d "C:\Users\teste\OneDrive\Documents\Claude\Projects\forge"
-"C:\Program Files\Git\cmd\git.exe" add forge-web-studio/app/landing/page.tsx FORGE_MASTER_PLAN.md
-"C:\Program Files\Git\cmd\git.exe" commit -m "ForgeOS landing v2: 3D neural hero + interactive module explorer w/ video slots; remove fabricated stats/testimonials"
-"C:\Program Files\Git\cmd\git.exe" pull --rebase origin main
-"C:\Program Files\Git\cmd\git.exe" push origin main
+
+set GIT="C:\Program Files\Git\cmd\git.exe"
+
+REM stage everything: new landing, backend fix, plan, archived scripts (moves + deletes)
+%GIT% add -A
+
+%GIT% commit -m "ForgeOS landing v2 (3D hero + module explorer); fix: wire setupAutonomy (was imported never called - fixes /api/workspace/branding 404s); repo cleanup: archive ~105 throwaway scripts + stale index.js"
+
+%GIT% pull --rebase origin main
+%GIT% push origin main
+
 echo.
-echo Done. Vercel auto-deploys from main in ~2 min.
-echo Verify: https://forge-sand-two.vercel.app/landing
+echo ============================================================
+echo Pushed. Vercel (frontend) + Railway (backend) auto-deploy.
+echo Verify in ~2-3 min:
+echo   Landing : https://forge-sand-two.vercel.app/landing
+echo   Backend : https://forge-production-2692.up.railway.app/health
+echo   Autonomy: https://forge-production-2692.up.railway.app/api/workspace/branding  (should NOT be 404 anymore)
+echo ============================================================
 pause
