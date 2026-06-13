@@ -16,6 +16,7 @@ import tokensRouter from './routes/tokens'
 import roomsRouter from './routes/rooms'
 import twinRouter from './routes/twin'
 import datingRouter from './routes/dating'
+import notificationsRouter from './routes/notifications'
 import { setupWebSocket } from './ws/server'
 import { errorHandler } from './middleware/error'
 import { seedDatabase, seedExtras } from './lib/seed'
@@ -75,49 +76,10 @@ app.use('/api/tokens',  tokensRouter)
 app.use('/api/rooms',   roomsRouter)
 app.use('/api/twin',    twinRouter)
 app.use('/api/dating',  datingRouter)
+app.use('/api/notifications', notificationsRouter)
 
 // ── Error handler ────────────────────────────────────
 app.use(errorHandler)
 
 // ── WebSocket ────────────────────────────────────────
-setupWebSocket(httpServer)
-
-// ── DB bootstrap ─────────────────────────────────────
-async function bootstrapDB() {
-  const { execSync } = await import('child_process')
-  try {
-    console.log('[db] running prisma db push...')
-    execSync('node_modules/.bin/prisma db push --accept-data-loss', {
-      stdio: 'inherit',
-      timeout: 60000,
-    })
-    console.log('[db] prisma db push complete')
-    // Seed initial data after push
-    await seedDatabase()
-    await seedExtras()
-  } catch (e) {
-    console.error('[db] bootstrap error:', e)
-  }
-}
-
-// ── Start ────────────────────────────────────────────
-const PORT = process.env.PORT || 4000
-console.log(`[startup] binding port ${PORT}`)
-
-bootstrapDB().then(() => {
-  httpServer.listen(PORT, () => {
-    console.log(`[startup] VIVA API ready on port ${PORT}`)
-  })
-})
-
-process.on('uncaughtException', (err) => {
-  console.error('[crash] uncaughtException:', err)
-  process.exit(1)
-})
-
-process.on('unhandledRejection', (reason) => {
-  console.error('[crash] unhandledRejection:', reason)
-  process.exit(1)
-})
-
-export default app
+setupWeb

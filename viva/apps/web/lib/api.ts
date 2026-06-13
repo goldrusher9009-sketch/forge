@@ -194,6 +194,8 @@ export const twin = {
     ),
   updateTask: (id: string, data: { status?: string; result?: string }) =>
     request<any>(`/api/twin/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  runTask: (id: string) =>
+    request<any>(`/api/twin/tasks/${id}/run`, { method: 'POST' }),
 }
 
 // ── Dating ────────────────────────────────────────────
@@ -246,18 +248,12 @@ export class VivaWS {
 
   on(type: string, fn: (data: any) => void) {
     if (!this.listeners.has(type)) this.listeners.set(type, new Set())
-    this.listeners.get(type)!.add(fn)
-    return () => this.listeners.get(type)?.delete(fn)
-  }
+    this.listeners.get(type)!.add(fn
+// ── Notifications ──────────────────────────────────────────
 
-  private emit(type: string, data: any) {
-    this.listeners.get(type)?.forEach(fn => fn(data))
-  }
-
-  disconnect() {
-    if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
-    this.ws?.close()
-  }
+export const notifications = {
+  list: () => request<{ notifications: any[]; unread: number }>('/api/notifications'),
+  unreadCount: () => request<{ count: number }>('/api/notifications/unread-count'),
+  markRead: (id: string) => request<any>(`/api/notifications/${id}/read`, { method: 'POST' }),
+  markAllRead: () => request<{ ok: boolean }>('/api/notifications/read-all', { method: 'POST' }),
 }
-
-export const vivaWS = typeof window !== 'undefined' ? new VivaWS() : null

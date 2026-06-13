@@ -95,6 +95,13 @@ router.post('/connect/:targetId', requireAuth, async (req: AuthRequest, res, nex
         where: { id: reverse.id },
         data: { status: 'MATCHED', compatibility: calcCompatibility(me, target) },
       })
+      // Notify both users of match
+      await prisma.notification.createMany({
+        data: [
+          { userId: req.userId!, type: 'match', title: 'New match!', body: `You and ${target.displayName} matched.`, linkUrl: '/dating' },
+          { userId: targetId, type: 'match', title: 'New match!', body: `You and ${me.displayName} matched.`, linkUrl: '/dating' },
+        ],
+      }).catch(() => {})
       return res.json({ status: 'MATCHED', match: matched })
     }
 

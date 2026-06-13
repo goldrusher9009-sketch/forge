@@ -52,6 +52,7 @@ model User {
   matchesA      Match[]      @relation("MatchUserA")
   matchesB      Match[]      @relation("MatchUserB")
   agentTasks    AgentTask[]
+  notifications Notification[]
   refreshTokens RefreshToken[]
 }
 
@@ -311,7 +312,19 @@ model AgentTask {
   createdAt   DateTime    @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, status])
 }
 
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // like/match/room/market/twin/system
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  linkUrl   String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

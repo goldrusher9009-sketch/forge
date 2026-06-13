@@ -13,6 +13,7 @@ export default function HomeCanvas() {
   const [time, setTime] = useState(new Date())
   const [hovered, setHovered] = useState<string | null>(null)
   const [unread, setUnread] = useState(0)
+  const [notifCount, setNotifCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
@@ -25,6 +26,7 @@ export default function HomeCanvas() {
     // Real unread count from threads
     messagesApi.threads().then((threads: any[]) => {
       setUnread(threads.filter((t: any) => t.unreadCount > 0).length)
+      notifApi.unreadCount().then(d => setNotifCount(d.count)).catch(() => {})
     }).catch(() => {})
     return () => clearInterval(tick)
   }, [])
@@ -52,6 +54,12 @@ export default function HomeCanvas() {
           </h1>
         </div>
         <div className="flex items-center gap-4">
+          <Link href="/notifications" className="relative">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/40 hover:text-white/70 transition-colors">
+              <path d="M10 2a6 6 0 00-6 6v3l-1.5 2h15L16 11V8a6 6 0 00-6-6zM8.5 16a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            </svg>
+            {notifCount > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-white flex items-center justify-center" style={{ background: 'var(--ring-social)', fontSize: '0.5rem' }}>{notifCount}</span>}
+          </Link>
           <Link href="/messages" className="relative">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/40 hover:text-white/70 transition-colors">
               <path d="M3 4h14v10H11l-3 3v-3H3V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -368,17 +376,4 @@ function RingCanvas({ rings, vscore, tier, hovered, setHovered }: {
         <g>
           <text
             x={cx} y={cy + 42}
-            textAnchor="middle"
-            fill={RING_META[hovered as keyof typeof RING_META]?.color}
-            fontSize={9}
-            letterSpacing={2}
-            fontFamily="monospace"
-            opacity={0.8}
-          >
-            {hovered.toUpperCase()}  {rings[hovered]}
-          </text>
-        </g>
-      )}
-    </svg>
-  )
-}
+            t
