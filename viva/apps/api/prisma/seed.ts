@@ -34,10 +34,10 @@ async function main() {
 
   // Markets — match schema: title, description, category, yesProb, totalVolume, closesAt
   const markets = [
-    { title: 'BTC hits $100K by end of 2025', description: 'Will Bitcoin reach six figures?', category: 'crypto', yesProb: 0.62, totalVolume: 1240000, closesAt: new Date('2025-12-31') },
+    { title: 'BTC hits $100K by end of 2025', description: 'Will Bitcoin reach six figures?', category: 'crypto', yesProb: 0.62, totalVolume: 1240000, closesAt: new Date('2027-12-31') },
     { title: 'ETH flips BTC market cap by 2026', description: 'Will Ethereum overtake Bitcoin?', category: 'crypto', yesProb: 0.18, totalVolume: 540000, closesAt: new Date('2026-01-01') },
     { title: 'AI contributes 5%+ of global GDP by 2027', description: 'Measured by IMF or World Bank.', category: 'tech', yesProb: 0.45, totalVolume: 890000, closesAt: new Date('2027-01-01') },
-    { title: 'Viva reaches 1M users in 2025', description: 'Total registered users on platform.', category: 'social', yesProb: 0.71, totalVolume: 320000, closesAt: new Date('2025-12-31') },
+    { title: 'Viva reaches 1M users in 2025', description: 'Total registered users on platform.', category: 'social', yesProb: 0.71, totalVolume: 320000, closesAt: new Date('2027-12-31') },
     { title: 'Longevity escape velocity declared by 2030', description: 'Will a credible body make the declaration?', category: 'health', yesProb: 0.22, totalVolume: 670000, closesAt: new Date('2030-01-01') },
   ]
 
