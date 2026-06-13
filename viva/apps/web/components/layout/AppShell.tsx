@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAppStore } from '@/lib/store'
 import clsx from 'clsx'
 
 const NAV_PRIMARY = [
@@ -23,6 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [moreSheetOpen, setMoreSheetOpen] = useState(false)
+  const { user } = useAppStore()
 
   const activeId = [...NAV_PRIMARY, ...NAV_MORE].find(n => pathname.startsWith(n.path))?.id
 
@@ -40,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             key={id}
             href={path}
             className={clsx(
-              'group flex flex-col items-center justify-center w-12 h-12 rounded-sm transition-all duration-200 relative',
+              'press group flex flex-col items-center justify-center w-12 h-12 rounded-sm transition-all duration-200 relative',
               activeId === id
                 ? 'bg-white/8'
                 : 'hover:bg-white/4'
@@ -64,13 +66,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <button
           onClick={() => setDrawerOpen(!drawerOpen)}
           className={clsx(
-            'group flex flex-col items-center justify-center w-12 h-12 rounded-sm transition-all duration-200 mt-auto relative',
+            'press group flex flex-col items-center justify-center w-12 h-12 rounded-sm transition-all duration-200 mt-auto relative',
             drawerOpen ? 'bg-white/8' : 'hover:bg-white/4'
           )}
           title="More"
         >
           <MoreIcon size={18} className="text-white/40 group-hover:text-white/70 transition-colors" />
         </button>
+
+        {/* Profile avatar */}
+        <Link href="/settings" className="press flex items-center justify-center w-9 h-9 rounded-full overflow-hidden mt-2 ring-1 ring-white/10 hover:ring-white/30 transition-all" title="Settings">
+          {user?.avatar
+            ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white/50" style={{ background: 'rgba(124,58,237,0.2)' }}>?</div>
+          }
+        </Link>
 
         {/* Drawer */}
         {drawerOpen && (
@@ -104,29 +114,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* MOBILE BOTTOM NAV */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-20 border-t border-white/5 flex items-center justify-around px-2 pb-safe"
-        style={{ background: 'rgba(4,4,10,0.97)', backdropFilter: 'blur(20px)', minHeight: '64px', paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-20 border-t border-white/5 flex items-center justify-around px-1"
+        style={{ background: 'rgba(4,4,10,0.97)', backdropFilter: 'blur(24px)', minHeight: '60px', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {NAV_PRIMARY.slice(0, 4).map(({ id, label, path, icon: Icon }) => (
           <Link
             key={id}
             href={path}
-            className="flex flex-col items-center gap-1 py-2 px-3"
+            className="press flex flex-col items-center gap-1 py-2 px-4 min-w-[56px]"
           >
-            <Icon
-              size={20}
-              className={clsx(
-                'transition-colors',
-                activeId === id ? 'text-white' : 'text-white/35'
+            <div className="relative">
+              <Icon
+                size={22}
+                className={clsx(
+                  'transition-all duration-200',
+                  activeId === id ? 'text-white drop-shadow-[0_0_8px_rgba(124,58,237,0.8)]' : 'text-white/30'
+                )}
+              />
+              {activeId === id && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full" style={{ background: 'var(--v)' }} />
               )}
-            />
+            </div>
             <span
-              className="text-xs font-medium transition-colors"
+              className="transition-all duration-200"
               style={{
-                fontSize: '0.625rem',
+                fontSize: '0.55rem',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: activeId === id ? 'var(--v)' : 'rgba(245,244,240,0.4)',
+                fontWeight: 600,
+                color: activeId === id ? 'var(--v)' : 'rgba(245,244,240,0.3)',
               }}
             >
               {label}
@@ -137,47 +153,57 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* More button mobile */}
         <button
           onClick={() => setMoreSheetOpen(true)}
-          className="flex flex-col items-center gap-1 py-2 px-3"
+          className="press flex flex-col items-center gap-1 py-2 px-4 min-w-[56px]"
         >
-          <MoreIcon size={20} className="text-white/35" />
-          <span style={{ fontSize: '0.625rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(245,244,240,0.4)' }}>
+          <MoreIcon size={22} className="text-white/30" />
+          <span style={{ fontSize: '0.55rem', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600, color: 'rgba(245,244,240,0.3)' }}>
             More
           </span>
         </button>
       </nav>
 
-      {/* MOBILE MORE SHEET */}
-      {moreSheetOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-50 flex flex-col"
-          style={{ background: 'rgba(4,4,10,0.97)', backdropFilter: 'blur(20px)' }}
-        >
-          <div className="flex items-center justify-between px-6 pt-8 pb-6 border-b border-white/5">
-            <span className="t-caption" style={{ fontSize: '0.625rem', opacity: 0.4 }}>All modules</span>
-            <button onClick={() => setMoreSheetOpen(false)} className="text-white/40 hover:text-white text-2xl">×</button>
-          </div>
-          <div className="grid grid-cols-2 gap-3 p-6">
-            {[...NAV_PRIMARY, ...NAV_MORE].map(({ id, label, path, icon: Icon }) => (
-              <Link
-                key={id}
-                href={path}
-                onClick={() => setMoreSheetOpen(false)}
-                className={clsx(
-                  'flex items-center gap-3 p-4 rounded border transition-all',
-                  activeId === id
-                    ? 'border-violet-500/30 bg-violet-500/8'
-                    : 'border-white/6 bg-white/2 hover:bg-white/5'
-                )}
-              >
-                <Icon size={20} className={activeId === id ? 'text-violet-400' : 'text-white/50'} />
-                <span className={clsx('text-sm font-medium', activeId === id ? 'text-white' : 'text-white/60')}>
-                  {label}
-                </span>
-              </Link>
-            ))}
-          </div>
+      {/* MOBILE MORE SHEET — animated slide-up */}
+      <div
+        className="lg:hidden fixed inset-0 z-50 flex flex-col"
+        style={{
+          background: 'rgba(4,4,10,0.97)',
+          backdropFilter: 'blur(24px)',
+          transform: moreSheetOpen ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+          pointerEvents: moreSheetOpen ? 'auto' : 'none',
+        }}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
         </div>
-      )}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <span className="font-semibold text-sm text-white/70">All Modules</span>
+          <button onClick={() => setMoreSheetOpen(false)} className="press w-8 h-8 flex items-center justify-center rounded-full bg-white/6 text-white/50 hover:text-white text-lg">×</button>
+        </div>
+        <div className="grid grid-cols-2 gap-3 p-5 overflow-y-auto">
+          {[...NAV_PRIMARY, ...NAV_MORE].map(({ id, label, path, icon: Icon }) => (
+            <Link
+              key={id}
+              href={path}
+              onClick={() => setMoreSheetOpen(false)}
+              className={clsx(
+                'press flex items-center gap-3 p-4 border transition-all',
+                activeId === id
+                  ? 'border-violet-500/40 bg-violet-500/10'
+                  : 'border-white/6 bg-white/2 hover:bg-white/5'
+              )}
+              style={{ borderRadius: 'var(--radius)' }}
+            >
+              <Icon size={20} className={activeId === id ? 'text-violet-400' : 'text-white/50'} />
+              <span className={clsx('text-sm font-medium', activeId === id ? 'text-white' : 'text-white/60')}>
+                {label}
+              </span>
+            </Link>
+          ))}
+        </div>
+        <div style={{ height: 'env(safe-area-inset-bottom, 20px)' }} />
+      </div>
     </div>
   )
 }

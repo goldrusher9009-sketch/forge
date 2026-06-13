@@ -142,12 +142,12 @@ export default function FeedPage() {
                         ))}
                       </div>
                     )}
-                    <div className="flex items-center gap-5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => toggleLike(post.id)} className="flex items-center gap-1.5 text-white/30 hover:text-white/60 transition-colors text-xs">
+                    <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => toggleLike(post.id)} className="press flex items-center gap-1.5 text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5">
                         <span>♡</span><span>{likes}</span>
                       </button>
-                      <button className="text-white/30 hover:text-white/60 transition-colors text-xs">◎</button>
-                      <button className="text-white/30 hover:text-white/60 transition-colors text-xs">⇄</button>
+                      <button className="press text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5">◎</button>
+                      <button className="press text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5">⇄</button>
                     </div>
                   </div>
                 </div>
