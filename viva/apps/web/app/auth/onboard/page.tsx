@@ -59,9 +59,16 @@ export default function Onboard() {
       setTokens(res.accessToken, res.refreshToken)
       setUser(mapApiUser(res.user, mockUser()))
     } catch (e: any) {
-      // Fallback to mock if API unavailable
-      console.warn('API unavailable, using mock:', e.message)
-      setUser({ ...mockUser(), handle: handle || 'sovereign', displayName: displayName || 'Sovereign' })
+      // If registration fails (e.g. email already exists), try login
+      try {
+        const loginRes = await auth.login(email || `${handle}@viva.app`, password || 'demo1234')
+        setTokens(loginRes.accessToken, loginRes.refreshToken)
+        setUser(mapApiUser(loginRes.user, mockUser()))
+      } catch {
+        // Fallback to mock if API unavailable
+        console.warn('API unavailable, using mock:', e.message)
+        setUser({ ...mockUser(), handle: handle || 'sovereign', displayName: displayName || 'Sovereign' })
+      }
     }
     setOnboarded(true)
     router.push('/home')
