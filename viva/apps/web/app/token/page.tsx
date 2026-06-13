@@ -383,7 +383,10 @@ function BondingCurve({ price, supply }: { price: number; supply: number }) {
       {/* Axis labels */}
       <text x="0" y={H + 14} fontSize={9} fill="rgba(245,244,240,0.25)" fontFamily="monospace">0</text>
       <text x={W - 12} y={H + 14} fontSize={9} fill="rgba(245,244,240,0.25)" fontFamily="monospace">supply</text>
-      <text x={currentX + 6} y={currentY - 6} fontSize={9} fill="var(--ring-wealth)" fontFamily="monospace">${price}</text>
+      
+      <text x={currentX + 6} y={currentY - 6} fontSize={9} fill="var(--ring-wealth)" fontFamily="monospace">
+        ${price.toFixed(2)}
+      </text>
     </svg>
   )
 }

@@ -248,7 +248,24 @@ export class VivaWS {
 
   on(type: string, fn: (data: any) => void) {
     if (!this.listeners.has(type)) this.listeners.set(type, new Set())
-    this.listeners.get(type)!.add(fn
+    this.listeners.get(type)!.add(fn)
+  }
+
+  off(type: string, fn: (data: any) => void) {
+    this.listeners.get(type)?.delete(fn)
+  }
+
+  private emit(type: string, data: any) {
+    this.listeners.get(type)?.forEach(fn => fn(data))
+  }
+
+  disconnect() {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
+    this.ws?.close()
+    this.ws = null
+  }
+}
+
 // ── Notifications ──────────────────────────────────────────
 
 export const notifications = {

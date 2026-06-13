@@ -2,9 +2,8 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, MOCK_MARKETS, type Market } from '@/lib/store'
 import { markets as marketsApi } from '@/lib/api'
-import clsx from 'clsx'
 
-const CATEGORIES = ['All', 'Crypto', 'Tech', 'Health', 'Social', 'Macro', 'AI']
+const CATEGORIES = ['All', 'Crypto', 'Tech', 'Health', 'Social', 'Macro', 'AI', 'VIVA']
 
 export default function MarketsPage() {
   const { user, setUser } = useAppStore()
@@ -26,13 +25,11 @@ export default function MarketsPage() {
   async function loadMarkets() {
     try {
       const data = await marketsApi.list()
-      // Normalize API shape → unified shape
       setMarkets(data.map((m: any) => ({
         ...m,
         question: m.title ?? m.question,
         closes: m.closesAt ?? m.closes,
         volume: m.totalVolume ?? m.volume ?? 0,
-        // normalize category to Title Case for filter
         category: m.category ? m.category.charAt(0).toUpperCase() + m.category.slice(1).toLowerCase() : 'General',
       })))
     } catch {
@@ -51,8 +48,8 @@ export default function MarketsPage() {
       return new Date(a.closes ?? 0).getTime() - new Date(b.closes ?? 0).getTime()
     })
 
-  async function stake() {
-    if (!selected || !amount) return
+  async function handleBet() {
+    if (!selected || !amount || staking) return
     setStaking(true)
     try {
       const res = await marketsApi.stake(selected.id, side, +amount)
@@ -102,7 +99,7 @@ export default function MarketsPage() {
         </div>
 
         {/* Category filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {CATEGORIES.map(c => (
             <button
               key={c}
@@ -145,8 +142,8 @@ export default function MarketsPage() {
             return (
               <button
                 key={m.id}
-                onClick={() => window.location.href = `/markets/${m.id}`}
-                className="p-5 border border-white/6 hover:border-white/18 transition-all text-left group"
+                onClick={() => setSelected(m)}
+                className="p-5 border border-white/6 hover:border-white/20 transition-all text-left group"
                 style={{ borderRadius: 'var(--radius)', background: m.myStake ? 'rgba(124,58,237,0.04)' : 'transparent' }}
               >
                 {/* Category + close */}
@@ -215,7 +212,7 @@ export default function MarketsPage() {
           >
             <div className="flex items-center justify-between mb-5">
               <p className="t-caption" style={{ fontSize: '0.625rem' }}>STAKE POSITION</p>
-              <button onClick={() => setSelected(null)} className="text-white/30 hover:text-white text-xl">×</button>
+              <button onClick={() => setSelected(null)} className="text-white/30 hover:text-white text-xl">x</button>
             </div>
 
             <p className="text-sm font-medium text-white/80 mb-5 leading-snug">{selected.question ?? selected.title}</p>
@@ -236,7 +233,7 @@ export default function MarketsPage() {
                     color: side === s ? 'white' : 'rgba(245,244,240,0.4)',
                   }}
                 >
-                  {s} — {s === 'YES' ? Math.round(selected.yesProb * 100) : Math.round((1 - selected.yesProb) * 100)}%
+                  {s} {s === 'YES' ? Math.round(selected.yesProb * 100) : Math.round((1 - selected.yesProb) * 100)}%
                 </button>
               ))}
             </div>
@@ -278,12 +275,12 @@ export default function MarketsPage() {
             </div>
 
             <button
-              onClick={stake}
+              onClick={handleBet}
               disabled={!amount || staking}
-              className="w-full py-3.5 font-semibold text-sm text-white transition-all disabled:opacity-40"
-              style={{ background: side === 'YES' ? 'var(--ring-activity)' : 'var(--ring-wealth)', borderRadius: 'var(--radius)' }}
+              className="w-full py-3 font-semibold text-sm transition-all disabled:opacity-40"
+              style={{ background: side === 'YES' ? 'var(--ring-activity)' : 'var(--ring-wealth)', borderRadius: 'var(--radius)', color: 'var(--ink)' }}
             >
-              {staking ? 'Staking…' : `Stake ${amount} $VIVA on ${side.toUpperCase()}`}
+              {staking ? 'Placing...' : `Bet ${side} - ${amount || '0'} $VIVA`}
             </button>
           </div>
         </div>

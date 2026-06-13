@@ -66,7 +66,7 @@ export default function RoomsPage() {
           tier: r.host?.tier?.toLowerCase() ?? 'rising',
           speakers: (r.members ?? []).filter((m: any) => m.role === 'SPEAKER' || m.role === 'HOST').map((m: any) => m.user?.handle ?? m.userId),
           listeners: r._count?.members ?? r.listenerCount ?? r.listeners ?? 0,
-          live: r.isLive ?? r.status === 'LIVE' ?? false,
+          live: Boolean(r.isLive ?? (r.status === 'LIVE')),
           started: r.createdAt ? new Date(r.createdAt).getTime() : Date.now(),
           minVScore: r.minVScore ?? 0,
         })))
@@ -177,7 +177,7 @@ export default function RoomsPage() {
             <section className="mb-8">
               <p className="t-caption mb-4" style={{ fontSize: '0.625rem' }}>SPEAKERS · {activeRoom.speakers.length}</p>
               <div className="flex gap-4 flex-wrap">
-                {activeRoom.speakers.map((sp, i) => (
+                {activeRoom.speakers.map((sp: string, i: number) => (
                   <div key={sp} className="flex flex-col items-center gap-2">
                     <div className="relative">
                       <div
@@ -372,7 +372,8 @@ export default function RoomsPage() {
   )
 }
 
+
 function formatTime(ts: number) {
   const d = new Date(ts)
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }

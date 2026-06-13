@@ -303,7 +303,7 @@ function StepIdentity({ handle, setHandle, displayName, setDisplayName, email, s
 function StepRings({ rings, setRings }: any) {
   return (
     <div className="space-y-4">
-      {(Object.entries(RING_META) as [keyof typeof rings, typeof RING_META[keyof typeof RING_META]][]).map(([key, meta]) => (
+      {(Object.entries(RING_META) as [string, typeof RING_META[keyof typeof RING_META]][]).map(([key, meta]) => (
         <div key={key} className="group">
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-2">

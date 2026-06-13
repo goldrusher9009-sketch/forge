@@ -164,10 +164,12 @@ export default function FeedPage() {
   )
 }
 
+
 function formatRelTime(ts: string | number) {
-  const diff = Date.now() - new Date(ts).getTime()
-  const h = Math.floor(diff / 3600000)
-  if (h < 1) return Math.floor(diff / 60000) + 'm'
-  if (h < 24) return h + 'h'
-  return Math.floor(h / 24) + 'd'
+  const d = typeof ts === 'string' ? new Date(ts) : new Date(ts)
+  const diff = Date.now() - d.getTime()
+  if (diff < 60000) return 'just now'
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago'
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago'
+  return Math.floor(diff / 86400000) + 'd ago'
 }

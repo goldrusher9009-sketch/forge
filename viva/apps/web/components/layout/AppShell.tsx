@@ -119,7 +119,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 'transition-colors',
                 activeId === id ? 'text-white' : 'text-white/35'
               )}
-              style={activeId === id ? { color: 'var(--v)' } : undefined}
             />
             <span
               className="text-xs font-medium transition-colors"
