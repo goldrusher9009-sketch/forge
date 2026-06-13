@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAppStore, mockUser, mapApiUser, RING_META, TIER_META } from '@/lib/store'
-import { auth } from '@/lib/api'
+import { auth, messages as messagesApi } from '@/lib/api'
 import clsx from 'clsx'
 
 export default function HomeCanvas() {
@@ -12,16 +12,20 @@ export default function HomeCanvas() {
   const [mounted, setMounted] = useState(false)
   const [time, setTime] = useState(new Date())
   const [hovered, setHovered] = useState<string | null>(null)
+  const [unread, setUnread] = useState(0)
 
   useEffect(() => {
     setMounted(true)
     const tick = setInterval(() => setTime(new Date()), 60000)
-    // Fetch real user from API; fallback to mock
     auth.me().then(me => {
       setUser(mapApiUser(me, mockUser()))
     }).catch(() => {
       if (!user) setUser(mockUser())
     })
+    // Real unread count from threads
+    messagesApi.threads().then((threads: any[]) => {
+      setUnread(threads.filter((t: any) => t.unreadCount > 0).length)
+    }).catch(() => {})
     return () => clearInterval(tick)
   }, [])
 
@@ -52,11 +56,11 @@ export default function HomeCanvas() {
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/40 hover:text-white/70 transition-colors">
               <path d="M3 4h14v10H11l-3 3v-3H3V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
             </svg>
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-white flex items-center justify-center" style={{ background: 'var(--v)', fontSize: '0.5rem' }}>3</span>
+            {unread > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-white flex items-center justify-center" style={{ background: 'var(--v)', fontSize: '0.5rem' }}>{unread}</span>}
           </Link>
-          <button className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+          <Link href="/settings" className="w-8 h-8 rounded-full overflow-hidden border border-white/10 hover:border-white/30 transition-colors">
             <img src={u.avatar} alt={u.displayName} className="w-full h-full object-cover" />
-          </button>
+          </Link>
         </div>
       </header>
 

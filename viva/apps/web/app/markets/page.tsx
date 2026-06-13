@@ -145,7 +145,7 @@ export default function MarketsPage() {
             return (
               <button
                 key={m.id}
-                onClick={() => setSelected(m)}
+                onClick={() => window.location.href = `/markets/${m.id}`}
                 className="p-5 border border-white/6 hover:border-white/18 transition-all text-left group"
                 style={{ borderRadius: 'var(--radius)', background: m.myStake ? 'rgba(124,58,237,0.04)' : 'transparent' }}
               >

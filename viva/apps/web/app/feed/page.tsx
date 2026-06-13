@@ -123,10 +123,12 @@ export default function FeedPage() {
             return (
               <article key={post.id} className="py-6 border-b border-white/5 last:border-b-0 group">
                 <div className="flex gap-4">
-                  <img src={avatarSrc} alt={authorName} className="w-9 h-9 rounded-full flex-shrink-0" />
+                  <a href={`/profile/${authorHandle}`} className="flex-shrink-0">
+                    <img src={avatarSrc} alt={authorName} className="w-9 h-9 rounded-full hover:ring-2 hover:ring-white/20 transition-all" />
+                  </a>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className="font-semibold text-sm text-white/90">{authorName}</span>
+                      <a href={`/profile/${authorHandle}`} className="font-semibold text-sm text-white/90 hover:text-white transition-colors">{authorName}</a>
                       <span className="text-xs text-white/30">@{authorHandle}</span>
                       <span className="text-white/15">·</span>
                       <span className="text-xs text-white/30">{formatRelTime(ts)}</span>
