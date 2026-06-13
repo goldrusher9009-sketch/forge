@@ -166,3 +166,166 @@ input:-webkit-autofill:active {
 .tier-stable { color: var(--ring-nutrition); }
 .tier-guardian { color: var(--v); }
 .tier-sovereign { color: var(--ring-wealth); }
+
+/* ── Mobile-first improvements ──────────────────────────── */
+
+/* Touch targets — minimum 44px for all interactive elements */
+button, a, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area on mobile */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-top    { padding-top:    env(safe-area-inset-top, 0px); }
+
+/* Scrollbar hide for horizontal scroll lists */
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* Mobile text sizing */
+@media (max-width: 640px) {
+  .t-display {
+    font-size: clamp(2.5rem, 12vw, 4rem);
+    line-height: 0.92;
+  }
+  .container-editorial {
+    padding: 0 1.25rem;
+  }
+}
+
+/* ── Animation keyframes ─────────────────────────────────── */
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 currentColor; }
+  70%  { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+/* ── Animation utility classes ───────────────────────────── */
+
+.animate-slide-up   { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-slide-in   { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-scale-in   { animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-spin-slow  { animation: spin-slow 3s linear infinite; }
+.animate-float      { animation: float 3s ease-in-out infinite; }
+.animate-pulse-ring { animation: pulse-ring 1.5s ease-out infinite; }
+
+/* Shimmer skeleton loader */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.09) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: var(--radius);
+}
+
+/* ── Micro-interaction utilities ─────────────────────────── */
+
+/* Press scale — add to any interactive card */
+.press {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/* Hover lift */
+.hover-lift {
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+/* Hover glow V */
+.hover-glow:hover {
+  box-shadow: 0 0 20px var(--v)50;
+}
+
+/* Button loading spinner */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+}
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 16px; height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin-slow 0.6s linear infinite;
+}
+
+/* ── Card styles ─────────────────────────────────────────── */
+
+.card {
+  border: 1px solid rgba(245,244,240,0.07);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.01);
+  transition: border-color var(--transition), background var(--transition);
+}
+.card:hover {
+  border-color: rgba(245,244,240,0.14);
+  background: rgba(255,255,255,0.025);
+}
+
+/* ── Mobile nav height var ───────────────────────────────── */
+:root {
+  --nav-h: 64px;
+}
+
+/* ── Page transition fade ────────────────────────────────── */
+main {
+  animation: fadeIn 0.25s ease both;
+}
+
+/* ── Status indicator dot ────────────────────────────────── */
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-dot.live {
+  background: var(--ring-activity);
+  animation: pulse-ring 1.5s ease-out infinite;
+  color: var(--ring-activity);
+}
