@@ -1,0 +1,2 @@
+# Allow dist to be committed (Railway needs it)
+!dist/

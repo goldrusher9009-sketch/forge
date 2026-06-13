@@ -121,8 +121,8 @@ export default function DatingPage() {
                     })}
                   </div>
                   <div className="flex items-center gap-3">
-                    <button onClick={() => decide('pass')} className="flex-1 py-3.5 font-semibold text-sm border border-white/12 text-white/50 hover:border-white/25 transition-all" style={{ borderRadius: 'var(--radius)' }}>Pass</button>
-                    <button onClick={() => decide('like')} className="flex-1 py-3.5 font-semibold text-sm text-white transition-all hover:opacity-90" style={{ background: 'var(--ring-wealth)', borderRadius: 'var(--radius)' }}>♥ Connect</button>
+                    <button onClick={() => decide('pass')} className="press flex-1 py-3.5 font-semibold text-sm border border-white/12 text-white/50 hover:border-white/25 transition-all" style={{ borderRadius: 'var(--radius)' }}>Pass</button>
+                    <button onClick={() => decide('like')} className="press flex-1 py-3.5 font-semibold text-sm text-white transition-all hover:opacity-90" style={{ background: 'var(--ring-wealth)', borderRadius: 'var(--radius)' }}>♥ Connect</button>
                   </div>
                 </div>
               </div>

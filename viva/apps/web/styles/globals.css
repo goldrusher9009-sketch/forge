@@ -329,3 +329,73 @@ main {
   animation: pulse-ring 1.5s ease-out infinite;
   color: var(--ring-activity);
 }
+
+/* ── Stagger animation delays ───────────────────────────── */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+/* ── Card hover lift ────────────────────────────────────── */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ── Gradient text ──────────────────────────────────────── */
+.text-gradient {
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-v {
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glow on active nav items ───────────────────────────── */
+.nav-glow {
+  filter: drop-shadow(0 0 6px rgba(124,58,237,0.7));
+}
+
+/* ── Mobile-safe tap area ───────────────────────────────── */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Input focus ring ───────────────────────────────────── */
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 1.5px solid rgba(124,58,237,0.5);
+  outline-offset: 0;
+}
+
+/* ── Smooth scrolling ───────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── iOS momentum scroll ────────────────────────────────── */
+.overflow-y-auto, .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Prevent text selection on interactive elements ──────── */
+button, a, [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Notch / dynamic island safe areas ─────────────────── */
+.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 16px); }
+.safe-top    { padding-top:    max(env(safe-area-inset-top),    0px);  }
