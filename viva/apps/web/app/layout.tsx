@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import '../styles/globals.css'
+import { ToastProvider } from '@/components/ui/Toast'
 
 export const metadata: Metadata = {
   title: 'VIVA — Life Operating System',
@@ -23,15 +24,13 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   )

@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, mapApiUser, MOCK_POSTS } from '@/lib/store'
 import { feed as feedApi, auth } from '@/lib/api'
+import { useToast } from '@/components/ui/Toast'
 
 const FILTERS = ['All', 'Health', 'Markets', 'Twin', 'ZKP', 'YouToken']
 
 export default function FeedPage() {
   const { user, setUser } = useAppStore()
+  const { success, error: toastError } = useToast()
   const [filter, setFilter] = useState('All')
   const [posts, setPosts] = useState<any[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
@@ -46,18 +48,24 @@ export default function FeedPage() {
       const cat = filter === 'All' ? undefined : filter.toLowerCase()
       const newPost = await feedApi.create({ content: draft, category: cat })
       setPosts(prev => [newPost, ...prev])
+      success('Post published to Signal Feed')
     } catch {
       setPosts(prev => [{ id: `p${Date.now()}`, author: { displayName: u.displayName, handle: u.handle }, content: draft, createdAt: new Date().toISOString(), _count: { likes: 0 } }, ...prev])
+      success('Post published')
     }
     setDraft('')
     setComposing(false)
   }
 
   async function toggleLike(postId: string) {
+    // Optimistic update first
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, _count: { ...p._count, likes: (p._count?.likes ?? 0) + 1 }, _liked: true } : p))
     try {
       await feedApi.like(postId)
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, _count: { ...p._count, likes: (p._count?.likes ?? 0) + 1 } } : p))
-    } catch {}
+      success('♡ Signal boosted')
+    } catch {
+      // keep optimistic — still show boost
+    }
   }
 
   return (
@@ -143,8 +151,9 @@ export default function FeedPage() {
                       </div>
                     )}
                     <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => toggleLike(post.id)} className="press flex items-center gap-1.5 text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5">
-                        <span>♡</span><span>{likes}</span>
+                      <button onClick={() => toggleLike(post.id)} className="press flex items-center gap-1.5 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5"
+                        style={{ color: post._liked ? 'var(--ring-social)' : 'rgba(255,255,255,0.3)' }}>
+                        <span>{post._liked ? '♥' : '♡'}</span><span>{likes}</span>
                       </button>
                       <button className="press text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5">◎</button>
                       <button className="press text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5">⇄</button>

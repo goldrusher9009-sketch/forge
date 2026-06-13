@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, MOCK_PROFILES, TIER_META } from '@/lib/store'
 import { dating as datingApi } from '@/lib/api'
+import { useToast } from '@/components/ui/Toast'
 
 const ZK_BADGE_LABELS: Record<string, { label: string; color: string }> = {
   health:   { label: 'Health Verified', color: 'var(--ring-activity)' },
@@ -12,6 +13,7 @@ const ZK_BADGE_LABELS: Record<string, { label: string; color: string }> = {
 
 export default function DatingPage() {
   const { user, setUser } = useAppStore()
+  const { success, info } = useToast()
   const [profiles, setProfiles] = useState<any[]>([])
   const [matches, setMatches] = useState<any[]>([])
   const [decided, setDecided] = useState<Record<string, 'pass' | 'like'>>({})
@@ -53,12 +55,24 @@ export default function DatingPage() {
     try {
       if (choice === 'like') {
         const res = await datingApi.connect(current.id)
-        if (res.status === 'MATCHED') setTimeout(() => setMatched(current.id), 300)
+        if (res.status === 'MATCHED') {
+          setTimeout(() => setMatched(current.id), 300)
+          success('🔮 It\'s a match!')
+        } else {
+          info('Interest sent — waiting for match')
+        }
       } else {
         await datingApi.pass(current.id)
       }
     } catch {
-      if (choice === 'like' && Math.random() > 0.4) setTimeout(() => setMatched(current.id), 300)
+      if (choice === 'like') {
+        if (Math.random() > 0.4) {
+          setTimeout(() => setMatched(current.id), 300)
+          success('🔮 It\'s a match!')
+        } else {
+          info('Interest sent')
+        }
+      }
     }
   }
 

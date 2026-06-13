@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAppStore, mockUser, RING_META } from '@/lib/store'
 import { twin as twinApi } from '@/lib/api'
 import clsx from 'clsx'
+import { useToast } from '@/components/ui/Toast'
 
 type AutonomyLevel = 'L1' | 'L2' | 'L3'
 
@@ -42,6 +43,7 @@ interface ChatMsg {
 
 export default function TwinPage() {
   const { user, setUser } = useAppStore()
+  const { success, error: toastError } = useToast()
   const [autonomy, setAutonomy] = useState<AutonomyLevel>('L2')
   const [tasks, setTasks] = useState<Task[]>([])
   const [loadingTasks, setLoadingTasks] = useState(true)
@@ -93,8 +95,9 @@ export default function TwinPage() {
       setNewTitle('')
       setNewDesc('')
       setShowCreate(false)
+      success('Twin task created')
     } catch (e: any) {
-      alert(e.message || 'Create failed')
+      toastError(e.message || 'Create failed')
     } finally { setCreating(false) }
   }
 
@@ -105,6 +108,7 @@ export default function TwinPage() {
       setRunResult(prev => ({ ...prev, [task.id]: res }))
       const updated = await twinApi.tasks()
       setTasks(Array.isArray(updated) ? updated : [])
+      success('Twin task completed')
     } catch (e: any) {
       setRunResult(prev => ({ ...prev, [task.id]: { success: false, result: e.message } }))
     } finally { setRunningId(null) }

@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, mockUser, MOCK_MARKETS, type Market } from '@/lib/store'
 import { markets as marketsApi } from '@/lib/api'
+import { useToast } from '@/components/ui/Toast'
 
 const CATEGORIES = ['All', 'Crypto', 'Tech', 'Health', 'Social', 'Macro', 'AI', 'VIVA']
 
 export default function MarketsPage() {
   const { user, setUser } = useAppStore()
+  const { success, error: toastError } = useToast()
   const [markets, setMarkets] = useState<any[]>([])
   const [cat, setCat] = useState('All')
   const [selected, setSelected] = useState<any | null>(null)
@@ -57,11 +59,13 @@ export default function MarketsPage() {
         ? { ...m, yesProb: res.newYesProb ?? m.yesProb, volume: (m.volume ?? 0) + +amount }
         : m
       ))
+      success(`${side} stake of ${amount} VIT confirmed`)
     } catch {
       setMarkets(prev => prev.map((m: any) => m.id === selected.id
         ? { ...m, volume: (m.volume ?? 0) + +amount }
         : m
       ))
+      success(`${side} position recorded`)
     }
     setStaking(false)
     setSelected(null)
