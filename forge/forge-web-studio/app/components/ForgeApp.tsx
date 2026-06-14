@@ -3379,6 +3379,13 @@ export default function ForgeApp() {
                 <h2 style={{ margin:0, fontSize:14, fontWeight:600, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                   {activeThread ? activeThread.title : activeProject ? activeProject.name : 'Forge Workspace'}
                 </h2>
+                {activeThread && messages.length > 1 && (
+                  <button onClick={async () => {
+                    const tok = localStorage.getItem('forge_token');
+                    const d = await fetch('/api/threads/' + activeThread.id + '/summarize', { method:'POST', headers:{ Authorization:'Bearer '+tok } }).then(r=>r.json());
+                    if (d.title) { setActiveThread((prev: any) => prev ? {...prev, title: d.title} : prev); setThreads((prev: any[]) => prev.map((t: any) => t.id===activeThread.id ? {...t, title: d.title} : t)); showToast('Thread titled'); }
+                  }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Auto-generate thread title'>AI Title</button>
+                )}
                 {/* Mini sparkline */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
                   const vals = threadStats.token_history.map(h => h.tokens);

@@ -3500,6 +3500,36 @@ app.delete('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, message: 'Thread deleted' });
 });
 
+// POST /api/threads/:id/summarize — Generate a short title for a thread using the LLM.
+app.post('/api/threads/:id/summarize', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const threadId = req.params.id;
+  const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, userId) as any;
+  if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const messages = db.prepare("SELECT role, content FROM thread_messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 20").all(threadId) as any[];
+  if (!messages.length) { res.json({ success: true, title: 'Empty thread' }); return; }
+  const key = safe(() => getUserKey(userId, 'anthropic'), null) || safe(() => getUserKey(userId, 'openai'), null);
+  if (!key) { res.status(400).json({ success: false, error: 'NO_KEY' }); return; }
+  const preview = messages.slice(0, 6).map((m: any) => `${m.role}: ${String(m.content || '').slice(0, 200)}`).join('\n');
+  let title = 'Conversation';
+  try {
+    const provider = safe(() => getUserKey(userId, 'anthropic'), null) ? 'anthropic' : 'openai';
+    if (provider === 'anthropic') {
+      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      const client = new Anthropic({ apiKey: key });
+      const resp = await client.messages.create({ model: 'claude-haiku-4-5', max_tokens: 40, messages: [{ role: 'user', content: `Generate a short (5-8 word) descriptive title for this conversation. Reply with ONLY the title, no quotes:\n\n${preview}` }] });
+      title = (resp.content[0] as any).text?.trim() || 'Conversation';
+    } else {
+      const OpenAI = (await import('openai')).default;
+      const client = new OpenAI({ apiKey: key });
+      const resp = await client.chat.completions.create({ model: 'gpt-4o-mini', max_tokens: 40, messages: [{ role: 'user', content: `Generate a short (5-8 word) descriptive title for this conversation. Reply with ONLY the title, no quotes:\n\n${preview}` }] });
+      title = resp.choices[0]?.message?.content?.trim() || 'Conversation';
+    }
+  } catch (_) {}
+  db.prepare("UPDATE threads SET title=?, updated_at=datetime('now') WHERE id=?").run(title, threadId);
+  res.json({ success: true, title });
+});
+
 // ── Thread stats (context usage panel) ────────────────────────
 app.get('/api/threads/:id/stats', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
