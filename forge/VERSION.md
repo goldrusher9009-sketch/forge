@@ -1,5 +1,13 @@
 # Forge Platform
 
+## v7.8 — 2026-06-14 — Power Features: Context Warning, Search, Templates, Fork, Cost, Compare
+- **Context limit warning banner** — ⚠️ at 75% + 🚨 at 90% context capacity with "New thread" CTA
+- **Live content search** — sidebar search queries `/api/search` (threads + messages + memory) with 350ms debounce
+- **Thread templates modal** — ⚡ button opens 12 starter templates (Research, Code Review, Debug, etc.)
+- **Fork thread from message** — 🍴 Fork button on every message; POST `/api/threads/:id/fork` creates copy up to that point
+- **Real-time cost estimate chip** — shows ~$X before sending based on model pricing × context tokens
+- **Model comparison panel** — ⚖️ right panel tab; compare up to 3 models on same prompt side by side; POST `/api/chat/simple`
+
 ## v7.7 — 2026-06-14 — UX Depth: Shortcuts, Wordcount, Badges, Timestamps, Pinned Panel, Slash Prompts, Archive
 - **Keyboard shortcuts modal** — `?` key shows all shortcuts overlay (Ctrl+K, arrows, Esc, Enter)
 - **Thread word count + reading time** — live badge in thread header (e.g. "1,234w · 6m read")
