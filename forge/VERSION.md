@@ -1,5 +1,13 @@
 # Forge Platform
 
+## v7.5 — 2026-06-14 — UX Moat: Prompts, Cmd+K, Checklist, AI Title, Changelog, Notifs
+- **Prompt Library** — save/search/use/delete prompts; `/api/prompts` full CRUD; inserts into SuperAgent input
+- **Cmd+K Command Palette** — 12 nav commands, fuzzy filter, Escape to close, discoverable via footer hint
+- **Activation Checklist** — `/api/checklist` tracks 5 onboarding milestones; progress card on workspace home
+- **AI Auto-title Threads** — `/api/threads/:id/summarize` uses claude-haiku-4-5 to generate 5-8 word titles
+- **Changelog Modal** — `/api/changelog` parses VERSION.md; auto-shows on first login after new version
+- **Notification Bell** — `/api/notifications` surfaces pending approvals + nightly run status; badge + dropdown
+
 ## v7.3 — 2026-06-14 — Moat Deepening: Savings, Activity Feed, Vertical Packs
 - **GET /api/savings** — BYO-key savings calculator: compares user's actual provider cost vs Forge seat markup per-1k-tokens. Returns savedLabel, byProvider breakdown, headline. Shown as green savings card in Outcome Ledger.
 - **Outcome Ledger savings card** — live "$X saved vs seat pricing" banner with per-provider token breakdown rendered in the outcomes panel.

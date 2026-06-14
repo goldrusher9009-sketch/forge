@@ -3404,6 +3404,18 @@ export default function ForgeApp() {
                     if (d.title) { setActiveThread((prev: any) => prev ? {...prev, title: d.title} : prev); setThreads((prev: any[]) => prev.map((t: any) => t.id===activeThread.id ? {...t, title: d.title} : t)); showToast('Thread titled'); }
                   }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Auto-generate thread title'>AI Title</button>
                 )}
+                {activeThread && messages.length > 0 && (
+                  <button onClick={() => {
+                    const title = activeThread.title || 'thread';
+                    const md = messages.map((m: any) => `**${m.role === 'user' ? 'You' : 'Forge'}** (${new Date(m.created_at||Date.now()).toLocaleString()})\n\n${m.content||''}`).join('\n\n---\n\n');
+                    const blob = new Blob([`# ${title}\n\n${md}`], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = `${title.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.md`; a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('Thread exported');
+                  }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Export thread as Markdown'>&#8595; Export</button>
+                )}
                 {/* Mini sparkline */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
                   const vals = threadStats.token_history.map(h => h.tokens);
