@@ -7953,8 +7953,14 @@ export default function ForgeApp() {
             {id:'m10',icon:'🎙',name:'Meeting Notes',desc:'Transcribe meetings, extract action items, and send summaries automatically.',category:'productivity',installs:2800,rating:4.9},
             {id:'m11',icon:'🔔',name:'Alert Monitor',desc:'Watch metrics, APIs, or websites — get notified when conditions are met.',category:'tools',installs:320,rating:4.2},
             {id:'m12',icon:'🌍',name:'Translator Pro',desc:'Real-time translation with context awareness across 100+ languages.',category:'writing',installs:1100,rating:4.6},
+            {id:'v1',icon:'⚖️',name:'Law Firm Pack',desc:'Client intake, case status updates, contract drafting, billing narratives. Built for solo practitioners and small firms.',category:'vertical',installs:540,rating:4.8},
+            {id:'v2',icon:'🍽️',name:'Restaurant Pack',desc:'Menu copywriting, review responses, staff scheduling drafts, supplier negotiation emails.',category:'vertical',installs:320,rating:4.7},
+            {id:'v3',icon:'🛒',name:'E-Commerce Pack',desc:'Product descriptions, abandoned cart emails, customer support replies, inventory alerts, SEO optimized listings.',category:'vertical',installs:890,rating:4.9},
+            {id:'v4',icon:'🏗️',name:'Trades Pack',desc:'Job quoting, client follow-ups, permit checklists, invoice generation. For contractors, plumbers, electricians.',category:'vertical',installs:210,rating:4.6},
+            {id:'v5',icon:'🏢',name:'Agency Pack',desc:'Client reporting, campaign briefs, performance summaries, proposal generation. Runs across all your client accounts.',category:'vertical',installs:670,rating:4.8},
+            {id:'v6',icon:'🏥',name:'Healthcare Pack',desc:'Patient intake summaries, appointment reminders, insurance pre-auth drafts, HIPAA-aware workflows.',category:'vertical',installs:480,rating:4.7},
           ];
-          const cats = ['All','productivity','data','tools','writing','research','developer','marketing'];
+          const cats = ['All','productivity','data','tools','writing','research','developer','marketing','vertical'];
           const showVertical = mktTab === 'vertical';
           const handlePublish = async () => {
             setPublishLoading(true);
@@ -8011,7 +8017,7 @@ export default function ForgeApp() {
                               <span key={tag} style={{ fontSize:10, padding:'2px 7px', background:'var(--fg-bg4)', borderRadius:20, color:'var(--fg-text3)' }}>#{tag.trim()}</span>
                             ))}
                           </div>
-                          <button onClick={async () => { await fetch('/api/marketplace/install', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${localStorage.getItem('forge_token')}`}, body:JSON.stringify({listingId:item.id}) }); showToast(`✅ ${item.name} installed!`); }} style={{ width:'100%', padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ Install</button>
+                          <button onClick={async () => { await fetch('/api/marketplace/install', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${localStorage.getItem('forge_token')}`}, body:JSON.stringify({listingId:item.id}) }); showToast(item.name + ' installed!'); }} style={{ width:'100%', padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ Install</button>
                         </div>
                       ))}
                     </div>
@@ -8095,13 +8101,13 @@ export default function ForgeApp() {
                 </div>
               </div>
               <div style={{ background:'linear-gradient(135deg,rgba(255,31,53,0.15),rgba(99,102,241,0.1))', border:'1px solid rgba(255,31,53,0.25)', borderRadius:14, padding:24, marginBottom:24, display:'flex', alignItems:'center', gap:20 }}>
-                <span style={{ fontSize:48 }}>🤖</span>
+                <span style={{ fontSize:48 }}>🏪</span>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.08em' }}>⭐ Featured</div>
-                  <div style={{ fontSize:18, fontWeight:800, color:'var(--fg-text)', marginBottom:6 }}>Forge Agent Bundle</div>
-                  <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.5 }}>10 specialist agents: researcher, coder, writer, analyst, and more - all in one package.</div>
+                  <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.08em' }}>New: Vertical Packs</div>
+                  <div style={{ fontSize:18, fontWeight:800, color:'var(--fg-text)', marginBottom:6 }}>Industry Starter Packs</div>
+                  <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.5 }}>Law, restaurant, e-commerce, trades, agency, healthcare - pre-built agent workflows for your industry. Filter by Vertical to browse.</div>
                 </div>
-                <button onClick={() => showToast('Forge Agent Bundle installed!')} style={{ padding:'10px 22px', background:'var(--fg-orange)', border:'none', borderRadius:9, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', flexShrink:0 }}>Install Free</button>
+                <button onClick={() => setMktCat('vertical')} style={{ padding:'10px 22px', background:'var(--fg-orange)', border:'none', borderRadius:9, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', flexShrink:0 }}>Browse Packs</button>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
                 {filtered.map(m => {
