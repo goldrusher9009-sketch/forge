@@ -8035,19 +8035,29 @@ export default function ForgeApp() {
         {showChangelog && changelogData && (<div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:10001, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => { setShowChangelog(false); if (changelogData[0]) localStorage.setItem('forge_seen_version', changelogData[0].version); }}><div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:18, padding:32, maxWidth:540, width:'90%', maxHeight:'80vh', overflowY:'auto' }} onClick={e => e.stopPropagation()}><div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}><h2 style={{ margin:0, fontSize:18, fontWeight:800 }}>What's New in Forge</h2><button onClick={() => { setShowChangelog(false); if (changelogData[0]) localStorage.setItem('forge_seen_version', changelogData[0].version); }} style={{ background:'none', border:'none', fontSize:20, cursor:'pointer', color:'var(--fg-text3)' }}>x</button></div>{changelogData.map((r: any, i: number) => (<div key={i} style={{ marginBottom:20 }}><div style={{ display:'flex', alignItems:'baseline', gap:10, marginBottom:8 }}><span style={{ fontSize:13, fontWeight:800, color:'var(--fg-orange)' }}>{r.version}</span><span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>{r.title}</span><span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{r.date}</span></div>{r.bullets.map((b: string, j: number) => (<div key={j} style={{ fontSize:12, color:'var(--fg-text2)', padding:'4px 0', borderBottom:'1px solid var(--fg-border)', paddingLeft:12, lineHeight:1.5 }}>{b}</div>))}</div>))}<button onClick={() => { setShowChangelog(false); if (changelogData[0]) localStorage.setItem('forge_seen_version', changelogData[0].version); }} style={{ marginTop:8, padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%' }}>Got it</button></div></div>)}
 
         {showCmdPalette && (() => {
-          const cmds = [
-            { label: 'New Chat', action: () => { setMainTab('super'); setShowCmdPalette(false); } },
-            { label: 'Go to Workspace', action: () => { setMainTab('workspace'); setShowCmdPalette(false); } },
-            { label: 'Go to Prompt Library', action: () => { setMainTab('prompts'); setShowCmdPalette(false); } },
-            { label: 'Go to Brain', action: () => { setMainTab('brain'); setShowCmdPalette(false); } },
-            { label: 'Go to Runs', action: () => { setMainTab('runs'); setShowCmdPalette(false); } },
-            { label: 'Go to Marketplace', action: () => { setMainTab('marketplace'); setShowCmdPalette(false); } },
-            { label: 'Go to Intelligence', action: () => { setMainTab('intelligence'); setShowCmdPalette(false); } },
-            { label: 'Go to Billing', action: () => { setMainTab('billing'); setShowCmdPalette(false); } },
-            { label: 'Go to Settings', action: () => { setMainTab('settings'); setShowCmdPalette(false); } },
-            { label: 'Go to Agency', action: () => { setMainTab('agency'); setShowCmdPalette(false); } },
-            { label: 'Go to Skills', action: () => { setMainTab('skills'); setShowCmdPalette(false); } },
-            { label: 'Go to Platforms', action: () => { setMainTab('platforms'); setShowCmdPalette(false); } },
+          const cmds: {label:string;icon:string;action:()=>void;category:string}[] = [
+            { category:'nav', icon:'💬', label:'New Conversation', action: () => { newThread(); setShowCmdPalette(false); } },
+            { category:'nav', icon:'🏠', label:'Go to Chat', action: () => { setMainTab('super'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'🧠', label:'Go to Brain', action: () => { setMainTab('brain'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'🗂', label:'Go to Workspace', action: () => { setMainTab('workspace'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'📚', label:'Go to Prompt Library', action: () => { setMainTab('prompts'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'⚡', label:'Go to Runs', action: () => { setMainTab('runs'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'🏪', label:'Go to Marketplace', action: () => { setMainTab('marketplace'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'💳', label:'Go to Billing', action: () => { setMainTab('billing'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'⚙️', label:'Go to Settings', action: () => { setMainTab('settings'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'🏢', label:'Go to Agency', action: () => { setMainTab('agency'); setShowCmdPalette(false); } },
+            { category:'nav', icon:'🔗', label:'Go to Platforms', action: () => { setMainTab('platforms'); setShowCmdPalette(false); } },
+            // Thread actions (only shown when a thread is active)
+            ...(activeThread ? [
+              { category:'thread', icon:'🍴', label:'Fork Current Thread', action: async () => { setShowCmdPalette(false); const tok = localStorage.getItem('forge_token'); const d = await fetch('/api/threads/'+activeThread.id+'/fork', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: '{}' }).then(r=>r.json()); if (d?.success && d?.data) { await loadThreads(); selectThread(d.data); showToast('🍴 Thread forked'); } } },
+              { category:'thread', icon:'📥', label:'Export Thread as Markdown', action: () => { setShowCmdPalette(false); const title = activeThread.title || 'thread'; const md = messages.map((m: any) => '**'+(m.role==='user'?'You':'Forge')+'** ('+new Date(m.created_at||Date.now()).toLocaleString()+')\n\n'+(m.content||'')).join('\n\n---\n\n'); const blob = new Blob(['# '+title+'\n\n'+md], { type:'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=title.replace(/[^a-z0-9]/gi,'_').toLowerCase()+'.md'; a.click(); URL.revokeObjectURL(url); showToast('Thread exported'); } },
+              { category:'thread', icon:'📋', label:'Export Thread as JSON', action: () => { setShowCmdPalette(false); const blob = new Blob([JSON.stringify({ thread: activeThread, messages }, null, 2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='forge_thread_'+activeThread.id+'.json'; a.click(); URL.revokeObjectURL(url); showToast('Thread exported as JSON'); } },
+              { category:'thread', icon:'🔗', label:'Copy Thread Link', action: () => { setShowCmdPalette(false); navigator.clipboard.writeText(window.location.origin+'?thread='+activeThread.id).catch(()=>{}); showToast('Thread link copied'); } },
+            ] as any[] : []),
+            // UI toggles
+            { category:'ui', icon:'⌨️', label:'Show Keyboard Shortcuts', action: () => { setShowCmdPalette(false); setShowShortcuts(true); } },
+            { category:'ui', icon:'⚖️', label:'Open Model Compare Panel', action: () => { setShowCmdPalette(false); setRightTab('compare' as any); setRightExpanded(true); } },
+            { category:'ui', icon:'🔖', label:'Open Pinned Messages', action: () => { setShowCmdPalette(false); setRightTab('pinned' as any); setRightExpanded(true); } },
           ];
           const filtered = cmds.filter(c => !cmdQuery || c.label.toLowerCase().includes(cmdQuery.toLowerCase()));
           cmdFilteredRef.current = filtered;
