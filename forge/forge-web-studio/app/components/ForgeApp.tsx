@@ -782,6 +782,12 @@ export default function ForgeApp() {
         .then(r => r.json()).then(d => setIntelligenceData(d.intelligence || null))
         .catch(() => {});
     }
+    if (user && !digestData) {
+      const tok = localStorage.getItem('forge_token');
+      fetch('/api/digest', { headers: { Authorization: 'Bearer ' + tok } })
+        .then(r => r.json()).then(d => setDigestData(d.digest || null))
+        .catch(() => {});
+    }
     if (mainTab === 'platforms' && user && !referralData) {
       const tok = localStorage.getItem('forge_token');
       fetch('/api/referral', { headers: { Authorization: 'Bearer ' + tok } })
@@ -1089,6 +1095,8 @@ export default function ForgeApp() {
   const [savingsData, setSavingsData] = useState<any>(null);
   const [activityFeed, setActivityFeed] = useState<any[]|null>(null);
   const [referralData, setReferralData] = useState<any>(null);
+  const [digestData, setDigestData] = useState<any>(null);
+  const [showDigest, setShowDigest] = useState(false);
   const [intelligenceData, setIntelligenceData] = useState<any>(null);
 
   // Agency / White-label state
@@ -3671,6 +3679,7 @@ export default function ForgeApp() {
                         </button>
                       {activityFeed && activityFeed.length > 0 && (<div style={{ maxWidth:480, width:'100%', marginTop:24 }}><div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--fg-text3)', marginBottom:10 }}>Recent Activity</div><div style={{ display:'flex', flexDirection:'column', gap:6 }}>{activityFeed.map((ev: any, i: number) => (<div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10 }}><span style={{ fontSize:16, flexShrink:0 }}>{ev.icon}</span><div style={{ flex:1, minWidth:0 }}><div style={{ fontSize:12, fontWeight:600, color:'var(--fg-text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ev.title}</div>{ev.body && <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ev.body}</div>}</div><div style={{ fontSize:10, color:'var(--fg-text3)', flexShrink:0, marginTop:1 }}>{ev.ts ? new Date(ev.ts).toLocaleDateString() : ''}</div></div>))}</div></div>)}
                       {intelligenceData && (<div style={{ maxWidth:480, width:'100%', marginTop:16, background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(168,85,247,0.08))', border:'1px solid rgba(99,102,241,0.3)', borderRadius:14, padding:'16px 20px' }}><div style={{ display:'flex', alignItems:'center', gap:14 }}><div style={{ textAlign:'center', minWidth:60 }}><div style={{ fontSize:28, fontWeight:900, color:'#818cf8', lineHeight:1 }}>{intelligenceData.score}</div><div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--fg-text3)' }}>/ 1000</div></div><div style={{ flex:1 }}><div style={{ fontSize:14, fontWeight:800, color:'var(--fg-text)', marginBottom:2 }}>Forge IQ: {intelligenceData.level}</div><div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:8 }}>{intelligenceData.levelDesc}</div><div style={{ height:6, background:'rgba(255,255,255,0.08)', borderRadius:3, overflow:'hidden' }}><div style={{ height:'100%', width: intelligenceData.pct + '%', background:'linear-gradient(90deg,#818cf8,#a855f7)', borderRadius:3, transition:'width 1s ease' }} /></div>{intelligenceData.nextLevel && <div style={{ fontSize:10, color:'var(--fg-text3)', marginTop:4 }}>Next: {intelligenceData.nextLevel} at {intelligenceData.nextAt} pts</div>}</div></div></div>)}
+                      <button onClick={() => { const tok = localStorage.getItem('forge_token'); fetch('/api/digest', { headers: { Authorization: 'Bearer ' + tok } }).then(r=>r.json()).then(d=>{ setDigestData(d.digest||null); setShowDigest(true); }).catch(()=>{}); }} style={{ gridColumn:'1 / -1', marginTop:8, padding:'10px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text2)', fontSize:13, fontWeight:600, cursor:'pointer' }}>Week in Review</button>
                       </div>
                     </div>
                   )}
@@ -8702,6 +8711,7 @@ export default function ForgeApp() {
         )}
 
       </div>
+      {showDigest && digestData && (<div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowDigest(false)}><div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:18, padding:32, maxWidth:520, width:'90%', maxHeight:'80vh', overflowY:'auto' }} onClick={e => e.stopPropagation()}><div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}><h2 style={{ margin:0, fontSize:18, fontWeight:800 }}>Week in Review</h2><button onClick={() => setShowDigest(false)} style={{ background:'none', border:'none', fontSize:20, cursor:'pointer', color:'var(--fg-text3)' }}>x</button></div><div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10, marginBottom:20 }}>{Object.entries({ Messages: digestData.stats?.messages||0, Runs: digestData.stats?.runs||0, Memories: digestData.stats?.memories||0, Threads: digestData.stats?.threads||0 }).map(([k,v]) => (<div key={k} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 16px' }}><div style={{ fontSize:20, fontWeight:800, color:'var(--fg-orange)' }}>{String(v)}</div><div style={{ fontSize:11, color:'var(--fg-text3)' }}>{k}</div></div>))}</div>{(digestData.highlights||[]).map((h: string, i: number) => (<div key={i} style={{ fontSize:13, color:'var(--fg-text)', padding:'6px 0', borderBottom:'1px solid var(--fg-border)' }}>{h}</div>))}<div style={{ display:'flex', gap:8, marginTop:16 }}><div style={{ flex:1, textAlign:'center' }}><div style={{ fontSize:24, fontWeight:900, color:'var(--fg-orange)' }}>{digestData.streak||0}</div><div style={{ fontSize:11, color:'var(--fg-text3)' }}>Day Streak</div></div><div style={{ flex:1, textAlign:'center' }}><div style={{ fontSize:24, fontWeight:900, color:'var(--fg-orange)' }}>{digestData.longestStreak||0}</div><div style={{ fontSize:11, color:'var(--fg-text3)' }}>Best Streak</div></div></div></div></div>)}
     </div>
   );
 }

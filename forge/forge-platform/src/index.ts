@@ -5202,6 +5202,38 @@ function touchStreak(userId: string): { streak: number; longest: number; lastSee
   return { streak, longest, lastSeen: prevSeenForReturn };
 }
 
+// GET /api/digest — Weekly digest: personalized summary of user's Forge activity this week.
+app.get('/api/digest', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const since = new Date(); since.setDate(since.getDate() - 7);
+  const sinceStr = since.toISOString();
+  const messages  = safe(() => (db.prepare("SELECT COUNT(*) as c FROM superagent_messages WHERE user_id=? AND created_at>=?").get(userId, sinceStr) as any).c, 0);
+  const runs      = safe(() => (db.prepare("SELECT COUNT(*) as c FROM nightly_runs WHERE user_id=? AND status='done' AND started_at>=?").get(userId, sinceStr) as any).c, 0);
+  const memories  = safe(() => (db.prepare("SELECT COUNT(*) as c FROM forge_memory WHERE user_id=? AND created_at>=?").get(userId, sinceStr) as any).c, 0);
+  const threads   = safe(() => (db.prepare("SELECT COUNT(*) as c FROM threads WHERE user_id=? AND updated_at>=?").get(userId, sinceStr) as any).c, 0);
+  const topMemories = safe(() => db.prepare("SELECT key, value FROM forge_memory WHERE user_id=? AND created_at>=? ORDER BY created_at DESC LIMIT 3").all(userId, sinceStr) as any[], []);
+  const topThreads  = safe(() => db.prepare("SELECT title, updated_at FROM threads WHERE user_id=? AND updated_at>=? ORDER BY updated_at DESC LIMIT 3").all(userId, sinceStr) as any[], []);
+  const lastRun     = safe(() => db.prepare("SELECT summary, finished_at FROM nightly_runs WHERE user_id=? AND status='done' ORDER BY finished_at DESC LIMIT 1").get(userId) as any, null);
+  // streak
+  const streakRow = safe(() => db.prepare("SELECT login_streak, longest_streak FROM users WHERE id=?").get(userId) as any, null);
+  const highlights: string[] = [];
+  if (messages > 0) highlights.push(`Sent ${messages} message${messages > 1 ? 's' : ''} to Forge`);
+  if (runs > 0) highlights.push(`Completed ${runs} autonomous run${runs > 1 ? 's' : ''}`);
+  if (memories > 0) highlights.push(`Forge learned ${memories} new thing${memories > 1 ? 's' : ''} about you`);
+  if (threads > 0) highlights.push(`Worked in ${threads} conversation${threads > 1 ? 's' : ''}`);
+  if (highlights.length === 0) highlights.push('No activity this week — start a conversation to build momentum.');
+  res.json({ success: true, digest: {
+    week: sinceStr.slice(0, 10),
+    highlights,
+    stats: { messages, runs, memories, threads },
+    topMemories: (topMemories || []).map((m: any) => ({ key: m.key, value: String(m.value).slice(0, 100) })),
+    topThreads: (topThreads || []).map((t: any) => ({ title: t.title || 'Untitled', date: t.updated_at })),
+    lastRunSummary: lastRun?.summary || null,
+    streak: streakRow?.login_streak || 0,
+    longestStreak: streakRow?.longest_streak || 0,
+  }});
+});
+
 // GET /api/intelligence — Forge Intelligence Score: gamified brain health metric.
 app.get('/api/intelligence', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
