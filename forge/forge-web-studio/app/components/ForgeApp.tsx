@@ -3412,6 +3412,16 @@ export default function ForgeApp() {
                     if (d.title) { setActiveThread((prev: any) => prev ? {...prev, title: d.title} : prev); setThreads((prev: any[]) => prev.map((t: any) => t.id===activeThread.id ? {...t, title: d.title} : t)); showToast('Thread titled'); }
                   }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Auto-generate thread title'>AI Title</button>
                 )}
+                {activeThread && messages.length > 0 && (() => {
+                  const allText = messages.map((m: any) => m.content || '').join(' ');
+                  const wordCount = allText.trim().split(/\s+/).filter(Boolean).length;
+                  const readMins = Math.max(1, Math.round(wordCount / 200));
+                  return (
+                    <span style={{ flexShrink:0, fontSize:10, color:'var(--fg-text3)', whiteSpace:'nowrap', padding:'2px 7px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6 }} title={`${wordCount.toLocaleString()} words in this thread`}>
+                      {wordCount.toLocaleString()}w · {readMins}m read
+                    </span>
+                  );
+                })()}
                 {activeThread && messages.length > 0 && (
                   <button onClick={() => {
                     const title = activeThread.title || 'thread';
