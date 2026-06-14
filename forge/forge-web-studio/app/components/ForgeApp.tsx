@@ -4600,7 +4600,23 @@ export default function ForgeApp() {
                           <button onClick={() => setSuperMode('forgeMagic')} title="Magic mode — auto-loads all tools, skills, hooks & connectors" style={{ padding:'3px 8px', background: superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-bg4)', border:`1px solid ${superMode==='forgeMagic' ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: superMode==='forgeMagic' ? '#fff' : 'var(--fg-text3)', fontSize:10, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>✨ Magic</button>
                         </div>
                       </div>
-                      <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                      <div style={{ display:'flex', gap:4, flexShrink:0, alignItems:'center' }}>
+                        {/* Cost estimate chip */}
+                        {!sending && input.trim() && threadStats && (() => {
+                          const inputTokenEst = Math.ceil(input.length / 4);
+                          const contextTokens = threadStats.total_tokens || 0;
+                          const totalIn = contextTokens + inputTokenEst;
+                          const estOut = Math.min(1000, inputTokenEst * 3);
+                          // Look up model pricing from openRouterModels or providerModels
+                          const orModel = openRouterModels.find(m => selectedModel === 'openrouter/'+m.id || selectedModel === m.id);
+                          const priceIn = orModel?.pricing?.prompt ? parseFloat(orModel.pricing.prompt) : null;
+                          const priceOut = orModel?.pricing?.completion ? parseFloat(orModel.pricing.completion) : null;
+                          if (!priceIn || priceIn === 0) return null;
+                          const estCost = (totalIn * priceIn) + (estOut * (priceOut || priceIn));
+                          if (estCost < 0.000001) return null;
+                          const display = estCost < 0.001 ? `~$${(estCost*1000).toFixed(3)}m` : `~$${estCost.toFixed(4)}`;
+                          return <span style={{ fontSize:10, color:'var(--fg-text3)', whiteSpace:'nowrap', padding:'2px 6px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6 }} title={`Est. ${totalIn.toLocaleString()} tokens in + ~${estOut} out`}>💰 {display}</span>;
+                        })()}
                         {sending && (
                           <button
                             onClick={() => { sendAbortRef.current?.abort(); if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; } setSending(false); setTyping(false); sendAbortRef.current = null; setAiElapsed(null); }}
