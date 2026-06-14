@@ -5171,6 +5171,58 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
   } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+
+// POST /api/threads/:id/suggestions — generate 3 follow-up reply chips using LLM
+app.post('/api/threads/:id/suggestions', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const thread = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(req.params.id, userId);
+  if (!thread) return res.status(404).json({ success: false, error: 'Thread not found' });
+  const msgs = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at DESC LIMIT 6').all(req.params.id) as any[];
+  const lastAI = msgs.find((m: any) => m.role === 'assistant');
+  if (!lastAI) return res.json({ success: true, suggestions: [] });
+  try {
+    const userRow = db.prepare('SELECT preferred_model FROM users WHERE id=?').get(userId) as any;
+    const model = userRow?.preferred_model || 'claude-3-5-haiku-20241022';
+    const key = await getUserKey(userId, 'anthropic');
+    if (!key) return res.json({ success: true, suggestions: [] });
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic.default({ apiKey: key });
+    const context = msgs.reverse().map((m: any) => `${m.role}: ${m.content.slice(0,300)}`).join('\n');
+    const resp = await client.messages.create({
+      model: model.startsWith('claude') ? model : 'claude-3-5-haiku-20241022',
+      max_tokens: 200,
+      messages: [{ role: 'user', content: `Given this conversation, generate exactly 3 short follow-up questions or prompts the user might want to ask next. Return ONLY a JSON array of 3 strings, each under 60 chars. No explanation.\n\nConversation:\n${context}` }]
+    });
+    const text = resp.content[0].type === 'text' ? resp.content[0].text.trim() : '[]';
+    const match = text.match(/\[.*\]/s);
+    const suggestions = match ? JSON.parse(match[0]) : [];
+    res.json({ success: true, suggestions: suggestions.slice(0, 3) });
+  } catch (e: any) { res.json({ success: true, suggestions: [] }); }
+});
+
+
+// GET /api/threads/:id/export — export thread as markdown or JSON
+app.get('/api/threads/:id/export', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, userId) as any;
+  if (!thread) return res.status(404).json({ success: false, error: 'Thread not found' });
+  const msgs = db.prepare('SELECT role,content,created_at FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(req.params.id) as any[];
+  const fmt = (req.query.format as string) || 'md';
+  if (fmt === 'json') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="thread-${req.params.id.slice(0,8)}.json"`);
+    return res.json({ thread: { id: thread.id, title: thread.title, created_at: thread.created_at }, messages: msgs });
+  }
+  const lines = [`# ${thread.title || 'Thread'}`, `Exported ${new Date().toISOString().slice(0,10)}`, ''];
+  for (const m of msgs) {
+    const role = m.role === 'user' ? '**You**' : '**Forge**';
+    lines.push(`### ${role}`, `_${m.created_at}_`, '', m.content, '', '---', '');
+  }
+  res.setHeader('Content-Type', 'text/markdown');
+  res.setHeader('Content-Disposition', `attachment; filename="thread-${req.params.id.slice(0,8)}.md"`);
+  res.send(lines.join('\n'));
+});
+
 // GET /api/brain/category/:cat — memories in one category (drill-down).
 app.get('/api/brain/category/:cat', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
