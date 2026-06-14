@@ -3061,6 +3061,14 @@ export default function ForgeApp() {
           <button onClick={() => setSidebarExpanded(!sidebarExpanded)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13, padding:4, opacity:0.6 }}>{sidebarExpanded ? '«' : '◀'}</button>
         </div>
 
+        {/* BYO-Key Savings Banner */}
+        {sidebarExpanded && trustData?.byoSavings > 0 && (
+          <div onClick={() => setMainTab('trust')} style={{ margin:'8px 8px 0', padding:'7px 10px', background:'linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))', border:'1px solid rgba(34,197,94,0.3)', borderRadius:8, cursor:'pointer' }}>
+            <div style={{ fontSize:10, color:'#4ade80', fontWeight:700, letterSpacing:'0.05em' }}>💰 BYO KEY SAVINGS</div>
+            <div style={{ fontSize:15, fontWeight:800, color:'#4ade80', marginTop:1 }}>${(trustData.byoSavings/100).toFixed(2)} <span style={{ fontSize:10, fontWeight:400, color:'rgba(74,222,128,0.7)' }}>vs seat pricing</span></div>
+          </div>
+        )}
+
         {/* Nav tabs — 3-zone Taskade-style */}
         <div style={{ padding:'6px 6px', borderBottom:'1px solid var(--fg-border)', overflowY:'auto', flexShrink:0, maxHeight: sidebarExpanded ? 'calc(100vh - 340px)' : 'calc(100vh - 120px)' }}>
           {/* -- ZONE 1: Core -- */}
@@ -3070,6 +3078,7 @@ export default function ForgeApp() {
             { id:'brain', icon:'🧠', label:'Forge Brain' },
             { id:'trust', icon:'🏆', label:'Trust Ladder' },
             { id:'outcomes', icon:'📊', label:'Outcome Ledger' },
+            { id:'agency', icon:'🏢', label:'Agency Mode' },
             { id:'workspace', icon:'🛠', label:'Workspace' },
             { id:'super', icon:'🌟', label:'SuperAgent' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
