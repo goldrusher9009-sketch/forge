@@ -616,6 +616,8 @@ export default function ForgeApp() {
   // Main tab
   const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'|'agency'|'prompts'>('workspace');
   const [showCmdPalette, setShowCmdPalette] = React.useState(false);
+  const [changelogData, setChangelogData] = React.useState<any[]|null>(null);
+  const [showChangelog, setShowChangelog] = React.useState(false);
   const [cmdQuery, setCmdQuery] = React.useState('');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
@@ -795,6 +797,14 @@ export default function ForgeApp() {
       fetch('/api/checklist', { headers: { Authorization: 'Bearer ' + tok } })
         .then(r => r.json()).then(d => setChecklistData(d.checklist || null))
         .catch(() => {});
+    }
+    if (!changelogData) {
+      fetch('/api/changelog')
+        .then(r => r.json()).then(d => {
+          setChangelogData(d.releases || []);
+          const seen = localStorage.getItem('forge_seen_version');
+          if (d.releases && d.releases[0] && d.releases[0].version !== seen) setShowChangelog(true);
+        }).catch(() => {});
     }
     if (user && !digestData) {
       const tok = localStorage.getItem('forge_token');
@@ -7478,6 +7488,8 @@ export default function ForgeApp() {
         )}
 
         {/* -- Desktop & Files --------------------------------------------- */}
+        {showChangelog && changelogData && (<div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:10001, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => { setShowChangelog(false); if (changelogData[0]) localStorage.setItem('forge_seen_version', changelogData[0].version); }}><div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:18, padding:32, maxWidth:540, width:'90%', maxHeight:'80vh', overflowY:'auto' }} onClick={e => e.stopPropagation()}><div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}><h2 style={{ margin:0, fontSize:18, fontWeight:800 }}>What's New in Forge</h2><button onClick={() => { setShowChangelog(false); if (changelogData[0]) localStorage.setItem('forge_seen_version', changelogData[0].version); }} style={{ background:'none', border:'none', fontSize:20, cursor:'pointer', color:'var(--fg-text3)' }}>x</button></div>{changelogData.map((r: any, i: number) => (<div key={i} style={{ marginBottom:20 }}><div style={{ display:'flex', alignItems:'baseline', gap:10, marginBottom:8 }}><span style={{ fontSize:13, fontWeight:800, color:'var(--fg-orange)' }}>{r.version}</span><span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>{r.title}</span><span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{r.date}</span></div>{r.bullets.map((b: string, j: number) => (<div key={j} style={{ fontSize:12, color:'var(--fg-text2)', padding:'4px 0', borderBottom:'1px solid var(--fg-border)', paddingLeft:12, lineHeight:1.5 }}>{b}</div>))}</div>))}<button onClick={() => { setShowChangelog(false); if (changelogData[0]) localStorage.setItem('forge_seen_version', changelogData[0].version); }} style={{ marginTop:8, padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%' }}>Got it</button></div></div>)}
+
         {showCmdPalette && (() => {
           const cmds = [
             { label: 'New Chat', action: () => { setMainTab('super'); setShowCmdPalette(false); } },

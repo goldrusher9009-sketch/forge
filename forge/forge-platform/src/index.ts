@@ -5315,6 +5315,30 @@ app.get('/api/intelligence', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, intelligence: { score, level: level.label, levelDesc: level.desc, nextLevel: nextLevel?.label || null, nextAt, pct, breakdown: { memories, runs, threads, messages: outcomes, seoPages, approvals } } });
 });
 
+// GET /api/changelog — Parse VERSION.md and return recent releases.
+app.get('/api/changelog', (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const versionPath = path.join(__dirname, '..', '..', '..', 'VERSION.md');
+    const raw = fs.existsSync(versionPath) ? fs.readFileSync(versionPath, 'utf8') : '';
+    const sections = raw.split(/^## /m).slice(1, 6); // last 5 releases
+    const releases = sections.map((s: string) => {
+      const lines = s.trim().split('\n');
+      const header = lines[0] || '';
+      const vMatch = header.match(/^(v[\d.]+)/);
+      const dateMatch = header.match(/(\d{4}-\d{2}-\d{2})/);
+      const titleMatch = header.match(/—\s*(.+?)(?:\s*—|$)/);
+      const bullets = lines.slice(1).filter((l: string) => l.trim().startsWith('-')).slice(0, 5)
+        .map((l: string) => l.replace(/^[\s-]+/, '').replace(/\*\*/g, ''));
+      return { version: vMatch?.[1] || header, date: dateMatch?.[1] || '', title: titleMatch?.[1]?.trim() || '', bullets };
+    });
+    res.json({ success: true, releases });
+  } catch (e) {
+    res.json({ success: true, releases: [] });
+  }
+});
+
 // GET /api/outcomes — Outcome Ledger: counts everything Forge did for the user this month.
 app.get('/api/outcomes', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
