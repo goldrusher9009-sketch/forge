@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'>('workspace');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -736,6 +736,22 @@ export default function ForgeApp() {
   const [autoMenuOpen, setAutoMenuOpen] = useState(false);
   useEffect(() => { if (mainTab === 'forgeco' && user) loadCo(); /* eslint-disable-next-line */ }, [mainTab]);
   useEffect(() => { if (mainTab === 'intelligence' && user) loadIntelligence(); /* eslint-disable-next-line */ }, [mainTab]);
+  useEffect(() => {
+    if (mainTab === 'brief' && user && !briefData && !briefLoading) {
+      setBriefLoading(true); setBriefError('');
+      fetch('/api/brief', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+        .then(r => r.json()).then(d => { setBriefData(d); setBriefLoading(false); })
+        .catch(() => { setBriefError('Failed to load morning brief.'); setBriefLoading(false); });
+    }
+  /* eslint-disable-next-line */ }, [mainTab]);
+  useEffect(() => {
+    if (mainTab === 'brain' && user && !brainData && !brainLoading) {
+      setBrainLoading(true); setBrainError('');
+      fetch('/api/brain/summary', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+        .then(r => r.json()).then(d => { setBrainData(d); setBrainLoading(false); })
+        .catch(() => { setBrainError('Failed to load brain summary.'); setBrainLoading(false); });
+    }
+  /* eslint-disable-next-line */ }, [mainTab]);
   const [multiResponse, setMultiResponse] = useState(false);
   const [multiResponses, setMultiResponses] = useState<{model:string; content:string}[]>([]);
   // Tool calls captured during the current SSE stream — map of msgId -> tool call list
@@ -1005,6 +1021,16 @@ export default function ForgeApp() {
   const [igNodes, setIgNodes] = useState<{id:string;label:string;type:string;weight:number}[]>([]);
   const [igQuery, setIgQuery] = useState('');
   const [igLoading, setIgLoading] = useState(false);
+
+  // Morning Brief state
+  const [briefData, setBriefData] = useState<any>(null);
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [briefError, setBriefError] = useState('');
+
+  // Forge Brain state
+  const [brainData, setBrainData] = useState<any>(null);
+  const [brainLoading, setBrainLoading] = useState(false);
+  const [brainError, setBrainError] = useState('');
 
   // Agent Swarm state
   const [swarmTask, setSwarmTask] = useState('');
@@ -2975,6 +3001,8 @@ export default function ForgeApp() {
           {/* -- ZONE 1: Core -- */}
           {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>Core</div>}
           {([
+            { id:'brief', icon:'☀️', label:'Morning Brief' },
+            { id:'brain', icon:'🧠', label:'Forge Brain' },
             { id:'workspace', icon:'🛠', label:'Workspace' },
             { id:'super', icon:'🌟', label:'SuperAgent' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
@@ -8065,6 +8093,148 @@ export default function ForgeApp() {
           </div>
           );
         })()}
+
+        {/* ── Morning Brief ───────────────────────────────────────── */}
+        {mainTab === 'brief' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>☀️</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Morning Brief</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Your daily Forge snapshot — streaks, changes, and top action.</p>
+                </div>
+                <button onClick={() => { setBriefData(null); setBriefLoading(true); setBriefError(''); fetch('/api/brief',{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>{setBriefData(d);setBriefLoading(false);}).catch(()=>{setBriefError('Failed.');setBriefLoading(false);}); }} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻ Refresh</button>
+              </div>
+              {briefLoading && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading…</div>}
+              {briefError && <div style={{ textAlign:'center', padding:40, color:'#f87171', fontSize:13 }}>{briefError}</div>}
+              {briefData && !briefLoading && (() => {
+                const b = briefData.brief || briefData;
+                return (
+                  <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                    {/* Streaks */}
+                    {b.streaks && (
+                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>🔥 Streaks</div>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:10 }}>
+                          {Object.entries(b.streaks).map(([k,v]:any) => (
+                            <div key={k} style={{ background:'var(--fg-bg3)', borderRadius:10, padding:'12px 14px' }}>
+                              <div style={{ fontSize:20, fontWeight:800, color:'var(--fg-orange)' }}>{v}</div>
+                              <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2 }}>{k.replace(/_/g,' ')}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Delta */}
+                    {b.delta && (
+                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>📊 Since Last Visit</div>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:10 }}>
+                          {Object.entries(b.delta).map(([k,v]:any) => (
+                            <div key={k} style={{ background:'var(--fg-bg3)', borderRadius:10, padding:'12px 14px' }}>
+                              <div style={{ fontSize:20, fontWeight:800, color:'#6366f1' }}>{typeof v === 'number' && v > 0 ? `+${v}` : String(v)}</div>
+                              <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2 }}>{k.replace(/_/g,' ')}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Priority Action */}
+                    {b.priority && (
+                      <div style={{ background:'rgba(255,31,53,0.08)', border:'1px solid rgba(255,31,53,0.25)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-orange)', marginBottom:8 }}>⚡ Priority Action</div>
+                        <div style={{ fontSize:15, color:'var(--fg-text)', fontWeight:500 }}>{typeof b.priority === 'string' ? b.priority : JSON.stringify(b.priority)}</div>
+                      </div>
+                    )}
+                    {/* Headline / fallback */}
+                    {b.headline && (
+                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:15, color:'var(--fg-text2)' }}>{b.headline}</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* ── Forge Brain ─────────────────────────────────────────── */}
+        {mainTab === 'brain' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:820, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🧠</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Forge Brain</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Everything Forge knows about you — categorised, weighted, and evolving.</p>
+                </div>
+                <button onClick={() => { setBrainData(null); setBrainLoading(true); setBrainError(''); fetch('/api/brain/summary',{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>{setBrainData(d);setBrainLoading(false);}).catch(()=>{setBrainError('Failed.');setBrainLoading(false);}); }} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻ Refresh</button>
+              </div>
+              {brainLoading && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading…</div>}
+              {brainError && <div style={{ textAlign:'center', padding:40, color:'#f87171', fontSize:13 }}>{brainError}</div>}
+              {brainData && !brainLoading && (() => {
+                const bd = brainData.summary || brainData;
+                const cats: Record<string,any[]> = bd.by_category || {};
+                const top: any[] = bd.top_insights || [];
+                return (
+                  <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                    {/* Totals */}
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:12 }}>
+                      {[
+                        { label:'Total Memories', value: bd.total ?? '--', color:'var(--fg-orange)' },
+                        { label:'Avg Strength', value: bd.avg_strength != null ? Number(bd.avg_strength).toFixed(2) : '--', color:'#6366f1' },
+                        { label:'Categories', value: Object.keys(cats).length, color:'#22c55e' },
+                      ].map(s => (
+                        <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, textAlign:'center' }}>
+                          <div style={{ fontSize:26, fontWeight:800, color:s.color }}>{String(s.value)}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:4 }}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Headline */}
+                    {bd.headline && (
+                      <div style={{ background:'rgba(99,102,241,0.08)', border:'1px solid rgba(99,102,241,0.25)', borderRadius:12, padding:16 }}>
+                        <div style={{ fontSize:14, color:'var(--fg-text)', fontStyle:'italic' }}>"{bd.headline}"</div>
+                      </div>
+                    )}
+                    {/* Top Insights */}
+                    {top.length > 0 && (
+                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>⭐ Top Insights</div>
+                        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                          {top.map((m:any, i:number) => (
+                            <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start', padding:'10px 12px', background:'var(--fg-bg3)', borderRadius:8 }}>
+                              <span style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', flexShrink:0, marginTop:1 }}>{m.category || 'general'}</span>
+                              <span style={{ fontSize:13, color:'var(--fg-text2)', flex:1 }}>{m.content || m.key}</span>
+                              <span style={{ fontSize:11, color:'var(--fg-text3)', flexShrink:0 }}>{m.strength != null ? Number(m.strength).toFixed(1) : ''}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* By Category */}
+                    {Object.keys(cats).length > 0 && (
+                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>📂 By Category</div>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:8 }}>
+                          {Object.entries(cats).map(([cat, items]:any) => (
+                            <div key={cat} style={{ background:'var(--fg-bg3)', borderRadius:8, padding:'10px 14px' }}>
+                              <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', textTransform:'capitalize' }}>{cat}</div>
+                              <div style={{ fontSize:20, fontWeight:800, color:'#6366f1', marginTop:2 }}>{Array.isArray(items) ? items.length : items}</div>
+                              <div style={{ fontSize:11, color:'var(--fg-text3)' }}>memories</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
