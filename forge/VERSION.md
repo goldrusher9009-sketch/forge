@@ -1,4 +1,13 @@
-# Forge Platform — Version History
+# Forge Platform
+
+## v7.3 — 2026-06-14 — Moat Deepening: Savings, Activity Feed, Vertical Packs
+- **GET /api/savings** — BYO-key savings calculator: compares user's actual provider cost vs Forge seat markup per-1k-tokens. Returns savedLabel, byProvider breakdown, headline. Shown as green savings card in Outcome Ledger.
+- **Outcome Ledger savings card** — live "$X saved vs seat pricing" banner with per-provider token breakdown rendered in the outcomes panel.
+- **GET /api/activity** — unified activity feed: last N events across nightly_runs, forge_memory, pending_approvals, seo_pages, threads, sorted by timestamp. Powers homepage "Recent Activity" widget.
+- **Homepage Recent Activity widget** — shown in empty workspace when user has activity history; fetched on mount, renders icon + title + body + date for each event.
+- **Marketplace vertical seed packs** — 6 industry packs (Law, Restaurant, E-Commerce, Trades, Agency, Healthcare) seeded into marketplace_listings on backend startup. Frontend adds 'vertical' category tab + browse packs featured box.
+- **Onboarding checklist** — 3-step setup guide shown in empty workspace when no API keys configured; step 2 links directly to platforms tab.
+- **ForgeApp.tsx BOM fix** — replaced all template literal ternaries in JSX style props with plain string ternaries to prevent TSC cascade errors in BOM-encoded file. — Version History
 
 ## v7.2 — 2026-06-14 — PHASE 3: Forge Brain v2 (the compounding-memory MOAT)
 - **Categories** — forge_memory gains category (customer/pricing/voice/rule/decision/product/ops/general), confidence, last_reinforced_at (idempotent migration). Deterministic categorizer on write (no LLM cost).
