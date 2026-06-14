@@ -5231,6 +5231,63 @@ app.get('/api/outcomes', requireAuth, (req: AuthRequest, res) => {
   });
 });
 
+// ── Referral system ──────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS referral_codes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL UNIQUE,
+  code TEXT NOT NULL UNIQUE,
+  signups INTEGER NOT NULL DEFAULT 0,
+  credits_earned INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS referral_signups (
+  id TEXT PRIMARY KEY,
+  referrer_id TEXT NOT NULL,
+  referee_id TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+function getReferralCode(userId: string): string {
+  const existing = db.prepare('SELECT code FROM referral_codes WHERE user_id=?').get(userId) as any;
+  if (existing) return existing.code;
+  const code = userId.slice(0,8).toUpperCase();
+  db.prepare('INSERT OR IGNORE INTO referral_codes (id,user_id,code) VALUES (?,?,?)').run(uuidv4(), userId, code);
+  return code;
+}
+
+// GET /api/referral — get my referral code + stats
+app.get('/api/referral', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const code = getReferralCode(userId);
+  const row = db.prepare('SELECT signups, credits_earned FROM referral_codes WHERE user_id=?').get(userId) as any;
+  const recent = db.prepare('SELECT referee_id, created_at FROM referral_signups WHERE referrer_id=? ORDER BY created_at DESC LIMIT 10').all(userId) as any[];
+  res.json({
+    success: true,
+    referral: {
+      code,
+      link: (process.env.FRONTEND_URL || 'https://forge-sand-two.vercel.app') + '?ref=' + code,
+      signups: row?.signups || 0,
+      creditsEarned: row?.credits_earned || 0,
+      recent,
+    }
+  });
+});
+
+// POST /api/referral/track — called on register when ?ref= present
+app.post('/api/referral/track', requireAuth, (req: AuthRequest, res) => {
+  const refereeId = req.user!.sub;
+  const { code } = req.body;
+  if (!code) { res.status(400).json({ success: false, error: 'Missing code' }); return; }
+  const ref = db.prepare('SELECT id, user_id FROM referral_codes WHERE code=?').get(code.toUpperCase()) as any;
+  if (!ref) { res.status(404).json({ success: false, error: 'Invalid referral code' }); return; }
+  if (ref.user_id === refereeId) { res.status(400).json({ success: false, error: 'Cannot refer yourself' }); return; }
+  const already = db.prepare('SELECT id FROM referral_signups WHERE referrer_id=? AND referee_id=?').get(ref.user_id, refereeId);
+  if (already) { res.json({ success: true, message: 'Already tracked' }); return; }
+  db.prepare('INSERT INTO referral_signups (id,referrer_id,referee_id) VALUES (?,?,?)').run(uuidv4(), ref.user_id, refereeId);
+  db.prepare('UPDATE referral_codes SET signups=signups+1, credits_earned=credits_earned+100 WHERE user_id=?').run(ref.user_id);
+  res.json({ success: true, message: 'Referral tracked' });
+});
+
 // GET /api/savings — BYO-key savings: how much user saved vs. paying per-token at Forge markup.
 app.get('/api/savings', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;

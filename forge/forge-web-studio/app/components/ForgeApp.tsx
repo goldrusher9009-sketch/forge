@@ -776,6 +776,12 @@ export default function ForgeApp() {
         .then(r => r.json()).then(d => setActivityFeed(d.activity || []))
         .catch(() => setActivityFeed([]));
     }
+    if (mainTab === 'platforms' && user && !referralData) {
+      const tok = localStorage.getItem('forge_token');
+      fetch('/api/referral', { headers: { Authorization: 'Bearer ' + tok } })
+        .then(r => r.json()).then(d => setReferralData(d.referral || null))
+        .catch(() => {});
+    }
   /* eslint-disable-next-line */ }, [mainTab]);
   useEffect(() => {
     if (mainTab === 'agency' && user && !agencyLoaded) {
@@ -1076,6 +1082,7 @@ export default function ForgeApp() {
   const [outcomesError, setOutcomesError] = useState('');
   const [savingsData, setSavingsData] = useState<any>(null);
   const [activityFeed, setActivityFeed] = useState<any[]|null>(null);
+  const [referralData, setReferralData] = useState<any>(null);
 
   // Agency / White-label state
   const [agencyTab, setAgencyTab] = useState<'overview'|'clients'|'new'>('overview');
@@ -5836,19 +5843,19 @@ export default function ForgeApp() {
                 </div>
                 <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
                   <div style={{ flex:1, minWidth:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:'10px 14px', fontFamily:'monospace', fontSize:13, color:'var(--fg-orange)' }}>
-                    {`https://forge-sand-two.vercel.app?ref=${user?.email?.split('@')[0] || 'user'}`}
+                    {referralData?.link || ('https://forge-sand-two.vercel.app?ref=' + (user?.email?.split('@')[0] || 'user'))}
                   </div>
-                  <button onClick={() => { navigator.clipboard.writeText(`https://forge-sand-two.vercel.app?ref=${user?.email?.split('@')[0] || 'user'}`); showToast('🔗 Referral link copied'); }}
+                  <button onClick={() => { navigator.clipboard.writeText(referralData?.link || ('https://forge-sand-two.vercel.app?ref=' + (user?.email?.split('@')[0] || 'user'))); showToast('Referral link copied'); }}
                     style={{ padding:'10px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
-                    📋 Copy Link
+                    Copy Link
                   </button>
-                  <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('I use Forge AI for multi-model agents, swarms, and deep research. BYOK = no markup. Try it free: https://forge-sand-two.vercel.app')}`, '_blank')}
+                  <button onClick={() => window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('I use Forge AI for multi-model agents, swarms, and deep research. BYOK = no markup. Try it free: https://forge-sand-two.vercel.app'), '_blank')}
                     style={{ padding:'10px 20px', background:'#1da1f2', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
-                    ↗ Share
+                    Share
                   </button>
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginTop:16 }}>
-                  {[{icon:'👥',label:'Friends Referred',val:'0'},{icon:'🎉',label:'Tokens Earned',val:'0'},{icon:'💰',label:'Credits Value',val:'$0.00'}].map(s => (
+                  {[{icon:'👥',label:'Friends Referred',val:String(referralData?.signups||0)},{icon:'🎁',label:'Credits Earned',val:String(referralData?.creditsEarned||0)},{icon:'🔗',label:'Your Code',val:referralData?.code||'---'}].map(s => (
                     <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14, textAlign:'center' }}>
                       <div style={{ fontSize:20, marginBottom:4 }}>{s.icon}</div>
                       <div style={{ fontSize:18, fontWeight:800, color:'var(--fg-orange)' }}>{s.val}</div>
