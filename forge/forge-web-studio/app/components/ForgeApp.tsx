@@ -8497,18 +8497,26 @@ export default function ForgeApp() {
               </div>
               {outcomesLoading && <div style={{ textAlign:'center', color:'var(--fg-text3)', padding:40 }}>Loading...</div>}
               {outcomesError && <div style={{ color:'#f87171', padding:16, background:'rgba(248,113,113,0.08)', borderRadius:10 }}>{outcomesError}</div>}
-              {outcomesData && (() => {
-                const d = outcomesData;
+              {outcomesData?.outcomes && (() => {
+                const o = outcomesData.outcomes;
+                const b = o.breakdown || {};
                 const items: {icon:string;label:string;value:string|number;color:string;desc:string}[] = [
-                  {icon:'💬',label:'Messages',value:d.messages||0,color:'#6366f1',desc:'Conversations processed'},
-                  {icon:'🤖',label:'Autonomous Runs',value:d.autonomousRuns||0,color:'var(--fg-orange)',desc:'Tasks without prompting'},
-                  {icon:'🧠',label:'Memories Learned',value:d.memoriesLearned||0,color:'#22c55e',desc:'New facts retained'},
-                  {icon:'✅',label:'Approvals',value:d.approvalsHandled||0,color:'#f59e0b',desc:'Decisions handled'},
-                  {icon:'📄',label:'SEO Pages',value:d.seoPages||0,color:'#ec4899',desc:'Pages generated'},
-                  {icon:'🔢',label:'Tokens',value:d.tokensProcessed ? Math.round(d.tokensProcessed/1000)+'k' : '0',color:'var(--fg-text2)',desc:'LLM tokens used'},
+                  {icon:'💬',label:'Messages',value:b.messages||0,color:'#6366f1',desc:'Conversations processed'},
+                  {icon:'🤖',label:'Autonomous Runs',value:b.autonomousRuns||0,color:'var(--fg-orange)',desc:'Tasks without prompting'},
+                  {icon:'🧠',label:'Memories Learned',value:b.memoriesLearned||0,color:'#22c55e',desc:'New facts retained'},
+                  {icon:'✅',label:'Approvals',value:b.approvalsHandled||0,color:'#f59e0b',desc:'Decisions handled'},
+                  {icon:'📄',label:'SEO Pages',value:b.seoPages||0,color:'#ec4899',desc:'Pages generated'},
+                  {icon:'🔢',label:'Tokens',value:b.tokensProcessed ? Math.round(b.tokensProcessed/1000)+'k' : '0',color:'var(--fg-text2)',desc:'LLM tokens used'},
                 ];
                 return (
                   <div>
+                    <div style={{ background:'linear-gradient(135deg,rgba(255,31,53,0.12),rgba(99,102,241,0.08))', border:'1px solid rgba(255,31,53,0.2)', borderRadius:14, padding:22, marginBottom:20, display:'flex', alignItems:'center', gap:16 }}>
+                      <div style={{ fontSize:48, fontWeight:900, color:'var(--fg-orange)', lineHeight:1 }}>{o.total||0}</div>
+                      <div>
+                        <div style={{ fontSize:16, fontWeight:700, color:'var(--fg-text)', marginBottom:3 }}>{o.headline || 'Actions this month'}</div>
+                        <div style={{ fontSize:12, color:'var(--fg-text3)' }}>{o.period?.label || 'This month'}</div>
+                      </div>
+                    </div>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
                       {items.map(item=>(
                         <div key={item.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
@@ -8518,10 +8526,10 @@ export default function ForgeApp() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ background:'rgba(255,31,53,0.05)', border:'1px solid rgba(255,31,53,0.12)', borderRadius:12, padding:18 }}>
-                      <div style={{ fontWeight:700, fontSize:14, color:'var(--fg-text)', marginBottom:6 }}>This Month</div>
+                    <div style={{ background:'rgba(34,197,94,0.05)', border:'1px solid rgba(34,197,94,0.15)', borderRadius:12, padding:18 }}>
+                      <div style={{ fontWeight:700, fontSize:13, color:'#22c55e', marginBottom:6 }}>Monthly Summary</div>
                       <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.65 }}>
-                        Forge processed <strong>{(d.messages||0).toLocaleString()}</strong> messages, ran <strong>{d.autonomousRuns||0}</strong> autonomous tasks, and learned <strong>{d.memoriesLearned||0}</strong> memory entries. Total: <strong>{d.tokensProcessed ? Math.round(d.tokensProcessed/1000)+'k' : '0'}</strong> tokens.
+                        Forge processed <strong>{(b.messages||0).toLocaleString()}</strong> messages, ran <strong>{b.autonomousRuns||0}</strong> autonomous tasks, and learned <strong>{b.memoriesLearned||0}</strong> memory entries. Total: <strong>{b.tokensProcessed ? Math.round(b.tokensProcessed/1000)+'k' : '0'}</strong> tokens processed.
                       </div>
                     </div>
                   </div>
