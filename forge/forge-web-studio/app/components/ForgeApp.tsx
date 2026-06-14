@@ -810,6 +810,12 @@ export default function ForgeApp() {
         .then(r => r.json()).then(d => { setAnalyticsData(d); setAnalyticsLoading(false); })
         .catch(() => setAnalyticsLoading(false));
     }
+    if (user && notifications.length === 0) {
+      const tok = localStorage.getItem('forge_token');
+      fetch('/api/notifications', { headers: { Authorization: 'Bearer ' + tok } })
+        .then(r => r.json()).then(d => { setNotifications(d.notifications || []); setNotifUnread(d.unread || 0); })
+        .catch(() => {});
+    }
     if (user && activityFeed === null) {
       const tok = localStorage.getItem('forge_token');
       fetch('/api/activity?limit=8', { headers: { Authorization: 'Bearer ' + tok } })
@@ -1187,6 +1193,9 @@ export default function ForgeApp() {
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifUnread, setNotifUnread] = useState(0);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [checklistData, setChecklistData] = React.useState<any>(null);
   const [savingsData, setSavingsData] = useState<any>(null);
   const [activityFeed, setActivityFeed] = useState<any[]|null>(null);
@@ -3801,6 +3810,49 @@ export default function ForgeApp() {
                   <button onClick={() => { setCompareMode(true); setCompareResults([]); if (selectedModel) setCompareModels([selectedModel]); }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Compare models side-by-side'>
                     ⚖️ Compare
                   </button>
+                )}
+                {user && (
+                  <div style={{ position:'relative', flexShrink:0 }}>
+                    <button onClick={() => setShowNotifPanel(p => !p)} style={{ padding:'2px 8px', background: showNotifPanel ? 'rgba(255,31,53,0.12)' : 'var(--fg-bg3)', border:`1px solid ${showNotifPanel ? 'var(--fg-orange)' : 'var(--fg-border)'}`, borderRadius:6, color: showNotifPanel ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:13, cursor:'pointer', position:'relative' }} title='Notifications'>
+                      🔔
+                      {notifUnread > 0 && <span style={{ position:'absolute', top:-4, right:-4, minWidth:15, height:15, borderRadius:8, background:'var(--fg-orange)', color:'#fff', fontSize:9, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px' }}>{notifUnread > 9 ? '9+' : notifUnread}</span>}
+                    </button>
+                    {showNotifPanel && (
+                      <div style={{ position:'absolute', top:'calc(100% + 8px)', right:0, width:320, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,0.35)', zIndex:9999, overflow:'hidden' }}>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', borderBottom:'1px solid var(--fg-border)' }}>
+                          <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🔔 Notifications</span>
+                          {notifUnread > 0 && (
+                            <button onClick={() => {
+                              const tok = localStorage.getItem('forge_token');
+                              fetch('/api/notifications/read-all', { method:'POST', headers:{ Authorization:'Bearer '+tok } }).then(() => { setNotifications(n => n.map(x => ({...x, read:1}))); setNotifUnread(0); }).catch(()=>{});
+                            }} style={{ fontSize:10, color:'var(--fg-orange)', background:'none', border:'none', cursor:'pointer', fontWeight:600 }}>Mark all read</button>
+                          )}
+                        </div>
+                        <div style={{ maxHeight:320, overflowY:'auto' }}>
+                          {notifications.length === 0 ? (
+                            <div style={{ textAlign:'center', padding:'32px 16px', color:'var(--fg-text3)', fontSize:13 }}>No notifications yet</div>
+                          ) : notifications.map((n: any) => {
+                            const typeColor: Record<string,string> = { success:'#22c55e', warning:'#f59e0b', error:'#f87171', info:'#6366f1' };
+                            const typeIcon: Record<string,string> = { success:'✅', warning:'⚠️', error:'❌', info:'ℹ️' };
+                            return (
+                              <div key={n.id} style={{ display:'flex', gap:10, padding:'11px 14px', borderBottom:'1px solid var(--fg-border)', background: n.read ? 'transparent' : 'rgba(255,31,53,0.04)', position:'relative' }}>
+                                <span style={{ fontSize:16, flexShrink:0, marginTop:1 }}>{typeIcon[n.type] || 'ℹ️'}</span>
+                                <div style={{ flex:1, minWidth:0 }}>
+                                  <div style={{ fontSize:12, fontWeight:700, color: typeColor[n.type] || 'var(--fg-text)', marginBottom:2 }}>{n.title}</div>
+                                  {n.body && <div style={{ fontSize:11, color:'var(--fg-text3)', lineHeight:1.4 }}>{n.body}</div>}
+                                  <div style={{ fontSize:10, color:'var(--fg-text3)', marginTop:4 }}>{new Date(n.created_at).toLocaleString()}</div>
+                                </div>
+                                <button onClick={() => {
+                                  const tok = localStorage.getItem('forge_token');
+                                  fetch(`/api/notifications/${n.id}`, { method:'DELETE', headers:{ Authorization:'Bearer '+tok } }).then(() => { setNotifications(prev => prev.filter(x => x.id !== n.id)); if (!n.read) setNotifUnread(u => Math.max(0, u-1)); }).catch(()=>{});
+                                }} style={{ position:'absolute', top:8, right:8, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14, lineHeight:1 }}>×</button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
                 {/* Mini sparkline */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
