@@ -616,6 +616,7 @@ export default function ForgeApp() {
   // Main tab
   const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'|'agency'|'prompts'>('workspace');
   const [showCmdPalette, setShowCmdPalette] = React.useState(false);
+  const [showShortcuts, setShowShortcuts] = React.useState(false);
   const [changelogData, setChangelogData] = React.useState<any[]|null>(null);
   const [showChangelog, setShowChangelog] = React.useState(false);
   const [notifData, setNotifData] = React.useState<any>(null);
@@ -644,7 +645,8 @@ export default function ForgeApp() {
     window.addEventListener('resize', check);
     const handleCmdK = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCmdPalette(p => !p); setCmdQuery(''); setCmdIdx(0); }
-      if (e.key === 'Escape') { setShowCmdPalette(false); }
+      if (e.key === '?' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) { e.preventDefault(); setShowShortcuts(p => !p); }
+      if (e.key === 'Escape') { setShowCmdPalette(false); setShowShortcuts(false); }
       if (e.key === 'ArrowDown') { e.preventDefault(); setCmdIdx(p => { const n = Math.min(p+1, cmdFilteredRef.current.length-1); cmdIdxRef.current=n; return n; }); }
       if (e.key === 'ArrowUp') { e.preventDefault(); setCmdIdx(p => { const n = Math.max(p-1, 0); cmdIdxRef.current=n; return n; }); }
       if (e.key === 'Enter' && cmdFilteredRef.current.length > 0) { const fn = cmdFilteredRef.current[cmdIdxRef.current]; if (fn) fn.action(); }
@@ -7653,6 +7655,50 @@ export default function ForgeApp() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* -- Keyboard Shortcuts Modal ---------------------------------------- */}
+        {showShortcuts && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:10002, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowShortcuts(false)}>
+            <div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:18, padding:28, maxWidth:460, width:'90%', maxHeight:'80vh', overflowY:'auto' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+                <h2 style={{ margin:0, fontSize:17, fontWeight:800 }}>⌨️ Keyboard Shortcuts</h2>
+                <button onClick={() => setShowShortcuts(false)} style={{ background:'none', border:'none', fontSize:20, cursor:'pointer', color:'var(--fg-text3)' }}>×</button>
+              </div>
+              {[
+                { section: 'Navigation', items: [
+                  { key: 'Ctrl+K', desc: 'Open command palette' },
+                  { key: '?', desc: 'Show this shortcuts panel' },
+                  { key: 'Esc', desc: 'Close modals / palettes' },
+                ]},
+                { section: 'Messaging', items: [
+                  { key: 'Enter', desc: 'Send message' },
+                  { key: 'Shift+Enter', desc: 'New line in message' },
+                  { key: '/', desc: 'Trigger prompt library in input' },
+                ]},
+                { section: 'Command Palette (Ctrl+K)', items: [
+                  { key: '↑ / ↓', desc: 'Navigate commands' },
+                  { key: 'Enter', desc: 'Execute selected command' },
+                  { key: 'Esc', desc: 'Close palette' },
+                ]},
+                { section: 'Threads', items: [
+                  { key: 'Ctrl+N', desc: 'New thread (via Cmd+K → New Thread)' },
+                  { key: 'Focus mode', desc: '⊟ button hides sidebar + right panel' },
+                ]},
+              ].map(({ section, items }) => (
+                <div key={section} style={{ marginBottom:18 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>{section}</div>
+                  {items.map(({ key, desc }) => (
+                    <div key={key} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 0', borderBottom:'1px solid var(--fg-border)' }}>
+                      <span style={{ fontSize:12, color:'var(--fg-text3)' }}>{desc}</span>
+                      <kbd style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, padding:'2px 8px', fontSize:11, fontFamily:'monospace', color:'var(--fg-text)', fontWeight:700, whiteSpace:'nowrap' }}>{key}</kbd>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <div style={{ marginTop:8, fontSize:11, color:'var(--fg-text3)', textAlign:'center' }}>Press <kbd style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:4, padding:'1px 5px', fontSize:10, fontFamily:'monospace' }}>?</kbd> or <kbd style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:4, padding:'1px 5px', fontSize:10, fontFamily:'monospace' }}>Esc</kbd> to close</div>
             </div>
           </div>
         )}

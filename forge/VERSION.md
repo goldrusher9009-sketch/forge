@@ -1,5 +1,15 @@
 # Forge Platform
 
+## v7.6 — 2026-06-14 — UX Polish: Export, Profile, Chips, Sparkline, Pin, Reactions, Focus
+- **Thread Export** — download any thread as a Markdown file with one click
+- **Profile card** — avatar, email, join date, plan tier shown at top of Settings
+- **Smart quick-reply chips** — context-aware follow-up suggestions after assistant replies
+- **7-day token sparkline** — bar chart on workspace home shows daily usage trend
+- **Pin messages** — star important messages; `/api/messages/:id/pin` + GET pinned endpoint
+- **Message reactions** — 👍 ❤️ ⭐ emoji reactions on assistant messages; `/api/messages/:id/react`
+- **Focus mode** — ⊟ button collapses sidebar + right panel for distraction-free writing
+- **Cmd+K keyboard nav** — arrow keys highlight commands, Enter executes, mouse hover syncs index
+
 ## v7.5 — 2026-06-14 — UX Moat: Prompts, Cmd+K, Checklist, AI Title, Changelog, Notifs
 - **Prompt Library** — save/search/use/delete prompts; `/api/prompts` full CRUD; inserts into SuperAgent input
 - **Cmd+K Command Palette** — 12 nav commands, fuzzy filter, Escape to close, discoverable via footer hint
