@@ -4221,6 +4221,29 @@ export default function ForgeApp() {
                         </div>
                       );
                     })()}
+                    {/* Smart quick-reply chips — shows after assistant responds */}
+                    {forgeMode !== 'copilot' && !sending && messages.length > 1 && messages[messages.length-1]?.role === 'assistant' && !input && (
+                      <div style={{ display:'flex', gap:5, padding:'4px 0 6px', flexWrap:'wrap' }}>
+                        {(() => {
+                          const lastContent = String(messages[messages.length-1]?.content||'').toLowerCase();
+                          const chips: string[] = [];
+                          if (lastContent.includes('step') || lastContent.includes('process') || lastContent.includes('how to')) chips.push('Show me an example');
+                          if (lastContent.includes('option') || lastContent.includes('approach') || lastContent.includes('could')) chips.push('Which do you recommend?');
+                          if (lastContent.length > 300) chips.push('Summarize that');
+                          chips.push('Tell me more');
+                          if (lastContent.includes('code') || lastContent.includes('```')) chips.push('Explain this code');
+                          chips.push('What should I do next?');
+                          return chips.slice(0,4).map(s => (
+                            <button key={s} onClick={() => { setInput(s); textareaRef.current?.focus(); }}
+                              style={{ fontSize:11, padding:'3px 10px', borderRadius:12, background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', color:'var(--fg-text3)', cursor:'pointer', transition:'all 0.15s' }}
+                              onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.background='var(--fg-bg3)';}}
+                              onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.background='var(--fg-bg4)';}}>
+                              {s}
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    )}
                     {/* Co-Pilot mode suggestion strip */}
                     {forgeMode === 'copilot' && messages.length > 0 && (
                       <div style={{ display:'flex', gap:6, padding:'4px 0 6px', flexWrap:'wrap' }}>
