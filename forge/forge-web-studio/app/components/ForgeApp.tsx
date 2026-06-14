@@ -763,8 +763,11 @@ export default function ForgeApp() {
   useEffect(() => {
     if (mainTab === 'outcomes' && user && !outcomesData && !outcomesLoading) {
       setOutcomesLoading(true); setOutcomesError('');
-      fetch('/api/outcomes', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
-        .then(r => r.json()).then(d => { setOutcomesData(d); setOutcomesLoading(false); })
+      const tok = localStorage.getItem('forge_token');
+      Promise.all([
+        fetch('/api/outcomes', { headers: { Authorization: 'Bearer ' + tok } }).then(r => r.json()),
+        fetch('/api/savings', { headers: { Authorization: 'Bearer ' + tok } }).then(r => r.json()),
+      ]).then(([od, sd]) => { setOutcomesData(od); setSavingsData(sd); setOutcomesLoading(false); })
         .catch(() => { setOutcomesError('Failed to load outcomes.'); setOutcomesLoading(false); });
     }
   /* eslint-disable-next-line */ }, [mainTab]);
@@ -1065,6 +1068,7 @@ export default function ForgeApp() {
   const [outcomesData, setOutcomesData] = useState<any>(null);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
   const [outcomesError, setOutcomesError] = useState('');
+  const [savingsData, setSavingsData] = useState<any>(null);
 
   // Agency / White-label state
   const [agencyTab, setAgencyTab] = useState<'overview'|'clients'|'new'>('overview');
@@ -8551,12 +8555,31 @@ export default function ForgeApp() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ background:'rgba(34,197,94,0.05)', border:'1px solid rgba(34,197,94,0.15)', borderRadius:12, padding:18 }}>
+                    <div style={{ background:'rgba(34,197,94,0.05)', border:'1px solid rgba(34,197,94,0.15)', borderRadius:12, padding:18, marginBottom:12 }}>
                       <div style={{ fontWeight:700, fontSize:13, color:'#22c55e', marginBottom:6 }}>Monthly Summary</div>
                       <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.65 }}>
                         Forge processed <strong>{(b.messages||0).toLocaleString()}</strong> messages, ran <strong>{b.autonomousRuns||0}</strong> autonomous tasks, and learned <strong>{b.memoriesLearned||0}</strong> memory entries. Total: <strong>{b.tokensProcessed ? Math.round(b.tokensProcessed/1000)+'k' : '0'}</strong> tokens processed.
                       </div>
                     </div>
+                    {savingsData?.savings && (() => {
+                      const sv = savingsData.savings;
+                      return (
+                        <div style={{ background:'linear-gradient(135deg,rgba(34,197,94,0.1),rgba(99,102,241,0.06))', border:'1px solid rgba(34,197,94,0.25)', borderRadius:14, padding:22, display:'flex', alignItems:'center', gap:20 }}>
+                          <div style={{ fontSize:44, fontWeight:900, color:'#22c55e', lineHeight:1, minWidth:80 }}>{sv.savedLabel}</div>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontSize:15, fontWeight:700, color:'var(--fg-text)', marginBottom:4 }}>Saved with your own API keys</div>
+                            <div style={{ fontSize:13, color:'var(--fg-text3)', lineHeight:1.6 }}>{sv.headline}</div>
+                            <div style={{ display:'flex', gap:16, marginTop:10, flexWrap:'wrap' }}>
+                              {(sv.byProvider||[]).map((p:any) => (
+                                <div key={p.provider} style={{ background:'rgba(0,0,0,0.12)', borderRadius:8, padding:'4px 10px', fontSize:11, color:'var(--fg-text2)' }}>
+                                  <strong style={{ textTransform:'capitalize' }}>{p.provider}</strong>: {Math.round((p.tokens||0)/1000)}k tokens — saved ${p.saved.toFixed(3)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })()}

@@ -5231,6 +5231,47 @@ app.get('/api/outcomes', requireAuth, (req: AuthRequest, res) => {
   });
 });
 
+// GET /api/savings — BYO-key savings: how much user saved vs. paying per-token at Forge markup.
+app.get('/api/savings', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const COST_PER_1K: Record<string, number> = {
+    anthropic: 0.009, openai: 0.007, gemini: 0.0005,
+    groq: 0.0004, mistral: 0.003, openrouter: 0.005,
+  };
+  const FORGE_SEAT_COST_PER_1K = 0.098;
+  const rows = db.prepare(
+    'SELECT provider, SUM(total_tokens) as tokens FROM usage_logs WHERE user_id=? GROUP BY provider'
+  ).all(userId) as any[];
+  let actualCost = 0;
+  let forgeSeatCost = 0;
+  const byProvider: any[] = [];
+  for (const r of rows) {
+    const k = (r.tokens || 0) / 1000;
+    const providerRate = COST_PER_1K[r.provider] ?? 0.005;
+    const actual = k * providerRate;
+    const seat = k * FORGE_SEAT_COST_PER_1K;
+    actualCost += actual;
+    forgeSeatCost += seat;
+    byProvider.push({ provider: r.provider, tokens: r.tokens, actualCost: +actual.toFixed(4), forgeSeatCost: +seat.toFixed(4), saved: +(seat - actual).toFixed(4) });
+  }
+  const saved = forgeSeatCost - actualCost;
+  const totalTokens = rows.reduce((s: number, r: any) => s + (r.tokens || 0), 0);
+  res.json({
+    success: true,
+    savings: {
+      totalTokens,
+      actualCost: +actualCost.toFixed(4),
+      forgeSeatCost: +forgeSeatCost.toFixed(4),
+      saved: +saved.toFixed(2),
+      savedLabel: saved >= 0.01 ? '$' + saved.toFixed(2) : '<$0.01',
+      headline: saved >= 1
+        ? 'Your API keys saved you $' + saved.toFixed(2) + ' vs. Forge seat pricing.'
+        : 'Keep using Forge — your savings grow with every message.',
+      byProvider,
+    }
+  });
+});
+
 // GET /api/brief — the daily hook. Streak + since-last-visit delta + 1 priority.
 app.get('/api/brief', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
