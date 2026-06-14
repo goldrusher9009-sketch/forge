@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'|'agency'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'|'agency'|'prompts'>('workspace');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -7455,6 +7455,72 @@ export default function ForgeApp() {
         )}
 
         {/* -- Desktop & Files --------------------------------------------- */}
+        {mainTab === 'prompts' && (() => {
+          const [pLibrary, setPLibrary] = React.useState<any[]|null>(null);
+          const [pInput, setPInput] = React.useState('');
+          const [pTitle, setPTitle] = React.useState('');
+          const [pSaving, setPSaving] = React.useState(false);
+          const [pFilter, setPFilter] = React.useState('');
+          if (pLibrary === null && user) {
+            const tok = localStorage.getItem('forge_token');
+            fetch('/api/prompts', { headers: { Authorization: 'Bearer ' + tok } })
+              .then(r => r.json()).then(d => setPLibrary(d.data || [])).catch(() => setPLibrary([]));
+          }
+          const filtered = (pLibrary || []).filter((p: any) => !pFilter || p.title?.toLowerCase().includes(pFilter.toLowerCase()) || p.content?.toLowerCase().includes(pFilter.toLowerCase()));
+          const savePrompt = async () => {
+            if (!pTitle.trim() || !pInput.trim()) return;
+            setPSaving(true);
+            const tok = localStorage.getItem('forge_token');
+            await fetch('/api/prompts', { method:'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type':'application/json' }, body: JSON.stringify({ title: pTitle, content: pInput }) }).then(r => r.json());
+            const d = await fetch('/api/prompts', { headers: { Authorization: 'Bearer ' + tok } }).then(r => r.json());
+            setPLibrary(d.data || []); setPTitle(''); setPInput(''); setPSaving(false);
+          };
+          const usePrompt = async (p: any) => {
+            const tok = localStorage.getItem('forge_token');
+            fetch('/api/prompts/' + p.id + '/use', { method:'POST', headers: { Authorization: 'Bearer ' + tok } });
+            setMainTab('super');
+            setSuperInput(p.content);
+            showToast('Prompt loaded');
+          };
+          const deletePrompt = async (id: string) => {
+            const tok = localStorage.getItem('forge_token');
+            await fetch('/api/prompts/' + id, { method:'DELETE', headers: { Authorization: 'Bearer ' + tok } });
+            setPLibrary(prev => (prev||[]).filter((p: any) => p.id !== id));
+          };
+          return (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:760, margin:'0 auto' }}>
+              <h2 style={{ margin:'0 0 4px', fontSize:20, fontWeight:800 }}>Prompt Library</h2>
+              <p style={{ margin:'0 0 24px', fontSize:13, color:'var(--fg-text3)' }}>Save and reuse your best prompts. Click Use to load into chat.</p>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:14, padding:20, marginBottom:24 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', marginBottom:10 }}>Save a new prompt</div>
+                <input value={pTitle} onChange={e => setPTitle(e.target.value)} placeholder='Title (e.g. Weekly planning)' style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box' }} />
+                <textarea value={pInput} onChange={e => setPInput(e.target.value)} placeholder='Your prompt text...' rows={4} style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
+                <button onClick={savePrompt} disabled={pSaving || !pTitle.trim() || !pInput.trim()} style={{ marginTop:10, padding:'8px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity: pSaving ? 0.6 : 1 }}>{pSaving ? 'Saving...' : 'Save Prompt'}</button>
+              </div>
+              <input value={pFilter} onChange={e => setPFilter(e.target.value)} placeholder='Search prompts...' style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:16, boxSizing:'border-box' }} />
+              {pLibrary === null && <div style={{ color:'var(--fg-text3)', fontSize:13 }}>Loading...</div>}
+              {pLibrary !== null && filtered.length === 0 && <div style={{ color:'var(--fg-text3)', fontSize:13 }}>No prompts yet. Save one above.</div>}
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {filtered.map((p: any) => (
+                  <div key={p.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                      <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{p.title}</div>
+                      <div style={{ display:'flex', gap:6 }}>
+                        <div style={{ fontSize:11, color:'var(--fg-text3)', marginRight:8, alignSelf:'center' }}>Used {p.use_count||0}x</div>
+                        <button onClick={() => usePrompt(p)} style={{ padding:'5px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Use</button>
+                        <button onClick={() => deletePrompt(p.id)} style={{ padding:'5px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text3)', fontSize:12, cursor:'pointer' }}>Delete</button>
+                      </div>
+                    </div>
+                    <div style={{ fontSize:12, color:'var(--fg-text2)', whiteSpace:'pre-wrap', lineHeight:1.5, maxHeight:80, overflow:'hidden', textOverflow:'ellipsis' }}>{p.content}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          );
+        })()}
+
         {mainTab === 'desktop' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:900, margin:'0 auto' }}>
