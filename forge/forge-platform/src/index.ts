@@ -1865,6 +1865,23 @@ db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (
   UNIQUE(user_id, app_id)
 )`);
 
+db.exec(`CREATE TABLE IF NOT EXISTS marketplace_listings (
+  id TEXT PRIMARY KEY,
+  author_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  icon TEXT NOT NULL DEFAULT '🤖',
+  category TEXT NOT NULL DEFAULT 'general',
+  prompt TEXT NOT NULL,
+  tags TEXT NOT NULL DEFAULT '[]',
+  price INTEGER NOT NULL DEFAULT 0,
+  installs INTEGER NOT NULL DEFAULT 0,
+  rating REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'published',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+)`);
+
 // Business type → persona map
 const FORGE_PERSONAS: Record<string, string> = {
   law_firm: 'You are Forge, a precise and formal AI business OS for a law firm. Be professional, meticulous, cite specifics. Never casual. Use legal-adjacent framing.',
@@ -2360,6 +2377,58 @@ app.delete('/api/marketplace/:appId/uninstall', requireAuth, (req: AuthRequest, 
   const userId = req.user!.sub;
   db.prepare('DELETE FROM marketplace_installs WHERE user_id=? AND app_id=?').run(userId, req.params.appId);
   res.json({ success:true });
+});
+
+// GET /api/marketplace/community — user-published workflows
+app.get('/api/marketplace/community', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { category, search } = req.query as any;
+  let q = 'SELECT l.*, u.email as author_email FROM marketplace_listings l LEFT JOIN users u ON l.author_id=u.id WHERE l.status=\'published\'';
+  const params: any[] = [];
+  if (category && category !== 'All') { q += ' AND l.category=?'; params.push(category); }
+  if (search) { q += ' AND (l.name LIKE ? OR l.description LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
+  q += ' ORDER BY l.installs DESC LIMIT 100';
+  const rows = db.prepare(q).all(...params) as any[];
+  const installedIds = new Set((db.prepare('SELECT app_id FROM marketplace_installs WHERE user_id=?').all(userId) as any[]).map((r:any)=>r.app_id));
+  res.json({ success:true, data: rows.map(r => ({ ...r, tags: JSON.parse(r.tags||'[]'), installed: installedIds.has(r.id), isOwn: r.author_id===userId })) });
+});
+
+// POST /api/marketplace/publish — publish a user workflow
+app.post('/api/marketplace/publish', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { name, description, icon='🤖', category='general', prompt, tags=[], price=0 } = req.body;
+  if (!name||!description||!prompt) { res.status(400).json({ error:'name, description, prompt required' }); return; }
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  db.prepare(`INSERT INTO marketplace_listings (id,author_id,name,description,icon,category,prompt,tags,price,installs,rating,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,0,0,'published',?,?)`)
+    .run(id, userId, name, description, icon, category, prompt, JSON.stringify(tags), price, now, now);
+  res.json({ success:true, data:{ id, name, message:'Published to community marketplace!' } });
+});
+
+// POST /api/marketplace/community/:id/install — install community workflow
+app.post('/api/marketplace/community/:id/install', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const listing = db.prepare('SELECT * FROM marketplace_listings WHERE id=? AND status=\'published\'').get(req.params.id) as any;
+  if (!listing) { res.status(404).json({ error:'Listing not found' }); return; }
+  db.prepare("INSERT OR IGNORE INTO marketplace_installs (id,user_id,app_id,installed_at) VALUES (?,?,?,datetime('now'))").run(uuidv4(), userId, listing.id);
+  db.prepare('UPDATE marketplace_listings SET installs=installs+1, updated_at=? WHERE id=?').run(new Date().toISOString(), listing.id);
+  res.json({ success:true, data:{ id:listing.id, name:listing.name, prompt:listing.prompt } });
+});
+
+// DELETE /api/marketplace/listings/:id — delete own listing
+app.delete('/api/marketplace/listings/:id', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const listing = db.prepare('SELECT * FROM marketplace_listings WHERE id=? AND author_id=?').get(req.params.id, userId) as any;
+  if (!listing) { res.status(404).json({ error:'Not found or not yours' }); return; }
+  db.prepare('UPDATE marketplace_listings SET status=\'archived\' WHERE id=?').run(req.params.id);
+  res.json({ success:true });
+});
+
+// GET /api/marketplace/my-listings — user's own published workflows
+app.get('/api/marketplace/my-listings', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const rows = db.prepare('SELECT * FROM marketplace_listings WHERE author_id=? ORDER BY created_at DESC').all(userId) as any[];
+  res.json({ success:true, data: rows.map(r => ({ ...r, tags: JSON.parse(r.tags||'[]') })) });
 });
 
 // ── Universal Agents ──────────────────────────────────────────────────────────

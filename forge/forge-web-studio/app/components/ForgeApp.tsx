@@ -8140,7 +8140,6 @@ export default function ForgeApp() {
                 const b = briefData.brief || briefData;
                 return (
                   <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-                    {/* Streaks */}
                     {b.streaks && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
                         <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>🔥 Streaks</div>
@@ -8154,28 +8153,25 @@ export default function ForgeApp() {
                         </div>
                       </div>
                     )}
-                    {/* Delta */}
                     {b.delta && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
                         <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>📊 Since Last Visit</div>
                         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:10 }}>
                           {Object.entries(b.delta).map(([k,v]:any) => (
                             <div key={k} style={{ background:'var(--fg-bg3)', borderRadius:10, padding:'12px 14px' }}>
-                              <div style={{ fontSize:20, fontWeight:800, color:'#6366f1' }}>{typeof v === 'number' && v > 0 ? `+${v}` : String(v)}</div>
+                              <div style={{ fontSize:20, fontWeight:800, color:'#6366f1' }}>{typeof v === 'number' && v > 0 ? '+'+v : String(v)}</div>
                               <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2 }}>{k.replace(/_/g,' ')}</div>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-                    {/* Priority Action */}
                     {b.priority && (
                       <div style={{ background:'rgba(255,31,53,0.08)', border:'1px solid rgba(255,31,53,0.25)', borderRadius:12, padding:20 }}>
                         <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-orange)', marginBottom:8 }}>⚡ Priority Action</div>
                         <div style={{ fontSize:15, color:'var(--fg-text)', fontWeight:500 }}>{typeof b.priority === 'string' ? b.priority : JSON.stringify(b.priority)}</div>
                       </div>
                     )}
-                    {/* Headline / fallback */}
                     {b.headline && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
                         <div style={{ fontSize:15, color:'var(--fg-text2)' }}>{b.headline}</div>
@@ -8208,7 +8204,6 @@ export default function ForgeApp() {
                 const top: any[] = bd.top_insights || [];
                 return (
                   <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-                    {/* Totals */}
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:12 }}>
                       {[
                         { label:'Total Memories', value: bd.total ?? '--', color:'var(--fg-orange)' },
@@ -8221,13 +8216,11 @@ export default function ForgeApp() {
                         </div>
                       ))}
                     </div>
-                    {/* Headline */}
                     {bd.headline && (
                       <div style={{ background:'rgba(99,102,241,0.08)', border:'1px solid rgba(99,102,241,0.25)', borderRadius:12, padding:16 }}>
                         <div style={{ fontSize:14, color:'var(--fg-text)', fontStyle:'italic' }}>"{bd.headline}"</div>
                       </div>
                     )}
-                    {/* Top Insights */}
                     {top.length > 0 && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
                         <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>⭐ Top Insights</div>
@@ -8242,7 +8235,6 @@ export default function ForgeApp() {
                         </div>
                       </div>
                     )}
-                    {/* By Category */}
                     {Object.keys(cats).length > 0 && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
                         <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>📂 By Category</div>
