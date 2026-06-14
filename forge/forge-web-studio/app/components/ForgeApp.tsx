@@ -3476,6 +3476,13 @@ export default function ForgeApp() {
                   )}
                 </div>
               )}
+              {/* 🎯 Focus Mode toggle */}
+              {!isMobile && (
+                <button onClick={() => { const next = forgeMode === 'focus' ? 'default' : 'focus'; setForgeMode(next); try { localStorage.setItem('forge_mode', next); } catch {} if (next === 'focus') setSidebarExpanded(false); else setSidebarExpanded(true); }} title={forgeMode === 'focus' ? 'Exit focus mode' : 'Focus mode — hide panels'}
+                  style={{ padding:'4px 8px', background: forgeMode==='focus' ? 'rgba(99,102,241,0.2)' : 'var(--fg-bg4)', border:`1px solid ${forgeMode==='focus' ? 'rgba(99,102,241,0.5)' : 'var(--fg-border2)'}`, borderRadius:8, color: forgeMode==='focus' ? '#a5b4fc' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:700, flexShrink:0 }}>
+                  {forgeMode === 'focus' ? '⊞ Exit Focus' : '⊟ Focus'}
+                </button>
+              )}
               {/* 🔧 ForgeOptimizer toggle */}
               {!isMobile && activeThread && (
                 <div style={{ display:'flex', alignItems:'center', gap:4, flexShrink:0 }}>
