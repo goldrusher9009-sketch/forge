@@ -1034,6 +1034,9 @@ export default function ForgeApp() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
+  const [shareToken, setShareToken] = useState<string|null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [searchResults, setSearchResults] = useState<{threads:any[];messages:any[]}|null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -1363,6 +1366,9 @@ export default function ForgeApp() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Reset share token when thread changes
+  useEffect(() => { setShareToken(null); setShareCopied(false); }, [activeThread?.id]);
 
   // Load context pins when thread changes
   useEffect(() => {
@@ -3728,6 +3734,29 @@ export default function ForgeApp() {
                     a.click();
                   }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Export thread as Markdown'>
                     ⬇ Export
+                  </button>
+                )}
+                {activeThread && user && (
+                  <button onClick={async () => {
+                    if (shareToken) {
+                      const url = window.location.origin + '/shared/' + shareToken;
+                      await navigator.clipboard.writeText(url);
+                      setShareCopied(true); setTimeout(() => setShareCopied(false), 2000);
+                      return;
+                    }
+                    setShareLoading(true);
+                    try {
+                      const tok = localStorage.getItem('forge_token');
+                      const d = await fetch('/api/threads/' + activeThread.id + '/share', { method:'POST', headers:{ Authorization:'Bearer '+tok } }).then(r=>r.json());
+                      if (d.success) {
+                        setShareToken(d.token);
+                        const url = window.location.origin + '/shared/' + d.token;
+                        await navigator.clipboard.writeText(url);
+                        setShareCopied(true); setTimeout(() => setShareCopied(false), 2000);
+                      }
+                    } finally { setShareLoading(false); }
+                  }} style={{ flexShrink:0, padding:'2px 8px', background: shareToken ? 'rgba(251,146,60,0.12)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color: shareToken ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title={shareToken ? 'Copy share link' : 'Create public share link'}>
+                    {shareLoading ? '…' : shareCopied ? '✓ Copied!' : shareToken ? '🔗 Copy link' : '🔗 Share'}
                   </button>
                 )}
                 {/* Mini sparkline */}
