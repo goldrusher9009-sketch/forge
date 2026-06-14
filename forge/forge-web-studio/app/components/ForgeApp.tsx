@@ -633,7 +633,7 @@ export default function ForgeApp() {
   const [desktopBrowserCtx, setDesktopBrowserCtx] = useState<{ url: string; title: string; text: string } | null>(null);
 
   // Right panel tabs
-  const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'|'pinned'>(() => {
+  const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'|'pinned'|'compare'>(() => {
     try { return (localStorage.getItem('forge_right_tab') as any) || 'tracker'; } catch { return 'tracker'; }
   });
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
@@ -1014,6 +1014,9 @@ export default function ForgeApp() {
   const [multiStartTime, setMultiStartTime] = useState<number>(0);
   const [multiComparePrompt, setMultiComparePrompt] = useState('');
   const [multiCompareResults, setMultiCompareResults] = useState<{model:string;text:string;error:boolean}[]>([]);
+  const [cmpPrompt, setCmpPrompt] = useState('');
+  const [cmpModels, setCmpModels] = useState<string[]>([]);
+  const [cmpRunning, setCmpRunning] = useState(false);
   const [multiCompareLoading, setMultiCompareLoading] = useState(false);
   // Chat folder actions (hoisted — can't use useState inside render IIFE)
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
@@ -4655,7 +4658,7 @@ export default function ForgeApp() {
                       {id:'agent',icon:'🤖'},{id:'artifacts',icon:'📄'},{id:'tasks',icon:'✓'},
                       {id:'live',icon:'📺'},{id:'schedule',icon:'📅'},{id:'context',icon:'📊'},
                       {id:'browser',icon:'🌐'},{id:'terminal',icon:'💻'},{id:'dispatch',icon:'🚀'},
-                      {id:'pinned',icon:'🔖'},
+                      {id:'pinned',icon:'🔖'},{id:'compare',icon:'⚖️'},
                     ] as const).map(tab => (
                       <button key={tab.id} onClick={() => setRightTab(tab.id as any)} title={tab.id} style={{ flex:'0 0 auto', padding:'10px 8px', background:'none', border:'none', borderBottom:rightTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', color:rightTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{tab.icon}</button>
                     ))}
@@ -5662,6 +5665,64 @@ export default function ForgeApp() {
                         )}
                       </div>
                     )}
+                    {rightTab==='compare' && (() => {
+                      return (
+                        <div>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>⚖️ Model Comparison</p>
+                          <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 12px' }}>Send the same prompt to multiple models and compare responses side by side.</p>
+                          {(() => {
+                            const availModels = [
+                              ...FORGE_MODELS.map(m=>({id:m.id, label:m.label})),
+                              ...openRouterModels.slice(0,30).map(m=>({id:'openrouter/'+m.id, label:m.name||m.id}))
+                            ].slice(0,20);
+                            return (
+                              <div>
+                                <div style={{ marginBottom:8 }}>
+                                  <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 4px', fontWeight:600 }}>Models (select up to 3)</p>
+                                  <div style={{ display:'flex', flexDirection:'column', gap:4, maxHeight:160, overflowY:'auto' }}>
+                                    {availModels.map(m => (
+                                      <label key={m.id} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:'var(--fg-text2)', cursor:'pointer', padding:'3px 0' }}>
+                                        <input type="checkbox" checked={cmpModels.includes(m.id)} onChange={e => { if (e.target.checked && cmpModels.length < 3) setCmpModels(p=>[...p,m.id]); else setCmpModels(p=>p.filter(x=>x!==m.id)); }} style={{ accentColor:'var(--fg-orange)', flexShrink:0 }} />
+                                        {m.label}
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                                <textarea value={cmpPrompt} onChange={e=>setCmpPrompt(e.target.value)} placeholder="Enter prompt to compare..." rows={3} style={{ width:'100%', boxSizing:'border-box', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:12, padding:'6px 8px', resize:'vertical', outline:'none', marginBottom:8 }} />
+                                <button disabled={!cmpPrompt.trim() || cmpModels.length < 2 || cmpRunning} onClick={async () => {
+                                  setCmpRunning(true);
+                                  setMultiCompareResults(cmpModels.map(m=>({model:m,text:'⏳ Generating…',error:false})));
+                                  await Promise.all(cmpModels.map(async (modelId, idx) => {
+                                    try {
+                                      const cleanModel = modelId.startsWith('openrouter/') ? modelId.slice('openrouter/'.length) : modelId;
+                                      const d = await apiFetch('/chat/simple', { method:'POST', body: JSON.stringify({ message: cmpPrompt, model: cleanModel }) }, user?.token);
+                                      setMultiCompareResults(p => p.map((r,i) => i===idx ? {...r, text: d?.data?.content || d?.content || '(no response)', error:false} : r));
+                                    } catch(e:any) {
+                                      setMultiCompareResults(p => p.map((r,i) => i===idx ? {...r, text:'Error: '+e.message, error:true} : r));
+                                    }
+                                  }));
+                                  setCmpRunning(false);
+                                }} style={{ width:'100%', padding:'7px', background: (!cmpPrompt.trim()||cmpModels.length<2||cmpRunning) ? 'var(--fg-bg4)' : 'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor: (!cmpPrompt.trim()||cmpModels.length<2||cmpRunning) ? 'default' : 'pointer', marginBottom:12 }}>
+                                  {cmpRunning ? '⏳ Running…' : `⚖️ Compare ${cmpModels.length} models`}
+                                </button>
+                                {multiCompareResults.length > 0 && (
+                                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                                    {multiCompareResults.map((r,i) => (
+                                      <div key={i} style={{ background:'var(--fg-bg3)', border:`1px solid ${r.error?'rgba(239,68,68,0.4)':'var(--fg-border)'}`, borderRadius:8, padding:10 }}>
+                                        <div style={{ fontSize:10, fontWeight:700, color:'var(--fg-orange)', textTransform:'uppercase', marginBottom:4, letterSpacing:'0.05em' }}>{r.model.replace('openrouter/','').split('/').pop()}</div>
+                                        <p style={{ margin:0, fontSize:12, color: r.error ? '#f87171' : 'var(--fg-text2)', whiteSpace:'pre-wrap', lineHeight:1.5, maxHeight:200, overflowY:'auto' }}>{r.text}</p>
+                                        {!r.error && r.text !== '⏳ Generating…' && <button onClick={() => { navigator.clipboard.writeText(r.text); showToast('📋 Copied'); }} style={{ marginTop:6, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📋 Copy</button>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      );
+                    })()}
+
                     {rightTab==='pinned' && (() => {
                       const pinnedMsgs = messages.filter((m: any) => m.pinned);
                       return (

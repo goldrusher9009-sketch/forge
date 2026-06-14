@@ -4872,6 +4872,17 @@ app.post('/api/prompts/:id/use', requireAuth, (req: AuthRequest, res) => {
 app.delete('/api/prompts/:id', requireAuth, (req: AuthRequest, res) => { db.prepare('DELETE FROM prompt_cache WHERE id=? AND user_id=?').run(req.params.id,req.user!.sub); res.json({ success:true }); });
 
 // ─── Search ───────────────────────────────────────────────────────────────────
+// POST /api/chat/simple — single non-streaming completion for compare/quick use
+app.post('/api/chat/simple', requireAuth, async (req: AuthRequest, res) => {
+  const { message, model = 'claude-haiku-4-5' } = req.body || {};
+  if (!message) { res.status(400).json({ error: 'message required' }); return; }
+  try {
+    const key = await getUserKey(req.user!.sub, model.includes('gpt')||model.includes('openai') ? 'openai' : model.includes('gemini') ? 'gemini' : model.includes('groq') ? 'groq' : model.includes('mistral') ? 'mistral' : 'anthropic');
+    const result = await callLLM({ model, messages: [{ role: 'user', content: message }], max_tokens: 1024 }, key);
+    res.json({ success: true, data: { content: result.content, model } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/search', requireAuth, (req: AuthRequest, res) => {
   const { q, type='all', limit=20 } = req.query as any;
   if (!q||q.length<2) { res.status(400).json({ error:'query too short' }); return; }
