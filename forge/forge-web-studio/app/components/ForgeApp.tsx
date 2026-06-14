@@ -3935,6 +3935,13 @@ export default function ForgeApp() {
                             )}
                           </div>
                         )}
+                        {m.created_at && (() => {
+                          const d = new Date(m.created_at);
+                          const diffMs = Date.now() - d.getTime();
+                          const diffMin = Math.floor(diffMs/60000);
+                          const rel = diffMin < 1 ? 'just now' : diffMin < 60 ? `${diffMin}m ago` : diffMin < 1440 ? `${Math.floor(diffMin/60)}h ago` : d.toLocaleDateString();
+                          return <span title={d.toLocaleString()} style={{ fontSize:10, color:'var(--fg-text3)', marginTop:4, display:'block', cursor:'default' }}>{rel}</span>;
+                        })()}
                         {m.model && (() => {
                           const mdl = m.model as string;
                           const icon = mdl.includes('claude') ? '🟠' : mdl.includes('gpt') || mdl.includes('openai') ? '🟢' : mdl.includes('gemini') ? '🔵' : mdl.includes('groq') ? '⚡' : mdl.includes('mistral') ? '🌀' : '🤖';
