@@ -865,7 +865,7 @@ export default function ForgeApp() {
   const [sketchArtifact, setSketchArtifact] = useState<Artifact | null>(null);
   const [previewCode, setPreviewCode] = useState('');
   // Inline message preview state: msgId -> 'code' | 'preview'
-  const [inlinePreviews, setInlinePreviews] = useState<Record<string, 'code'|'preview'>>({});
+  const [inlinePreviews, setInlinePreviews] = useState<Record<string, 'code'|'preview'|'diff'>>({});
 
   // Dispatch
   const [dispatchPrompt, setDispatchPrompt] = useState('');
@@ -4011,7 +4011,7 @@ export default function ForgeApp() {
                     const codeBlock = extracted?.code || null;
                     const isHtml = extracted?.isHtml || false;
                     const msgKey = m.id || String(i);
-                    const previewMode = inlinePreviews[msgKey] || (isHtml ? 'preview' : 'code');
+                    const previewMode: 'code'|'preview'|'diff' = inlinePreviews[msgKey] || (isHtml ? 'preview' : 'code');
                     return (
                     <div key={msgKey} style={{ display:'flex', gap:12, alignItems:'flex-start', flexDirection:m.role==='user' ? 'row-reverse' : 'row' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background:m.role==='user' ? 'var(--fg-orange)' : 'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
@@ -4020,18 +4020,56 @@ export default function ForgeApp() {
                       <div style={{ maxWidth: codeBlock ? '90%' : '75%', flex: codeBlock ? 1 : undefined, padding:'12px 16px', borderRadius:m.role==='user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px', background:m.role==='user' ? 'var(--fg-bg4)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', lineHeight:1.6 }}>
                         <div style={{ margin:0, fontSize:14, color:'var(--fg-text)', whiteSpace:'pre-wrap', wordBreak:'break-word', lineHeight:1.7 }}>{renderContent(m.content)}</div>
                         {/* Inline live preview card */}
-                        {codeBlock && (
+                        {codeBlock && (() => {
+                          // Find prev code block for diff view
+                          let prevCode: string | null = null;
+                          for (let j = i-1; j >= 0; j--) {
+                            if ((messages[j] as any).role === 'assistant') {
+                              const pe = extractCodeBlock((messages[j] as any).content);
+                              if (pe?.code && pe.code !== codeBlock) { prevCode = pe.code; }
+                              break;
+                            }
+                          }
+                          const hasDiff = !!prevCode;
+                          return (
                           <div style={{ marginTop:12, border:'1px solid var(--fg-border2)', borderRadius:10, overflow:'hidden' }}>
                             {/* Preview toolbar */}
                             <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 10px', background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)' }}>
-                              <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, marginRight:4 }}>ΓÜí Live Preview</span>
+                              <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, marginRight:4 }}>⚡ Live Preview</span>
                               <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'code' }))} style={{ padding:'3px 10px', background: previewMode==='code' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='code' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Code</button>
                               <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'preview' }))} style={{ padding:'3px 10px', background: previewMode==='preview' ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='preview' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>Preview</button>
-                              <button onClick={() => { navigator.clipboard.writeText(codeBlock); showToast('≡ƒôï Code copied'); }} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>≡ƒôï Copy</button>
-                              <button onClick={() => downloadCode(codeBlock, extracted?.suggestedFilename || (isHtml ? 'output.html' : 'output.txt'))} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Download file">≡ƒÆ╛ Download</button>
-                              <button onClick={() => { setPreviewCode(codeBlock); setSketchMode(true); }} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Open in Sketch panel">├ù Expand</button>
+                              {hasDiff && <button onClick={() => setInlinePreviews(p => ({ ...p, [msgKey]: 'diff' }))} style={{ padding:'3px 10px', background: previewMode==='diff' ? '#7c3aed' : 'var(--fg-bg3)', border:'none', borderRadius:5, color: previewMode==='diff' ? '#fff' : 'var(--fg-text3)', fontSize:11, cursor:'pointer', fontWeight:600 }}>± Diff</button>}
+                              <button onClick={() => { navigator.clipboard.writeText(codeBlock); showToast('📋 Code copied'); }} style={{ marginLeft:'auto', padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>📋 Copy</button>
+                              <button onClick={() => downloadCode(codeBlock, extracted?.suggestedFilename || (isHtml ? 'output.html' : 'output.txt'))} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Download file">💾 Download</button>
+                              <button onClick={() => { setPreviewCode(codeBlock); setSketchMode(true); }} style={{ padding:'3px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:5, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }} title="Open in Sketch panel">✕ Expand</button>
                             </div>
-                            {previewMode === 'code' ? (
+                            {previewMode === 'diff' && hasDiff ? (
+                              <pre style={{ margin:0, padding:'12px 14px', background:'var(--fg-bg)', fontSize:12, fontFamily:'var(--fg-font-mono)', overflowX:'auto', maxHeight:380, overflowY:'auto', whiteSpace:'pre', lineHeight:1.6 }}>
+                                {(() => {
+                                  const oldLines = prevCode!.split('\n');
+                                  const newLines = codeBlock.split('\n');
+                                  const result: JSX.Element[] = [];
+                                  const maxLen = Math.max(oldLines.length, newLines.length);
+                                  let ki = 0;
+                                  for (let di = 0; di < newLines.length; di++) {
+                                    const nl = newLines[di];
+                                    const ol = oldLines[di];
+                                    if (ol === undefined) {
+                                      result.push(<div key={ki++} style={{ background:'rgba(34,197,94,0.15)', color:'var(--fg-green)' }}>{'+ ' + nl}</div>);
+                                    } else if (nl === ol) {
+                                      result.push(<div key={ki++} style={{ color:'var(--fg-text3)' }}>{'  ' + nl}</div>);
+                                    } else {
+                                      result.push(<div key={ki++} style={{ background:'rgba(239,68,68,0.12)', color:'#f87171' }}>{'- ' + ol}</div>);
+                                      result.push(<div key={ki++} style={{ background:'rgba(34,197,94,0.15)', color:'var(--fg-green)' }}>{'+ ' + nl}</div>);
+                                    }
+                                  }
+                                  for (let di = newLines.length; di < oldLines.length; di++) {
+                                    result.push(<div key={ki++} style={{ background:'rgba(239,68,68,0.12)', color:'#f87171' }}>{'- ' + oldLines[di]}</div>);
+                                  }
+                                  return result;
+                                })()}
+                              </pre>
+                            ) : previewMode === 'code' ? (
                               <pre style={{ margin:0, padding:'12px 14px', background:'var(--fg-bg)', color:'var(--fg-green)', fontSize:12, fontFamily:'var(--fg-font-mono)', overflowX:'auto', maxHeight:280, overflowY:'auto', whiteSpace:'pre', lineHeight:1.6 }}>{codeBlock}</pre>
                             ) : (
                               <iframe
@@ -4042,7 +4080,7 @@ export default function ForgeApp() {
                               />
                             )}
                           </div>
-                        )}
+                        );})()}
                         {m.created_at && (() => {
                           const d = new Date(m.created_at);
                           const diffMs = Date.now() - d.getTime();
