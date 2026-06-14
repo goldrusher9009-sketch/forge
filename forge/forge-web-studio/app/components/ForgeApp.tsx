@@ -1037,6 +1037,10 @@ export default function ForgeApp() {
   const [shareToken, setShareToken] = useState<string|null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareModels, setCompareModels] = useState<string[]>([]);
+  const [compareResults, setCompareResults] = useState<{model:string;content:string;loading:boolean}[]>([]);
+  const [comparePrompt, setComparePrompt] = useState('');
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [searchResults, setSearchResults] = useState<{threads:any[];messages:any[]}|null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -3757,6 +3761,11 @@ export default function ForgeApp() {
                     } finally { setShareLoading(false); }
                   }} style={{ flexShrink:0, padding:'2px 8px', background: shareToken ? 'rgba(251,146,60,0.12)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color: shareToken ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title={shareToken ? 'Copy share link' : 'Create public share link'}>
                     {shareLoading ? '…' : shareCopied ? '✓ Copied!' : shareToken ? '🔗 Copy link' : '🔗 Share'}
+                  </button>
+                )}
+                {user && (
+                  <button onClick={() => { setCompareMode(true); setCompareResults([]); if (selectedModel) setCompareModels([selectedModel]); }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Compare models side-by-side'>
+                    ⚖️ Compare
                   </button>
                 )}
                 {/* Mini sparkline */}
@@ -8256,6 +8265,54 @@ export default function ForgeApp() {
         )}
 
         {/* -- Command Palette (Cmd+K) --------------------------------------- */}
+        {compareMode && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', flexDirection:'column', zIndex:99990, padding:16, gap:12 }} onClick={() => setCompareMode(false)}>
+            <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:14, padding:16, maxWidth:900, width:'100%', margin:'0 auto', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <h2 style={{ margin:0, fontSize:16, fontWeight:800, color:'var(--fg-text)' }}>⚖️ Model Compare</h2>
+                <button onClick={() => setCompareMode(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', fontSize:18, cursor:'pointer' }}>✕</button>
+              </div>
+              <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+                {(['claude-sonnet-4-5', 'claude-3-5-haiku-20241022', 'gpt-4o', 'gpt-4o-mini', 'gemini-2.0-flash', 'llama-3.3-70b-versatile'] as string[]).map(m => (
+                  <button key={m} onClick={() => setCompareModels(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])} style={{ padding:'4px 12px', borderRadius:20, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid var(--fg-border)', background: compareModels.includes(m) ? 'var(--fg-orange)' : 'var(--fg-bg3)', color: compareModels.includes(m) ? '#fff' : 'var(--fg-text2)' }}>{m}</button>
+                ))}
+              </div>
+              <div style={{ display:'flex', gap:8, marginBottom:12 }}>
+                <textarea value={comparePrompt} onChange={e => setComparePrompt(e.target.value)} placeholder='Enter prompt to compare across models…' rows={3} style={{ flex:1, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', padding:'8px 12px', fontSize:13, fontFamily:'var(--fg-font)', resize:'vertical' }} />
+                <button disabled={compareModels.length < 1 || !comparePrompt.trim()} onClick={async () => {
+                  if (!user) return;
+                  const prompt = comparePrompt.trim();
+                  setCompareResults(compareModels.map(m => ({ model: m, content: '', loading: true })));
+                  await Promise.all(compareModels.map(async (model, idx) => {
+                    try {
+                      const threadResp = await apiFetchSSE('/threads', { method:'POST', body: JSON.stringify({ title: 'Compare: ' + prompt.slice(0,40) }) }, user.token);
+                      const threadId = threadResp?.data?.id || threadResp?.id;
+                      if (!threadId) throw new Error('thread fail');
+                      let accumulated = '';
+                      const modelId = model.startsWith('openrouter/') ? model.slice('openrouter/'.length) : model;
+                      await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body: JSON.stringify({ content: prompt, model: modelId }) }, user.token, (evt) => {
+                        if (evt.content) { accumulated += evt.content; setCompareResults(prev => prev.map((r,i) => i===idx ? {...r, content: accumulated} : r)); }
+                      });
+                    } catch (e: any) {
+                      setCompareResults(prev => prev.map((r,i) => i===idx ? {...r, content: '⚠️ Error: ' + e.message, loading: false} : r));
+                    }
+                    setCompareResults(prev => prev.map((r,i) => i===idx ? {...r, loading: false} : r));
+                  }));
+                }} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer', alignSelf:'flex-end', whiteSpace:'nowrap', opacity: compareModels.length < 1 || !comparePrompt.trim() ? 0.4 : 1 }}>▶ Run</button>
+              </div>
+              {compareResults.length > 0 && (
+                <div style={{ display:'grid', gridTemplateColumns: `repeat(${compareResults.length}, 1fr)`, gap:12, maxHeight:'50vh', overflow:'auto' }}>
+                  {compareResults.map((r, i) => (
+                    <div key={i} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:12 }}>
+                      <div style={{ fontSize:10, fontWeight:700, color:'var(--fg-orange)', marginBottom:8, textTransform:'uppercase', letterSpacing:1 }}>{r.model}</div>
+                      <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{r.loading && !r.content ? '⏳ Generating…' : r.content || '—'}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {showCmdPalette && (
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'flex-start', justifyContent:'center', zIndex:99999, paddingTop:120 }} onClick={() => setShowCmdPalette(false)}>
             <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:14, width:'min(560px,90vw)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)', overflow:'hidden' }} onClick={e => e.stopPropagation()}>
