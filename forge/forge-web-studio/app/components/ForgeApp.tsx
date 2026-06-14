@@ -3935,7 +3935,12 @@ export default function ForgeApp() {
                             )}
                           </div>
                         )}
-                        {m.model && <p style={{ margin:'6px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{m.model}</p>}
+                        {m.model && (() => {
+                          const mdl = m.model as string;
+                          const icon = mdl.includes('claude') ? '🟠' : mdl.includes('gpt') || mdl.includes('openai') ? '🟢' : mdl.includes('gemini') ? '🔵' : mdl.includes('groq') ? '⚡' : mdl.includes('mistral') ? '🌀' : '🤖';
+                          const shortName = mdl.replace('anthropic/','').replace('openai/','').replace('google/','').replace('openrouter/','').split('-').slice(0,3).join('-');
+                          return <span style={{ display:'inline-flex', alignItems:'center', gap:3, marginTop:5, fontSize:10, color:'var(--fg-text3)', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'1px 7px', fontFamily:'monospace' }} title={mdl}>{icon} {shortName}</span>;
+                        })()}
                         <div style={{ display:'flex', gap:4, marginTop:6, opacity:0.5, transition:'opacity 0.15s' }}
                           onMouseEnter={e => (e.currentTarget.style.opacity='1')}
                           onMouseLeave={e => (e.currentTarget.style.opacity='0.5')}>
