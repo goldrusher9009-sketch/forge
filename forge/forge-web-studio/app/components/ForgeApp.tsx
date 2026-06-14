@@ -4178,7 +4178,20 @@ export default function ForgeApp() {
                               ≡ƒì┤ Fork
                             </button>
                           )}
-                          {m.id && m.role === 'assistant' && ['👍','❤️','😂','🎉','🔥','💯'].map(emoji => (
+                          {m.id && activeThread && (
+                    <button onClick={async () => {
+                      const tok = localStorage.getItem('forge_token');
+                      const d = await fetch('/api/threads/' + activeThread.id + '/branch', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ message_id: m.id }) }).then(r=>r.json());
+                      if (d.success) {
+                        await loadThreads(activeProject?.id);
+                        const newT = { id: d.data.id, title: d.data.title, created_at: new Date().toISOString() };
+                        setActiveThread(newT as any);
+                        setMessages([]);
+                        showToast('Thread branched! ' + d.data.message_count + ' messages copied');
+                      }
+                    }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'2px 6px', borderRadius:4, opacity:0.5 }} title='Branch thread from this message (fork)'>⑂ Fork</button>
+                  )}
+                  {m.id && m.role === 'assistant' && ['👍','❤️','😂','🎉','🔥','💯'].map(emoji => (
                             <button key={emoji} onClick={async () => {
                               const tok = localStorage.getItem('forge_token');
                               const newReaction = (m as any).reaction === emoji ? null : emoji;

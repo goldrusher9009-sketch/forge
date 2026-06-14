@@ -6353,6 +6353,41 @@ app.delete('/api/prompt-history/:id', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true });
 });
 
+
+// ── Thread Branching ──────────────────────────────────────────────────────────
+app.post('/api/threads/:id/branch', requireAuth, async (req: AuthRequest, res) => {
+  const { message_id } = req.body; // branch at this message (inclusive)
+  const userId = req.user!.sub;
+  
+  // Get original thread
+  const origThread: any = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, userId);
+  if (!origThread) return res.status(404).json({ success: false, error: 'Thread not found' });
+  
+  // Get messages up to branch point
+  let msgs: any[];
+  if (message_id) {
+    // Get the target message to find its created_at
+    const pivot: any = db.prepare('SELECT created_at FROM messages WHERE id=? AND thread_id=?').get(message_id, req.params.id);
+    if (!pivot) return res.status(404).json({ success: false, error: 'Message not found' });
+    msgs = db.prepare("SELECT * FROM messages WHERE thread_id=? AND created_at<=? ORDER BY created_at ASC").all(req.params.id, pivot.created_at);
+  } else {
+    msgs = db.prepare("SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC").all(req.params.id);
+  }
+  
+  // Create new thread
+  const newId = require('uuid').v4();
+  const branchTitle = (origThread.title || 'Thread') + ' [branch]';
+  db.prepare("INSERT INTO threads (id, user_id, project_id, title, created_at) VALUES (?, ?, ?, ?, datetime('now'))").run(newId, userId, origThread.project_id, branchTitle);
+  
+  // Copy messages
+  const insertMsg = db.prepare("INSERT INTO messages (id, thread_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+  for (const m of msgs) {
+    insertMsg.run(require('uuid').v4(), newId, m.role, m.content, m.model, m.created_at);
+  }
+  
+  res.json({ success: true, data: { id: newId, title: branchTitle, message_count: msgs.length } });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`🚀 Forge Platform v6.99 running on port ${PORT} (${NODE_ENV})`);
 });
