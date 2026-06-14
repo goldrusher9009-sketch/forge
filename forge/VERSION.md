@@ -1,5 +1,14 @@
 # Forge Platform — Version History
 
+## v7.2 — 2026-06-14 — PHASE 3: Forge Brain v2 (the compounding-memory MOAT)
+- **Categories** — forge_memory gains category (customer/pricing/voice/rule/decision/product/ops/general), confidence, last_reinforced_at (idempotent migration). Deterministic categorizer on write (no LLM cost).
+- **GET /api/brain/summary** — "What Forge knows about you": total memories, brain strength, days learning, new-this-week, by-category breakdown, top insights, headline + moat note. Makes the moat *felt*.
+- **GET /api/brain/category/:cat** — drill-down by category.
+- **POST /api/brain/decay** — fades memories not reinforced in 30d, prunes near-zero. Keeps brain accurate/alive (nightly-safe).
+- **Reinforce-on-use** — memories surfaced into agent context get strength/confidence bumped (anti-decay). Categorizer + decay logic unit-verified.
+- route-manifest test guards /api/brain/summary, /category/:cat, /decay.
+- Strategy: see FORGE_MOAT.md (5 compounding moat layers; Brain is the keystone).
+
 ## v7.1 — 2026-06-14 — PHASE 2: Addictive Core (Morning Brief)
 ### The daily-hook loop
 - **GET /api/brief** — returns greeting, login streak + longest streak, "since last visit" delta (pending approvals, new SEO pages, new threads, last nightly run), and the ONE priority action (finish setup → add key → review approvals → run an agent).

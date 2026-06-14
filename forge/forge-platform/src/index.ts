@@ -3999,8 +3999,9 @@ app.post('/api/superagent/chat', requireAuth, async (req: AuthRequest, res) => {
   const done = () => { clearInterval(hb); try { res.end(); } catch {} };
 
   try {
-    // Load forge memories as context
-    const memories = db.prepare('SELECT topic,insight FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC LIMIT 30').all(userId) as any[];
+    // Load forge memories as context (and reinforce them — surfaced = useful → anti-decay)
+    const memories = db.prepare('SELECT id,topic,insight FROM forge_memory WHERE user_id=? ORDER BY strength DESC,frequency DESC LIMIT 30').all(userId) as any[];
+    try { for (const m of memories) reinforceMemory(m.id); } catch {}
     const threadMems = db.prepare('SELECT topic,insight FROM thread_memories WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
     const memContext = [...memories, ...threadMems].map(m => `• ${m.topic}: ${m.insight}`).join('\n');
 
@@ -4128,8 +4129,9 @@ app.post('/api/brain', requireAuth, (req: AuthRequest, res) => {
     res.json({ success: true, id: existing.id, reinforced: true });
   } else {
     const id = uuidv4();
-    db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)').run(id, userId, topic, insight, source_thread_id || null);
-    res.json({ success: true, id, reinforced: false });
+    const category = categorizeMemory(topic, insight);
+    db.prepare('INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength,category,last_reinforced_at) VALUES (?,?,?,?,?,1,1.0,?,datetime(\'now\'))').run(id, userId, topic, insight, source_thread_id || null, category);
+    res.json({ success: true, id, reinforced: false, category });
   }
 });
 
@@ -4798,6 +4800,93 @@ cron.schedule('0 2 * * *', async () => {
     ).run(u.id);
   }
 }, { timezone: 'America/New_York' });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PHASE 3 — Forge Brain v2: the compounding-memory MOAT.
+// Adds categories (knowledge-graph dimension), confidence, decay, and a
+// "what Forge knows about you" summary that makes the moat felt. Switching
+// cost = the brain. All additive on forge_memory. forge/ only.
+// ═══════════════════════════════════════════════════════════════════════════
+(function migrateBrainV2(){
+  const cols = (db.prepare('PRAGMA table_info(forge_memory)').all() as any[]).map(c => c.name);
+  const add = (name: string, ddl: string) => { if (!cols.includes(name)) { try { db.exec(`ALTER TABLE forge_memory ADD COLUMN ${ddl}`); } catch {} } };
+  add('category',           "category TEXT NOT NULL DEFAULT 'general'");
+  add('confidence',         'confidence REAL NOT NULL DEFAULT 0.5');
+  add('last_reinforced_at', 'last_reinforced_at TEXT');
+})();
+
+// Categorize a memory from its topic/insight text — lightweight, deterministic,
+// no LLM call needed (keeps it free + fast on every write).
+const BRAIN_CATEGORIES: Array<[string, RegExp]> = [
+  ['customer',   /\b(customer|client|lead|buyer|contact|account)\b/i],
+  ['pricing',    /\b(price|pricing|cost|rate|quote|invoice|discount|margin|fee)\b/i],
+  ['voice',      /\b(tone|voice|brand|style|wording|phrasing|how we (say|write|talk))\b/i],
+  ['rule',       /\b(never|always|do not|don'?t|must|policy|rule|avoid|prefer)\b/i],
+  ['decision',  /\b(decided|decision|chose|chosen|approved|rejected|agreed)\b/i],
+  ['product',    /\b(product|service|offering|feature|sku|menu|catalog)\b/i],
+  ['ops',        /\b(schedule|hours|process|workflow|operation|fulfil|deliver|shipping)\b/i],
+];
+function categorizeMemory(topic: string, insight: string): string {
+  const t = `${topic} ${insight}`;
+  for (const [cat, rx] of BRAIN_CATEGORIES) if (rx.test(t)) return cat;
+  return 'general';
+}
+
+// Call when a memory is surfaced/used → reinforce it (anti-decay, "alive" brain).
+function reinforceMemory(id: string) {
+  try { db.prepare("UPDATE forge_memory SET strength=MIN(strength+0.1,10.0),confidence=MIN(confidence+0.05,1.0),last_reinforced_at=datetime('now') WHERE id=?").run(id); } catch {}
+}
+
+// GET /api/brain/summary — "What Forge knows about you" (makes the moat FELT).
+app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  try {
+    // Backfill category for any rows still on default (cheap, idempotent).
+    const uncat = db.prepare("SELECT id,topic,insight FROM forge_memory WHERE user_id=? AND (category IS NULL OR category='general') LIMIT 200").all(userId) as any[];
+    const upd = db.prepare('UPDATE forge_memory SET category=? WHERE id=?');
+    for (const m of uncat) { const c = categorizeMemory(m.topic || '', m.insight || ''); if (c !== 'general') upd.run(c, m.id); }
+
+    const total = (db.prepare('SELECT COUNT(*) c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
+    const totalStrength = (db.prepare('SELECT COALESCE(SUM(strength),0) s FROM forge_memory WHERE user_id=?').get(userId) as any).s;
+    const byCategory = db.prepare(`SELECT category, COUNT(*) count, ROUND(AVG(confidence),2) avgConfidence, ROUND(SUM(strength),1) strength FROM forge_memory WHERE user_id=? GROUP BY category ORDER BY count DESC`).all(userId);
+    const topInsights = db.prepare(`SELECT category, topic, insight, strength, frequency FROM forge_memory WHERE user_id=? ORDER BY strength DESC, frequency DESC LIMIT 10`).all(userId);
+    const newThisWeek = (db.prepare(`SELECT COUNT(*) c FROM forge_memory WHERE user_id=? AND created_at >= datetime('now','-7 days')`).get(userId) as any).c;
+    const oldestRow = db.prepare('SELECT MIN(created_at) m FROM forge_memory WHERE user_id=?').get(userId) as any;
+    const daysLearning = oldestRow?.m ? Math.max(1, Math.round((Date.now() - new Date(oldestRow.m).getTime()) / 86400000)) : 0;
+
+    res.json({ success: true, data: {
+      totalMemories: total,
+      brainStrength: Math.round(totalStrength),
+      daysLearning,
+      newThisWeek,
+      byCategory,
+      topInsights,
+      // The headline line for the dashboard:
+      headline: total === 0
+        ? 'Forge is just getting to know your business — start a few tasks and your brain will grow.'
+        : `Forge knows ${total} things about your business across ${byCategory.length} areas, learned over ${daysLearning} day${daysLearning===1?'':'s'}.`,
+      moatNote: total > 0 ? `This knowledge is yours and compounds daily — it's what makes Forge irreplaceable for you.` : null,
+    }});
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// GET /api/brain/category/:cat — memories in one category (drill-down).
+app.get('/api/brain/category/:cat', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const rows = db.prepare('SELECT id,topic,insight,strength,frequency,confidence,created_at FROM forge_memory WHERE user_id=? AND category=? ORDER BY strength DESC').all(userId, req.params.cat);
+  res.json({ success: true, data: rows });
+});
+
+// POST /api/brain/decay — fade memories not reinforced recently (keeps brain accurate).
+// Idempotent; safe to call nightly. Drops strength on stale rows, prunes near-zero.
+app.post('/api/brain/decay', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  try {
+    const faded = db.prepare(`UPDATE forge_memory SET strength=MAX(strength-0.3,0) WHERE user_id=? AND COALESCE(last_reinforced_at,created_at) < datetime('now','-30 days')`).run(userId);
+    const pruned = db.prepare(`DELETE FROM forge_memory WHERE user_id=? AND strength<=0.1 AND frequency<=1`).run(userId);
+    res.json({ success: true, faded: faded.changes, pruned: pruned.changes });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PHASE 2 — Addictive Core: Morning Brief engine (streaks + delta + 1 priority).

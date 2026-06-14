@@ -41,6 +41,10 @@ const FRONTEND_CALLS: Array<{ method: string; path: string }> = [
   { method: 'POST', path: '/api/tokens/stake' },
   // Phase 2 — Morning Brief daily hook:
   { method: 'GET',  path: '/api/brief' },
+  // Phase 3 — Forge Brain v2 (compounding-memory moat):
+  { method: 'GET',  path: '/api/brain/summary' },
+  { method: 'GET',  path: '/api/brain/category/pricing' },
+  { method: 'POST', path: '/api/brain/decay' },
   // Core surfaces the demo also exercises:
   { method: 'POST', path: '/api/auth/login' },
   { method: 'POST', path: '/api/auth/register' },
