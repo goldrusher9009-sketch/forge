@@ -4174,6 +4174,23 @@ export default function ForgeApp() {
                     </div>
                   )}
                   {/* Token optimization hint — shown after conversation has tokens */}
+                  {!sending && threadStats && selectedModel && (() => {
+                    const used = threadStats.total_tokens || 0;
+                    const limit = getContextLimit(selectedModel);
+                    const pct = limit > 0 ? (used / limit) * 100 : 0;
+                    if (pct < 75) return null;
+                    const isNear = pct >= 90;
+                    return (
+                      <div style={{ margin:'0 32px 8px', padding:'8px 14px', background: isNear ? 'rgba(239,68,68,0.1)' : 'rgba(249,115,22,0.08)', border:`1px solid ${isNear ? 'rgba(239,68,68,0.4)' : 'rgba(249,115,22,0.3)'}`, borderRadius:10, display:'flex', alignItems:'center', gap:10 }}>
+                        <span style={{ fontSize:16, flexShrink:0 }}>{isNear ? '🚨' : '⚠️'}</span>
+                        <div style={{ flex:1 }}>
+                          <span style={{ fontSize:12, fontWeight:700, color: isNear ? '#f87171' : 'var(--fg-orange)' }}>{isNear ? 'Context nearly full' : 'Context filling up'}</span>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:8 }}>{pct.toFixed(0)}% · {used.toLocaleString()} / {limit.toLocaleString()} tokens</span>
+                        </div>
+                        <button onClick={() => newThread()} style={{ flexShrink:0, padding:'4px 10px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>New thread</button>
+                      </div>
+                    );
+                  })()}
                   {!sending && messages.length >= 4 && threadStats && threadStats.total_tokens > 0 && (() => {
                     const tokens = threadStats.total_tokens;
                     const msgs = threadStats.message_count || messages.length;

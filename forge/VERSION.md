@@ -1,5 +1,15 @@
 # Forge Platform
 
+## v7.7 — 2026-06-14 — UX Depth: Shortcuts, Wordcount, Badges, Timestamps, Pinned Panel, Slash Prompts, Archive
+- **Keyboard shortcuts modal** — `?` key shows all shortcuts overlay (Ctrl+K, arrows, Esc, Enter)
+- **Thread word count + reading time** — live badge in thread header (e.g. "1,234w · 6m read")
+- **Prompt usage badge** — 🔥 fire icon at 5x uses, optimistic count update on use
+- **Model badge on messages** — provider icon + short name pill under each assistant reply
+- **Message relative timestamps** — "2m ago" with hover tooltip for absolute time
+- **Pinned messages panel** — new 🔖 tab in right panel lists all pinned msgs in current thread
+- **Slash command shows saved prompts** — type `/` to search and load prompts from library
+- **Archived threads sidebar section** — collapsible 🗃 Archived row at bottom of thread list
+
 ## v7.6 — 2026-06-14 — UX Polish: Export, Profile, Chips, Sparkline, Pin, Reactions, Focus
 - **Thread Export** — download any thread as a Markdown file with one click
 - **Profile card** — avatar, email, join date, plan tier shown at top of Settings
