@@ -1185,6 +1185,7 @@ export default function ForgeApp() {
   const [searchResults, setSearchResults] = useState<any[]|null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimer = React.useRef<any>(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [skillCat, setSkillCat] = useState('All');
   const [activeSkills, setActiveSkills] = useState<Set<string>>(() => {
     try { const s = localStorage.getItem('forge_active_skills'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
@@ -3217,11 +3218,14 @@ export default function ForgeApp() {
         {mainTab === 'workspace' && sidebarExpanded && (
           <>
             <div style={{ padding:'10px 10px 0' }}>
-              <button onClick={() => newThread()} style={{ width:'100%', padding:'9px 14px', background:'var(--fg-btn-grad)', border:'none', borderRadius:'var(--fg-radius-btn)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:7, boxShadow:'0 2px 10px rgba(255,31,53,0.25)', transition:'all 0.18s', letterSpacing:'-0.01em' }}
-                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 0 18px rgba(255,31,53,0.4), 0 4px 12px rgba(0,0,0,0.4)';(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)';}}
-                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 2px 10px rgba(255,31,53,0.25)';(e.currentTarget as HTMLButtonElement).style.transform='none';}}>
-                <span style={{ fontSize:14 }}>📝</span>New conversation
-              </button>
+              <div style={{ display:'flex', gap:6 }}>
+                <button onClick={() => newThread()} style={{ flex:1, padding:'9px 14px', background:'var(--fg-btn-grad)', border:'none', borderRadius:'var(--fg-radius-btn)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:7, boxShadow:'0 2px 10px rgba(255,31,53,0.25)', transition:'all 0.18s', letterSpacing:'-0.01em' }}
+                  onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 0 18px rgba(255,31,53,0.4), 0 4px 12px rgba(0,0,0,0.4)';(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)';}}
+                  onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 2px 10px rgba(255,31,53,0.25)';(e.currentTarget as HTMLButtonElement).style.transform='none';}}>
+                  <span style={{ fontSize:14 }}>📝</span>New conversation
+                </button>
+                <button onClick={() => setShowTemplateModal(true)} title="Start from template" style={{ flexShrink:0, padding:'9px 11px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:'var(--fg-radius-btn)', color:'var(--fg-text2)', cursor:'pointer', fontSize:14, transition:'all 0.15s' }} onMouseEnter={e=>(e.currentTarget.style.borderColor='var(--fg-orange)')} onMouseLeave={e=>(e.currentTarget.style.borderColor='var(--fg-border2)')}>⚡</button>
+              </div>
             </div>
 
             {pinnedProjects.length > 0 && (
@@ -7818,6 +7822,51 @@ export default function ForgeApp() {
             </div>
           </div>
         )}
+
+        {/* -- Thread Templates Modal ------------------------------------------ */}
+        {showTemplateModal && (() => {
+          const TEMPLATES = [
+            { icon:'🔬', label:'Research', desc:'Deep-dive into a topic', prompt:'Research the following topic thoroughly and give me a comprehensive, structured overview with key findings, important nuances, and areas for further exploration:\n\n' },
+            { icon:'💻', label:'Code Review', desc:'Review or debug code', prompt:'Please review the following code for bugs, performance issues, security vulnerabilities, and style improvements. Explain each issue and suggest fixes:\n\n```\n\n```' },
+            { icon:'📋', label:'Planning', desc:'Plan a project or task', prompt:'Help me create a detailed project plan for the following goal. Break it into phases, milestones, tasks, and identify risks:\n\n' },
+            { icon:'✍️', label:'Writing', desc:'Draft or edit content', prompt:'Help me write the following. Be clear, engaging, and well-structured:\n\n' },
+            { icon:'🐛', label:'Debug', desc:'Debug an issue', prompt:'I\'m encountering a bug. Here\'s what\'s happening, what I expected, and the relevant code:\n\n**Problem:**\n\n**Expected:**\n\n**Code:**\n```\n\n```' },
+            { icon:'📊', label:'Data Analysis', desc:'Analyze data or metrics', prompt:'Analyze the following data and give me insights, patterns, anomalies, and actionable recommendations:\n\n' },
+            { icon:'🎨', label:'Design', desc:'UX, UI, or product design', prompt:'I need help designing the following. Consider user experience, visual hierarchy, and best practices:\n\n' },
+            { icon:'📧', label:'Email / Message', desc:'Draft a message', prompt:'Draft a professional message for the following purpose. Keep it concise and clear:\n\nRecipient/Context:\nPurpose:\nKey points to include:\n' },
+            { icon:'🧠', label:'Brainstorm', desc:'Generate ideas', prompt:'Brainstorm ideas for the following. Give me a diverse range of creative and practical options:\n\n' },
+            { icon:'📝', label:'Summarize', desc:'Summarize text or docs', prompt:'Summarize the following content. Extract key points, main arguments, and important details:\n\n' },
+            { icon:'🔄', label:'Explain', desc:'Explain a concept simply', prompt:'Explain the following concept in a clear, accessible way. Use analogies and examples:\n\n' },
+            { icon:'⚡', label:'Quick Task', desc:'Just start blank', prompt:'' },
+          ];
+          return (
+            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:10002, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowTemplateModal(false)}>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, width:560, maxWidth:'92vw', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 64px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
+                  <h2 style={{ margin:0, fontSize:17, fontWeight:800 }}>⚡ Start from Template</h2>
+                  <button onClick={() => setShowTemplateModal(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', fontSize:18, cursor:'pointer', padding:'2px 6px' }}>✕</button>
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                  {TEMPLATES.map(t => (
+                    <button key={t.label} onClick={async () => {
+                      setShowTemplateModal(false);
+                      const thread = await newThread(t.label !== 'Quick Task' ? t.label : undefined);
+                      if (thread && t.prompt) { setTimeout(() => { setInput(t.prompt); }, 300); }
+                    }} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'12px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:10, cursor:'pointer', textAlign:'left', transition:'all 0.15s' }}
+                      onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}}
+                      onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg3)';}}>
+                      <span style={{ fontSize:20, flexShrink:0 }}>{t.icon}</span>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:2 }}>{t.label}</div>
+                        <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{t.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* -- Keyboard Shortcuts Modal ---------------------------------------- */}
         {showShortcuts && (
