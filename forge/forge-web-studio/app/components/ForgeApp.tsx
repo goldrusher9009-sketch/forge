@@ -2796,6 +2796,19 @@ export default function ForgeApp() {
       }
       // Reload messages in background to sync with DB (don't await — already have the reply)
       loadMessages(threadId);
+      // Auto-title: if thread still has default name and this is first exchange, generate a title
+      try {
+        const curThread = activeThread || (await apiFetch(`/threads`, {}, user.token))?.data?.find((t: any) => t.id === threadId);
+        if (curThread && (curThread.title === 'New conversation' || !curThread.title)) {
+          const snippet = userContent.slice(0, 200);
+          const td = await apiFetch('/chat/simple', { method:'POST', body: JSON.stringify({ message: `Generate a short, specific thread title (4-7 words, no quotes, no punctuation at end) for a conversation that starts with: "${snippet}"`, model: 'claude-haiku-4-5-20251001' }) }, user.token);
+          const newTitle = (td?.data?.content || '').trim().replace(/^["']|["']$/g,'').slice(0, 80);
+          if (newTitle && newTitle.length > 3) {
+            await apiFetch(`/threads/${threadId}`, { method:'PATCH', body: JSON.stringify({ title: newTitle }) }, user.token);
+            setActiveThread(prev => prev ? { ...prev, title: newTitle } : prev);
+          }
+        }
+      } catch {}
       await loadArtifacts();
       await loadThreads(activeProject?.id);
       loadThreadTokenStats(threadId);
