@@ -6388,6 +6388,47 @@ app.post('/api/threads/:id/branch', requireAuth, async (req: AuthRequest, res) =
   res.json({ success: true, data: { id: newId, title: branchTitle, message_count: msgs.length } });
 });
 
+
+// ── Message Bookmarks ─────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS message_bookmarks (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  message_id TEXT NOT NULL,
+  thread_id TEXT NOT NULL,
+  note TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(user_id, message_id)
+)`);
+
+app.get('/api/bookmarks', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`
+    SELECT b.*, m.content, m.role, t.title as thread_title
+    FROM message_bookmarks b
+    LEFT JOIN messages m ON b.message_id = m.id
+    LEFT JOIN threads t ON b.thread_id = t.id
+    WHERE b.user_id=? ORDER BY b.created_at DESC LIMIT 100
+  `).all(req.user!.sub);
+  res.json({ success: true, data: rows });
+});
+
+app.post('/api/bookmarks', requireAuth, (req: AuthRequest, res) => {
+  const { message_id, thread_id, note } = req.body;
+  if (!message_id || !thread_id) return res.status(400).json({ success: false, error: 'message_id and thread_id required' });
+  const id = require('uuid').v4();
+  try {
+    db.prepare('INSERT INTO message_bookmarks (id,user_id,message_id,thread_id,note) VALUES (?,?,?,?,?)').run(id, req.user!.sub, message_id, thread_id, note || '');
+    res.json({ success: true, data: { id } });
+  } catch (e: any) {
+    if (e.message.includes('UNIQUE')) return res.status(409).json({ success: false, error: 'already bookmarked' });
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.delete('/api/bookmarks/:messageId', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM message_bookmarks WHERE user_id=? AND message_id=?').run(req.user!.sub, req.params.messageId);
+  res.json({ success: true });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`🚀 Forge Platform v6.99 running on port ${PORT} (${NODE_ENV})`);
 });

@@ -1024,6 +1024,9 @@ export default function ForgeApp() {
   // Context pins
   const [contextPins, setContextPins] = useState<{id:string;label:string;content:string}[]>([]);
   // Prompt history
+  // Bookmarks
+  const [bookmarks, setBookmarks] = useState<{id:string;message_id:string;thread_id:string;note:string;content:string;role:string;thread_title:string}[]>([]);
+  const [showBookmarksPanel, setShowBookmarksPanel] = useState(false);
   const [promptHistory, setPromptHistory] = useState<{id:string;content:string;starred:number;use_count:number}[]>([]);
   const [showPromptHistory, setShowPromptHistory] = useState(false);
   const [promptHistorySearch, setPromptHistorySearch] = useState('');
@@ -1317,6 +1320,14 @@ export default function ForgeApp() {
     } catch { /* keep current list if endpoint unavailable */ }
   }, [user, activeThread?.id]);
   useEffect(() => { loadFolderFiles(); }, [loadFolderFiles]);
+
+  // Load bookmarks
+  useEffect(() => {
+    if (!user) return;
+    const tok = localStorage.getItem('forge_token');
+    fetch('/api/bookmarks', { headers: { Authorization: 'Bearer ' + tok } })
+      .then(r => r.json()).then(d => { if (d.success) setBookmarks(d.data || []); }).catch(() => {});
+  }, [user]);
 
   // Load prompt history
   useEffect(() => {
@@ -3582,6 +3593,11 @@ export default function ForgeApp() {
                     {contextPins.length > 0 ? `📌 ${contextPins.length} pinned` : '📌 Pin context'}
                   </button>
                 )}
+                {user && (
+                  <button onClick={() => setShowBookmarksPanel((p: boolean) => !p)} style={{ flexShrink:0, padding:'2px 8px', background: showBookmarksPanel ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color: showBookmarksPanel ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Your bookmarked messages'>
+                    🔖 {bookmarks.length > 0 ? bookmarks.length : ''} Bookmarks
+                  </button>
+                )}
                 {/* Mini sparkline */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
                   const vals = threadStats.token_history.map(h => h.tokens);
@@ -4178,7 +4194,23 @@ export default function ForgeApp() {
                               ≡ƒì┤ Fork
                             </button>
                           )}
-                          {m.id && activeThread && (
+                          {m.id && activeThread && (() => {
+                    const isBookmarked = bookmarks.some((b: any) => b.message_id === m.id);
+                    return (
+                      <button onClick={async () => {
+                        const tok = localStorage.getItem('forge_token');
+                        if (isBookmarked) {
+                          await fetch('/api/bookmarks/' + m.id, { method:'DELETE', headers:{ Authorization:'Bearer '+tok } });
+                          setBookmarks((prev: any[]) => prev.filter((b: any) => b.message_id !== m.id));
+                          showToast('Bookmark removed');
+                        } else {
+                          const d = await fetch('/api/bookmarks', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ message_id: m.id, thread_id: activeThread.id }) }).then(r=>r.json());
+                          if (d.success) { setBookmarks((prev: any[]) => [{ id:d.data.id, message_id:m.id, thread_id:activeThread.id, note:'', content:m.content, role:m.role, thread_title:activeThread.title }, ...prev]); showToast('Bookmarked!'); }
+                        }
+                      }} style={{ background:'none', border:'none', color: isBookmarked ? '#f59e0b' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, opacity: isBookmarked ? 1 : 0.5 }} title={isBookmarked ? 'Remove bookmark' : 'Bookmark this message'}>{isBookmarked ? '🔖' : '🔖'}</button>
+                    );
+                  })()}
+                  {m.id && activeThread && (
                     <button onClick={async () => {
                       const tok = localStorage.getItem('forge_token');
                       const d = await fetch('/api/threads/' + activeThread.id + '/branch', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ message_id: m.id }) }).then(r=>r.json());
@@ -8072,7 +8104,29 @@ export default function ForgeApp() {
         )}
 
         {/* -- Thread Templates Modal ------------------------------------------ */}
-        {showPinsModal && activeThread && (
+        {showBookmarksPanel && (
+  <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowBookmarksPanel(false)}>
+    <div style={{ background:'var(--fg-bg)', borderRadius:16, padding:24, width:520, maxHeight:'80vh', overflow:'auto', boxShadow:'0 20px 60px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+        <h3 style={{ margin:0, fontSize:16, fontWeight:700, color:'var(--fg-text)' }}>🔖 Bookmarks</h3>
+        <button onClick={() => setShowBookmarksPanel(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:18 }}>×</button>
+      </div>
+      {bookmarks.length === 0 ? (
+        <div style={{ textAlign:'center', padding:32, color:'var(--fg-text3)', fontSize:13 }}>No bookmarks yet — click 🔖 on any message</div>
+      ) : bookmarks.map((bk: any) => (
+        <div key={bk.id} style={{ border:'1px solid var(--fg-border)', borderRadius:10, padding:12, marginBottom:10, cursor:'pointer' }}
+          onClick={() => { setShowBookmarksPanel(false); const t = { id:bk.thread_id, title:bk.thread_title, created_at:'' }; setActiveThread(t as any); setMessages([]); }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+            <span style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:600 }}>{bk.thread_title || 'Thread'} · {bk.role}</span>
+            <button onClick={async (e: any) => { e.stopPropagation(); const tok=localStorage.getItem('forge_token'); await fetch('/api/bookmarks/'+bk.message_id,{method:'DELETE',headers:{Authorization:'Bearer '+tok}}); setBookmarks((prev: any[])=>prev.filter((x: any)=>x.id!==bk.id)); }} style={{ background:'none', border:'none', color:'#f87171', cursor:'pointer', fontSize:12 }}>✕</button>
+          </div>
+          <div style={{ fontSize:12, color:'var(--fg-text2)', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as any }}>{bk.content}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{showPinsModal && activeThread && (
   <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowPinsModal(false)}>
     <div style={{ background:'var(--fg-bg)', borderRadius:16, padding:24, width:480, maxHeight:'80vh', overflow:'auto', boxShadow:'0 20px 60px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
