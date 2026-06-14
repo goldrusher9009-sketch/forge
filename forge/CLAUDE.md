@@ -1,5 +1,12 @@
 # Forge Platform — CLAUDE.md
 
+## ⚠️ READ DEPLOY_MAP.md FIRST
+Before any deploy/debug work, read `DEPLOY_MAP.md`. Key facts: the GitHub repo
+`goldrusher9009-sketch/forge` is a MONOREPO — real Forge is in the `forge/` subfolder;
+`viva/`, `Flash`, etc. are OTHER apps sharing `main`, so deploy commit messages lie.
+Railway project = **hearty-contentment** (service `forge`). Deploys take minutes —
+ALWAYS re-check the live endpoint before concluding a deploy failed.
+
 ## What This Is
 Client-portal SaaS where users bring their own LLM API keys (Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter). No server-side env vars for user keys. Admin can set platform-wide keys via DB.
 

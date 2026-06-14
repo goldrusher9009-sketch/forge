@@ -1,5 +1,11 @@
 # Forge Platform — Version History
 
+## v7.1 — 2026-06-14 — PHASE 2: Addictive Core (Morning Brief)
+### The daily-hook loop
+- **GET /api/brief** — returns greeting, login streak + longest streak, "since last visit" delta (pending approvals, new SEO pages, new threads, last nightly run), and the ONE priority action (finish setup → add key → review approvals → run an agent).
+- **Login streaks** — users table gains login_streak, longest_streak, last_seen_at, last_brief_at (idempotent migration). `touchStreak()` extends on consecutive days, resets on a missed day; wired into /api/auth/login and /api/brief. Streak math unit-verified.
+- **route-manifest test** updated to guard /api/brief.
+
 ## v7.0 — 2026-06-13 — PHASE 0: Truth & Stability
 ### Route-gap closers (frontend called these → backend 404'd; now real handlers)
 - **POST /api/agent/run** — SSE agent stream (tool_call/tool_result/response/error events) the agent UI expects

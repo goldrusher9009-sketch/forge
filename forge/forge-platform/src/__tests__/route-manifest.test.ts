@@ -39,6 +39,8 @@ const FRONTEND_CALLS: Array<{ method: string; path: string }> = [
   { method: 'DELETE', path: '/api/orgs/members/abc123' },
   { method: 'GET',  path: '/api/tokens/balance' },
   { method: 'POST', path: '/api/tokens/stake' },
+  // Phase 2 — Morning Brief daily hook:
+  { method: 'GET',  path: '/api/brief' },
   // Core surfaces the demo also exercises:
   { method: 'POST', path: '/api/auth/login' },
   { method: 'POST', path: '/api/auth/register' },

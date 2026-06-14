@@ -211,6 +211,7 @@ app.post('/api/auth/login', (req, res) => {
   const refreshToken = signRefresh(payload);
   db.prepare('INSERT INTO refresh_tokens (id,user_id,token,expires_at) VALUES (?,?,?,?)')
     .run(uuidv4(), user.id, refreshToken, new Date(Date.now() + 7 * 86400000).toISOString());
+  try { touchStreak(user.id); } catch {}
   res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: NODE_ENV === 'production', sameSite: NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 86400000 });
   // return both keys for compatibility with old/new frontend
   res.json({ success: true, message: 'Login successful', accessToken, access_token: accessToken, data: { accessToken, access_token: accessToken, user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name, role: user.role } } });
@@ -4797,6 +4798,88 @@ cron.schedule('0 2 * * *', async () => {
     ).run(u.id);
   }
 }, { timezone: 'America/New_York' });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PHASE 2 — Addictive Core: Morning Brief engine (streaks + delta + 1 priority).
+// The daily-hook loop. Tracks login streak, computes "what changed since you
+// left", and surfaces the single most important next action.
+// ═══════════════════════════════════════════════════════════════════════════
+// Safe, idempotent column migration (SQLite has no IF NOT EXISTS for columns).
+(function migrateStreakCols(){
+  const cols = (db.prepare('PRAGMA table_info(users)').all() as any[]).map(c => c.name);
+  const add = (name: string, ddl: string) => { if (!cols.includes(name)) { try { db.exec(`ALTER TABLE users ADD COLUMN ${ddl}`); } catch {} } };
+  add('login_streak',   'login_streak INTEGER NOT NULL DEFAULT 0');
+  add('longest_streak', 'longest_streak INTEGER NOT NULL DEFAULT 0');
+  add('last_seen_at',   'last_seen_at TEXT');
+  add('last_brief_at',  'last_brief_at TEXT');
+})();
+
+// Update streak on activity. Returns the updated streak record.
+function touchStreak(userId: string): { streak: number; longest: number; lastSeen: string | null } {
+  const u = db.prepare('SELECT login_streak,longest_streak,last_seen_at FROM users WHERE id=?').get(userId) as any;
+  if (!u) return { streak: 0, longest: 0, lastSeen: null };
+  const prevSeen = u.last_seen_at ? new Date(u.last_seen_at) : null;
+  const now = new Date();
+  const dayMs = 86400000;
+  const dayOf = (d: Date) => Math.floor(d.getTime() / dayMs);
+  let streak = u.login_streak || 0;
+  const prevSeenForReturn = u.last_seen_at;
+  if (!prevSeen) {
+    streak = 1;
+  } else {
+    const gap = dayOf(now) - dayOf(prevSeen);
+    if (gap === 0) { /* same day, no change */ }
+    else if (gap === 1) streak += 1;        // consecutive day → extend
+    else streak = 1;                         // missed a day → reset
+  }
+  const longest = Math.max(u.longest_streak || 0, streak);
+  db.prepare("UPDATE users SET login_streak=?,longest_streak=?,last_seen_at=datetime('now') WHERE id=?").run(streak, longest, userId);
+  return { streak, longest, lastSeen: prevSeenForReturn };
+}
+
+// GET /api/brief — the daily hook. Streak + since-last-visit delta + 1 priority.
+app.get('/api/brief', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  try {
+    const beforeBrief = db.prepare('SELECT last_brief_at FROM users WHERE id=?').get(userId) as any;
+    const since = beforeBrief?.last_brief_at || null;
+    const s = touchStreak(userId);
+
+    const user = db.prepare('SELECT business_name,business_type,onboarding_complete FROM users WHERE id=?').get(userId) as any;
+
+    // Delta: what happened since last brief (or all-time if first brief).
+    const sinceClause = since ? "AND created_at > ?" : "";
+    const args = (sql: string) => since ? db.prepare(sql).all(userId, since) : db.prepare(sql.replace('AND created_at > ?', '')).all(userId);
+    const newApprovals = (db.prepare(`SELECT COUNT(*) c FROM pending_approvals WHERE user_id=? AND status='pending'`).get(userId) as any).c;
+    const newSeo = (db.prepare(`SELECT COUNT(*) c FROM seo_pages WHERE user_id=? ${sinceClause}`).get(...(since?[userId,since]:[userId])) as any).c;
+    const newThreads = (db.prepare(`SELECT COUNT(*) c FROM threads WHERE user_id=? ${sinceClause}`).get(...(since?[userId,since]:[userId])) as any).c;
+    const lastNightly = db.prepare("SELECT status,finished_at,summary FROM nightly_runs WHERE user_id=? ORDER BY started_at DESC LIMIT 1").get(userId) as any;
+
+    // The ONE priority action — ordered by what unblocks the most value.
+    let priority: { action: string; cta: string; route: string };
+    const hasKey = (db.prepare('SELECT COUNT(*) c FROM api_keys WHERE user_id=?').get(userId) as any).c > 0;
+    if (!user?.onboarding_complete) priority = { action: 'Finish setting up your workspace — 60 seconds to your first agent.', cta: 'Complete setup', route: '/onboarding' };
+    else if (!hasKey) priority = { action: 'Add an API key to unlock your agents.', cta: 'Add a key', route: '/settings/keys' };
+    else if (newApprovals > 0) priority = { action: `${newApprovals} item${newApprovals>1?'s':''} from your overnight run need a quick yes/no.`, cta: 'Review & approve', route: '/approvals' };
+    else priority = { action: 'Your agents are idle. Kick off a task and watch them work.', cta: 'Run an agent', route: '/agent' };
+
+    db.prepare("UPDATE users SET last_brief_at=datetime('now') WHERE id=?").run(userId);
+
+    const greet = (() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; })();
+
+    res.json({ success: true, data: {
+      greeting: greet,
+      businessName: user?.business_name || null,
+      streak: s.streak,
+      longestStreak: s.longest,
+      streakMessage: s.streak >= 2 ? `🔥 ${s.streak}-day streak` : 'Welcome back',
+      firstBrief: !since,
+      since,
+      delta: { pendingApprovals: newApprovals, newSeoPages: newSeo, newThreads, lastNightly: lastNightly ? { status: lastNightly.status, finishedAt: lastNightly.finished_at } : null },
+      priority,
+    }});
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PHASE 0 — Route-gap closers. Frontend called these; backend lacked them → 404.
