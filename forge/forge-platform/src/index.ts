@@ -5202,6 +5202,28 @@ function touchStreak(userId: string): { streak: number; longest: number; lastSee
   return { streak, longest, lastSeen: prevSeenForReturn };
 }
 
+// GET /api/checklist — Activation checklist: checks real DB state for onboarding steps.
+app.get('/api/checklist', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const hasKey = safe(() => {
+    const row = db.prepare('SELECT anthropic_key, openai_key FROM users WHERE id=?').get(userId) as any;
+    return !!(row?.anthropic_key || row?.openai_key);
+  }, false);
+  const hasChat = safe(() => (db.prepare('SELECT COUNT(*) as c FROM superagent_messages WHERE user_id=?').get(userId) as any).c > 0, false);
+  const hasPrompt = safe(() => (db.prepare('SELECT COUNT(*) as c FROM prompt_cache WHERE user_id=?').get(userId) as any).c > 0, false);
+  const hasRun = safe(() => (db.prepare('SELECT COUNT(*) as c FROM nightly_runs WHERE user_id=? AND status=\'done\'').get(userId) as any).c > 0, false);
+  const hasMemory = safe(() => (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(userId) as any).c > 0, false);
+  const steps = [
+    { id: 'key', label: 'Add your API key', done: hasKey, href: 'settings' },
+    { id: 'chat', label: 'Send your first message', done: hasChat, href: 'super' },
+    { id: 'memory', label: 'Let Forge learn something about you', done: hasMemory, href: 'brain' },
+    { id: 'prompt', label: 'Save a prompt to your library', done: hasPrompt, href: 'prompts' },
+    { id: 'run', label: 'Complete a nightly autonomous run', done: hasRun, href: 'runs' },
+  ];
+  const completed = steps.filter(s => s.done).length;
+  res.json({ success: true, checklist: { steps, completed, total: steps.length, allDone: completed === steps.length } });
+});
+
 // GET /api/digest — Weekly digest: personalized summary of user's Forge activity this week.
 app.get('/api/digest', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
