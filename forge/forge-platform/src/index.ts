@@ -3502,6 +3502,25 @@ app.delete('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, message: 'Thread deleted' });
 });
 
+// POST /api/threads/:id/fork — Fork thread from a specific message onwards
+app.post('/api/threads/:id/fork', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  const srcId = req.params.id;
+  const { from_message_id, title } = req.body || {};
+  const src = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(srcId, uid) as any;
+  if (!src) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const allMsgs = db.prepare('SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(srcId) as any[];
+  const cutIdx = from_message_id ? allMsgs.findIndex((m: any) => m.id === from_message_id) : allMsgs.length;
+  const msgsToCopy = cutIdx >= 0 ? allMsgs.slice(0, cutIdx + 1) : allMsgs;
+  const newId = uuidv4();
+  const newTitle = title || `Fork of ${src.title || 'conversation'}`;
+  db.prepare('INSERT INTO threads (id,user_id,project_id,title,model) VALUES (?,?,?,?,?)').run(newId, uid, src.project_id || null, newTitle, src.model || 'forge-fast');
+  const insertMsg = db.prepare('INSERT INTO messages (id,thread_id,role,content,model,created_at,pinned) VALUES (?,?,?,?,?,?,?)');
+  for (const m of msgsToCopy) { insertMsg.run(uuidv4(), newId, m.role, m.content, m.model, m.created_at, m.pinned || 0); }
+  const newThread = db.prepare('SELECT * FROM threads WHERE id=?').get(newId);
+  res.status(201).json({ success: true, data: newThread, message_count: msgsToCopy.length });
+});
+
 // PATCH /api/messages/:id/pin — Pin or unpin a message
 app.patch('/api/messages/:id/pin', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;

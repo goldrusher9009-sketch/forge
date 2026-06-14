@@ -4060,6 +4060,19 @@ export default function ForgeApp() {
                               {m.pinned ? '📌' : '📍'} {m.pinned ? 'Pinned' : 'Pin'}
                             </button>
                           )}
+                          {m.id && (
+                            <button onClick={async () => {
+                              const tok = localStorage.getItem('forge_token');
+                              try {
+                                const d = await fetch('/api/threads/' + activeThread!.id + '/fork', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ from_message_id: m.id }) }).then(r=>r.json());
+                                if (d?.success && d?.data) { await loadThreads(); selectThread(d.data); showToast('🍴 Thread forked from this message'); }
+                              } catch { showToast('Fork failed'); }
+                            }} title="Fork thread from this message" style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
+                              onMouseEnter={e => (e.currentTarget.style.background='var(--fg-border)')}
+                              onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                              🍴 Fork
+                            </button>
+                          )}
                           {m.id && m.role === 'assistant' && ['👍','❤️','⭐'].map(emoji => (
                             <button key={emoji} onClick={async () => {
                               const tok = localStorage.getItem('forge_token');
