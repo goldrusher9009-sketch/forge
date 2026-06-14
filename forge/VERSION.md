@@ -1,3 +1,9 @@
+## v7.9 — 2026-06-14 — Cmd+K Palette, Auto-title, JSON Export
+- **Expanded Cmd+K palette** — 24 commands across nav/thread/ui; fork thread, export MD/JSON, copy link, open panels
+- **Auto-title threads** — after first AI reply, generates 4-7 word title via haiku model; replaces "New conversation"
+- **JSON export button** — thread header exports full thread+messages as .json download
+- **File restore** — recovered ForgeApp.tsx from truncation; re-applied all features cleanly
+
 # Forge Platform
 
 ## v7.8 — 2026-06-14 — Power Features: Context Warning, Search, Templates, Fork, Cost, Compare

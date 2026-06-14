@@ -3532,6 +3532,16 @@ export default function ForgeApp() {
                     showToast('Thread exported');
                   }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Export thread as Markdown'>&#8595; Export</button>
                 )}
+                {activeThread && messages.length > 0 && (
+                  <button onClick={() => {
+                    const blob = new Blob([JSON.stringify({ thread: activeThread, messages, exported_at: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = 'forge_thread_' + activeThread.id + '.json'; a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('Thread exported as JSON');
+                  }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Export thread as JSON'>{ } JSON</button>
+                )}
                 {/* Mini sparkline */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
                   const vals = threadStats.token_history.map(h => h.tokens);
