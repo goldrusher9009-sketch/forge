@@ -7781,6 +7781,7 @@ export default function ForgeApp() {
           const usePrompt = async (p: any) => {
             const tok = localStorage.getItem('forge_token');
             fetch('/api/prompts/' + p.id + '/use', { method:'POST', headers: { Authorization: 'Bearer ' + tok } });
+            setPLibrary(prev => (prev||[]).map((x: any) => x.id === p.id ? {...x, use_count: (x.use_count||0)+1} : x));
             setMainTab('super');
             setSuperInput(p.content);
             showToast('Prompt loaded');
@@ -7810,7 +7811,7 @@ export default function ForgeApp() {
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
                       <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{p.title}</div>
                       <div style={{ display:'flex', gap:6 }}>
-                        <div style={{ fontSize:11, color:'var(--fg-text3)', marginRight:8, alignSelf:'center' }}>Used {p.use_count||0}x</div>
+                        <span style={{ fontSize:11, color: (p.use_count||0) >= 5 ? 'var(--fg-orange)' : 'var(--fg-text3)', background: (p.use_count||0) >= 5 ? 'rgba(249,115,22,0.12)' : 'var(--fg-bg3)', border:`1px solid ${(p.use_count||0) >= 5 ? 'rgba(249,115,22,0.3)' : 'var(--fg-border)'}`, borderRadius:20, padding:'2px 8px', marginRight:4, alignSelf:'center', fontWeight:600 }}>{(p.use_count||0) >= 5 ? '🔥 ' : ''}{p.use_count||0}x</span>
                         <button onClick={() => usePrompt(p)} style={{ padding:'5px 14px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Use</button>
                         <button onClick={() => deletePrompt(p.id)} style={{ padding:'5px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text3)', fontSize:12, cursor:'pointer' }}>Delete</button>
                       </div>
