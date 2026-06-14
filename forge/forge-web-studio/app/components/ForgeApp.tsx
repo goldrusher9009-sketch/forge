@@ -1182,6 +1182,9 @@ export default function ForgeApp() {
   // Skills & Tools state (must be top-level — not inside render IIFE)
   const [skillSearch, setSkillSearch] = useState('');
   const [threadSearch, setThreadSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]|null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimer = React.useRef<any>(null);
   const [skillCat, setSkillCat] = useState('All');
   const [activeSkills, setActiveSkills] = useState<Set<string>>(() => {
     try { const s = localStorage.getItem('forge_active_skills'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
@@ -3236,7 +3239,52 @@ export default function ForgeApp() {
 
             <div style={{ padding:'12px 12px 4px', flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
               <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 8px' }}>{activeProject ? activeProject.name : 'Recent'}</p>
-              <input value={threadSearch} onChange={e => setThreadSearch(e.target.value)} placeholder="🔌 Search threads..." style={{ flex:'0 0 auto', marginBottom:8, padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, outline:'none' }} />
+              <div style={{ flex:'0 0 auto', marginBottom:8, position:'relative' }}>
+                <input value={threadSearch} onChange={e => {
+                  const v = e.target.value; setThreadSearch(v);
+                  clearTimeout(searchTimer.current);
+                  if (v.length < 2) { setSearchResults(null); return; }
+                  setSearchLoading(true);
+                  searchTimer.current = setTimeout(async () => {
+                    try {
+                      const d = await apiFetch(`/search?q=${encodeURIComponent(v)}&limit=20`, {}, user?.token);
+                      setSearchResults(d?.data?.results || []);
+                    } catch { setSearchResults([]); }
+                    setSearchLoading(false);
+                  }, 350);
+                }} onKeyDown={e => { if (e.key==='Escape') { setThreadSearch(''); setSearchResults(null); } }} placeholder="🔍 Search threads & messages..." style={{ width:'100%', boxSizing:'border-box', padding:'6px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text)', fontSize:12, outline:'none' }} />
+                {threadSearch.length >= 2 && (
+                  <div style={{ position:'absolute', top:'100%', left:0, right:0, zIndex:50, marginTop:2, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,0.4)', maxHeight:320, overflowY:'auto' }}>
+                    {searchLoading && <div style={{ padding:'12px 14px', fontSize:12, color:'var(--fg-text3)' }}>Searching…</div>}
+                    {!searchLoading && searchResults !== null && searchResults.length === 0 && <div style={{ padding:'12px 14px', fontSize:12, color:'var(--fg-text3)' }}>No results for "{threadSearch}"</div>}
+                    {!searchLoading && searchResults !== null && searchResults.length > 0 && (() => {
+                      const threadHits = searchResults.filter(r => r.type==='thread');
+                      const msgHits = searchResults.filter(r => r.type==='message');
+                      const memHits = searchResults.filter(r => r.type==='memory');
+                      return (
+                        <div>
+                          {threadHits.length > 0 && <div style={{ padding:'6px 14px 2px', fontSize:10, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Threads</div>}
+                          {threadHits.map((r: any) => (
+                            <div key={r.id} onMouseDown={e => { e.preventDefault(); const t = threads.find((x:any)=>x.id===r.id); if(t){selectThread(t);} setThreadSearch(''); setSearchResults(null); }} style={{ padding:'6px 14px', cursor:'pointer', fontSize:12, color:'var(--fg-text)', borderTop:'1px solid var(--fg-border2)' }} onMouseEnter={e=>(e.currentTarget.style.background='var(--fg-bg3)')} onMouseLeave={e=>(e.currentTarget.style.background='')}>
+                              <span style={{ marginRight:6 }}>💬</span>{r.text || '(untitled)'}
+                            </div>
+                          ))}
+                          {msgHits.length > 0 && <div style={{ padding:'6px 14px 2px', fontSize:10, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.06em', borderTop:'1px solid var(--fg-border)' }}>Messages</div>}
+                          {msgHits.map((r: any) => (
+                            <div key={r.id} onMouseDown={e => { e.preventDefault(); const t = threads.find((x:any)=>x.id===r.thread_id); if(t){selectThread(t);} setThreadSearch(''); setSearchResults(null); }} style={{ padding:'6px 14px', cursor:'pointer', fontSize:12, color:'var(--fg-text)', borderTop:'1px solid var(--fg-border2)' }} onMouseEnter={e=>(e.currentTarget.style.background='var(--fg-bg3)')} onMouseLeave={e=>(e.currentTarget.style.background='')}>
+                              <span style={{ marginRight:6, fontSize:10 }}>💬</span><span style={{ color:'var(--fg-text3)', fontSize:11 }}>{r.text}</span>
+                            </div>
+                          ))}
+                          {memHits.length > 0 && <div style={{ padding:'6px 14px 2px', fontSize:10, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.06em', borderTop:'1px solid var(--fg-border)' }}>Memory</div>}
+                          {memHits.map((r: any) => (
+                            <div key={r.id} style={{ padding:'6px 14px', fontSize:11, color:'var(--fg-text3)', borderTop:'1px solid var(--fg-border2)' }}>🧠 {r.text}</div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
               <div className="fg-chats-scroll" style={{ flex:1, overflowY:'auto' }}>
                 {/* Pinned threads first */}
                 {threads.filter(t => t.pinned && !t.archived && (t.title||'').toLowerCase().includes(threadSearch.toLowerCase())).map(t => (
