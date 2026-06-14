@@ -1030,6 +1030,10 @@ export default function ForgeApp() {
   const [promptHistory, setPromptHistory] = useState<{id:string;content:string;starred:number;use_count:number}[]>([]);
   const [showPromptHistory, setShowPromptHistory] = useState(false);
   const [promptHistorySearch, setPromptHistorySearch] = useState('');
+  const [replySuggestions, setReplySuggestions] = useState<string[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [showCmdPalette, setShowCmdPalette] = useState(false);
+  const [cmdQuery, setCmdQuery] = useState('');
   const [showPinsModal, setShowPinsModal] = useState(false);
   const [pinInput, setPinInput] = useState({ label: '', content: '' });
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
@@ -1336,6 +1340,16 @@ export default function ForgeApp() {
     fetch('/api/prompt-history?limit=50', { headers: { Authorization: 'Bearer ' + tok } })
       .then(r => r.json()).then(d => { if (d.success) setPromptHistory(d.data || []); }).catch(() => {});
   }, [user]);
+
+  // Cmd+K command palette
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCmdPalette(p => !p); setCmdQuery(''); }
+      if (e.key === 'Escape') setShowCmdPalette(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Load context pins when thread changes
   useEffect(() => {
@@ -2622,7 +2636,7 @@ export default function ForgeApp() {
     // Capture image attachments for vision
     const pendingImages = [...chatImages];
     setChatImages([]);
-    setInput(''); setVoiceTranscript('');
+    setInput(''); setVoiceTranscript(''); setReplySuggestions([]);
     // Save to prompt history
     if (userContent.trim().length >= 3) {
       const tok = localStorage.getItem('forge_token');
@@ -3598,6 +3612,19 @@ export default function ForgeApp() {
                     🔖 {bookmarks.length > 0 ? bookmarks.length : ''} Bookmarks
                   </button>
                 )}
+                {activeThread && user && (
+                  <button onClick={async () => {
+                    const tok = localStorage.getItem('forge_token');
+                    const resp = await fetch('/api/threads/' + activeThread.id + '/export?format=md', { headers:{ Authorization:'Bearer '+tok } });
+                    const text = await resp.text();
+                    const a = document.createElement('a');
+                    a.href = 'data:text/markdown;charset=utf-8,' + encodeURIComponent(text);
+                    a.download = (activeThread.title || 'thread').slice(0,40).replace(/[^a-zA-Z0-9]/g,'-') + '.md';
+                    a.click();
+                  }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Export thread as Markdown'>
+                    ⬇ Export
+                  </button>
+                )}
                 {/* Mini sparkline */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
                   const vals = threadStats.token_history.map(h => h.tokens);
@@ -4239,6 +4266,36 @@ export default function ForgeApp() {
                     </div>
                     );
                   })}
+                  {/* Smart reply suggestions */}
+                  {!typing && messages.length > 0 && messages[messages.length-1]?.role === 'assistant' && (
+                    <div style={{ paddingLeft:44, marginBottom:4 }}>
+                      {replySuggestions.length === 0 && !suggestionsLoading && activeThread && (
+                        <button onClick={async () => {
+                          setSuggestionsLoading(true);
+                          try {
+                            const tok = localStorage.getItem('forge_token');
+                            const d = await fetch('/api/threads/' + activeThread.id + '/suggestions', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' } }).then(r=>r.json());
+                            if (d.success) setReplySuggestions(d.suggestions || []);
+                          } catch {} finally { setSuggestionsLoading(false); }
+                        }} style={{ fontSize:11, padding:'3px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, color:'var(--fg-text3)', cursor:'pointer' }}>
+                          💡 Suggest replies
+                        </button>
+                      )}
+                      {suggestionsLoading && <span style={{ fontSize:11, color:'var(--fg-text3)' }}>Thinking of suggestions…</span>}
+                      {replySuggestions.length > 0 && (
+                        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                          {replySuggestions.map((s, i) => (
+                            <button key={i} onClick={() => { setInput(s); setReplySuggestions([]); }} style={{ fontSize:12, padding:'4px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:14, color:'var(--fg-text2)', cursor:'pointer', transition:'background 0.15s' }}
+                              onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg4)')}
+                              onMouseLeave={e => (e.currentTarget.style.background='var(--fg-bg3)')}>
+                              {s}
+                            </button>
+                          ))}
+                          <button onClick={() => setReplySuggestions([])} style={{ fontSize:11, padding:'4px 8px', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer' }}>✕</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {/* Persistent thinking steps ΓÇö shown after response arrives */}
                   {!typing && lastThinkingSteps.length > 0 && (
                     <div style={{ display:'flex', gap:12, alignItems:'flex-start', maxWidth:680 }}>
@@ -8009,6 +8066,40 @@ export default function ForgeApp() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* -- Command Palette (Cmd+K) --------------------------------------- */}
+        {showCmdPalette && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'flex-start', justifyContent:'center', zIndex:99999, paddingTop:120 }} onClick={() => setShowCmdPalette(false)}>
+            <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:14, width:'min(560px,90vw)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)', overflow:'hidden' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', borderBottom:'1px solid var(--fg-border)' }}>
+                <span style={{ fontSize:16 }}>⌘</span>
+                <input autoFocus value={cmdQuery} onChange={e => setCmdQuery(e.target.value)} placeholder='Search commands…' style={{ flex:1, background:'none', border:'none', outline:'none', color:'var(--fg-text)', fontSize:15, fontFamily:'var(--fg-font)' }} />
+                <kbd style={{ fontSize:10, color:'var(--fg-text3)', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:4, padding:'2px 6px' }}>ESC</kbd>
+              </div>
+              <div style={{ maxHeight:360, overflowY:'auto' }}>
+                {[
+                  { icon:'✏️', label:'New thread', action: () => { setActiveThread(null); setMessages([]); setShowCmdPalette(false); } },
+                  { icon:'🔍', label:'Search threads', action: () => { setShowCmdPalette(false); setTimeout(() => { const el = document.querySelector('[placeholder*="Search"]') as HTMLInputElement; el?.focus(); }, 100); } },
+                  { icon:'🧠', label:'Open Brain dashboard', action: () => { setActiveView('brain'); setShowCmdPalette(false); } },
+                  { icon:'⚙️', label:'Go to Settings', action: () => { setActiveView('settings'); setShowCmdPalette(false); } },
+                  { icon:'🏠', label:'Go to Home', action: () => { setActiveView('home'); setShowCmdPalette(false); } },
+                  { icon:'🔖', label:'Toggle bookmarks panel', action: () => { setShowBookmarksPanel((p: boolean) => !p); setShowCmdPalette(false); } },
+                  { icon:'📌', label:'Manage context pins', action: () => { setShowPinsModal(true); setShowCmdPalette(false); } },
+                  { icon:'🕐', label:'Browse prompt history', action: () => { setShowPromptHistory(true); setShowCmdPalette(false); } },
+                  { icon:'🗑️', label:'Clear chat input', action: () => { setInput(''); setShowCmdPalette(false); } },
+                ].filter(c => !cmdQuery || c.label.toLowerCase().includes(cmdQuery.toLowerCase())).map((cmd, i) => (
+                  <button key={i} onClick={cmd.action} style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'10px 16px', background:'none', border:'none', borderBottom:'1px solid var(--fg-border)', color:'var(--fg-text)', fontSize:14, cursor:'pointer', textAlign:'left' }}
+                    onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg3)')}
+                    onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                    <span style={{ fontSize:16 }}>{cmd.icon}</span>
+                    <span>{cmd.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div style={{ padding:'8px 16px', fontSize:11, color:'var(--fg-text3)', borderTop:'1px solid var(--fg-border)' }}>⌘K to open · ↑↓ navigate · Enter to run · Esc to close</div>
             </div>
           </div>
         )}
