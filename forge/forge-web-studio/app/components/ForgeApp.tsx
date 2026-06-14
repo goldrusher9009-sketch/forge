@@ -1020,6 +1020,11 @@ export default function ForgeApp() {
   const [improvingPrompt, setImprovingPrompt] = useState(false);
   const [multiCompareLoading, setMultiCompareLoading] = useState(false);
   // Chat folder actions (hoisted ΓÇö can't use useState inside render IIFE)
+
+  // Context pins
+  const [contextPins, setContextPins] = useState<{id:string;label:string;content:string}[]>([]);
+  const [showPinsModal, setShowPinsModal] = useState(false);
+  const [pinInput, setPinInput] = useState({ label: '', content: '' });
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('forge_pinned_threads')||'[]')); } catch { return new Set(); }
   });
@@ -1308,6 +1313,14 @@ export default function ForgeApp() {
     } catch { /* keep current list if endpoint unavailable */ }
   }, [user, activeThread?.id]);
   useEffect(() => { loadFolderFiles(); }, [loadFolderFiles]);
+
+  // Load context pins when thread changes
+  useEffect(() => {
+    if (!user || !activeThread?.id) { setContextPins([]); return; }
+    const tok = localStorage.getItem('forge_token');
+    fetch('/api/threads/' + activeThread.id + '/pins', { headers: { Authorization: 'Bearer ' + tok } })
+      .then(r => r.json()).then(d => { if (d.success) setContextPins(d.data || []); }).catch(() => {});
+  }, [user, activeThread?.id]);
   const uploadFile = async (file: File) => {
     if (!user) return;
     try {
@@ -2573,6 +2586,11 @@ export default function ForgeApp() {
 
     // Build content with attached files
     let userContent = input.trim();
+    // Inject context pins
+    if (contextPins.length > 0) {
+      const pinContext = contextPins.map((p: any) => `\n\n---\n📌 **${p.label}** (pinned context):\n${p.content}`).join('');
+      userContent += pinContext;
+    }
     if (attachedFiles.length > 0) {
       const fileContext = attachedFiles.map(f => `\n\n---\n≡ƒôä **${f.name}**:\n\`\`\`\n${f.content}\n\`\`\``).join('');
       userContent += fileContext;
@@ -3541,6 +3559,11 @@ export default function ForgeApp() {
                     URL.revokeObjectURL(url);
                     showToast('Thread exported as JSON');
                   }} style={{ flexShrink:0, padding:'2px 8px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Export thread as JSON'>{ } JSON</button>
+                )}
+                {activeThread && (
+                  <button onClick={() => setShowPinsModal(true)} style={{ flexShrink:0, padding:'2px 8px', background: contextPins.length > 0 ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color: contextPins.length > 0 ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:10, cursor:'pointer', fontWeight:600, whiteSpace:'nowrap' }} title='Manage context pins'>
+                    {contextPins.length > 0 ? `📌 ${contextPins.length} pinned` : '📌 Pin context'}
+                  </button>
                 )}
                 {/* Mini sparkline */}
                 {threadStats && threadStats.token_history.length > 0 && (() => {
@@ -7991,7 +8014,42 @@ export default function ForgeApp() {
         )}
 
         {/* -- Thread Templates Modal ------------------------------------------ */}
-        {showTemplateModal && (() => {
+        {showPinsModal && activeThread && (
+  <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowPinsModal(false)}>
+    <div style={{ background:'var(--fg-bg)', borderRadius:16, padding:24, width:480, maxHeight:'80vh', overflow:'auto', boxShadow:'0 20px 60px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+        <h3 style={{ margin:0, fontSize:16, fontWeight:700, color:'var(--fg-text)' }}>📌 Context Pins</h3>
+        <button onClick={() => setShowPinsModal(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:18 }}>×</button>
+      </div>
+      <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>Pinned snippets are automatically injected into every message in this thread.</p>
+      {contextPins.map(pin => (
+        <div key={pin.id} style={{ border:'1px solid var(--fg-border)', borderRadius:8, padding:10, marginBottom:8, display:'flex', gap:8, alignItems:'flex-start' }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:12, fontWeight:600, color:'var(--fg-orange)', marginBottom:4 }}>{pin.label}</div>
+            <pre style={{ margin:0, fontSize:11, color:'var(--fg-text2)', whiteSpace:'pre-wrap', wordBreak:'break-all', maxHeight:80, overflow:'auto' }}>{pin.content}</pre>
+          </div>
+          <button onClick={async () => {
+            const tok = localStorage.getItem('forge_token');
+            await fetch('/api/threads/' + activeThread.id + '/pins/' + pin.id, { method:'DELETE', headers:{ Authorization:'Bearer '+tok } });
+            setContextPins(prev => prev.filter(p => p.id !== pin.id));
+          }} style={{ background:'none', border:'none', color:'#f87171', cursor:'pointer', fontSize:14, padding:'2px 6px', flexShrink:0 }} title='Remove pin'>✕</button>
+        </div>
+      ))}
+      <div style={{ borderTop:'1px solid var(--fg-border)', paddingTop:16, marginTop:8 }}>
+        <div style={{ fontSize:12, fontWeight:600, color:'var(--fg-text2)', marginBottom:8 }}>Add new pin</div>
+        <input value={pinInput.label} onChange={e => setPinInput(p => ({...p, label: e.target.value}))} placeholder='Label (e.g. "Project spec", "My codebase context")' style={{ width:'100%', padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box', marginBottom:8 }} />
+        <textarea value={pinInput.content} onChange={e => setPinInput(p => ({...p, content: e.target.value}))} placeholder='Paste your context here...' rows={4} style={{ width:'100%', padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, boxSizing:'border-box', resize:'vertical', fontFamily:'inherit', marginBottom:8 }} />
+        <button onClick={async () => {
+          if (!pinInput.label.trim() || !pinInput.content.trim()) return;
+          const tok = localStorage.getItem('forge_token');
+          const d = await fetch('/api/threads/' + activeThread.id + '/pins', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ label: pinInput.label.trim(), content: pinInput.content.trim() }) }).then(r=>r.json());
+          if (d.success) { setContextPins(prev => [...prev, d.data]); setPinInput({ label:'', content:'' }); }
+        }} style={{ padding:'8px 16px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', width:'100%' }}>Add Pin</button>
+      </div>
+    </div>
+  </div>
+)}
+{showTemplateModal && (() => {
           const TEMPLATES = [
             { icon:'≡ƒö¼', label:'Research', desc:'Deep-dive into a topic', prompt:'Research the following topic thoroughly and give me a comprehensive, structured overview with key findings, important nuances, and areas for further exploration:\n\n' },
             { icon:'≡ƒÆ╗', label:'Code Review', desc:'Review or debug code', prompt:'Please review the following code for bugs, performance issues, security vulnerabilities, and style improvements. Explain each issue and suggest fixes:\n\n```\n\n```' },

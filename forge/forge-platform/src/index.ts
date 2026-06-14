@@ -6260,6 +6260,38 @@ app.get('/api/router/stats', requireAuth, (req: AuthRequest, res) => {
 });
 
 
+
+// ── Thread Context Pins ───────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS thread_context_pins (
+  id TEXT PRIMARY KEY,
+  thread_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  label TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// List pins for a thread
+app.get('/api/threads/:threadId/pins', requireAuth, (req: AuthRequest, res) => {
+  const pins = db.prepare('SELECT * FROM thread_context_pins WHERE thread_id=? AND user_id=? ORDER BY created_at ASC').all(req.params.threadId, req.user!.sub);
+  res.json({ success: true, data: pins });
+});
+
+// Add pin
+app.post('/api/threads/:threadId/pins', requireAuth, (req: AuthRequest, res) => {
+  const { label, content } = req.body;
+  if (!label || !content) return res.status(400).json({ success: false, error: 'label and content required' });
+  const id = require('uuid').v4();
+  db.prepare('INSERT INTO thread_context_pins (id, thread_id, user_id, label, content) VALUES (?, ?, ?, ?, ?)').run(id, req.params.threadId, req.user!.sub, label, content);
+  res.json({ success: true, data: { id, label, content } });
+});
+
+// Delete pin
+app.delete('/api/threads/:threadId/pins/:pinId', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM thread_context_pins WHERE id=? AND user_id=?').run(req.params.pinId, req.user!.sub);
+  res.json({ success: true });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`🚀 Forge Platform v6.99 running on port ${PORT} (${NODE_ENV})`);
 });
