@@ -1882,6 +1882,25 @@ db.exec(`CREATE TABLE IF NOT EXISTS marketplace_listings (
   updated_at TEXT NOT NULL
 )`);
 
+// Seed vertical packs into marketplace if not already present
+const SEED_LISTINGS = [
+  { id:'seed-law',    icon:'⚖️',  name:'Law Firm Pack',      category:'vertical', description:'Client intake, case status updates, contract drafting, billing narratives. Built for solo practitioners and small firms.', prompt:'You are a law firm AI assistant. Help with client intake summaries, case status updates, contract clause drafting, and billing narrative generation. Be precise, professional, and never give legal advice.', tags:'["law","legal","contracts","clients"]', installs:540, rating:4.8 },
+  { id:'seed-rest',  icon:'🍽️', name:'Restaurant Pack',     category:'vertical', description:'Menu copywriting, review responses, staff scheduling drafts, supplier negotiation emails.', prompt:'You are a restaurant operations AI. Help with menu descriptions, customer review responses, weekly staff schedule drafts, and supplier emails. Be warm, practical, and hospitality-focused.', tags:'["restaurant","hospitality","menu","staff"]', installs:320, rating:4.7 },
+  { id:'seed-ecom',  icon:'🛒',  name:'E-Commerce Pack',    category:'vertical', description:'Product descriptions, abandoned cart emails, customer support replies, inventory alerts, SEO optimized listings.', prompt:'You are an ecommerce AI specialist. Write product descriptions, abandoned cart recovery emails, customer support replies, and SEO-optimized listing copy. Be conversion-focused and data-driven.', tags:'["ecommerce","shopify","products","email"]', installs:890, rating:4.9 },
+  { id:'seed-trade', icon:'🏗️', name:'Trades Pack',         category:'vertical', description:'Job quoting, client follow-ups, permit checklists, invoice generation. For contractors, plumbers, electricians.', prompt:'You are a trades business AI. Help with job quotes, client follow-up messages, permit application checklists, and invoice generation. Be direct, practical, and fast.', tags:'["trades","contractor","quotes","invoices"]', installs:210, rating:4.6 },
+  { id:'seed-agency',icon:'🏢', name:'Agency Pack',         category:'vertical', description:'Client reporting, campaign briefs, performance summaries, proposal generation. Runs across all your client accounts.', prompt:'You are a marketing agency AI. Produce client status reports, campaign briefs, performance summaries, and new business proposals. Be strategic, brand-aware, and results-focused.', tags:'["agency","marketing","campaigns","clients"]', installs:670, rating:4.8 },
+  { id:'seed-health',icon:'🏥', name:'Healthcare Pack',     category:'vertical', description:'Patient intake summaries, appointment reminders, insurance pre-auth drafts, HIPAA-aware workflows.', prompt:'You are a healthcare admin AI. Help with patient intake summaries, appointment reminder drafts, and insurance pre-authorization letters. Always be HIPAA-aware and never include real PHI in outputs.', tags:'["healthcare","medical","patients","admin"]', installs:480, rating:4.7 },
+];
+const seedAuthorId = 'forge-system';
+for (const s of SEED_LISTINGS) {
+  const exists = db.prepare('SELECT id FROM marketplace_listings WHERE id=?').get(s.id);
+  if (!exists) {
+    const now = new Date().toISOString();
+    db.prepare(`INSERT INTO marketplace_listings (id,author_id,name,description,icon,category,prompt,tags,price,installs,rating,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,0,?,?,'published',?,?)`)
+      .run(s.id, seedAuthorId, s.name, s.description, s.icon, s.category, s.prompt, s.tags, s.installs, s.rating, now, now);
+  }
+}
+
 // Business type → persona map
 const FORGE_PERSONAS: Record<string, string> = {
   law_firm: 'You are Forge, a precise and formal AI business OS for a law firm. Be professional, meticulous, cite specifics. Never casual. Use legal-adjacent framing.',
