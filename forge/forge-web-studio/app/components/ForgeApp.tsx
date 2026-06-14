@@ -4100,14 +4100,14 @@ export default function ForgeApp() {
                               ≡ƒì┤ Fork
                             </button>
                           )}
-                          {m.id && m.role === 'assistant' && ['≡ƒæì','Γ¥ñ∩╕Å','Γ¡É'].map(emoji => (
+                          {m.id && m.role === 'assistant' && ['👍','❤️','😂','🎉','🔥','💯'].map(emoji => (
                             <button key={emoji} onClick={async () => {
                               const tok = localStorage.getItem('forge_token');
-                              const newReaction = m.reaction === emoji ? null : emoji;
+                              const newReaction = (m as any).reaction === emoji ? null : emoji;
                               await fetch('/api/messages/' + m.id + '/react', { method:'PATCH', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ reaction: newReaction }) });
                               setMessages((prev: any[]) => prev.map((msg: any) => msg.id === m.id ? {...msg, reaction: newReaction} : msg));
-                            }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13, padding:'2px 4px', borderRadius:4, opacity: m.reaction === emoji ? 1 : 0.5, transform: m.reaction === emoji ? 'scale(1.2)' : 'scale(1)', transition:'all 0.15s' }}
-                              title={m.reaction === emoji ? 'Remove reaction' : `React with ${emoji}`}>
+                            }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13, padding:'2px 4px', borderRadius:4, opacity: (m as any).reaction === emoji ? 1 : 0.4, transform: (m as any).reaction === emoji ? 'scale(1.25)' : 'scale(1)', transition:'all 0.15s' }}
+                              title={(m as any).reaction === emoji ? 'Remove reaction' : emoji}>
                               {emoji}
                             </button>
                           ))}

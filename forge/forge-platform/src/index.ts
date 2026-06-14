@@ -6192,6 +6192,39 @@ io.on('connection', (socket: any) => {
   socket.on('join', (userId: string) => socket.join(`user:${userId}`));
 });
 (app as any).io = io;
+
+// ── Message Reactions ─────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS message_reactions (
+  id TEXT PRIMARY KEY,
+  message_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  emoji TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(message_id, user_id, emoji)
+)`);
+
+app.get('/api/messages/:id/reactions', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT emoji, COUNT(*) as count, GROUP_CONCAT(user_id) as user_ids FROM message_reactions WHERE message_id=? GROUP BY emoji').all(req.params.id);
+  const userId = req.user!.sub;
+  res.json({ success: true, data: rows.map((r: any) => ({ emoji: r.emoji, count: r.count, reacted: r.user_ids.split(',').includes(userId) })) });
+});
+
+app.post('/api/messages/:id/reactions', requireAuth, (req: AuthRequest, res) => {
+  const { emoji } = req.body;
+  if (!emoji) return res.status(400).json({ success: false, error: 'emoji required' });
+  const id = require('uuid').v4();
+  try {
+    db.prepare('INSERT INTO message_reactions (id, message_id, user_id, emoji) VALUES (?, ?, ?, ?)').run(id, req.params.id, req.user!.sub, emoji);
+  } catch (e: any) { if (!e.message.includes('UNIQUE')) return res.status(500).json({ success: false, error: e.message }); }
+  res.json({ success: true });
+});
+
+app.delete('/api/messages/:id/reactions/:emoji', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM message_reactions WHERE message_id=? AND user_id=? AND emoji=?').run(req.params.id, req.user!.sub, decodeURIComponent(req.params.emoji));
+  res.json({ success: true });
+});
+
+
 httpServer.listen(PORT, () => {
   console.log(`🚀 Forge Platform v6.99 running on port ${PORT} (${NODE_ENV})`);
 });
