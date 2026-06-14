@@ -615,6 +615,8 @@ export default function ForgeApp() {
 
   // Main tab
   const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'|'agency'|'prompts'>('workspace');
+  const [showCmdPalette, setShowCmdPalette] = React.useState(false);
+  const [cmdQuery, setCmdQuery] = React.useState('');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -633,6 +635,12 @@ export default function ForgeApp() {
     const check = () => { const m = window.innerWidth < 768; setIsMobile(m); if (m) setSidebarExpanded(false); };
     check();
     window.addEventListener('resize', check);
+    const handleCmdK = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCmdPalette(p => !p); setCmdQuery(''); }
+      if (e.key === 'Escape') { setShowCmdPalette(false); }
+    };
+    window.addEventListener('keydown', handleCmdK);
+    return () => window.removeEventListener('keydown', handleCmdK);
     return () => window.removeEventListener('resize', check);
   }, []);
   const [rightExpanded, setRightExpanded] = useState(() => {
@@ -7455,6 +7463,47 @@ export default function ForgeApp() {
         )}
 
         {/* -- Desktop & Files --------------------------------------------- */}
+        {showCmdPalette && (() => {
+          const cmds = [
+            { label: 'New Chat', action: () => { setMainTab('super'); setShowCmdPalette(false); } },
+            { label: 'Go to Workspace', action: () => { setMainTab('workspace'); setShowCmdPalette(false); } },
+            { label: 'Go to Prompt Library', action: () => { setMainTab('prompts'); setShowCmdPalette(false); } },
+            { label: 'Go to Brain', action: () => { setMainTab('brain'); setShowCmdPalette(false); } },
+            { label: 'Go to Runs', action: () => { setMainTab('runs'); setShowCmdPalette(false); } },
+            { label: 'Go to Marketplace', action: () => { setMainTab('marketplace'); setShowCmdPalette(false); } },
+            { label: 'Go to Intelligence', action: () => { setMainTab('intelligence'); setShowCmdPalette(false); } },
+            { label: 'Go to Billing', action: () => { setMainTab('billing'); setShowCmdPalette(false); } },
+            { label: 'Go to Settings', action: () => { setMainTab('settings'); setShowCmdPalette(false); } },
+            { label: 'Go to Agency', action: () => { setMainTab('agency'); setShowCmdPalette(false); } },
+            { label: 'Go to Skills', action: () => { setMainTab('skills'); setShowCmdPalette(false); } },
+            { label: 'Go to Platforms', action: () => { setMainTab('platforms'); setShowCmdPalette(false); } },
+          ];
+          const filtered = cmds.filter(c => !cmdQuery || c.label.toLowerCase().includes(cmdQuery.toLowerCase()));
+          return (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:10000, display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:120 }} onClick={() => setShowCmdPalette(false)}>
+            <div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:16, width:'100%', maxWidth:520, boxShadow:'0 24px 64px rgba(0,0,0,0.4)', overflow:'hidden' }} onClick={e => e.stopPropagation()}>
+              <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:10 }}>
+                <span style={{ fontSize:14, color:'var(--fg-text3)' }}>Search commands...</span>
+                <input autoFocus value={cmdQuery} onChange={e => setCmdQuery(e.target.value)} placeholder='' style={{ flex:1, background:'transparent', border:'none', outline:'none', color:'var(--fg-text)', fontSize:15 }} />
+                <span style={{ fontSize:11, color:'var(--fg-text3)', background:'var(--fg-bg2)', padding:'2px 6px', borderRadius:4, border:'1px solid var(--fg-border)' }}>ESC</span>
+              </div>
+              <div style={{ maxHeight:360, overflowY:'auto' }}>
+                {filtered.length === 0 && <div style={{ padding:'20px 16px', color:'var(--fg-text3)', fontSize:13 }}>No commands found</div>}
+                {filtered.map((c, i) => (
+                  <button key={i} onClick={c.action} style={{ display:'block', width:'100%', padding:'11px 16px', background:'none', border:'none', borderBottom:'1px solid var(--fg-border)', color:'var(--fg-text)', fontSize:14, textAlign:'left', cursor:'pointer' }}
+                    onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg2)')}
+                    onMouseLeave={e => (e.currentTarget.style.background='none')}
+                  >{c.label}</button>
+                ))}
+              </div>
+              <div style={{ padding:'8px 16px', borderTop:'1px solid var(--fg-border)', fontSize:11, color:'var(--fg-text3)' }}>
+                Press Cmd+K to toggle  |  Arrow keys to navigate  |  Enter to select
+              </div>
+            </div>
+          </div>
+          );
+        })()}
+
         {mainTab === 'prompts' && (() => {
           const [pLibrary, setPLibrary] = React.useState<any[]|null>(null);
           const [pInput, setPInput] = React.useState('');
