@@ -6028,6 +6028,33 @@ export default function ForgeApp() {
               <h2 style={{ color:'var(--fg-orange)', margin:'0 0 4px', fontSize:22, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.3px' }}>⚙️ Settings</h2>
               <p style={{ color:'var(--fg-text3)', margin:'0 0 24px', fontSize:14 }}>Configure API keys, agents, and preferences</p>
 
+              {/* Profile Card */}
+              {(() => {
+                const [profileData, setProfileData] = React.useState<any>(null);
+                if (!profileData && user) {
+                  const tok = localStorage.getItem('forge_token');
+                  fetch('/api/profile', { headers: { Authorization: 'Bearer ' + tok } })
+                    .then(r => r.json()).then(d => setProfileData(d)).catch(() => {});
+                }
+                if (!profileData) return null;
+                const joinDate = profileData.created_at ? new Date(profileData.created_at).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) : '';
+                const initials = ((profileData.first_name||'')[0]||(profileData.email||'')[0]||'?').toUpperCase();
+                return (
+                  <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24, display:'flex', alignItems:'center', gap:20 }}>
+                    <div style={{ width:56, height:56, borderRadius:'50%', background:'var(--fg-orange)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, fontWeight:800, color:'#fff', flexShrink:0 }}>{initials}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>{[profileData.first_name, profileData.last_name].filter(Boolean).join(' ') || profileData.email}</div>
+                      <div style={{ fontSize:13, color:'var(--fg-text3)', marginTop:2 }}>{profileData.email}</div>
+                      {joinDate && <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:4 }}>Member since {joinDate}</div>}
+                    </div>
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', background:'rgba(249,115,22,0.12)', padding:'4px 10px', borderRadius:20, display:'inline-block' }}>{(profileData.role||'free').toUpperCase()}</div>
+                      <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:6 }}>Plan tier</div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Connected Services */}
               <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
                 <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:'0 0 4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Connected Services</h3>
