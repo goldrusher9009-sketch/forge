@@ -5272,6 +5272,47 @@ app.get('/api/savings', requireAuth, (req: AuthRequest, res) => {
   });
 });
 
+// GET /api/activity — unified activity feed: last 20 events across all Forge surfaces.
+app.get('/api/activity', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const limit = Math.min(Number(req.query.limit) || 20, 50);
+  const events: any[] = [];
+
+  // Nightly runs
+  safe(() => {
+    const runs = db.prepare("SELECT id, status, summary, started_at, finished_at FROM nightly_runs WHERE user_id=? ORDER BY started_at DESC LIMIT 5").all(userId) as any[];
+    for (const r of runs) events.push({ type:'run', icon:'🤖', title: r.status === 'done' ? 'Autonomous run completed' : 'Autonomous run ' + r.status, body: r.summary || null, ts: r.finished_at || r.started_at });
+  }, null);
+
+  // Memories learned
+  safe(() => {
+    const mems = db.prepare("SELECT key, value, created_at FROM forge_memory WHERE user_id=? ORDER BY created_at DESC LIMIT 5").all(userId) as any[];
+    for (const m of mems) events.push({ type:'memory', icon:'🧠', title: 'Memory learned', body: m.key + ': ' + String(m.value).slice(0, 80), ts: m.created_at });
+  }, null);
+
+  // Approvals
+  safe(() => {
+    const approvals = db.prepare("SELECT id, type, title, status, created_at FROM pending_approvals WHERE user_id=? ORDER BY created_at DESC LIMIT 5").all(userId) as any[];
+    for (const a of approvals) events.push({ type:'approval', icon:'✅', title: (a.status === 'pending' ? 'Approval waiting: ' : 'Approval ' + a.status + ': ') + a.title, body: null, ts: a.created_at });
+  }, null);
+
+  // SEO pages
+  safe(() => {
+    const pages = db.prepare("SELECT keyword, url, published_at FROM seo_pages WHERE user_id=? ORDER BY published_at DESC LIMIT 5").all(userId) as any[];
+    for (const p of pages) events.push({ type:'seo', icon:'📄', title: 'SEO page generated', body: p.keyword, ts: p.published_at });
+  }, null);
+
+  // Threads
+  safe(() => {
+    const threads = db.prepare("SELECT id, title, updated_at FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT 5").all(userId) as any[];
+    for (const t of threads) events.push({ type:'thread', icon:'💬', title: 'Conversation: ' + (t.title || 'Untitled'), body: null, ts: t.updated_at });
+  }, null);
+
+  // Sort all by ts desc, take limit
+  events.sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+  res.json({ success: true, activity: events.slice(0, limit) });
+});
+
 // GET /api/brief — the daily hook. Streak + since-last-visit delta + 1 priority.
 app.get('/api/brief', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;

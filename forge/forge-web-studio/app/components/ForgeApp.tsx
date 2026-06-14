@@ -770,6 +770,12 @@ export default function ForgeApp() {
       ]).then(([od, sd]) => { setOutcomesData(od); setSavingsData(sd); setOutcomesLoading(false); })
         .catch(() => { setOutcomesError('Failed to load outcomes.'); setOutcomesLoading(false); });
     }
+    if (user && activityFeed === null) {
+      const tok = localStorage.getItem('forge_token');
+      fetch('/api/activity?limit=8', { headers: { Authorization: 'Bearer ' + tok } })
+        .then(r => r.json()).then(d => setActivityFeed(d.activity || []))
+        .catch(() => setActivityFeed([]));
+    }
   /* eslint-disable-next-line */ }, [mainTab]);
   useEffect(() => {
     if (mainTab === 'agency' && user && !agencyLoaded) {
@@ -1069,6 +1075,7 @@ export default function ForgeApp() {
   const [outcomesLoading, setOutcomesLoading] = useState(false);
   const [outcomesError, setOutcomesError] = useState('');
   const [savingsData, setSavingsData] = useState<any>(null);
+  const [activityFeed, setActivityFeed] = useState<any[]|null>(null);
 
   // Agency / White-label state
   const [agencyTab, setAgencyTab] = useState<'overview'|'clients'|'new'>('overview');
@@ -3648,6 +3655,7 @@ export default function ForgeApp() {
                           <span style={{ fontSize:28 }}>🛡</span>
                           <span style={{ fontSize:12, fontWeight:600 }}>Skills</span>
                         </button>
+                      {activityFeed && activityFeed.length > 0 && (<div style={{ maxWidth:480, width:'100%', marginTop:24 }}><div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--fg-text3)', marginBottom:10 }}>Recent Activity</div><div style={{ display:'flex', flexDirection:'column', gap:6 }}>{activityFeed.map((ev: any, i: number) => (<div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10 }}><span style={{ fontSize:16, flexShrink:0 }}>{ev.icon}</span><div style={{ flex:1, minWidth:0 }}><div style={{ fontSize:12, fontWeight:600, color:'var(--fg-text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ev.title}</div>{ev.body && <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ev.body}</div>}</div><div style={{ fontSize:10, color:'var(--fg-text3)', flexShrink:0, marginTop:1 }}>{ev.ts ? new Date(ev.ts).toLocaleDateString() : ''}</div></div>))}</div></div>)}
                       </div>
                     </div>
                   )}
