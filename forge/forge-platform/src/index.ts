@@ -429,6 +429,7 @@ try { db.exec(`ALTER TABLE threads ADD COLUMN archived INTEGER NOT NULL DEFAULT 
 try { db.exec(`ALTER TABLE threads ADD COLUMN total_tokens INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE messages ADD COLUMN tokens INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE messages ADD COLUMN model TEXT`); } catch {}
+try { db.exec(`ALTER TABLE messages ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`); } catch {}
 
 // ── Safe migrations (add columns that may be missing in older DBs) ──
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
@@ -3498,6 +3499,26 @@ app.delete('/api/threads/:id', requireAuth, (req: AuthRequest, res) => {
   const r = db.prepare('DELETE FROM threads WHERE id=? AND user_id=?').run(req.params.id, req.user!.sub);
   if (!r.changes) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
   res.json({ success: true, message: 'Thread deleted' });
+});
+
+// PATCH /api/messages/:id/pin — Pin or unpin a message
+app.patch('/api/messages/:id/pin', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const msgId = req.params.id;
+  const msg = db.prepare('SELECT m.id, t.user_id FROM messages m JOIN threads t ON m.thread_id=t.id WHERE m.id=?').get(msgId) as any;
+  if (!msg || msg.user_id !== userId) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
+  const pinned = req.body?.pinned ? 1 : 0;
+  db.prepare('UPDATE messages SET pinned=? WHERE id=?').run(pinned, msgId);
+  res.json({ success: true, pinned: !!pinned });
+});
+
+// GET /api/threads/:id/pinned — Get pinned messages for a thread
+app.get('/api/threads/:id/pinned', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const thread = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(req.params.id, userId) as any;
+  if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
+  const rows = db.prepare('SELECT id, role, content, created_at FROM messages WHERE thread_id=? AND pinned=1 ORDER BY created_at ASC').all(req.params.id) as any[];
+  res.json({ success: true, data: rows });
 });
 
 // POST /api/threads/:id/summarize — Generate a short title for a thread using the LLM.

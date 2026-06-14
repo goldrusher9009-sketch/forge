@@ -308,7 +308,7 @@ interface Project { id: string; name: string; color: string; system_prompt?: str
 interface Thread { id: string; project_id?: string; title: string; created_at: string; pinned?: number; archived?: number; total_tokens?: number; }
 interface VaultKey { provider: string; key_preview: string; key_status: 'active'|'inactive'|'invalid'; created_at: string; updated_at: string; }
 interface SuperMemory { id: string; topic: string; insight: string; frequency: number; strength: number; updated_at: string; }
-interface Message { id: string; thread_id: string; role: 'user' | 'assistant'; content: string; model?: string; created_at: string; }
+interface Message { id: string; thread_id: string; role: 'user' | 'assistant'; content: string; model?: string; created_at: string; pinned?: boolean; }
 interface Artifact { id: string; thread_id?: string; title: string; type: string; content: string; version: number; created_at: string; }
 interface WorkspaceAgent { id: string; name: string; icon: string; color: string; system_prompt: string; model: string; enabled: number; built_in?: number; }
 interface WorkspaceTask { id: string; title: string; description?: string; status: 'todo' | 'in_progress' | 'done' | 'blocked'; priority: 'low' | 'medium' | 'high'; project_id?: string; created_at: string; }
@@ -3926,6 +3926,20 @@ export default function ForgeApp() {
                               onMouseEnter={e => (e.currentTarget.style.background='var(--fg-border)')}
                               onMouseLeave={e => (e.currentTarget.style.background='none')}>
                               📖 Read
+                            </button>
+                          )}
+                          {m.id && (
+                            <button onClick={async () => {
+                              const tok = localStorage.getItem('forge_token');
+                              const newPinned = !m.pinned;
+                              await fetch('/api/messages/' + m.id + '/pin', { method:'PATCH', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ pinned: newPinned }) });
+                              setMessages((prev: any[]) => prev.map((msg: any) => msg.id === m.id ? {...msg, pinned: newPinned} : msg));
+                              showToast(newPinned ? '📌 Message pinned' : 'Unpinned');
+                            }} title={m.pinned ? 'Unpin message' : 'Pin message'}
+                              style={{ background:'none', border:'none', color: m.pinned ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
+                              onMouseEnter={e => (e.currentTarget.style.background='var(--fg-border)')}
+                              onMouseLeave={e => (e.currentTarget.style.background='none')}>
+                              {m.pinned ? '📌' : '📍'} {m.pinned ? 'Pinned' : 'Pin'}
                             </button>
                           )}
                         </div>
