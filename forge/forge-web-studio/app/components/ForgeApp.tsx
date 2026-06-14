@@ -2625,16 +2625,45 @@ export default function ForgeApp() {
       return;
     }
 
+    // Skill slash commands — rewrite input then continue to normal send
+    let effectiveInput = input;
+    const trimmedInput = input.trim();
+    if (trimmedInput.startsWith('/summarize')) {
+      const msgContext = messages.slice(-30).map((m: any) => `${m.role}: ${m.content.slice(0,500)}`).join('\n');
+      effectiveInput = `Please summarize this conversation concisely, highlighting key decisions and action items:\n\n${msgContext}`;
+    } else if (trimmedInput.startsWith('/translate')) {
+      const parts = trimmedInput.match(/^\/translate\s+to\s+(\w+)[:\s]\s*([\s\S]+)$/i);
+      if (parts) {
+        effectiveInput = `Translate the following to ${parts[1]}, preserving tone and meaning:\n\n${parts[2]}`;
+      } else {
+        const rest = trimmedInput.replace(/^\/translate\s*/i, '').trim();
+        if (!rest) { setInput('/translate to Spanish: '); return; }
+        effectiveInput = `Translate the following to Spanish, preserving tone and meaning:\n\n${rest}`;
+      }
+    } else if (trimmedInput.startsWith('/explain')) {
+      const rest = trimmedInput.slice(8).trim();
+      if (!rest) { setInput('/explain '); return; }
+      effectiveInput = `Explain this clearly and simply, as if to someone unfamiliar with the topic:\n\n${rest}`;
+    } else if (trimmedInput.startsWith('/fix')) {
+      const rest = trimmedInput.slice(4).trim();
+      if (!rest) { setInput('/fix '); return; }
+      effectiveInput = `Find and fix all bugs in the following code, then explain what was wrong:\n\n\`\`\`\n${rest}\n\`\`\``;
+    } else if (trimmedInput.startsWith('/improve')) {
+      const rest = trimmedInput.slice(8).trim();
+      if (!rest) { setInput('/improve '); return; }
+      effectiveInput = `Improve and polish the following text for clarity, conciseness, and impact:\n\n${rest}`;
+    }
+
     let currentThread = activeThread;
 
     // If already sending, spawn a NEW thread for this message so both run in parallel
     if (sending) {
-      const title = input.trim().slice(0, 60);
+      const title = effectiveInput.trim().slice(0, 60);
       const spawnThread = await newThread(title);
       if (!spawnThread) return;
       setInput('');
       // Fire the new thread request independently ΓÇö no await so current send keeps going
-      const spawnContent = input.trim();
+      const spawnContent = effectiveInput.trim();
       const spawnModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
       const spawnCatalogSkills: any[] = (window as any).FORGE_CATALOG_DATA?.skills || [];
       const spawnSkillPrompts: Record<string, string> = {};
@@ -2656,13 +2685,13 @@ export default function ForgeApp() {
 
     if (!currentThread) {
       // Create thread titled from first message, then immediately send
-      const title = input.trim().slice(0, 60);
+      const title = effectiveInput.trim().slice(0, 60);
       currentThread = await newThread(title);
       if (!currentThread) return;
     }
 
     // Build content with attached files
-    let userContent = input.trim();
+    let userContent = effectiveInput.trim();
     // Inject context pins
     if (contextPins.length > 0) {
       const pinContext = contextPins.map((p: any) => `\n\n---\n📌 **${p.label}** (pinned context):\n${p.content}`).join('');
