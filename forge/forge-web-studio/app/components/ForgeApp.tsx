@@ -713,6 +713,7 @@ export default function ForgeApp() {
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState('');
   const [slashIdx, setSlashIdx] = useState(0);
+  const [promptLibrary, setPromptLibrary] = useState<{id:string;title:string;content:string;use_count:number}[]>([]);
   const [activeAgentIds, setActiveAgentIds] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState(() => { try { return localStorage.getItem('forge_selected_model') || ''; } catch { return ''; } }); // persisted to localStorage
   const isFreeModel = (m: any) => !m ? false : (typeof m === 'string' ? m.includes(':free') : (m.id?.includes(':free') || m.pricing?.prompt === '0' || m.pricing?.prompt === '0.0'));
@@ -1645,6 +1646,8 @@ export default function ForgeApp() {
     loadDispatchRuns(); loadSchedules(); loadThreads();
     loadCustomProviders(); loadUsageLogs(); loadSubscription();
     loadApiKeys(); loadVault(); // loadOpenRouterModels called inside loadApiKeys only when OR key confirmed
+    // Load prompt library for slash autocomplete
+    apiFetch('/prompts', {}, user.token).then((d: any) => { if (d?.data) setPromptLibrary(d.data); }).catch(() => {});
     loadTotalTokens(); loadSuperMemory(); loadSuperHistory();
     loadHooks(); loadConnectors();
   }, [user]);
@@ -4284,7 +4287,8 @@ export default function ForgeApp() {
                     {slashOpen && (() => {
                       const q = slashQuery.toLowerCase();
                       const filtered = SLASH_COMMANDS.filter(c => c.cmd.startsWith(q) || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
-                      if (!filtered.length) return null;
+                      const matchedPrompts = promptLibrary.filter(p => !q || p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q)).slice(0, 5);
+                      if (!filtered.length && !matchedPrompts.length) return null;
                       return (
                         <div style={{ position:'absolute', bottom:'calc(100% + 6px)', left:0, right:0, background:'var(--fg-bg2)', border:'1px solid var(--fg-border3)', borderRadius:12, overflow:'hidden', zIndex:200, boxShadow:'0 -8px 32px rgba(0,0,0,0.6)' }}>
                           <div style={{ padding:'6px 12px 4px', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-orange)', borderBottom:'1px solid var(--fg-border)' }}>⚡ Commands</div>
@@ -4319,6 +4323,25 @@ export default function ForgeApp() {
                                 </div>
                               );
                             })}
+                          {matchedPrompts.length > 0 && (
+                            <div>
+                              <div style={{ padding:'5px 12px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)' }}>My Prompts</div>
+                              {matchedPrompts.map((p, i) => {
+                                const globalIdx = filtered.length + i;
+                                const active = globalIdx === slashIdx;
+                                return (
+                                  <div key={p.id} onMouseDown={e => { e.preventDefault(); setInput(p.content); setSlashOpen(false); setTimeout(() => textareaRef.current?.focus(), 10); apiFetch('/prompts/'+p.id+'/use', {method:'POST'}, user?.token||'').catch(()=>{}); setPromptLibrary(prev => prev.map(x => x.id === p.id ? {...x, use_count: x.use_count+1} : x)); }} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background: active ? 'rgba(255,31,53,0.1)' : 'transparent', cursor:'pointer', borderLeft: active ? '2px solid var(--fg-orange)' : '2px solid transparent', transition:'all 0.1s' }}>
+                                    <span style={{ fontSize:16, flexShrink:0 }}>📝</span>
+                                    <div style={{ flex:1, minWidth:0 }}>
+                                      <div style={{ fontSize:13, fontWeight:600, color: active ? 'var(--fg-orange)' : 'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.title}</div>
+                                      <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.content.slice(0,60)}</div>
+                                    </div>
+                                    {p.use_count >= 5 && <span style={{ fontSize:11 }}>🔥</span>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                           </div>
                         </div>
                       );
