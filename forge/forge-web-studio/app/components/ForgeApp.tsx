@@ -3612,6 +3612,25 @@ export default function ForgeApp() {
                           <button key={s} onClick={() => { setInput(s); textareaRef.current?.focus(); }} style={{ padding:'8px 14px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:20, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.background='var(--fg-bg3)';(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border3)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.background='var(--fg-bg4)';(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';}}>{s}</button>
                         ))}
                       </div>
+                      {/* Setup checklist — shown until user has a key */}
+                      {apiKeys && !apiKeys.has_anthropic && !apiKeys.has_openai && !apiKeys.has_gemini && (
+                        <div style={{ background:'rgba(255,31,53,0.04)', border:'1px solid rgba(255,31,53,0.15)', borderRadius:14, padding:20, maxWidth:480, width:'100%', marginTop:8 }}>
+                          <div style={{ fontWeight:700, fontSize:13, color:'var(--fg-text)', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>
+                            <span style={{ fontSize:16 }}>🚀</span> Get started in 3 steps
+                          </div>
+                          {([
+                            { done: !!user, icon:'✅', label:'Create your account', action: null },
+                            { done: apiKeys?.has_anthropic||apiKeys?.has_openai||apiKeys?.has_gemini, icon:'🔑', label:'Add your API key (Anthropic, OpenAI, or Gemini)', action: () => setMainTab('platforms') },
+                            { done: false, icon:'💬', label:'Send your first message', action: null },
+                          ] as {done:boolean|undefined;icon:string;label:string;action:((()=>void)|null)}[]).map((step, i) => (
+                            <div key={i} onClick={() => step.action && step.action()} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 10px', borderRadius:9, marginBottom:6, background: step.done ? 'rgba(34,197,94,0.06)' : 'transparent', cursor: step.action ? 'pointer' : 'default', transition:'background 0.15s' }}>
+                              <div style={{ width:22, height:22, borderRadius:'50%', background: step.done ? 'rgba(34,197,94,0.2)' : 'var(--fg-bg4)', border:`1px solid ${step.done?'rgba(34,197,94,0.4)':'var(--fg-border)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, flexShrink:0, fontWeight:700, color: step.done?'#4ade80':'var(--fg-text3)' }}>{step.done ? '✓' : i+1}</div>
+                              <span style={{ fontSize:13, color: step.done ? 'var(--fg-text3)' : 'var(--fg-text)', textDecoration: step.done?'line-through':'none' }}>{step.label}</span>
+                              {step.action && !step.done && <span style={{ marginLeft:'auto', fontSize:11, color:'var(--fg-orange)', fontWeight:600 }}>Go →</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginTop:24, maxWidth:540 }}>
                         <button onClick={() => { newThread(); }} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'16px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border2)', borderRadius:12, color:'var(--fg-text2)', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-orange)';(e.currentTarget as HTMLElement).style.background='rgba(255,31,53,0.05)';}} onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor='var(--fg-border2)';(e.currentTarget as HTMLElement).style.background='var(--fg-bg2)';}}>
                           <span style={{ fontSize:28 }}>🛠</span>
