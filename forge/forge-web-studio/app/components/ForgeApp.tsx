@@ -621,6 +621,9 @@ export default function ForgeApp() {
   const [notifData, setNotifData] = React.useState<any>(null);
   const [showNotifs, setShowNotifs] = React.useState(false);
   const [cmdQuery, setCmdQuery] = React.useState('');
+  const [cmdIdx, setCmdIdx] = React.useState(0);
+  const cmdIdxRef = React.useRef(0);
+  const cmdFilteredRef = React.useRef<{label:string;action:()=>void}[]>([]);
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -640,8 +643,11 @@ export default function ForgeApp() {
     check();
     window.addEventListener('resize', check);
     const handleCmdK = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCmdPalette(p => !p); setCmdQuery(''); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCmdPalette(p => !p); setCmdQuery(''); setCmdIdx(0); }
       if (e.key === 'Escape') { setShowCmdPalette(false); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setCmdIdx(p => { const n = Math.min(p+1, cmdFilteredRef.current.length-1); cmdIdxRef.current=n; return n; }); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setCmdIdx(p => { const n = Math.max(p-1, 0); cmdIdxRef.current=n; return n; }); }
+      if (e.key === 'Enter' && cmdFilteredRef.current.length > 0) { const fn = cmdFilteredRef.current[cmdIdxRef.current]; if (fn) fn.action(); }
     };
     window.addEventListener('keydown', handleCmdK);
     return () => window.removeEventListener('keydown', handleCmdK);
@@ -7652,25 +7658,26 @@ export default function ForgeApp() {
             { label: 'Go to Platforms', action: () => { setMainTab('platforms'); setShowCmdPalette(false); } },
           ];
           const filtered = cmds.filter(c => !cmdQuery || c.label.toLowerCase().includes(cmdQuery.toLowerCase()));
+          cmdFilteredRef.current = filtered;
+          const safeIdx = Math.min(cmdIdx, filtered.length-1);
           return (
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:10000, display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:120 }} onClick={() => setShowCmdPalette(false)}>
             <div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:16, width:'100%', maxWidth:520, boxShadow:'0 24px 64px rgba(0,0,0,0.4)', overflow:'hidden' }} onClick={e => e.stopPropagation()}>
               <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:10 }}>
                 <span style={{ fontSize:14, color:'var(--fg-text3)' }}>Search commands...</span>
-                <input autoFocus value={cmdQuery} onChange={e => setCmdQuery(e.target.value)} placeholder='' style={{ flex:1, background:'transparent', border:'none', outline:'none', color:'var(--fg-text)', fontSize:15 }} />
+                <input autoFocus value={cmdQuery} onChange={e => { setCmdQuery(e.target.value); setCmdIdx(0); cmdIdxRef.current=0; }} placeholder='' style={{ flex:1, background:'transparent', border:'none', outline:'none', color:'var(--fg-text)', fontSize:15 }} />
                 <span style={{ fontSize:11, color:'var(--fg-text3)', background:'var(--fg-bg2)', padding:'2px 6px', borderRadius:4, border:'1px solid var(--fg-border)' }}>ESC</span>
               </div>
               <div style={{ maxHeight:360, overflowY:'auto' }}>
                 {filtered.length === 0 && <div style={{ padding:'20px 16px', color:'var(--fg-text3)', fontSize:13 }}>No commands found</div>}
                 {filtered.map((c, i) => (
-                  <button key={i} onClick={c.action} style={{ display:'block', width:'100%', padding:'11px 16px', background:'none', border:'none', borderBottom:'1px solid var(--fg-border)', color:'var(--fg-text)', fontSize:14, textAlign:'left', cursor:'pointer' }}
-                    onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg2)')}
-                    onMouseLeave={e => (e.currentTarget.style.background='none')}
-                  >{c.label}</button>
+                  <button key={i} onClick={c.action} style={{ display:'block', width:'100%', padding:'11px 16px', background: i===safeIdx ? 'var(--fg-bg2)' : 'none', border:'none', borderBottom:'1px solid var(--fg-border)', color: i===safeIdx ? 'var(--fg-orange)' : 'var(--fg-text)', fontSize:14, textAlign:'left', cursor:'pointer', fontWeight: i===safeIdx ? 700 : 400 }}
+                    onMouseEnter={e => { setCmdIdx(i); cmdIdxRef.current=i; }}
+                  >{i===safeIdx && <span style={{ marginRight:6 }}>›</span>}{c.label}</button>
                 ))}
               </div>
               <div style={{ padding:'8px 16px', borderTop:'1px solid var(--fg-border)', fontSize:11, color:'var(--fg-text3)' }}>
-                Press Cmd+K to toggle  |  Arrow keys to navigate  |  Enter to select
+                <span style={{ marginRight:12 }}>&#8593;&#8595; navigate</span><span style={{ marginRight:12 }}>&#9166; select</span><span>ESC close</span>
               </div>
             </div>
           </div>
