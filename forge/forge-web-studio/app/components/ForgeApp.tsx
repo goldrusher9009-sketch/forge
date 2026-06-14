@@ -211,6 +211,18 @@ function syntaxHighlight(code: string, lang: string): string {
   return c;
 }
 
+// --- @mention agent definitions -----------------------------------------------
+const AGENT_MENTIONS = [
+  { name:'researcher', icon:'🔬', desc:'Deep web research on any topic',    systemPrompt:'You are Researcher, an expert at deep web research. Find accurate, well-sourced information and present it clearly with citations.' },
+  { name:'coder',      icon:'💻', desc:'Write, review, or debug code',      systemPrompt:'You are Coder, an expert software engineer. Write clean, efficient, well-documented code and explain your decisions.' },
+  { name:'writer',     icon:'✍️', desc:'Draft emails, docs, content',       systemPrompt:'You are Writer, an expert copywriter and editor. Write compelling, clear, professional content tailored to the audience.' },
+  { name:'analyst',   icon:'📊', desc:'Analyze data, create reports',      systemPrompt:'You are Analyst, a data and business analysis expert. Break down complex problems and present clear insights with supporting evidence.' },
+  { name:'designer',  icon:'🎨', desc:'UI/UX critique and ideas',          systemPrompt:'You are Designer, a senior UI/UX expert. Critique designs, suggest improvements, and describe mockups with precision.' },
+  { name:'teacher',   icon:'🎓', desc:'Explain anything clearly',          systemPrompt:'You are Teacher, an expert educator. Explain complex topics simply, use examples and analogies, and check for understanding.' },
+  { name:'legal',     icon:'⚖️', desc:'Plain-English legal guidance',      systemPrompt:'You are Legal, a knowledgeable legal assistant. Explain legal concepts in plain English and flag important considerations. (Not a substitute for real legal advice.)' },
+  { name:'critic',    icon:'🔍', desc:'Critical review and feedback',      systemPrompt:'You are Critic, an expert reviewer. Give honest, constructive, specific feedback that makes work better.' },
+];
+
 // --- Slash command definitions ------------------------------------------------
 const SLASH_COMMANDS = [
   // Agents
@@ -614,7 +626,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'|'agency'|'prompts'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'|'agency'|'prompts'|'analytics'>('workspace');
   const [showCmdPalette, setShowCmdPalette] = React.useState(false);
   const [showShortcuts, setShowShortcuts] = React.useState(false);
   const [changelogData, setChangelogData] = React.useState<any[]|null>(null);
@@ -790,6 +802,13 @@ export default function ForgeApp() {
         fetch('/api/savings', { headers: { Authorization: 'Bearer ' + tok } }).then(r => r.json()),
       ]).then(([od, sd]) => { setOutcomesData(od); setSavingsData(sd); setOutcomesLoading(false); })
         .catch(() => { setOutcomesError('Failed to load outcomes.'); setOutcomesLoading(false); });
+    }
+    if (mainTab === 'analytics' && user && !analyticsData && !analyticsLoading) {
+      setAnalyticsLoading(true);
+      const tok = localStorage.getItem('forge_token');
+      fetch(`/api/analytics?period=${analyticsPeriod}&days=${analyticsPeriod}`, { headers: { Authorization: 'Bearer ' + tok } })
+        .then(r => r.json()).then(d => { setAnalyticsData(d); setAnalyticsLoading(false); })
+        .catch(() => setAnalyticsLoading(false));
     }
     if (user && activityFeed === null) {
       const tok = localStorage.getItem('forge_token');
@@ -1034,6 +1053,8 @@ export default function ForgeApp() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
+  const [mentionPicker, setMentionPicker] = useState<{query:string;pos:{top:number;left:number}}|null>(null);
+  const [activeMention, setActiveMention] = useState<string|null>(null); // active @agent name
   const [shareToken, setShareToken] = useState<string|null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1163,6 +1184,9 @@ export default function ForgeApp() {
   const [outcomesData, setOutcomesData] = useState<any>(null);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
   const [outcomesError, setOutcomesError] = useState('');
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
   const [checklistData, setChecklistData] = React.useState<any>(null);
   const [savingsData, setSavingsData] = useState<any>(null);
   const [activityFeed, setActivityFeed] = useState<any[]|null>(null);
@@ -2800,6 +2824,15 @@ export default function ForgeApp() {
         agent_mode: agentMode,
       };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
+      // @mention agent — inject system prompt and strip @name from content
+      if (activeMention) {
+        const mentionAgent = AGENT_MENTIONS.find(a => a.name === activeMention);
+        if (mentionAgent) {
+          body.skill_prompt = (body.skill_prompt ? body.skill_prompt + '\n\n' : '') + mentionAgent.systemPrompt;
+          body.content = (body.content as string).replace(new RegExp(`@${activeMention}\\s*`, 'i'), '').trim();
+        }
+        setActiveMention(null);
+      }
       // Attach images for vision
       if (pendingImages.length > 0) {
         body.attachments = pendingImages.map(img => ({ type: 'image', data: img.data, mediaType: img.mediaType, name: img.name }));
@@ -3315,6 +3348,7 @@ export default function ForgeApp() {
             { id:'brain', icon:'≡ƒºá', label:'Forge Brain' },
             { id:'trust', icon:'≡ƒÅå', label:'Trust Ladder' },
             { id:'outcomes', icon:'≡ƒôè', label:'Outcome Ledger' },
+            { id:'analytics', icon:'📊', label:'Analytics' },
             { id:'agency', icon:'≡ƒÅó', label:'Agency Mode' },
             { id:'workspace', icon:'≡ƒ¢á', label:'Workspace' },
             { id:'super', icon:'≡ƒîƒ', label:'SuperAgent' },
@@ -4742,6 +4776,31 @@ export default function ForgeApp() {
                       <div style={{ position:'absolute', inset:0, zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(8,8,9,0.82)', border:'2px dashed var(--fg-orange)', borderRadius:12, pointerEvents:'none', fontSize:13, fontWeight:700, color:'var(--fg-orange2)' }}>≡ƒôü Drop folder or files to add as context</div>
                     )}
                     {/* Slash command dropdown */}
+                    {mentionPicker && (() => {
+                      const mq = mentionPicker.query.toLowerCase();
+                      const mfiltered = AGENT_MENTIONS.filter(a => a.name.startsWith(mq) || a.desc.toLowerCase().includes(mq));
+                      if (!mfiltered.length) return null;
+                      return (
+                        <div style={{ position:'absolute', bottom:'calc(100% + 6px)', left:0, right:0, background:'var(--fg-bg2)', border:'1px solid var(--fg-border3)', borderRadius:12, overflow:'hidden', zIndex:201, boxShadow:'0 -8px 32px rgba(0,0,0,0.6)' }}>
+                          <div style={{ padding:'6px 12px 4px', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-orange)', borderBottom:'1px solid var(--fg-border)' }}>@ Agents</div>
+                          {mfiltered.map((a, i) => (
+                            <div key={a.name} onClick={() => { setActiveMention(a.name); setInput(input.replace(/@\w*$/, '') + `@${a.name} `); setMentionPicker(null); }} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 14px', cursor:'pointer', background: i === 0 ? 'rgba(251,146,60,0.08)' : 'transparent' }}>
+                              <span style={{ fontSize:16 }}>{a.icon}</span>
+                              <div>
+                                <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>@{a.name}</div>
+                                <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{a.desc}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    {activeMention && (
+                      <div style={{ position:'absolute', bottom:'calc(100% + 6px)', right:8, background:'rgba(251,146,60,0.12)', border:'1px solid var(--fg-orange)', borderRadius:20, padding:'2px 10px', fontSize:11, fontWeight:700, color:'var(--fg-orange)', zIndex:202, display:'flex', alignItems:'center', gap:6 }}>
+                        {AGENT_MENTIONS.find(a=>a.name===activeMention)?.icon} @{activeMention}
+                        <button onClick={() => setActiveMention(null)} style={{ background:'none', border:'none', color:'var(--fg-orange)', cursor:'pointer', padding:0, fontSize:12, lineHeight:1 }}>✕</button>
+                      </div>
+                    )}
                     {slashOpen && (() => {
                       const q = slashQuery.toLowerCase();
                       const filtered = SLASH_COMMANDS.filter(c => c.cmd.startsWith(q) || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
@@ -4854,8 +4913,27 @@ export default function ForgeApp() {
                         const match = val.match(/(?:^|\n)\/(\S*)$/);
                         if (match) { setSlashOpen(true); setSlashQuery(match[1]); setSlashIdx(0); }
                         else { setSlashOpen(false); setSlashQuery(''); }
+                        // @mention detection
+                        const atMatch = val.match(/@(\w*)$/);
+                        if (atMatch) {
+                          const rect = e.target.getBoundingClientRect();
+                          setMentionPicker({ query: atMatch[1], pos: { top: rect.top - 8, left: rect.left + 8 } });
+                        } else { setMentionPicker(null); }
                       }}
                       onKeyDown={e => {
+                        if (mentionPicker) {
+                          const mq = mentionPicker.query.toLowerCase();
+                          const mfiltered = AGENT_MENTIONS.filter(a => a.name.startsWith(mq));
+                          if (e.key === 'Escape') { setMentionPicker(null); return; }
+                          if ((e.key === 'Enter' || e.key === 'Tab') && mfiltered.length > 0) {
+                            e.preventDefault();
+                            const agent = mfiltered[0];
+                            setActiveMention(agent.name);
+                            setInput(input.replace(/@\w*$/, '') + `@${agent.name} `);
+                            setMentionPicker(null);
+                            return;
+                          }
+                        }
                         if (slashOpen) {
                           const q = slashQuery.toLowerCase();
                           const filtered = SLASH_COMMANDS.filter(c => c.cmd.startsWith(q) || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
@@ -9861,6 +9939,106 @@ export default function ForgeApp() {
                         </div>
                       );
                     })()}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* -- Analytics Dashboard ----------------------------------------- */}
+        {mainTab === 'analytics' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:860, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>📊</span>
+                <div style={{ flex:1 }}>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Analytics</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Your usage stats — messages, tokens, top models, daily activity.</p>
+                </div>
+                <div style={{ display:'flex', gap:6 }}>
+                  {(['7','30','90'] as const).map(p => (
+                    <button key={p} onClick={() => { setAnalyticsPeriod(p); setAnalyticsData(null); }} style={{ padding:'5px 12px', borderRadius:8, border:`1px solid ${analyticsPeriod===p ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: analyticsPeriod===p ? 'var(--fg-orange)' : 'var(--fg-bg2)', color: analyticsPeriod===p ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight:600 }}>{p}d</button>
+                  ))}
+                </div>
+              </div>
+              {analyticsLoading && <div style={{ textAlign:'center', color:'var(--fg-text3)', padding:60 }}>Loading...</div>}
+              {analyticsData && (() => {
+                const d = analyticsData;
+                const daily: any[] = d.dailyUsage || [];
+                const topModels: any[] = d.topModels || [];
+                const maxMsgs = Math.max(...daily.map((x:any) => x.messages || 0), 1);
+                const maxModelTokens = Math.max(...topModels.map((m:any) => m.tokens || 0), 1);
+                return (
+                  <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                    {/* KPI cards */}
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+                      {[
+                        { icon:'💬', label:'Threads', value:(d.totalThreads||0).toLocaleString(), color:'#6366f1' },
+                        { icon:'📨', label:'Messages', value:(d.totalMessages||0).toLocaleString(), color:'var(--fg-orange)' },
+                        { icon:'🔢', label:'Tokens', value: d.totalTokens >= 1000000 ? (d.totalTokens/1000000).toFixed(1)+'M' : d.totalTokens >= 1000 ? Math.round((d.totalTokens||0)/1000)+'k' : (d.totalTokens||0).toString(), color:'#22c55e' },
+                        { icon:'🧠', label:'Memories', value:(d.memCount||0).toLocaleString(), color:'#f59e0b' },
+                      ].map(s => (
+                        <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, textAlign:'center' }}>
+                          <div style={{ fontSize:24, marginBottom:6 }}>{s.icon}</div>
+                          <div style={{ fontSize:26, fontWeight:800, color:s.color }}>{s.value}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:4 }}>{s.label}</div>
+                          <div style={{ fontSize:10, color:'var(--fg-text3)', marginTop:2 }}>last {analyticsPeriod}d</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Daily usage sparkline */}
+                    {daily.length > 0 && (
+                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:14 }}>📈 Daily Messages</div>
+                        <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:80 }}>
+                          {daily.map((day:any, i:number) => {
+                            const h = Math.max(4, Math.round(((day.messages||0)/maxMsgs)*76));
+                            const isToday = i === daily.length - 1;
+                            return (
+                              <div key={i} title={`${day.date}: ${day.messages} msgs`} style={{ flex:1, height:h, background: isToday ? 'var(--fg-orange)' : 'rgba(99,102,241,0.5)', borderRadius:'3px 3px 0 0', transition:'height 0.3s', cursor:'default', minWidth:4 }} />
+                            );
+                          })}
+                        </div>
+                        <div style={{ display:'flex', justifyContent:'space-between', marginTop:6, fontSize:10, color:'var(--fg-text3)' }}>
+                          <span>{daily[0]?.date}</span>
+                          <span>{daily[daily.length-1]?.date}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Top models */}
+                    {topModels.length > 0 && (
+                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:14 }}>🤖 Top Models</div>
+                        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                          {topModels.map((m:any, i:number) => {
+                            const pct = Math.round(((m.tokens||0)/maxModelTokens)*100);
+                            const colors = ['var(--fg-orange)','#6366f1','#22c55e','#f59e0b','#ec4899'];
+                            return (
+                              <div key={m.model||i}>
+                                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                                  <span style={{ fontSize:13, color:'var(--fg-text)', fontWeight:600 }}>{m.model || 'unknown'}</span>
+                                  <span style={{ fontSize:12, color:'var(--fg-text3)' }}>{m.count||0} calls · {m.tokens >= 1000 ? Math.round((m.tokens||0)/1000)+'k' : m.tokens||0} tokens</span>
+                                </div>
+                                <div style={{ background:'var(--fg-bg3)', borderRadius:4, height:6 }}>
+                                  <div style={{ height:'100%', width:pct+'%', background:colors[i%colors.length], borderRadius:4, transition:'width 0.4s' }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {topModels.length === 0 && daily.length === 0 && (
+                      <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
+                        <div style={{ fontSize:40, marginBottom:12 }}>📊</div>
+                        <div style={{ fontSize:15, fontWeight:600 }}>No data yet</div>
+                        <div style={{ fontSize:13, marginTop:6 }}>Start chatting to see your analytics here.</div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
