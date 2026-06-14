@@ -18,18 +18,15 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e) }
 })
 
-// POST /api/notifications/:id/read
-router.post('/:id/read', requireAuth, async (req: AuthRequest, res, next) => {
+// GET /api/notifications/unread-count  ← before /:id routes
+router.get('/unread-count', requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    const n = await prisma.notification.findUnique({ where: { id: req.params.id } })
-    if (!n) throw new AppError(404, 'Not found')
-    if (n.userId !== req.userId) throw new AppError(403, 'Forbidden')
-    const updated = await prisma.notification.update({ where: { id: n.id }, data: { read: true } })
-    res.json(updated)
+    const count = await prisma.notification.count({ where: { userId: req.userId!, read: false } })
+    res.json({ count })
   } catch (e) { next(e) }
 })
 
-// POST /api/notifications/read-all
+// POST /api/notifications/read-all  ← before /:id/read
 router.post('/read-all', requireAuth, async (req: AuthRequest, res, next) => {
   try {
     await prisma.notification.updateMany({
@@ -40,11 +37,14 @@ router.post('/read-all', requireAuth, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e) }
 })
 
-// GET /api/notifications/unread-count
-router.get('/unread-count', requireAuth, async (req: AuthRequest, res, next) => {
+// POST /api/notifications/:id/read
+router.post('/:id/read', requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    const count = await prisma.notification.count({ where: { userId: req.userId!, read: false } })
-    res.json({ count })
+    const n = await prisma.notification.findUnique({ where: { id: req.params.id } })
+    if (!n) throw new AppError(404, 'Not found')
+    if (n.userId !== req.userId) throw new AppError(403, 'Forbidden')
+    const updated = await prisma.notification.update({ where: { id: n.id }, data: { read: true } })
+    res.json(updated)
   } catch (e) { next(e) }
 })
 

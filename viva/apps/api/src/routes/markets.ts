@@ -31,6 +31,18 @@ router.get('/', optionalAuth, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e) }
 })
 
+// GET /api/markets/user/positions  ← must be before /:id
+router.get('/user/positions', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const positions = await prisma.marketPosition.findMany({
+      where: { userId: req.userId },
+      include: { market: true },
+      orderBy: { createdAt: 'desc' },
+    })
+    res.json(positions)
+  } catch (e) { next(e) }
+})
+
 // GET /api/markets/:id
 router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
@@ -72,18 +84,6 @@ router.post('/:id/stake', requireAuth, async (req: AuthRequest, res, next) => {
     })
 
     res.status(201).json({ position, newProbability: newProb, newYesProb: newProb })
-  } catch (e) { next(e) }
-})
-
-// GET /api/markets/user/positions
-router.get('/user/positions', requireAuth, async (req: AuthRequest, res, next) => {
-  try {
-    const positions = await prisma.marketPosition.findMany({
-      where: { userId: req.userId },
-      include: { market: true },
-      orderBy: { createdAt: 'desc' },
-    })
-    res.json(positions)
   } catch (e) { next(e) }
 })
 

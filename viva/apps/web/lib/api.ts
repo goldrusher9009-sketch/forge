@@ -1,6 +1,10 @@
 // VIVA API Client — typed fetch wrapper
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+// Use relative URL on client so requests go through Next.js (avoids CORS).
+// On server-side (SSR), fall back to full Railway URL.
+const BASE = typeof window !== 'undefined'
+  ? ''
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000')
 
 class APIError extends Error {
   constructor(public status: number, message: string) {

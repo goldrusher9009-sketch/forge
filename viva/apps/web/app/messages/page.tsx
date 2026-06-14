@@ -34,7 +34,21 @@ export default function MessagesPage() {
 
   async function loadThreads() {
     try {
-      const data = await messagesApi.threads()
+      const raw = await messagesApi.threads()
+      // API returns members: [{userId, user: {id,handle,displayName,avatarUrl}}]
+      // Normalize to participants: [{displayName, handle, avatarUrl}] filtering out self
+      const uid = user?.id ?? (typeof window !== 'undefined' ? localStorage.getItem('viva_user_id') : null)
+      const data = raw.map((t: any) => {
+        const otherMembers = (t.members ?? [])
+          .filter((m: any) => m.userId !== uid && m.userId !== 'me')
+          .map((m: any) => m.user ?? { displayName: m.userId, handle: m.userId, avatarUrl: null })
+        const lastMessage = t.messages?.[0] ?? null
+        return {
+          ...t,
+          participants: otherMembers,
+          lastMessage,
+        }
+      })
       setThreads(data)
     } catch {
       setThreads(MOCK_THREADS as any)

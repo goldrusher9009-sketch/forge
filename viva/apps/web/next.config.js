@@ -7,15 +7,8 @@ const nextConfig = {
   images: {
     domains: ['api.dicebear.com', 'avatars.githubusercontent.com'],
   },
-  async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
-      },
-    ]
-  },
+  // No rewrites — all /api/* calls handled by Next.js route handlers (server-side proxy)
+  // This avoids CORS issues since route handlers fetch from Railway server-side
 }
 
 module.exports = nextConfig

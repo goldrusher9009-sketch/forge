@@ -183,9 +183,9 @@ export default function ProfilePage() {
                     <span className="t-caption" style={{ color: 'var(--ghost)', fontSize: '0.6rem' }}>
                       {new Date(post.createdAt).toLocaleDateString()}
                     </span>
-                    {post.likesCount > 0 && (
+                    {(post._count?.likes ?? post.likesCount ?? 0) > 0 && (
                       <span className="t-caption" style={{ color: 'var(--ghost)', fontSize: '0.6rem' }}>
-                        ♥ {post.likesCount}
+                        ♥ {post._count?.likes ?? post.likesCount}
                       </span>
                     )}
                   </div>

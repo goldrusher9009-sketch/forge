@@ -25,15 +25,19 @@ export default function FeedPage() {
 
   useEffect(() => { if (mounted) loadFeed() }, [filter])
 
-  async function loadFeed() {
+  async function loadFeed(cursor?: string) {
     setLoading(true)
     try {
       const cat = filter === 'All' ? undefined : filter.toLowerCase()
-      const res = await feedApi.list(cat)
-      setPosts(res.posts)
+      const res = await feedApi.list(cat, cursor)
+      if (cursor) {
+        setPosts(prev => [...prev, ...res.posts])
+      } else {
+        setPosts(res.posts)
+      }
       setNextCursor(res.nextCursor)
     } catch {
-      setPosts(MOCK_POSTS as any)
+      if (!cursor) setPosts(MOCK_POSTS as any)
     } finally {
       setLoading(false)
     }
@@ -165,9 +169,23 @@ export default function FeedPage() {
           })}
         </div>
 
-        <div className="pt-8 pb-20 text-center">
-          <button className="t-caption hover:opacity-60 transition-opacity" style={{ fontSize: '0.625rem' }}>LOAD MORE SIGNAL</button>
-        </div>
+        {nextCursor && (
+          <div className="pt-8 pb-20 text-center">
+            <button
+              onClick={() => loadFeed(nextCursor)}
+              disabled={loading}
+              className="t-caption hover:opacity-60 transition-opacity disabled:opacity-30"
+              style={{ fontSize: '0.625rem' }}
+            >
+              {loading ? 'LOADING…' : 'LOAD MORE SIGNAL'}
+            </button>
+          </div>
+        )}
+        {!nextCursor && posts.length > 0 && (
+          <div className="pt-8 pb-20 text-center">
+            <p className="t-caption opacity-30" style={{ fontSize: '0.625rem' }}>END OF FEED</p>
+          </div>
+        )}
       </div>
     </div>
   )

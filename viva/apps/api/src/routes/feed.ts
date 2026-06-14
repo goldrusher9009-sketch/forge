@@ -72,11 +72,11 @@ router.post('/:id/like', requireAuth, async (req: AuthRequest, res, next) => {
     } else {
       await prisma.postLike.create({ data: { userId: req.userId!, postId } })
       // Notify post author
-      const post = await prisma.post.findUnique({ where: { id: postId }, select: { userId: true } })
-      if (post && post.userId !== req.userId) {
+      const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true } })
+      if (post && post.authorId !== req.userId) {
         await prisma.notification.create({
           data: {
-            userId: post.userId,
+            userId: post.authorId,
             type: 'like',
             title: 'Someone liked your post',
             body: 'Your post received an attention signal.',
