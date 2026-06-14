@@ -435,8 +435,11 @@ try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT 
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN key_preview TEXT NOT NULL DEFAULT ''`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_limit INTEGER NOT NULL DEFAULT 1000000`); } catch {}
-// Always reset tokens_used to 0 and set limit to 1M on every startup (billing not live yet — no false token blocks)
-try { db.exec(`UPDATE subscriptions SET tokens_limit=1000000, tokens_used=0`); } catch {}
+// Phase 4: billing is live — do NOT reset tokens on startup. Set correct plan limits for any rows that still have the old 1M default.
+try { db.exec(`UPDATE subscriptions SET tokens_limit=10000   WHERE plan='free'      AND tokens_limit=1000000`); } catch {}
+try { db.exec(`UPDATE subscriptions SET tokens_limit=500000  WHERE plan='starter'   AND tokens_limit=1000000`); } catch {}
+try { db.exec(`UPDATE subscriptions SET tokens_limit=2000000 WHERE plan='pro'       AND tokens_limit=1000000`); } catch {}
+try { db.exec(`UPDATE subscriptions SET tokens_limit=10000000 WHERE plan='enterprise' AND tokens_limit=1000000`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN tokens_used INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE subscriptions ADD COLUMN period_start TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
 // Rebuild subscriptions if period_end column is missing
@@ -1189,8 +1192,21 @@ app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRe
     return;
   }
 
-  // Token budget enforcement disabled until billing is live
-  // (usage is still tracked in usage_logs and subscriptions tables)
+  // Phase 4: enforce token limits. Admin/enterprise users are never blocked.
+  {
+    ensureSubscription(userId);
+    const sub = db.prepare('SELECT plan, tokens_used, tokens_limit FROM subscriptions WHERE user_id=?').get(userId) as any;
+    const userRow = db.prepare('SELECT role FROM users WHERE id=?').get(userId) as any;
+    const isAdmin = userRow?.role === 'admin';
+    if (sub && !isAdmin && sub.plan !== 'enterprise') {
+      const overageTokens = sub.tokens_used - sub.tokens_limit;
+      if (overageTokens >= 50000) {
+        // Hard block after 50k overage tokens without payment
+        res.status(402).json({ success: false, error: 'TOKEN_LIMIT_EXCEEDED', message: `You have used ${sub.tokens_used.toLocaleString()} / ${sub.tokens_limit.toLocaleString()} tokens. Upgrade your plan or add credits to continue.`, tokensUsed: sub.tokens_used, tokensLimit: sub.tokens_limit });
+        return;
+      }
+    }
+  }
 
   try {
     // Add language/channel context to system message if needed
@@ -1615,13 +1631,42 @@ app.post('/api/billing/upgrade', requireAuth, async (req: AuthRequest, res) => {
   res.json({ success: true, plan, message: `Upgraded to ${plan} (demo mode — add STRIPE_SECRET_KEY for real payments)`, tokensLimit: newLimit });
 });
 
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+
+// Stripe webhook signature verification (HMAC-SHA256)
+function verifyStripeSignature(payload: Buffer, sigHeader: string, secret: string): any {
+  const crypto = require('crypto');
+  const parts = sigHeader.split(',').reduce((acc: any, part: string) => {
+    const [k, v] = part.split('='); acc[k] = v; return acc;
+  }, {} as Record<string,string>);
+  const timestamp = parts['t'];
+  const sig = parts['v1'];
+  if (!timestamp || !sig) throw new Error('Invalid Stripe-Signature header');
+  const signed = `${timestamp}.${payload.toString('utf8')}`;
+  const expected = crypto.createHmac('sha256', secret).update(signed).digest('hex');
+  if (expected !== sig) throw new Error('Stripe signature mismatch');
+  // Reject replays older than 5 minutes
+  if (Math.abs(Date.now()/1000 - Number(timestamp)) > 300) throw new Error('Webhook timestamp too old');
+  return JSON.parse(payload.toString('utf8'));
+}
+
 // Stripe webhook (handle subscription events)
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  if (!STRIPE_SECRET || !sig) { res.json({ received: true }); return; }
+  const sig = req.headers['stripe-signature'] as string;
+  if (!STRIPE_SECRET) { res.json({ received: true }); return; }
+  let event: any;
   try {
-    // In production: verify signature with stripe.webhooks.constructEvent()
-    const event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    if (STRIPE_WEBHOOK_SECRET && sig) {
+      event = verifyStripeSignature(req.body as Buffer, sig, STRIPE_WEBHOOK_SECRET);
+    } else {
+      // Dev/test fallback — no secret configured
+      event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    }
+  } catch (err: any) {
+    console.error('Webhook signature error:', err.message);
+    res.status(400).json({ error: `Webhook signature failed: ${err.message}` }); return;
+  }
+  try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const userId = session.client_reference_id || session.metadata?.userId;
@@ -1636,11 +1681,25 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
       if (session.metadata?.kind === 'forge_topup' && session.metadata?.user_id) {
         try { (app as any).forgeBillingHooks?.onTopupPaid(session.metadata.user_id, Number(session.metadata.credit_amount) || 0); } catch {}
       }
+      // Overage charge paid — reset tokens_used to 0 so user can continue
+      if (session.metadata?.kind === 'forge_overage' && session.metadata?.userId) {
+        const uid = session.metadata.userId;
+        db.prepare("UPDATE subscriptions SET tokens_used=0, updated_at=datetime('now') WHERE user_id=?").run(uid);
+        console.log(`[billing] Overage paid by user ${uid} — token counter reset`);
+      }
     }
     if (event.type === 'invoice.paid') {
       const inv = event.data.object;
       const sub = db.prepare('SELECT user_id, plan FROM subscriptions WHERE stripe_customer_id=?').get(inv.customer) as any;
-      if (sub) { try { (app as any).forgeBillingHooks?.onInvoicePaid(sub.user_id, sub.plan); } catch {} }
+      if (sub) {
+        // Reset token usage for the new billing period
+        const now = new Date();
+        const newEnd = new Date(now); newEnd.setDate(newEnd.getDate() + 30);
+        db.prepare("UPDATE subscriptions SET tokens_used=0, period_start=?, period_end=?, status='active', updated_at=datetime('now') WHERE user_id=?")
+          .run(now.toISOString(), newEnd.toISOString(), sub.user_id);
+        console.log(`[billing] Period reset for user ${sub.user_id} (plan: ${sub.plan}) after invoice.paid`);
+        try { (app as any).forgeBillingHooks?.onInvoicePaid(sub.user_id, sub.plan); } catch {}
+      }
     }
     if (event.type === 'customer.subscription.deleted') {
       const subObj = event.data.object;
@@ -2003,6 +2062,58 @@ app.post('/api/billing/topup', requireAuth, async (req: AuthRequest, res) => {
     const sess = await r.json() as any;
     res.json({ success: true, data: { url: sess.url } });
   } catch(e:any) { res.status(500).json({ success:false, error: e.message }); }
+});
+
+// Phase 4: overage charge — bill user for tokens used beyond their plan limit
+// Calculates overage cost at $0.003/1k tokens and creates a Stripe Checkout session
+app.post('/api/billing/overage-charge', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const stripe = process.env.STRIPE_SECRET_KEY;
+  if (!stripe) { res.status(503).json({ success: false, error: 'Stripe not configured' }); return; }
+
+  ensureSubscription(userId);
+  const sub = db.prepare('SELECT plan, tokens_used, tokens_limit, stripe_customer_id FROM subscriptions WHERE user_id=?').get(userId) as any;
+  if (!sub) { res.status(404).json({ success: false, error: 'No subscription found' }); return; }
+
+  const overageTokens = Math.max(0, sub.tokens_used - sub.tokens_limit);
+  if (overageTokens < 1000) {
+    res.json({ success: false, error: 'No significant overage to charge', overageTokens }); return;
+  }
+
+  // $0.003 per 1k overage tokens (cost-plus with margin)
+  const overageCostCents = Math.ceil((overageTokens / 1000) * 0.30); // $0.003 = 0.30 cents per 1k
+  const minimumCents = 100; // $1 minimum charge
+  const chargeCents = Math.max(overageCostCents, minimumCents);
+
+  try {
+    const user = db.prepare('SELECT email FROM users WHERE id=?').get(userId) as any;
+    const body: Record<string,string> = {
+      mode: 'payment',
+      'payment_method_types[0]': 'card',
+      'line_items[0][price_data][currency]': 'usd',
+      'line_items[0][price_data][product_data][name]': `Forge Overage — ${overageTokens.toLocaleString()} tokens`,
+      'line_items[0][price_data][product_data][description]': `Overage usage above your ${sub.plan} plan limit`,
+      'line_items[0][price_data][unit_amount]': String(chargeCents),
+      'line_items[0][quantity]': '1',
+      success_url: `${process.env.FRONTEND_URL||'https://forge-sand-two.vercel.app'}/?overage=success`,
+      cancel_url:  `${process.env.FRONTEND_URL||'https://forge-sand-two.vercel.app'}/?overage=cancel`,
+      'metadata[userId]': userId,
+      'metadata[kind]': 'forge_overage',
+      'metadata[overage_tokens]': String(overageTokens),
+    };
+    if (sub.stripe_customer_id) body.customer = sub.stripe_customer_id;
+    else if (user?.email) body.customer_email = user.email;
+
+    const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${stripe}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(body).toString(),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const sess = await r.json() as any;
+    console.log(`[billing] Overage charge created for user ${userId}: ${overageTokens} tokens, $${(chargeCents/100).toFixed(2)}`);
+    res.json({ success: true, data: { url: sess.url, overageTokens, chargeUsd: chargeCents / 100 } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 // ── APPROVALS INBOX ──────────────────────────────────────────────────────────

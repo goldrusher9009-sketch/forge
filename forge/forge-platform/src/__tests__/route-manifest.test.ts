@@ -32,6 +32,7 @@ const FRONTEND_CALLS: Array<{ method: string; path: string }> = [
   { method: 'POST', path: '/api/billing/subscribe' },
   { method: 'GET',  path: '/api/billing/tiers' },
   { method: 'POST', path: '/api/billing/tiers' },
+  { method: 'POST', path: '/api/billing/overage-charge' },
   { method: 'GET',  path: '/api/forge-tools/catalog' },
   { method: 'POST', path: '/api/marketplace/install' },
   { method: 'GET',  path: '/api/orgs' },
