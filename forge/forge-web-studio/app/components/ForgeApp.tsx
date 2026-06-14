@@ -1017,6 +1017,7 @@ export default function ForgeApp() {
   const [cmpPrompt, setCmpPrompt] = useState('');
   const [cmpModels, setCmpModels] = useState<string[]>([]);
   const [cmpRunning, setCmpRunning] = useState(false);
+  const [improvingPrompt, setImprovingPrompt] = useState(false);
   const [multiCompareLoading, setMultiCompareLoading] = useState(false);
   // Chat folder actions (hoisted — can't use useState inside render IIFE)
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
@@ -4587,6 +4588,21 @@ export default function ForgeApp() {
                         <button onClick={() => imageInputRef.current?.click()} title="Attach image for vision" style={{ padding:'4px 8px', background: chatImages.length > 0 ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${chatImages.length > 0 ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: chatImages.length > 0 ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>🖼️</button>
                         {/* TTS toggle */}
                         <button onClick={() => setTtsEnabled(p => !p)} title={ttsEnabled ? 'TTS on — click to disable' : 'Enable voice output'} style={{ padding:'4px 8px', background: ttsEnabled ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${ttsEnabled ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color: ttsEnabled ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>🔊</button>
+                        {/* Improve prompt button */}
+                        {input.trim().length > 10 && (
+                          <button onClick={async () => {
+                            if (improvingPrompt) return;
+                            setImprovingPrompt(true);
+                            try {
+                              const d = await apiFetch('/chat/simple', { method:'POST', body: JSON.stringify({ message: `Rewrite the following prompt to be clearer, more specific, and more effective for an AI assistant. Keep the intent identical but improve structure, specificity, and clarity. Output ONLY the improved prompt, no explanation:\n\n${input}`, model: 'claude-haiku-4-5-20251001' }) }, user?.token);
+                              const improved = d?.data?.content || d?.content;
+                              if (improved) { setInput(improved.trim()); showToast('✨ Prompt improved'); }
+                            } catch { showToast('Improve failed'); }
+                            setImprovingPrompt(false);
+                          }} title="Improve this prompt with AI" style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 8px', background: improvingPrompt ? 'var(--fg-odim)' : 'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-orange)', cursor: improvingPrompt ? 'default' : 'pointer', fontSize:11, fontWeight:600, animation: improvingPrompt ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>
+                            {improvingPrompt ? '⏳' : '✨'} Improve
+                          </button>
+                        )}
                         {/* Quick right panel buttons */}
                         <button onClick={() => { setRightTab('context'); setRightExpanded(true); }} title="Context usage" style={{ padding:'4px 8px', background:'transparent', border:'1px solid var(--fg-border2)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>📊</button>
                         <button onClick={() => { setRightTab('live'); setRightExpanded(true); }} title={liveEvents[0]?.message || 'Live activity'} style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', background: sending ? 'var(--fg-odim)' : liveEvents.length > 0 ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${sending ? 'var(--fg-orange)' : liveEvents.length > 0 ? 'var(--fg-odim2)' : 'var(--fg-border2)'}`, borderRadius:6, color: sending ? 'var(--fg-orange2)' : liveEvents.length > 0 ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:11, maxWidth:160, overflow:'hidden' }}>
