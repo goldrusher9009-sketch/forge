@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'|'agency'>('workspace');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -766,6 +766,14 @@ export default function ForgeApp() {
       fetch('/api/outcomes', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
         .then(r => r.json()).then(d => { setOutcomesData(d); setOutcomesLoading(false); })
         .catch(() => { setOutcomesError('Failed to load outcomes.'); setOutcomesLoading(false); });
+    }
+  /* eslint-disable-next-line */ }, [mainTab]);
+  useEffect(() => {
+    if (mainTab === 'agency' && user && !agencyLoaded) {
+      setAgencyLoaded(true);
+      const tok = localStorage.getItem('forge_token');
+      fetch('/api/agency/overview', { headers: { Authorization: `Bearer ${tok}` } }).then(r=>r.json()).then(d=>setAgencyOverview(d.data||d)).catch(()=>{});
+      fetch('/api/agency/clients', { headers: { Authorization: `Bearer ${tok}` } }).then(r=>r.json()).then(d=>setAgencyClients(d.data||[])).catch(()=>{});
     }
   /* eslint-disable-next-line */ }, [mainTab]);
   const [multiResponse, setMultiResponse] = useState(false);
@@ -1057,6 +1065,37 @@ export default function ForgeApp() {
   const [outcomesData, setOutcomesData] = useState<any>(null);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
   const [outcomesError, setOutcomesError] = useState('');
+
+  // Agency / White-label state
+  const [agencyTab, setAgencyTab] = useState<'overview'|'clients'|'new'>('overview');
+  const [agencyOverview, setAgencyOverview] = useState<any>(null);
+  const [agencyClients, setAgencyClients] = useState<any[]>([]);
+  const [agencyForm, setAgencyForm] = useState({ clientName:'', clientEmail:'', brandColor:'#ff1f35', plan:'starter' });
+  const [agencyCreating, setAgencyCreating] = useState(false);
+  const [agencyLoaded, setAgencyLoaded] = useState(false);
+
+  // Marketplace community state
+  const [mktTab, setMktTab] = useState<'vertical'|'community'|'publish'|'mine'>('vertical');
+  const [communityItems, setCommunityItems] = useState<any[]>([]);
+  const [communityLoading, setCommunityLoading] = useState(false);
+  const [myListings, setMyListings] = useState<any[]>([]);
+  const [publishForm, setPublishForm] = useState({ name:'', description:'', icon:'🤖', category:'general', prompt:'', tags:'', price:0 });
+  const [publishLoading, setPublishLoading] = useState(false);
+
+  // Marketplace community fetch effects (must be after mktTab/communityItems declarations)
+  useEffect(() => {
+    if (mainTab === 'marketplace' && mktTab === 'community' && communityItems.length === 0 && !communityLoading) {
+      setCommunityLoading(true);
+      fetch('/api/marketplace/community', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+        .then(r=>r.json()).then(d=>{ setCommunityItems(d.data||[]); setCommunityLoading(false); }).catch(()=>setCommunityLoading(false));
+    }
+  /* eslint-disable-next-line */ }, [mainTab, mktTab]);
+  useEffect(() => {
+    if (mainTab === 'marketplace' && mktTab === 'mine') {
+      fetch('/api/marketplace/my-listings', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+        .then(r=>r.json()).then(d=>setMyListings(d.data||[])).catch(()=>{});
+    }
+  /* eslint-disable-next-line */ }, [mainTab, mktTab]);
 
   // Agent Swarm state
   const [swarmTask, setSwarmTask] = useState('');
@@ -8361,6 +8400,97 @@ export default function ForgeApp() {
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        )}
+
+        {/* -- Agency / White-Label ----------------------------------------- */}
+        {mainTab === 'agency' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:900, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🏢</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Agency Mode</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>White-label Forge for your clients. Each client gets their own branded workspace.</p>
+                </div>
+                <button onClick={() => setAgencyTab('overview')} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background: agencyTab==='overview' ? 'var(--fg-orange)' : 'var(--fg-bg2)', color: agencyTab==='overview' ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight:600 }}>Overview</button>
+                <button onClick={() => setAgencyTab('clients')} style={{ padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background: agencyTab==='clients' ? 'var(--fg-orange)' : 'var(--fg-bg2)', color: agencyTab==='clients' ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight:600 }}>Clients</button>
+                <button onClick={() => setAgencyTab('new')} style={{ padding:'6px 14px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600 }}>+ New Client</button>
+              </div>
+
+              {agencyTab === 'overview' && (() => {
+                if (!agencyOverview) return <div style={{ textAlign:'center', color:'var(--fg-text3)', padding:40 }}>Loading...</div>;
+                const d = agencyOverview;
+                return (
+                  <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+                      {([{icon:'👥',label:'Active Clients',value:d.activeClients,color:'#6366f1'},{icon:'💬',label:'Messages This Month',value:d.monthlyMessages,color:'var(--fg-orange)'},{icon:'🔢',label:'Tokens Used',value:d.monthlyTokens?Math.round(d.monthlyTokens/1000)+'k':'0',color:'#22c55e'},{icon:'📦',label:'Plan Breakdown',value:Object.entries(d.planBreakdown||{}).map(([k,v])=>`${v}×${k}`).join(' '),color:'var(--fg-text2)'}] as any[]).map((s:any)=>(
+                        <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, textAlign:'center' }}>
+                          <div style={{ fontSize:24, marginBottom:6 }}>{s.icon}</div>
+                          <div style={{ fontSize:20, fontWeight:800, color:s.color }}>{String(s.value)}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:4 }}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {(d.clients||[]).length > 0 && (
+                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                        <div style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--fg-text3)', marginBottom:12 }}>Recent Clients</div>
+                        {d.clients.map((c:any)=>(
+                          <div key={c.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'1px solid var(--fg-border)' }}>
+                            <div style={{ width:32, height:32, borderRadius:8, background:c.brand_color||'var(--fg-orange)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:800, fontSize:13 }}>{c.client_name?.[0]}</div>
+                            <div style={{ flex:1 }}><div style={{ fontWeight:600, color:'var(--fg-text)', fontSize:13 }}>{c.client_name}</div><div style={{ fontSize:11, color:'var(--fg-text3)' }}>{c.subdomain}.forge.app · {c.plan}</div></div>
+                            <div style={{ fontSize:11, padding:'3px 8px', borderRadius:6, background: c.status==='active' ? 'rgba(34,197,94,0.12)' : 'var(--fg-bg3)', color: c.status==='active' ? '#22c55e' : 'var(--fg-text3)' }}>{c.status}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {agencyTab === 'clients' && (() => {
+                if (!agencyClients) return <div style={{ textAlign:'center', color:'var(--fg-text3)', padding:40 }}>Loading...</div>;
+                return (
+                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                    {agencyClients.length === 0 && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>No clients yet. Create your first white-label workspace →</div>}
+                    {agencyClients.map((c:any)=>(
+                      <div key={c.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:'16px 20px', display:'flex', alignItems:'center', gap:14 }}>
+                        <div style={{ width:40, height:40, borderRadius:10, background:c.brand_color||'var(--fg-orange)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:800, fontSize:16 }}>{c.client_name?.[0]}</div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontWeight:700, color:'var(--fg-text)', fontSize:14 }}>{c.client_name}</div>
+                          <div style={{ fontSize:12, color:'var(--fg-text3)' }}>{c.subdomain}.forge.app · {c.plan} · {(c.usage?.messages||0).toLocaleString()} msgs</div>
+                        </div>
+                        <div style={{ fontSize:11, padding:'3px 8px', borderRadius:6, background: c.status==='active' ? 'rgba(34,197,94,0.12)' : 'var(--fg-bg3)', color: c.status==='active' ? '#22c55e' : 'var(--fg-text3)' }}>{c.status}</div>
+                        <button onClick={async()=>{ if(!confirm('Archive this client?'))return; await fetch('/api/agency/clients/'+c.id,{method:'DELETE',headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}); setAgencyClients((p:any[])=>(p||[]).filter((x:any)=>x.id!==c.id)); }} style={{ padding:'5px 10px', borderRadius:7, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'#f87171', cursor:'pointer', fontSize:11 }}>Archive</button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {agencyTab === 'new' && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:14, padding:28, maxWidth:520 }}>
+                  <div style={{ fontWeight:700, fontSize:16, color:'var(--fg-text)', marginBottom:20 }}>New Client Workspace</div>
+                  {(['clientName','clientEmail'] as const).map((field)=>(
+                    <div key={field} style={{ marginBottom:14 }}>
+                      <label style={{ fontSize:12, fontWeight:600, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>{field==='clientName'?'Client Name *':'Client Email'}</label>
+                      <input value={agencyForm[field]} onChange={e=>setAgencyForm((p:any)=>({...p,[field]:e.target.value}))} style={{ width:'100%', padding:'9px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' as const }} placeholder={field==='clientName'?'Acme Corp':'acme@example.com'} />
+                    </div>
+                  ))}
+                  <div style={{ marginBottom:14 }}>
+                    <label style={{ fontSize:12, fontWeight:600, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Brand Color</label>
+                    <input type="color" value={agencyForm.brandColor} onChange={e=>setAgencyForm((p:any)=>({...p,brandColor:e.target.value}))} style={{ width:48, height:36, borderRadius:8, border:'1px solid var(--fg-border)', cursor:'pointer', background:'none' }} />
+                  </div>
+                  <div style={{ marginBottom:20 }}>
+                    <label style={{ fontSize:12, fontWeight:600, color:'var(--fg-text3)', display:'block', marginBottom:5 }}>Plan</label>
+                    <select value={agencyForm.plan} onChange={e=>setAgencyForm((p:any)=>({...p,plan:e.target.value}))} style={{ width:'100%', padding:'9px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
+                      <option value="starter">Starter</option><option value="pro">Pro</option><option value="agency">Agency</option>
+                    </select>
+                  </div>
+                  <button disabled={!agencyForm.clientName || agencyCreating} onClick={async()=>{ setAgencyCreating(true); try { const r=await fetch('/api/agency/clients',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify(agencyForm)}); const d=await r.json(); if(d.success){ setAgencyTab('clients'); setAgencyForm({clientName:'',clientEmail:'',brandColor:'#ff1f35',plan:'starter'}); const r2=await fetch('/api/agency/clients',{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}); const d2=await r2.json(); setAgencyClients(d2.data||[]); }} finally { setAgencyCreating(false); }}} style={{ width:'100%', padding:'12px', borderRadius:10, border:'none', background: agencyForm.clientName ? 'var(--fg-orange)' : 'var(--fg-bg3)', color: agencyForm.clientName ? '#fff' : 'var(--fg-text3)', fontWeight:700, fontSize:14, cursor: agencyForm.clientName ? 'pointer' : 'not-allowed' }}>{agencyCreating ? 'Creating...' : 'Provision Client Workspace'}</button>
+                </div>
+              )}
             </div>
           </div>
         )}

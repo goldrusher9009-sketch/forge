@@ -5715,6 +5715,97 @@ try {
   console.error('setupAutonomy failed:', e?.message || e);
 }
 
+// ── White-Label / Agency Mode ─────────────────────────────────────────────
+// Tables
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS agency_clients (
+    id TEXT PRIMARY KEY,
+    agency_user_id TEXT NOT NULL,
+    client_name TEXT NOT NULL,
+    client_email TEXT NOT NULL DEFAULT '',
+    subdomain TEXT NOT NULL DEFAULT '',
+    brand_color TEXT NOT NULL DEFAULT '#ff1f35',
+    brand_logo TEXT NOT NULL DEFAULT '',
+    plan TEXT NOT NULL DEFAULT 'starter',
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS agency_client_usage (
+    id TEXT PRIMARY KEY,
+    agency_user_id TEXT NOT NULL,
+    client_id TEXT NOT NULL,
+    messages INTEGER NOT NULL DEFAULT 0,
+    tokens INTEGER NOT NULL DEFAULT 0,
+    month TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`);
+} catch {}
+
+// GET /api/agency/clients — list sub-accounts
+app.get('/api/agency/clients', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const clients = db.prepare('SELECT * FROM agency_clients WHERE agency_user_id=? ORDER BY created_at DESC').all(userId) as any[];
+  const enriched = clients.map((c: any) => {
+    const usage = db.prepare("SELECT SUM(messages) m, SUM(tokens) t FROM agency_client_usage WHERE client_id=?").get(c.id) as any;
+    return { ...c, usage: { messages: usage?.m || 0, tokens: usage?.t || 0 } };
+  });
+  res.json({ success: true, data: enriched });
+});
+
+// POST /api/agency/clients — provision a new client sub-account
+app.post('/api/agency/clients', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { clientName, clientEmail, brandColor, brandLogo, plan } = req.body;
+  if (!clientName) return res.status(400).json({ error: 'clientName required' });
+  const id = uuidv4();
+  const subdomain = clientName.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,30) + '-' + id.slice(0,6);
+  const now = new Date().toISOString();
+  db.prepare(`INSERT INTO agency_clients (id,agency_user_id,client_name,client_email,subdomain,brand_color,brand_logo,plan,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id, userId, clientName, clientEmail||'', subdomain, brandColor||'#ff1f35', brandLogo||'', plan||'starter', 'active', now, now);
+  res.json({ success: true, data: { id, subdomain, clientName } });
+});
+
+// PATCH /api/agency/clients/:id — update branding / plan
+app.patch('/api/agency/clients/:id', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const client = db.prepare('SELECT * FROM agency_clients WHERE id=? AND agency_user_id=?').get(req.params.id, userId) as any;
+  if (!client) return res.status(404).json({ error: 'Not found' });
+  const { clientName, brandColor, brandLogo, plan, status } = req.body;
+  const now = new Date().toISOString();
+  db.prepare(`UPDATE agency_clients SET client_name=COALESCE(?,client_name), brand_color=COALESCE(?,brand_color), brand_logo=COALESCE(?,brand_logo), plan=COALESCE(?,plan), status=COALESCE(?,status), updated_at=? WHERE id=?`)
+    .run(clientName||null, brandColor||null, brandLogo||null, plan||null, status||null, now, req.params.id);
+  res.json({ success: true });
+});
+
+// DELETE /api/agency/clients/:id — archive client
+app.delete('/api/agency/clients/:id', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  db.prepare("UPDATE agency_clients SET status='archived', updated_at=? WHERE id=? AND agency_user_id=?").run(new Date().toISOString(), req.params.id, userId);
+  res.json({ success: true });
+});
+
+// GET /api/agency/clients/:id/usage — per-client usage this month
+app.get('/api/agency/clients/:id/usage', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const client = db.prepare('SELECT * FROM agency_clients WHERE id=? AND agency_user_id=?').get(req.params.id, userId) as any;
+  if (!client) return res.status(404).json({ error: 'Not found' });
+  const month = new Date().toISOString().slice(0,7);
+  const usage = db.prepare('SELECT * FROM agency_client_usage WHERE client_id=? AND month=?').get(req.params.id, month) as any;
+  res.json({ success: true, data: { client, usage: usage || { messages:0, tokens:0, month } } });
+});
+
+// GET /api/agency/overview — agency dashboard summary
+app.get('/api/agency/overview', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const clients = db.prepare("SELECT * FROM agency_clients WHERE agency_user_id=? AND status='active'").all(userId) as any[];
+  const month = new Date().toISOString().slice(0,7);
+  const totals = db.prepare("SELECT SUM(messages) m, SUM(tokens) t FROM agency_client_usage WHERE agency_user_id=? AND month=?").get(userId, month) as any;
+  const plans: Record<string,number> = {};
+  for (const c of clients) { plans[c.plan] = (plans[c.plan]||0) + 1; }
+  res.json({ success: true, data: { activeClients: clients.length, totalClients: db.prepare('SELECT COUNT(*) c FROM agency_clients WHERE agency_user_id=?').get(userId) as any, monthlyMessages: totals?.m||0, monthlyTokens: totals?.t||0, planBreakdown: plans, clients: clients.slice(0,5) } });
+});
+
 // ── Server Bootstrap ──────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
 const io = require('socket.io')(httpServer, { cors: { origin: '*', methods: ['GET','POST'] } });
