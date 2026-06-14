@@ -1209,6 +1209,9 @@ export default function ForgeApp() {
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimer = React.useRef<any>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [templateSaveMode, setTemplateSaveMode] = useState(false);
+  const [templateSaveName, setTemplateSaveName] = useState('');
   const [skillCat, setSkillCat] = useState('All');
   const [activeSkills, setActiveSkills] = useState<Set<string>>(() => {
     try { const s = localStorage.getItem('forge_active_skills'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
@@ -1342,6 +1345,13 @@ export default function ForgeApp() {
     const tok = localStorage.getItem('forge_token');
     fetch('/api/prompt-history?limit=50', { headers: { Authorization: 'Bearer ' + tok } })
       .then(r => r.json()).then(d => { if (d.success) setPromptHistory(d.data || []); }).catch(() => {});
+  }, [user]);
+
+  // Load templates
+  useEffect(() => {
+    if (!user) return;
+    const tok = localStorage.getItem('forge_token');
+    fetch('/api/templates', { headers:{ Authorization:'Bearer '+tok } }).then(r=>r.json()).then(d => { if (d.success) setTemplates(d.data || []); }).catch(()=>{});
   }, [user]);
 
   // Cmd+K command palette
@@ -8131,6 +8141,57 @@ export default function ForgeApp() {
                     </button>
                   </div>
                 </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* -- Thread Templates Modal --------------------------------------- */}
+        {showTemplateModal && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }} onClick={() => { setShowTemplateModal(false); setTemplateSaveMode(false); }}>
+            <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:18, padding:28, maxWidth:580, width:'90vw', maxHeight:'85vh', overflowY:'auto' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:800, color:'var(--fg-text)' }}>📋 {templateSaveMode ? 'Save as Template' : 'Conversation Templates'}</h2>
+                <button onClick={() => setTemplateSaveMode(m => !m)} style={{ marginLeft:'auto', padding:'4px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight:600 }}>
+                  {templateSaveMode ? '← Browse' : '+ Save current'}
+                </button>
+              </div>
+              {templateSaveMode ? (
+                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                  <input value={templateSaveName} onChange={e => setTemplateSaveName(e.target.value)} placeholder='Template name…' style={{ padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+                  <p style={{ margin:0, fontSize:12, color:'var(--fg-text3)' }}>Saves the current input as a reusable starter prompt.</p>
+                  <button onClick={async () => {
+                    if (!templateSaveName.trim() || !input.trim()) return;
+                    const tok = localStorage.getItem('forge_token');
+                    const d = await fetch('/api/templates', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ title: templateSaveName, initial_prompt: input.trim() }) }).then(r=>r.json());
+                    if (d.success) { setTemplates(prev => [d.data, ...prev]); setTemplateSaveName(''); setTemplateSaveMode(false); showToast('Template saved!', 'success'); }
+                  }} style={{ padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontWeight:700, cursor:'pointer', fontSize:14 }}>Save Template</button>
+                </div>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {templates.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:13 }}>No templates yet. Type a prompt and click "+ Save current".</p>}
+                  {templates.map((t: any) => (
+                    <div key={t.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10 }}>
+                      <span style={{ fontSize:20 }}>{t.icon}</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:700, fontSize:13 }}>{t.title}</div>
+                        <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2 }}>{t.initial_prompt.slice(0,80)}{t.initial_prompt.length > 80 ? '…' : ''}</div>
+                      </div>
+                      <button onClick={async () => {
+                        const tok = localStorage.getItem('forge_token');
+                        await fetch('/api/templates/' + t.id + '/use', { method:'POST', headers:{ Authorization:'Bearer '+tok } });
+                        setInput(t.initial_prompt);
+                        setShowTemplateModal(false);
+                        showToast('Template loaded!', 'success');
+                      }} style={{ padding:'5px 12px', background:'var(--fg-orange)', border:'none', borderRadius:7, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Use</button>
+                      <button onClick={async () => {
+                        const tok = localStorage.getItem('forge_token');
+                        await fetch('/api/templates/' + t.id, { method:'DELETE', headers:{ Authorization:'Bearer '+tok } });
+                        setTemplates(prev => prev.filter((x: any) => x.id !== t.id));
+                      }} style={{ padding:'5px 8px', background:'none', border:'1px solid var(--fg-border)', borderRadius:7, color:'var(--fg-text3)', fontSize:12, cursor:'pointer' }}>✕</button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
