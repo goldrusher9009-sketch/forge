@@ -5315,6 +5315,27 @@ app.get('/api/intelligence', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, intelligence: { score, level: level.label, levelDesc: level.desc, nextLevel: nextLevel?.label || null, nextAt, pct, breakdown: { memories, runs, threads, messages: outcomes, seoPages, approvals } } });
 });
 
+// GET /api/notifications — Smart notification center: actionable items from DB state.
+app.get('/api/notifications', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const notes: { id: string; type: string; title: string; body: string; href: string; ts: string }[] = [];
+  // Pending approvals
+  const pendingCount = safe(() => (db.prepare("SELECT COUNT(*) as c FROM pending_approvals WHERE user_id=? AND status='pending'").get(userId) as any).c, 0);
+  if (pendingCount > 0) notes.push({ id:'approvals', type:'action', title:`${pendingCount} approval${pendingCount>1?'s':''} waiting`, body:'Your autonomous agent needs your sign-off.', href:'forgeauto', ts: new Date().toISOString() });
+  // Last nightly run
+  const lastRun = safe(() => db.prepare("SELECT summary, finished_at, status FROM nightly_runs WHERE user_id=? ORDER BY finished_at DESC LIMIT 1").get(userId) as any, null);
+  if (lastRun?.status === 'done' && lastRun.finished_at) notes.push({ id:'lastrun', type:'info', title:'Nightly run complete', body: lastRun.summary?.slice(0,100) || 'Your agent finished its autonomous run.', href:'runs', ts: lastRun.finished_at });
+  // Memory milestones
+  const memCount = safe(() => (db.prepare("SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?").get(userId) as any).c, 0);
+  const milestones = [10, 25, 50, 100, 250, 500];
+  const hit = milestones.filter(m => memCount >= m).pop();
+  if (hit) notes.push({ id:'memory_'+hit, type:'milestone', title:`Forge has ${memCount} memories`, body:`Your AI brain hit ${hit} memories — it knows you well.`, href:'brain', ts: new Date().toISOString() });
+  // No API key
+  const hasKey = safe(() => { const r = db.prepare('SELECT anthropic_key,openai_key FROM users WHERE id=?').get(userId) as any; return !!(r?.anthropic_key||r?.openai_key); }, false);
+  if (!hasKey) notes.push({ id:'nokey', type:'warn', title:'No API key set', body:'Add an Anthropic or OpenAI key to start using Forge.', href:'platforms', ts: new Date().toISOString() });
+  res.json({ success: true, notifications: notes.slice(0, 10), unread: notes.length });
+});
+
 // GET /api/changelog — Parse VERSION.md and return recent releases.
 app.get('/api/changelog', (req, res) => {
   try {

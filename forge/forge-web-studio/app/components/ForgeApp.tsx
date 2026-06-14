@@ -618,6 +618,8 @@ export default function ForgeApp() {
   const [showCmdPalette, setShowCmdPalette] = React.useState(false);
   const [changelogData, setChangelogData] = React.useState<any[]|null>(null);
   const [showChangelog, setShowChangelog] = React.useState(false);
+  const [notifData, setNotifData] = React.useState<any>(null);
+  const [showNotifs, setShowNotifs] = React.useState(false);
   const [cmdQuery, setCmdQuery] = React.useState('');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
@@ -805,6 +807,12 @@ export default function ForgeApp() {
           const seen = localStorage.getItem('forge_seen_version');
           if (d.releases && d.releases[0] && d.releases[0].version !== seen) setShowChangelog(true);
         }).catch(() => {});
+    }
+    if (user && !notifData) {
+      const tok = localStorage.getItem('forge_token');
+      fetch('/api/notifications', { headers: { Authorization: 'Bearer ' + tok } })
+        .then(r => r.json()).then(d => setNotifData(d))
+        .catch(() => {});
     }
     if (user && !digestData) {
       const tok = localStorage.getItem('forge_token');
@@ -3428,6 +3436,28 @@ export default function ForgeApp() {
                 </span>
                 {sessionCost > 0 && <span style={{ fontSize:10, color:'var(--fg-green)', fontFamily:'monospace', marginLeft:2 }}>${sessionCost.toFixed(4)}</span>}
               </div>
+              {/* Notification bell */}
+              {notifData && notifData.unread > 0 && (
+                <div style={{ position:'relative', flexShrink:0 }}>
+                  <button onClick={() => setShowNotifs(p => !p)} style={{ position:'relative', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, padding:'4px 8px', cursor:'pointer', display:'flex', alignItems:'center', gap:4, color:'var(--fg-text2)', fontSize:13 }}>
+                    <span>&#128276;</span>
+                    <span style={{ position:'absolute', top:-4, right:-4, background:'var(--fg-orange)', color:'#fff', fontSize:9, fontWeight:800, borderRadius:'50%', width:14, height:14, display:'flex', alignItems:'center', justifyContent:'center' }}>{notifData.unread}</span>
+                  </button>
+                  {showNotifs && (
+                    <div style={{ position:'absolute', top:'calc(100% + 8px)', right:0, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:12, minWidth:300, boxShadow:'0 12px 40px rgba(0,0,0,0.3)', zIndex:9000 }} onClick={e => e.stopPropagation()}>
+                      <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--fg-border)', fontSize:12, fontWeight:700, color:'var(--fg-text2)' }}>Notifications</div>
+                      {(notifData.notifications||[]).map((n: any) => (
+                        <div key={n.id} onClick={() => { setMainTab(n.href); setShowNotifs(false); }} style={{ padding:'10px 16px', borderBottom:'1px solid var(--fg-border)', cursor:'pointer', display:'flex', flexDirection:'column', gap:2 }}
+                          onMouseEnter={e => (e.currentTarget.style.background='var(--fg-bg2)')}
+                          onMouseLeave={e => (e.currentTarget.style.background='transparent')}>
+                          <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>{n.title}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{n.body}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {/* 🔧 ForgeOptimizer toggle */}
               {!isMobile && activeThread && (
                 <div style={{ display:'flex', alignItems:'center', gap:4, flexShrink:0 }}>
