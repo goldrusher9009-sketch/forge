@@ -308,7 +308,7 @@ interface Project { id: string; name: string; color: string; system_prompt?: str
 interface Thread { id: string; project_id?: string; title: string; created_at: string; pinned?: number; archived?: number; total_tokens?: number; }
 interface VaultKey { provider: string; key_preview: string; key_status: 'active'|'inactive'|'invalid'; created_at: string; updated_at: string; }
 interface SuperMemory { id: string; topic: string; insight: string; frequency: number; strength: number; updated_at: string; }
-interface Message { id: string; thread_id: string; role: 'user' | 'assistant'; content: string; model?: string; created_at: string; pinned?: boolean; }
+interface Message { id: string; thread_id: string; role: 'user' | 'assistant'; content: string; model?: string; created_at: string; pinned?: boolean; reaction?: string; }
 interface Artifact { id: string; thread_id?: string; title: string; type: string; content: string; version: number; created_at: string; }
 interface WorkspaceAgent { id: string; name: string; icon: string; color: string; system_prompt: string; model: string; enabled: number; built_in?: number; }
 interface WorkspaceTask { id: string; title: string; description?: string; status: 'todo' | 'in_progress' | 'done' | 'blocked'; priority: 'low' | 'medium' | 'high'; project_id?: string; created_at: string; }
@@ -3948,6 +3948,17 @@ export default function ForgeApp() {
                               {m.pinned ? '📌' : '📍'} {m.pinned ? 'Pinned' : 'Pin'}
                             </button>
                           )}
+                          {m.id && m.role === 'assistant' && ['👍','❤️','⭐'].map(emoji => (
+                            <button key={emoji} onClick={async () => {
+                              const tok = localStorage.getItem('forge_token');
+                              const newReaction = m.reaction === emoji ? null : emoji;
+                              await fetch('/api/messages/' + m.id + '/react', { method:'PATCH', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ reaction: newReaction }) });
+                              setMessages((prev: any[]) => prev.map((msg: any) => msg.id === m.id ? {...msg, reaction: newReaction} : msg));
+                            }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13, padding:'2px 4px', borderRadius:4, opacity: m.reaction === emoji ? 1 : 0.5, transform: m.reaction === emoji ? 'scale(1.2)' : 'scale(1)', transition:'all 0.15s' }}
+                              title={m.reaction === emoji ? 'Remove reaction' : `React with ${emoji}`}>
+                              {emoji}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>

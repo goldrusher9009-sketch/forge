@@ -430,6 +430,7 @@ try { db.exec(`ALTER TABLE threads ADD COLUMN total_tokens INTEGER NOT NULL DEFA
 try { db.exec(`ALTER TABLE messages ADD COLUMN tokens INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE messages ADD COLUMN model TEXT`); } catch {}
 try { db.exec(`ALTER TABLE messages ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE messages ADD COLUMN reaction TEXT`); } catch {}
 
 // ── Safe migrations (add columns that may be missing in older DBs) ──
 try { db.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))`); } catch {}
@@ -3510,6 +3511,17 @@ app.patch('/api/messages/:id/pin', requireAuth, (req: AuthRequest, res) => {
   const pinned = req.body?.pinned ? 1 : 0;
   db.prepare('UPDATE messages SET pinned=? WHERE id=?').run(pinned, msgId);
   res.json({ success: true, pinned: !!pinned });
+});
+
+// PATCH /api/messages/:id/react — Set or clear a reaction emoji on a message
+app.patch('/api/messages/:id/react', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const msgId = req.params.id;
+  const msg = db.prepare('SELECT m.id, t.user_id FROM messages m JOIN threads t ON m.thread_id=t.id WHERE m.id=?').get(msgId) as any;
+  if (!msg || msg.user_id !== userId) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return; }
+  const reaction = req.body?.reaction || null;
+  db.prepare('UPDATE messages SET reaction=? WHERE id=?').run(reaction, msgId);
+  res.json({ success: true, reaction });
 });
 
 // GET /api/threads/:id/pinned — Get pinned messages for a thread
