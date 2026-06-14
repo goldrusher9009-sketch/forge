@@ -633,7 +633,7 @@ export default function ForgeApp() {
   const [desktopBrowserCtx, setDesktopBrowserCtx] = useState<{ url: string; title: string; text: string } | null>(null);
 
   // Right panel tabs
-  const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'>(() => {
+  const [rightTab, setRightTab] = useState<'tracker'|'agents'|'artifacts'|'tasks'|'schedule'|'dispatch'|'live'|'context'|'browser'|'terminal'|'agent'|'tools'|'hooks'|'runs'|'pinned'>(() => {
     try { return (localStorage.getItem('forge_right_tab') as any) || 'tracker'; } catch { return 'tracker'; }
   });
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
@@ -4508,6 +4508,7 @@ export default function ForgeApp() {
                       {id:'agent',icon:'🤖'},{id:'artifacts',icon:'📄'},{id:'tasks',icon:'✓'},
                       {id:'live',icon:'📺'},{id:'schedule',icon:'📅'},{id:'context',icon:'📊'},
                       {id:'browser',icon:'🌐'},{id:'terminal',icon:'💻'},{id:'dispatch',icon:'🚀'},
+                      {id:'pinned',icon:'🔖'},
                     ] as const).map(tab => (
                       <button key={tab.id} onClick={() => setRightTab(tab.id as any)} title={tab.id} style={{ flex:'0 0 auto', padding:'10px 8px', background:'none', border:'none', borderBottom:rightTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', color:rightTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{tab.icon}</button>
                     ))}
@@ -5514,6 +5515,29 @@ export default function ForgeApp() {
                         )}
                       </div>
                     )}
+                    {rightTab==='pinned' && (() => {
+                      const pinnedMsgs = messages.filter((m: any) => m.pinned);
+                      return (
+                        <div>
+                          <p style={{ color:'var(--fg-text3)', fontSize:11, fontWeight:600, textTransform:'uppercase', margin:'0 0 10px' }}>🔖 Pinned Messages</p>
+                          {!activeThread && <p style={{ color:'var(--fg-text3)', fontSize:12 }}>Open a thread to see pinned messages.</p>}
+                          {activeThread && pinnedMsgs.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12 }}>No pinned messages in this thread. Click 📍 Pin on any message.</p>}
+                          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                            {pinnedMsgs.map((m: any) => (
+                              <div key={m.id} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:10 }}>
+                                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                                  <span style={{ fontSize:11 }}>{m.role === 'user' ? '👤' : '⚡'}</span>
+                                  <span style={{ fontSize:10, color:'var(--fg-text3)', fontWeight:600, textTransform:'uppercase' }}>{m.role === 'user' ? 'You' : 'Forge'}</span>
+                                  {m.created_at && <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:'auto' }}>{new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>}
+                                </div>
+                                <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', whiteSpace:'pre-wrap', maxHeight:80, overflow:'hidden', lineHeight:1.5 }}>{(m.content||'').slice(0,200)}{(m.content||'').length > 200 ? '...' : ''}</p>
+                                <button onClick={() => { navigator.clipboard.writeText(m.content); showToast('📋 Copied'); }} style={{ marginTop:6, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, padding:'2px 0' }}>📋 Copy</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
