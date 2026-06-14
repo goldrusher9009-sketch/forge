@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'trust'|'outcomes'|'forgevoyage'>('workspace');
   // Desktop app integration
   const isDesktop = typeof window !== 'undefined' && !!(window as any).forgeDesktop;
   const [desktopFolders, setDesktopFolders] = useState<string[]>([]);
@@ -750,6 +750,22 @@ export default function ForgeApp() {
       fetch('/api/brain/summary', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
         .then(r => r.json()).then(d => { setBrainData(d); setBrainLoading(false); })
         .catch(() => { setBrainError('Failed to load brain summary.'); setBrainLoading(false); });
+    }
+  /* eslint-disable-next-line */ }, [mainTab]);
+  useEffect(() => {
+    if (mainTab === 'trust' && user && !trustData && !trustLoading) {
+      setTrustLoading(true); setTrustError('');
+      fetch('/api/brain/trust-ladder', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+        .then(r => r.json()).then(d => { setTrustData(d); setTrustLoading(false); })
+        .catch(() => { setTrustError('Failed to load trust ladder.'); setTrustLoading(false); });
+    }
+  /* eslint-disable-next-line */ }, [mainTab]);
+  useEffect(() => {
+    if (mainTab === 'outcomes' && user && !outcomesData && !outcomesLoading) {
+      setOutcomesLoading(true); setOutcomesError('');
+      fetch('/api/outcomes', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+        .then(r => r.json()).then(d => { setOutcomesData(d); setOutcomesLoading(false); })
+        .catch(() => { setOutcomesError('Failed to load outcomes.'); setOutcomesLoading(false); });
     }
   /* eslint-disable-next-line */ }, [mainTab]);
   const [multiResponse, setMultiResponse] = useState(false);
@@ -1031,6 +1047,16 @@ export default function ForgeApp() {
   const [brainData, setBrainData] = useState<any>(null);
   const [brainLoading, setBrainLoading] = useState(false);
   const [brainError, setBrainError] = useState('');
+
+  // Trust Ladder state
+  const [trustData, setTrustData] = useState<any>(null);
+  const [trustLoading, setTrustLoading] = useState(false);
+  const [trustError, setTrustError] = useState('');
+
+  // Outcome Ledger state
+  const [outcomesData, setOutcomesData] = useState<any>(null);
+  const [outcomesLoading, setOutcomesLoading] = useState(false);
+  const [outcomesError, setOutcomesError] = useState('');
 
   // Agent Swarm state
   const [swarmTask, setSwarmTask] = useState('');
@@ -3003,6 +3029,8 @@ export default function ForgeApp() {
           {([
             { id:'brief', icon:'☀️', label:'Morning Brief' },
             { id:'brain', icon:'🧠', label:'Forge Brain' },
+            { id:'trust', icon:'🏆', label:'Trust Ladder' },
+            { id:'outcomes', icon:'📊', label:'Outcome Ledger' },
             { id:'workspace', icon:'🛠', label:'Workspace' },
             { id:'super', icon:'🌟', label:'SuperAgent' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
@@ -8229,6 +8257,115 @@ export default function ForgeApp() {
                         </div>
                       </div>
                     )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* -- Trust Ladder ----------------------------------------- */}
+        {mainTab === 'trust' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:820, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🏆</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Trust Ladder</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>How much Forge trusts itself to act on your behalf — grows with every interaction.</p>
+                </div>
+              </div>
+              {trustLoading && <div style={{ textAlign:'center', color:'var(--fg-text3)', padding:40 }}>Loading...</div>}
+              {trustError && <div style={{ color:'#f87171', padding:16, background:'rgba(248,113,113,0.08)', borderRadius:10 }}>{trustError}</div>}
+              {trustData && (() => {
+                const d = trustData;
+                const lc: Record<number,string> = {1:'#6366f1',2:'#f59e0b',3:'#22c55e'};
+                const ll: Record<number,string> = {1:'Suggest',2:'Approve',3:'Auto'};
+                const ld: Record<number,string> = {1:'I suggest, you decide.',2:'I act, you approve.',3:'I act autonomously.'};
+                const li: Record<number,string> = {1:'💡',2:'✅',3:'🤖'};
+                const lv: number = d.autonomyLevel || 1;
+                return (
+                  <div>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
+                      {([{icon:'🎯',label:'Trust Score',value:(d.trustScore||0)+'/100',color:'var(--fg-orange)'},{icon:'⚡',label:'Autonomy Level',value:'Level '+lv,color:lc[lv]},{icon:'📈',label:'Weekly Points',value:(d.weeklyGrowth?.length||0)+' days',color:'#22c55e'}] as {icon:string;label:string;value:string;color:string}[]).map(s=>(
+                        <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, textAlign:'center' }}>
+                          <div style={{ fontSize:26, marginBottom:6 }}>{s.icon}</div>
+                          <div style={{ fontSize:22, fontWeight:800, color:s.color }}>{s.value}</div>
+                          <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:4 }}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:14 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
+                        <div style={{ width:44, height:44, borderRadius:10, background:lc[lv]+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>{li[lv]}</div>
+                        <div><div style={{ fontWeight:700, color:'var(--fg-text)' }}>{ll[lv]} Mode</div><div style={{ fontSize:12, color:'var(--fg-text3)' }}>{ld[lv]}</div></div>
+                      </div>
+                      <div style={{ background:'var(--fg-bg3)', borderRadius:6, height:8, marginBottom:6 }}>
+                        <div style={{ height:'100%', background:lc[lv], width:(d.trustScore||0)+'%', borderRadius:6, transition:'width 0.5s' }} />
+                      </div>
+                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'var(--fg-text3)' }}><span>0 — Suggest</span><span>50 — Approve</span><span>100 — Auto</span></div>
+                    </div>
+                    {d.byoSavings && (
+                      <div style={{ background:'rgba(34,197,94,0.06)', border:'1px solid rgba(34,197,94,0.18)', borderRadius:12, padding:18, marginBottom:14 }}>
+                        <div style={{ fontWeight:700, color:'#22c55e', marginBottom:10 }}>💰 BYO-Key Savings vs Seat Pricing</div>
+                        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+                          {(Object.entries(d.byoSavings) as [string,number][]).map(([k,v])=>(
+                            <div key={k} style={{ background:'var(--fg-bg2)', borderRadius:8, padding:'8px 14px', textAlign:'center' }}>
+                              <div style={{ fontSize:18, fontWeight:800, color:'#22c55e' }}>${v}</div>
+                              <div style={{ fontSize:11, color:'var(--fg-text3)' }}>vs {k}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:8 }}>Est. monthly savings using your own API keys vs seat pricing.</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* -- Outcome Ledger ----------------------------------------- */}
+        {mainTab === 'outcomes' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:820, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>📊</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Outcome Ledger</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Everything Forge produced this month — tracked and owned by you.</p>
+                </div>
+              </div>
+              {outcomesLoading && <div style={{ textAlign:'center', color:'var(--fg-text3)', padding:40 }}>Loading...</div>}
+              {outcomesError && <div style={{ color:'#f87171', padding:16, background:'rgba(248,113,113,0.08)', borderRadius:10 }}>{outcomesError}</div>}
+              {outcomesData && (() => {
+                const d = outcomesData;
+                const items: {icon:string;label:string;value:string|number;color:string;desc:string}[] = [
+                  {icon:'💬',label:'Messages',value:d.messages||0,color:'#6366f1',desc:'Conversations processed'},
+                  {icon:'🤖',label:'Autonomous Runs',value:d.autonomousRuns||0,color:'var(--fg-orange)',desc:'Tasks without prompting'},
+                  {icon:'🧠',label:'Memories Learned',value:d.memoriesLearned||0,color:'#22c55e',desc:'New facts retained'},
+                  {icon:'✅',label:'Approvals',value:d.approvalsHandled||0,color:'#f59e0b',desc:'Decisions handled'},
+                  {icon:'📄',label:'SEO Pages',value:d.seoPages||0,color:'#ec4899',desc:'Pages generated'},
+                  {icon:'🔢',label:'Tokens',value:d.tokensProcessed ? Math.round(d.tokensProcessed/1000)+'k' : '0',color:'var(--fg-text2)',desc:'LLM tokens used'},
+                ];
+                return (
+                  <div>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
+                      {items.map(item=>(
+                        <div key={item.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}><span style={{ fontSize:20 }}>{item.icon}</span><span style={{ fontSize:12, color:'var(--fg-text3)' }}>{item.label}</span></div>
+                          <div style={{ fontSize:26, fontWeight:800, color:item.color, marginBottom:2 }}>{item.value}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{item.desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ background:'rgba(255,31,53,0.05)', border:'1px solid rgba(255,31,53,0.12)', borderRadius:12, padding:18 }}>
+                      <div style={{ fontWeight:700, fontSize:14, color:'var(--fg-text)', marginBottom:6 }}>This Month</div>
+                      <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.65 }}>
+                        Forge processed <strong>{(d.messages||0).toLocaleString()}</strong> messages, ran <strong>{d.autonomousRuns||0}</strong> autonomous tasks, and learned <strong>{d.memoriesLearned||0}</strong> memory entries. Total: <strong>{d.tokensProcessed ? Math.round(d.tokensProcessed/1000)+'k' : '0'}</strong> tokens.
+                      </div>
+                    </div>
                   </div>
                 );
               })()}

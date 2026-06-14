@@ -4999,6 +4999,83 @@ app.post('/api/brain/decay', requireAuth, (req: AuthRequest, res) => {
   } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ── Trust Ladder ─────────────────────────────────────────────────────────────
+// Computes autonomy level, brain health, memory growth timeline, and BYO-key savings.
+// Makes moat #1 (compounding memory) and moat #4 (BYO-key cost) felt in the UI.
+app.get('/api/brain/trust-ladder', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+
+  // Memory totals + avg strength
+  const memTotals = db.prepare('SELECT COUNT(*) as total, AVG(strength) as avg_strength FROM forge_memory WHERE user_id=?').get(userId) as any;
+  const total = memTotals?.total || 0;
+  const avgStr = memTotals?.avg_strength || 0;
+
+  // Memory growth: count per week for last 8 weeks
+  const weeklyGrowth = db.prepare(`
+    SELECT strftime('%Y-W%W', created_at) as week, COUNT(*) as count
+    FROM forge_memory WHERE user_id=?
+    AND created_at >= datetime('now', '-56 days')
+    GROUP BY week ORDER BY week ASC
+  `).all(userId) as any[];
+
+  // Agent runs completed
+  const runCount = safe(() => (db.prepare('SELECT COUNT(*) as c FROM nightly_runs WHERE user_id=? AND status=?').get(userId, 'done') as any).c, 0);
+
+  // Approvals: total + auto-approved (trust ladder proxy)
+  const approvalTotal = safe(() => (db.prepare('SELECT COUNT(*) as c FROM pending_approvals WHERE user_id=?').get(userId) as any).c, 0);
+  const approvalApproved = safe(() => (db.prepare("SELECT COUNT(*) as c FROM pending_approvals WHERE user_id=? AND status='approved'").get(userId) as any).c, 0);
+
+  // Token usage for BYO-key savings calc
+  const sub = db.prepare('SELECT plan, tokens_used FROM subscriptions WHERE user_id=?').get(userId) as any;
+  const tokensUsed = sub?.tokens_used || 0;
+  // Competitor seat pricing benchmarks (monthly equivalent)
+  const competitors = [
+    { name: 'Cursor Pro', monthly: 20, per: 'seat' },
+    { name: 'ChatGPT Plus', monthly: 20, per: 'seat' },
+    { name: 'Lindy', monthly: 890, per: 'seat' },
+  ];
+  // Forge token cost at $1.50/M (what user pays their provider directly)
+  const forgeCost = (tokensUsed / 1_000_000) * 1.50;
+  const savings = competitors.map(c => ({ name: c.name, saved: Math.max(0, c.monthly - forgeCost).toFixed(2), theirCost: c.monthly, forgeCost: forgeCost.toFixed(2) }));
+
+  // Autonomy level: 1=Suggest, 2=Approve, 3=Auto (based on memory count + run count)
+  let autonomyLevel = 1;
+  let autonomyLabel = 'Suggest';
+  if (total >= 10 && runCount >= 1) { autonomyLevel = 2; autonomyLabel = 'Approve'; }
+  if (total >= 30 && runCount >= 5 && approvalApproved >= 10) { autonomyLevel = 3; autonomyLabel = 'Auto'; }
+
+  // Trust score 0–100
+  const trustScore = Math.min(100, Math.round(
+    (Math.min(total, 50) / 50) * 40 +       // memory depth (40pts)
+    (Math.min(avgStr, 10) / 10) * 20 +       // memory quality (20pts)
+    (Math.min(runCount, 10) / 10) * 20 +     // autonomous runs (20pts)
+    (Math.min(approvalApproved, 20) / 20) * 20  // approval history (20pts)
+  ));
+
+  // Next milestone
+  let nextMilestone = '';
+  if (autonomyLevel < 2) nextMilestone = `Add ${Math.max(0, 10 - total)} more memories and complete 1 autonomous run to unlock Approve mode`;
+  else if (autonomyLevel < 3) nextMilestone = `Add ${Math.max(0, 30 - total)} more memories, complete ${Math.max(0, 5 - runCount)} more runs, and approve ${Math.max(0, 10 - approvalApproved)} more actions to unlock Auto mode`;
+  else nextMilestone = 'Maximum autonomy unlocked — Forge is running on autopilot';
+
+  res.json({
+    success: true,
+    trustLadder: {
+      trustScore,
+      autonomyLevel,
+      autonomyLabel,
+      nextMilestone,
+      memoryTotal: total,
+      memoryAvgStrength: Math.round(avgStr * 100) / 100,
+      weeklyGrowth,
+      runCount,
+      approvalTotal,
+      approvalApproved,
+      byoKeySavings: { tokensUsed, forgeCost: forgeCost.toFixed(2), vs: savings },
+    }
+  });
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PHASE 2 — Addictive Core: Morning Brief engine (streaks + delta + 1 priority).
 // The daily-hook loop. Tracks login streak, computes "what changed since you
@@ -5036,6 +5113,35 @@ function touchStreak(userId: string): { streak: number; longest: number; lastSee
   db.prepare("UPDATE users SET login_streak=?,longest_streak=?,last_seen_at=datetime('now') WHERE id=?").run(streak, longest, userId);
   return { streak, longest, lastSeen: prevSeenForReturn };
 }
+
+// GET /api/outcomes — Outcome Ledger: counts everything Forge did for the user this month.
+app.get('/api/outcomes', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const since = new Date(); since.setDate(1); since.setHours(0,0,0,0);
+  const sinceStr = since.toISOString();
+
+  const messages    = safe(() => (db.prepare("SELECT COUNT(*) as c FROM superagent_messages WHERE user_id=? AND created_at>=?").get(userId, sinceStr) as any).c, 0);
+  const runs        = safe(() => (db.prepare("SELECT COUNT(*) as c FROM nightly_runs WHERE user_id=? AND status='done' AND started_at>=?").get(userId, sinceStr) as any).c, 0);
+  const memories    = safe(() => (db.prepare("SELECT COUNT(*) as c FROM forge_memory WHERE user_id=? AND created_at>=?").get(userId, sinceStr) as any).c, 0);
+  const approvals   = safe(() => (db.prepare("SELECT COUNT(*) as c FROM pending_approvals WHERE user_id=? AND created_at>=?").get(userId, sinceStr) as any).c, 0);
+  const seoPages    = safe(() => (db.prepare("SELECT COUNT(*) as c FROM seo_pages WHERE user_id=? AND created_at>=?").get(userId, sinceStr) as any).c, 0);
+  const totalTokens = safe(() => (db.prepare("SELECT SUM(total_tokens) as t FROM usage_logs WHERE user_id=? AND created_at>=?").get(userId, sinceStr) as any).t, 0);
+
+  const total = messages + runs + memories + approvals + seoPages;
+  const headline = total === 0
+    ? 'Forge is warming up — start chatting to see your outcomes here.'
+    : `Forge completed ${total} actions for you this month.`;
+
+  res.json({
+    success: true,
+    outcomes: {
+      period: { start: sinceStr, label: since.toLocaleString('default', { month: 'long', year: 'numeric' }) },
+      total,
+      headline,
+      breakdown: { messages, autonomousRuns: runs, memoriesLearned: memories, approvalsHandled: approvals, seoPages, tokensProcessed: totalTokens || 0 },
+    }
+  });
+});
 
 // GET /api/brief — the daily hook. Streak + since-last-visit delta + 1 priority.
 app.get('/api/brief', requireAuth, (req: AuthRequest, res) => {
