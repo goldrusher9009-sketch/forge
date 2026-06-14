@@ -3339,6 +3339,32 @@ export default function ForgeApp() {
                   );
                 })()}
                 {threads.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:12, padding:'4px 8px' }}>No conversations yet</p>}
+                {/* Archived threads section */}
+                {(() => {
+                  const archived = threads.filter(t => t.archived && (t.title||'').toLowerCase().includes(threadSearch.toLowerCase()));
+                  if (!archived.length) return null;
+                  return (
+                    <div style={{ marginTop:8 }}>
+                      <button onClick={() => { const el = document.getElementById('forge-archived-list'); if (el) { const shown = el.style.display !== 'none'; el.style.display = shown ? 'none' : 'block'; const ch = document.getElementById('forge-archived-chevron'); if (ch) ch.textContent = shown ? '▶' : '▼'; } }} style={{ width:'100%', display:'flex', alignItems:'center', gap:6, padding:'4px 8px', background:'transparent', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, textAlign:'left' }}>
+                        <span id="forge-archived-chevron">▶</span>
+                        <span>🗃 Archived ({archived.length})</span>
+                      </button>
+                      <div id="forge-archived-list" style={{ display:'none' }}>
+                        {archived.map(t => {
+                          const isActive = activeThread?.id===t.id;
+                          return (
+                            <div key={t.id} onClick={() => selectThread(t)} style={{ padding:'5px 8px', borderRadius:6, cursor:'pointer', marginBottom:1, background: isActive ? 'rgba(255,31,53,0.08)' : 'transparent', borderLeft: isActive ? '2px solid var(--fg-orange)' : '2px solid transparent', opacity:0.65 }}>
+                              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                                <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, fontStyle:'italic' }}>{t.title}</p>
+                                <button onClick={e => { e.stopPropagation(); archiveThread(t); }} title="Unarchive" style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:10, padding:'0 2px', opacity:0.5 }}>↩</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
