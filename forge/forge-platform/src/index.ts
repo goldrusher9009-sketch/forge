@@ -6292,6 +6292,67 @@ app.delete('/api/threads/:threadId/pins/:pinId', requireAuth, (req: AuthRequest,
   res.json({ success: true });
 });
 
+
+// ── Prompt History & Favorites ───────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS prompt_history (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  char_count INTEGER DEFAULT 0,
+  starred INTEGER DEFAULT 0,
+  use_count INTEGER DEFAULT 1,
+  last_used_at TEXT DEFAULT (datetime('now')),
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// List prompt history (most recent first, starred first)
+app.get('/api/prompt-history', requireAuth, (req: AuthRequest, res) => {
+  const limit = parseInt(req.query.limit as string) || 50;
+  const search = req.query.search as string || '';
+  let rows;
+  if (search) {
+    rows = db.prepare("SELECT * FROM prompt_history WHERE user_id=? AND content LIKE ? ORDER BY starred DESC, last_used_at DESC LIMIT ?").all(req.user!.sub, '%'+search+'%', limit);
+  } else {
+    rows = db.prepare("SELECT * FROM prompt_history WHERE user_id=? ORDER BY starred DESC, last_used_at DESC LIMIT ?").all(req.user!.sub, limit);
+  }
+  res.json({ success: true, data: rows });
+});
+
+// Save prompt (upsert by content)
+app.post('/api/prompt-history', requireAuth, (req: AuthRequest, res) => {
+  const { content } = req.body;
+  if (!content || content.length < 3) return res.json({ success: true });
+  const userId = req.user!.sub;
+  const existing: any = db.prepare("SELECT id FROM prompt_history WHERE user_id=? AND content=?").get(userId, content);
+  if (existing) {
+    db.prepare("UPDATE prompt_history SET use_count=use_count+1, last_used_at=datetime('now') WHERE id=?").run(existing.id);
+    return res.json({ success: true, id: existing.id });
+  }
+  const id = require('uuid').v4();
+  // Keep max 200 prompts per user, delete oldest non-starred if over
+  const count = (db.prepare("SELECT COUNT(*) as c FROM prompt_history WHERE user_id=?").get(userId) as any).c;
+  if (count >= 200) {
+    db.prepare("DELETE FROM prompt_history WHERE id=(SELECT id FROM prompt_history WHERE user_id=? AND starred=0 ORDER BY last_used_at ASC LIMIT 1)").run(userId);
+  }
+  db.prepare("INSERT INTO prompt_history (id,user_id,content,char_count) VALUES (?,?,?,?)").run(id, userId, content, content.length);
+  res.json({ success: true, id });
+});
+
+// Star/unstar
+app.patch('/api/prompt-history/:id/star', requireAuth, (req: AuthRequest, res) => {
+  const row: any = db.prepare("SELECT starred FROM prompt_history WHERE id=? AND user_id=?").get(req.params.id, req.user!.sub);
+  if (!row) return res.status(404).json({ success: false });
+  const newStar = row.starred ? 0 : 1;
+  db.prepare("UPDATE prompt_history SET starred=? WHERE id=?").run(newStar, req.params.id);
+  res.json({ success: true, starred: newStar });
+});
+
+// Delete
+app.delete('/api/prompt-history/:id', requireAuth, (req: AuthRequest, res) => {
+  db.prepare("DELETE FROM prompt_history WHERE id=? AND user_id=?").run(req.params.id, req.user!.sub);
+  res.json({ success: true });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`🚀 Forge Platform v6.99 running on port ${PORT} (${NODE_ENV})`);
 });

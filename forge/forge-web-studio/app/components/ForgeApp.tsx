@@ -1023,6 +1023,10 @@ export default function ForgeApp() {
 
   // Context pins
   const [contextPins, setContextPins] = useState<{id:string;label:string;content:string}[]>([]);
+  // Prompt history
+  const [promptHistory, setPromptHistory] = useState<{id:string;content:string;starred:number;use_count:number}[]>([]);
+  const [showPromptHistory, setShowPromptHistory] = useState(false);
+  const [promptHistorySearch, setPromptHistorySearch] = useState('');
   const [showPinsModal, setShowPinsModal] = useState(false);
   const [pinInput, setPinInput] = useState({ label: '', content: '' });
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
@@ -1313,6 +1317,14 @@ export default function ForgeApp() {
     } catch { /* keep current list if endpoint unavailable */ }
   }, [user, activeThread?.id]);
   useEffect(() => { loadFolderFiles(); }, [loadFolderFiles]);
+
+  // Load prompt history
+  useEffect(() => {
+    if (!user) return;
+    const tok = localStorage.getItem('forge_token');
+    fetch('/api/prompt-history?limit=50', { headers: { Authorization: 'Bearer ' + tok } })
+      .then(r => r.json()).then(d => { if (d.success) setPromptHistory(d.data || []); }).catch(() => {});
+  }, [user]);
 
   // Load context pins when thread changes
   useEffect(() => {
@@ -2600,6 +2612,11 @@ export default function ForgeApp() {
     const pendingImages = [...chatImages];
     setChatImages([]);
     setInput(''); setVoiceTranscript('');
+    // Save to prompt history
+    if (userContent.trim().length >= 3) {
+      const tok = localStorage.getItem('forge_token');
+      fetch('/api/prompt-history', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ content: userContent.trim() }) }).catch(() => {});
+    }
     setSending(true); setTyping(true);
     setAiElapsed(0);
     if (aiTimerRef.current) clearInterval(aiTimerRef.current);
@@ -4633,6 +4650,34 @@ export default function ForgeApp() {
                         <button onClick={() => { setSlashOpen(true); textareaRef.current?.focus(); }} title="Commands" style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:'5px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-orange)', cursor:'pointer', fontSize:14, fontWeight:700 }}>/</button>
                         {/* Voice button */}
                         <button onClick={toggleVoice} title={voiceActive ? 'Stop recording' : 'Voice input'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background:voiceActive ? 'var(--fg-orange)' : 'var(--fg-odim)', border:`1px solid ${voiceActive ? 'var(--fg-orange2)' : 'var(--fg-odim2)'}`, borderRadius:8, color:voiceActive ? '#fff' : 'var(--fg-orange2)', cursor:'pointer', fontSize:12, fontWeight:600, animation:voiceActive ? 'send-pulse 0.9s ease-in-out infinite' : 'none' }}>≡ƒÄñ {voiceActive ? 'ΓÅ║ Rec' : 'Voice'}</button>
+                        {/* Prompt history button */}
+                        <div style={{ position:'relative' }}>
+                          <button onClick={() => setShowPromptHistory(p => !p)} title='Prompt history' style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background: showPromptHistory ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${showPromptHistory ? 'var(--fg-border2)' : 'var(--fg-border2)'}`, borderRadius:8, color:'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight:600 }}>🕐 History</button>
+                          {showPromptHistory && (
+                            <div style={{ position:'absolute', bottom:'calc(100% + 6px)', left:0, width:360, background:'var(--fg-bg)', border:'1px solid var(--fg-border2)', borderRadius:12, maxHeight:320, overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 8px 32px rgba(0,0,0,0.3)', zIndex:200 }}>
+                              <div style={{ padding:'8px 10px', borderBottom:'1px solid var(--fg-border)', display:'flex', gap:6, alignItems:'center' }}>
+                                <input autoFocus value={promptHistorySearch} onChange={e => setPromptHistorySearch(e.target.value)} placeholder='Search history...' style={{ flex:1, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, padding:'5px 8px', color:'var(--fg-text)', fontSize:12 }} />
+                                <button onClick={() => setShowPromptHistory(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:16 }}>×</button>
+                              </div>
+                              <div style={{ overflowY:'auto', flex:1 }}>
+                                {promptHistory.filter((h: any) => !promptHistorySearch || h.content.toLowerCase().includes(promptHistorySearch.toLowerCase())).map((h: any) => (
+                                  <div key={h.id} style={{ display:'flex', alignItems:'flex-start', gap:6, padding:'7px 10px', borderBottom:'1px solid var(--fg-border)', cursor:'pointer' }}
+                                    onClick={() => { setInput(h.content); setShowPromptHistory(false); setPromptHistorySearch(''); }}>
+                                    <div style={{ flex:1, minWidth:0 }}>
+                                      <div style={{ fontSize:12, color:'var(--fg-text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{h.content}</div>
+                                      <div style={{ fontSize:10, color:'var(--fg-text3)', marginTop:2 }}>used {h.use_count}× · {h.content.length} chars</div>
+                                    </div>
+                                    <button onClick={async (e: any) => { e.stopPropagation(); const tok=localStorage.getItem('forge_token'); const d=await fetch('/api/prompt-history/'+h.id+'/star',{method:'PATCH',headers:{Authorization:'Bearer '+tok}}).then((r: any)=>r.json()); setPromptHistory((prev: any[])=>prev.map((x: any)=>x.id===h.id?{...x,starred:d.starred}:x)); }} style={{ background:'none', border:'none', cursor:'pointer', fontSize:14, padding:'2px 4px', color: h.starred ? '#f59e0b' : 'var(--fg-text3)', flexShrink:0 }} title={h.starred?'Unstar':'Star'}>{h.starred?'★':'☆'}</button>
+                                    <button onClick={async (e: any) => { e.stopPropagation(); const tok=localStorage.getItem('forge_token'); await fetch('/api/prompt-history/'+h.id,{method:'DELETE',headers:{Authorization:'Bearer '+tok}}); setPromptHistory((prev: any[])=>prev.filter((x: any)=>x.id!==h.id)); }} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, padding:'2px 4px', color:'#f87171', flexShrink:0 }} title='Delete'>✕</button>
+                                  </div>
+                                ))}
+                                {promptHistory.filter((h: any) => !promptHistorySearch || h.content.toLowerCase().includes(promptHistorySearch.toLowerCase())).length === 0 && (
+                                  <div style={{ padding:16, textAlign:'center', color:'var(--fg-text3)', fontSize:12 }}>No prompts yet — start chatting!</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                         <button onClick={() => wakeListening ? stopWakeListener() : startWakeListener()} title={wakeListening ? '"Hey Forge" wake word active ΓÇö click to stop' : 'Enable "Hey Forge" wake word'} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', background: heyForgeActive ? 'rgba(99,102,241,0.25)' : wakeListening ? 'var(--fg-odim)' : 'transparent', border:`1px solid ${wakeListening ? '#818cf8' : 'var(--fg-border2)'}`, borderRadius:8, color: wakeListening ? '#818cf8' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight:600, animation: wakeListening ? 'pulse 2s ease-in-out infinite' : 'none' }}>≡ƒæé {wakeListening ? 'Awake' : 'Hey Forge'}</button>
                         {/* Attach file */}
                         <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display:'none' }} onChange={async e => {
