@@ -1211,6 +1211,7 @@ app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRe
   }
 
   try {
+    const _routeStart = Date.now();
     // Add language/channel context to system message if needed
     let systemMsg = language !== 'English' || channel !== 'Chat'
       ? [{ role: 'system', content: `You are a helpful AI assistant. Respond in ${language}. This is a ${channel} channel — keep format appropriate for that context.` }, ...messages]
@@ -1262,6 +1263,14 @@ app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRe
 
     // Update token usage
     db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
+
+    // Router flywheel: log routing decision for data moat
+    try {
+      const promptLen = JSON.stringify(messages).length;
+      const complexity = promptLen > 3000 ? 'high' : promptLen > 800 ? 'medium' : 'low';
+      db.prepare('INSERT INTO routing_log (id,user_id,model_requested,model_resolved,provider,prompt_complexity,prompt_tokens,completion_tokens,latency_ms,created_at) VALUES (?,?,?,?,?,?,?,?,?,datetime("now"))')
+        .run(require('uuid').v4(), userId, forgeModelId, actualModel, provider, complexity, result.promptTokens, result.completionTokens, Date.now() - _routeStart);
+    } catch {}
 
     // Return both Forge format and OpenAI-compat format so ForgeCo and other clients work
     res.json({ success: true, data: { response: result.content, model: forgeModelId, modelName: actualModel, provider, tokensUsed: totalTokens, promptTokens: result.promptTokens, completionTokens: result.completionTokens, cost: providerCost, revenue: forgeRevenue }, choices: [{ message: { role: 'assistant', content: result.content } }], model: forgeModelId });
@@ -6222,6 +6231,32 @@ app.post('/api/messages/:id/reactions', requireAuth, (req: AuthRequest, res) => 
 app.delete('/api/messages/:id/reactions/:emoji', requireAuth, (req: AuthRequest, res) => {
   db.prepare('DELETE FROM message_reactions WHERE message_id=? AND user_id=? AND emoji=?').run(req.params.id, req.user!.sub, decodeURIComponent(req.params.emoji));
   res.json({ success: true });
+});
+
+
+
+// ── Router Flywheel ───────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS routing_log (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  model_requested TEXT,
+  model_resolved TEXT,
+  provider TEXT,
+  prompt_complexity TEXT,
+  prompt_tokens INTEGER DEFAULT 0,
+  completion_tokens INTEGER DEFAULT 0,
+  latency_ms INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+app.get('/api/router/stats', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const total = (db.prepare('SELECT COUNT(*) as c FROM routing_log WHERE user_id=?').get(userId) as any)?.c || 0;
+  const byModel = db.prepare('SELECT model_resolved, COUNT(*) as c FROM routing_log WHERE user_id=? GROUP BY model_resolved ORDER BY c DESC').all(userId);
+  const byComplexity = db.prepare('SELECT prompt_complexity, COUNT(*) as c, AVG(latency_ms) as avg_latency FROM routing_log WHERE user_id=? GROUP BY prompt_complexity').all(userId);
+  const avgLatency = (db.prepare('SELECT AVG(latency_ms) as a FROM routing_log WHERE user_id=?').get(userId) as any)?.a || 0;
+  const globalTotal = (db.prepare('SELECT COUNT(*) as c FROM routing_log').get() as any)?.c || 0;
+  res.json({ success: true, data: { total, globalTotal, byModel, byComplexity, avgLatency: Math.round(avgLatency) } });
 });
 
 
