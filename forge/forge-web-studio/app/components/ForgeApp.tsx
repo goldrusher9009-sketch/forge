@@ -776,6 +776,12 @@ export default function ForgeApp() {
         .then(r => r.json()).then(d => setActivityFeed(d.activity || []))
         .catch(() => setActivityFeed([]));
     }
+    if (user && !intelligenceData) {
+      const tok = localStorage.getItem('forge_token');
+      fetch('/api/intelligence', { headers: { Authorization: 'Bearer ' + tok } })
+        .then(r => r.json()).then(d => setIntelligenceData(d.intelligence || null))
+        .catch(() => {});
+    }
     if (mainTab === 'platforms' && user && !referralData) {
       const tok = localStorage.getItem('forge_token');
       fetch('/api/referral', { headers: { Authorization: 'Bearer ' + tok } })
@@ -1083,6 +1089,7 @@ export default function ForgeApp() {
   const [savingsData, setSavingsData] = useState<any>(null);
   const [activityFeed, setActivityFeed] = useState<any[]|null>(null);
   const [referralData, setReferralData] = useState<any>(null);
+  const [intelligenceData, setIntelligenceData] = useState<any>(null);
 
   // Agency / White-label state
   const [agencyTab, setAgencyTab] = useState<'overview'|'clients'|'new'>('overview');
@@ -3663,6 +3670,7 @@ export default function ForgeApp() {
                           <span style={{ fontSize:12, fontWeight:600 }}>Skills</span>
                         </button>
                       {activityFeed && activityFeed.length > 0 && (<div style={{ maxWidth:480, width:'100%', marginTop:24 }}><div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--fg-text3)', marginBottom:10 }}>Recent Activity</div><div style={{ display:'flex', flexDirection:'column', gap:6 }}>{activityFeed.map((ev: any, i: number) => (<div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10 }}><span style={{ fontSize:16, flexShrink:0 }}>{ev.icon}</span><div style={{ flex:1, minWidth:0 }}><div style={{ fontSize:12, fontWeight:600, color:'var(--fg-text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ev.title}</div>{ev.body && <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ev.body}</div>}</div><div style={{ fontSize:10, color:'var(--fg-text3)', flexShrink:0, marginTop:1 }}>{ev.ts ? new Date(ev.ts).toLocaleDateString() : ''}</div></div>))}</div></div>)}
+                      {intelligenceData && (<div style={{ maxWidth:480, width:'100%', marginTop:16, background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(168,85,247,0.08))', border:'1px solid rgba(99,102,241,0.3)', borderRadius:14, padding:'16px 20px' }}><div style={{ display:'flex', alignItems:'center', gap:14 }}><div style={{ textAlign:'center', minWidth:60 }}><div style={{ fontSize:28, fontWeight:900, color:'#818cf8', lineHeight:1 }}>{intelligenceData.score}</div><div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--fg-text3)' }}>/ 1000</div></div><div style={{ flex:1 }}><div style={{ fontSize:14, fontWeight:800, color:'var(--fg-text)', marginBottom:2 }}>Forge IQ: {intelligenceData.level}</div><div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:8 }}>{intelligenceData.levelDesc}</div><div style={{ height:6, background:'rgba(255,255,255,0.08)', borderRadius:3, overflow:'hidden' }}><div style={{ height:'100%', width: intelligenceData.pct + '%', background:'linear-gradient(90deg,#818cf8,#a855f7)', borderRadius:3, transition:'width 1s ease' }} /></div>{intelligenceData.nextLevel && <div style={{ fontSize:10, color:'var(--fg-text3)', marginTop:4 }}>Next: {intelligenceData.nextLevel} at {intelligenceData.nextAt} pts</div>}</div></div></div>)}
                       </div>
                     </div>
                   )}

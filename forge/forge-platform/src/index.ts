@@ -5202,6 +5202,35 @@ function touchStreak(userId: string): { streak: number; longest: number; lastSee
   return { streak, longest, lastSeen: prevSeenForReturn };
 }
 
+// GET /api/intelligence — Forge Intelligence Score: gamified brain health metric.
+app.get('/api/intelligence', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const memories   = safe(() => (db.prepare("SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?").get(userId) as any).c, 0);
+  const runs       = safe(() => (db.prepare("SELECT COUNT(*) as c FROM nightly_runs WHERE user_id=? AND status='done'").get(userId) as any).c, 0);
+  const threads    = safe(() => (db.prepare("SELECT COUNT(*) as c FROM threads WHERE user_id=?").get(userId) as any).c, 0);
+  const outcomes   = safe(() => (db.prepare("SELECT COUNT(*) as c FROM superagent_messages WHERE user_id=?").get(userId) as any).c, 0);
+  const seoPages   = safe(() => (db.prepare("SELECT COUNT(*) as c FROM seo_pages WHERE user_id=?").get(userId) as any).c, 0);
+  const approvals  = safe(() => (db.prepare("SELECT COUNT(*) as c FROM pending_approvals WHERE user_id=? AND status='approved'").get(userId) as any).c, 0);
+  // Score: weighted sum capped at 1000
+  const score = Math.min(1000, Math.round(
+    memories * 8 + runs * 25 + threads * 2 + outcomes * 0.5 + seoPages * 15 + approvals * 10
+  ));
+  const LEVELS = [
+    { min: 0,   label: 'Spark',      desc: 'Just getting started.' },
+    { min: 50,  label: 'Apprentice', desc: 'Building good habits.' },
+    { min: 150, label: 'Practitioner', desc: 'Forge is learning your workflow.' },
+    { min: 300, label: 'Expert',     desc: 'Deep context established.' },
+    { min: 500, label: 'Veteran',    desc: 'Forge knows you well.' },
+    { min: 750, label: 'Autonomous', desc: 'Forge runs independently.' },
+    { min: 950, label: 'Sovereign',  desc: 'Full autonomy unlocked.' },
+  ];
+  const level = [...LEVELS].reverse().find(l => score >= l.min) || LEVELS[0];
+  const nextLevel = LEVELS.find(l => l.min > score);
+  const nextAt = nextLevel?.min ?? 1000;
+  const pct = nextLevel ? Math.round(((score - level.min) / (nextAt - level.min)) * 100) : 100;
+  res.json({ success: true, intelligence: { score, level: level.label, levelDesc: level.desc, nextLevel: nextLevel?.label || null, nextAt, pct, breakdown: { memories, runs, threads, messages: outcomes, seoPages, approvals } } });
+});
+
 // GET /api/outcomes — Outcome Ledger: counts everything Forge did for the user this month.
 app.get('/api/outcomes', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
