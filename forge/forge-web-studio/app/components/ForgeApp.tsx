@@ -3754,6 +3754,46 @@ export default function ForgeApp() {
                       {activityFeed && activityFeed.length > 0 && (<div style={{ maxWidth:480, width:'100%', marginTop:24 }}><div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--fg-text3)', marginBottom:10 }}>Recent Activity</div><div style={{ display:'flex', flexDirection:'column', gap:6 }}>{activityFeed.map((ev: any, i: number) => (<div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10 }}><span style={{ fontSize:16, flexShrink:0 }}>{ev.icon}</span><div style={{ flex:1, minWidth:0 }}><div style={{ fontSize:12, fontWeight:600, color:'var(--fg-text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ev.title}</div>{ev.body && <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ev.body}</div>}</div><div style={{ fontSize:10, color:'var(--fg-text3)', flexShrink:0, marginTop:1 }}>{ev.ts ? new Date(ev.ts).toLocaleDateString() : ''}</div></div>))}</div></div>)}
                       {intelligenceData && (<div style={{ maxWidth:480, width:'100%', marginTop:16, background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(168,85,247,0.08))', border:'1px solid rgba(99,102,241,0.3)', borderRadius:14, padding:'16px 20px' }}><div style={{ display:'flex', alignItems:'center', gap:14 }}><div style={{ textAlign:'center', minWidth:60 }}><div style={{ fontSize:28, fontWeight:900, color:'#818cf8', lineHeight:1 }}>{intelligenceData.score}</div><div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--fg-text3)' }}>/ 1000</div></div><div style={{ flex:1 }}><div style={{ fontSize:14, fontWeight:800, color:'var(--fg-text)', marginBottom:2 }}>Forge IQ: {intelligenceData.level}</div><div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:8 }}>{intelligenceData.levelDesc}</div><div style={{ height:6, background:'rgba(255,255,255,0.08)', borderRadius:3, overflow:'hidden' }}><div style={{ height:'100%', width: intelligenceData.pct + '%', background:'linear-gradient(90deg,#818cf8,#a855f7)', borderRadius:3, transition:'width 1s ease' }} /></div>{intelligenceData.nextLevel && <div style={{ fontSize:10, color:'var(--fg-text3)', marginTop:4 }}>Next: {intelligenceData.nextLevel} at {intelligenceData.nextAt} pts</div>}</div></div></div>)}
                       <button onClick={() => { const tok = localStorage.getItem('forge_token'); fetch('/api/digest', { headers: { Authorization: 'Bearer ' + tok } }).then(r=>r.json()).then(d=>{ setDigestData(d.digest||null); setShowDigest(true); }).catch(()=>{}); }} style={{ gridColumn:'1 / -1', marginTop:8, padding:'10px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text2)', fontSize:13, fontWeight:600, cursor:'pointer' }}>Week in Review</button>
+                      {(() => {
+                        const [usageSparkData, setUsageSparkData] = React.useState<any[]|null>(null);
+                        if (!usageSparkData && user) {
+                          const tok = localStorage.getItem('forge_token');
+                          fetch('/api/billing/usage', { headers: { Authorization: 'Bearer ' + tok } })
+                            .then(r => r.json()).then(d => {
+                              const rows: any[] = d.data || [];
+                              const days: {[k:string]:number} = {};
+                              for (let i = 6; i >= 0; i--) { const dt = new Date(); dt.setDate(dt.getDate()-i); days[dt.toISOString().slice(0,10)] = 0; }
+                              rows.forEach((r: any) => { const day = String(r.created_at||'').slice(0,10); if (day in days) days[day] += (r.total_tokens||0); });
+                              setUsageSparkData(Object.entries(days).map(([date,tokens]) => ({ date, tokens })));
+                            }).catch(() => setUsageSparkData([]));
+                        }
+                        if (!usageSparkData || usageSparkData.length === 0) return null;
+                        const maxT = Math.max(...usageSparkData.map(d => d.tokens), 1);
+                        const totalT = usageSparkData.reduce((s,d) => s+d.tokens, 0);
+                        if (totalT === 0) return null;
+                        const barW = 24; const barGap = 4; const barH = 36;
+                        return (
+                          <div style={{ maxWidth:480, width:'100%', marginTop:16, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:14, padding:'14px 20px' }}>
+                            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                              <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)' }}>7-Day Token Usage</div>
+                              <div style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700 }}>{totalT.toLocaleString()} total</div>
+                            </div>
+                            <div style={{ display:'flex', alignItems:'flex-end', gap:barGap, height:barH }}>
+                              {usageSparkData.map((d,i) => {
+                                const h = d.tokens > 0 ? Math.max(4, Math.round((d.tokens/maxT)*barH)) : 2;
+                                const isToday = i === usageSparkData.length-1;
+                                return (
+                                  <div key={d.date} title={`${d.date}: ${d.tokens.toLocaleString()} tokens`} style={{ flex:1, height:h, background: isToday ? 'var(--fg-orange)' : 'rgba(249,115,22,0.35)', borderRadius:'3px 3px 0 0', transition:'height 0.3s' }} />
+                                );
+                              })}
+                            </div>
+                            <div style={{ display:'flex', justifyContent:'space-between', marginTop:4 }}>
+                              <span style={{ fontSize:9, color:'var(--fg-text3)' }}>{usageSparkData[0]?.date?.slice(5)}</span>
+                              <span style={{ fontSize:9, color:'var(--fg-orange)', fontWeight:700 }}>today</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {checklistData && !checklistData.allDone && (<div style={{ maxWidth:480, width:'100%', marginTop:16, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:14, padding:'16px 20px' }}><div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}><div style={{ fontSize:13, fontWeight:800 }}>Getting Started</div><div style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:700 }}>{checklistData.completed}/{checklistData.total} done</div></div><div style={{ height:4, background:'rgba(255,255,255,0.07)', borderRadius:2, marginBottom:14, overflow:'hidden' }}><div style={{ height:'100%', width: (checklistData.completed/checklistData.total*100)+'%', background:'var(--fg-orange)', borderRadius:2, transition:'width 0.5s' }} /></div>{(checklistData.steps||[]).map((s: any) => (<div key={s.id} onClick={() => { if (!s.done) setMainTab(s.href); }} style={{ display:'flex', alignItems:'center', gap:10, padding:'7px 8px', borderRadius:8, marginBottom:4, cursor: s.done?'default':'pointer', opacity: s.done?0.55:1 }}><div style={{ width:18, height:18, borderRadius:'50%', background: s.done?'rgba(34,197,94,0.25)':'rgba(255,255,255,0.06)', border:'1px solid '+(s.done?'rgba(34,197,94,0.5)':'var(--fg-border)'), display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, flexShrink:0, color: s.done?'#4ade80':'var(--fg-text3)', fontWeight:800 }}>{s.done?'v':''}</div><span style={{ fontSize:12, color: s.done?'var(--fg-text3)':'var(--fg-text)', textDecoration:s.done?'line-through':'none', flex:1 }}>{s.label}</span>{!s.done && <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600, flexShrink:0 }}>Go</span>}</div>))}</div>)}
                       </div>
                     </div>
