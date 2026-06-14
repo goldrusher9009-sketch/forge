@@ -7955,6 +7955,15 @@ export default function ForgeApp() {
             {id:'m12',icon:'🌍',name:'Translator Pro',desc:'Real-time translation with context awareness across 100+ languages.',category:'writing',installs:1100,rating:4.6},
           ];
           const cats = ['All','productivity','data','tools','writing','research','developer','marketing'];
+          const showVertical = mktTab === 'vertical';
+          const handlePublish = async () => {
+            setPublishLoading(true);
+            try {
+              const r = await fetch('/api/marketplace/publish', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${localStorage.getItem('forge_token')}`}, body:JSON.stringify(publishForm) });
+              if (r.ok) { showToast('Published to community!'); setPublishForm({ name:'', description:'', icon:'', category:'general', prompt:'', tags:'', price:0 }); setMktTab('mine'); }
+              else showToast('Publish failed');
+            } finally { setPublishLoading(false); }
+          };
           const filtered = mktItems.filter(m =>
             (mktCat==='All'||m.category===mktCat) &&
             (!mktSearch||m.name.toLowerCase().includes(mktSearch.toLowerCase())||m.desc.toLowerCase().includes(mktSearch.toLowerCase()))
@@ -7962,19 +7971,126 @@ export default function ForgeApp() {
           return (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:960, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:16 }}>
                 <span style={{ fontSize:36 }}>🛍</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Marketplace</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Extend Forge with community skills, agents, and integrations.</p>
                 </div>
               </div>
+              {/* 4-tab bar */}
+              <div style={{ display:'flex', gap:0, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:4, marginBottom:20, width:'fit-content' }}>
+                {([['vertical','🏪 Browse'],['community','🌐 Community'],['publish','📤 Publish'],['mine','📦 My Listings']] as const).map(([t,label]) => (
+                  <button key={t} onClick={() => setMktTab(t as any)} style={{ padding:'6px 16px', background:mktTab===t?'var(--fg-orange)':'transparent', border:'none', borderRadius:7, color:mktTab===t?'#fff':'var(--fg-text2)', fontSize:12, fontWeight:mktTab===t?700:400, cursor:'pointer', transition:'all 0.15s' }}>{label}</button>
+                ))}
+              </div>
+
+              {/* Community tab */}
+              {mktTab === 'community' && (
+                <div>
+                  {communityLoading ? <div style={{ color:'var(--fg-text3)', fontSize:13 }}>Loading community listings…</div> : communityItems.length === 0 ? (
+                    <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
+                      <div style={{ fontSize:48, marginBottom:12 }}>🌐</div>
+                      <div style={{ fontSize:16, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>No community listings yet</div>
+                      <div style={{ fontSize:13 }}>Be the first to publish a skill or agent!</div>
+                    </div>
+                  ) : (
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
+                      {communityItems.map((item:any) => (
+                        <div key={item.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                            <span style={{ fontSize:28 }}>{item.icon||'🤖'}</span>
+                            <div>
+                              <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{item.name}</div>
+                              <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{item.category} • ⬇ {item.installCount||0}</div>
+                            </div>
+                          </div>
+                          <p style={{ margin:'0 0 10px', fontSize:12, color:'var(--fg-text2)', lineHeight:1.5 }}>{item.description}</p>
+                          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:10 }}>
+                            {(item.tags||'').split(',').filter(Boolean).map((tag:string) => (
+                              <span key={tag} style={{ fontSize:10, padding:'2px 7px', background:'var(--fg-bg4)', borderRadius:20, color:'var(--fg-text3)' }}>#{tag.trim()}</span>
+                            ))}
+                          </div>
+                          <button onClick={async () => { await fetch('/api/marketplace/install', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${localStorage.getItem('forge_token')}`}, body:JSON.stringify({listingId:item.id}) }); showToast(`✅ ${item.name} installed!`); }} style={{ width:'100%', padding:'8px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>+ Install</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Publish tab */}
+              {mktTab === 'publish' && (
+                <div style={{ maxWidth:560 }}>
+                  <h2 style={{ margin:'0 0 16px', fontSize:16, fontWeight:700, color:'var(--fg-text)' }}>Publish to Community</h2>
+                  {(['name','description','prompt'] as const).map(field => (
+                    <div key={field} style={{ marginBottom:12 }}>
+                      <label style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:600, textTransform:'capitalize', display:'block', marginBottom:4 }}>{field}</label>
+                      {field === 'prompt' || field === 'description'
+                        ? <textarea value={(publishForm as any)[field]} onChange={e => setPublishForm(p => ({...p,[field]:e.target.value}))} rows={field==='prompt'?6:3} style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+                        : <input value={(publishForm as any)[field]} onChange={e => setPublishForm(p => ({...p,[field]:e.target.value}))} style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                      }
+                    </div>
+                  ))}
+                  <div style={{ display:'flex', gap:12, marginBottom:12 }}>
+                    <div style={{ flex:1 }}>
+                      <label style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:600, display:'block', marginBottom:4 }}>Icon</label>
+                      <input value={publishForm.icon} onChange={e => setPublishForm(p => ({...p,icon:e.target.value}))} style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:20, boxSizing:'border-box' }} />
+                    </div>
+                    <div style={{ flex:2 }}>
+                      <label style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:600, display:'block', marginBottom:4 }}>Category</label>
+                      <select value={publishForm.category} onChange={e => setPublishForm(p => ({...p,category:e.target.value}))} style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }}>
+                        {['general','productivity','data','tools','writing','research','developer','marketing'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom:16 }}>
+                    <label style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:600, display:'block', marginBottom:4 }}>Tags (comma-separated)</label>
+                    <input value={publishForm.tags} onChange={e => setPublishForm(p => ({...p,tags:e.target.value}))} placeholder="ai, automation, productivity" style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                  </div>
+                  <button disabled={publishLoading || !publishForm.name || !publishForm.prompt} onClick={handlePublish} style={{ padding:'10px 24px', background: publishLoading||!publishForm.name||!publishForm.prompt ? 'var(--fg-bg4)' : 'var(--fg-orange)', border:'none', borderRadius:9, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                    {publishLoading ? 'Publishing...' : 'Publish'}
+                  </button>
+                </div>
+              )}
+
+              {/* My Listings tab */}
+              {mktTab === 'mine' && (
+                <div>
+                  {myListings.length === 0 ? (
+                    <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
+                      <div style={{ fontSize:48, marginBottom:12 }}>📦</div>
+                      <div style={{ fontSize:16, fontWeight:700, color:'var(--fg-text)', marginBottom:6 }}>No listings yet</div>
+                      <button onClick={() => setMktTab('publish')} style={{ padding:'8px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Publish your first skill</button>
+                    </div>
+                  ) : (
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
+                      {myListings.map((item:any) => (
+                        <div key={item.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                            <span style={{ fontSize:28 }}>{item.icon||'🤖'}</span>
+                            <div style={{ flex:1 }}>
+                              <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{item.name}</div>
+                              <div style={{ fontSize:11, color:'var(--fg-text3)' }}>⬇ {item.installCount||0} installs</div>
+                            </div>
+                            <span style={{ fontSize:10, padding:'3px 8px', background: item.status==='active'?'rgba(34,197,94,0.15)':'var(--fg-bg4)', borderRadius:20, color:item.status==='active'?'#4ade80':'var(--fg-text3)', fontWeight:700 }}>{item.status}</span>
+                          </div>
+                          <p style={{ margin:0, fontSize:12, color:'var(--fg-text2)', lineHeight:1.5 }}>{item.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Vertical Browse tab (default) */}
+              {showVertical && <div>
               <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap' }}>
                 <input value={mktSearch} onChange={e => setMktSearch(e.target.value)} placeholder="🔍 Search marketplace..."
                   style={{ flex:'1 1 200px', padding:'9px 14px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:9, color:'var(--fg-text)', fontSize:13 }} />
                 <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                   {cats.map(c => (
-                    <button key={c} onClick={() => setMktCat(c)} style={{ padding:'7px 14px', background:mktCat===c?'var(--fg-orange)':'var(--fg-bg2)', border:`1px solid ${mktCat===c?'var(--fg-orange)':'var(--fg-border)'}`, borderRadius:8, color:mktCat===c?'#fff':'var(--fg-text2)', fontSize:12, fontWeight:mktCat===c?700:400, cursor:'pointer', textTransform:'capitalize' }}>{c}</button>
+                    <button key={c} onClick={() => setMktCat(c)} style={{ padding:'7px 14px', background:mktCat===c?'var(--fg-orange)':'var(--fg-bg2)', border:mktCat===c?'1px solid var(--fg-orange)':'1px solid var(--fg-border)', borderRadius:8, color:mktCat===c?'#fff':'var(--fg-text2)', fontSize:12, fontWeight:mktCat===c?700:400, cursor:'pointer', textTransform:'capitalize' }}>{c}</button>
                   ))}
                 </div>
               </div>
@@ -7983,15 +8099,15 @@ export default function ForgeApp() {
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.08em' }}>⭐ Featured</div>
                   <div style={{ fontSize:18, fontWeight:800, color:'var(--fg-text)', marginBottom:6 }}>Forge Agent Bundle</div>
-                  <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.5 }}>10 specialist agents — researcher, coder, writer, analyst, and more — all in one package.</div>
+                  <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.5 }}>10 specialist agents: researcher, coder, writer, analyst, and more - all in one package.</div>
                 </div>
-                <button onClick={() => showToast('✅ Forge Agent Bundle installed!')} style={{ padding:'10px 22px', background:'var(--fg-orange)', border:'none', borderRadius:9, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', flexShrink:0 }}>Install Free</button>
+                <button onClick={() => showToast('Forge Agent Bundle installed!')} style={{ padding:'10px 22px', background:'var(--fg-orange)', border:'none', borderRadius:9, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', flexShrink:0 }}>Install Free</button>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
                 {filtered.map(m => {
                   const installed = mktInstalled.has(m.id);
                   return (
-                  <div key={m.id} style={{ background:'var(--fg-bg2)', border:`1px solid ${installed?'rgba(34,197,94,0.3)':'var(--fg-border)'}`, borderRadius:12, padding:18, display:'flex', flexDirection:'column', gap:10 }}>
+                  <div key={m.id} style={{ background:'var(--fg-bg2)', border:installed?'1px solid rgba(34,197,94,0.3)':'1px solid var(--fg-border)', borderRadius:12, padding:18, display:'flex', flexDirection:'column', gap:10 }}>
                     <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
                       <span style={{ fontSize:32 }}>{m.icon}</span>
                       <div style={{ flex:1 }}>
@@ -8006,14 +8122,16 @@ export default function ForgeApp() {
                       <span>⭐ {m.rating}</span>
                       <span style={{ marginLeft:'auto', fontWeight:700, color:'#22c55e' }}>Free</span>
                     </div>
-                    <button onClick={() => setMktInstalled((p: Set<string>) => { const n = new Set(p); if (n.has(m.id)) n.delete(m.id); else { n.add(m.id); showToast(`✅ ${m.name} installed!`); } return n; })}
+                    <button onClick={() => setMktInstalled((p: Set<string>) => { const n = new Set<string>(p); if (n.has(m.id)) n.delete(m.id); else { n.add(m.id); showToast(m.name + ' installed!'); } return n; })}
                       style={{ padding:'8px', background:installed?'var(--fg-bg4)':'var(--fg-orange)', border:installed?'1px solid var(--fg-border)':'none', borderRadius:8, color:installed?'var(--fg-text3)':'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>
-                      {installed?'✓ Installed — Remove':'+ Install'}
+                      {installed?'Remove':'+ Install'}
                     </button>
                   </div>
                   );
                 })}
               </div>
+              </div>}
+
             </div>
           </div>
           );
