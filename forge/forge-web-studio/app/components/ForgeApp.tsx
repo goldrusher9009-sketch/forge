@@ -1034,6 +1034,9 @@ export default function ForgeApp() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
+  const [sidebarSearch, setSidebarSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<{threads:any[];messages:any[]}|null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [showPinsModal, setShowPinsModal] = useState(false);
   const [pinInput, setPinInput] = useState({ label: '', content: '' });
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
@@ -2585,6 +2588,33 @@ export default function ForgeApp() {
   const sendMessage = async () => {
     if (!user || !input.trim()) return;
     if (handleNLCommand(input.trim())) { setInput(''); return; }
+
+    // /image [prompt] — inline image generation via backend
+    if (input.trim().toLowerCase().startsWith('/image ')) {
+      const imgPrompt = input.trim().slice(7).trim();
+      if (!imgPrompt) return;
+      let currentThread2 = activeThread;
+      if (!currentThread2) { currentThread2 = await newThread(imgPrompt.slice(0,60)); if (!currentThread2) return; }
+      setInput(''); setReplySuggestions([]);
+      setMessages((prev: any[]) => [...prev, { id: 'tmp-img-user', role:'user', content:'/image ' + imgPrompt, created_at: new Date().toISOString() }]);
+      setSending(true);
+      try {
+        const tok = localStorage.getItem('forge_token');
+        const d = await fetch('/api/image-gen', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ prompt: imgPrompt, thread_id: currentThread2.id }) }).then(r=>r.json());
+        if (d.success && d.url) {
+          setMessages((prev: any[]) => [...prev.filter((m: any) => m.id !== 'tmp-img-user'),
+            { id: 'u-' + Date.now(), role:'user', content:'/image ' + imgPrompt, created_at: new Date().toISOString() },
+            { id: 'a-' + Date.now(), role:'assistant', content:`![Generated image](${d.url})\n\n*Prompt: ${imgPrompt}*`, created_at: new Date().toISOString() }
+          ]);
+        } else {
+          setMessages((prev: any[]) => [...prev.filter((m: any) => m.id !== 'tmp-img-user'), { id: 'e-' + Date.now(), role:'assistant', content:`⚠️ Image generation failed: ${d.error || 'No OpenAI key configured'}`, created_at: new Date().toISOString() }]);
+        }
+      } catch (e: any) {
+        setMessages((prev: any[]) => [...prev.filter((m: any) => m.id !== 'tmp-img-user'), { id: 'e-' + Date.now(), role:'assistant', content:`⚠️ Image generation error: ${e.message}`, created_at: new Date().toISOString() }]);
+      } finally { setSending(false); }
+      return;
+    }
+
     let currentThread = activeThread;
 
     // If already sending, spawn a NEW thread for this message so both run in parallel
@@ -3303,6 +3333,42 @@ export default function ForgeApp() {
                 </button>
                 <button onClick={() => setShowTemplateModal(true)} title="Start from template" style={{ flexShrink:0, padding:'9px 11px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:'var(--fg-radius-btn)', color:'var(--fg-text2)', cursor:'pointer', fontSize:14, transition:'all 0.15s' }} onMouseEnter={e=>(e.currentTarget.style.borderColor='var(--fg-orange)')} onMouseLeave={e=>(e.currentTarget.style.borderColor='var(--fg-border2)')}>ΓÜí</button>
               </div>
+            </div>
+
+            {/* Sidebar search */}
+            <div style={{ padding:'8px 10px 0' }}>
+              <div style={{ position:'relative' }}>
+                <input value={sidebarSearch} onChange={async e => {
+                  const q = e.target.value; setSidebarSearch(q);
+                  if (!q.trim() || q.length < 2) { setSearchResults(null); return; }
+                  setSearchLoading(true);
+                  try {
+                    const tok = localStorage.getItem('forge_token');
+                    const d = await fetch('/api/search?q=' + encodeURIComponent(q), { headers:{ Authorization:'Bearer '+tok } }).then(r=>r.json());
+                    if (d.success) setSearchResults(d.data);
+                  } catch {} finally { setSearchLoading(false); }
+                }} placeholder='🔍 Search threads & messages…' style={{ width:'100%', padding:'7px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, outline:'none', boxSizing:'border-box' }} />
+                {sidebarSearch && <button onClick={() => { setSidebarSearch(''); setSearchResults(null); }} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>✕</button>}
+              </div>
+              {searchLoading && <div style={{ fontSize:11, color:'var(--fg-text3)', padding:'4px 2px' }}>Searching…</div>}
+              {searchResults && (
+                <div style={{ marginTop:6, maxHeight:300, overflowY:'auto', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8 }}>
+                  {searchResults.threads.length === 0 && searchResults.messages.length === 0 && <div style={{ padding:'10px 12px', fontSize:12, color:'var(--fg-text3)' }}>No results</div>}
+                  {searchResults.threads.map((t: any) => (
+                    <button key={t.id} onClick={() => { const thr = threads.find((x: any) => x.id === t.id); if (thr) { setActiveThread(thr); } setSidebarSearch(''); setSearchResults(null); }} style={{ width:'100%', display:'block', padding:'8px 12px', background:'none', border:'none', borderBottom:'1px solid var(--fg-border)', color:'var(--fg-text)', fontSize:12, cursor:'pointer', textAlign:'left' }}
+                      onMouseEnter={e=>(e.currentTarget.style.background='var(--fg-bg3)')} onMouseLeave={e=>(e.currentTarget.style.background='none')}>
+                      <span style={{ fontSize:10, color:'var(--fg-orange)', fontWeight:700 }}>THREAD</span> {t.title || 'Untitled'}
+                    </button>
+                  ))}
+                  {searchResults.messages.map((m: any) => (
+                    <button key={m.id} onClick={() => { const thr = threads.find((x: any) => x.id === m.thread_id); if (thr) { setActiveThread(thr); } setSidebarSearch(''); setSearchResults(null); }} style={{ width:'100%', display:'block', padding:'8px 12px', background:'none', border:'none', borderBottom:'1px solid var(--fg-border)', color:'var(--fg-text)', fontSize:12, cursor:'pointer', textAlign:'left' }}
+                      onMouseEnter={e=>(e.currentTarget.style.background='var(--fg-bg3)')} onMouseLeave={e=>(e.currentTarget.style.background='none')}>
+                      <div style={{ fontSize:10, color:'var(--fg-text3)', fontWeight:700 }}>{m.thread_title} · {m.role}</div>
+                      <div style={{ color:'var(--fg-text2)', marginTop:2 }}>{m.snippet}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {pinnedProjects.length > 0 && (

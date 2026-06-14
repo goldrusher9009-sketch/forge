@@ -5223,6 +5223,30 @@ app.get('/api/threads/:id/export', requireAuth, (req: AuthRequest, res) => {
   res.send(lines.join('\n'));
 });
 
+
+// POST /api/image-gen — generate image via DALL-E 3 using user's OpenAI key
+app.post('/api/image-gen', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const { prompt, thread_id } = req.body;
+  if (!prompt) return res.status(400).json({ success: false, error: 'prompt required' });
+  try {
+    const key = await getUserKey(userId, 'openai');
+    if (!key) return res.status(400).json({ success: false, error: 'No OpenAI key configured. Add one in Settings.' });
+    const OpenAI = require('openai');
+    const client = new OpenAI.default({ apiKey: key });
+    const resp = await client.images.generate({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', quality: 'standard' });
+    const url = resp.data[0].url;
+    // Save assistant message to thread if thread_id provided
+    if (thread_id) {
+      const msgId = require('crypto').randomUUID();
+      const userMsgId = require('crypto').randomUUID();
+      db.prepare('INSERT INTO messages (id,thread_id,role,content,created_at) VALUES (?,?,?,?,datetime(\'now\'))').run(userMsgId, thread_id, 'user', '/image ' + prompt);
+      db.prepare('INSERT INTO messages (id,thread_id,role,content,created_at) VALUES (?,?,?,?,datetime(\'now\'))').run(msgId, thread_id, 'assistant', `![](${url})\n\n*Prompt: ${prompt}*`);
+    }
+    res.json({ success: true, url });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // GET /api/brain/category/:cat — memories in one category (drill-down).
 app.get('/api/brain/category/:cat', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
