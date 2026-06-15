@@ -189,7 +189,7 @@ const FEATURES = [
     num: '01',
     color: '#818CF8',
     tag: 'THE FOUNDATION',
-    title: 'Your life has a score.\nThe world just couldn't see it.',
+    title: "Your life has a score.\nThe world just couldn't see it.",
     story: 'Before social media, reputation was earned slowly — over years, through actions, in person. Then the internet flattened it all into follower counts and blue ticks. VIVA restores the original idea: your actual behaviour, quantified and verified. V-Score is built from 5 rings that touch every pillar of a real life.',
     details: ['Sleep → how well you recover', 'Nutrition → what you actually eat', 'Activity → how you move your body', 'Social → depth of your real connections', 'Wealth → your financial trajectory'],
     callout: 'Score updates daily. Cryptographically verifiable. Cannot be bought.',
@@ -580,18 +580,18 @@ export default function LandingPage() {
       <Fade>
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '56px 24px', background: 'rgba(124,58,237,0.04)' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', marginBottom: 28, textAlign: 'center' }}>WHO WE ARE & WHAT WE BUILT</p>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', marginBottom: 28, textAlign: 'center' }}>WHO WE ARE & WHAT WE BUILT</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 32 }}>
               {[
-                { icon: '⚡', color: '#818CF8', title: 'Built for people who want more', body: 'VIVA is for humans who take their health, wealth, and relationships seriously — not casually. No motivation-poster energy. Real systems, real accountability.' },
-                { icon: '🧬', color: '#34D399', title: 'Rooted in biology and finance', body: 'The 5 rings aren\'t arbitrary. Sleep, nutrition, activity, social, wealth — these are the pillars longevity science says matter most. We quantify what actually moves the needle.' },
-                { icon: '🔐', color: '#F472B6', title: 'Sovereignty by design', body: 'You own your data. Your score is cryptographically verified. Your twin works for you, not advertisers. No data sold. Ever. Your attention is not the product.' },
-                { icon: '🌐', color: '#FACC15', title: 'Reputation is the new currency', body: 'In the attention economy, followers were currency. In VIVA, your V-Score is currency. It gates access, unlocks markets, and signals value — earned through action, not content.' },
+                { icon: '⚡', color: '#818CF8', title: 'Built for people who want more', body: "VIVA is for humans who take their health, wealth, and relationships seriously. No motivation-poster energy. Real systems, real accountability." },
+                { icon: '🧬', color: '#34D399', title: 'Rooted in biology and finance', body: "The 5 rings are not arbitrary. Sleep, nutrition, activity, social, wealth — the pillars longevity science says matter most. We quantify what actually moves the needle." },
+                { icon: '🔐', color: '#F472B6', title: 'Sovereignty by design', body: 'You own your data. Your score is cryptographically verified. Your twin works for you, not advertisers. No data sold. Ever.' },
+                { icon: '🌐', color: '#FACC15', title: 'Reputation is the new currency', body: 'In the attention economy, followers were currency. In VIVA, your V-Score is currency. Earned through action, not content.' },
               ].map(c => (
-                <div key={c.title}>
-                  <div style={{ fontSize: 22, marginBottom: 12 }}>{c.icon}</div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: c.color, marginBottom: 8 }}>{c.title}</p>
-                  <p style={{ fontSize: 13, lineHeight: 1.65, color: 'rgba(245,244,240,0.42)' }}>{c.body}</p>
+                <div key={c.title} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ fontSize: 28 }}>{c.icon}</div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: c.color }}>{c.title}</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>{c.body}</p>
                 </div>
               ))}
             </div>
@@ -599,110 +599,90 @@ export default function LandingPage() {
         </div>
       </Fade>
 
-      {/* ═══ NOSTALGIA manifesto ═══ */}
+      {/* MANIFESTO */}
       <Fade>
-        <div style={{ padding: '80px 24px', maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', marginBottom: 24 }}>THE REASON VIVA EXISTS</p>
-          <blockquote style={{
-            fontSize: 'clamp(1.4rem, 3.5vw, 2.1rem)', fontWeight: 800,
-            letterSpacing: '-0.025em', lineHeight: 1.35,
-            color: 'rgba(245,244,240,0.85)', marginBottom: 28,
-          }}>
-            "Social media gave everyone a platform. It gave no one a reputation."
-          </blockquote>
-          <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(245,244,240,0.4)', maxWidth: 580, margin: '0 auto 28px' }}>
-            We remember when your reputation was built over years, through actions — not curated content. When your word meant something because it was verifiable. When community was real because entry cost something.
-          </p>
-          <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(245,244,240,0.4)', maxWidth: 580, margin: '0 auto 28px' }}>
-            VIVA is not nostalgic for the past. It's building the infrastructure for that feeling — but with the tools of the future. Cryptographic verification. AI autonomy. Decentralised reputation. Prediction markets. Zero-knowledge proofs.
-          </p>
-          <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(245,244,240,0.7)', maxWidth: 540, margin: '0 auto', fontWeight: 600 }}>
-            The best of who we used to be. Supercharged with what we can build now.
-          </p>
-        </div>
-      </Fade>
-
-      {/* ═══ FEATURE SECTIONS ═══ */}
-      {FEATURES.map((f, i) => <FeatureSection key={f.id} f={f} i={i} />)}
-
-      {/* ═══ TIERS ═══ */}
-      <Fade>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '80px 24px' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', marginBottom: 12, textAlign: 'center' }}>THE TIERS</p>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 900, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: 48 }}>
-              Your score unlocks your world.
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
-              {[
-                { name: 'SEED', range: '0–399', color: '#6B7280', features: ['5 markets', 'Basic twin (L1)', '3 matches/week', 'Public profile'] },
-                { name: 'BUILDER', range: '400–599', color: '#60A5FA', features: ['10 markets', 'Twin L2', '10 matches/week', 'YouToken mint'] },
-                { name: 'GUARDIAN', range: '600–799', color: '#34D399', features: ['Unlimited markets', 'Twin L3', 'Audio rooms', 'Token trading'] },
-                { name: 'SOVEREIGN', range: '800–949', color: '#818CF8', features: ['Premium markets', 'Full autonomy', 'ZK matching', 'Priority matching'] },
-                { name: 'LEGEND', range: '950–1000', color: '#FACC15', features: ['All access', 'Governance votes', 'Revenue share', 'Founding badge'] },
-              ].map((t, ti) => (
-                <div key={t.name} style={{
-                  background: `rgba(255,255,255,${ti === 3 ? 0.04 : 0.02})`,
-                  border: `1px solid ${ti === 3 ? t.color + '30' : 'rgba(255,255,255,0.06)'}`,
-                  borderRadius: 16, padding: '20px 16px',
-                  position: 'relative', overflow: 'hidden',
-                }}>
-                  {ti === 3 && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: t.color }} />}
-                  <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, color: t.color, marginBottom: 4 }}>{t.name}</p>
-                  <p style={{ fontSize: 12, fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>V{t.range}</p>
-                  <ul style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {t.features.map(f => (
-                      <li key={f} style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                        <span style={{ color: t.color, fontSize: 10, marginTop: 2, flexShrink: 0 }}>✓</span>
-                        <span style={{ fontSize: 11, color: 'rgba(245,244,240,0.45)', lineHeight: 1.4 }}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Fade>
-
-      {/* ═══ FINAL CTA ═══ */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '100px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center bottom, rgba(124,58,237,0.12) 0%, transparent 60%)', pointerEvents: 'none' }} />
-        <Fade>
-          <div style={{ position: 'relative', zIndex: 1, maxWidth: 620, margin: '0 auto' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', marginBottom: 20 }}>START FOR FREE. GROW FOREVER.</p>
-            <h2 style={{ fontSize: 'clamp(2.2rem, 5.5vw, 4rem)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.05, marginBottom: 24 }}>
-              Your life is your<br />
-              <span style={{ background: 'linear-gradient(120deg, #7C3AED, #A78BFA, #34D399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>greatest asset.</span><br />
-              Start tracking it.
-            </h2>
-            <p style={{ fontSize: 16, color: 'rgba(245,244,240,0.38)', marginBottom: 40, lineHeight: 1.7 }}>
-              Log your first ring today. See your V-Score in 24 hours. Your twin activates immediately.
+        <section style={{ padding: '88px 24px', maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', marginBottom: 40 }}>THE MANIFESTO</p>
+          {[
+            "Social media gave everyone a platform. It gave no one a reputation.",
+            "You can have 10 million followers and zero credibility. You can have 50 real connections and move markets.",
+            "The internet optimised for attention. We optimised for signal.",
+            "VIVA is built on a simple belief: the people who actually do the work deserve a system that sees them.",
+            "Not a feed. Not a highlight reel. A score.",
+          ].map((line, i) => (
+            <p key={i} style={{ fontSize: i === 0 ? 22 : 16, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? 'white' : 'rgba(255,255,255,0.45)', lineHeight: 1.75, marginBottom: 24 }}>
+              {line}
             </p>
-            <Link href="/auth/onboard" style={{
-              display: 'inline-block', padding: '18px 40px', borderRadius: 15,
-              fontWeight: 800, fontSize: 17, color: 'white', textDecoration: 'none',
-              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-              boxShadow: '0 0 80px rgba(124,58,237,0.5), 0 8px 32px rgba(0,0,0,0.4)',
-            }}>
-              Claim your V-Score →
-            </Link>
-            <p style={{ fontSize: 12, color: 'rgba(245,244,240,0.18)', marginTop: 20 }}>No credit card · No data sold · Takes 2 minutes</p>
-          </div>
+          ))}
+        </section>
+      </Fade>
+
+      {/* FEATURES */}
+      <section style={{ padding: '0 24px 80px' }}>
+        <Fade>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', textAlign: 'center', marginBottom: 72 }}>THE SYSTEM</p>
         </Fade>
-      </div>
+        {FEATURES.map((f, i) => <FeatureSection key={f.id} f={f} i={i} />)}
+      </section>
+
+      {/* TIERS */}
+      <Fade>
+        <section style={{ padding: '80px 24px', background: 'rgba(255,255,255,0.015)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', textAlign: 'center', marginBottom: 12 }}>YOUR RANK UNLOCKS YOUR WORLD</p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginBottom: 52 }}>V-Score gates every feature. Earn access. It cannot be bought.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+              {[
+                { tier: 'SEED', range: '0–199', color: '#64748B', features: ['Basic V-Score', 'Public feed', 'Health rings'] },
+                { tier: 'BUILDER', range: '200–499', color: '#34D399', features: ['AI Twin (L1)', 'Feed + comments', 'Dating preview'] },
+                { tier: 'GUARDIAN', range: '500–699', color: '#818CF8', features: ['Twin L2', 'Prediction markets', 'Token mint'] },
+                { tier: 'SOVEREIGN', range: '700–899', color: '#F472B6', features: ['Twin L3 auto', 'All markets', 'Rooms host'] },
+                { tier: 'LEGEND', range: '900–1000', color: '#FACC15', features: ['Everything', 'LEGEND badge', 'Governance vote'] },
+              ].map(t => (
+                <div key={t.tier} style={{ border: `1px solid ${t.color}30`, borderRadius: 16, padding: '24px 18px', background: `${t.color}06` }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: t.color, marginBottom: 6 }}>{t.tier}</p>
+                  <p style={{ fontSize: 22, fontWeight: 900, color: 'white', fontFamily: 'monospace', marginBottom: 18 }}>{t.range}</p>
+                  {t.features.map(feat => (
+                    <div key={feat} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{feat}</p>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </Fade>
+
+      {/* CTA */}
+      <Fade>
+        <section style={{ padding: '100px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#A78BFA', marginBottom: 24 }}>THE INVITATION</p>
+          <h2 style={{ fontSize: 'clamp(32px, 6vw, 64px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 20 }}>
+            Your score is already<br />being written.
+          </h2>
+          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)', marginBottom: 48, maxWidth: 480, margin: '0 auto 48px' }}>
+            Every day you sleep well, move, connect, and build — it counts. VIVA just makes it visible.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="/auth/onboard" style={{ padding: '16px 36px', borderRadius: 12, background: '#7C3AED', color: 'white', fontWeight: 700, fontSize: 16, textDecoration: 'none' }}>
+              Start building your score
+            </a>
+            <a href="/home" style={{ padding: '16px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', fontWeight: 600, fontSize: 15, textDecoration: 'none' }}>
+              Go to app
+            </a>
+          </div>
+        </section>
+      </Fade>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.04)', padding: '24px', maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#7C3AED' }} />
-          </div>
-          <span style={{ fontWeight: 900, fontSize: 14, letterSpacing: '-0.02em' }}>VIVA</span>
-          <span style={{ fontSize: 11, color: 'rgba(245,244,240,0.18)' }}>Life Operating System</span>
-        </div>
-        <p style={{ fontSize: 11, color: 'rgba(245,244,240,0.18)' }}>© 2026 VIVA Protocol · No data sold · Your life, your score</p>
+      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '32px 24px', textAlign: 'center' }}>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}>
+          VIVA — Life Operating System · Your data, your score, your sovereignty.
+        </p>
       </footer>
+
     </div>
   )
 }
