@@ -4,6 +4,6 @@
   forge/forge-web-studio/app/components/ForgeApp.tsx `
   forge/push_all_pending.ps1
 
-& 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' commit -m "feat(forge): Batch12-19: personas, templates, collections, agenda, goals, captures, graph, journal, habits, flashcards, reading, kanban, digest, snippets, global-search, onboarding, link-vault, content-calendar, debate-mode, thread-voting, adv-stats, focus-timer, sys-prompt-templates, activity-heatmap, writing-assist, thread-stats"
+& 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' commit -m "feat(forge): Batch12-20: personas, templates, collections, agenda, goals, captures, graph, journal, habits, flashcards, reading, kanban, digest, snippets, global-search, onboarding, link-vault, content-calendar, debate-mode, thread-voting, adv-stats, focus-timer, sys-prompt-templates, activity-heatmap, writing-assist, thread-stats, token-breakdown, smart-rename, saved-searches, productivity-score, thread-compare"
 & 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' push origin main
 Write-Host "Pushed! Railway deploying in ~2 min."

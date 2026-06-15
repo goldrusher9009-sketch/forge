@@ -90,7 +90,69 @@ function RingBar({ k, val }: { k: string; val: number }) {
   )
 }
 
-type Tab = 'posts' | 'invest' | 'market' | 'advertise'
+type Tab = 'posts' | 'invest' | 'market' | 'advertise' | 'social'
+
+// ─── Tab: Social ─────────────────────────────────────────────────────────────
+const MOCK_FOLLOWERS = [
+  { handle: 'luna_v',       name: 'Luna V',       tier: 'guardian', vscore: 912, tokens: 2400, color: '#a855f7' },
+  { handle: 'aisham',       name: 'Aisha M',       tier: 'proven',   vscore: 780, tokens: 1800, color: '#38bdf8' },
+  { handle: 'zerov',        name: 'Zero V',        tier: 'seeker',   vscore: 540, tokens: 950,  color: '#6b7280' },
+  { handle: 'noa_d',        name: 'Noa D',         tier: 'proven',   vscore: 821, tokens: 620,  color: '#38bdf8' },
+  { handle: 'carlosmendez', name: 'Carlos Mendez', tier: 'rising',   vscore: 610, tokens: 300,  color: '#059669' },
+]
+const MOCK_FOLLOWING = [
+  { handle: 'mayafit',  name: 'Maya Chen',   tier: 'guardian', vscore: 935, tokens: 8200, color: '#a855f7' },
+  { handle: 'alexribs', name: 'Alex Rivera', tier: 'guardian', vscore: 888, tokens: 5600, color: '#a855f7' },
+  { handle: 'sarakim',  name: 'Sara Kim',    tier: 'proven',   vscore: 756, tokens: 1200, color: '#38bdf8' },
+]
+
+function SocialTab({ followerCount, followingCount }: { handle: string; followerCount: number; followingCount: number }) {
+  const [socialTab, setSocialTab] = useState<'followers' | 'following'>('followers')
+  const list = socialTab === 'followers' ? MOCK_FOLLOWERS : MOCK_FOLLOWING
+
+  return (
+    <div className="space-y-3">
+      {/* Sub-tabs */}
+      <div className="flex gap-1 rounded-lg p-0.5"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        {(['followers', 'following'] as const).map(t => (
+          <button key={t} onClick={() => setSocialTab(t)}
+            className="flex-1 py-1.5 rounded-md text-xs font-semibold capitalize transition-all"
+            style={socialTab === t
+              ? { background: 'rgba(124,58,237,0.25)', color: '#a855f7' }
+              : { color: 'rgba(255,255,255,0.4)' }}>
+            {t} · {t === 'followers' ? (followerCount || MOCK_FOLLOWERS.length) : (followingCount || MOCK_FOLLOWING.length)}
+          </button>
+        ))}
+      </div>
+
+      {list.map(u => (
+        <a key={u.handle} href={`/profile/${u.handle}`}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all block"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', textDecoration: 'none' }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+            style={{ background: `${u.color}18`, border: `1.5px solid ${u.color}35`, color: u.color }}>
+            {u.name[0]}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-semibold" style={{ color: 'var(--paper)' }}>{u.name}</span>
+              <span className="text-xs px-1.5 py-0.5 rounded font-bold capitalize"
+                style={{ background: `${u.color}15`, color: u.color, fontSize: '0.55rem' }}>
+                {u.tier}
+              </span>
+            </div>
+            <p className="text-xs" style={{ opacity: 0.4 }}>@{u.handle} · V-Score {u.vscore}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-semibold" style={{ color: '#f59e0b' }}>{u.tokens.toLocaleString()}</p>
+            <p className="text-xs" style={{ opacity: 0.3 }}>tokens held</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  )
+}
 
 // ─── Tab: Posts ───────────────────────────────────────────────────────────────
 function PostsTab({ posts, isOwn }: { posts: any[]; isOwn: boolean }) {
@@ -606,6 +668,7 @@ export default function ProfilePage() {
 
   const TABS: { id: Tab; label: string; icon: string }[] = [
     { id: 'posts', label: 'Posts', icon: '▤' },
+    { id: 'social', label: 'Social', icon: '◈' },
     { id: 'invest', label: 'Invest', icon: '↗' },
     { id: 'market', label: 'Market', icon: '◈' },
     { id: 'advertise', label: 'Advertise', icon: '⊕' },
@@ -785,6 +848,7 @@ export default function ProfilePage() {
       {/* Tab content */}
       <div className="px-5 py-5 max-w-2xl mx-auto">
         {tab === 'posts' && <PostsTab posts={posts} isOwn={isOwn} />}
+        {tab === 'social' && <SocialTab handle={handle as string} followerCount={profile?.followerCount ?? 0} followingCount={profile?.followingCount ?? 0} />}
         {tab === 'invest' && <InvestTab profile={{ ...profile, vScore: vscore, tokenSymbol: symbol, tokenPrice: price }} tier={tier} />}
         {tab === 'market' && <MarketTab profile={{ ...profile, vScore: vscore }} tier={tier} />}
         {tab === 'advertise' && <AdvertiseTab profile={{ ...profile, vScore: vscore }} tier={tier} />}

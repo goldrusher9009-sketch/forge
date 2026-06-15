@@ -628,6 +628,13 @@ export default function ForgeApp() {
   const [improvedPrompt, setImprovedPrompt] = useState<string|null>(null);
   const [tokenBreakdown, setTokenBreakdown] = useState<any>(null);
   const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
+  const [tokenBreakThreadId, setTokenBreakThreadId] = useState('');
+  const [savedSearches, setSavedSearches] = useState<any[]>([]);
+  const [newSearchQuery, setNewSearchQuery] = useState('');
+  const [newSearchLabel, setNewSearchLabel] = useState('');
+  const [prodScore, setProdScore] = useState<any>(null);
+  const [renamePrompt, setRenamePrompt] = useState('');
+  const [renameTarget, setRenameTarget] = useState<any>(null);
   const [threadStatsExt, setThreadStatsExt] = useState<any>(null);
   const [showThreadStats, setShowThreadStats] = useState(false);
   const [replayData, setReplayData] = useState<any>(null);
@@ -759,14 +766,6 @@ export default function ForgeApp() {
   const [newTplCategory, setNewTplCategory] = useState('general');
   const [activityHeatmap, setActivityHeatmap] = useState<any[]>([]);
   const [writingText, setWritingText] = useState('');
-  const [tokenBreakdown, setTokenBreakdown] = useState<any>(null);
-  const [tokenBreakThreadId, setTokenBreakThreadId] = useState('');
-  const [savedSearches, setSavedSearches] = useState<any[]>([]);
-  const [newSearchQuery, setNewSearchQuery] = useState('');
-  const [newSearchLabel, setNewSearchLabel] = useState('');
-  const [prodScore, setProdScore] = useState<any>(null);
-  const [renamePrompt, setRenamePrompt] = useState('');
-  const [renameTarget, setRenameTarget] = useState<any>(null);
   const [writingMode, setWritingMode] = useState('improve');
   const [writingResult, setWritingResult] = useState<any>(null);
   const [showWritingAssist, setShowWritingAssist] = useState(false);
@@ -2884,10 +2883,6 @@ export default function ForgeApp() {
     } catch {}
   }
 
-  async function loadTokenBreakdown(threadId: string) {
-    const tok = localStorage.getItem('forge_token'); if (!tok || !threadId) return;
-    try { const r = await fetch(`/api/threads/${threadId}/token-breakdown`, { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setTokenBreakdown(d); } catch {}
-  }
   async function loadSavedSearches() {
     const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/saved-searches', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setSavedSearches(Array.isArray(d)?d:[]); } catch {}
@@ -10565,6 +10560,111 @@ export default function ForgeApp() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Token Breakdown tab */}
+        {mainTab === 'tokenbreak' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🪙 Token Cost Breakdown</h2>
+              <div style={{ display:'flex', gap:10, marginBottom:20 }}>
+                <input value={tokenBreakThreadId} onChange={e=>setTokenBreakThreadId(e.target.value)} placeholder="Thread ID..." style={{ flex:1, padding:'9px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text)', fontSize:13 }} />
+                <button onClick={()=>loadTokenBreakdown(tokenBreakThreadId)} style={{ padding:'9px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Analyze</button>
+              </div>
+              {tokenBreakdown && (
+                <>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
+                    {[{label:'Total Tokens',val:tokenBreakdown.totalTokens?.toLocaleString()},{label:'Est. Cost',val:`$${tokenBreakdown.totalCost}`},{label:'Messages',val:tokenBreakdown.breakdown?.length}].map((s:any)=>(
+                      <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'14px 16px', border:'1px solid var(--fg-border)', textAlign:'center' }}>
+                        <div style={{ color:'var(--fg-orange)', fontSize:20, fontWeight:800 }}>{s.val}</div>
+                        <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, marginBottom:10 }}>By Model</h3>
+                  {Object.entries(tokenBreakdown.byModel||{}).map(([model,d]:any)=>(
+                    <div key={model} style={{ background:'var(--fg-bg2)', borderRadius:8, padding:'10px 14px', border:'1px solid var(--fg-border)', marginBottom:6, display:'flex', justifyContent:'space-between' }}>
+                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{model}</span>
+                      <span style={{ color:'var(--fg-text2)', fontSize:12 }}>{d.count} msgs · {d.tokens} tokens · ${d.cost.toFixed(5)}</span>
+                    </div>
+                  ))}
+                  <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, margin:'16px 0 10px' }}>Message Log</h3>
+                  <div style={{ maxHeight:300, overflowY:'auto' }}>
+                    {tokenBreakdown.breakdown?.map((m:any)=>(
+                      <div key={m.id} style={{ display:'flex', justifyContent:'space-between', padding:'6px 10px', borderBottom:'1px solid var(--fg-border2)', fontSize:12 }}>
+                        <span style={{ color: m.role==='user'?'var(--fg-orange)':'var(--fg-text2)' }}>{m.role}</span>
+                        <span style={{ color:'var(--fg-text3)' }}>{m.model||'—'}</span>
+                        <span style={{ color:'var(--fg-text)' }}>{m.tokens} tok</span>
+                        <span style={{ color:'var(--fg-text3)' }}>${m.estimatedCost}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Saved Searches tab */}
+        {mainTab === 'savedsearch' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:680, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🔖 Saved Searches</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:10, marginBottom:10 }}>
+                  <input value={newSearchQuery} onChange={e=>setNewSearchQuery(e.target.value)} placeholder="Search query..." style={{ flex:2, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input value={newSearchLabel} onChange={e=>setNewSearchLabel(e.target.value)} placeholder="Label (optional)..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                </div>
+                <button onClick={addSavedSearch} style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Save Search</button>
+              </div>
+              {savedSearches.length === 0 ? (
+                <button onClick={loadSavedSearches} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Searches</button>
+              ) : savedSearches.map((s:any)=>(
+                <div key={s.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 16px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <div>
+                    {s.label && <div style={{ color:'var(--fg-text3)', fontSize:11, marginBottom:2 }}>{s.label}</div>}
+                    <div style={{ color:'var(--fg-text)', fontSize:14, fontWeight:600 }}>{s.query}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:2 }}>Used {s.hit_count}× · {s.last_used ? new Date(s.last_used).toLocaleDateString() : 'never'}</div>
+                  </div>
+                  <button onClick={()=>deleteSavedSearch(s.id)} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Productivity Score tab */}
+        {mainTab === 'prodscore' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:680, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🏆 Productivity Score</h2>
+              {!prodScore ? (
+                <button onClick={loadProdScore} style={{ padding:'12px 24px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>Calculate Today's Score</button>
+              ) : (
+                <>
+                  <div style={{ textAlign:'center', padding:'32px 0', background:'var(--fg-bg2)', borderRadius:16, border:'1px solid var(--fg-border)', marginBottom:24 }}>
+                    <div style={{ fontSize:80, fontWeight:900, color: prodScore.score>=70?'#22c55e':prodScore.score>=40?'var(--fg-orange)':'#ef4444', lineHeight:1 }}>{prodScore.score}</div>
+                    <div style={{ color:'var(--fg-text2)', fontSize:14, marginTop:8 }}>/ 100 — {prodScore.date}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:12, marginTop:4 }}>{prodScore.score>=70?'🔥 Great work!':prodScore.score>=40?'⚡ Getting there':'😴 Quiet day'}</div>
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
+                    {[
+                      {label:'Messages Today', val:prodScore.todayMessages, icon:'💬'},
+                      {label:'Threads Today', val:prodScore.todayThreads, icon:'🧵'},
+                      {label:'Tokens Today', val:(prodScore.todayTokens||0).toLocaleString(), icon:'🪙'},
+                      {label:'Messages This Week', val:prodScore.weekMessages, icon:'📅'},
+                    ].map((s:any)=>(
+                      <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'16px', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:12 }}>
+                        <span style={{ fontSize:24 }}>{s.icon}</span>
+                        <div><div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700 }}>{s.val}</div><div style={{ color:'var(--fg-text3)', fontSize:11 }}>{s.label}</div></div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={loadProdScore} style={{ marginTop:16, padding:'8px 18px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
+                </>
+              )}
+            </div>
           </div>
         )}
 
