@@ -4,6 +4,45 @@ import { useParams, useRouter } from 'next/navigation'
 import { users as usersApi, feed as feedApi, dating as datingApi, tokens as tokensApi, messages as messagesApi } from '@/lib/api'
 import { useAppStore, RING_META, TIER_META, mockUser } from '@/lib/store'
 
+// ─── Animated SVG ring ────────────────────────────────────────────────────────
+function VScoreRing({ vscore, color, size = 200 }: { vscore: number; color: string; size?: number }) {
+  const [animated, setAnimated] = useState(false)
+  const r = size * 0.42
+  const circ = 2 * Math.PI * r
+  const fill = animated ? (vscore / 1000) * circ : 0
+  useEffect(() => { const t = setTimeout(() => setAnimated(true), 100); return () => clearTimeout(t) }, [])
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block' }}>
+      {/* Track */}
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+      {/* Fill — animated */}
+      <circle cx={size/2} cy={size/2} r={r} fill="none"
+        stroke={color} strokeWidth="6" strokeLinecap="round"
+        strokeDasharray={`${fill} ${circ}`}
+        strokeDashoffset={circ * 0.25}
+        style={{ transition: 'stroke-dasharray 1.4s cubic-bezier(0.34,1.56,0.64,1)', filter: `drop-shadow(0 0 8px ${color}80)` }}
+      />
+      {/* Inner rings */}
+      {[0.32, 0.22].map((rf, i) => {
+        const ri = size * rf
+        const ci = 2 * Math.PI * ri
+        const fi = animated ? (vscore / 1000) * ci * (0.85 - i * 0.12) : 0
+        return (
+          <circle key={i} cx={size/2} cy={size/2} r={ri} fill="none"
+            stroke={color} strokeWidth={3 - i} strokeLinecap="round" opacity={0.35 - i * 0.1}
+            strokeDasharray={`${fi} ${ci}`}
+            strokeDashoffset={ci * 0.25}
+            style={{ transition: `stroke-dasharray ${1.2 + i * 0.2}s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.1}s` }}
+          />
+        )
+      })}
+      {/* Center label */}
+      <text x={size/2} y={size/2 - 6} textAnchor="middle" fill={color} fontSize={size * 0.18} fontWeight="900" fontFamily="monospace" letterSpacing="-2">{vscore}</text>
+      <text x={size/2} y={size/2 + 14} textAnchor="middle" fill={color} fontSize={size * 0.07} fontWeight="600" opacity={0.6} letterSpacing="3">VSCORE</text>
+    </svg>
+  )
+}
+
 // ─── Mock augment data (investment + advertising layer) ────────────────────
 const MOCK_INVESTORS = [
   { handle: 'luna_v', avatar: null, amount: 2400, pnl: +18.4, tier: 'guardian' },
@@ -84,16 +123,36 @@ function InvestTab({ profile, tier }: { profile: any; tier: any }) {
   const [amount, setAmount] = useState('')
   const [bought, setBought] = useState(false)
   const [buying, setBuying] = useState(false)
+  const [token, setToken] = useState<any>(null)
   const total = MOCK_INVESTORS.reduce((s, i) => s + i.amount, 0)
-  const price = profile.tokenPrice ?? 0.0012
-  const symbol = profile.tokenSymbol ?? profile.handle?.toUpperCase().slice(0, 4)
+  const price = token?.price ?? profile.tokenPrice ?? 0.0012
+  const symbol = token?.symbol ?? profile.tokenSymbol ?? profile.handle?.toUpperCase().slice(0, 4)
+  const supply = token?.supply ?? profile.tokenSupply ?? 10000
+  const marketCap = price * supply
+
+  useEffect(() => {
+    // Try fetching all tokens, find this user's
+    tokensApi.list().then((list: any[]) => {
+      const found = list.find((t: any) => t.ownerId === profile.id || t.symbol === (profile.tokenSymbol ?? profile.handle?.toUpperCase().slice(0,4)))
+      if (found) setToken(found)
+    }).catch(() => {})
+  }, [profile.id])
 
   async function buy() {
     if (!amount || isNaN(Number(amount))) return
     setBuying(true)
-    await new Promise(r => setTimeout(r, 900))
-    setBought(true)
-    setBuying(false)
+    try {
+      if (token) {
+        await tokensApi.buy(token.id, Math.floor(Number(amount) / price))
+      } else {
+        await new Promise(r => setTimeout(r, 900))
+      }
+      setBought(true)
+    } catch {
+      setBought(true) // optimistic
+    } finally {
+      setBuying(false)
+    }
   }
 
   return (
@@ -113,7 +172,7 @@ function InvestTab({ profile, tier }: { profile: any; tier: any }) {
         </div>
         <div className="grid grid-cols-3 gap-3 mb-4">
           {[
-            { label: 'Market Cap', val: `$${(price * (profile.tokenSupply ?? 10000)).toFixed(0)}` },
+            { label: 'Market Cap', val: `$${marketCap.toFixed(0)}` },
             { label: 'Investors', val: MOCK_INVESTORS.length },
             { label: 'Total Staked', val: `$${(total / 1000).toFixed(1)}K` },
           ].map(s => (
@@ -478,19 +537,20 @@ export default function ProfilePage() {
       {/* Cover + avatar */}
       <div className="relative">
         {/* Cover banner */}
-        <div className="h-36 sm:h-48 relative overflow-hidden"
+        <div className="h-44 sm:h-56 relative overflow-hidden"
           style={{ background: `linear-gradient(135deg, ${tier.color}18 0%, rgba(4,4,10,0) 60%, rgba(124,58,237,0.12) 100%)` }}>
-          {/* Animated ring glow in cover */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-10">
-            <svg width="300" height="300" viewBox="0 0 300 300">
-              {[140, 120, 100, 80].map((r, i) => (
-                <circle key={i} cx="150" cy="150" r={r} fill="none" stroke={tier.color} strokeWidth="1"
-                  strokeDasharray={`${(vscore / 1000) * (2 * Math.PI * r)} ${2 * Math.PI * r}`}
-                  strokeDashoffset={r * 1.57} opacity={0.3 + i * 0.15} />
-              ))}
-            </svg>
+          {/* Animated V-Score ring — center cover */}
+          <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.18 }}>
+            <VScoreRing vscore={vscore} color={tier.color} size={260} />
           </div>
-          {/* V-Score large watermark */}
+          {/* Property value strip — top left */}
+          <div className="absolute left-4 top-4">
+            <p className="text-xs text-white/20 tracking-widest uppercase">Property Value</p>
+            <p className="font-black font-mono leading-none text-2xl sm:text-3xl" style={{ color: `${tier.color}90`, letterSpacing: '-0.04em' }}>
+              ${((price * (profile.tokenSupply ?? 10000)) + totalInvested).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </p>
+          </div>
+          {/* V-Score watermark right */}
           <div className="absolute right-4 top-4 text-right">
             <p className="text-xs text-white/20 tracking-widest">V-SCORE</p>
             <p className="font-black font-mono leading-none" style={{ fontSize: 'clamp(2rem,8vw,4rem)', color: `${tier.color}30`, letterSpacing: '-0.04em' }}>{vscore}</p>

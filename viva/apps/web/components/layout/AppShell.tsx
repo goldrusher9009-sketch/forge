@@ -15,10 +15,12 @@ const NAV_PRIMARY = [
 ]
 
 const NAV_MORE = [
+  { id: 'explore',       label: 'Explore',      path: '/explore',       icon: ExploreIcon },
   { id: 'messages',      label: 'Messages',     path: '/messages',      icon: MsgIcon },
   { id: 'dating',        label: 'Match',        path: '/dating',        icon: MatchIcon },
   { id: 'health',        label: 'Health ZK',    path: '/health',        icon: HealthIcon },
   { id: 'token',         label: 'YouToken',     path: '/token',         icon: TokenIcon },
+  { id: 'leaderboard',   label: 'Leaderboard',  path: '/leaderboard',   icon: LeaderIcon },
   { id: 'notifications', label: 'Notifications',path: '/notifications', icon: BellIcon },
   { id: 'settings',      label: 'Settings',     path: '/settings',      icon: GearIcon },
 ]
@@ -339,6 +341,27 @@ function GearIcon({ size = 20, className = '' }) {
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" className={className}>
       <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
       <path d="M10 3v2M10 15v2M3 10h2M15 10h2M5.05 5.05l1.41 1.41M13.54 13.54l1.41 1.41M14.95 5.05l-1.41 1.41M6.46 13.54l-1.41 1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function ExploreIcon({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" className={className}>
+      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M13 7l-2.5 5.5L5 15l2.5-5.5L13 7z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="10" cy="10" r="1.2" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function LeaderIcon({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" className={className}>
+      <rect x="7" y="8" width="6" height="9" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+      <rect x="2" y="11" width="5" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+      <rect x="13" y="5" width="5" height="12" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M10 5l-1.5 2h3L10 5z" fill="currentColor" opacity="0.6"/>
     </svg>
   )
 }

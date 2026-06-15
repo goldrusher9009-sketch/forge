@@ -10358,7 +10358,7 @@ export default function ForgeApp() {
               <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
                 <div style={{ fontSize:32, marginBottom:8 }}>🔗</div>
                 <div style={{ fontSize:14 }}>No saved links yet</div>
-                <button onClick={loadUrlSaves} style={{ marginTop:12, padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Links</button>
+                <button onClick={() => loadUrlSaves()} style={{ marginTop:12, padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Links</button>
               </div>
             ) : urlSaves.map((u: any) => (
               <div key={u.id} style={{ background:'var(--fg-bg3)', borderRadius:10, padding:14, marginBottom:10, display:'flex', gap:12, alignItems:'flex-start' }}>
@@ -10592,6 +10592,6 @@ export default function ForgeApp() {
           </div>
         )}
       </div>
-    </div>
-  );
+    </div>  );
 }
+
