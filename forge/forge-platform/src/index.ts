@@ -5900,4 +5900,114 @@ app.get('/api/threads/timeline', requireAuth, (req: any, res: any) => {
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ── Conversation goals ─────────────────────────────────────────────────────────
+// POST /api/threads/:id/goals
+app.post('/api/threads/:id/goals', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const { goal } = req.body;
+    if (!goal) return res.status(400).json({ error: 'goal required' });
+    try { db.prepare('ALTER TABLE threads ADD COLUMN goal TEXT').run(); } catch {}
+    db.prepare('UPDATE threads SET goal=? WHERE id=?').run(goal, threadId);
+    res.json({ goal });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/goals
+app.get('/api/threads/:id/goals', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    res.json({ goal: thread.goal || null });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread lock (read-only mode) ───────────────────────────────────────────────
+// POST /api/threads/:id/lock
+app.post('/api/threads/:id/lock', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    try { db.prepare('ALTER TABLE threads ADD COLUMN locked INTEGER DEFAULT 0').run(); } catch {}
+    const newVal = thread.locked ? 0 : 1;
+    db.prepare('UPDATE threads SET locked=? WHERE id=?').run(newVal, threadId);
+    res.json({ locked: !!newVal });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Bulk delete threads ────────────────────────────────────────────────────────
+// POST /api/threads/bulk-delete
+app.post('/api/threads/bulk-delete', requireAuth, (req: any, res: any) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'ids array required' });
+    let deleted = 0;
+    for (const id of ids) {
+      const t = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(id, req.user.id);
+      if (t) { db.prepare('DELETE FROM messages WHERE thread_id=?').run(id); db.prepare('DELETE FROM threads WHERE id=?').run(id); deleted++; }
+    }
+    res.json({ deleted });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Message search with highlight ─────────────────────────────────────────────
+// GET /api/messages/search-highlight?q=term
+app.get('/api/messages/search-highlight', requireAuth, (req: any, res: any) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.json({ results: [] });
+    const rows = db.prepare("SELECT m.id, m.content, m.role, m.created_at, t.id as thread_id, t.title as thread_title FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND m.content LIKE ? ORDER BY m.created_at DESC LIMIT 20").all(req.user.id, `%${q}%`) as any[];
+    const results = rows.map((r: any) => {
+      const idx = (r.content||'').toLowerCase().indexOf(q.toLowerCase());
+      const start = Math.max(0, idx - 60);
+      const snippet = (r.content||'').substring(start, start + 200);
+      return { ...r, snippet, matchIndex: idx - start };
+    });
+    res.json({ results });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── User notes (scratch pad) ───────────────────────────────────────────────────
+// GET /api/notes
+app.get('/api/notes', requireAuth, (req: any, res: any) => {
+  try {
+    try { db.prepare('CREATE TABLE IF NOT EXISTS user_notes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, content TEXT, created_at TEXT, updated_at TEXT)').run(); } catch {}
+    const notes = db.prepare("SELECT * FROM user_notes WHERE user_id=? ORDER BY updated_at DESC LIMIT 50").all(req.user.id);
+    res.json({ notes });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/notes
+app.post('/api/notes', requireAuth, (req: any, res: any) => {
+  try {
+    try { db.prepare('CREATE TABLE IF NOT EXISTS user_notes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, content TEXT, created_at TEXT, updated_at TEXT)').run(); } catch {}
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ error: 'content required' });
+    const r = db.prepare("INSERT INTO user_notes (user_id, content, created_at, updated_at) VALUES (?,?,datetime('now'),datetime('now'))").run(req.user.id, content);
+    res.json({ id: r.lastInsertRowid, content });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/notes/:id
+app.put('/api/notes/:id', requireAuth, (req: any, res: any) => {
+  try {
+    const { content } = req.body;
+    db.prepare("UPDATE user_notes SET content=?, updated_at=datetime('now') WHERE id=? AND user_id=?").run(content, req.params.id, req.user.id);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/notes/:id
+app.delete('/api/notes/:id', requireAuth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM user_notes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

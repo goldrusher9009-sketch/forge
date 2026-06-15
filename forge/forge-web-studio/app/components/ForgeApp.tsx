@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -665,6 +665,13 @@ export default function ForgeApp() {
   const [modelBreakdownGlobal, setModelBreakdownGlobal] = useState<any[]>([]);
   const [showGlobalStats, setShowGlobalStats] = useState(false);
   const [brainCodeBlocks, setBrainCodeBlocks] = useState<any[]>([]);
+  const [userNotes, setUserNotes] = useState<any[]>([]);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<number|null>(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
+  const [threadGoal, setThreadGoal] = useState('');
+  const [showGoalInput, setShowGoalInput] = useState(false);
+  const [threadLocked, setThreadLocked] = useState(false);
   const [showCodeBlocks, setShowCodeBlocks] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<any[]>([]);
   const [showPinned, setShowPinned] = useState(true);
@@ -2541,6 +2548,55 @@ export default function ForgeApp() {
     } catch {}
   }
 
+  async function loadNotes() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/notes', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setUserNotes(d.notes || []); }
+    } catch {}
+  }
+
+  async function saveNote() {
+    if (!newNoteText.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/notes', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content: newNoteText.trim() }) });
+      if (r.ok) { setNewNoteText(''); loadNotes(); }
+    } catch {}
+  }
+
+  async function updateNote(id: number, content: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/notes/${id}`, { method:'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content }) });
+      setEditingNoteId(null); loadNotes();
+    } catch {}
+  }
+
+  async function deleteNote(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/notes/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } });
+      loadNotes();
+    } catch {}
+  }
+
+  async function saveThreadGoal(threadId: string, goal: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/threads/${threadId}/goals`, { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ goal }) });
+      setShowGoalInput(false);
+    } catch {}
+  }
+
+  async function toggleThreadLock(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/lock`, { method:'POST', headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setThreadLocked(d.locked); }
+    } catch {}
+  }
+
   async function loadSimilarThreads(threadId: string) {
     const tok = localStorage.getItem('forge_token');
     try {
@@ -3686,6 +3742,34 @@ export default function ForgeApp() {
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>😊</button>
                   <button onClick={() => activeThread && loadComplexity(String(activeThread.id))} title="Complexity score"
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🧮</button>
+                  <button onClick={() => { if (activeThread) { setShowGoalInput(g => !g); if (!threadGoal) fetch(`/api/threads/${activeThread.id}/goals`,{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>setThreadGoal(d.goal||'')); } }} title="Thread goal"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🎯</button>
+                  <button onClick={() => activeThread && toggleThreadLock(String(activeThread.id))} title={threadLocked ? 'Unlock thread' : 'Lock thread'}
+                    style={{ padding:'4px 8px', background: threadLocked ? 'rgba(239,68,68,0.15)' : 'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color: threadLocked ? '#ef4444' : 'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🔒</button>
+                  {showGoalInput && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:280, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:8 }}>🎯 Thread Goal</div>
+                      <textarea value={threadGoal} onChange={e => setThreadGoal(e.target.value)} placeholder="What are you trying to accomplish?" rows={3} style={{ width:'100%', padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text)', fontSize:12, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
+                      <div style={{ display:'flex', gap:6, marginTop:8 }}>
+                        <button onClick={() => { if (activeThread) saveThreadGoal(String(activeThread.id), threadGoal); setShowGoalInput(false); }} style={{ flex:1, padding:'6px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:12 }}>Save</button>
+                        <button onClick={() => setShowGoalInput(false)} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>×</button>
+                      </div>
+                    </div>
+                  )}
+                  <button onClick={() => { if (activeThread) { setShowGoalInput(g => !g); if (!threadGoal) fetch(`/api/threads/${activeThread.id}/goals`,{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>setThreadGoal(d.goal||'')); } }} title="Thread goal"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🎯</button>
+                  <button onClick={() => activeThread && toggleThreadLock(String(activeThread.id))} title={threadLocked ? 'Unlock thread' : 'Lock thread'}
+                    style={{ padding:'4px 8px', background: threadLocked ? 'rgba(239,68,68,0.15)' : 'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color: threadLocked ? '#ef4444' : 'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🔒</button>
+                  {showGoalInput && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:280, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:8 }}>🎯 Thread Goal</div>
+                      <textarea value={threadGoal} onChange={e => setThreadGoal(e.target.value)} placeholder="What are you trying to accomplish?" rows={3} style={{ width:'100%', padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text)', fontSize:12, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
+                      <div style={{ display:'flex', gap:6, marginTop:8 }}>
+                        <button onClick={() => { if (activeThread) saveThreadGoal(String(activeThread.id), threadGoal); setShowGoalInput(false); }} style={{ flex:1, padding:'6px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:12 }}>Save</button>
+                        <button onClick={() => setShowGoalInput(false)} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>×</button>
+                      </div>
+                    </div>
+                  )}
                   {showSentiment && sentimentTimeline && (
                     <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:300, maxHeight:300, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
@@ -8787,23 +8871,84 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* ── Forge Brain ─────────────────────────────────────────── */}
+        {/* Notes tab */}
+        {mainTab === 'notes' && (() => {
+          if (!userNotes.length && !newNoteText) { loadNotes(); }
+          return (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>📝</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Notes</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Scratch pad — quick notes saved to your account.</p>
+                </div>
+                <button onClick={loadNotes} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻ Refresh</button>
+              </div>
+              {/* New note input */}
+              <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+                <textarea
+                  value={newNoteText}
+                  onChange={e => setNewNoteText(e.target.value)}
+                  placeholder="Write a note…"
+                  rows={3}
+                  style={{ flex:1, padding:'10px 12px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text)', fontSize:13, resize:'vertical', fontFamily:'inherit' }}
+                />
+                <button onClick={saveNote} disabled={!newNoteText.trim()} style={{ alignSelf:'flex-end', padding:'10px 18px', borderRadius:10, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600, opacity: newNoteText.trim() ? 1 : 0.4 }}>Save</button>
+              </div>
+              {/* Notes list */}
+              {userNotes.length === 0 && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>No notes yet.</div>}
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {userNotes.map((n: any) => (
+                  <div key={n.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                    {editingNoteId === n.id ? (
+                      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                        <textarea
+                          value={editingNoteText}
+                          onChange={e => setEditingNoteText(e.target.value)}
+                          rows={4}
+                          style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'vertical', fontFamily:'inherit' }}
+                        />
+                        <div style={{ display:'flex', gap:6 }}>
+                          <button onClick={() => updateNote(n.id, editingNoteText)} style={{ padding:'6px 14px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:12 }}>Save</button>
+                          <button onClick={() => setEditingNoteId(null)} style={{ padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p style={{ margin:'0 0 10px', fontSize:14, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.6 }}>{n.content}</p>
+                        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)', flex:1 }}>{new Date(n.created_at).toLocaleDateString()}</span>
+                          <button onClick={() => { setEditingNoteId(n.id); setEditingNoteText(n.content); }} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>Edit</button>
+                          <button onClick={() => deleteNote(n.id)} style={{ padding:'4px 10px', borderRadius:6, border:'none', background:'rgba(239,68,68,0.1)', color:'#ef4444', cursor:'pointer', fontSize:11 }}>Delete</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          );
+        })()}
+
+        {/* Forge Brain tab */}
         {mainTab === 'brain' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:820, margin:'0 auto' }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>🧠</span>
+                <span style={{ fontSize:36 }}>&#x1F9E0;</span>
                 <div>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Forge Brain</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Everything Forge knows about you — categorised, weighted, and evolving.</p>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Everything Forge knows about you.</p>
                 </div>
                 <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
                   <button onClick={() => loadBrainCodeBlocks()} title="Recent code blocks" style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>{'</>'}</button>
-                  <button onClick={() => loadGlobalStats()} title="Usage stats: streak, top threads, models" style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>📈</button>
+                  <button onClick={() => loadGlobalStats()} title="Usage stats" style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>&#x1F4C8;</button>
                   <button onClick={() => { setBrainData(null); setBrainLoading(true); setBrainError(''); fetch('/api/brain/summary',{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>{setBrainData(d);setBrainLoading(false);}).catch(()=>{setBrainError('Failed.');setBrainLoading(false);}); }} style={{ padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>&#x21BB; Refresh</button>
                 </div>
               </div>
-              {brainLoading && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading&#8230;</div>}
+              {brainLoading && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading...</div>}
               {brainError && <div style={{ textAlign:'center', padding:40, color:'#f87171', fontSize:13 }}>{brainError}</div>}
               {showCodeBlocks && brainCodeBlocks.length > 0 && (
                 <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, marginBottom:16 }}>
@@ -8825,8 +8970,8 @@ export default function ForgeApp() {
               {showGlobalStats && (
                 <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, marginBottom:16 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                    <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>📈 Usage Stats</span>
-                    <button onClick={() => setShowGlobalStats(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                    <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Usage Stats</span>
+                    <button onClick={() => setShowGlobalStats(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>x</button>
                   </div>
                   {streakData && (
                     <div style={{ display:'flex', gap:16, marginBottom:12 }}>
@@ -8879,28 +9024,29 @@ export default function ForgeApp() {
                   <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
                     {top.length > 0 && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>Top Insights</div>
-                        {top.slice(0,8).map((ins: any, i: number) => (
-                          <div key={i} style={{ padding:'8px 0', borderBottom: i < Math.min(top.length,8)-1 ? '1px solid var(--fg-border)' : 'none' }}>
-                            <div style={{ fontSize:13, color:'var(--fg-text)', fontWeight:500 }}>{ins.content || ins}</div>
-                            {ins.category && <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2, textTransform:'capitalize' }}>{ins.category}</div>}
-                          </div>
-                        ))}
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>✨ Top Insights</div>
+                        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                          {top.slice(0,5).map((ins: any, i: number) => (
+                            <div key={i} style={{ background:'var(--fg-bg3)', borderRadius:10, padding:'10px 14px', fontSize:13, color:'var(--fg-text2)', lineHeight:1.5 }}>{typeof ins === 'string' ? ins : ins.content || JSON.stringify(ins)}</div>
+                          ))}
+                        </div>
                       </div>
                     )}
                     {Object.keys(cats).length > 0 && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>By Category</div>
-                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:8 }}>
-                          {Object.entries(cats).map(([cat, items]:any) => (
-                            <div key={cat} style={{ background:'var(--fg-bg3)', borderRadius:8, padding:'10px 14px' }}>
-                              <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', textTransform:'capitalize' }}>{cat}</div>
-                              <div style={{ fontSize:20, fontWeight:800, color:'#6366f1', marginTop:2 }}>{Array.isArray(items) ? items.length : items}</div>
-                              <div style={{ fontSize:11, color:'var(--fg-text3)' }}>memories</div>
-                            </div>
-                          ))}
-                        </div>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>🗂 By Category</div>
+                        {Object.entries(cats).map(([cat, items]: [string, any[]]) => (
+                          <div key={cat} style={{ marginBottom:12 }}>
+                            <div style={{ fontSize:11, fontWeight:600, color:'var(--fg-text3)', marginBottom:4, textTransform:'capitalize' }}>{cat}</div>
+                            {items.slice(0,3).map((it: any, i: number) => (
+                              <div key={i} style={{ fontSize:12, color:'var(--fg-text2)', padding:'4px 0', borderBottom:'1px solid var(--fg-border)', lineHeight:1.4 }}>{typeof it === 'string' ? it : it.content || JSON.stringify(it)}</div>
+                            ))}
+                          </div>
+                        ))}
                       </div>
+                    )}
+                    {!top.length && !Object.keys(cats).length && (
+                      <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)', fontSize:13 }}>No brain data yet. Chat to build your profile.</div>
                     )}
                   </div>
                 );
