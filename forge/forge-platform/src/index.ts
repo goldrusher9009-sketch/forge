@@ -6010,4 +6010,151 @@ app.delete('/api/notes/:id', requireAuth, (req: any, res: any) => {
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ── Batch 11 ─────────────────────────────────────────────────────────────────
+
+// POST /api/messages/:id/diff-explain — explain code diff in a message
+app.post('/api/messages/:id/diff-explain', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const msg = await db.get('SELECT * FROM messages WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    const content = msg.content || '';
+    // Extract code blocks
+    const codeBlocks: string[] = [];
+    const re = /```[\w]*\n?([\s\S]*?)```/g;
+    let m;
+    while ((m = re.exec(content)) !== null) codeBlocks.push(m[1].trim());
+    if (codeBlocks.length === 0) return res.json({ explanation: 'No code blocks found in this message.', diffs: [] });
+    // Produce simple line-level diff info
+    const diffs = codeBlocks.map((code, i) => {
+      const lines = code.split('\n');
+      const added = lines.filter(l => l.startsWith('+')).length;
+      const removed = lines.filter(l => l.startsWith('-')).length;
+      const context = lines.filter(l => !l.startsWith('+') && !l.startsWith('-')).length;
+      return { blockIndex: i, lines: lines.length, added, removed, context, preview: lines.slice(0, 5).join('\n') };
+    });
+    res.json({ explanation: `Found ${codeBlocks.length} code block(s). Use your LLM to explain changes.`, diffs, codeBlocks });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/session-replay — ordered message list with timing deltas for replay
+app.get('/api/threads/:id/session-replay', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    if (!thread) return res.status(404).json({ error: 'Thread not found' });
+    const messages = await db.all(
+      'SELECT id, role, content, created_at, model FROM messages WHERE thread_id=? ORDER BY created_at ASC',
+      [req.params.id]
+    );
+    const frames = messages.map((msg: any, i: number) => {
+      const prevTime = i > 0 ? new Date(messages[i-1].created_at).getTime() : new Date(msg.created_at).getTime();
+      const thisTime = new Date(msg.created_at).getTime();
+      const deltaMs = Math.max(0, thisTime - prevTime);
+      return { ...msg, frameIndex: i, deltaMs, deltaLabel: deltaMs < 1000 ? `${deltaMs}ms` : `${(deltaMs/1000).toFixed(1)}s` };
+    });
+    res.json({ threadId: req.params.id, title: thread.title, totalFrames: frames.length, frames });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/threads/:id/smart-rename — AI-suggested title from first N messages
+app.post('/api/threads/:id/smart-rename', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    if (!thread) return res.status(404).json({ error: 'Thread not found' });
+    const messages = await db.all(
+      'SELECT role, content FROM messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 6',
+      [req.params.id]
+    );
+    if (messages.length === 0) return res.json({ title: thread.title, changed: false });
+    // Generate title from first user message — extract key noun phrase
+    const firstUser = messages.find((m: any) => m.role === 'user');
+    if (!firstUser) return res.json({ title: thread.title, changed: false });
+    const words = (firstUser.content as string).replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
+    const stopWords = new Set(['the','a','an','is','are','what','how','can','you','i','me','my','we','our','do','does','please','help','make','create','write','give','tell','show','get','set','find','use','need']);
+    const keyWords = words.filter(w => w.length > 2 && !stopWords.has(w.toLowerCase())).slice(0, 6);
+    const suggestedTitle = keyWords.length >= 2 ? keyWords.slice(0, 5).map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ') : (thread.title || 'Untitled Thread');
+    const apply = req.body?.apply === true;
+    if (apply) {
+      await db.run('UPDATE threads SET title=? WHERE id=?', [suggestedTitle, req.params.id]);
+    }
+    res.json({ originalTitle: thread.title, suggestedTitle, changed: apply, messageCount: messages.length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/token-breakdown — per-message estimated token counts + cost
+app.get('/api/threads/:id/token-breakdown', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    if (!thread) return res.status(404).json({ error: 'Thread not found' });
+    const messages = await db.all(
+      'SELECT id, role, content, model, created_at FROM messages WHERE thread_id=? ORDER BY created_at ASC',
+      [req.params.id]
+    );
+    const MODEL_COSTS: Record<string, {in: number, out: number}> = {
+      'claude-3-5-sonnet': { in: 3, out: 15 },
+      'claude-3-opus': { in: 15, out: 75 },
+      'claude-3-haiku': { in: 0.25, out: 1.25 },
+      'gpt-4o': { in: 2.5, out: 10 },
+      'gpt-4': { in: 30, out: 60 },
+      'gpt-3.5-turbo': { in: 0.5, out: 1.5 },
+      'gemini-pro': { in: 0.5, out: 1.5 },
+      'default': { in: 3, out: 15 },
+    };
+    const estimateTokens = (text: string) => Math.ceil((text || '').length / 4);
+    let totalInputTokens = 0, totalOutputTokens = 0, totalCostUsd = 0;
+    const breakdown = messages.map((msg: any) => {
+      const tokens = estimateTokens(msg.content || '');
+      const modelKey = Object.keys(MODEL_COSTS).find(k => (msg.model||'').toLowerCase().includes(k)) || 'default';
+      const rates = MODEL_COSTS[modelKey];
+      const costPer1M = msg.role === 'assistant' ? rates.out : rates.in;
+      const costUsd = (tokens / 1_000_000) * costPer1M;
+      if (msg.role === 'user') totalInputTokens += tokens; else totalOutputTokens += tokens;
+      totalCostUsd += costUsd;
+      return { id: msg.id, role: msg.role, model: msg.model, estimatedTokens: tokens, costUsd: +costUsd.toFixed(6) };
+    });
+    res.json({
+      threadId: req.params.id, messageCount: messages.length, breakdown,
+      totals: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens, totalTokens: totalInputTokens+totalOutputTokens, estimatedCostUsd: +totalCostUsd.toFixed(4) }
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/stats/daily-tokens — daily token usage (estimated) last 30 days
+app.get('/api/stats/daily-tokens', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const rows = await db.all(`
+      SELECT date(created_at) as day,
+        SUM(CASE WHEN role='user' THEN CAST(length(content)/4 AS INT) ELSE 0 END) as inputTokens,
+        SUM(CASE WHEN role='assistant' THEN CAST(length(content)/4 AS INT) ELSE 0 END) as outputTokens
+      FROM messages WHERE user_id=? AND created_at >= date('now','-30 days')
+      GROUP BY day ORDER BY day ASC`, [req.user.id]);
+    res.json({ days: rows.map((r: any) => ({ ...r, totalTokens: (r.inputTokens||0)+(r.outputTokens||0) })) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/similar — find semantically similar threads by title/keyword overlap
+app.get('/api/threads/:id/similar', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    if (!thread) return res.status(404).json({ error: 'Thread not found' });
+    const allThreads = await db.all('SELECT id, title FROM threads WHERE user_id=? AND id!=?', [req.user.id, req.params.id]);
+    const titleWords = new Set((thread.title||'').toLowerCase().split(/\W+/).filter((w: string) => w.length > 3));
+    const scored = allThreads.map((t: any) => {
+      const words = new Set((t.title||'').toLowerCase().split(/\W+/).filter((w: string) => w.length > 3));
+      const intersection = [...titleWords].filter(w => words.has(w)).length;
+      const union = new Set([...titleWords, ...words]).size;
+      const similarity = union > 0 ? intersection / union : 0;
+      return { ...t, similarity: +similarity.toFixed(2) };
+    }).filter((t: any) => t.similarity > 0.1).sort((a: any, b: any) => b.similarity - a.similarity).slice(0, 8);
+    res.json({ threadId: req.params.id, similar: scored });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

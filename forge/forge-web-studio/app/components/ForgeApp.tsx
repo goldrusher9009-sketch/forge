@@ -672,6 +672,14 @@ export default function ForgeApp() {
   const [threadGoal, setThreadGoal] = useState('');
   const [showGoalInput, setShowGoalInput] = useState(false);
   const [threadLocked, setThreadLocked] = useState(false);
+  const [sessionReplay, setSessionReplay] = useState<any>(null);
+  const [showSessionReplay, setShowSessionReplay] = useState(false);
+  const [replayFrame, setReplayFrame] = useState(0);
+  const [smartRenameData, setSmartRenameData] = useState<any>(null);
+  const [showSmartRename, setShowSmartRename] = useState(false);
+  const [diffExplainData, setDiffExplainData] = useState<any>(null);
+  const [showDiffExplain, setShowDiffExplain] = useState(false);
+  const [dailyTokens, setDailyTokens] = useState<any[]>([]);
   const [showCodeBlocks, setShowCodeBlocks] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<any[]>([]);
   const [showPinned, setShowPinned] = useState(true);
@@ -2597,7 +2605,40 @@ export default function ForgeApp() {
     } catch {}
   }
 
-  async function loadSimilarThreads(threadId: string) {
+  async function loadSessionReplay(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/session-replay`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setSessionReplay(d); setReplayFrame(0); setShowSessionReplay(true); }
+    } catch {}
+  }
+
+  async function loadSmartRename(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/smart-rename`, { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ apply: false }) });
+      if (r.ok) { const d = await r.json(); setSmartRenameData(d); setShowSmartRename(true); }
+    } catch {}
+  }
+
+  async function applySmartRename(threadId: string, title: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/threads/${threadId}/smart-rename`, { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ apply: true }) });
+      setThreads((ts: any[]) => ts.map(t => String(t.id) === String(threadId) ? { ...t, title } : t));
+      setShowSmartRename(false);
+    } catch {}
+  }
+
+  async function loadDailyTokens() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/stats/daily-tokens', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setDailyTokens(d.days || []); }
+    } catch {}
+  }
+
+    async function loadSimilarThreads(threadId: string) {
     const tok = localStorage.getItem('forge_token');
     try {
       const r = await fetch(`/api/threads/${threadId}/similar`, { headers: { Authorization: `Bearer ${tok}` } });
@@ -2649,7 +2690,7 @@ export default function ForgeApp() {
     const tok = localStorage.getItem('forge_token');
     try {
       const r = await fetch(`/api/threads/${threadId}/token-breakdown`, { headers: { Authorization: `Bearer ${tok}` } });
-      if (r.ok) setTokenBreakdown(await r.json());
+      if (r.ok) { const d = await r.json(); setTokenBreakdown(d); setShowTokenBreakdown(true); }
     } catch {}
   }
 
@@ -3756,21 +3797,71 @@ export default function ForgeApp() {
                       </div>
                     </div>
                   )}
-                  <button onClick={() => { if (activeThread) { setShowGoalInput(g => !g); if (!threadGoal) fetch(`/api/threads/${activeThread.id}/goals`,{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>setThreadGoal(d.goal||'')); } }} title="Thread goal"
-                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🎯</button>
-                  <button onClick={() => activeThread && toggleThreadLock(String(activeThread.id))} title={threadLocked ? 'Unlock thread' : 'Lock thread'}
-                    style={{ padding:'4px 8px', background: threadLocked ? 'rgba(239,68,68,0.15)' : 'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color: threadLocked ? '#ef4444' : 'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🔒</button>
-                  {showGoalInput && (
-                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:280, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
-                      <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)', marginBottom:8 }}>🎯 Thread Goal</div>
-                      <textarea value={threadGoal} onChange={e => setThreadGoal(e.target.value)} placeholder="What are you trying to accomplish?" rows={3} style={{ width:'100%', padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text)', fontSize:12, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
-                      <div style={{ display:'flex', gap:6, marginTop:8 }}>
-                        <button onClick={() => { if (activeThread) saveThreadGoal(String(activeThread.id), threadGoal); setShowGoalInput(false); }} style={{ flex:1, padding:'6px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:12 }}>Save</button>
-                        <button onClick={() => setShowGoalInput(false)} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>×</button>
+
+                  <button onClick={() => activeThread && loadTokenBreakdown(String(activeThread.id))} title="Token breakdown"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🪙</button>
+                  <button onClick={() => activeThread && loadSessionReplay(String(activeThread.id))} title="Session replay"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>▶️</button>
+                  <button onClick={() => activeThread && loadSmartRename(String(activeThread.id))} title="Smart rename"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>✏️</button>
+                  {showTokenBreakdown && tokenBreakdown && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:320, maxHeight:380, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>🪙 Token Breakdown</span>
+                        <button onClick={() => setShowTokenBreakdown(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      <div style={{ background:'var(--fg-bg2)', borderRadius:8, padding:'10px 12px', marginBottom:10, fontSize:12 }}>
+                        <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                          <span style={{ color:'var(--fg-text2)' }}>In: <b style={{ color:'var(--fg-orange)' }}>{tokenBreakdown.totals?.inputTokens?.toLocaleString()}</b></span>
+                          <span style={{ color:'var(--fg-text2)' }}>Out: <b style={{ color:'var(--fg-orange)' }}>{tokenBreakdown.totals?.outputTokens?.toLocaleString()}</b></span>
+                          <span style={{ color:'var(--fg-text2)' }}>Est. cost: <b style={{ color:'#4ade80' }}>${tokenBreakdown.totals?.estimatedCostUsd}</b></span>
+                        </div>
+                      </div>
+                      {(tokenBreakdown.breakdown || []).slice(0, 15).map((b: any, i: number) => (
+                        <div key={i} style={{ display:'flex', justifyContent:'space-between', fontSize:11, padding:'3px 0', borderBottom:'1px solid var(--fg-border)', color:'var(--fg-text3)' }}>
+                          <span style={{ color: b.role==='user' ? '#60a5fa' : '#a78bfa' }}>{b.role}</span>
+                          <span>{b.estimatedTokens?.toLocaleString()} tok</span>
+                          <span style={{ color:'#4ade80' }}>${b.costUsd}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {showSessionReplay && sessionReplay && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:340, maxHeight:400, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>▶️ Replay — frame {replayFrame+1}/{sessionReplay.totalFrames}</span>
+                        <button onClick={() => setShowSessionReplay(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {sessionReplay.frames && sessionReplay.frames[replayFrame] && (() => {
+                        const f = sessionReplay.frames[replayFrame];
+                        return (
+                          <div>
+                            <div style={{ fontSize:10, color:'var(--fg-text3)', marginBottom:4 }}>{f.role} · {f.deltaLabel} after prev</div>
+                            <div style={{ background:'var(--fg-bg2)', borderRadius:8, padding:'8px 10px', fontSize:12, color:'var(--fg-text2)', maxHeight:200, overflowY:'auto', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{(f.content||'').slice(0,400)}{f.content?.length > 400 ? '…' : ''}</div>
+                            <div style={{ display:'flex', gap:6, marginTop:8, justifyContent:'center' }}>
+                              <button onClick={() => setReplayFrame(f => Math.max(0,f-1))} disabled={replayFrame===0} style={{ padding:'5px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>◀</button>
+                              <button onClick={() => setReplayFrame(f => Math.min(sessionReplay.totalFrames-1,f+1))} disabled={replayFrame>=sessionReplay.totalFrames-1} style={{ padding:'5px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>▶</button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  {showSmartRename && smartRenameData && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:300, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>✏️ Smart Rename</span>
+                        <button onClick={() => setShowSmartRename(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:4 }}>Current: {smartRenameData.originalTitle}</div>
+                      <div style={{ background:'var(--fg-bg2)', borderRadius:8, padding:'8px 12px', fontSize:13, color:'var(--fg-text)', fontWeight:600, marginBottom:10 }}>💡 {smartRenameData.suggestedTitle}</div>
+                      <div style={{ display:'flex', gap:6 }}>
+                        <button onClick={() => activeThread && applySmartRename(String(activeThread.id), smartRenameData.suggestedTitle)} style={{ flex:1, padding:'6px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:12 }}>Apply</button>
+                        <button onClick={() => setShowSmartRename(false)} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>Skip</button>
                       </div>
                     </div>
                   )}
-                  {showSentiment && sentimentTimeline && (
+                                    {showSentiment && sentimentTimeline && (
                     <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:300, maxHeight:300, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
                         <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>😊 Sentiment — {sentimentTimeline.overall}</span>
