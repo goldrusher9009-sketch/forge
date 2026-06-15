@@ -62,7 +62,11 @@ async function request<T>(
     const newToken = await refreshAccessToken()
     if (newToken) return request<T>(path, options, false)
     clearTokens()
-    if (typeof window !== 'undefined') window.location.href = '/auth/onboard'
+    // Only redirect to onboard if user is inside the app (not on landing or auth pages)
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname
+      if (p !== '/' && !p.startsWith('/auth')) window.location.href = '/auth/onboard'
+    }
     throw new APIError(401, 'Session expired')
   }
 
