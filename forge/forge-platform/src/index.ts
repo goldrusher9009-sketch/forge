@@ -5185,4 +5185,42 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
     for (const m of uncat) { const c = categorizeMemory(m.topic || '', m.insight || ''); if (c !== 'general') upd.run(c, m.id); }
 
     const total = (db.prepare('SELECT COUNT(*) c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
-    const t
+    const topCategories = db.prepare("SELECT category, COUNT(*) as cnt, AVG(strength) as avg_str FROM forge_memory WHERE user_id=? GROUP BY category ORDER BY cnt DESC LIMIT 8").all(userId) as any[];
+    const recent = db.prepare("SELECT topic, insight, category, strength, created_at FROM forge_memory WHERE user_id=? ORDER BY created_at DESC LIMIT 5").all(userId) as any[];
+    const strongest = db.prepare("SELECT topic, insight, category, strength FROM forge_memory WHERE user_id=? ORDER BY strength DESC LIMIT 5").all(userId) as any[];
+    res.json({ total, topCategories, recent, strongest });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Version ──────────────────────────────────────────────────────────────────
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v6.99', build: 'production', timestamp: new Date().toISOString() }));
+
+// ─── 404 fallback ─────────────────────────────────────────────────────────────
+app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
+
+// ─── Server bootstrap ─────────────────────────────────────────────────────────
+const httpServer = require('http').createServer(app);
+try {
+  const { Server } = require('socket.io');
+  const io = new Server(httpServer, {
+    cors: { origin: FRONTEND_URL, methods: ['GET', 'POST'], credentials: true },
+    transports: ['websocket', 'polling']
+  });
+  io.use((socket: any, next: any) => {
+    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+    if (!token) return next(new Error('No token'));
+    try { socket.user = jwt.verify(token, JWT_SECRET); next(); } catch { next(new Error('Invalid token')); }
+  });
+  io.on('connection', (socket: any) => {
+    socket.on('join_thread', (tid: string) => socket.join(`thread:${tid}`));
+    socket.on('leave_thread', (tid: string) => socket.leave(`thread:${tid}`));
+    socket.on('typing_start', (tid: string) => socket.to(`thread:${tid}`).emit('typing', { userId: socket.user?.sub }));
+    socket.on('typing_stop', (tid: string) => socket.to(`thread:${tid}`).emit('typing_stop', { userId: socket.user?.sub }));
+    socket.on('thread_update', (data: any) => socket.to(`thread:${data.threadId}`).emit('thread_update', data));
+    socket.on('ping', () => socket.emit('pong'));
+    socket.on('disconnect', () => {});
+  });
+  (app as any).io = io;
+} catch (e: any) { console.warn('Socket.IO init failed:', e.message); }
+
+httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

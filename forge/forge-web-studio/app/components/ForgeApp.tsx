@@ -626,6 +626,15 @@ export default function ForgeApp() {
   const [threadMood, setThreadMood] = useState<{mood:string;emoji:string}|null>(null);
   const [promptImproving, setPromptImproving] = useState(false);
   const [improvedPrompt, setImprovedPrompt] = useState<string|null>(null);
+  const [tokenBreakdown, setTokenBreakdown] = useState<any>(null);
+  const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
+  const [threadStatsExt, setThreadStatsExt] = useState<any>(null);
+  const [showThreadStats, setShowThreadStats] = useState(false);
+  const [replayData, setReplayData] = useState<any>(null);
+  const [showReplay, setShowReplay] = useState(false);
+  const [glossary, setGlossary] = useState<any[]>([]);
+  const [showGlossary, setShowGlossary] = useState(false);
+  const [dailyDigest, setDailyDigest] = useState<any>(null);
   const [pinnedMessages, setPinnedMessages] = useState<any[]>([]);
   const [showPinned, setShowPinned] = useState(true);
   const [tldr, setTldr] = useState<string[]|null>(null);
@@ -2348,6 +2357,59 @@ export default function ForgeApp() {
     }
   };
 
+  async function loadReplay(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/replay`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setReplayData(await r.json());
+    } catch {}
+  }
+
+  async function loadGlossary() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/brain/glossary', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setGlossary(d.glossary || []); }
+    } catch {}
+  }
+
+  async function loadDailyDigest() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/brain/daily-digest', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setDailyDigest(await r.json());
+    } catch {}
+  }
+
+  async function loadTokenBreakdown(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/token-breakdown`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setTokenBreakdown(await r.json());
+    } catch {}
+  }
+
+  async function loadThreadStatsExt(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/stats-extended`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setThreadStatsExt(await r.json());
+    } catch {}
+  }
+
+  async function triggerSmartRename(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/smart-rename`, { method: 'POST', headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) {
+        const data = await r.json();
+        if (data.renamed) {
+          setThreads((prev: any[]) => prev.map((t: any) => t.id === threadId ? { ...t, title: data.title } : t));
+        }
+      }
+    } catch {}
+  }
+
   const improvePrompt = async (currentInput: string) => {
     if (!currentInput.trim() || !user) return;
     setPromptImproving(true); setImprovedPrompt(null);
@@ -2373,6 +2435,10 @@ export default function ForgeApp() {
     try { const d = await fetch('/api/threads/' + threadId + '/pinned', { headers: { Authorization: 'Bearer ' + tok } }).then(r=>r.json()); if (d.pinned) setPinnedMessages(d.pinned); } catch {}
   };
   const selectThread = async (t: Thread) => { setActiveThread(t); setPinnedMessages([]); setTldr(null); setThreadMood(null); await loadMessages(t.id); loadPinned(t.id);
+      loadTokenBreakdown(String(t.id));
+      loadThreadStatsExt(String(t.id));
+      loadReplay(String(t.id));
+      setTimeout(() => triggerSmartRename(String(t.id)), 3000);
     const _tok = localStorage.getItem('forge_token');
     fetch('/api/threads/' + t.id + '/mood', { headers: { Authorization: 'Bearer ' + _tok } })
       .then(r => r.json()).then(d => { if (d.emoji) setThreadMood(d); }).catch(() => {});
@@ -3331,6 +3397,107 @@ export default function ForgeApp() {
                 </span>
                 {sessionCost > 0 && <span style={{ fontSize:10, color:'var(--fg-green)', fontFamily:'monospace', marginLeft:2 }}>${sessionCost.toFixed(4)}</span>}
               </div>
+              {/* ⚡ Token breakdown + 📊 Stats buttons */}
+              {activeThread && (
+                <div style={{ display:'flex', gap:4, flexShrink:0, position:'relative' }}>
+                  <button onClick={() => setShowTokenBreakdown(v => !v)} title="Token breakdown by model"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>⚡</button>
+                  <button onClick={() => setShowReplay(v => !v)} title="Thread replay / key moments"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🎬</button>
+                  <button onClick={() => { setShowGlossary(v => !v); if (!glossary.length) loadGlossary(); }} title="Workspace glossary"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>📖</button>
+                  <button onClick={() => setShowThreadStats(v => !v)} title="Thread stats"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>📊</button>
+                  {showTokenBreakdown && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:280, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>⚡ Token Breakdown</span>
+                        <button onClick={() => setShowTokenBreakdown(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {tokenBreakdown?.breakdown?.length > 0 ? tokenBreakdown.breakdown.map((b: any, i: number) => (
+                        <div key={i} style={{ marginBottom:8 }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, color:'var(--fg-text2)' }}>
+                            <span style={{ fontWeight:600 }}>{b.model || b.provider || 'unknown'}</span>
+                            <span>{(b.total_tokens||0).toLocaleString()} tok</span>
+                          </div>
+                          <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--fg-text3)', paddingLeft:8 }}>
+                            <span>{b.requests} req · ↑{(b.prompt_tokens||0).toLocaleString()} ↓{(b.completion_tokens||0).toLocaleString()}</span>
+                            {(b.cost||0) > 0 && <span>${b.cost.toFixed(4)}</span>}
+                          </div>
+                        </div>
+                      )) : <p style={{ fontSize:12, color:'var(--fg-text3)', margin:0 }}>No routing data yet</p>}
+                      {tokenBreakdown?.totals?.total > 0 && (
+                        <div style={{ borderTop:'1px solid var(--fg-border)', paddingTop:8, marginTop:4, display:'flex', justifyContent:'space-between', fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>
+                          <span>Total</span><span>{tokenBreakdown.totals.total.toLocaleString()} tok</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {showThreadStats && threadStatsExt && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:220, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>📊 Thread Stats</span>
+                        <button onClick={() => setShowThreadStats(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {[
+                        ['Messages', threadStatsExt.totalMessages],
+                        ['Your messages', threadStatsExt.userMessages],
+                        ['AI replies', threadStatsExt.assistantMessages],
+                        ['Word count', (threadStatsExt.wordCount||0).toLocaleString()],
+                        ['Read time', `~${threadStatsExt.readingMinutes} min`],
+                      ].map(([label, val]) => (
+                        <div key={label as string} style={{ display:'flex', justifyContent:'space-between', fontSize:12, color:'var(--fg-text2)', marginBottom:4 }}>
+                          <span>{label}</span><span style={{ fontWeight:600 }}>{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {showReplay && replayData && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:320, maxHeight:400, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>🎬 Thread Replay</span>
+                        <button onClick={() => setShowReplay(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:8 }}>{replayData.totalMessages} messages · {(replayData.totalWords||0).toLocaleString()} words</div>
+                      {replayData.keyMoments?.length > 0 && (
+                        <div>
+                          <div style={{ fontSize:11, fontWeight:600, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:6 }}>Key Moments</div>
+                          {replayData.keyMoments.map((m: any) => (
+                            <div key={m.id} style={{ padding:'6px 8px', background:'var(--fg-bg2)', borderRadius:6, marginBottom:4, cursor:'pointer', border:'1px solid var(--fg-border)' }}
+                              onClick={() => { setShowReplay(false); setTimeout(() => { const el = document.getElementById('msg-'+m.id); if (el) el.scrollIntoView({behavior:'smooth',block:'center'}); }, 100); }}>
+                              <div style={{ display:'flex', gap:4, alignItems:'center', marginBottom:2 }}>
+                                <span style={{ fontSize:10 }}>{m.role==='user'?'👤':'⚡'}</span>
+                                {m.isCode && <span style={{ fontSize:10, background:'rgba(99,102,241,0.2)', color:'#818cf8', padding:'0 4px', borderRadius:4 }}>code</span>}
+                                {m.bookmarked && <span style={{ fontSize:10 }}>🔖</span>}
+                                {m.rating===1 && <span style={{ fontSize:10 }}>👍</span>}
+                                <span style={{ fontSize:10, color:'var(--fg-text3)', marginLeft:'auto' }}>msg {m.index+1}</span>
+                              </div>
+                              <div style={{ fontSize:11, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.preview}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {(!replayData.keyMoments || replayData.keyMoments.length === 0) && (
+                        <p style={{ fontSize:12, color:'var(--fg-text3)', margin:0 }}>No key moments yet — rate or bookmark messages to highlight them.</p>
+                      )}
+                    </div>
+                  )}
+                  {showGlossary && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:260, maxHeight:360, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>📖 Your Glossary</span>
+                        <button onClick={() => setShowGlossary(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {glossary.length > 0 ? glossary.slice(0,20).map((g: any) => (
+                        <div key={g.term} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'3px 0', borderBottom:'1px solid var(--fg-border)', fontSize:12 }}>
+                          <span style={{ color:'var(--fg-text2)', fontFamily:'monospace' }}>{g.term}</span>
+                          <span style={{ color:'var(--fg-text3)', fontSize:11 }}>{g.count}×</span>
+                        </div>
+                      )) : <p style={{ fontSize:12, color:'var(--fg-text3)', margin:0 }}>Chat more to build your glossary!</p>}
+                    </div>
+                  )}
+                </div>
+              )}
               {/* 🔧 ForgeOptimizer toggle */}
               {!isMobile && activeThread && (
                 <div style={{ display:'flex', alignItems:'center', gap:4, flexShrink:0 }}>
@@ -8410,20 +8577,13 @@ export default function ForgeApp() {
                               <div style={{ width:32, fontSize:11, color:'var(--fg-text3)', flexShrink:0 }}>{dayLabels[dow]}</div>
                               {row.map((count:number, hour:number) => {
                                 const alpha = count === 0 ? 0.06 : 0.15 + (count/maxHeat)*0.85;
-                                return <div key={hour} title={dayLabels[dow]+' '+hour+':00 — '+count+' msgs'} style={{ flex:1, height:18, borderRadius:3, background:'rgba(249,115,22,'+alpha+')', minWidth:10 }} />;
+                                return <div key={hour} title={dayLabels[dow]+' '+hour+':00 — '+count+' msgs'} style={{ flex:1, height:16, background:`rgba(249,115,22,${alpha})`, borderRadius:2 }} />;
                               })}
                             </div>
                           ))}
-                          <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:8, fontSize:11, color:'var(--fg-text3)' }}>
-                            <span>Less</span>
-                            {[0.06,0.3,0.55,0.8,1.0].map((a,i) => (
-                              <div key={i} style={{ width:14, height:14, borderRadius:3, background:'rgba(249,115,22,'+a+')' }} />
-                            ))}
-                            <span>More</span>
-                          </div>
                         </div>
                       ) : (
-                        <div style={{ textAlign:'center', padding:32, color:'var(--fg-text3)', fontSize:13 }}>No activity data yet.</div>
+                        <div style={{ textAlign:'center', padding:32, color:'var(--fg-text3)', fontSize:13 }}>No heatmap data yet — start chatting!</div>
                       )}
                     </div>
                   </div>
