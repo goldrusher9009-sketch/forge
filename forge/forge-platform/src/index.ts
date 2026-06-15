@@ -5175,6 +5175,88 @@ function reinforceMemory(id: string) {
   try { db.prepare("UPDATE forge_memory SET strength=MIN(strength+0.1,10.0),confidence=MIN(confidence+0.05,1.0),last_reinforced_at=datetime('now') WHERE id=?").run(id); } catch {}
 }
 
+
+// ── Similar threads finder ─────────────────────────────────────────────────────
+// GET /api/threads/:id/similar
+app.get('/api/threads/:id/similar', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT content FROM messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 5").all(threadId) as any[];
+    const text = msgs.map((m: any) => m.content).join(' ').toLowerCase();
+    const words = text.match(/\b[a-z]{4,}\b/g) || [];
+    const freq: Record<string,number> = {};
+    for (const w of words) freq[w] = (freq[w]||0)+1;
+    const topWords = Object.entries(freq).sort(([,a],[,b])=>(b as number)-(a as number)).slice(0,8).map(([w])=>w);
+    if (topWords.length === 0) return res.json({ similar: [] });
+    const allThreads = db.prepare("SELECT t.id, t.title, t.created_at FROM threads t WHERE t.user_id=? AND t.id!=? AND t.archived=0 ORDER BY t.created_at DESC LIMIT 100").all(req.user.id, threadId) as any[];
+    const scored = allThreads.map((t: any) => {
+      const tMsgs = db.prepare("SELECT content FROM messages WHERE thread_id=? LIMIT 3").all(t.id) as any[];
+      const tText = tMsgs.map((m: any) => m.content).join(' ').toLowerCase();
+      const score = topWords.filter((w: string) => tText.includes(w)).length;
+      return { ...t, score };
+    }).filter((t: any) => t.score > 1).sort((a: any,b: any) => b.score - a.score).slice(0,5);
+    res.json({ similar: scored });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Prompt template library ────────────────────────────────────────────────────
+// GET /api/prompt-templates
+app.get('/api/prompt-templates', requireAuth, (req: any, res: any) => {
+  try {
+    const builtins = [
+      { id:'b1', title:'Debug this code', body:'Debug the following code and explain what is wrong:\n\n```\n{{code}}\n```', category:'coding', builtin:true },
+      { id:'b2', title:'Explain simply', body:'Explain the following concept in simple terms:\n\n{{concept}}', category:'learning', builtin:true },
+      { id:'b3', title:'Write unit tests', body:'Write comprehensive unit tests for:\n\n```\n{{code}}\n```', category:'coding', builtin:true },
+      { id:'b4', title:'Summarize article', body:'Summarize in 3-5 bullet points:\n\n{{article}}', category:'writing', builtin:true },
+      { id:'b5', title:'Code review', body:'Review this code for bugs, performance, and best practices:\n\n```\n{{code}}\n```', category:'coding', builtin:true },
+      { id:'b6', title:'SQL query help', body:'Write a SQL query to: {{task}}\n\nTable schema: {{schema}}', category:'data', builtin:true },
+    ];
+    db.prepare("CREATE TABLE IF NOT EXISTS prompt_templates (id TEXT PRIMARY KEY, user_id TEXT, title TEXT, body TEXT, category TEXT, created_at TEXT DEFAULT (datetime('now')))").run();
+    const userTemplates = db.prepare("SELECT * FROM prompt_templates WHERE user_id=? ORDER BY created_at DESC").all(req.user.id) as any[];
+    res.json({ templates: [...builtins, ...userTemplates] });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/prompt-templates
+app.post('/api/prompt-templates', requireAuth, (req: any, res: any) => {
+  try {
+    const { title, body, category } = req.body;
+    if (!title || !body) return res.status(400).json({ error: 'title and body required' });
+    db.prepare("CREATE TABLE IF NOT EXISTS prompt_templates (id TEXT PRIMARY KEY, user_id TEXT, title TEXT, body TEXT, category TEXT, created_at TEXT DEFAULT (datetime('now')))").run();
+    const id = 'ut_' + Date.now();
+    db.prepare("INSERT INTO prompt_templates (id, user_id, title, body, category) VALUES (?,?,?,?,?)").run(id, req.user.id, title, body, category || 'general');
+    res.json({ id, title, body, category, builtin: false });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/prompt-templates/:id
+app.delete('/api/prompt-templates/:id', requireAuth, (req: any, res: any) => {
+  try {
+    db.prepare("DELETE FROM prompt_templates WHERE id=? AND user_id=?").run(req.params.id, req.user.id);
+    res.json({ deleted: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Prompt writing coach ───────────────────────────────────────────────────────
+// POST /api/prompts/critique
+app.post('/api/prompts/critique', requireAuth, (req: any, res: any) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: 'text required' });
+    const issues: string[] = [];
+    if (text.length < 20) issues.push('Very short — add more context');
+    if (!/[?.]/.test(text)) issues.push('No clear goal — end with a specific request');
+    if (text.length > 2000) issues.push('Very long — consider breaking into smaller questions');
+    if (!/\b(explain|write|create|build|fix|debug|analyze|compare|summarize|translate|list|show|help)\b/i.test(text)) {
+      issues.push('No action verb — try: explain, write, create, fix, analyze');
+    }
+    const score = Math.max(0, 100 - issues.length * 22);
+    res.json({ score, issues, ok: issues.length === 0 });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // GET /api/brain/summary — "What Forge knows about you" (makes the moat FELT).
 app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
@@ -5222,5 +5304,600 @@ try {
   });
   (app as any).io = io;
 } catch (e: any) { console.warn('Socket.IO init failed:', e.message); }
+
+
+// ── Message search ─────────────────────────────────────────────────────────────
+// GET /api/messages/search
+app.get('/api/messages/search', requireAuth, (req: any, res: any) => {
+  try {
+    const q = (req.query.q as string || '').trim();
+    if (!q) return res.json({ results: [] });
+    const rows = db.prepare("SELECT m.id, m.thread_id, m.role, m.content, m.created_at, t.title as thread_title FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND m.content LIKE ? ORDER BY m.created_at DESC LIMIT 30").all(req.user.id, `%${q}%`) as any[];
+    res.json({ results: rows.map((r: any) => ({ ...r, snippet: r.content.substring(0, 200) })) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Token breakdown per thread ─────────────────────────────────────────────────
+// GET /api/threads/:id/token-breakdown
+app.get('/api/threads/:id/token-breakdown', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    let rows: any[] = [];
+    try { rows = db.prepare("SELECT model, provider, SUM(input_tokens) as input_tokens, SUM(output_tokens) as output_tokens, COUNT(*) as calls FROM routing_log WHERE user_id=? AND thread_id=? GROUP BY model, provider").all(req.user.id, threadId) as any[]; } catch {}
+    res.json({ breakdown: rows });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Smart rename ───────────────────────────────────────────────────────────────
+// POST /api/threads/:id/smart-rename
+app.post('/api/threads/:id/smart-rename', requireAuth, async (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    if (thread.title && thread.title !== 'New Thread' && thread.title !== 'Untitled') return res.json({ renamed: false, title: thread.title });
+    const msgs = db.prepare("SELECT content FROM messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 3").all(threadId) as any[];
+    if (msgs.length === 0) return res.json({ renamed: false });
+    const text = msgs[0].content.substring(0, 120);
+    const words = text.split(/\s+/).slice(0, 6).join(' ');
+    const newTitle = words.charAt(0).toUpperCase() + words.slice(1);
+    db.prepare('UPDATE threads SET title=? WHERE id=?').run(newTitle, threadId);
+    res.json({ renamed: true, title: newTitle });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread stats extended ──────────────────────────────────────────────────────
+// GET /api/threads/:id/stats-extended
+app.get('/api/threads/:id/stats-extended', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT role, content FROM messages WHERE thread_id=? ORDER BY created_at ASC").all(threadId) as any[];
+    const wordCount = msgs.reduce((acc: number, m: any) => acc + (m.content || '').split(/\s+/).length, 0);
+    const userMessages = msgs.filter((m: any) => m.role === 'user').length;
+    const assistantMessages = msgs.filter((m: any) => m.role === 'assistant').length;
+    const readingMinutes = Math.ceil(wordCount / 200);
+    res.json({ wordCount, readingMinutes, userMessages, assistantMessages, totalMessages: msgs.length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread highlights ──────────────────────────────────────────────────────────
+// GET /api/threads/:id/highlights
+app.get('/api/threads/:id/highlights', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    let rows: any[] = [];
+    try { rows = db.prepare("SELECT * FROM messages WHERE thread_id=? AND role='assistant' AND (rating > 0 OR bookmarked=1) ORDER BY created_at ASC").all(threadId) as any[]; } catch {}
+    res.json({ highlights: rows });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Diff summary ───────────────────────────────────────────────────────────────
+// POST /api/threads/:id/diff-summary
+app.post('/api/threads/:id/diff-summary', requireAuth, (req: any, res: any) => {
+  try {
+    const { diff } = req.body;
+    if (!diff) return res.json({ files: [] });
+    const lines = (diff as string).split('\n');
+    const files: any[] = [];
+    let cur: any = null;
+    for (const line of lines) {
+      if (line.startsWith('diff --git')) { if (cur) files.push(cur); cur = { file: line.replace(/.*b\//, ''), added: 0, removed: 0 }; }
+      else if (cur && line.startsWith('+') && !line.startsWith('+++')) cur.added++;
+      else if (cur && line.startsWith('-') && !line.startsWith('---')) cur.removed++;
+    }
+    if (cur) files.push(cur);
+    res.json({ files });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread replay ──────────────────────────────────────────────────────────────
+// GET /api/threads/:id/replay
+app.get('/api/threads/:id/replay', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC").all(threadId) as any[];
+    const timeline = msgs.map((m: any, i: number) => {
+      const isKeyMoment = (m.bookmarked === 1 || m.rating > 0 || (m.content || '').includes('```'));
+      return { index: i, id: m.id, role: m.role, created_at: m.created_at, snippet: (m.content || '').substring(0, 100), isKeyMoment };
+    });
+    res.json({ timeline, totalMessages: msgs.length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Brain glossary ─────────────────────────────────────────────────────────────
+// GET /api/brain/glossary
+app.get('/api/brain/glossary', requireAuth, (req: any, res: any) => {
+  try {
+    const msgs = db.prepare("SELECT m.content FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND m.role='user' ORDER BY m.created_at DESC LIMIT 200").all(req.user.id) as any[];
+    const text = msgs.map((m: any) => m.content).join(' ');
+    const terms = new Set<string>();
+    (text.match(/\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b/g) || []).forEach((t: string) => terms.add(t));
+    (text.match(/\b[A-Z]{2,}\b/g) || []).forEach((t: string) => terms.add(t));
+    (text.match(/\b[a-z]+-[a-z]+-[a-z]+\b/g) || []).forEach((t: string) => terms.add(t));
+    res.json({ terms: Array.from(terms).slice(0, 50) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Daily digest ───────────────────────────────────────────────────────────────
+// GET /api/brain/daily-digest
+app.get('/api/brain/daily-digest', requireAuth, (req: any, res: any) => {
+  try {
+    const msgs = db.prepare("SELECT m.*, t.title as thread_title FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND date(m.created_at)=date('now') ORDER BY m.created_at DESC LIMIT 20").all(req.user.id) as any[];
+    const threadCounts: Record<string,number> = {};
+    for (const m of msgs) threadCounts[m.thread_id] = (threadCounts[m.thread_id]||0)+1;
+    const topThreadId = Object.entries(threadCounts).sort(([,a],[,b])=>(b as number)-(a as number))[0]?.[0];
+    const topThread = topThreadId ? db.prepare('SELECT id, title FROM threads WHERE id=?').get(topThreadId) : null;
+    let memories: any[] = [];
+    try { memories = db.prepare("SELECT * FROM forge_memory WHERE user_id=? AND date(created_at)=date('now') LIMIT 5").all(req.user.id) as any[]; } catch {}
+    let streak = 0;
+    try { const s: any = db.prepare("SELECT streak FROM user_streaks WHERE user_id=?").get(req.user.id); streak = s?.streak || 0; } catch {}
+    res.json({ todayMessages: msgs.length, topThread, newMemories: memories.length, streak });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Prompt critique ────────────────────────────────────────────────────────────
+// POST /api/prompts/critique
+app.post('/api/prompts/critique', requireAuth, (req: any, res: any) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt) return res.json({ score: 0, issues: [] });
+    const text = prompt as string;
+    let score = 100;
+    const issues: string[] = [];
+    if (text.length < 20) { score -= 30; issues.push('Too short — add more context'); }
+    if (!text.includes('?') && !text.toLowerCase().includes('please') && !text.toLowerCase().includes('write') && !text.toLowerCase().includes('explain') && !text.toLowerCase().includes('list') && !text.toLowerCase().includes('create')) { score -= 15; issues.push('Add a clear action verb or question'); }
+    if (text.length > 2000) { score -= 10; issues.push('Very long — consider breaking into steps'); }
+    if (!/[.?!]/.test(text)) { score -= 10; issues.push('Add punctuation for clarity'); }
+    if (text === text.toLowerCase()) { score -= 5; issues.push('Use capitalization for readability'); }
+    res.json({ score: Math.max(0, score), issues });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ── Writing coach ──────────────────────────────────────────────────────────────
+// POST /api/writing/analyze
+app.post('/api/writing/analyze', requireAuth, (req: any, res: any) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.json({ score: 0, feedback: [] });
+    const t = text as string;
+    const feedback: string[] = [];
+    let score = 100;
+    const sentences = t.split(/[.!?]+/).filter((s: string) => s.trim().length > 0);
+    const avgLen = sentences.length ? t.split(/\s+/).length / sentences.length : 0;
+    if (avgLen > 30) { score -= 15; feedback.push('Sentences too long — aim for 15-20 words average'); }
+    if (avgLen > 0 && avgLen < 5) { score -= 10; feedback.push('Sentences very short — vary sentence length'); }
+    const passivePattern = /\b(is|was|were|are|been|being)\s+\w+ed\b/gi;
+    const passiveCount = (t.match(passivePattern) || []).length;
+    if (passiveCount > 2) { score -= 15; feedback.push(`${passiveCount} passive voice instances — prefer active voice`); }
+    const fillers = ['very', 'really', 'quite', 'just', 'basically', 'literally', 'actually', 'honestly', 'essentially'];
+    const fillerCount = fillers.filter((f: string) => t.toLowerCase().includes(f)).length;
+    if (fillerCount > 2) { score -= 10; feedback.push('Filler words detected — trim "very", "just", "basically" etc.'); }
+    const wordFreq: Record<string,number> = {};
+    const words = t.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+    for (const w of words) wordFreq[w] = (wordFreq[w]||0)+1;
+    const repeated = Object.entries(wordFreq).filter(([,c]) => (c as number) > 3).map(([w]) => w);
+    if (repeated.length > 0) { score -= 10; feedback.push(`Overused words: ${repeated.slice(0,3).join(', ')} — use synonyms`); }
+    if (feedback.length === 0) feedback.push('Great writing! Clear and concise.');
+    res.json({ score: Math.max(0, score), feedback, metrics: { sentences: sentences.length, words: words.length, avgSentenceLength: Math.round(avgLen), passiveVoice: passiveCount } });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread archiver ────────────────────────────────────────────────────────────
+// POST /api/threads/:id/archive  (toggle)
+app.post('/api/threads/:id/archive', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const newVal = thread.archived ? 0 : 1;
+    db.prepare('UPDATE threads SET archived=? WHERE id=?').run(newVal, threadId);
+    res.json({ archived: !!newVal });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/archived
+app.get('/api/threads/archived', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare("SELECT id, title, created_at, updated_at FROM threads WHERE user_id=? AND archived=1 ORDER BY updated_at DESC").all(req.user.id);
+    res.json({ threads: rows });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Message formatting helper ──────────────────────────────────────────────────
+// POST /api/messages/:id/format
+app.post('/api/messages/:id/format', requireAuth, (req: any, res: any) => {
+  try {
+    const { style } = req.body; // 'bullets' | 'numbered' | 'summary' | 'table'
+    const msgId = req.params.id;
+    const msg = db.prepare("SELECT m.*, t.user_id FROM messages m JOIN threads t ON t.id=m.thread_id WHERE m.id=?").get(msgId) as any;
+    if (!msg || msg.user_id !== req.user.id) return res.status(404).json({ error: 'Not found' });
+    const text = msg.content as string;
+    let formatted = text;
+    if (style === 'bullets') {
+      const lines = text.split(/[.!?]+/).filter((s: string) => s.trim().length > 10);
+      formatted = lines.map((l: string) => `• ${l.trim()}`).join('\n');
+    } else if (style === 'numbered') {
+      const lines = text.split(/[.!?]+/).filter((s: string) => s.trim().length > 10);
+      formatted = lines.map((l: string, i: number) => `${i+1}. ${l.trim()}`).join('\n');
+    } else if (style === 'summary') {
+      const words = text.split(/\s+/);
+      formatted = words.slice(0, Math.min(50, words.length)).join(' ') + (words.length > 50 ? '...' : '');
+    }
+    res.json({ formatted });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Quick stats (for homepage widget) ─────────────────────────────────────────
+// GET /api/stats/quick
+app.get('/api/stats/quick', requireAuth, (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+    const totalThreads = (db.prepare("SELECT COUNT(*) as n FROM threads WHERE user_id=? AND archived=0").get(userId) as any).n;
+    const totalMessages = (db.prepare("SELECT COUNT(*) as n FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=?").get(userId) as any).n;
+    const todayMessages = (db.prepare("SELECT COUNT(*) as n FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND date(m.created_at)=date('now')").get(userId) as any).n;
+    const bookmarks = (db.prepare("SELECT COUNT(*) as n FROM message_bookmarks WHERE user_id=?").get(userId) as any).n;
+    let memories = 0;
+    try { memories = (db.prepare("SELECT COUNT(*) as n FROM forge_memory WHERE user_id=?").get(userId) as any).n; } catch {}
+    res.json({ totalThreads, totalMessages, todayMessages, bookmarks, memories });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Focus mode sessions ────────────────────────────────────────────────────────
+// POST /api/focus/start
+app.post('/api/focus/start', requireAuth, (req: any, res: any) => {
+  try {
+    db.prepare("CREATE TABLE IF NOT EXISTS focus_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, started_at TEXT DEFAULT (datetime('now')), ended_at TEXT, duration_minutes INTEGER)").run();
+    const { threadId } = req.body;
+    const r = db.prepare("INSERT INTO focus_sessions (user_id, thread_id) VALUES (?,?)").run(req.user.id, threadId || null);
+    res.json({ sessionId: r.lastInsertRowid });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/focus/end
+app.post('/api/focus/end', requireAuth, (req: any, res: any) => {
+  try {
+    const { sessionId } = req.body;
+    const session = db.prepare("SELECT * FROM focus_sessions WHERE id=? AND user_id=?").get(sessionId, req.user.id) as any;
+    if (!session) return res.status(404).json({ error: 'Not found' });
+    const started = new Date(session.started_at).getTime();
+    const durationMinutes = Math.round((Date.now() - started) / 60000);
+    db.prepare("UPDATE focus_sessions SET ended_at=datetime('now'), duration_minutes=? WHERE id=?").run(durationMinutes, sessionId);
+    res.json({ durationMinutes });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/focus/history
+app.get('/api/focus/history', requireAuth, (req: any, res: any) => {
+  try {
+    db.prepare("CREATE TABLE IF NOT EXISTS focus_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, started_at TEXT DEFAULT (datetime('now')), ended_at TEXT, duration_minutes INTEGER)").run();
+    const rows = db.prepare("SELECT * FROM focus_sessions WHERE user_id=? AND ended_at IS NOT NULL ORDER BY started_at DESC LIMIT 20").all(req.user.id);
+    const total = rows.reduce((acc: number, r: any) => acc + (r.duration_minutes || 0), 0);
+    res.json({ sessions: rows, totalMinutes: total });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ── Thread pinning (pin thread to top of list) ────────────────────────────────
+// POST /api/threads/:id/pin
+app.post('/api/threads/:id/pin', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const newVal = thread.pinned ? 0 : 1;
+    try { db.prepare('ALTER TABLE threads ADD COLUMN pinned INTEGER DEFAULT 0').run(); } catch {}
+    db.prepare('UPDATE threads SET pinned=? WHERE id=?').run(newVal, threadId);
+    res.json({ pinned: !!newVal });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread duplication ─────────────────────────────────────────────────────────
+// POST /api/threads/:id/duplicate
+app.post('/api/threads/:id/duplicate', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare('SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(threadId) as any[];
+    const newTitle = (thread.title || 'Thread') + ' (copy)';
+    const newThread = db.prepare("INSERT INTO threads (user_id, title, model, created_at, updated_at) VALUES (?,?,?,datetime('now'),datetime('now'))").run(req.user.id, newTitle, thread.model);
+    const newId = newThread.lastInsertRowid;
+    for (const m of msgs) {
+      db.prepare("INSERT INTO messages (thread_id, role, content, model, created_at) VALUES (?,?,?,?,datetime('now'))").run(newId, m.role, m.content, m.model);
+    }
+    res.json({ thread: { id: newId, title: newTitle } });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Message translation ────────────────────────────────────────────────────────
+// POST /api/messages/:id/translate
+app.post('/api/messages/:id/translate', requireAuth, (req: any, res: any) => {
+  try {
+    const { targetLang } = req.body;
+    const msgId = req.params.id;
+    const msg = db.prepare("SELECT m.*, t.user_id FROM messages m JOIN threads t ON t.id=m.thread_id WHERE m.id=?").get(msgId) as any;
+    if (!msg || msg.user_id !== req.user.id) return res.status(404).json({ error: 'Not found' });
+    // Return a signal for the frontend to call the LLM for translation
+    res.json({ content: msg.content, targetLang: targetLang || 'es', msgId });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Workspace health check ─────────────────────────────────────────────────────
+// GET /api/workspace/health
+app.get('/api/workspace/health', requireAuth, (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+    const issues: string[] = [];
+    const totalThreads = (db.prepare("SELECT COUNT(*) as n FROM threads WHERE user_id=? AND archived=0").get(userId) as any).n;
+    const emptyThreads = (db.prepare("SELECT COUNT(*) as n FROM threads t WHERE t.user_id=? AND t.archived=0 AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.thread_id=t.id)").get(userId) as any).n;
+    const unnamedThreads = (db.prepare("SELECT COUNT(*) as n FROM threads WHERE user_id=? AND archived=0 AND (title IS NULL OR title='New Thread' OR title='Untitled')").get(userId) as any).n;
+    if (emptyThreads > 0) issues.push(`${emptyThreads} empty threads — consider deleting them`);
+    if (unnamedThreads > 3) issues.push(`${unnamedThreads} unnamed threads — use smart rename to fix`);
+    if (totalThreads > 100) issues.push(`${totalThreads} active threads — consider archiving old ones`);
+    let memories = 0;
+    try { memories = (db.prepare("SELECT COUNT(*) as n FROM forge_memory WHERE user_id=?").get(userId) as any).n; } catch {}
+    const score = Math.max(0, 100 - issues.length * 20);
+    res.json({ score, issues, stats: { totalThreads, emptyThreads, unnamedThreads, memories } });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Prompt history (last 50 user prompts) ─────────────────────────────────────
+// GET /api/prompts/history
+app.get('/api/prompts/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare("SELECT m.id, m.content, m.created_at, t.title as thread_title, t.id as thread_id FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND m.role='user' ORDER BY m.created_at DESC LIMIT 50").all(req.user.id) as any[];
+    res.json({ prompts: rows.map((r: any) => ({ ...r, preview: (r.content || '').substring(0, 120) })) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread word cloud data ─────────────────────────────────────────────────────
+// GET /api/threads/:id/wordcloud
+app.get('/api/threads/:id/wordcloud', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT content FROM messages WHERE thread_id=? ORDER BY created_at ASC").all(threadId) as any[];
+    const text = msgs.map((m: any) => m.content).join(' ').toLowerCase();
+    const stopWords = new Set(['the','a','an','is','in','it','of','to','and','or','for','on','at','by','with','from','that','this','was','are','be','have','has','had','not','but','as','we','they','you','he','she','i','my','your','our','their','its','what','when','how','can','do','did','will','would','could','should','may','might','also','just','more','some','any','all','each','there','then','than','so','up','out','if','about','into','over','after','because','like','one','which','who','way']);
+    const words = text.match(/\b[a-z]{4,}\b/g) || [];
+    const freq: Record<string,number> = {};
+    for (const w of words) { if (!stopWords.has(w)) freq[w] = (freq[w]||0)+1; }
+    const sorted = Object.entries(freq).sort(([,a],[,b])=>(b as number)-(a as number)).slice(0,30);
+    res.json({ words: sorted.map(([text, count]) => ({ text, count })) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Conversation export (JSON) ─────────────────────────────────────────────────
+// GET /api/threads/:id/export/json
+app.get('/api/threads/:id/export/json', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare('SELECT role, content, model, created_at FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(threadId);
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="thread-${threadId}.json"`);
+    res.json({ thread: { id: thread.id, title: thread.title, created_at: thread.created_at }, messages: msgs, exportedAt: new Date().toISOString() });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ── Thread mood / sentiment over time ─────────────────────────────────────────
+// GET /api/threads/:id/sentiment-timeline
+app.get('/api/threads/:id/sentiment-timeline', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT id, role, content, created_at FROM messages WHERE thread_id=? ORDER BY created_at ASC").all(threadId) as any[];
+    const positiveWords = ['great','excellent','perfect','love','good','nice','awesome','helpful','thanks','thank','happy','wonderful','fantastic','amazing'];
+    const negativeWords = ['bad','wrong','broken','error','fail','issue','problem','terrible','awful','hate','confused','frustrating','not working'];
+    const timeline = msgs.map((m: any) => {
+      const txt = (m.content || '').toLowerCase();
+      const pos = positiveWords.filter((w: string) => txt.includes(w)).length;
+      const neg = negativeWords.filter((w: string) => txt.includes(w)).length;
+      const score = pos - neg;
+      return { id: m.id, role: m.role, created_at: m.created_at, sentiment: score > 0 ? 'positive' : score < 0 ? 'negative' : 'neutral', score };
+    });
+    const avg = timeline.reduce((s: number, t: any) => s + t.score, 0) / Math.max(1, timeline.length);
+    res.json({ timeline, avgScore: Math.round(avg * 10) / 10, overall: avg > 0.5 ? 'positive' : avg < -0.5 ? 'negative' : 'neutral' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── User activity heatmap ──────────────────────────────────────────────────────
+// GET /api/stats/heatmap
+app.get('/api/stats/heatmap', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare("SELECT strftime('%Y-%m-%d', created_at) as day, COUNT(*) as count FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND m.created_at >= date('now','-90 days') GROUP BY day ORDER BY day").all(req.user.id) as any[];
+    res.json({ heatmap: rows });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread complexity score ────────────────────────────────────────────────────
+// GET /api/threads/:id/complexity
+app.get('/api/threads/:id/complexity', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT role, content FROM messages WHERE thread_id=? ORDER BY created_at ASC").all(threadId) as any[];
+    const total = msgs.length;
+    const avgLen = msgs.reduce((s: number, m: any) => s + (m.content||'').length, 0) / Math.max(1, total);
+    const codeBlocks = msgs.filter((m: any) => (m.content||'').includes('```')).length;
+    const questions = msgs.filter((m: any) => (m.content||'').includes('?')).length;
+    const uniqueModels = new Set(msgs.map((m: any) => (m as any).model).filter(Boolean)).size;
+    const score = Math.min(100, Math.round((total * 2) + (avgLen / 100) + (codeBlocks * 5) + (questions * 2) + (uniqueModels * 10)));
+    res.json({ score, breakdown: { messageCount: total, avgMsgLength: Math.round(avgLen), codeBlocks, questions, uniqueModels } });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Recent codeblocks across all threads ──────────────────────────────────────
+// GET /api/brain/codeblocks
+app.get('/api/brain/codeblocks', requireAuth, (req: any, res: any) => {
+  try {
+    const msgs = db.prepare("SELECT m.id, m.content, m.created_at, t.title as thread_title, t.id as thread_id FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND m.role='assistant' AND m.content LIKE '%```%' ORDER BY m.created_at DESC LIMIT 30").all(req.user.id) as any[];
+    const blocks: any[] = [];
+    for (const m of msgs) {
+      const matches = (m.content || '').match(/```(\w*)\n([\s\S]*?)```/g) || [];
+      for (const block of matches.slice(0,3)) {
+        const langMatch = block.match(/```(\w*)/);
+        const lang = langMatch ? langMatch[1] : '';
+        const code = block.replace(/```\w*\n?/, '').replace(/```$/, '').trim();
+        if (code.length > 10) blocks.push({ thread_title: m.thread_title, thread_id: m.thread_id, created_at: m.created_at, lang, preview: code.substring(0, 200) });
+      }
+      if (blocks.length >= 20) break;
+    }
+    res.json({ blocks });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Smart thread merge (check similarity before merging) ──────────────────────
+// GET /api/threads/merge-candidates
+app.get('/api/threads/merge-candidates', requireAuth, (req: any, res: any) => {
+  try {
+    const threads = db.prepare("SELECT t.id, t.title, COUNT(m.id) as msg_count FROM threads t LEFT JOIN messages m ON m.thread_id=t.id WHERE t.user_id=? AND (t.archived IS NULL OR t.archived=0) GROUP BY t.id ORDER BY t.updated_at DESC LIMIT 30").all(req.user.id) as any[];
+    const candidates: any[] = [];
+    for (let i = 0; i < threads.length; i++) {
+      for (let j = i+1; j < threads.length; j++) {
+        const a = (threads[i] as any).title || '';
+        const b = (threads[j] as any).title || '';
+        const wordsA = new Set(a.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3));
+        const wordsB = new Set(b.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3));
+        const shared = [...wordsA].filter((w: string) => wordsB.has(w)).length;
+        const similarity = shared / Math.max(1, Math.max(wordsA.size, wordsB.size));
+        if (similarity > 0.4) candidates.push({ threadA: threads[i], threadB: threads[j], similarity: Math.round(similarity * 100) });
+      }
+    }
+    candidates.sort((a: any, b: any) => b.similarity - a.similarity);
+    res.json({ candidates: candidates.slice(0, 10) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Conversation depth analysis ────────────────────────────────────────────────
+// GET /api/threads/:id/depth
+app.get('/api/threads/:id/depth', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT role, content FROM messages WHERE thread_id=? ORDER BY created_at ASC").all(threadId) as any[];
+    let turns = 0; let prevRole = '';
+    for (const m of msgs) { if ((m as any).role !== prevRole) { turns++; prevRole = (m as any).role; } }
+    const userMsgs = msgs.filter((m: any) => m.role === 'user');
+    const avgUserLen = userMsgs.reduce((s: number, m: any) => s + (m.content||'').length, 0) / Math.max(1, userMsgs.length);
+    const depth = turns >= 10 ? 'deep' : turns >= 4 ? 'moderate' : 'shallow';
+    const followUpRate = turns > 2 ? Math.round(((turns - 1) / Math.max(1, userMsgs.length)) * 100) : 0;
+    res.json({ turns, depth, avgUserMessageLength: Math.round(avgUserLen), followUpRate });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ── Thread reading time estimator ─────────────────────────────────────────────
+// GET /api/threads/:id/reading-time
+app.get('/api/threads/:id/reading-time', requireAuth, (req: any, res: any) => {
+  try {
+    const threadId = req.params.id;
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, req.user.id);
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT content FROM messages WHERE thread_id=?").all(threadId) as any[];
+    const totalChars = msgs.reduce((s: number, m: any) => s + (m.content||'').length, 0);
+    const wordCount = Math.round(totalChars / 5);
+    const readingMinutes = Math.max(1, Math.round(wordCount / 200));
+    const speakingMinutes = Math.max(1, Math.round(wordCount / 130));
+    res.json({ wordCount, readingMinutes, speakingMinutes, msgCount: msgs.length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Top threads by length ──────────────────────────────────────────────────────
+// GET /api/stats/top-threads
+app.get('/api/stats/top-threads', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare("SELECT t.id, t.title, t.model, t.created_at, COUNT(m.id) as msg_count, SUM(LENGTH(m.content)) as total_chars FROM threads t LEFT JOIN messages m ON m.thread_id=t.id WHERE t.user_id=? AND (t.archived IS NULL OR t.archived=0) GROUP BY t.id ORDER BY msg_count DESC LIMIT 10").all(req.user.id) as any[];
+    res.json({ threads: rows.map((r: any) => ({ ...r, wordCount: Math.round((r.total_chars||0)/5), readingMinutes: Math.max(1, Math.round((r.total_chars||0)/1000)) })) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Model usage breakdown ──────────────────────────────────────────────────────
+// GET /api/stats/model-breakdown
+app.get('/api/stats/model-breakdown', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare("SELECT m.model, COUNT(*) as count FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? AND m.role='assistant' AND m.model IS NOT NULL GROUP BY m.model ORDER BY count DESC").all(req.user.id) as any[];
+    const total = rows.reduce((s: number, r: any) => s + r.count, 0);
+    res.json({ models: rows.map((r: any) => ({ model: r.model, count: r.count, pct: Math.round((r.count/Math.max(1,total))*100) })), total });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── User streaks (daily) ───────────────────────────────────────────────────────
+// GET /api/stats/streak
+app.get('/api/stats/streak', requireAuth, (req: any, res: any) => {
+  try {
+    const days = db.prepare("SELECT DISTINCT strftime('%Y-%m-%d', m.created_at) as day FROM messages m JOIN threads t ON t.id=m.thread_id WHERE t.user_id=? ORDER BY day DESC LIMIT 90").all(req.user.id) as any[];
+    let streak = 0; let longest = 0; let current = 0;
+    const today = new Date(); today.setHours(0,0,0,0);
+    let expected = new Date(today);
+    for (const row of days) {
+      const d = new Date((row as any).day + 'T00:00:00Z');
+      const diff = Math.round((expected.getTime() - d.getTime()) / 86400000);
+      if (diff === 0 || diff === 1) { current++; expected = d; if (current > longest) longest = current; }
+      else break;
+    }
+    streak = current;
+    res.json({ currentStreak: streak, longestStreak: longest, activeDays: days.length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Session time tracker ───────────────────────────────────────────────────────
+// GET /api/stats/session-time
+app.get('/api/stats/session-time', requireAuth, (req: any, res: any) => {
+  try {
+    const sessions = db.prepare("SELECT SUM(duration_minutes) as total, COUNT(*) as count, AVG(duration_minutes) as avg FROM focus_sessions WHERE user_id=?").get(req.user.id) as any;
+    const last7 = db.prepare("SELECT strftime('%Y-%m-%d',started_at) as day, SUM(duration_minutes) as mins FROM focus_sessions WHERE user_id=? AND started_at >= date('now','-7 days') GROUP BY day ORDER BY day").all(req.user.id) as any[];
+    res.json({ totalMinutes: sessions?.total || 0, sessionCount: sessions?.count || 0, avgMinutes: Math.round(sessions?.avg || 0), last7Days: last7 });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Knowledge graph (entities from memory) ────────────────────────────────────
+// GET /api/brain/knowledge-graph
+app.get('/api/brain/knowledge-graph', requireAuth, (req: any, res: any) => {
+  try {
+    let memories: any[] = [];
+    try { memories = db.prepare("SELECT content, category FROM forge_memory WHERE user_id=? LIMIT 50").all(req.user.id) as any[]; } catch {}
+    const nodes: any[] = [];
+    const edges: any[] = [];
+    const cats = new Set<string>();
+    for (const m of memories) {
+      if (m.category) cats.add(m.category);
+      const words = (m.content||'').match(/\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)*/g) || [];
+      for (const w of words.slice(0,3)) {
+        if (!nodes.find((n: any) => n.id === w)) nodes.push({ id: w, category: m.category || 'general', label: w });
+      }
+    }
+    for (let i = 0; i < nodes.length && i < 5; i++) {
+      for (let j = i+1; j < nodes.length && j < 5; j++) {
+        edges.push({ from: nodes[i].id, to: nodes[j].id });
+      }
+    }
+    res.json({ nodes: nodes.slice(0,20), edges: edges.slice(0,30), categories: [...cats] });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Thread timeline (all threads sorted by date) ───────────────────────────────
+// GET /api/threads/timeline
+app.get('/api/threads/timeline', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare("SELECT t.id, t.title, t.model, t.created_at, t.updated_at, COUNT(m.id) as msg_count FROM threads t LEFT JOIN messages m ON m.thread_id=t.id WHERE t.user_id=? AND (t.archived IS NULL OR t.archived=0) GROUP BY t.id ORDER BY t.created_at DESC LIMIT 50").all(req.user.id) as any[];
+    res.json({ timeline: rows });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

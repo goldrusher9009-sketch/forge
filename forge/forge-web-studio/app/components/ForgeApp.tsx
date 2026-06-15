@@ -635,6 +635,37 @@ export default function ForgeApp() {
   const [glossary, setGlossary] = useState<any[]>([]);
   const [showGlossary, setShowGlossary] = useState(false);
   const [dailyDigest, setDailyDigest] = useState<any>(null);
+  const [similarThreads, setSimilarThreads] = useState<any[]>([]);
+  const [showSimilar, setShowSimilar] = useState(false);
+  const [promptTemplates, setPromptTemplates] = useState<any[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [critiqueScore, setCritiqueScore] = useState<any>(null);
+  const [showCritique, setShowCritique] = useState(false);
+  const [writingAnalysis, setWritingAnalysis] = useState<any>(null);
+  const [showWritingCoach, setShowWritingCoach] = useState(false);
+  const [focusSessionId, setFocusSessionId] = useState<number|null>(null);
+  const [focusStartTime, setFocusStartTime] = useState<number|null>(null);
+  const [focusElapsed, setFocusElapsed] = useState(0);
+  const [showFocusMode, setShowFocusMode] = useState(false);
+  const [archivedThreads, setArchivedThreads] = useState<any[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
+  const [quickStats, setQuickStats] = useState<any>(null);
+  const [wordCloudData, setWordCloudData] = useState<any[]>([]);
+  const [showWordCloud, setShowWordCloud] = useState(false);
+  const [promptHistory, setPromptHistory] = useState<any[]>([]);
+  const [showPromptHistory, setShowPromptHistory] = useState(false);
+  const [workspaceHealth, setWorkspaceHealth] = useState<any>(null);
+  const [sentimentTimeline, setSentimentTimeline] = useState<any>(null);
+  const [showSentiment, setShowSentiment] = useState(false);
+  const [complexityData, setComplexityData] = useState<any>(null);
+  const [showComplexity, setShowComplexity] = useState(false);
+  const [depthData, setDepthData] = useState<any>(null);
+  const [streakData, setStreakData] = useState<any>(null);
+  const [topThreads, setTopThreads] = useState<any[]>([]);
+  const [modelBreakdownGlobal, setModelBreakdownGlobal] = useState<any[]>([]);
+  const [showGlobalStats, setShowGlobalStats] = useState(false);
+  const [brainCodeBlocks, setBrainCodeBlocks] = useState<any[]>([]);
+  const [showCodeBlocks, setShowCodeBlocks] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<any[]>([]);
   const [showPinned, setShowPinned] = useState(true);
   const [tldr, setTldr] = useState<string[]|null>(null);
@@ -2357,6 +2388,183 @@ export default function ForgeApp() {
     }
   };
 
+  async function analyzeWriting(text: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/writing/analyze', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ text }) });
+      if (r.ok) { setWritingAnalysis(await r.json()); setShowWritingCoach(true); }
+    } catch {}
+  }
+
+  async function startFocusSession() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/focus/start', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ threadId: activeThread ? String(activeThread.id) : null }) });
+      if (r.ok) { const d = await r.json(); setFocusSessionId(d.sessionId); setFocusStartTime(Date.now()); setFocusElapsed(0); setShowFocusMode(true); }
+    } catch {}
+  }
+
+  async function endFocusSession() {
+    if (!focusSessionId) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch('/api/focus/end', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ sessionId: focusSessionId }) });
+    } catch {}
+    setFocusSessionId(null); setFocusStartTime(null); setShowFocusMode(false);
+  }
+
+  async function loadArchivedThreads() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/threads/archived', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setArchivedThreads(d.threads || []); }
+    } catch {}
+  }
+
+  async function toggleArchiveThread(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/archive`, { method:'POST', headers:{ Authorization:`Bearer ${tok}` } });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.archived) setThreads((prev: any[]) => prev.filter((t: any) => String(t.id) !== threadId));
+        else loadArchivedThreads();
+      }
+    } catch {}
+  }
+
+  async function loadQuickStats() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/stats/quick', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setQuickStats(await r.json());
+    } catch {}
+  }
+
+  async function togglePinThread(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/pin`, { method: 'POST', headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { await loadThreads(); }
+    } catch {}
+  }
+
+  async function duplicateThread(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/duplicate`, { method: 'POST', headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { await loadThreads(); }
+    } catch {}
+  }
+
+  async function loadWordCloud(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/wordcloud`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setWordCloudData(d.words || []); setShowWordCloud(true); }
+    } catch {}
+  }
+
+  async function loadPromptHistory() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/prompts/history', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setPromptHistory(d.prompts || []); setShowPromptHistory(true); }
+    } catch {}
+  }
+
+  async function exportThreadJson(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/export/json`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) {
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `thread-${threadId}.json`; a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {}
+  }
+
+  async function loadWorkspaceHealth() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/workspace/health', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setWorkspaceHealth(await r.json());
+    } catch {}
+  }
+
+  async function loadSentimentTimeline(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/sentiment-timeline`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { setSentimentTimeline(await r.json()); setShowSentiment(true); }
+    } catch {}
+  }
+
+  async function loadComplexity(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/complexity`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { setComplexityData(await r.json()); setShowComplexity(true); }
+    } catch {}
+  }
+
+  async function loadDepth(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/depth`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setDepthData(await r.json());
+    } catch {}
+  }
+
+  async function loadBrainCodeBlocks() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/brain/codeblocks', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setBrainCodeBlocks(d.blocks || []); setShowCodeBlocks(true); }
+    } catch {}
+  }
+
+  async function loadGlobalStats() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const [sR, tR, mR] = await Promise.all([
+        fetch('/api/stats/streak', { headers: { Authorization: `Bearer ${tok}` } }),
+        fetch('/api/stats/top-threads', { headers: { Authorization: `Bearer ${tok}` } }),
+        fetch('/api/stats/model-breakdown', { headers: { Authorization: `Bearer ${tok}` } }),
+      ]);
+      if (sR.ok) setStreakData(await sR.json());
+      if (tR.ok) { const d = await tR.json(); setTopThreads(d.threads || []); }
+      if (mR.ok) { const d = await mR.json(); setModelBreakdownGlobal(d.models || []); }
+      setShowGlobalStats(true);
+    } catch {}
+  }
+
+  async function loadSimilarThreads(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/similar`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setSimilarThreads(d.similar || []); }
+    } catch {}
+  }
+
+  async function loadPromptTemplates() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/prompt-templates', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setPromptTemplates(d.templates || []); }
+    } catch {}
+  }
+
+  async function critiquePrompt(text: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/prompts/critique', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ text }) });
+      if (r.ok) { const d = await r.json(); setCritiqueScore(d); setShowCritique(true); }
+    } catch {}
+  }
+
   async function loadReplay(threadId: string) {
     const tok = localStorage.getItem('forge_token');
     try {
@@ -2438,6 +2646,7 @@ export default function ForgeApp() {
       loadTokenBreakdown(String(t.id));
       loadThreadStatsExt(String(t.id));
       loadReplay(String(t.id));
+      loadSimilarThreads(String(t.id));
       setTimeout(() => triggerSmartRename(String(t.id)), 3000);
     const _tok = localStorage.getItem('forge_token');
     fetch('/api/threads/' + t.id + '/mood', { headers: { Authorization: 'Bearer ' + _tok } })
@@ -3176,6 +3385,53 @@ export default function ForgeApp() {
                 onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.boxShadow='0 2px 10px rgba(255,31,53,0.25)';(e.currentTarget as HTMLButtonElement).style.transform='none';}}>
                 <span style={{ fontSize:14 }}>📝</span>New conversation
               </button>
+              <div style={{ display:'flex', gap:4, marginTop:6 }}>
+                <button onClick={() => { setShowArchived(v => !v); if (!archivedThreads.length) loadArchivedThreads(); }} style={{ flex:1, padding:'7px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:'var(--fg-radius-btn)', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600, display:'flex', alignItems:'center', gap:5 }}>
+                  <span>📦</span>{showArchived ? 'Hide' : 'Archived'}
+                </button>
+                <button onClick={() => loadPromptHistory()} title="Prompt history" style={{ padding:'7px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:'var(--fg-radius-btn)', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600 }}>🕐</button>
+                <button onClick={() => loadWorkspaceHealth()} title="Workspace health" style={{ padding:'7px 10px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:'var(--fg-radius-btn)', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight:600 }}>🩺</button>
+              </div>
+              {showPromptHistory && promptHistory.length > 0 && (
+                <div style={{ marginTop:8, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, padding:8, maxHeight:200, overflowY:'auto' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                    <span style={{ fontSize:11, fontWeight:700, color:'var(--fg-text)' }}>🕐 Recent prompts</span>
+                    <button onClick={() => setShowPromptHistory(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>×</button>
+                  </div>
+                  {promptHistory.slice(0,10).map((p:any) => (
+                    <div key={p.id} onClick={() => { setInput(p.content); setShowPromptHistory(false); }} style={{ fontSize:11, color:'var(--fg-text3)', padding:'4px 6px', borderRadius:4, cursor:'pointer', marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}
+                      onMouseEnter={e=>(e.currentTarget as HTMLDivElement).style.background='var(--fg-bg4)'}
+                      onMouseLeave={e=>(e.currentTarget as HTMLDivElement).style.background='transparent'}>
+                      {p.preview}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {workspaceHealth && (
+                <div style={{ marginTop:8, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, padding:10 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+                    <span style={{ fontSize:11, fontWeight:700, color:'var(--fg-text)' }}>🩺 Workspace Health</span>
+                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                      <span style={{ fontSize:14, fontWeight:700, color: workspaceHealth.score>=80 ? '#4ade80' : workspaceHealth.score>=50 ? '#facc15' : '#f87171' }}>{workspaceHealth.score}</span>
+                      <button onClick={() => setWorkspaceHealth(null)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>×</button>
+                    </div>
+                  </div>
+                  {workspaceHealth.issues.length === 0 ? <p style={{ fontSize:11, color:'#4ade80', margin:0 }}>All good!</p> : workspaceHealth.issues.map((iss:string,i:number) => (
+                    <p key={i} style={{ fontSize:10, color:'#facc15', margin:'2px 0' }}>⚠ {iss}</p>
+                  ))}
+                </div>
+              )}
+              {showArchived && (
+                <div style={{ marginTop:8 }}>
+                  {archivedThreads.length === 0 && <p style={{ fontSize:12, color:'var(--fg-text3)', padding:'6px 8px', margin:0 }}>No archived threads</p>}
+                  {archivedThreads.map((t: any) => (
+                    <div key={t.id} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 8px', borderRadius:6, marginBottom:2, opacity:0.7 }}>
+                      <span style={{ flex:1, fontSize:12, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{t.title}</span>
+                      <button onClick={() => toggleArchiveThread(String(t.id))} style={{ background:'none', border:'none', color:'var(--fg-accent)', cursor:'pointer', fontSize:10, padding:'2px 4px' }}>unarchive</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {pinnedProjects.length > 0 && (
@@ -3404,10 +3660,91 @@ export default function ForgeApp() {
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>⚡</button>
                   <button onClick={() => setShowReplay(v => !v)} title="Thread replay / key moments"
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🎬</button>
+                  <button onClick={() => setShowSimilar(v => !v)} title="Similar threads"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🔗</button>
+                  <button onClick={() => { setShowTemplates(v => !v); if (!promptTemplates.length) loadPromptTemplates(); }} title="Prompt templates"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>📋</button>
                   <button onClick={() => { setShowGlossary(v => !v); if (!glossary.length) loadGlossary(); }} title="Workspace glossary"
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>📖</button>
                   <button onClick={() => setShowThreadStats(v => !v)} title="Thread stats"
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>📊</button>
+                  <button onClick={() => { analyzeWriting(messages.filter((m:any)=>m.role==='assistant').slice(-1)[0]?.content || ''); }} title="Writing coach — analyze last AI reply"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>✍️</button>
+                  <button onClick={() => { if (focusSessionId) endFocusSession(); else startFocusSession(); }} title={focusSessionId ? 'End focus session' : 'Start focus session'}
+                    style={{ padding:'4px 8px', background: focusSessionId ? 'rgba(239,68,68,0.2)' : 'var(--fg-bg4)', border:`1px solid ${focusSessionId ? 'rgba(239,68,68,0.5)' : 'var(--fg-border2)'}`, borderRadius:8, color: focusSessionId ? '#f87171' : 'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>
+                    {focusSessionId ? '⏹ Focus' : '🎯 Focus'}
+                  </button>
+                  <button onClick={() => activeThread && loadWordCloud(String(activeThread.id))} title="Word cloud — top words in this thread"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>☁️</button>
+                  <button onClick={() => activeThread && exportThreadJson(String(activeThread.id))} title="Export thread as JSON"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>⬇️</button>
+                  <button onClick={() => activeThread && togglePinThread(String(activeThread.id))} title="Pin / unpin thread"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>📌</button>
+                  <button onClick={() => activeThread && duplicateThread(String(activeThread.id))} title="Duplicate this thread"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>⧉</button>
+                  <button onClick={() => activeThread && loadSentimentTimeline(String(activeThread.id))} title="Sentiment timeline"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>😊</button>
+                  <button onClick={() => activeThread && loadComplexity(String(activeThread.id))} title="Complexity score"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🧮</button>
+                  {showSentiment && sentimentTimeline && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:300, maxHeight:300, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>😊 Sentiment — {sentimentTimeline.overall}</span>
+                        <button onClick={() => setShowSentiment(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      <div style={{ display:'flex', gap:3, flexWrap:'wrap' }}>
+                        {(sentimentTimeline.timeline || []).map((t: any, i: number) => (
+                          <div key={i} title={`${t.role}: ${t.sentiment}`} style={{ width:14, height:14, borderRadius:3, background: t.sentiment==='positive' ? '#4ade80' : t.sentiment==='negative' ? '#f87171' : 'var(--fg-border2)' }} />
+                        ))}
+                      </div>
+                      <p style={{ margin:'8px 0 0', fontSize:11, color:'var(--fg-text3)' }}>Avg score: {sentimentTimeline.avgScore}</p>
+                    </div>
+                  )}
+                  {showComplexity && complexityData && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:240, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>🧮 Complexity</span>
+                        <button onClick={() => setShowComplexity(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      <div style={{ fontSize:28, fontWeight:800, color:'var(--fg-accent)', marginBottom:6 }}>{complexityData.score}</div>
+                      {complexityData.breakdown && Object.entries(complexityData.breakdown).map(([k,v]:any) => (
+                        <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--fg-text3)', marginBottom:2 }}>
+                          <span>{k.replace(/([A-Z])/g,' $1').trim()}</span><span style={{ color:'var(--fg-text)' }}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {showWordCloud && wordCloudData.length > 0 && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, width:320, maxHeight:340, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>☁️ Word Cloud</span>
+                        <button onClick={() => setShowWordCloud(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                        {wordCloudData.map((w:any, i:number) => (
+                          <span key={i} style={{ fontSize: Math.max(10, Math.min(20, 10 + Math.round(w.count/3))), color:`hsl(${(i*37)%360},60%,65%)`, fontWeight:600 }}>{w.text}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {showWritingCoach && writingAnalysis && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:300, maxHeight:360, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>✍️ Writing Coach</span>
+                        <button onClick={() => setShowWritingCoach(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                        <div style={{ width:48, height:48, borderRadius:'50%', background: writingAnalysis.score >= 80 ? 'rgba(34,197,94,0.2)' : writingAnalysis.score >= 60 ? 'rgba(234,179,8,0.2)' : 'rgba(239,68,68,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color: writingAnalysis.score >= 80 ? '#4ade80' : writingAnalysis.score >= 60 ? '#facc15' : '#f87171' }}>{writingAnalysis.score}</div>
+                        <div>
+                          <div style={{ fontSize:12, fontWeight:600, color:'var(--fg-text)' }}>{writingAnalysis.score >= 80 ? 'Strong writing' : writingAnalysis.score >= 60 ? 'Good, with room' : 'Needs work'}</div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{writingAnalysis.metrics?.sentences} sentences · {writingAnalysis.metrics?.words} words</div>
+                        </div>
+                      </div>
+                      {writingAnalysis.feedback?.map((f: string, i: number) => (
+                        <div key={i} style={{ padding:'6px 8px', background:'var(--fg-bg2)', borderRadius:6, marginBottom:4, fontSize:12, color:'var(--fg-text2)', borderLeft:'3px solid var(--fg-accent)' }}>{f}</div>
+                      ))}
+                    </div>
+                  )}
                   {showTokenBreakdown && (
                     <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:280, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
@@ -3480,6 +3817,45 @@ export default function ForgeApp() {
                       {(!replayData.keyMoments || replayData.keyMoments.length === 0) && (
                         <p style={{ fontSize:12, color:'var(--fg-text3)', margin:0 }}>No key moments yet — rate or bookmark messages to highlight them.</p>
                       )}
+                    </div>
+                  )}
+                  {showSimilar && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:280, maxHeight:320, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>🔗 Similar Threads</span>
+                        <button onClick={() => setShowSimilar(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {similarThreads.length > 0 ? similarThreads.map((t: any) => (
+                        <div key={t.id} style={{ padding:'7px 8px', background:'var(--fg-bg2)', borderRadius:6, marginBottom:4, cursor:'pointer', border:'1px solid var(--fg-border)' }}
+                          onClick={() => { const thread = threads.find((th: any) => String(th.id) === String(t.id)); if (thread) { selectThread(thread); setShowSimilar(false); } }}>
+                          <div style={{ fontSize:12, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{t.title}</div>
+                          <div style={{ fontSize:10, color:'var(--fg-text3)', marginTop:2 }}>{t.score} matching topics</div>
+                        </div>
+                      )) : <p style={{ fontSize:12, color:'var(--fg-text3)', margin:0 }}>No similar threads found yet</p>}
+                    </div>
+                  )}
+                  {showTemplates && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:300, maxHeight:380, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-text)' }}>📋 Prompt Templates</span>
+                        <button onClick={() => setShowTemplates(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {['coding','learning','writing','data','general'].map(cat => {
+                        const items = promptTemplates.filter(t => t.category === cat);
+                        if (!items.length) return null;
+                        return (
+                          <div key={cat} style={{ marginBottom:10 }}>
+                            <div style={{ fontSize:10, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:4 }}>{cat}</div>
+                            {items.map((t: any) => (
+                              <div key={t.id} style={{ padding:'6px 8px', background:'var(--fg-bg2)', borderRadius:6, marginBottom:3, cursor:'pointer', border:'1px solid var(--fg-border)' }}
+                                onClick={() => { setInput(t.body); setShowTemplates(false); }}>
+                                <div style={{ fontSize:12, color:'var(--fg-text2)', fontWeight:500 }}>{t.title}</div>
+                                {t.builtin && <span style={{ fontSize:9, color:'var(--fg-text3)' }}>built-in</span>}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                   {showGlossary && (
@@ -8421,54 +8797,100 @@ export default function ForgeApp() {
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Forge Brain</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Everything Forge knows about you — categorised, weighted, and evolving.</p>
                 </div>
-                <button onClick={() => { setBrainData(null); setBrainLoading(true); setBrainError(''); fetch('/api/brain/summary',{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>{setBrainData(d);setBrainLoading(false);}).catch(()=>{setBrainError('Failed.');setBrainLoading(false);}); }} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻ Refresh</button>
+                <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
+                  <button onClick={() => loadBrainCodeBlocks()} title="Recent code blocks" style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>{'</>'}</button>
+                  <button onClick={() => loadGlobalStats()} title="Usage stats: streak, top threads, models" style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>📈</button>
+                  <button onClick={() => { setBrainData(null); setBrainLoading(true); setBrainError(''); fetch('/api/brain/summary',{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>{setBrainData(d);setBrainLoading(false);}).catch(()=>{setBrainError('Failed.');setBrainLoading(false);}); }} style={{ padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>&#x21BB; Refresh</button>
+                </div>
               </div>
-              {brainLoading && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading…</div>}
+              {brainLoading && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading&#8230;</div>}
               {brainError && <div style={{ textAlign:'center', padding:40, color:'#f87171', fontSize:13 }}>{brainError}</div>}
+              {showCodeBlocks && brainCodeBlocks.length > 0 && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, marginBottom:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                    <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Recent Code Blocks</span>
+                    <button onClick={() => setShowCodeBlocks(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>x</button>
+                  </div>
+                  {brainCodeBlocks.map((b: any, i: number) => (
+                    <div key={i} style={{ background:'var(--fg-bg3)', borderRadius:8, padding:10, marginBottom:8, cursor:'pointer' }} onClick={() => setActiveThread(threads.find((t: any) => t.id === b.thread_id) || null)}>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                        <span style={{ fontSize:10, color:'var(--fg-accent)', fontWeight:600 }}>{b.lang || 'code'}</span>
+                        <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{b.thread_title}</span>
+                      </div>
+                      <pre style={{ margin:0, fontSize:10, color:'var(--fg-text2)', whiteSpace:'pre-wrap', overflow:'hidden', maxHeight:60 }}>{b.preview}</pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showGlobalStats && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, marginBottom:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                    <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>📈 Usage Stats</span>
+                    <button onClick={() => setShowGlobalStats(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                  </div>
+                  {streakData && (
+                    <div style={{ display:'flex', gap:16, marginBottom:12 }}>
+                      <div style={{ textAlign:'center' }}>
+                        <div style={{ fontSize:22, fontWeight:800, color:'var(--fg-accent)' }}>{streakData.currentStreak}</div>
+                        <div style={{ fontSize:10, color:'var(--fg-text3)' }}>day streak</div>
+                      </div>
+                      <div style={{ textAlign:'center' }}>
+                        <div style={{ fontSize:22, fontWeight:800, color:'#6366f1' }}>{streakData.longestStreak}</div>
+                        <div style={{ fontSize:10, color:'var(--fg-text3)' }}>longest</div>
+                      </div>
+                      <div style={{ textAlign:'center' }}>
+                        <div style={{ fontSize:22, fontWeight:800, color:'#4ade80' }}>{streakData.activeDays}</div>
+                        <div style={{ fontSize:10, color:'var(--fg-text3)' }}>active days</div>
+                      </div>
+                    </div>
+                  )}
+                  {modelBreakdownGlobal.length > 0 && (
+                    <div style={{ marginBottom:12 }}>
+                      <div style={{ fontSize:11, fontWeight:600, color:'var(--fg-text3)', marginBottom:6 }}>Model usage</div>
+                      {modelBreakdownGlobal.slice(0,5).map((m: any) => (
+                        <div key={m.model} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                          <div style={{ fontSize:11, color:'var(--fg-text2)', width:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.model}</div>
+                          <div style={{ flex:1, height:6, background:'var(--fg-bg4)', borderRadius:3, overflow:'hidden' }}>
+                            <div style={{ width:`${m.pct}%`, height:'100%', background:'var(--fg-accent)', borderRadius:3 }} />
+                          </div>
+                          <div style={{ fontSize:11, color:'var(--fg-text3)', width:32, textAlign:'right' }}>{m.pct}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {topThreads.length > 0 && (
+                    <div>
+                      <div style={{ fontSize:11, fontWeight:600, color:'var(--fg-text3)', marginBottom:6 }}>Longest threads</div>
+                      {topThreads.slice(0,5).map((t: any) => (
+                        <div key={t.id} style={{ display:'flex', justifyContent:'space-between', fontSize:11, padding:'3px 0', borderBottom:'1px solid var(--fg-border)' }}>
+                          <span style={{ color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:200 }}>{t.title || 'Untitled'}</span>
+                          <span style={{ color:'var(--fg-text3)', flexShrink:0 }}>{t.msg_count} msgs</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {brainData && !brainLoading && (() => {
                 const bd = brainData.summary || brainData;
                 const cats: Record<string,any[]> = bd.by_category || {};
                 const top: any[] = bd.top_insights || [];
                 return (
                   <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-                    {/* Totals */}
-                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:12 }}>
-                      {[
-                        { label:'Total Memories', value: bd.total ?? '--', color:'var(--fg-orange)' },
-                        { label:'Avg Strength', value: bd.avg_strength != null ? Number(bd.avg_strength).toFixed(2) : '--', color:'#6366f1' },
-                        { label:'Categories', value: Object.keys(cats).length, color:'#22c55e' },
-                      ].map(s => (
-                        <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, textAlign:'center' }}>
-                          <div style={{ fontSize:26, fontWeight:800, color:s.color }}>{String(s.value)}</div>
-                          <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:4 }}>{s.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Headline */}
-                    {bd.headline && (
-                      <div style={{ background:'rgba(99,102,241,0.08)', border:'1px solid rgba(99,102,241,0.25)', borderRadius:12, padding:16 }}>
-                        <div style={{ fontSize:14, color:'var(--fg-text)', fontStyle:'italic' }}>"{bd.headline}"</div>
-                      </div>
-                    )}
-                    {/* Top Insights */}
                     {top.length > 0 && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>⭐ Top Insights</div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                          {top.map((m:any, i:number) => (
-                            <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start', padding:'10px 12px', background:'var(--fg-bg3)', borderRadius:8 }}>
-                              <span style={{ fontSize:11, fontWeight:700, color:'var(--fg-orange)', flexShrink:0, marginTop:1 }}>{m.category || 'general'}</span>
-                              <span style={{ fontSize:13, color:'var(--fg-text2)', flex:1 }}>{m.content || m.key}</span>
-                              <span style={{ fontSize:11, color:'var(--fg-text3)', flexShrink:0 }}>{m.strength != null ? Number(m.strength).toFixed(1) : ''}</span>
-                            </div>
-                          ))}
-                        </div>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>Top Insights</div>
+                        {top.slice(0,8).map((ins: any, i: number) => (
+                          <div key={i} style={{ padding:'8px 0', borderBottom: i < Math.min(top.length,8)-1 ? '1px solid var(--fg-border)' : 'none' }}>
+                            <div style={{ fontSize:13, color:'var(--fg-text)', fontWeight:500 }}>{ins.content || ins}</div>
+                            {ins.category && <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2, textTransform:'capitalize' }}>{ins.category}</div>}
+                          </div>
+                        ))}
                       </div>
                     )}
-                    {/* By Category */}
                     {Object.keys(cats).length > 0 && (
                       <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>📂 By Category</div>
+                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>By Category</div>
                         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:8 }}>
                           {Object.entries(cats).map(([cat, items]:any) => (
                             <div key={cat} style={{ background:'var(--fg-bg3)', borderRadius:8, padding:'10px 14px' }}>
@@ -8486,113 +8908,6 @@ export default function ForgeApp() {
             </div>
           </div>
         )}
-
-        {/* ── Analytics Panel ──────────────────────────────────────────────────── */}
-        {mainTab === 'analytics' && (() => {
-          const stats = analyticsData?.stats || {};
-          const daily = analyticsData?.daily || [];
-          const models = analyticsData?.models || [];
-          const heat = heatmapData;
-          const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-          const maxHeat = heat ? Math.max(1, ...heat.flat()) : 1;
-          const maxDaily = daily.length ? Math.max(1, ...daily.map((d:any) => d.messages || 0)) : 1;
-          const maxModel = models.length ? Math.max(1, ...models.map((m:any) => m.count || 0)) : 1;
-          return (
-            <div style={{ flex:1, overflowY:'auto', padding:32, background:'var(--fg-bg)' }}>
-              <div style={{ maxWidth:1000, margin:'0 auto' }}>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:28 }}>
-                  <div>
-                    <h1 style={{ margin:'0 0 4px', fontSize:26, fontWeight:900, color:'var(--fg-text)', fontFamily:'var(--fg-font-display)' }}>📊 Analytics</h1>
-                    <p style={{ margin:0, color:'var(--fg-text3)', fontSize:14 }}>Your usage across threads, messages, tokens, and time.</p>
-                  </div>
-                  <div style={{ display:'flex', gap:6 }}>
-                    {(['7','30','90'] as const).map(p => (
-                      <button key={p} onClick={() => { setAnalyticsPeriod(p); setAnalyticsData(null); }}
-                        style={{ padding:'6px 14px', background: analyticsPeriod===p ? 'var(--fg-orange)' : 'var(--fg-bg3)', border:'1px solid '+(analyticsPeriod===p ? 'var(--fg-orange)' : 'var(--fg-border)'), borderRadius:8, color: analyticsPeriod===p ? '#fff' : 'var(--fg-text2)', fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                        {p}d
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {analyticsLoading ? (
-                  <div style={{ textAlign:'center', padding:80, color:'var(--fg-text3)' }}>Loading analytics…</div>
-                ) : (
-                  <div>
-                    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
-                      {[
-                        { label:'Threads', value: stats.threads ?? '—', icon:'🧵' },
-                        { label:'Messages', value: stats.messages ?? '—', icon:'💬' },
-                        { label:'Tokens', value: stats.tokens ? (stats.tokens > 1000000 ? (stats.tokens/1000000).toFixed(1)+'M' : stats.tokens > 1000 ? (stats.tokens/1000).toFixed(0)+'K' : String(stats.tokens)) : '—', icon:'⚡' },
-                        { label:'Memories', value: stats.memories ?? '—', icon:'🧠' },
-                      ].map(({ label, value, icon }) => (
-                        <div key={label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:'18px 20px' }}>
-                          <div style={{ fontSize:22, marginBottom:6 }}>{icon}</div>
-                          <div style={{ fontSize:28, fontWeight:800, color:'var(--fg-text)', lineHeight:1 }}>{value}</div>
-                          <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:4 }}>{label}</div>
-                        </div>
-                      ))}
-                    </div>
-                    {daily.length > 0 && (
-                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
-                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:14 }}>📈 Daily Messages</div>
-                        <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:64 }}>
-                          {daily.slice(-30).map((d:any, i:number) => {
-                            const h = Math.max(3, Math.round((d.messages / maxDaily) * 64));
-                            return <div key={i} title={d.date+': '+d.messages+' msgs'} style={{ flex:1, height:h, background:'var(--fg-orange)', borderRadius:'2px 2px 0 0', opacity:0.8, minWidth:4 }} />;
-                          })}
-                        </div>
-                        <div style={{ display:'flex', justifyContent:'space-between', marginTop:6, fontSize:10, color:'var(--fg-text3)' }}>
-                          <span>{daily.slice(-30)[0]?.date || ''}</span>
-                          <span>{daily.slice(-1)[0]?.date || ''}</span>
-                        </div>
-                      </div>
-                    )}
-                    {models.length > 0 && (
-                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
-                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:14 }}>🤖 Top Models</div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                          {models.slice(0,6).map((m:any) => (
-                            <div key={m.model} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                              <div style={{ width:140, fontSize:12, color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flexShrink:0 }}>{m.model}</div>
-                              <div style={{ flex:1, background:'var(--fg-bg3)', borderRadius:4, height:12, overflow:'hidden' }}>
-                                <div style={{ width: Math.round((m.count/maxModel)*100)+'%', height:'100%', background:'#6366f1', borderRadius:4 }} />
-                              </div>
-                              <div style={{ width:36, fontSize:12, color:'var(--fg-text3)', textAlign:'right', flexShrink:0 }}>{m.count}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                      <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:14 }}>🔥 Activity Heatmap</div>
-                      {heat ? (
-                        <div>
-                          <div style={{ display:'flex', marginLeft:36, marginBottom:4, gap:2 }}>
-                            {Array.from({length:24}, (_,h) => (
-                              <div key={h} style={{ flex:1, fontSize:9, color:'var(--fg-text3)', textAlign:'center' }}>{h%6===0 ? h+'h' : ''}</div>
-                            ))}
-                          </div>
-                          {heat.map((row:number[], dow:number) => (
-                            <div key={dow} style={{ display:'flex', alignItems:'center', gap:2, marginBottom:3 }}>
-                              <div style={{ width:32, fontSize:11, color:'var(--fg-text3)', flexShrink:0 }}>{dayLabels[dow]}</div>
-                              {row.map((count:number, hour:number) => {
-                                const alpha = count === 0 ? 0.06 : 0.15 + (count/maxHeat)*0.85;
-                                return <div key={hour} title={dayLabels[dow]+' '+hour+':00 — '+count+' msgs'} style={{ flex:1, height:16, background:`rgba(249,115,22,${alpha})`, borderRadius:2 }} />;
-                              })}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ textAlign:'center', padding:32, color:'var(--fg-text3)', fontSize:13 }}>No heatmap data yet — start chatting!</div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
       </div>
     </div>
   );
