@@ -8,6 +8,7 @@ export default function Admin({ address, notify }) {
   const [ov, setOv] = useState(null);
   const [hl, setHl] = useState(null);
   const [acts, setActs] = useState([]);
+  const [audit, setAudit] = useState([]);
   function load() {
     api.pending().then(setPending).catch(()=>{});
     api.openBonds().then(setBonds).catch(()=>{});
@@ -15,6 +16,7 @@ export default function Admin({ address, notify }) {
     api.adminOverview().then(setOv).catch(()=>{});
     api.adminHealth().then(setHl).catch(()=>{});
     api.treasuryActions().then(setActs).catch(()=>{});
+    api.adminAudit().then(setAudit).catch(()=>{});
   }
   useEffect(()=>{ load(); },[]);
 
@@ -96,6 +98,17 @@ export default function Admin({ address, notify }) {
           </div>
         ))}
         {acts.length===0 && <div className="row"><span style={{opacity:.6}}>No treasury actions.</span></div>}
+      </div>
+
+      <div className="feed" style={{marginTop:14}}>
+        <div className="fh"><span>📋 AUDIT LOG</span><span>{audit.length}</span></div>
+        {audit.map((a)=>(
+          <div className="row" key={a.id}>
+            <span><b className="mono" style={{color:"var(--blue)"}}>{a.action.toUpperCase()}</b> {a.detail}</span>
+            <b className="mono" style={{fontSize:10,opacity:.5}}>{new Date(a.ts).toLocaleTimeString()}</b>
+          </div>
+        ))}
+        {audit.length===0 && <div className="row"><span style={{opacity:.6}}>No actions logged.</span></div>}
       </div>
     </div>
   );

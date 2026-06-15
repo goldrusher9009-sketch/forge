@@ -224,3 +224,11 @@ CREATE TABLE IF NOT EXISTS webhooks (
   active  INTEGER NOT NULL DEFAULT 1,
   ts      INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS audit_log (
+  id     INTEGER PRIMARY KEY AUTOINCREMENT,
+  actor  TEXT,
+  action TEXT NOT NULL,
+  detail TEXT,
+  ts     INTEGER NOT NULL
+);

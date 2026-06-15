@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "../api.js";
+import ConnectWallet from "./ConnectWallet.jsx";
 import { TOKEN, PRICE_USD } from "../brand.js";
 
 export default function Dashboard({ balance, miners, toggleMiner, insights, address, notify, onChange }) {
@@ -15,6 +16,7 @@ export default function Dashboard({ balance, miners, toggleMiner, insights, addr
         <div className="usd">≈ ${(balance*PRICE_USD).toFixed(2)} USD</div>
         <div className="sub"><span>PRICE <b>${PRICE_USD}</b></span><span>ROLES ACTIVE <b>{Object.values(miners).filter(Boolean).length}/4</b></span></div>
       </div>
+      <ConnectWallet notify={notify}/>
       {badges.length>0 && (
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
           {badges.map((b)=>(<span key={b.code} className="mono" style={{fontSize:11,fontWeight:700,border:"3px solid var(--ink)",padding:"6px 10px",background:"var(--paper2)"}}>{b.name}</span>))}

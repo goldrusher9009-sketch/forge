@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -10525,6 +10525,139 @@ export default function ForgeApp() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Timer tab */}
+        {mainTab === 'timer' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:680, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>⏱ Focus Timer</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:20, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:12, marginBottom:14, flexWrap:('wrap' as any) }}>
+                  <input value={timerLabel} onChange={e=>setTimerLabel(e.target.value)} placeholder="Session label..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <select value={timerDuration} onChange={e=>setTimerDuration(+e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
+                    {[5,10,15,20,25,30,45,60,90].map(m=><option key={m} value={m}>{m} min</option>)}
+                  </select>
+                </div>
+                {timerRunning ? (
+                  <div style={{ textAlign:'center', padding:'20px 0' }}>
+                    <div style={{ fontSize:48, fontWeight:800, color:'var(--fg-orange)', fontFamily:'monospace', marginBottom:12 }}>
+                      {String(Math.floor((timerDuration*60-timerElapsed)/60)).padStart(2,'0')}:{String((timerDuration*60-timerElapsed)%60).padStart(2,'0')}
+                    </div>
+                    <div style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:16 }}>🔥 {timerRunning.label}</div>
+                    <button onClick={()=>endTimer('')} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'#ef4444', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:14 }}>End Session</button>
+                  </div>
+                ) : (
+                  <button onClick={startTimer} style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>▶ Start Focus Session</button>
+                )}
+              </div>
+              <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, marginBottom:10 }}>Recent Sessions</h3>
+              {timerSessions.length === 0 ? (
+                <button onClick={loadTimers} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Sessions</button>
+              ) : timerSessions.map((t:any) => (
+                <div key={t.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 16px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <div>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{t.label}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:2 }}>{t.duration_min} min · {t.status} · {new Date(t.created_at).toLocaleDateString()}</div>
+                    {t.notes && <div style={{ color:'var(--fg-text2)', fontSize:11, marginTop:2 }}>{t.notes}</div>}
+                  </div>
+                  <span style={{ fontSize:18 }}>{t.status==='completed'?'✅':'🔄'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* System Prompt Templates tab */}
+        {mainTab === 'systpl' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📋 System Prompt Templates</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:20, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:10, marginBottom:10 }}>
+                  <input value={newTplName} onChange={e=>setNewTplName(e.target.value)} placeholder="Template name..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <select value={newTplCategory} onChange={e=>setNewTplCategory(e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
+                    {['general','coding','writing','analysis','creative','customer'].map(c=><option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <textarea value={newTplContent} onChange={e=>setNewTplContent(e.target.value)} placeholder="System prompt content..." rows={4} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+                <button onClick={addSysTpl} style={{ marginTop:10, padding:'9px 20px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Save Template</button>
+              </div>
+              {sysTpls.length === 0 ? (
+                <button onClick={loadSysTpls} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Templates</button>
+              ) : sysTpls.map((t:any) => (
+                <div key={t.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'14px 16px', border:`1px solid ${t.is_default?'var(--fg-orange)':'var(--fg-border)'}`, marginBottom:10 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+                    <div>
+                      <span style={{ color:'var(--fg-text)', fontWeight:600, fontSize:14 }}>{t.name}</span>
+                      <span style={{ marginLeft:8, fontSize:10, padding:'2px 7px', borderRadius:10, background:'var(--fg-bg4)', color:'var(--fg-text3)' }}>{t.category}</span>
+                      {t.is_default===1 && <span style={{ marginLeft:6, fontSize:10, padding:'2px 7px', borderRadius:10, background:'var(--fg-orange)', color:'#fff' }}>DEFAULT</span>}
+                    </div>
+                    <div style={{ display:'flex', gap:6 }}>
+                      <button onClick={()=>setDefaultTpl(t.id)} title="Set as default" style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>⭐</button>
+                      <button onClick={()=>deleteSysTpl(t.id)} style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'#ef4444', cursor:'pointer', fontSize:11 }}>✕</button>
+                    </div>
+                  </div>
+                  <div style={{ color:'var(--fg-text2)', fontSize:12, lineHeight:1.5, maxHeight:80, overflowY:'auto', whiteSpace:'pre-wrap' }}>{t.content}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Activity Heatmap tab */}
+        {mainTab === 'heatmap' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:780, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:8, fontSize:22, fontWeight:700 }}>🌡 Activity Heatmap</h2>
+              <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:20 }}>Message frequency by day of week × hour — last 30 days</p>
+              {activityHeatmap.length === 0 ? (
+                <button onClick={loadHeatmap} style={{ padding:'10px 20px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:14 }}>Load Heatmap</button>
+              ) : (() => {
+                const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                const maxCount = Math.max(...activityHeatmap.map((r:any)=>r.count), 1);
+                const grid: Record<string,number> = {};
+                activityHeatmap.forEach((r:any)=>{ grid[`${r.dow}-${r.hour}`]=r.count; });
+                return (
+                  <div style={{ overflowX:'auto' }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'40px repeat(24, 28px)', gap:3, minWidth:700 }}>
+                      <div/>
+                      {Array.from({length:24},(_,h)=><div key={h} style={{ color:'var(--fg-text3)', fontSize:9, textAlign:'center' }}>{h}</div>)}
+                      {days.map((day,dow)=>(
+                        <>
+                          <div key={`l${dow}`} style={{ color:'var(--fg-text2)', fontSize:11, display:'flex', alignItems:'center' }}>{day}</div>
+                          {Array.from({length:24},(_,h)=>{
+                            const v = grid[`${dow}-${String(h).padStart(2,'0')}`]||0;
+                            const alpha = v ? 0.15 + 0.85*(v/maxCount) : 0.06;
+                            return <div key={h} title={`${day} ${h}:00 — ${v} msgs`} style={{ width:24, height:22, borderRadius:4, background:`rgba(255,107,0,${alpha})`, cursor:'default' }}/>;
+                          })}
+                        </>
+                      ))}
+                    </div>
+                    <div style={{ marginTop:16, color:'var(--fg-text3)', fontSize:12 }}>Total activity points: {activityHeatmap.reduce((s:number,r:any)=>s+r.count,0)}</div>
+                  </div>
+                );
+              })()}
+
+              <div style={{ marginTop:32, background:'var(--fg-bg2)', borderRadius:14, padding:20, border:'1px solid var(--fg-border)' }}>
+                <h3 style={{ color:'var(--fg-text)', fontSize:16, fontWeight:700, marginBottom:14 }}>✍️ Writing Assistant</h3>
+                <div style={{ display:'flex', gap:10, marginBottom:10, flexWrap:('wrap' as any) }}>
+                  <select value={writingMode} onChange={e=>setWritingMode(e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
+                    {['improve','formal','casual','shorter','expand','bullets','fix'].map(m=><option key={m} value={m}>{m}</option>)}
+                  </select>
+                  <button onClick={runWritingAssist} style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Enhance ✨</button>
+                </div>
+                <textarea value={writingText} onChange={e=>setWritingText(e.target.value)} placeholder="Paste text to rewrite..." rows={5} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
+                {writingResult && (
+                  <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:14, border:'1px solid var(--fg-border)' }}>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginBottom:6 }}>Mode: <strong>{writingResult.mode}</strong> — send this to your AI:</div>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, lineHeight:1.6, whiteSpace:'pre-wrap', fontStyle:'italic' }}>{writingResult.instruction}</div>
+                    <button onClick={()=>{navigator.clipboard.writeText(writingResult.instruction);}} style={{ marginTop:10, padding:'6px 14px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg4)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>📋 Copy Prompt</button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

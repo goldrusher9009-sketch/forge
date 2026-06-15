@@ -120,3 +120,6 @@ export function award(address, code) {
 }
 export function badgeName(code){ return BADGES[code] || code; }
 
+export function audit(actor, action, detail = "") {
+  try { db.prepare("INSERT INTO audit_log (actor,action,detail,ts) VALUES (?,?,?,?)").run(actor || null, action, detail, Date.now()); } catch {}
+}

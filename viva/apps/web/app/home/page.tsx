@@ -44,6 +44,47 @@ function StatCard({ label, value, prefix = '', sub, color, trigger }: {
   )
 }
 
+const TICKER_TOKENS = [
+  { symbol: 'SOVV', price: 0.0089, change: +24.1 },
+  { symbol: 'LUNA', price: 0.0072, change: +18.3 },
+  { symbol: 'ZERO', price: 0.0061, change: +12.7 },
+  { symbol: 'AISH', price: 0.0048, change: +9.2 },
+  { symbol: 'NOAD', price: 0.0041, change: +7.8 },
+  { symbol: 'BIOP', price: 0.0028, change: +3.1 },
+  { symbol: 'ZKPR', price: 0.0022, change: -1.2 },
+  { symbol: 'MINT', price: 0.0019, change: +2.0 },
+]
+
+function TokenTicker() {
+  const items = [...TICKER_TOKENS, ...TICKER_TOKENS] // duplicate for seamless loop
+  return (
+    <Link href="/tokens" className="block overflow-hidden rounded-xl border border-white/6 hover:border-white/12 transition-all"
+      style={{ background: 'rgba(255,255,255,0.018)' }}>
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
+        <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4ade80' }} />
+        <span className="text-xs text-white/35 tracking-widest">YOUTOKEN MARKET</span>
+        <span className="ml-auto text-xs text-white/25 hover:text-white/50 transition-colors">View all →</span>
+      </div>
+      <div className="relative py-2 overflow-hidden">
+        <div className="flex gap-6 animate-[ticker_20s_linear_infinite]" style={{ width: 'max-content' }}>
+          {items.map((t, i) => {
+            const up = t.change >= 0
+            return (
+              <div key={i} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs font-mono font-bold text-white/70">${t.symbol}</span>
+                <span className="text-xs font-mono text-white/45">{t.price.toFixed(4)}</span>
+                <span className={`text-xs font-mono font-semibold ${up ? 'text-green-400' : 'text-red-400'}`}>
+                  {up ? '▲' : '▼'}{Math.abs(t.change).toFixed(1)}%
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 export default function HomeCanvas() {
   const { user, setUser } = useAppStore()
   const [mounted, setMounted] = useState(false)
@@ -188,6 +229,9 @@ export default function HomeCanvas() {
 
             <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
 
+            {/* Token ticker */}
+            <TokenTicker />
+
             {/* Quick actions */}
             <section>
               <p style={{ fontSize: '0.6rem', opacity: 0.4, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>QUICK ACTIONS</p>
@@ -197,7 +241,7 @@ export default function HomeCanvas() {
                   { label: 'Check Feed', href: '/feed', icon: '≡', color: 'var(--ring-social)' },
                   { label: 'AI Twin', href: '/twin', icon: '◈', color: 'var(--v)' },
                   { label: 'Markets', href: '/markets', icon: '↗', color: 'var(--ring-wealth)' },
-                  { label: 'My Token', href: '/token', icon: '◉', color: 'var(--ring-wealth)' },
+                  { label: 'Token Market', href: '/tokens', icon: '◉', color: '#f59e0b' },
                   { label: 'Leaderboard', href: '/leaderboard', icon: '▲', color: '#f59e0b' },
                 ] as const).map(({ label, href, icon, color }) => (
                   <Link key={label} href={href}

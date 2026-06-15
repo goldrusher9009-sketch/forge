@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, getUser, credit, notifyUser } from "../database/db.js";
+import { db, getUser, credit, notifyUser, audit } from "../database/db.js";
 import { swarmMode } from "../services/swarm.js";
 import { dkgMode } from "../services/dkg.js";
 import { chainStatus } from "../services/chain.js";
@@ -27,6 +27,7 @@ r.post("/insights/:id/verify", async (req, res) => {
     if (submitterAddress) notifyUser(submitterAddress, `Verifier approved insight #${ins.id} — +${reward} MINE`);
   let ual = null;
   if (approved) { const pub = await publishAsset(ins.id, { prompt: ins.prompt }, submitterAddress ? [submitterAddress] : []); ual = pub.ual; }
+  audit(submitterAddress, "verify-insight", `#${ins.id} ${status}`);
   emit("insight", { id: ins.id, prompt: ins.prompt, status, reward });
   res.json({ ok: true, id: ins.id, status, balance, ual });
 });
@@ -64,6 +65,7 @@ r.get("/overview", (_req, res) => {
     burnBySource: db.prepare("SELECT source, SUM(amount) s, COUNT(*) n FROM burn_events GROUP BY source").all(),
   });
 });
+r.get("/audit", (_req, res) => res.json(db.prepare("SELECT * FROM audit_log ORDER BY ts DESC LIMIT 50").all()));
 r.get("/health", (_req, res) => {
   const mem = process.memoryUsage();
   res.json({

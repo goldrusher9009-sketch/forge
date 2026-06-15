@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, getUser, debit, credit, addBurn } from "../database/db.js";
+import { db, getUser, debit, credit, addBurn, audit } from "../database/db.js";
 import { emit } from "../lib/bus.js";
 const r = Router();
 
@@ -59,6 +59,7 @@ r.post("/:id/award", (req, res) => {
   const next = getUser(winner) ? credit(winner, payout, "bond", `won bond #${b.id}`) : null;
   addBurn(fee, "bond-success");
   db.prepare("UPDATE bonds SET status='awarded', winner=? WHERE id=?").run(winner, b.id);
+  audit(winner, "award-bond", `#${b.id} ${payout}`);
   emit("bond-award", { id: b.id, winner, payout });
   emit("burn", { amount: fee, source: "bond-success" });
   res.json({ ok: true, payout, fee, winnerBalance: next });

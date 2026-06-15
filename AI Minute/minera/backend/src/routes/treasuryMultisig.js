@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, addBurn } from "../database/db.js";
+import { db, addBurn, audit } from "../database/db.js";
 import { emit } from "../lib/bus.js";
 const r = Router();
 
@@ -32,6 +32,7 @@ r.post("/:id/approve", (req, res) => {
     if (a.kind === "burn" && a.amount > 0) { addBurn(a.amount, "treasury-multisig"); emit("burn", { amount: a.amount, source: "treasury-multisig" }); }
     db.prepare("UPDATE treasury_actions SET status = 'executed' WHERE id = ?").run(a.id);
     executed = true;
+    audit(signer, "multisig-execute", `action #${a.id} ${a.kind}`);
   }
   res.json({ ok: true, approvals: count, threshold: a.threshold, executed });
 });

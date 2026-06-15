@@ -29,10 +29,11 @@ import Activity from "./components/Activity.jsx";
 import NetworkMap from "./components/NetworkMap.jsx";
 import Treasury from "./components/Treasury.jsx";
 import News from "./components/News.jsx";
+import Faq from "./components/Faq.jsx";
 
 const TABS = [
   ["dash","▦ DASH"],["explore","💡 EXPLORE"],["market","◆ MARKET"],["bonds","💎 BONDS"],
-  ["data","📡 DATA"],["roles","◎ ROLES"],["board","🏆 BOARD"],["activity","🌐 ACTIVITY"],["map","🛰 MAP"],["wallet","📜 WALLET"],["cash","$ CASH"],["subnets","🌐 SUBNETS"],["stats","📊 STATS"],["treasury","🏦 TREASURY"],["stake","🔒 STAKE"],["govern","🗳 GOVERN"],["keys","🔑 API"],["profile","👤 PROFILE"],["news","📰 NEWS"],["admin","⚙ ADMIN"],
+  ["data","📡 DATA"],["roles","◎ ROLES"],["board","🏆 BOARD"],["activity","🌐 ACTIVITY"],["map","🛰 MAP"],["wallet","📜 WALLET"],["cash","$ CASH"],["subnets","🌐 SUBNETS"],["stats","📊 STATS"],["treasury","🏦 TREASURY"],["stake","🔒 STAKE"],["govern","🗳 GOVERN"],["keys","🔑 API"],["profile","👤 PROFILE"],["news","📰 NEWS"],["faq","❓ FAQ"],["admin","⚙ ADMIN"],
 ];
 
 export default function App() {
@@ -126,6 +127,7 @@ export default function App() {
         {tab==="keys" && <Settings address={user.address} notify={notify}/>}
         {tab==="profile" && <Profile address={user.address} notify={notify}/>}
         {tab==="news" && <News/>}
+        {tab==="faq" && <Faq/>}
         {tab==="admin" && <Admin address={user.address} notify={(m)=>{notify(m); refreshBalance();}}/>}
       </div>
       {toast && <div className="toast">{toast}</div>}
