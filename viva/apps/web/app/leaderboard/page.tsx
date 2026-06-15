@@ -121,6 +121,24 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
+      {/* Economy stats bar */}
+      <div className="px-4 pt-3 pb-1">
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: 'Total MCap',    val: '$284K',  color: '#f59e0b' },
+            { label: 'Active Tokens', val: '10',     color: '#a855f7' },
+            { label: 'Avg V-Score',   val: '890',    color: '#7c3aed' },
+            { label: '24h Volume',    val: '$12.4K', color: '#22c55e' },
+          ].map(s => (
+            <div key={s.label} className="rounded-xl px-2 py-2 text-center"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-xs font-bold" style={{ color: s.color }}>{s.val}</p>
+              <p className="text-xs mt-0.5" style={{ opacity: 0.35, fontSize: '0.6rem' }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="px-4 pb-8 max-w-2xl mx-auto">
         {/* Podium — top 3 */}
         <div className="flex items-end justify-center gap-3 py-8">
@@ -225,9 +243,9 @@ export default function LeaderboardPage() {
               style={{ background: 'rgba(124,58,237,0.18)', border: '1px solid rgba(124,58,237,0.4)', color: 'var(--v)' }}>
               Log Health Ring
             </a>
-            <a href="/feed" className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+            <a href="/tokens" className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}>
-              Post to Feed
+              Buy Tokens →
             </a>
           </div>
         </div>

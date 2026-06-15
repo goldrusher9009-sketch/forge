@@ -10,9 +10,11 @@ type VideoClip = { id: number; handle: string; caption: string; likes: number; c
 const COLORS = ['#818CF8','#34D399','#FB923C','#F472B6','#FACC15','#A78BFA']
 
 const MOCK_ROOMS = [
-  { id:'r1', title:'Regenerative Finance + ZK Identity', topic:'DeFi · ZKP', host:'noa_d', hostScore:671, speakers:['noa_d','luna_v','aisham'], listeners:47, minVScore:400, color:'#818CF8' },
-  { id:'r2', title:'Builder Hour: AI Agents & Autonomy', topic:'AI · Builders', host:'danr', hostScore:589, speakers:['danr','mateuso'], listeners:23, minVScore:200, color:'#34D399' },
-  { id:'r3', title:'Sovereign Health: Beyond the App', topic:'Health · Philosophy', host:'luna_v', hostScore:834, speakers:['luna_v'], listeners:89, minVScore:600, color:'#F472B6' },
+  { id:'r1', title:'Regenerative Finance + ZK Identity', topic:'DeFi · ZKP', host:'noa_d', hostScore:671, speakers:['noa_d','luna_v','aisham'], listeners:47, minVScore:400, minTokens:0,    gateToken:'',     color:'#818CF8' },
+  { id:'r2', title:'Builder Hour: AI Agents & Autonomy', topic:'AI · Builders', host:'danr', hostScore:589, speakers:['danr','mateuso'], listeners:23, minVScore:200, minTokens:0,    gateToken:'',     color:'#34D399' },
+  { id:'r3', title:'Sovereign Health: Beyond the App', topic:'Health · Philosophy', host:'luna_v', hostScore:834, speakers:['luna_v'], listeners:89, minVScore:600, minTokens:0,    gateToken:'',     color:'#F472B6' },
+  { id:'r4', title:'$MAYA Token Holders Only 🔒',      topic:'Finance · Exclusive', host:'mayafit',  hostScore:935, speakers:['mayafit'], listeners:12,  minVScore:0,   minTokens:100,  gateToken:'MAYA', color:'#a855f7' },
+  { id:'r5', title:'Guardian+ Inner Circle',           topic:'Elite · Strategy',   host:'luna_v',   hostScore:912, speakers:['luna_v','aisham'], listeners:8,   minVScore:800, minTokens:500,  gateToken:'',     color:'#f59e0b' },
 ]
 
 const SEED_CHAT: ChatMsg[] = [
@@ -98,8 +100,20 @@ export default function RoomsPage() {
     setChatInput('')
   }
 
+  // Mock: user holds some tokens
+  const USER_TOKENS: Record<string,number> = { MAYA: 250, ALEX: 100, SAR: 500, ZEN: 200, JOE: 80 }
+
+  function canJoinRoom(r: typeof MOCK_ROOMS[0]) {
+    if (u.vscore < r.minVScore) return false
+    if (r.minTokens > 0 && r.gateToken) {
+      const held = USER_TOKENS[r.gateToken] ?? 0
+      if (held < r.minTokens) return false
+    }
+    return true
+  }
+
   function joinRoom(r: typeof MOCK_ROOMS[0]) {
-    if (u.vscore < r.minVScore) return
+    if (!canJoinRoom(r)) return
     setActiveRoom(r)
     setTab('audio')
     roomsApi.join(r.id).catch(()=>{})
@@ -297,7 +311,7 @@ export default function RoomsPage() {
           {tab==='audio' && (
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {rooms.map(r=>{
-                const locked = u.vscore < r.minVScore
+                const locked = !canJoinRoom(r)
                 return (
                   <div key={r.id} onClick={()=>!locked&&joinRoom(r)} style={{ padding:20, borderRadius:14, border:`1px solid ${locked?'rgba(255,255,255,0.06)':`${r.color}30`}`, background:`${r.color}06`, cursor:locked?'not-allowed':'pointer', opacity:locked?0.5:1, transition:'all 0.2s' }}>
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
@@ -319,7 +333,9 @@ export default function RoomsPage() {
                       </div>
                       <div style={{ textAlign:'right', flexShrink:0 }}>
                         {locked
-                          ? <div style={{ fontSize:11, color:'rgba(255,255,255,0.25)' }}>V-Score {r.minVScore}+<br/>required</div>
+                          ? <div style={{ fontSize:11, color:'rgba(255,255,255,0.25)', textAlign:'center', lineHeight:1.4 }}>
+                              {r.minTokens > 0 && r.gateToken ? `${r.minTokens} $${r.gateToken}` : `V-Score ${r.minVScore}+`}<br/>required 🔒
+                            </div>
                           : <div style={{ padding:'6px 14px', borderRadius:8, background:r.color, color:'#06060E', fontSize:12, fontWeight:800 }}>Join</div>
                         }
                       </div>
