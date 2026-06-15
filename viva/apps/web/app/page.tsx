@@ -5,8 +5,12 @@ import Link from 'next/link'
 function useInView(ref: React.RefObject<Element>, threshold = 0.1) {
   const [inView, setInView] = useState(false)
   useEffect(() => {
+    if (!ref.current) return
+    // Check immediately if already in viewport
+    const rect = ref.current.getBoundingClientRect()
+    if (rect.top < window.innerHeight && rect.bottom > 0) { setInView(true); return }
     const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true) }, { threshold })
-    if (ref.current) obs.observe(ref.current)
+    obs.observe(ref.current)
     return () => obs.disconnect()
   }, [ref, threshold])
   return inView
