@@ -3597,6 +3597,37 @@ app.post('/api/threads/:id/summarize', requireAuth, async (req: AuthRequest, res
   res.json({ success: true, title });
 });
 
+// POST /api/threads/:id/tldr — Generate bullet-point TL;DR of a long thread
+app.post('/api/threads/:id/tldr', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.sub;
+  const threadId = req.params.id;
+  const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, userId) as any;
+  if (!thread) { res.status(404).json({ error: 'Not found' }); return; }
+  const msgs = db.prepare("SELECT role, content FROM thread_messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 40").all(threadId) as any[];
+  if (msgs.length < 3) { res.json({ bullets: ['Thread too short for summary.'] }); return; }
+  const key = safe(() => getUserKey(userId, 'anthropic'), null) || safe(() => getUserKey(userId, 'openai'), null);
+  if (!key) { res.status(400).json({ error: 'No LLM key configured' }); return; }
+  const transcript = msgs.map((m: any) => `${m.role === 'user' ? 'User' : 'AI'}: ${String(m.content || '').slice(0, 300)}`).join('\n');
+  let bullets: string[] = [];
+  try {
+    const provider = safe(() => getUserKey(userId, 'anthropic'), null) ? 'anthropic' : 'openai';
+    const prompt = `Summarize this conversation in exactly 3 concise bullet points (start each with "• "). Cover: main topic, key conclusions, any action items. Reply with ONLY the 3 bullets.\n\n${transcript}`;
+    if (provider === 'anthropic') {
+      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      const client = new Anthropic({ apiKey: key });
+      const resp = await client.messages.create({ model: 'claude-haiku-4-5', max_tokens: 200, messages: [{ role: 'user', content: prompt }] });
+      bullets = ((resp.content[0] as any).text || '').split('\n').filter((l: string) => l.trim().startsWith('•')).map((l: string) => l.trim());
+    } else {
+      const OpenAI = (await import('openai')).default;
+      const client = new OpenAI({ apiKey: key });
+      const resp = await client.chat.completions.create({ model: 'gpt-4o-mini', max_tokens: 200, messages: [{ role: 'user', content: prompt }] });
+      bullets = (resp.choices[0]?.message?.content || '').split('\n').filter((l: string) => l.trim().startsWith('•')).map((l: string) => l.trim());
+    }
+  } catch (e: any) { bullets = ['• Could not generate summary: ' + e.message]; }
+  if (!bullets.length) bullets = ['• No summary available.'];
+  res.json({ bullets });
+});
+
 // ── Thread stats (context usage panel) ────────────────────────
 app.get('/api/threads/:id/stats', requireAuth, (req: AuthRequest, res) => {
   const userId = req.user!.sub;
@@ -5154,42 +5185,4 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
     for (const m of uncat) { const c = categorizeMemory(m.topic || '', m.insight || ''); if (c !== 'general') upd.run(c, m.id); }
 
     const total = (db.prepare('SELECT COUNT(*) c FROM forge_memory WHERE user_id=?').get(userId) as any).c;
-    const totalStrength = (db.prepare('SELECT COALESCE(SUM(strength),0) s FROM forge_memory WHERE user_id=?').get(userId) as any).s;
-    const byCategory = db.prepare(`SELECT category, COUNT(*) count, ROUND(AVG(confidence),2) avgConfidence, ROUND(SUM(strength),1) strength FROM forge_memory WHERE user_id=? GROUP BY category ORDER BY count DESC`).all(userId);
-    const topInsights = db.prepare(`SELECT category, topic, insight, strength, frequency FROM forge_memory WHERE user_id=? ORDER BY strength DESC, frequency DESC LIMIT 10`).all(userId);
-    const newThisWeek = (db.prepare(`SELECT COUNT(*) c FROM forge_memory WHERE user_id=? AND created_at >= datetime('now','-7 days')`).get(userId) as any).c;
-    const oldestRow = db.prepare('SELECT MIN(created_at) m FROM forge_memory WHERE user_id=?').get(userId) as any;
-    const daysLearning = oldestRow?.m ? Math.max(1, Math.round((Date.now() - new Date(oldestRow.m).getTime()) / 86400000)) : 0;
-
-    res.json({ success: true, data: {
-      totalMemories: total,
-      brainStrength: Math.round(totalStrength),
-      daysLearning,
-      newThisWeek,
-      byCategory,
-      topInsights,
-      // The headline line for the dashboard:
-      headline: total === 0
-        ? 'Forge is just getting to know your business — start a few tasks and your brain will grow.'
-        : `Forge knows ${total} things about your business across ${byCategory.length} areas, learned over ${daysLearning} day${daysLearning===1?'':'s'}.`,
-      moatNote: total > 0 ? `This knowledge is yours and compounds daily — it's what makes Forge irreplaceable for you.` : null,
-    }});
-  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-
-
-// POST /api/threads/:id/suggestions — generate 3 follow-up reply chips using LLM
-app.post('/api/threads/:id/suggestions', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const thread = db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(req.params.id, userId);
-  if (!thread) return res.status(404).json({ success: false, error: 'Thread not found' });
-  const msgs = db.prepare('SELECT role,content FROM messages WHERE thread_id=? ORDER BY created_at DESC LIMIT 6').all(req.params.id) as any[];
-  const lastAI = msgs.find((m: any) => m.role === 'assistant');
-  if (!lastAI) return res.json({ success: true, suggestions: [] });
-  try {
-    const userRow = db.prepare('SELECT preferred_model FROM users WHERE id=?').get(userId) as any;
-    const model = userRow?.preferred_model || 'claude-3-5-haiku-20241022';
-    const key = await getUserKey(userId, 'anthropic');
-    if (!key) return res.json({ success: true, suggestions: [] });
-    const Anthropic = require('@anthropic-ai/sdk');
-   
+    const t
