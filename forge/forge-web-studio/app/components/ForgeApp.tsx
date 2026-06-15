@@ -4528,6 +4528,23 @@ export default function ForgeApp() {
                               {emoji}
                             </button>
                           ))}
+                          {m.id && m.role === 'assistant' && (() => {
+                            const msgRating = (m as any).rating ?? 0;
+                            const rate = async (r: number) => {
+                              const tok = localStorage.getItem('forge_token');
+                              const newR = msgRating === r ? 0 : r;
+                              await fetch('/api/messages/' + m.id + '/rate', { method:'POST', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ rating: newR }) });
+                              setMessages((prev: any[]) => prev.map((msg: any) => msg.id === m.id ? {...msg, rating: newR} : msg));
+                              if (newR === 1) showToast('👍 Helpful — noted!');
+                              if (newR === -1) showToast('👎 Noted — will improve routing');
+                            };
+                            return (
+                              <div style={{ display:'flex', gap:2, marginLeft:4, borderLeft:'1px solid var(--fg-border)', paddingLeft:6 }}>
+                                <button onClick={() => rate(1)} title="Helpful" style={{ background:'none', border:'none', cursor:'pointer', fontSize:13, padding:'2px 4px', borderRadius:4, opacity: msgRating===1 ? 1 : 0.35, transform: msgRating===1 ? 'scale(1.2)' : 'scale(1)', transition:'all 0.15s', color: msgRating===1 ? '#22c55e' : 'var(--fg-text3)' }}>👍</button>
+                                <button onClick={() => rate(-1)} title="Not helpful" style={{ background:'none', border:'none', cursor:'pointer', fontSize:13, padding:'2px 4px', borderRadius:4, opacity: msgRating===-1 ? 1 : 0.35, transform: msgRating===-1 ? 'scale(1.2)' : 'scale(1)', transition:'all 0.15s', color: msgRating===-1 ? 'var(--fg-orange)' : 'var(--fg-text3)' }}>👎</button>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>

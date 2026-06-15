@@ -1272,6 +1272,12 @@ app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRe
         .run(require('uuid').v4(), userId, forgeModelId, actualModel, provider, complexity, result.promptTokens, result.completionTokens, Date.now() - _routeStart);
     } catch {}
 
+    // Check usage budget alerts
+    try {
+      const sub = db.prepare('SELECT tokens_used, monthly_token_limit FROM subscriptions WHERE user_id=? ORDER BY created_at DESC LIMIT 1').get(userId) as any;
+      if (sub?.monthly_token_limit > 0) checkUsageAlert(db, userId, sub.tokens_used, sub.monthly_token_limit);
+    } catch {}
+
     // Return both Forge format and OpenAI-compat format so ForgeCo and other clients work
     res.json({ success: true, data: { response: result.content, model: forgeModelId, modelName: actualModel, provider, tokensUsed: totalTokens, promptTokens: result.promptTokens, completionTokens: result.completionTokens, cost: providerCost, revenue: forgeRevenue }, choices: [{ message: { role: 'assistant', content: result.content } }], model: forgeModelId });
   } catch (err: any) {
