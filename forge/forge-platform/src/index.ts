@@ -7049,4 +7049,331 @@ app.delete('/api/kanban/:id', authMiddleware, async (req: any, res) => {
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ─── Batch 17: Snippets Vault, Polls, Cross-Search, Onboarding, Writing Modes ───
+
+// GET/POST/DELETE /api/snippets — code snippets vault
+app.get('/api/snippets', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS code_snippets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      code TEXT NOT NULL,
+      language TEXT DEFAULT 'text',
+      tags TEXT DEFAULT '',
+      pinned INTEGER DEFAULT 0,
+      use_count INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const q = req.query.q as string;
+    const lang = req.query.lang as string;
+    let query = 'SELECT * FROM code_snippets WHERE user_id=?';
+    const params: any[] = [userId];
+    if (q) { query += ' AND (title LIKE ? OR code LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
+    if (lang) { query += ' AND language=?'; params.push(lang); }
+    query += ' ORDER BY pinned DESC, use_count DESC, created_at DESC LIMIT 100';
+    const snippets = db.prepare(query).all(...params);
+    res.json(snippets);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/snippets', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title, code, language = 'text', tags = '' } = req.body;
+    if (!title || !code) return res.status(400).json({ error: 'title and code required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS code_snippets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT NOT NULL, code TEXT NOT NULL, language TEXT DEFAULT 'text', tags TEXT DEFAULT '', pinned INTEGER DEFAULT 0, use_count INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare('INSERT INTO code_snippets (user_id,title,code,language,tags) VALUES (?,?,?,?,?)').run(userId, title, code, language, tags);
+    res.json({ id: r.lastInsertRowid, title, language });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/snippets/:id/use', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare('UPDATE code_snippets SET use_count=use_count+1 WHERE id=?').run(req.params.id);
+    const s = db.prepare('SELECT code FROM code_snippets WHERE id=?').get(req.params.id) as any;
+    res.json({ code: s?.code || '' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/snippets/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare('DELETE FROM code_snippets WHERE id=? AND user_id=?').run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST /api/threads/:id/polls — thread polls
+app.post('/api/threads/:id/polls', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS thread_polls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      question TEXT NOT NULL,
+      options TEXT NOT NULL,
+      votes TEXT DEFAULT '{}',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const { question, options } = req.body;
+    if (!question || !Array.isArray(options) || options.length < 2) return res.status(400).json({ error: 'question and >=2 options required' });
+    const r = db.prepare('INSERT INTO thread_polls (thread_id,user_id,question,options) VALUES (?,?,?,?)').run(req.params.id, userId, question, JSON.stringify(options));
+    res.json({ id: r.lastInsertRowid, question, options, votes: {} });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/threads/:id/polls', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS thread_polls (id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER NOT NULL, user_id INTEGER NOT NULL, question TEXT NOT NULL, options TEXT NOT NULL, votes TEXT DEFAULT '{}', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const polls = db.prepare('SELECT * FROM thread_polls WHERE thread_id=? ORDER BY created_at DESC').all(req.params.id) as any[];
+    res.json(polls.map((p: any) => ({ ...p, options: JSON.parse(p.options), votes: JSON.parse(p.votes) })));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/polls/:id/vote', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const poll = db.prepare('SELECT * FROM thread_polls WHERE id=?').get(req.params.id) as any;
+    if (!poll) return res.status(404).json({ error: 'Poll not found' });
+    const votes = JSON.parse(poll.votes || '{}');
+    const { option } = req.body;
+    votes[userId] = option;
+    db.prepare('UPDATE thread_polls SET votes=? WHERE id=?').run(JSON.stringify(votes), req.params.id);
+    res.json({ ok: true, votes });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/search/global — cross-entity search
+app.get('/api/search/global', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const q = (req.query.q as string || '').trim();
+    if (!q) return res.json({ results: [] });
+    const like = `%${q}%`;
+    const results: any[] = [];
+    // Threads
+    const threads = db.prepare('SELECT id, title, created_at FROM threads WHERE user_id=? AND title LIKE ? LIMIT 5').all(userId, like) as any[];
+    threads.forEach((t: any) => results.push({ type:'thread', id: t.id, title: t.title, preview: '', date: t.created_at }));
+    // Messages
+    const msgs = db.prepare("SELECT m.id, m.content, m.created_at, t.title as thread_title, t.id as thread_id FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.content LIKE ? LIMIT 5").all(userId, like) as any[];
+    msgs.forEach((m: any) => results.push({ type:'message', id: m.id, title: m.thread_title, preview: m.content.slice(0,80), date: m.created_at, thread_id: m.thread_id }));
+    // Notes
+    try {
+      const notes = db.prepare('SELECT id, content, created_at FROM notes WHERE user_id=? AND content LIKE ? LIMIT 3').all(userId, like) as any[];
+      notes.forEach((n: any) => results.push({ type:'note', id: n.id, title: 'Note', preview: n.content.slice(0,80), date: n.created_at }));
+    } catch {}
+    // Snippets
+    try {
+      const snips = db.prepare('SELECT id, title, language FROM code_snippets WHERE user_id=? AND (title LIKE ? OR code LIKE ?) LIMIT 3').all(userId, like, like) as any[];
+      snips.forEach((s: any) => results.push({ type:'snippet', id: s.id, title: s.title, preview: s.language, date: '' }));
+    } catch {}
+    res.json({ results, query: q, total: results.length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/onboarding — user onboarding checklist
+app.get('/api/onboarding', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const threadCount = (db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=?').get(userId) as any).c;
+    const msgCount = (db.prepare('SELECT COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.role="user"').get(userId) as any).c;
+    const hasKey = db.prepare('SELECT COUNT(*) as c FROM api_keys WHERE user_id=?').get(userId) as any;
+    let noteCount = 0; try { noteCount = (db.prepare('SELECT COUNT(*) as c FROM notes WHERE user_id=?').get(userId) as any).c; } catch {}
+    const steps = [
+      { id:'add_key', label:'Add your first API key', done: hasKey.c > 0 },
+      { id:'first_thread', label:'Start your first thread', done: threadCount > 0 },
+      { id:'first_message', label:'Send a message', done: msgCount > 0 },
+      { id:'five_threads', label:'Create 5 threads', done: threadCount >= 5 },
+      { id:'take_note', label:'Write a note', done: noteCount > 0 },
+      { id:'ten_messages', label:'Exchange 10 messages', done: msgCount >= 10 },
+    ];
+    const completed = steps.filter(s => s.done).length;
+    res.json({ steps, completed, total: steps.length, pct: Math.round(completed / steps.length * 100) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/messages/:id/writing-mode — apply writing mode transform
+app.post('/api/messages/:id/writing-mode', authMiddleware, async (req: any, res) => {
+  try {
+    const { mode } = req.body; // 'formal','casual','concise','expand','bullet','story'
+    const msg = db.prepare('SELECT content FROM messages WHERE id=?').get(req.params.id) as any;
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    const modeInstructions: Record<string,string> = {
+      formal: 'Rewrite in formal professional tone',
+      casual: 'Rewrite in casual conversational tone',
+      concise: 'Make shorter and more concise',
+      expand: 'Expand with more detail and examples',
+      bullet: 'Convert to bullet points',
+      story: 'Rewrite as a narrative story'
+    };
+    const instruction = modeInstructions[mode] || 'Improve this text';
+    res.json({
+      messageId: req.params.id,
+      mode,
+      instruction,
+      originalContent: msg.content.slice(0, 200),
+      note: 'Pass instruction + content to your active model to transform.'
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ─── Batch 18: Debate Mode, URL Saves, Content Calendar, Thread Voting, Link Preview ───
+
+// POST /api/threads/:id/debate — start a debate (pro/con on a topic)
+app.post('/api/threads/:id/debate', authMiddleware, async (req: any, res) => {
+  try {
+    const { topic, side = 'both' } = req.body;
+    if (!topic) return res.status(400).json({ error: 'topic required' });
+    const angles: Record<string, string[]> = {
+      pro: [`Strong argument FOR: ${topic}`, 'Supporting evidence and examples', 'Counter to objections'],
+      con: [`Strong argument AGAINST: ${topic}`, 'Risks and drawbacks', 'Counter to pro arguments'],
+      both: [`PRO: ${topic}`, `CON: ${topic}`, 'Synthesis and nuanced verdict'],
+      steelman: [`The strongest possible case for: ${topic}`, 'Charitable interpretation of opposing view', 'Where both sides agree']
+    };
+    res.json({
+      topic,
+      side,
+      prompts: angles[side] || angles.both,
+      instruction: `Use your active model with these prompts to explore "${topic}" from the ${side} perspective.`
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST/DELETE /api/url-saves — saved URLs / bookmarked links
+app.get('/api/url-saves', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS url_saves (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      url TEXT NOT NULL,
+      title TEXT DEFAULT '',
+      description TEXT DEFAULT '',
+      tags TEXT DEFAULT '',
+      favicon TEXT DEFAULT '',
+      pinned INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const q = req.query.q as string;
+    const items = q
+      ? db.prepare('SELECT * FROM url_saves WHERE user_id=? AND (title LIKE ? OR url LIKE ? OR tags LIKE ?) ORDER BY pinned DESC, created_at DESC LIMIT 50').all(userId, `%${q}%`, `%${q}%`, `%${q}%`)
+      : db.prepare('SELECT * FROM url_saves WHERE user_id=? ORDER BY pinned DESC, created_at DESC LIMIT 50').all(userId);
+    res.json(items);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/url-saves', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { url, title = '', description = '', tags = '' } = req.body;
+    if (!url) return res.status(400).json({ error: 'url required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS url_saves (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, url TEXT NOT NULL, title TEXT DEFAULT '', description TEXT DEFAULT '', tags TEXT DEFAULT '', favicon TEXT DEFAULT '', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare('INSERT INTO url_saves (user_id,url,title,description,tags) VALUES (?,?,?,?,?)').run(userId, url, title, description, tags);
+    res.json({ id: r.lastInsertRowid, url, title });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/url-saves/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare('DELETE FROM url_saves WHERE id=? AND user_id=?').run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/url-saves/:id/pin', authMiddleware, async (req: any, res) => {
+  try {
+    const item = db.prepare('SELECT pinned FROM url_saves WHERE id=? AND user_id=?').get(req.params.id, req.user.userId) as any;
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    db.prepare('UPDATE url_saves SET pinned=? WHERE id=?').run(item.pinned ? 0 : 1, req.params.id);
+    res.json({ ok: true, pinned: !item.pinned });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST/PUT/DELETE /api/content-calendar — content planning calendar
+app.get('/api/content-calendar', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS content_calendar (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      content_type TEXT DEFAULT 'post',
+      platform TEXT DEFAULT 'blog',
+      scheduled_date TEXT NOT NULL,
+      status TEXT DEFAULT 'draft',
+      notes TEXT DEFAULT '',
+      thread_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const month = req.query.month as string;
+    const items = month
+      ? db.prepare("SELECT * FROM content_calendar WHERE user_id=? AND scheduled_date LIKE ? ORDER BY scheduled_date").all(userId, `${month}%`)
+      : db.prepare("SELECT * FROM content_calendar WHERE user_id=? ORDER BY scheduled_date DESC LIMIT 50").all(userId);
+    res.json(items);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content-calendar', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title, content_type = 'post', platform = 'blog', scheduled_date, notes = '', thread_id } = req.body;
+    if (!title || !scheduled_date) return res.status(400).json({ error: 'title and scheduled_date required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS content_calendar (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT NOT NULL, content_type TEXT DEFAULT 'post', platform TEXT DEFAULT 'blog', scheduled_date TEXT NOT NULL, status TEXT DEFAULT 'draft', notes TEXT DEFAULT '', thread_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare('INSERT INTO content_calendar (user_id,title,content_type,platform,scheduled_date,notes,thread_id) VALUES (?,?,?,?,?,?,?)').run(userId, title, content_type, platform, scheduled_date, notes, thread_id || null);
+    res.json({ id: r.lastInsertRowid, title, scheduled_date, status: 'draft' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/content-calendar/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const { status, notes, scheduled_date } = req.body;
+    if (status) db.prepare('UPDATE content_calendar SET status=? WHERE id=? AND user_id=?').run(status, req.params.id, req.user.userId);
+    if (notes !== undefined) db.prepare('UPDATE content_calendar SET notes=? WHERE id=? AND user_id=?').run(notes, req.params.id, req.user.userId);
+    if (scheduled_date) db.prepare('UPDATE content_calendar SET scheduled_date=? WHERE id=? AND user_id=?').run(scheduled_date, req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/content-calendar/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare('DELETE FROM content_calendar WHERE id=? AND user_id=?').run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/threads/:id/vote — community-style upvote/downvote
+app.post('/api/threads/:id/vote', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS thread_votes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      vote INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(thread_id, user_id)
+    )`).run();
+    const { vote } = req.body; // 1 or -1
+    if (vote !== 1 && vote !== -1) return res.status(400).json({ error: 'vote must be 1 or -1' });
+    db.prepare('INSERT OR REPLACE INTO thread_votes (thread_id,user_id,vote) VALUES (?,?,?)').run(req.params.id, userId, vote);
+    const score = (db.prepare('SELECT COALESCE(SUM(vote),0) as s FROM thread_votes WHERE thread_id=?').get(req.params.id) as any).s;
+    res.json({ ok: true, score });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/threads/:id/vote', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS thread_votes (id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER NOT NULL, user_id INTEGER NOT NULL, vote INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(thread_id, user_id))`).run();
+    const score = (db.prepare('SELECT COALESCE(SUM(vote),0) as s FROM thread_votes WHERE thread_id=?').get(req.params.id) as any).s;
+    const userVote = db.prepare('SELECT vote FROM thread_votes WHERE thread_id=? AND user_id=?').get(req.params.id, req.user.userId) as any;
+    res.json({ score, userVote: userVote?.vote || 0 });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/workspace/stats/advanced — advanced workspace statistics
+app.get('/api/workspace/stats/advanced', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const days = Number(req.query.days) || 30;
+    const since = new Date(Date.now() - days * 86400000).toISOString();
+    const threadsByDay = db.prepare("SELECT date(created_at) as day, COUNT(*) as count FROM threads WHERE user_id=? AND created_at>=? GROUP BY day ORDER BY day").all(userId, since) as any[];
+    const tokensByModel = db.prepare("SELECT model_used, SUM(tokens_used) as tokens FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY model_used").all(userId, since) as any[];
+    const msgLengths = db.prepare("SELECT role, AVG(LENGTH(content)) as avg_len FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY role").all(userId, since) as any[];
+    const longestThread = db.prepare("SELECT t.title, COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY t.id ORDER BY c DESC LIMIT 1").get(userId, since) as any;
+    res.json({ threadsByDay, tokensByModel, msgLengths, longestThread, period: days });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

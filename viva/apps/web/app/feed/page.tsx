@@ -1,14 +1,21 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore, mockUser, mapApiUser, MOCK_POSTS } from '@/lib/store'
 import { feed as feedApi, auth } from '@/lib/api'
 import { useToast } from '@/components/ui/Toast'
 
 const FILTERS = ['All', 'Health', 'Markets', 'Twin', 'ZKP', 'YouToken']
 
+interface Comment {
+  id: string
+  content: string
+  author: { displayName: string; handle: string; avatarUrl?: string }
+  createdAt: string
+}
+
 export default function FeedPage() {
   const { user, setUser } = useAppStore()
-  const { success, error: toastError } = useToast()
+  const { success } = useToast()
   const [filter, setFilter] = useState('All')
   const [posts, setPosts] = useState<any[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
@@ -16,6 +23,10 @@ export default function FeedPage() {
   const [draft, setDraft] = useState('')
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(true)
+  // Comments: postId → {open, comments, draft, submitting}
+  const [commentState, setCommentState] = useState<Record<string, {
+    open: boolean; comments: Comment[]; draft: string; submitting: boolean; loaded: boolean
+  }>>({})
 
   useEffect(() => {
     setMounted(true)
@@ -54,7 +65,13 @@ export default function FeedPage() {
       setPosts(prev => [newPost, ...prev])
       success('Post published to Signal Feed')
     } catch {
-      setPosts(prev => [{ id: `p${Date.now()}`, author: { displayName: u.displayName, handle: u.handle }, content: draft, createdAt: new Date().toISOString(), _count: { likes: 0 } }, ...prev])
+      setPosts(prev => [{
+        id: `p${Date.now()}`,
+        author: { displayName: u.displayName, handle: u.handle },
+        content: draft,
+        createdAt: new Date().toISOString(),
+        _count: { likes: 0, comments: 0 },
+      }, ...prev])
       success('Post published')
     }
     setDraft('')
@@ -62,13 +79,81 @@ export default function FeedPage() {
   }
 
   async function toggleLike(postId: string) {
-    // Optimistic update first
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, _count: { ...p._count, likes: (p._count?.likes ?? 0) + 1 }, _liked: true } : p))
+    setPosts(prev => prev.map(p => p.id === postId
+      ? { ...p, _count: { ...p._count, likes: (p._count?.likes ?? 0) + (p._liked ? -1 : 1) }, _liked: !p._liked }
+      : p))
+    try { await feedApi.like(postId) } catch {}
+  }
+
+  async function toggleComments(postId: string) {
+    const cur = commentState[postId]
+    if (cur?.open) {
+      setCommentState(prev => ({ ...prev, [postId]: { ...prev[postId], open: false } }))
+      return
+    }
+    // Open and load if not loaded yet
+    setCommentState(prev => ({
+      ...prev,
+      [postId]: { open: true, comments: prev[postId]?.comments ?? [], draft: prev[postId]?.draft ?? '', submitting: false, loaded: prev[postId]?.loaded ?? false },
+    }))
+    if (!cur?.loaded) {
+      try {
+        const data = await feedApi.comments?.(postId) ?? []
+        setCommentState(prev => ({
+          ...prev,
+          [postId]: { ...prev[postId], comments: data, loaded: true },
+        }))
+      } catch {
+        // mock comments
+        setCommentState(prev => ({
+          ...prev,
+          [postId]: {
+            ...prev[postId],
+            loaded: true,
+            comments: [
+              { id: 'c1', content: 'This is a signal 🔮', author: { displayName: 'Alex', handle: 'alex' }, createdAt: new Date(Date.now() - 120000).toISOString() },
+              { id: 'c2', content: 'Agreed, great take', author: { displayName: 'Jordan', handle: 'jordan' }, createdAt: new Date(Date.now() - 60000).toISOString() },
+            ],
+          },
+        }))
+      }
+    }
+  }
+
+  async function submitComment(postId: string) {
+    const st = commentState[postId]
+    if (!st?.draft.trim() || st.submitting) return
+    const content = st.draft.trim()
+    const optimistic: Comment = {
+      id: `c${Date.now()}`,
+      content,
+      author: { displayName: u.displayName, handle: u.handle, avatarUrl: u.avatar },
+      createdAt: new Date().toISOString(),
+    }
+    setCommentState(prev => ({
+      ...prev,
+      [postId]: { ...prev[postId], draft: '', submitting: true, comments: [...(prev[postId]?.comments ?? []), optimistic] },
+    }))
+    setPosts(prev => prev.map(p => p.id === postId
+      ? { ...p, _count: { ...p._count, comments: (p._count?.comments ?? 0) + 1 } }
+      : p))
     try {
-      await feedApi.like(postId)
-      success('♡ Signal boosted')
+      await feedApi.comment?.(postId, content)
+    } catch {}
+    setCommentState(prev => ({ ...prev, [postId]: { ...prev[postId], submitting: false } }))
+  }
+
+  async function sharePost(postId: string, content: string) {
+    const url = `${window.location.origin}/feed#${postId}`
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: content.slice(0, 100), url })
+      } else {
+        await navigator.clipboard.writeText(url)
+        success('Link copied to clipboard')
+      }
     } catch {
-      // keep optimistic — still show boost
+      success('Link copied')
     }
   }
 
@@ -99,7 +184,11 @@ export default function FeedPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="grid grid-cols-3 gap-3 mb-8">
-          {[{ label: 'Attention Earned', value: '1,247', unit: 'pts today', color: 'var(--ring-social)' }, { label: 'Signal Score', value: '94', unit: '/ 100', color: 'var(--ring-activity)' }, { label: 'Reach', value: '3.2K', unit: 'impressions', color: 'var(--ring-nutrition)' }].map(({ label, value, unit, color }) => (
+          {[
+            { label: 'Attention Earned', value: '1,247', unit: 'pts today', color: 'var(--ring-social)' },
+            { label: 'Signal Score', value: '94', unit: '/ 100', color: 'var(--ring-activity)' },
+            { label: 'Reach', value: '3.2K', unit: 'impressions', color: 'var(--ring-nutrition)' },
+          ].map(({ label, value, unit, color }) => (
             <div key={label} className="p-4 border border-white/6" style={{ borderRadius: 'var(--radius)' }}>
               <p className="t-caption mb-1" style={{ fontSize: '0.55rem' }}>{label.toUpperCase()}</p>
               <p className="text-lg font-bold" style={{ color, letterSpacing: '-0.03em' }}>{value}</p>
@@ -113,7 +202,15 @@ export default function FeedPage() {
             <div className="flex gap-3">
               <img src={u.avatar} alt="" className="w-8 h-8 rounded-full flex-shrink-0" />
               <div className="flex-1">
-                <textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="What signal are you sending today?" className="w-full bg-transparent text-white placeholder-white/25 outline-none resize-none text-sm leading-relaxed" rows={3} autoFocus />
+                <textarea
+                  value={draft}
+                  onChange={e => setDraft(e.target.value)}
+                  placeholder="What signal are you sending today?"
+                  className="w-full bg-transparent text-white placeholder-white/25 outline-none resize-none text-sm leading-relaxed"
+                  rows={3}
+                  autoFocus
+                  onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) submitPost() }}
+                />
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/8">
                   <span className="text-xs text-white/30">{draft.length} / 500</span>
                   <button onClick={submitPost} disabled={!draft.trim()} className="px-5 py-1.5 text-sm font-semibold text-white disabled:opacity-30" style={{ background: 'var(--v)', borderRadius: 'var(--radius)' }}>Publish</button>
@@ -131,9 +228,12 @@ export default function FeedPage() {
             const avatarSrc = post.author?.avatarUrl ?? post.avatar ?? ('https://api.dicebear.com/7.x/shapes/svg?seed=' + authorHandle)
             const ts = post.createdAt ?? post.ts
             const likes = post._count?.likes ?? post.attentionEarned ?? 0
+            const commentCount = post._count?.comments ?? 0
             const tags: string[] = post.tags ?? (post.category ? [post.category] : [])
+            const cs = commentState[post.id]
+
             return (
-              <article key={post.id} className="py-6 border-b border-white/5 last:border-b-0 group">
+              <article key={post.id} id={post.id} className="py-6 border-b border-white/5 last:border-b-0 group">
                 <div className="flex gap-4">
                   <a href={`/profile/${authorHandle}`} className="flex-shrink-0">
                     <img src={avatarSrc} alt={authorName} className="w-9 h-9 rounded-full hover:ring-2 hover:ring-white/20 transition-all" />
@@ -154,14 +254,87 @@ export default function FeedPage() {
                         ))}
                       </div>
                     )}
+
+                    {/* Action bar */}
                     <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => toggleLike(post.id)} className="press flex items-center gap-1.5 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5"
-                        style={{ color: post._liked ? 'var(--ring-social)' : 'rgba(255,255,255,0.3)' }}>
+                      <button
+                        onClick={() => toggleLike(post.id)}
+                        className="press flex items-center gap-1.5 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5"
+                        style={{ color: post._liked ? 'var(--ring-social)' : 'rgba(255,255,255,0.3)' }}
+                      >
                         <span>{post._liked ? '♥' : '♡'}</span><span>{likes}</span>
                       </button>
-                      <button className="press text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5">◎</button>
-                      <button className="press text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5">⇄</button>
+                      <button
+                        onClick={() => toggleComments(post.id)}
+                        className="press flex items-center gap-1.5 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5"
+                        style={{ color: cs?.open ? 'var(--v)' : 'rgba(255,255,255,0.3)' }}
+                      >
+                        <span>◎</span>
+                        {commentCount > 0 && <span>{commentCount}</span>}
+                      </button>
+                      <button
+                        onClick={() => sharePost(post.id, post.content ?? '')}
+                        className="press text-white/30 hover:text-white/70 transition-colors text-xs min-h-[36px] px-3 rounded-lg hover:bg-white/5"
+                      >
+                        ⇄
+                      </button>
                     </div>
+
+                    {/* Inline comment thread */}
+                    {cs?.open && (
+                      <div className="mt-4 border-l-2 pl-4" style={{ borderColor: 'rgba(124,58,237,0.3)' }}>
+                        {/* Existing comments */}
+                        <div className="space-y-3 mb-3">
+                          {cs.comments.length === 0 && cs.loaded && (
+                            <p className="text-xs text-white/25 italic">No comments yet. Be first.</p>
+                          )}
+                          {!cs.loaded && (
+                            <p className="text-xs text-white/25">Loading…</p>
+                          )}
+                          {cs.comments.map(c => (
+                            <div key={c.id} className="flex gap-2.5">
+                              <a href={`/profile/${c.author.handle}`}>
+                                <img
+                                  src={c.author.avatarUrl ?? `https://api.dicebear.com/7.x/shapes/svg?seed=${c.author.handle}`}
+                                  alt={c.author.displayName}
+                                  className="w-6 h-6 rounded-full flex-shrink-0 hover:ring-1 hover:ring-white/20"
+                                />
+                              </a>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <a href={`/profile/${c.author.handle}`} className="text-xs font-semibold text-white/70 hover:text-white">{c.author.displayName}</a>
+                                  <span className="text-xs text-white/20">{formatRelTime(c.createdAt)}</span>
+                                </div>
+                                <p className="text-xs text-white/60 leading-relaxed">{c.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Comment input */}
+                        <div className="flex gap-2.5 items-center">
+                          <img src={u.avatar} alt="" className="w-6 h-6 rounded-full flex-shrink-0" />
+                          <div className="flex-1 flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={cs.draft ?? ''}
+                              onChange={e => setCommentState(prev => ({ ...prev, [post.id]: { ...prev[post.id], draft: e.target.value } }))}
+                              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) submitComment(post.id) }}
+                              placeholder="Reply to signal…"
+                              className="flex-1 bg-white/4 border border-white/10 px-3 py-1.5 text-xs text-white placeholder-white/20 outline-none focus:border-violet-500/40 transition-colors"
+                              style={{ borderRadius: '99px' }}
+                            />
+                            <button
+                              onClick={() => submitComment(post.id)}
+                              disabled={!cs.draft?.trim() || cs.submitting}
+                              className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-30 transition-opacity"
+                              style={{ background: 'var(--v)', borderRadius: '99px' }}
+                            >
+                              {cs.submitting ? '…' : '↑'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </article>
@@ -190,7 +363,6 @@ export default function FeedPage() {
     </div>
   )
 }
-
 
 function formatRelTime(ts: string | number) {
   const d = typeof ts === 'string' ? new Date(ts) : new Date(ts)

@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { api } from "../api.js";
 import { TOKEN, PRICE_USD } from "../brand.js";
 
-export default function Dashboard({ balance, miners, toggleMiner, insights, address }) {
+export default function Dashboard({ balance, miners, toggleMiner, insights, address, notify, onChange }) {
   const [badges, setBadges] = useState([]);
-  useEffect(()=>{ if(address) api.achievements(address).then(setBadges).catch(()=>{}); },[address,insights.length]);
+  const [faucet, setFaucet] = useState(null);
+  useEffect(()=>{ if(address){ api.achievements(address).then(setBadges).catch(()=>{}); api.faucet(address).then(setFaucet).catch(()=>{}); } },[address,insights.length]);
+  async function claim(){ try{ await api.claimFaucet(address); notify&&notify("Claimed 25 MINE from faucet"); onChange&&onChange(); api.faucet(address).then(setFaucet); }catch{ notify&&notify("Already claimed today"); } }
   return (
     <div>
       <div className="balbox">
@@ -17,6 +19,12 @@ export default function Dashboard({ balance, miners, toggleMiner, insights, addr
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
           {badges.map((b)=>(<span key={b.code} className="mono" style={{fontSize:11,fontWeight:700,border:"3px solid var(--ink)",padding:"6px 10px",background:"var(--paper2)"}}>{b.name}</span>))}
         </div>
+      )}
+      {faucet && (
+        <button className="btn" style={{width:"100%",marginBottom:14,justifyContent:"center",opacity:faucet.canClaim?1:.5}}
+          disabled={!faucet.canClaim} onClick={claim}>
+          {faucet.canClaim ? "🚰 CLAIM DAILY FAUCET (+25 MINE)" : "🚰 FAUCET CLAIMED · COME BACK TOMORROW"}
+        </button>
       )}
       <div className="tiles">
         <MinerTile k="compute" label="🖥 COMPUTE" gain="+1.2/HR" on={miners.compute} toggle={toggleMiner}/>

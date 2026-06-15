@@ -248,3 +248,27 @@ Tests: **28/28 passing**. Load: ~726 req/s, rate limit confirmed (300/min → 42
 | DEPLOYMENT.md guide + CHANGELOG.md | ✅ |
 
 Smart contracts: **7 total**. API tests: **29/29 passing**.
+
+
+## Observability + open-source (latest)
+
+| Feature | Status |
+|---------|--------|
+| Metrics endpoint — `/metrics` (Prometheus text + JSON) | ✅ |
+| Webhooks — register URL, outbound event delivery | ✅ |
+| Request logging + leveled logger (quiet in tests) | ✅ |
+| LICENSE (MIT) + CONTRIBUTING + SECURITY docs | ✅ |
+
+Tests: **31/31 passing**.
+
+
+## Status · limits · backup · faucet (latest)
+
+| Feature | Status |
+|---------|--------|
+| Public status page — `/status` (uptime, modes, burns, auto-refresh) | ✅ |
+| Per-API-key daily cap (1000/day) + usage in Settings | ✅ |
+| DB backup/restore — `/api/admin/backup` + `npm run backup` CLI | ✅ |
+| Daily faucet — claim +25 MINE once/24h | ✅ |
+
+Tests: **33/33 passing**.

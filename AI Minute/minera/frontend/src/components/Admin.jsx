@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../api.js";
+import { api, download, BASE } from "../api.js";
 
 export default function Admin({ address, notify }) {
   const [pending, setPending] = useState([]);
@@ -24,6 +24,9 @@ export default function Admin({ address, notify }) {
 
   return (
     <div>
+      <div style={{marginBottom:14}}>
+        <a className="btn ghost" href={(BASE||"")+"/api/admin/backup"} target="_blank" rel="noreferrer" style={{textDecoration:"none",fontSize:11,padding:"8px 12px"}}>⬇ DB BACKUP (JSON)</a>
+      </div>
       {hl && (
         <div style={{border:"3px solid var(--ink)",padding:12,marginBottom:16,fontFamily:"'Space Mono',monospace",fontSize:12}}>
           <div style={{fontWeight:700,marginBottom:6}}>🩺 SYSTEM HEALTH</div>

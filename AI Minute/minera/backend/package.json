@@ -9,7 +9,8 @@
     "test": "node --test",
     "seed": "node src/seed.js",
     "digest": "node src/digestCli.js",
-    "loadtest": "node src/loadtest.js"
+    "loadtest": "node src/loadtest.js",
+    "backup": "node src/backupCli.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

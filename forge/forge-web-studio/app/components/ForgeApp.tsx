@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -724,6 +724,30 @@ export default function ForgeApp() {
   const [newKanbanTitle, setNewKanbanTitle] = useState('');
   const [newKanbanCol, setNewKanbanCol] = useState('backlog');
   const [digest, setDigest] = useState<any>(null);
+  const [snippets, setSnippets] = useState<any[]>([]);
+  const [snippetSearch, setSnippetSearch] = useState('');
+  const [newSnippet, setNewSnippet] = useState({ title:'', code:'', language:'typescript', tags:'' });
+  const [showSnippetForm, setShowSnippetForm] = useState(false);
+  const [globalSearchQ, setGlobalSearchQ] = useState('');
+  const [globalResults, setGlobalResults] = useState<any[]>([]);
+  const [onboarding, setOnboarding] = useState<any>(null);
+  const [urlSaves, setUrlSaves] = useState<any[]>([]);
+  const [urlSaveQ, setUrlSaveQ] = useState('');
+  const [newUrl, setNewUrl] = useState('');
+  const [newUrlTitle, setNewUrlTitle] = useState('');
+  const [showUrlForm, setShowUrlForm] = useState(false);
+  const [contentCalendar, setContentCalendar] = useState<any[]>([]);
+  const [calMonth, setCalMonth] = useState(new Date().toISOString().slice(0,7));
+  const [newCalTitle, setNewCalTitle] = useState('');
+  const [newCalDate, setNewCalDate] = useState('');
+  const [newCalPlatform, setNewCalPlatform] = useState('blog');
+  const [threadVoteScore, setThreadVoteScore] = useState<number>(0);
+  const [userVote, setUserVote] = useState<number>(0);
+  const [debateTopic, setDebateTopic] = useState('');
+  const [debateResult, setDebateResult] = useState<any>(null);
+  const [showDebate, setShowDebate] = useState(false);
+  const [advancedStats, setAdvancedStats] = useState<any>(null);
+  const [showAdvStats, setShowAdvStats] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<any[]>([]);
   const [showPinned, setShowPinned] = useState(true);
   const [tldr, setTldr] = useState<string[]|null>(null);
@@ -2760,7 +2784,125 @@ export default function ForgeApp() {
     } catch {}
   }
 
-  async function loadFlashcards(deck?: string) {
+  async function loadUrlSaves(q?: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const url = q ? `/api/url-saves?q=${encodeURIComponent(q)}` : '/api/url-saves';
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setUrlSaves(await r.json());
+    } catch {}
+  }
+  async function addUrlSave() {
+    if (!newUrl.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/url-saves', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ url: newUrl, title: newUrlTitle }) });
+      if (r.ok) { setNewUrl(''); setNewUrlTitle(''); setShowUrlForm(false); loadUrlSaves(); }
+    } catch {}
+  }
+  async function deleteUrlSave(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/url-saves/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadUrlSaves(); } catch {}
+  }
+  async function pinUrlSave(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/url-saves/${id}/pin`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}` } }); loadUrlSaves(); } catch {}
+  }
+  async function loadContentCalendar(month?: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const m = month || calMonth;
+      const r = await fetch(`/api/content-calendar?month=${m}`, { headers:{ Authorization:`Bearer ${tok}` } });
+      if (r.ok) setContentCalendar(await r.json());
+    } catch {}
+  }
+  async function addCalendarItem() {
+    if (!newCalTitle.trim() || !newCalDate.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/content-calendar', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title: newCalTitle, platform: newCalPlatform, scheduled_date: newCalDate }) });
+      if (r.ok) { setNewCalTitle(''); setNewCalDate(''); loadContentCalendar(); }
+    } catch {}
+  }
+  async function updateCalStatus(id: number, status: string) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/content-calendar/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ status }) }); loadContentCalendar(); } catch {}
+  }
+  async function deleteCalItem(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/content-calendar/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadContentCalendar(); } catch {}
+  }
+  async function loadThreadVote(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/vote`, { headers:{ Authorization:`Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setThreadVoteScore(d.score); setUserVote(d.userVote); }
+    } catch {}
+  }
+  async function voteThread(threadId: string, vote: number) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/vote`, { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ vote }) });
+      if (r.ok) { const d = await r.json(); setThreadVoteScore(d.score); setUserVote(vote); }
+    } catch {}
+  }
+  async function runDebate(threadId: string) {
+    if (!debateTopic.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/debate`, { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ topic: debateTopic, side: 'both' }) });
+      if (r.ok) { setDebateResult(await r.json()); setShowDebate(true); }
+    } catch {}
+  }
+  async function loadAdvancedStats() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/workspace/stats/advanced?days=30', { headers:{ Authorization:`Bearer ${tok}` } });
+      if (r.ok) { setAdvancedStats(await r.json()); setShowAdvStats(true); }
+    } catch {}
+  }
+
+  async function loadSnippets(q?: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const url = q ? `/api/snippets?q=${encodeURIComponent(q)}` : '/api/snippets';
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setSnippets(await r.json());
+    } catch {}
+  }
+  async function addSnippet() {
+    if (!newSnippet.title || !newSnippet.code) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch('/api/snippets', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify(newSnippet) });
+      setNewSnippet({ title:'', code:'', language:'typescript', tags:'' }); setShowSnippetForm(false); loadSnippets();
+    } catch {}
+  }
+  async function useSnippet(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/snippets/${id}/use`, { method:'POST', headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setInput(d.code); setMainTab('workspace' as any); }
+    } catch {}
+  }
+  async function deleteSnippet(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/snippets/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadSnippets(snippetSearch||undefined); } catch {}
+  }
+  async function globalSearch() {
+    if (!globalSearchQ.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/search/global?q=${encodeURIComponent(globalSearchQ)}`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setGlobalResults(d.results || []); }
+    } catch {}
+  }
+  async function loadOnboarding() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/onboarding', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setOnboarding(await r.json()); } catch {}
+  }
+
+    async function loadFlashcards(deck?: string) {
     const tok = localStorage.getItem('forge_token');
     try {
       const url = deck ? `/api/flashcards?deck=${encodeURIComponent(deck)}` : '/api/flashcards';
@@ -3792,6 +3934,12 @@ export default function ForgeApp() {
             { id:'reading', icon:'📚', label:'Reading' },
             { id:'kanban', icon:'🗃️', label:'Kanban' },
             { id:'digest', icon:'☀️', label:'Digest' },
+            { id:'snippets', icon:'🗄️', label:'Snippets' },
+            { id:'gsearch', icon:'🔎', label:'Search' },
+            { id:'onboarding', icon:'🚀', label:'Get Started' },
+            { id:'urlsaves', icon:'🔗', label:'Link Vault' },
+            { id:'calendar', icon:'📆', label:'Content Cal' },
+            { id:'advstats', icon:'📊', label:'Adv. Stats' },
             { id:'workspace', icon:'🛠', label:'Workspace' },
             { id:'super', icon:'🌟', label:'SuperAgent' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
@@ -4181,6 +4329,18 @@ export default function ForgeApp() {
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🎯</button>
                   <button onClick={() => activeThread && loadThreadInsights(String(activeThread.id))} title="Thread insights"
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🔍</button>
+                  <button onClick={() => activeThread && loadThreadVote(String(activeThread.id))} title={`Vote (score: ${threadVoteScore})`}
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>
+                    {userVote === 1 ? '👍' : userVote === -1 ? '👎' : '🗳'} {threadVoteScore > 0 ? `+${threadVoteScore}` : threadVoteScore}
+                  </button>
+                  {userVote === 0 && threadVoteScore === 0 && (
+                    <span style={{ display:'flex', gap:2 }}>
+                      <button onClick={() => activeThread && voteThread(String(activeThread.id), 1)} style={{ padding:'3px 6px', background:'none', border:'1px solid var(--fg-border2)', borderRadius:6, cursor:'pointer', fontSize:11 }}>👍</button>
+                      <button onClick={() => activeThread && voteThread(String(activeThread.id), -1)} style={{ padding:'3px 6px', background:'none', border:'1px solid var(--fg-border2)', borderRadius:6, cursor:'pointer', fontSize:11 }}>👎</button>
+                    </span>
+                  )}
+                  <button onClick={() => setShowDebate(d => !d)} title="Debate mode"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>⚔️</button>
                   {showCoaching && coachingTips.length > 0 && (
                     <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:320, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
@@ -4190,6 +4350,30 @@ export default function ForgeApp() {
                       {coachingTips.map((tip, i) => (
                         <div key={i} style={{ fontSize:12, color:'var(--fg-text2)', background:'var(--fg-bg3)', borderRadius:8, padding:'8px 10px', marginBottom:6 }}>💡 {tip}</div>
                       ))}
+                    </div>
+                  )}
+                  {showDebate && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:340, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>⚔️ Debate Mode</span>
+                        <button onClick={() => { setShowDebate(false); setDebateResult(null); }} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {!debateResult ? (
+                        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                          <input value={debateTopic} onChange={e => setDebateTopic(e.target.value)} placeholder="Enter topic to debate..." style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:12, width:'100%', boxSizing:'border-box' }} />
+                          <button onClick={() => activeThread && runDebate(String(activeThread.id))} style={{ padding:'8px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:700 }}>Generate Debate Angles</button>
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', marginBottom:8 }}>Topic: {debateResult.topic}</div>
+                          {debateResult.prompts?.map((p: string, i: number) => (
+                            <div key={i} style={{ padding:'8px 10px', background:'var(--fg-bg3)', borderRadius:8, fontSize:12, color:'var(--fg-text)', marginBottom:6, cursor:'pointer' }} onClick={() => { setInput(p); setShowDebate(false); setDebateResult(null); }}>
+                              {p}
+                            </div>
+                          ))}
+                          <button onClick={() => setDebateResult(null)} style={{ marginTop:4, fontSize:11, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer' }}>← New topic</button>
+                        </div>
+                      )}
                     </div>
                   )}
                   {showInsights && threadInsights && (
@@ -9836,6 +10020,450 @@ export default function ForgeApp() {
                     <div style={{ fontSize:13, color:'var(--fg-text2)', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{entry.summary}</div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Flashcards tab */}
+        {mainTab === 'flashcards' && (
+          <div style={{ padding:24, maxWidth:680 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🃏 Flashcards</h2>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={() => { setShowCardForm(v => !v); }} style={{ padding:'7px 14px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>+ Card</button>
+                <button onClick={() => loadFlashcards(activeDeck)} style={{ padding:'7px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻</button>
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              {['default', ...flashDecks.filter(d => d !== 'default')].map(deck => (
+                <button key={deck} onClick={() => { setActiveDeck(deck); loadFlashcards(deck); }} style={{ padding:'5px 12px', borderRadius:20, border: activeDeck === deck ? 'none' : '1px solid var(--fg-border)', background: activeDeck === deck ? 'var(--fg-orange,#ff1f35)' : 'var(--fg-bg3)', color: activeDeck === deck ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>{deck}</button>
+              ))}
+            </div>
+            {showCardForm && (
+              <div style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14, marginBottom:16, display:'flex', flexDirection:'column', gap:8 }}>
+                <input value={newCard.front} onChange={e => setNewCard(p => ({ ...p, front: e.target.value }))} placeholder="Front (question)" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                <textarea value={newCard.back} onChange={e => setNewCard(p => ({ ...p, back: e.target.value }))} placeholder="Back (answer)" rows={2} style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'none', fontFamily:'inherit' }} />
+                <input value={newCard.deck} onChange={e => setNewCard(p => ({ ...p, deck: e.target.value }))} placeholder="Deck name" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={addFlashcard} style={{ padding:'7px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13 }}>Save</button>
+                  <button onClick={() => setShowCardForm(false)} style={{ padding:'7px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {reviewCard ? (
+              <div style={{ textAlign:'center' }}>
+                <div style={{ background:'var(--fg-bg2)', borderRadius:16, padding:32, marginBottom:16, minHeight:140, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column' }}>
+                  <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:12 }}>FRONT</div>
+                  <div style={{ fontSize:18, color:'var(--fg-text)', fontWeight:600, lineHeight:1.4 }}>{reviewCard.front}</div>
+                  {showCardBack && (
+                    <>
+                      <div style={{ width:'100%', height:1, background:'var(--fg-border)', margin:'16px 0' }} />
+                      <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:8 }}>BACK</div>
+                      <div style={{ fontSize:15, color:'var(--fg-text2)', lineHeight:1.5 }}>{reviewCard.back}</div>
+                    </>
+                  )}
+                </div>
+                {!showCardBack ? (
+                  <button onClick={() => setShowCardBack(true)} style={{ padding:'10px 28px', borderRadius:10, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14, fontWeight:600 }}>Reveal Answer</button>
+                ) : (
+                  <div style={{ display:'flex', gap:10, justifyContent:'center' }}>
+                    {[['Again',0,'#ef4444'],['Hard',2,'#f97316'],['Good',4,'#22c55e'],['Easy',5,'#3b82f6']].map(([label,q,color]) => (
+                      <button key={label as string} onClick={() => reviewFlashcard(Number(q))} style={{ padding:'8px 18px', borderRadius:8, border:'none', background: color as string, color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>{label as string}</button>
+                    ))}
+                  </div>
+                )}
+                <div style={{ marginTop:12, fontSize:12, color:'var(--fg-text3)' }}>{flashcards.length} card{flashcards.length !== 1 ? 's' : ''} in deck</div>
+              </div>
+            ) : (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🃏</div>
+                <div>No cards to review. Add some above or load a deck.</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reading List tab */}
+        {mainTab === 'reading' && (
+          <div style={{ padding:24, maxWidth:700 }}>
+            <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:'0 0 16px' }}>📚 Reading List</h2>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <input value={newRead.title} onChange={e => setNewRead(p => ({ ...p, title: e.target.value }))} placeholder="Title or topic" style={{ flex:2, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+              <input value={newRead.url} onChange={e => setNewRead(p => ({ ...p, url: e.target.value }))} placeholder="URL (optional)" style={{ flex:2, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={addReadingItem} disabled={!newRead.title.trim()} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Add</button>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              {['all','unread','reading','done'].map(f => (
+                <button key={f} onClick={() => { setReadFilter(f); setTimeout(loadReadingList, 50); }} style={{ padding:'5px 12px', borderRadius:20, border: readFilter === f ? 'none' : '1px solid var(--fg-border)', background: readFilter === f ? 'var(--fg-orange,#ff1f35)' : 'var(--fg-bg3)', color: readFilter === f ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, textTransform:'capitalize' }}>{f}</button>
+              ))}
+              <button onClick={loadReadingList} style={{ marginLeft:'auto', padding:'5px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻</button>
+            </div>
+            {readingList.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>📚</div>
+                <div>Nothing in your reading list yet.</div>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {readingList.map((item: any) => (
+                  <div key={item.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 14px', display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:14, fontWeight:600, color:'var(--fg-text)' }}>{item.title}</div>
+                      {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'var(--fg-orange,#ff1f35)', textDecoration:'none' }}>{item.url.slice(0,50)}{item.url.length > 50 ? '…' : ''}</a>}
+                    </div>
+                    <select value={item.status} onChange={e => updateReadStatus(item.id, e.target.value)} style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', fontSize:12, cursor:'pointer' }}>
+                      <option value="unread">Unread</option>
+                      <option value="reading">Reading</option>
+                      <option value="done">Done</option>
+                    </select>
+                    <button onClick={() => deleteReadItem(item.id)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Kanban tab */}
+        {mainTab === 'kanban' && (
+          <div style={{ padding:24 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🗃️ Kanban Board</h2>
+              <button onClick={loadKanban} style={{ padding:'7px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Load</button>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <input value={newKanbanTitle} onChange={e => setNewKanbanTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && addKanbanItem()} placeholder="New card title..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+              <select value={newKanbanCol} onChange={e => setNewKanbanCol(e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', fontSize:13 }}>
+                {['backlog','in_progress','review','done'].map(c => <option key={c} value={c}>{c.replace('_',' ')}</option>)}
+              </select>
+              <button onClick={addKanbanItem} disabled={!newKanbanTitle.trim()} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Add</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, overflowX:'auto' }}>
+              {(['backlog','in_progress','review','done'] as const).map(col => (
+                <div key={col} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:12, minHeight:300 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>{col.replace('_',' ')}</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                    {(kanban[col] || []).map((item: any) => (
+                      <div key={item.id} style={{ background:'var(--fg-bg)', borderRadius:8, padding:'10px 12px', borderLeft:`3px solid ${item.color}` }}>
+                        <div style={{ fontSize:13, color:'var(--fg-text)', marginBottom:6 }}>{item.title}</div>
+                        <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                          {['backlog','in_progress','review','done'].filter(c => c !== col).map(c => (
+                            <button key={c} onClick={() => moveKanbanItem(item.id, c)} style={{ padding:'2px 6px', borderRadius:4, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>→{c.replace('_',' ')}</button>
+                          ))}
+                          <button onClick={() => deleteKanbanItem(item.id)} style={{ marginLeft:'auto', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>×</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Daily Digest tab */}
+        {mainTab === 'digest' && (
+          <div style={{ padding:24, maxWidth:600 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>☀️ Daily Digest</h2>
+              <button onClick={loadDigest} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>↻ Refresh</button>
+            </div>
+            {!digest ? (
+              <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:48, marginBottom:16 }}>☀️</div>
+                <div style={{ fontSize:14, marginBottom:16 }}>Click Refresh to load your daily summary.</div>
+                <button onClick={loadDigest} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14 }}>Load Digest</button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:24, marginBottom:20, borderLeft:'4px solid var(--fg-orange,#ff1f35)' }}>
+                  <div style={{ fontSize:13, color:'var(--fg-text3)', marginBottom:8 }}>{digest.date}</div>
+                  <div style={{ fontSize:16, color:'var(--fg-text)', lineHeight:1.5 }}>{digest.summary}</div>
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
+                  {[
+                    ['💬 Messages', digest.messagesExchanged],
+                    ['🧵 New threads', digest.threadsCreated],
+                    ['🪙 Tokens used', digest.tokensUsed?.toLocaleString()],
+                    ['📝 Notes', digest.recentNotes],
+                  ].map(([label, val]) => (
+                    <div key={label as string} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'14px 16px', textAlign:'center' }}>
+                      <div style={{ fontSize:22, fontWeight:700, color:'var(--fg-orange,#ff1f35)' }}>{val}</div>
+                      <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:4 }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+                {digest.topThread && (
+                  <div style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14 }}>
+                    <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:6 }}>Most Active Thread</div>
+                    <div style={{ fontSize:14, fontWeight:600, color:'var(--fg-text)' }}>{digest.topThread.title || 'Untitled'}</div>
+                    <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:4 }}>{digest.topThread.msg_count} messages</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Snippets Vault tab */}
+        {mainTab === 'snippets' && (
+          <div style={{ padding:24, maxWidth:800 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🗄️ Snippets Vault</h2>
+              <button onClick={() => setShowSnippetForm(v => !v)} style={{ padding:'7px 14px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>+ Snippet</button>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <input value={snippetSearch} onChange={e => setSnippetSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && loadSnippets(snippetSearch||undefined)} placeholder="Search snippets..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={() => loadSnippets(snippetSearch||undefined)} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻</button>
+            </div>
+            {showSnippetForm && (
+              <div style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14, marginBottom:16, display:'flex', flexDirection:'column', gap:8 }}>
+                <div style={{ display:'flex', gap:8 }}>
+                  <input value={newSnippet.title} onChange={e => setNewSnippet(p => ({ ...p, title: e.target.value }))} placeholder="Title" style={{ flex:2, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input value={newSnippet.language} onChange={e => setNewSnippet(p => ({ ...p, language: e.target.value }))} placeholder="language" style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                </div>
+                <textarea value={newSnippet.code} onChange={e => setNewSnippet(p => ({ ...p, code: e.target.value }))} placeholder="Paste your code here..." rows={6} style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:12, fontFamily:'monospace', resize:'vertical' }} />
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={addSnippet} style={{ padding:'7px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13 }}>Save</button>
+                  <button onClick={() => setShowSnippetForm(false)} style={{ padding:'7px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {snippets.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🗄️</div>
+                <div>No snippets yet. Save code you reuse frequently.</div>
+                <button onClick={() => loadSnippets()} style={{ marginTop:12, padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Snippets</button>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {snippets.map((s: any) => (
+                  <div key={s.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                      <div>
+                        <span style={{ fontSize:14, fontWeight:600, color:'var(--fg-text)' }}>{s.title}</span>
+                        <span style={{ marginLeft:10, fontSize:11, background:'var(--fg-bg4)', color:'var(--fg-text3)', padding:'2px 7px', borderRadius:4 }}>{s.language}</span>
+                        {s.use_count > 0 && <span style={{ marginLeft:6, fontSize:11, color:'var(--fg-text3)' }}>×{s.use_count}</span>}
+                      </div>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <button onClick={() => useSnippet(s.id)} style={{ padding:'5px 12px', borderRadius:6, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:12 }}>Use in chat</button>
+                        <button onClick={() => { navigator.clipboard.writeText(s.code); }} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>Copy</button>
+                        <button onClick={() => deleteSnippet(s.id)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                    </div>
+                    <pre style={{ background:'var(--fg-bg)', borderRadius:8, padding:'10px 12px', fontSize:12, color:'var(--fg-text2)', overflowX:'auto', margin:0, fontFamily:'monospace', maxHeight:180 }}>{s.code.slice(0,500)}{s.code.length > 500 ? '\n...' : ''}</pre>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Global Search tab */}
+        {mainTab === 'gsearch' && (
+          <div style={{ padding:24, maxWidth:700 }}>
+            <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:'0 0 16px' }}>🔎 Global Search</h2>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <input value={globalSearchQ} onChange={e => setGlobalSearchQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && globalSearch()} placeholder="Search across threads, messages, notes, snippets..." style={{ flex:1, padding:'10px 14px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={globalSearch} disabled={!globalSearchQ.trim()} style={{ padding:'10px 20px', borderRadius:10, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14, fontWeight:600 }}>Search</button>
+            </div>
+            {globalResults.length > 0 ? (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {globalResults.map((r: any, i: number) => (
+                  <div key={i} onClick={() => { if (r.type==='thread'||r.type==='message') { setMainTab('workspace' as any); } }} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 14px', cursor: r.type==='thread'||r.type==='message' ? 'pointer' : 'default', borderLeft:'3px solid var(--fg-orange,#ff1f35)' }}>
+                    <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:4 }}>
+                      <span style={{ fontSize:11, background:'var(--fg-bg4)', color:'var(--fg-text3)', padding:'1px 7px', borderRadius:10, textTransform:'capitalize' }}>{r.type}</span>
+                      <span style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>{r.title}</span>
+                    </div>
+                    {r.preview && <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:2 }}>{r.preview}</div>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🔎</div>
+                <div>Type a query and press Enter to search everywhere.</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Onboarding tab */}
+        {mainTab === 'onboarding' && (
+          <div style={{ padding:24, maxWidth:600 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🚀 Get Started</h2>
+              <button onClick={loadOnboarding} style={{ padding:'7px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻</button>
+            </div>
+            {!onboarding ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:48, marginBottom:16 }}>🚀</div>
+                <button onClick={loadOnboarding} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14 }}>Load Checklist</button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ background:'var(--fg-bg2)', borderRadius:12, padding:20, marginBottom:20 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12, alignItems:'center' }}>
+                    <span style={{ fontSize:15, fontWeight:700, color:'var(--fg-text)' }}>{onboarding.completed}/{onboarding.total} completed</span>
+                    <span style={{ fontSize:13, color:'var(--fg-orange,#ff1f35)', fontWeight:600 }}>{onboarding.pct}%</span>
+                  </div>
+                  <div style={{ height:10, background:'var(--fg-bg4)', borderRadius:5, overflow:'hidden' }}>
+                    <div style={{ height:'100%', width:`${onboarding.pct}%`, background:'var(--fg-orange,#ff1f35)', borderRadius:5, transition:'width 0.5s' }} />
+                  </div>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                  {onboarding.steps?.map((step: any) => (
+                    <div key={step.id} style={{ display:'flex', alignItems:'center', gap:14, background:'var(--fg-bg2)', borderRadius:10, padding:'14px 16px', opacity: step.done ? 0.7 : 1 }}>
+                      <div style={{ width:24, height:24, borderRadius:'50%', background: step.done ? '#22c55e' : 'var(--fg-bg4)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        {step.done ? <span style={{ color:'#fff', fontSize:14 }}>✓</span> : <span style={{ color:'var(--fg-text3)', fontSize:12 }}>○</span>}
+                      </div>
+                      <span style={{ fontSize:14, color: step.done ? 'var(--fg-text3)' : 'var(--fg-text)', textDecoration: step.done ? 'line-through' : 'none' }}>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+                {onboarding.pct === 100 && (
+                  <div style={{ marginTop:20, textAlign:'center', background:'rgba(34,197,94,0.1)', borderRadius:12, padding:20, border:'1px solid rgba(34,197,94,0.3)' }}>
+                    <div style={{ fontSize:32, marginBottom:8 }}>🎉</div>
+                    <div style={{ fontSize:16, fontWeight:700, color:'#22c55e' }}>You&apos;re all set! Forge is fully configured.</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Link Vault tab */}
+        {mainTab === 'urlsaves' && (
+          <div style={{ padding:24, maxWidth:800 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ margin:0, fontSize:20, fontWeight:700, color:'var(--fg-text)' }}>🔗 Link Vault</h2>
+              <button onClick={() => setShowUrlForm(f => !f)} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>+ Save Link</button>
+            </div>
+            {showUrlForm && (
+              <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16, marginBottom:16, display:'flex', flexDirection:'column', gap:8 }}>
+                <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://..." style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                <input value={newUrlTitle} onChange={e => setNewUrlTitle(e.target.value)} placeholder="Title (optional)" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={addUrlSave} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Save</button>
+                  <button onClick={() => setShowUrlForm(false)} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'none', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Cancel</button>
+                </div>
+              </div>
+            )}
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <input value={urlSaveQ} onChange={e => setUrlSaveQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && loadUrlSaves(urlSaveQ || undefined)} placeholder="Search links..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={() => loadUrlSaves(urlSaveQ || undefined)} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻</button>
+            </div>
+            {urlSaves.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:32, marginBottom:8 }}>🔗</div>
+                <div style={{ fontSize:14 }}>No saved links yet</div>
+                <button onClick={loadUrlSaves} style={{ marginTop:12, padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Links</button>
+              </div>
+            ) : urlSaves.map((u: any) => (
+              <div key={u.id} style={{ background:'var(--fg-bg3)', borderRadius:10, padding:14, marginBottom:10, display:'flex', gap:12, alignItems:'flex-start' }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:600, color:'var(--fg-text)', marginBottom:4 }}>{u.title || u.url}</div>
+                  <a href={u.url} target="_blank" rel="noreferrer" style={{ fontSize:12, color:'var(--fg-orange,#ff1f35)', textDecoration:'none' }}>{u.url}</a>
+                  {u.tags && <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:4 }}>{u.tags}</div>}
+                </div>
+                <div style={{ display:'flex', gap:4 }}>
+                  <button onClick={() => pinUrlSave(u.id)} style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'none', color: u.pinned ? '#f59e0b' : 'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>{u.pinned ? '📌' : '📍'}</button>
+                  <button onClick={() => deleteUrlSave(u.id)} style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>🗑</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Content Calendar tab */}
+        {mainTab === 'calendar' && (
+          <div style={{ padding:24, maxWidth:860 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ margin:0, fontSize:20, fontWeight:700, color:'var(--fg-text)' }}>📆 Content Calendar</h2>
+              <div style={{ display:'flex', gap:8 }}>
+                <input type="month" value={calMonth} onChange={e => { setCalMonth(e.target.value); loadContentCalendar(e.target.value); }} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+              </div>
+            </div>
+            <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16, marginBottom:16 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text2)', marginBottom:10 }}>+ New Content Item</div>
+              <div style={{ display:'flex', flexWrap:('wrap' as any), gap:8 }}>
+                <input value={newCalTitle} onChange={e => setNewCalTitle(e.target.value)} placeholder="Content title..." style={{ flex:2, minWidth:160, padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                <input type="date" value={newCalDate} onChange={e => setNewCalDate(e.target.value)} style={{ flex:1, minWidth:120, padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                <select value={newCalPlatform} onChange={e => setNewCalPlatform(e.target.value)} style={{ flex:1, minWidth:100, padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }}>
+                  {['blog','twitter','linkedin','instagram','youtube','newsletter','podcast'].map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <button onClick={addCalendarItem} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Add</button>
+              </div>
+            </div>
+            {contentCalendar.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:32, marginBottom:8 }}>📆</div>
+                <div style={{ fontSize:14 }}>No content planned for {calMonth}</div>
+                <button onClick={() => loadContentCalendar()} style={{ marginTop:12, padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Calendar</button>
+              </div>
+            ) : contentCalendar.map((item: any) => (
+              <div key={item.id} style={{ background:'var(--fg-bg3)', borderRadius:10, padding:14, marginBottom:8, display:'flex', gap:12, alignItems:'center' }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background: item.status === 'published' ? '#22c55e' : item.status === 'in_progress' ? '#f59e0b' : 'var(--fg-border2)', flexShrink:0 }} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>{item.title}</div>
+                  <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2 }}>{item.scheduled_date} · {item.platform} · {item.status}</div>
+                </div>
+                <select value={item.status} onChange={e => updateCalStatus(item.id, e.target.value)} style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:11 }}>
+                  {['draft','in_progress','scheduled','published'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <button onClick={() => deleteCalItem(item.id)} style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>🗑</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Advanced Stats tab */}
+        {mainTab === 'advstats' && (
+          <div style={{ padding:24, maxWidth:800 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ margin:0, fontSize:20, fontWeight:700, color:'var(--fg-text)' }}>📊 Advanced Stats</h2>
+              <button onClick={loadAdvancedStats} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>↻ Load Stats (30d)</button>
+            </div>
+            {!advancedStats ? (
+              <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>📊</div>
+                <div style={{ fontSize:15, marginBottom:16 }}>Advanced workspace analytics</div>
+                <button onClick={loadAdvancedStats} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14, fontWeight:700 }}>Load Stats</button>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text2)', marginBottom:12 }}>🧵 Threads by Day</div>
+                  {advancedStats.threadsByDay?.length > 0 ? advancedStats.threadsByDay.map((d: any) => (
+                    <div key={d.day} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'1px solid var(--fg-border2)', fontSize:12, color:'var(--fg-text)' }}>
+                      <span>{d.day}</span><span style={{ fontWeight:600 }}>{d.count} threads</span>
+                    </div>
+                  )) : <div style={{ fontSize:12, color:'var(--fg-text3)' }}>No data</div>}
+                </div>
+                <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text2)', marginBottom:12 }}>🤖 Tokens by Model</div>
+                  {advancedStats.tokensByModel?.length > 0 ? advancedStats.tokensByModel.map((d: any) => (
+                    <div key={d.model_used} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'1px solid var(--fg-border2)', fontSize:12, color:'var(--fg-text)' }}>
+                      <span>{d.model_used || 'unknown'}</span><span style={{ fontWeight:600 }}>{(d.tokens||0).toLocaleString()} tokens</span>
+                    </div>
+                  )) : <div style={{ fontSize:12, color:'var(--fg-text3)' }}>No data</div>}
+                </div>
+                {advancedStats.longestThread && (
+                  <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text2)', marginBottom:8 }}>🏆 Most Active Thread</div>
+                    <div style={{ fontSize:13, color:'var(--fg-text)' }}>{advancedStats.longestThread.title}</div>
+                    <div style={{ fontSize:12, color:'var(--fg-text3)' }}>{advancedStats.longestThread.c} messages</div>
+                  </div>
+                )}
+                <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text2)', marginBottom:12 }}>💬 Avg Message Length by Role</div>
+                  {advancedStats.msgLengths?.map((d: any) => (
+                    <div key={d.role} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'1px solid var(--fg-border2)', fontSize:12, color:'var(--fg-text)' }}>
+                      <span>{d.role}</span><span style={{ fontWeight:600 }}>{Math.round(d.avg_len)} chars</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

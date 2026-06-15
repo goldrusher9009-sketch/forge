@@ -19,7 +19,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res, next) => {
         author: {
           select: { id: true, handle: true, displayName: true, avatarUrl: true, vScore: true, tier: true },
         },
-        _count: { select: { likes: true } },
+        _count: { select: { likes: true, comments: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: limit + 1,
@@ -52,7 +52,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res, next) => {
         author: {
           select: { id: true, handle: true, displayName: true, avatarUrl: true, vScore: true, tier: true },
         },
-        _count: { select: { likes: true } },
+        _count: { select: { likes: true, comments: true } },
       },
     })
     res.status(201).json(post)
@@ -86,6 +86,48 @@ router.post('/:id/like', requireAuth, async (req: AuthRequest, res, next) => {
       }
       res.json({ liked: true })
     }
+  } catch (e) { next(e) }
+})
+
+// GET /api/feed/:id/comments
+router.get('/:id/comments', optionalAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const comments = await prisma.postComment.findMany({
+      where: { postId: req.params.id },
+      include: {
+        author: { select: { id: true, handle: true, displayName: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 50,
+    })
+    res.json(comments)
+  } catch (e) { next(e) }
+})
+
+// POST /api/feed/:id/comments
+router.post('/:id/comments', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const { content } = z.object({ content: z.string().min(1).max(500) }).parse(req.body)
+    const comment = await prisma.postComment.create({
+      data: { postId: req.params.id, authorId: req.userId!, content },
+      include: {
+        author: { select: { id: true, handle: true, displayName: true, avatarUrl: true } },
+      },
+    })
+    // Notify post author
+    const post = await prisma.post.findUnique({ where: { id: req.params.id }, select: { authorId: true } })
+    if (post && post.authorId !== req.userId) {
+      await prisma.notification.create({
+        data: {
+          userId: post.authorId,
+          type: 'like',
+          title: 'New comment on your post',
+          body: content.slice(0, 80),
+          linkUrl: '/feed',
+        },
+      }).catch(() => {})
+    }
+    res.status(201).json(comment)
   } catch (e) { next(e) }
 })
 

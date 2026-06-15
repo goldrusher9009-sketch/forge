@@ -186,3 +186,29 @@ test("multisig: propose, 2 approvals execute burn", async () => {
   r = await j("POST",`/api/treasury-actions/${id}/approve`,{signer:"0xsig2"});
   assert.equal(r.body.executed,true);
 });
+
+test("metrics endpoint", async () => {
+  const r=await j("GET","/metrics?format=json");
+  assert.ok("requests_total" in r.body); assert.ok(r.body.requests_total>0);
+});
+test("webhook register + list + delete", async () => {
+  const u=(await j("POST","/api/auth/login",{email:`wh${Date.now()}@x.io`})).body;
+  const id=(await j("POST",`/api/webhooks/${u.address}`,{url:"https://example.com/hook"})).body.id;
+  let list=(await j("GET",`/api/webhooks/${u.address}`)).body;
+  assert.ok(list.length>=1);
+  await j("DELETE",`/api/webhooks/${u.address}/${id}`);
+  list=(await j("GET",`/api/webhooks/${u.address}`)).body;
+  assert.equal(list.length,0);
+});
+
+test("faucet claim then cooldown", async () => {
+  const u=(await j("POST","/api/auth/login",{email:`fc${Date.now()}@x.io`})).body;
+  const c1=await j("POST",`/api/faucet/${u.address}/claim`);
+  assert.equal(c1.body.claimed,25);
+  const c2=await j("POST",`/api/faucet/${u.address}/claim`);
+  assert.equal(c2.status,429);
+});
+test("backup snapshot has tables", async () => {
+  const r=await j("GET","/api/admin/backup");
+  assert.ok(r.body.tables); assert.ok(r.body.tables.users);
+});

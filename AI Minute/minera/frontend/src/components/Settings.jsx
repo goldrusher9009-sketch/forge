@@ -69,7 +69,7 @@ export default function Settings({ address, notify }) {
         {keys.map((k)=>(
           <div className="row" key={k.id}>
             <span className="mono" style={{fontSize:11}}>{k.key.slice(0,18)}…</span>
-            <b className="mono" style={{fontSize:11}}>{k.calls} calls · ${k.spent.toFixed(2)}</b>
+            <b className="mono" style={{fontSize:11}}>{k.calls} calls · {k.day_calls||0}/1000 today · ${k.spent.toFixed(2)}</b>
           </div>
         ))}
         {keys.length===0 && <div className="row"><span style={{opacity:.6}}>No keys yet.</span></div>}

@@ -9,6 +9,11 @@ r.post("/chat/completions", async (req, res) => {
   if (apiKey) {
     const k = db.prepare("SELECT * FROM api_keys WHERE key = ?").get(apiKey);
     if (k) {
+      const DAY = 86400000, CAP = 1000;
+      let dayStart = k.day_start || 0, dayCalls = k.day_calls || 0;
+      if (Date.now() - dayStart > DAY) { dayStart = Date.now(); dayCalls = 0; }
+      if (dayCalls >= CAP) return res.status(429).json({ error: "daily API cap reached", cap: CAP, resetsAt: dayStart + DAY });
+      db.prepare("UPDATE api_keys SET day_calls = ?, day_start = ? WHERE id = ?").run(dayCalls + 1, dayStart, k.id);
       const fee = 0.05, protocolFee = fee * 0.20;
       db.prepare("UPDATE api_keys SET calls = calls + 1, spent = spent + ? WHERE id = ?").run(fee, k.id);
       if (getUser(k.address)) debit(k.address, fee, "api", "inference call");

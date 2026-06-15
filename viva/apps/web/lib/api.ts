@@ -123,6 +123,10 @@ export const feed = {
     request<{ liked: boolean }>(`/api/feed/${id}/like`, { method: 'POST' }),
   delete: (id: string) =>
     request(`/api/feed/${id}`, { method: 'DELETE' }),
+  comments: (id: string) =>
+    request<any[]>(`/api/feed/${id}/comments`),
+  comment: (id: string, content: string) =>
+    request<any>(`/api/feed/${id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
 }
 
 // ── Messages ──────────────────────────────────────────────

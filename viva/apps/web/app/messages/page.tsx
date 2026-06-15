@@ -1,10 +1,12 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAppStore, mockUser, MOCK_THREADS } from '@/lib/store'
 import { messages as messagesApi } from '@/lib/api'
 
 export default function MessagesPage() {
   const { user, setUser } = useAppStore()
+  const searchParams = useSearchParams()
   const [threads, setThreads] = useState<any[]>([])
   const [activeThread, setActiveThread] = useState<any | null>(null)
   const [msgs, setMsgs] = useState<any[]>([])
@@ -14,6 +16,7 @@ export default function MessagesPage() {
   const [showThread, setShowThread] = useState(false) // mobile slide-in
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const didAutoOpen = useRef(false)
 
   useEffect(() => {
     setMounted(true)
@@ -31,6 +34,30 @@ export default function MessagesPage() {
       setTimeout(() => inputRef.current?.focus(), 300)
     }
   }, [showThread, activeThread])
+
+  // Auto-open thread from ?thread= URL param once threads are loaded
+  useEffect(() => {
+    if (!mounted || didAutoOpen.current || threads.length === 0) return
+    const threadId = searchParams.get('thread')
+    if (!threadId) return
+    didAutoOpen.current = true
+    const found = threads.find((t: any) => t.id === threadId)
+    if (found) {
+      openThread(found)
+    } else {
+      // Thread not in list yet (just created) — fetch it directly and prepend
+      messagesApi.getMessages(threadId).then(data => {
+        const syntheticThread = {
+          id: threadId,
+          participants: [],
+          lastMessage: null,
+          messages: data.messages ?? data,
+        }
+        setThreads(prev => [syntheticThread, ...prev])
+        openThread(syntheticThread)
+      }).catch(() => {})
+    }
+  }, [mounted, threads, searchParams])
 
   async function loadThreads() {
     try {

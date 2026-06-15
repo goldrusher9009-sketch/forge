@@ -23,6 +23,9 @@ addColumn("bonds", "winner", "TEXT");
 addColumn("users", "display_name", "TEXT");
 addColumn("users", "bio", "TEXT");
 addColumn("users", "avatar_seed", "TEXT");
+addColumn("api_keys", "day_calls", "INTEGER DEFAULT 0");
+addColumn("api_keys", "day_start", "INTEGER DEFAULT 0");
+addColumn("users", "last_faucet", "INTEGER DEFAULT 0");
 
 // --- protocol counters ---
 function setIfMissing(k, v) {

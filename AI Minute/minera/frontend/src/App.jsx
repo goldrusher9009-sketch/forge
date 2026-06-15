@@ -106,7 +106,7 @@ export default function App() {
         {TABS.map(([k,l])=>(<button key={k} className={tab===k?"on":""} onClick={()=>{setTab(k); if(["wallet","board"].includes(k)) refreshBalance();}}>{l}</button>))}
       </div>
       <div className="panel">
-        {tab==="dash" && <Dashboard balance={balance} miners={miners} toggleMiner={toggleMiner} insights={insights} address={user.address}/>}
+        {tab==="dash" && <Dashboard balance={balance} miners={miners} toggleMiner={toggleMiner} insights={insights} address={user.address} notify={notify} onChange={refreshBalance}/>}
         {tab==="explore" && <Explorer address={user.address} onInsight={onInsight} notify={notify}/>}
         {tab==="market" && <Market address={user.address} onBalance={refreshBalance} notify={(m)=>{notify(m); refreshBalance();}}/>}
         {tab==="bonds" && <Bonds address={user.address} notify={(m)=>{notify(m); refreshBalance();}}/>}
