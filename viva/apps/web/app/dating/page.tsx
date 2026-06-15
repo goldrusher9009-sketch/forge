@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAppStore, mockUser, MOCK_PROFILES, TIER_META } from '@/lib/store'
-import { dating as datingApi } from '@/lib/api'
+import { dating as datingApi, messages as messagesApi } from '@/lib/api'
 import { useToast } from '@/components/ui/Toast'
 
 const ZK_BADGE_LABELS: Record<string, { label: string; color: string }> = {
@@ -12,6 +13,7 @@ const ZK_BADGE_LABELS: Record<string, { label: string; color: string }> = {
 }
 
 export default function DatingPage() {
+  const router = useRouter()
   const { user, setUser } = useAppStore()
   const { success, info } = useToast()
   const [profiles, setProfiles] = useState<any[]>([])
@@ -20,6 +22,15 @@ export default function DatingPage() {
   const [matched, setMatched] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [tab, setTab] = useState<'discover' | 'matches'>('discover')
+
+  async function goMessage(profileId: string) {
+    try {
+      const thread = await messagesApi.createThread(profileId)
+      router.push(`/messages?thread=${thread.id}`)
+    } catch {
+      router.push('/messages')
+    }
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -168,15 +179,17 @@ export default function DatingPage() {
                 const verified = p.verified ?? p.target?.verified ?? false
                 return (
                   <div key={p.id} className="flex items-center gap-4 p-4 border border-white/6 hover:border-white/12 transition-all" style={{ borderRadius: 'var(--radius)' }}>
-                    <img src={avatar} alt={name} className="w-12 h-12 rounded-full" />
+                    <a href={`/profile/${handle}`}>
+                      <img src={avatar} alt={name} className="w-12 h-12 rounded-full hover:ring-2 hover:ring-white/20 transition-all" />
+                    </a>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm">{name}</span>
+                        <a href={`/profile/${handle}`} className="font-semibold text-sm hover:text-white/70 transition-colors">{name}</a>
                         {verified && <span className="text-xs px-1.5 py-0.5" style={{ background: 'rgba(5,150,105,0.15)', color: 'var(--ring-activity)', borderRadius: '3px' }}>ZK</span>}
                       </div>
                       <p className="text-xs text-white/35 mt-0.5">@{handle} · {vscore} V-Score</p>
                     </div>
-                    <button className="px-4 py-2 text-xs font-semibold text-white hover:opacity-80 transition-opacity" style={{ background: 'var(--v)', borderRadius: 'var(--radius)' }}>Message →</button>
+                    <button onClick={() => goMessage(p.id ?? p.target?.id ?? p.id)} className="px-4 py-2 text-xs font-semibold text-white hover:opacity-80 transition-opacity" style={{ background: 'var(--v)', borderRadius: 'var(--radius)' }}>Message →</button>
                   </div>
                 )
               })}
@@ -191,7 +204,10 @@ export default function DatingPage() {
             <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl" style={{ background: 'rgba(225,29,72,0.15)', border: '2px solid var(--ring-wealth)' }}>♥</div>
             <h2 className="text-3xl font-bold" style={{ letterSpacing: '-0.04em' }}>It's a match.</h2>
             <p className="text-sm text-white/50">You and {profiles.find(p => p.id === matched)?.displayName} connected.</p>
-            <button className="px-8 py-3 font-semibold text-sm text-white" style={{ background: 'var(--ring-wealth)', borderRadius: 'var(--radius)' }} onClick={() => setMatched(null)}>Send a message →</button>
+            <button className="px-8 py-3 font-semibold text-sm text-white" style={{ background: 'var(--ring-wealth)', borderRadius: 'var(--radius)' }}
+              onClick={() => { const p = profiles.find(x => x.id === matched); if (p) goMessage(p.id); else router.push('/messages') }}>
+              Send a message →
+            </button>
           </div>
         </div>
       )}

@@ -189,3 +189,38 @@ CREATE TABLE IF NOT EXISTS chain_events (
   block   INTEGER,
   ts      INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS notif_prefs (
+  address TEXT PRIMARY KEY,
+  insight INTEGER NOT NULL DEFAULT 1,
+  license INTEGER NOT NULL DEFAULT 1,
+  referral INTEGER NOT NULL DEFAULT 1,
+  achievement INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS treasury_actions (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind      TEXT NOT NULL,        -- burn|grant|param
+  amount    REAL NOT NULL DEFAULT 0,
+  detail    TEXT,
+  proposer  TEXT,
+  status    TEXT NOT NULL DEFAULT 'pending',  -- pending|executed|cancelled
+  threshold INTEGER NOT NULL DEFAULT 2,
+  ts        INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS treasury_approvals (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  action_id INTEGER NOT NULL,
+  signer    TEXT NOT NULL,
+  ts        INTEGER NOT NULL,
+  UNIQUE(action_id, signer)
+);
+
+CREATE TABLE IF NOT EXISTS webhooks (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  address TEXT NOT NULL,
+  url     TEXT NOT NULL,
+  events  TEXT NOT NULL DEFAULT '*',
+  active  INTEGER NOT NULL DEFAULT 1,
+  ts      INTEGER NOT NULL
+);

@@ -9,7 +9,18 @@ r.get("/:address", (req, res) => {
 });
 
 r.get("/:address/transactions", (req, res) => {
-  res.json(db.prepare("SELECT * FROM transactions WHERE address = ? ORDER BY ts DESC LIMIT 50").all(req.params.address));
+  const type = req.query.type;
+  const limit = Math.min(100, Number(req.query.limit) || 25);
+  const offset = Number(req.query.offset) || 0;
+  let rows, total;
+  if (type) {
+    rows = db.prepare("SELECT * FROM transactions WHERE address = ? AND type = ? ORDER BY ts DESC LIMIT ? OFFSET ?").all(req.params.address, type, limit, offset);
+    total = db.prepare("SELECT COUNT(*) n FROM transactions WHERE address = ? AND type = ?").get(req.params.address, type).n;
+  } else {
+    rows = db.prepare("SELECT * FROM transactions WHERE address = ? ORDER BY ts DESC LIMIT ? OFFSET ?").all(req.params.address, limit, offset);
+    total = db.prepare("SELECT COUNT(*) n FROM transactions WHERE address = ?").get(req.params.address).n;
+  }
+  res.json({ rows, total, limit, offset });
 });
 
 r.post("/:address/credit", (req, res) => {

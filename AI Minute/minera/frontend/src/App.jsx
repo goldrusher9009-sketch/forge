@@ -26,10 +26,12 @@ import Search from "./components/Search.jsx";
 import Help from "./components/Help.jsx";
 import Profile from "./components/Profile.jsx";
 import Activity from "./components/Activity.jsx";
+import NetworkMap from "./components/NetworkMap.jsx";
+import Treasury from "./components/Treasury.jsx";
 
 const TABS = [
   ["dash","▦ DASH"],["explore","💡 EXPLORE"],["market","◆ MARKET"],["bonds","💎 BONDS"],
-  ["data","📡 DATA"],["roles","◎ ROLES"],["board","🏆 BOARD"],["activity","🌐 ACTIVITY"],["wallet","📜 WALLET"],["cash","$ CASH"],["subnets","🌐 SUBNETS"],["stats","📊 STATS"],["stake","🔒 STAKE"],["govern","🗳 GOVERN"],["keys","🔑 API"],["profile","👤 PROFILE"],["admin","⚙ ADMIN"],
+  ["data","📡 DATA"],["roles","◎ ROLES"],["board","🏆 BOARD"],["activity","🌐 ACTIVITY"],["map","🛰 MAP"],["wallet","📜 WALLET"],["cash","$ CASH"],["subnets","🌐 SUBNETS"],["stats","📊 STATS"],["treasury","🏦 TREASURY"],["stake","🔒 STAKE"],["govern","🗳 GOVERN"],["keys","🔑 API"],["profile","👤 PROFILE"],["admin","⚙ ADMIN"],
 ];
 
 export default function App() {
@@ -44,6 +46,8 @@ export default function App() {
   const [online, setOnline] = useState(0);
   const [lang, setLangState] = useState(getLang());
   const [help, setHelp] = useState(false);
+  const [preset, setPreset] = useState("blueprint");
+  useEffect(()=>{ if(preset==="blueprint") delete document.body.dataset.preset; else document.body.dataset.preset = preset; },[preset]);
   useEffect(()=>{ document.body.dataset.theme = theme; },[theme]);
   function notify(m){ setToast(m); clearTimeout(toastT.current); toastT.current=setTimeout(()=>setToast(null),2600); }
   const balance = user?.balance ?? 0;
@@ -110,10 +114,12 @@ export default function App() {
         {tab==="roles" && <Roles notify={notify}/>}
         {tab==="board" && <Leaderboard notify={notify}/>}
         {tab==="activity" && <Activity notify={notify}/>}
+        {tab==="map" && <NetworkMap/>}
         {tab==="wallet" && <Wallet address={user.address} balance={balance}/>}
         {tab==="cash" && <CashOut balance={balance} onWithdraw={onWithdraw} notify={notify}/>}
         {tab==="subnets" && <Subnets address={user.address} notify={(m)=>{notify(m); refreshBalance();}}/>}
         {tab==="stats" && <Analytics notify={notify}/>}
+        {tab==="treasury" && <Treasury notify={notify}/>}
         {tab==="stake" && <Stake address={user.address} balance={balance} onChange={refreshBalance} notify={(m)=>{notify(m);refreshBalance();}}/>}
         {tab==="govern" && <Govern address={user.address} notify={notify}/>}
         {tab==="keys" && <Settings address={user.address} notify={notify}/>}

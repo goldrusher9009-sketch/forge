@@ -81,8 +81,12 @@ export function addBurn(amount, source) {
   db.prepare("UPDATE protocol SET v = v - ? WHERE k = 'total_supply'").run(amount);
 }
 
-export function notifyUser(address, text) {
+export function notifyUser(address, text, category) {
   if (!address) return;
+  if (category) {
+    const p = db.prepare("SELECT * FROM notif_prefs WHERE address = ?").get(address);
+    if (p && p[category] === 0) return; // user muted this category
+  }
   db.prepare("INSERT INTO notifications (address,text,ts) VALUES (?,?,?)").run(address, text, Date.now());
 }
 
@@ -91,7 +95,7 @@ export function rewardReferrer(refereeAddress, bonus = 50) {
   if (!ref) return null;
   db.prepare("UPDATE referrals SET rewarded = 1 WHERE id = ?").run(ref.id);
   const next = credit(ref.referrer, bonus, "referral", `referral bonus: ${refereeAddress}`);
-  notifyUser(ref.referrer, `Referral bonus — your invite earned you +${bonus} MINE`);
+  notifyUser(ref.referrer, `Referral bonus — your invite earned you +${bonus} MINE`, "referral");
   award(ref.referrer, "referrer");
   return { referrer: ref.referrer, bonus, balance: next };
 }
@@ -107,7 +111,7 @@ export function award(address, code) {
   if (!address || !BADGES[code]) return false;
   try {
     db.prepare("INSERT INTO achievements (address,code,ts) VALUES (?,?,?)").run(address, code, Date.now());
-    notifyUser(address, `Achievement unlocked — ${BADGES[code]}`);
+    notifyUser(address, `Achievement unlocked — ${BADGES[code]}`, "achievement");
     return true;
   } catch { return false; } // already has it
 }

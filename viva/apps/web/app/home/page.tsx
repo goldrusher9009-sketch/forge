@@ -125,6 +125,7 @@ export default function HomeCanvas() {
               </span>
             )}
           </Link>
+          <Link href={`/profile/${u.handle}`} className="text-xs text-white/30 hover:text-white/70 transition-colors hidden sm:block">My Profile</Link>
           <Link href="/settings" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/10 hover:border-white/30 transition-colors">
             <img src={u.avatar} alt={u.displayName} className="w-full h-full object-cover" />
           </Link>

@@ -19,15 +19,28 @@ async function main() {
   const Bond = await hre.ethers.getContractFactory("EurekaBond");
   const bond = await Bond.deploy(); await bond.waitForDeployment();
 
+  const Staking = await hre.ethers.getContractFactory("Staking");
+  const staking = await Staking.deploy(tokenAddr); await staking.waitForDeployment();
+
+  const Gov = await hre.ethers.getContractFactory("Governance");
+  const gov = await Gov.deploy(tokenAddr); await gov.waitForDeployment();
+
+  const Market = await hre.ethers.getContractFactory("InsightMarketplace");
+  const market = await Market.deploy(deployer.address); await market.waitForDeployment();
+
   const MINTER = await token.MINTER_ROLE();
   await (await token.grantRole(MINTER, await pool.getAddress())).wait();
   await (await token.grantRole(MINTER, await insight.getAddress())).wait();
+  await (await token.grantRole(MINTER, await staking.getAddress())).wait();
 
   const addrs = {
     TOKEN_ADDRESS: tokenAddr,
     MINING_POOL_ADDRESS: await pool.getAddress(),
     INSIGHT_ADDRESS: await insight.getAddress(),
     BOND_ADDRESS: await bond.getAddress(),
+    STAKING_ADDRESS: await staking.getAddress(),
+    GOVERNANCE_ADDRESS: await gov.getAddress(),
+    MARKETPLACE_ADDRESS: await market.getAddress(),
   };
   console.log("\n=== Deployed ===");
   for (const [k, v] of Object.entries(addrs)) console.log(`${k}=${v}`);

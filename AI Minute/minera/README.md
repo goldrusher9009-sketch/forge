@@ -211,3 +211,40 @@ Tests: **19/19 passing** (includes full E2E flow).
 | Accessibility — focus rings, aria-labels, prefers-reduced-motion, sr-only | ✅ |
 
 Tests: **22/22 passing**.
+
+
+## API docs · indexer · digest · pagination (latest)
+
+| Feature | Status |
+|---------|--------|
+| OpenAPI spec + live HTML API docs (`/api/docs`) | ✅ |
+| Contract event indexer — mirrors on-chain events when chain active | ✅ |
+| Daily digest — `/api/digest` + `npm run digest` CLI | ✅ |
+| Transaction filters + pagination (type chips, load more) | ✅ |
+
+Tests: **26/26 passing**.
+
+
+## Map · prefs · themes · treasury · load (latest)
+
+| Feature | Status |
+|---------|--------|
+| Network swarm map — animated live node viz tab | ✅ |
+| Notification preferences — mute by category, backend respects | ✅ |
+| Theme presets — Blueprint / Terminal-green / Riso-pink | ✅ |
+| Treasury transparency — supply, burn %, cumulative curve, burn-by-source | ✅ |
+| Load-test script — `npm run loadtest` (726 req/s, rate-limiter verified) | ✅ |
+
+Tests: **28/28 passing**. Load: ~726 req/s, rate limit confirmed (300/min → 429).
+
+
+## Contracts v2 · multisig · docs (latest)
+
+| Feature | Status |
+|---------|--------|
+| 3 new contracts — Staking, Governance, InsightMarketplace (40/35/20/5) | ✅ |
+| Hardhat test suite expanded (staking yield, gov vote, market split) | ✅ |
+| Multi-sig treasury — propose/approve/execute (M-of-N) | ✅ |
+| DEPLOYMENT.md guide + CHANGELOG.md | ✅ |
+
+Smart contracts: **7 total**. API tests: **29/29 passing**.

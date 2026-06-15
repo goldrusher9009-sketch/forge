@@ -216,7 +216,10 @@ export default function MarketsPage() {
           >
             <div className="flex items-center justify-between mb-5">
               <p className="t-caption" style={{ fontSize: '0.625rem' }}>STAKE POSITION</p>
-              <button onClick={() => setSelected(null)} className="text-white/30 hover:text-white text-xl">x</button>
+              <div className="flex items-center gap-3">
+                <a href={`/markets/${selected.id}`} className="text-xs text-white/30 hover:text-white/70 underline transition-colors">View full market →</a>
+                <button onClick={() => setSelected(null)} className="text-white/30 hover:text-white text-xl">×</button>
+              </div>
             </div>
 
             <p className="text-sm font-medium text-white/80 mb-5 leading-snug">{selected.question ?? selected.title}</p>

@@ -7,7 +7,9 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "test": "node --test",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "digest": "node src/digestCli.js",
+    "loadtest": "node src/loadtest.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

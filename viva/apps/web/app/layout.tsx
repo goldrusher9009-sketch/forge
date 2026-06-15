@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import '../styles/globals.css'
 import { ToastProvider } from '@/components/ui/Toast'
+import { ShellWrapper } from '@/components/layout/ShellWrapper'
 
 const SITE_URL = 'https://viva-platform-eight.vercel.app'
 
@@ -46,7 +47,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <ToastProvider>
-          {children}
+          <ShellWrapper>
+            {children}
+          </ShellWrapper>
         </ToastProvider>
       </body>
     </html>

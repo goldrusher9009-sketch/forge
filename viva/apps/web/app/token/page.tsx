@@ -239,10 +239,10 @@ export default function TokenPage() {
                     { handle: 'danr', amount: 95, pct: 0.95, since: '3d' },
                   ].map(({ handle, amount, pct, since }) => (
                     <div key={handle} className="flex items-center gap-4 py-2.5 border-b border-white/5 last:border-0">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(124,58,237,0.2)', color: 'var(--v)' }}>
+                      <a href={`/profile/${handle}`} className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold hover:ring-2 hover:ring-white/20 transition-all flex-shrink-0" style={{ background: 'rgba(124,58,237,0.2)', color: 'var(--v)' }}>
                         {handle[0].toUpperCase()}
-                      </div>
-                      <span className="text-sm text-white/70 flex-1">@{handle}</span>
+                      </a>
+                      <a href={`/profile/${handle}`} className="text-sm text-white/70 flex-1 hover:text-white transition-colors">@{handle}</a>
                       <span className="t-mono text-xs" style={{ color: 'var(--ring-wealth)' }}>{amount} tokens</span>
                       <span className="t-mono text-xs text-white/25">{pct}%</span>
                       <span className="text-xs text-white/20">{since}</span>

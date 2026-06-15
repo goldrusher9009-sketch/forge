@@ -6340,4 +6340,713 @@ app.post('/api/workspace/templates', requireAuth, async (req: any, res) => {
 });
 
 
+
+// ─── Batch 13: AI Coaching, Compare Threads, Translate, Collections, Agenda ───
+
+// POST /api/threads/:id/coaching — AI coaching tips for a thread
+app.post('/api/threads/:id/coaching', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const messages = db.prepare('SELECT role, content FROM messages WHERE thread_id=? ORDER BY created_at LIMIT 30').all(req.params.id) as any[];
+    if (!messages.length) return res.json({ tips: [] });
+    const userMsgs = messages.filter((m: any) => m.role === 'user');
+    const avgLen = userMsgs.reduce((a: number, m: any) => a + m.content.length, 0) / (userMsgs.length || 1);
+    const tips: string[] = [];
+    if (avgLen < 60) tips.push('Try adding more context — longer prompts typically yield more accurate responses.');
+    if (userMsgs.length > 1 && userMsgs.some((m: any) => m.content.toLowerCase().startsWith('no'))) tips.push('Consider clarifying your intent upfront instead of correcting mid-thread.');
+    if (messages.length > 20) tips.push('This thread is long — consider branching or summarizing to keep focus sharp.');
+    if (userMsgs.every((m: any) => !m.content.includes('?'))) tips.push('Framing requests as questions can improve specificity of AI replies.');
+    if (!tips.length) tips.push('Great conversation structure! Keep it up.');
+    res.json({ tips, messageCount: messages.length, avgUserLength: Math.round(avgLen) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/compare/:id2 — compare two threads side-by-side metadata
+app.get('/api/threads/:id/compare/:id2', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const t1 = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, userId) as any;
+    const t2 = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id2, userId) as any;
+    if (!t1 || !t2) return res.status(404).json({ error: 'Thread not found' });
+    const m1 = db.prepare('SELECT COUNT(*) as c, SUM(tokens_used) as t FROM messages WHERE thread_id=?').get(req.params.id) as any;
+    const m2 = db.prepare('SELECT COUNT(*) as c, SUM(tokens_used) as t FROM messages WHERE thread_id=?').get(req.params.id2) as any;
+    res.json({
+      thread1: { ...t1, messageCount: m1.c, totalTokens: m1.t || 0 },
+      thread2: { ...t2, messageCount: m2.c, totalTokens: m2.t || 0 }
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/messages/:id/translate — translate a message
+app.post('/api/messages/:id/translate', authMiddleware, async (req: any, res) => {
+  try {
+    const { language = 'Spanish' } = req.body;
+    const msg = db.prepare('SELECT * FROM messages WHERE id=?').get(req.params.id) as any;
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    // Return stub translation indicator — actual translation done client-side via model
+    res.json({ messageId: req.params.id, originalContent: msg.content, targetLanguage: language, note: 'Use your active model to translate.' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST /api/collections — bookmark collections
+app.get('/api/collections', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS bookmark_collections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      color TEXT DEFAULT '#ff1f35',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const cols = db.prepare('SELECT * FROM bookmark_collections WHERE user_id=? ORDER BY created_at DESC').all(userId);
+    res.json(cols);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/collections', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name, description = '', color = '#ff1f35' } = req.body;
+    if (!name) return res.status(400).json({ error: 'name required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS bookmark_collections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      color TEXT DEFAULT '#ff1f35',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const r = db.prepare('INSERT INTO bookmark_collections (user_id,name,description,color) VALUES (?,?,?,?)').run(userId, name, description, color);
+    res.json({ id: r.lastInsertRowid, name, description, color });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/collections/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare('DELETE FROM bookmark_collections WHERE id=? AND user_id=?').run(req.params.id, userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/bookmarks/:id/collection — assign bookmark to collection
+app.post('/api/bookmarks/:id/collection', authMiddleware, async (req: any, res) => {
+  try {
+    const { collection_id } = req.body;
+    db.prepare('UPDATE bookmarks SET collection_id=? WHERE id=?').run(collection_id || null, req.params.id);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST /api/agenda — agenda items (daily planning)
+app.get('/api/agenda', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS agenda_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      notes TEXT DEFAULT '',
+      thread_id INTEGER,
+      due_date TEXT,
+      done INTEGER DEFAULT 0,
+      priority INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const date = (req.query.date as string) || new Date().toISOString().slice(0,10);
+    const items = db.prepare('SELECT * FROM agenda_items WHERE user_id=? AND (due_date=? OR due_date IS NULL) ORDER BY priority DESC, created_at').all(userId, date);
+    res.json(items);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/agenda', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title, notes = '', thread_id, due_date, priority = 0 } = req.body;
+    if (!title) return res.status(400).json({ error: 'title required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS agenda_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      notes TEXT DEFAULT '',
+      thread_id INTEGER,
+      due_date TEXT,
+      done INTEGER DEFAULT 0,
+      priority INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const r = db.prepare('INSERT INTO agenda_items (user_id,title,notes,thread_id,due_date,priority) VALUES (?,?,?,?,?,?)').run(userId, title, notes, thread_id || null, due_date || null, priority);
+    res.json({ id: r.lastInsertRowid, title, notes, done: 0 });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/agenda/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { done, title, notes, priority } = req.body;
+    if (done !== undefined) db.prepare('UPDATE agenda_items SET done=? WHERE id=? AND user_id=?').run(done ? 1 : 0, req.params.id, userId);
+    if (title !== undefined) db.prepare('UPDATE agenda_items SET title=? WHERE id=? AND user_id=?').run(title, req.params.id, userId);
+    if (notes !== undefined) db.prepare('UPDATE agenda_items SET notes=? WHERE id=? AND user_id=?').run(notes, req.params.id, userId);
+    if (priority !== undefined) db.prepare('UPDATE agenda_items SET priority=? WHERE id=? AND user_id=?').run(priority, req.params.id, userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/agenda/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare('DELETE FROM agenda_items WHERE id=? AND user_id=?').run(req.params.id, userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/insights — combined thread insight bundle
+app.get('/api/threads/:id/insights', authMiddleware, async (req: any, res) => {
+  try {
+    const messages = db.prepare('SELECT role, content, tokens_used, created_at FROM messages WHERE thread_id=? ORDER BY created_at').all(req.params.id) as any[];
+    const userMsgs = messages.filter((m: any) => m.role === 'user');
+    const aiMsgs = messages.filter((m: any) => m.role === 'assistant');
+    const totalTokens = messages.reduce((a: number, m: any) => a + (m.tokens_used || 0), 0);
+    const avgResponseLen = aiMsgs.reduce((a: number, m: any) => a + m.content.length, 0) / (aiMsgs.length || 1);
+    const firstMsg = messages[0];
+    const lastMsg = messages[messages.length - 1];
+    const durationMs = firstMsg && lastMsg ? new Date(lastMsg.created_at).getTime() - new Date(firstMsg.created_at).getTime() : 0;
+    res.json({
+      messageCount: messages.length,
+      userTurns: userMsgs.length,
+      aiTurns: aiMsgs.length,
+      totalTokens,
+      avgResponseLength: Math.round(avgResponseLen),
+      durationMinutes: Math.round(durationMs / 60000),
+      topWords: userMsgs.flatMap((m: any) => m.content.toLowerCase().split(/\W+/).filter((w: string) => w.length > 4))
+        .reduce((acc: Record<string,number>, w: string) => { acc[w] = (acc[w]||0)+1; return acc; }, {})
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ─── Batch 14: Goals tracker, Quick Capture, Knowledge Graph, Thread Milestones ───
+
+// GET/POST/PUT/DELETE /api/goals — user goals with progress tracking
+app.get('/api/goals', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS user_goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      target_value INTEGER DEFAULT 100,
+      current_value INTEGER DEFAULT 0,
+      unit TEXT DEFAULT '%',
+      status TEXT DEFAULT 'active',
+      due_date TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const goals = db.prepare('SELECT * FROM user_goals WHERE user_id=? ORDER BY created_at DESC').all(userId);
+    res.json(goals);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/goals', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title, description = '', target_value = 100, unit = '%', due_date } = req.body;
+    if (!title) return res.status(400).json({ error: 'title required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS user_goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      target_value INTEGER DEFAULT 100,
+      current_value INTEGER DEFAULT 0,
+      unit TEXT DEFAULT '%',
+      status TEXT DEFAULT 'active',
+      due_date TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const r = db.prepare('INSERT INTO user_goals (user_id,title,description,target_value,unit,due_date) VALUES (?,?,?,?,?,?)').run(userId, title, description, target_value, unit, due_date || null);
+    res.json({ id: r.lastInsertRowid, title, current_value: 0, target_value, unit, status: 'active' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/goals/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { current_value, status, title, description } = req.body;
+    if (current_value !== undefined) db.prepare('UPDATE user_goals SET current_value=? WHERE id=? AND user_id=?').run(current_value, req.params.id, userId);
+    if (status !== undefined) db.prepare('UPDATE user_goals SET status=? WHERE id=? AND user_id=?').run(status, req.params.id, userId);
+    if (title !== undefined) db.prepare('UPDATE user_goals SET title=? WHERE id=? AND user_id=?').run(title, req.params.id, userId);
+    if (description !== undefined) db.prepare('UPDATE user_goals SET description=? WHERE id=? AND user_id=?').run(description, req.params.id, userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/goals/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare('DELETE FROM user_goals WHERE id=? AND user_id=?').run(req.params.id, userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST/DELETE /api/captures — quick capture (scratchpad notes)
+app.get('/api/captures', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS quick_captures (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      tags TEXT DEFAULT '',
+      pinned INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const limit = Number(req.query.limit) || 50;
+    const items = db.prepare('SELECT * FROM quick_captures WHERE user_id=? ORDER BY pinned DESC, created_at DESC LIMIT ?').all(userId, limit);
+    res.json(items);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/captures', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { content, tags = '', pinned = 0 } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: 'content required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS quick_captures (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      tags TEXT DEFAULT '',
+      pinned INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const r = db.prepare('INSERT INTO quick_captures (user_id,content,tags,pinned) VALUES (?,?,?,?)').run(userId, content.trim(), tags, pinned ? 1 : 0);
+    res.json({ id: r.lastInsertRowid, content: content.trim(), tags, pinned });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/captures/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare('DELETE FROM quick_captures WHERE id=? AND user_id=?').run(req.params.id, userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/captures/:id/pin', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const item = db.prepare('SELECT * FROM quick_captures WHERE id=? AND user_id=?').get(req.params.id, userId) as any;
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    db.prepare('UPDATE quick_captures SET pinned=? WHERE id=?').run(item.pinned ? 0 : 1, req.params.id);
+    res.json({ ok: true, pinned: !item.pinned });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/knowledge-graph — topic graph from thread titles + tags
+app.get('/api/knowledge-graph', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const threads = db.prepare('SELECT id, title, tags FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT 100').all(userId) as any[];
+    const nodes: {id: string; label: string; type: string; size: number}[] = [];
+    const edges: {source: string; target: string}[] = [];
+    const tagMap: Record<string, string[]> = {};
+    threads.forEach((t: any) => {
+      nodes.push({ id: `t_${t.id}`, label: t.title || 'Untitled', type: 'thread', size: 8 });
+      if (t.tags) {
+        const tags = t.tags.split(',').map((s: string) => s.trim()).filter(Boolean);
+        tags.forEach((tag: string) => {
+          if (!tagMap[tag]) tagMap[tag] = [];
+          tagMap[tag].push(`t_${t.id}`);
+        });
+      }
+    });
+    Object.entries(tagMap).forEach(([tag, tids]) => {
+      nodes.push({ id: `tag_${tag}`, label: `#${tag}`, type: 'tag', size: 5 + tids.length * 2 });
+      tids.forEach(tid => edges.push({ source: `tag_${tag}`, target: tid }));
+    });
+    res.json({ nodes, edges, threadCount: threads.length, tagCount: Object.keys(tagMap).length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST /api/threads/:id/milestones — thread milestones
+app.get('/api/threads/:id/milestones', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS thread_milestones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      label TEXT NOT NULL,
+      message_id INTEGER,
+      reached_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const userId = req.user.userId;
+    const milestones = db.prepare('SELECT * FROM thread_milestones WHERE thread_id=? AND user_id=? ORDER BY reached_at').all(req.params.id, userId);
+    res.json(milestones);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/threads/:id/milestones', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS thread_milestones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      label TEXT NOT NULL,
+      message_id INTEGER,
+      reached_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const userId = req.user.userId;
+    const { label, message_id } = req.body;
+    if (!label) return res.status(400).json({ error: 'label required' });
+    const r = db.prepare('INSERT INTO thread_milestones (thread_id,user_id,label,message_id) VALUES (?,?,?,?)').run(req.params.id, userId, label, message_id || null);
+    res.json({ id: r.lastInsertRowid, label, thread_id: req.params.id });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ─── Batch 15: Journal, Habits, Changelog, Message Tags, Bulk Ops ───
+
+// GET/POST /api/journal — daily AI journal entries
+app.get('/api/journal', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      content TEXT NOT NULL,
+      mood TEXT DEFAULT 'neutral',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const limit = Number(req.query.limit) || 30;
+    const entries = db.prepare('SELECT * FROM journal_entries WHERE user_id=? ORDER BY date DESC LIMIT ?').all(userId, limit);
+    res.json(entries);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/journal', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { date, content, mood = 'neutral' } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: 'content required' });
+    const entryDate = date || new Date().toISOString().slice(0, 10);
+    db.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      content TEXT NOT NULL,
+      mood TEXT DEFAULT 'neutral',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    // Upsert by date
+    const existing = db.prepare('SELECT id FROM journal_entries WHERE user_id=? AND date=?').get(userId, entryDate) as any;
+    if (existing) {
+      db.prepare('UPDATE journal_entries SET content=?, mood=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(content.trim(), mood, existing.id);
+      res.json({ id: existing.id, date: entryDate, content: content.trim(), mood });
+    } else {
+      const r = db.prepare('INSERT INTO journal_entries (user_id,date,content,mood) VALUES (?,?,?,?)').run(userId, entryDate, content.trim(), mood);
+      res.json({ id: r.lastInsertRowid, date: entryDate, content: content.trim(), mood });
+    }
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/journal/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare('DELETE FROM journal_entries WHERE id=? AND user_id=?').run(req.params.id, userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST /api/habits — habit tracking
+app.get('/api/habits', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS habits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      icon TEXT DEFAULT '✅',
+      frequency TEXT DEFAULT 'daily',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    db.prepare(`CREATE TABLE IF NOT EXISTS habit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      habit_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      completed INTEGER DEFAULT 1,
+      UNIQUE(habit_id, date)
+    )`).run();
+    const habits = db.prepare('SELECT * FROM habits WHERE user_id=? ORDER BY created_at').all(userId) as any[];
+    const today = new Date().toISOString().slice(0, 10);
+    const logs = db.prepare('SELECT habit_id, date FROM habit_logs WHERE user_id=? AND date >= date(?, "-7 days")').all(userId, today) as any[];
+    const logSet = new Set(logs.map((l: any) => `${l.habit_id}:${l.date}`));
+    res.json(habits.map((h: any) => ({ ...h, doneToday: logSet.has(`${h.id}:${today}`), recentLogs: logs.filter((l: any) => l.habit_id === h.id).map((l: any) => l.date) })));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/habits', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name, icon = '✅', frequency = 'daily' } = req.body;
+    if (!name) return res.status(400).json({ error: 'name required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS habits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, name TEXT NOT NULL, icon TEXT DEFAULT '✅', frequency TEXT DEFAULT 'daily', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare('INSERT INTO habits (user_id,name,icon,frequency) VALUES (?,?,?,?)').run(userId, name, icon, frequency);
+    res.json({ id: r.lastInsertRowid, name, icon, frequency, doneToday: false });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/habits/:id/log', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS habit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, habit_id INTEGER NOT NULL, user_id INTEGER NOT NULL, date TEXT NOT NULL, completed INTEGER DEFAULT 1, UNIQUE(habit_id, date))`).run();
+    const date = req.body.date || new Date().toISOString().slice(0, 10);
+    db.prepare('INSERT OR REPLACE INTO habit_logs (habit_id,user_id,date,completed) VALUES (?,?,?,1)').run(req.params.id, userId, date);
+    res.json({ ok: true, date });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/habits/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare('DELETE FROM habits WHERE id=? AND user_id=?').run(req.params.id, userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/workspace/changelog — auto-generated changelog from VERSION.md or activity
+app.get('/api/workspace/changelog', authMiddleware, async (req: any, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const versionPath = path.join(process.cwd(), '..', 'VERSION.md');
+    let content = '';
+    try { content = fs.readFileSync(versionPath, 'utf8'); } catch { content = '# Forge Changelog\n\nNo changelog available.'; }
+    // Parse version entries
+    const entries = content.split(/^## /m).slice(1).slice(0, 10).map(block => {
+      const lines = block.trim().split('\n');
+      const header = lines[0] || '';
+      const body = lines.slice(1).join('\n').trim();
+      return { version: header.split(' ')[0], date: header.match(/\d{4}-\d{2}-\d{2}/)?.[0] || '', summary: body.slice(0, 200) };
+    });
+    res.json({ entries, raw: content.slice(0, 3000) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST/DELETE /api/messages/:id/tags — message tagging
+app.post('/api/messages/:id/tags', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS message_tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      message_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      tag TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(message_id, user_id, tag)
+    )`).run();
+    const userId = req.user.userId;
+    const { tag } = req.body;
+    if (!tag) return res.status(400).json({ error: 'tag required' });
+    db.prepare('INSERT OR IGNORE INTO message_tags (message_id,user_id,tag) VALUES (?,?,?)').run(req.params.id, userId, tag.trim().toLowerCase());
+    const tags = db.prepare('SELECT tag FROM message_tags WHERE message_id=? AND user_id=?').all(req.params.id, userId);
+    res.json({ tags: tags.map((t: any) => t.tag) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/messages/:id/tags', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS message_tags (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, tag TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(message_id, user_id, tag))`).run();
+    const userId = req.user.userId;
+    const tags = db.prepare('SELECT tag FROM message_tags WHERE message_id=? AND user_id=?').all(req.params.id, userId);
+    res.json({ tags: tags.map((t: any) => t.tag) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/threads/bulk-archive — bulk archive threads
+app.post('/api/threads/bulk-archive', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { thread_ids } = req.body;
+    if (!Array.isArray(thread_ids) || !thread_ids.length) return res.status(400).json({ error: 'thread_ids array required' });
+    // Add archived column if not exists
+    try { db.prepare('ALTER TABLE threads ADD COLUMN archived INTEGER DEFAULT 0').run(); } catch {}
+    const placeholders = thread_ids.map(() => '?').join(',');
+    db.prepare(`UPDATE threads SET archived=1 WHERE id IN (${placeholders}) AND user_id=?`).run(...thread_ids, userId);
+    res.json({ ok: true, archivedCount: thread_ids.length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/archived — list archived threads
+app.get('/api/threads/archived', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    try { db.prepare('ALTER TABLE threads ADD COLUMN archived INTEGER DEFAULT 0').run(); } catch {}
+    const threads = db.prepare('SELECT * FROM threads WHERE user_id=? AND archived=1 ORDER BY updated_at DESC').all(userId);
+    res.json(threads);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ─── Batch 16: Flashcards, Reading List, Time Tracker, Digest, Kanban ───
+
+// GET/POST/DELETE /api/flashcards — AI flashcard deck
+app.get('/api/flashcards', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS flashcards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      front TEXT NOT NULL,
+      back TEXT NOT NULL,
+      deck TEXT DEFAULT 'default',
+      ease_factor REAL DEFAULT 2.5,
+      interval INTEGER DEFAULT 1,
+      due_date TEXT DEFAULT CURRENT_DATE,
+      review_count INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const deck = req.query.deck as string;
+    const query = deck
+      ? 'SELECT * FROM flashcards WHERE user_id=? AND deck=? ORDER BY due_date LIMIT 50'
+      : 'SELECT * FROM flashcards WHERE user_id=? ORDER BY due_date LIMIT 50';
+    const cards = deck ? db.prepare(query).all(userId, deck) : db.prepare(query).all(userId);
+    const decks = db.prepare('SELECT DISTINCT deck FROM flashcards WHERE user_id=?').all(userId);
+    res.json({ cards, decks: decks.map((d: any) => d.deck) });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/flashcards', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { front, back, deck = 'default' } = req.body;
+    if (!front || !back) return res.status(400).json({ error: 'front and back required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS flashcards (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, front TEXT NOT NULL, back TEXT NOT NULL, deck TEXT DEFAULT 'default', ease_factor REAL DEFAULT 2.5, interval INTEGER DEFAULT 1, due_date TEXT DEFAULT CURRENT_DATE, review_count INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare('INSERT INTO flashcards (user_id,front,back,deck) VALUES (?,?,?,?)').run(userId, front, back, deck);
+    res.json({ id: r.lastInsertRowid, front, back, deck });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/flashcards/:id/review', authMiddleware, async (req: any, res) => {
+  try {
+    const { quality = 3 } = req.body; // 0-5 quality rating
+    const card = db.prepare('SELECT * FROM flashcards WHERE id=?').get(req.params.id) as any;
+    if (!card) return res.status(404).json({ error: 'Not found' });
+    // SM-2 algorithm
+    let ef = card.ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    if (ef < 1.3) ef = 1.3;
+    const interval = quality < 3 ? 1 : Math.round(card.interval * ef);
+    const nextDate = new Date(); nextDate.setDate(nextDate.getDate() + interval);
+    db.prepare('UPDATE flashcards SET ease_factor=?, interval=?, due_date=?, review_count=review_count+1 WHERE id=?')
+      .run(ef, interval, nextDate.toISOString().slice(0,10), req.params.id);
+    res.json({ ok: true, nextReviewIn: interval, ease_factor: ef });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/flashcards/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare('DELETE FROM flashcards WHERE id=? AND user_id=?').run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST/PUT/DELETE /api/reading-list
+app.get('/api/reading-list', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS reading_list (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      url TEXT DEFAULT '',
+      notes TEXT DEFAULT '',
+      status TEXT DEFAULT 'unread',
+      tags TEXT DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const status = req.query.status as string;
+    const items = status
+      ? db.prepare('SELECT * FROM reading_list WHERE user_id=? AND status=? ORDER BY created_at DESC').all(userId, status)
+      : db.prepare('SELECT * FROM reading_list WHERE user_id=? ORDER BY created_at DESC').all(userId);
+    res.json(items);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/reading-list', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title, url = '', notes = '', tags = '' } = req.body;
+    if (!title) return res.status(400).json({ error: 'title required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS reading_list (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT NOT NULL, url TEXT DEFAULT '', notes TEXT DEFAULT '', status TEXT DEFAULT 'unread', tags TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare('INSERT INTO reading_list (user_id,title,url,notes,tags) VALUES (?,?,?,?,?)').run(userId, title, url, notes, tags);
+    res.json({ id: r.lastInsertRowid, title, url, status: 'unread' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/reading-list/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const { status, notes } = req.body;
+    if (status) db.prepare('UPDATE reading_list SET status=? WHERE id=? AND user_id=?').run(status, req.params.id, req.user.userId);
+    if (notes !== undefined) db.prepare('UPDATE reading_list SET notes=? WHERE id=? AND user_id=?').run(notes, req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/reading-list/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare('DELETE FROM reading_list WHERE id=? AND user_id=?').run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/workspace/digest — AI workspace daily digest
+app.get('/api/workspace/digest', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const today = new Date().toISOString().slice(0,10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+    const threads = db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=? AND date(created_at)=?').get(userId, today) as any;
+    const messages = db.prepare('SELECT COUNT(*) as c, SUM(tokens_used) as t FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND date(created_at)=?').get(userId, today) as any;
+    const notes = db.prepare("SELECT COUNT(*) as c FROM notes WHERE user_id=? AND date(created_at)>=?").get(userId, yesterday) as any;
+    const topThread = db.prepare('SELECT title, (SELECT COUNT(*) FROM messages WHERE thread_id=threads.id) as msg_count FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT 1').get(userId) as any;
+    res.json({
+      date: today,
+      threadsCreated: threads.c,
+      messagesExchanged: messages.c,
+      tokensUsed: messages.t || 0,
+      recentNotes: notes.c,
+      topThread: topThread || null,
+      summary: `Today you had ${messages.c} messages across ${threads.c} new threads using ${messages.t || 0} tokens.`
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST/PUT /api/kanban — thread kanban board columns
+app.get('/api/kanban', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS kanban_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      thread_id INTEGER,
+      title TEXT NOT NULL,
+      column_name TEXT DEFAULT 'backlog',
+      position INTEGER DEFAULT 0,
+      color TEXT DEFAULT '#64748b',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const items = db.prepare('SELECT * FROM kanban_items WHERE user_id=? ORDER BY column_name, position').all(userId);
+    const columns = ['backlog','in_progress','review','done'];
+    const board: Record<string, any[]> = {};
+    columns.forEach(col => { board[col] = items.filter((i: any) => i.column_name === col); });
+    res.json({ board, columns });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/kanban', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title, column_name = 'backlog', thread_id, color = '#64748b' } = req.body;
+    if (!title) return res.status(400).json({ error: 'title required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS kanban_items (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, thread_id INTEGER, title TEXT NOT NULL, column_name TEXT DEFAULT 'backlog', position INTEGER DEFAULT 0, color TEXT DEFAULT '#64748b', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare('INSERT INTO kanban_items (user_id,title,column_name,thread_id,color) VALUES (?,?,?,?,?)').run(userId, title, column_name, thread_id || null, color);
+    res.json({ id: r.lastInsertRowid, title, column_name, color });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/kanban/:id', authMiddleware, async (req: any, res) => {
+  try {
+    const { column_name, position } = req.body;
+    if (column_name) db.prepare('UPDATE kanban_items SET column_name=? WHERE id=? AND user_id=?').run(column_name, req.params.id, req.user.userId);
+    if (position !== undefined) db.prepare('UPDATE kanban_items SET position=? WHERE id=?').run(position, req.params.id);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/kanban/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare('DELETE FROM kanban_items WHERE id=? AND user_id=?').run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

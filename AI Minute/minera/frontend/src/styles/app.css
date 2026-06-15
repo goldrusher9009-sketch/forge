@@ -137,3 +137,16 @@ body[data-theme="dark"] .device-bar,body[data-theme="dark"] .tb{background:#0B0D
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
 /* honor OS no-crosshair preference for pointer users who prefer default */
 @media (hover: none) { body { cursor: auto; } #xh { display: none; } }
+
+/* ---------- theme presets ---------- */
+body[data-preset="terminal"]{
+  --paper:#0C0F0C;--paper2:#11160F;--ink:#9DFF8A;
+  --blue:#39FF14;--blue2:#7CFF6A;--red:#FF4136;--green:#39FF14;--amber:#FFD700;
+  --grid:rgba(57,255,20,.07);--gridb:rgba(57,255,20,.14);
+}
+body[data-preset="terminal"] .tb,body[data-preset="terminal"] .device-bar{background:#000}
+body[data-preset="riso"]{
+  --paper:#FFF1E6;--paper2:#FFE3D3;--ink:#1A1A1A;
+  --blue:#0046FF;--blue2:#3366FF;--red:#FF2D78;--green:#00A878;--amber:#FFB100;
+  --grid:rgba(255,45,120,.10);--gridb:rgba(255,45,120,.20);
+}

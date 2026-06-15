@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -680,7 +680,50 @@ export default function ForgeApp() {
   const [diffExplainData, setDiffExplainData] = useState<any>(null);
   const [showDiffExplain, setShowDiffExplain] = useState(false);
   const [dailyTokens, setDailyTokens] = useState<any[]>([]);
+  const [personas, setPersonas] = useState<any[]>([]);
+  const [showPersonaForm, setShowPersonaForm] = useState(false);
+  const [newPersona, setNewPersona] = useState({ name:'', description:'', system_prompt:'', avatar:'🤖' });
+  const [activePersonaId, setActivePersonaId] = useState<number|null>(null);
+  const [focusPlannedMin, setFocusPlannedMin] = useState(25);
+  const [workspaceTemplates, setWorkspaceTemplates] = useState<any[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
+  const [showCollectionForm, setShowCollectionForm] = useState(false);
+  const [newCollection, setNewCollection] = useState({ name:'', description:'', color:'#ff1f35' });
+  const [agendaItems, setAgendaItems] = useState<any[]>([]);
+  const [newAgendaTitle, setNewAgendaTitle] = useState('');
+  const [coachingTips, setCoachingTips] = useState<string[]>([]);
+  const [showCoaching, setShowCoaching] = useState(false);
+  const [threadInsights, setThreadInsights] = useState<any>(null);
+  const [showInsights, setShowInsights] = useState(false);
   const [showCodeBlocks, setShowCodeBlocks] = useState(false);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [newGoal, setNewGoal] = useState({ title:'', description:'', target_value:100, unit:'%' });
+  const [showGoalForm, setShowGoalForm] = useState(false);
+  const [captures, setCaptures] = useState<any[]>([]);
+  const [newCapture, setNewCapture] = useState('');
+  const [knowledgeGraph, setKnowledgeGraph] = useState<any>(null);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [newMilestone, setNewMilestone] = useState('');
+  const [journalEntries, setJournalEntries] = useState<any[]>([]);
+  const [journalContent, setJournalContent] = useState('');
+  const [journalMood, setJournalMood] = useState('neutral');
+  const [habits, setHabits] = useState<any[]>([]);
+  const [newHabit, setNewHabit] = useState({ name:'', icon:'✅' });
+  const [changelog, setChangelog] = useState<any>(null);
+  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [flashDecks, setFlashDecks] = useState<string[]>([]);
+  const [activeDeck, setActiveDeck] = useState('default');
+  const [newCard, setNewCard] = useState({ front:'', back:'', deck:'default' });
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [reviewCard, setReviewCard] = useState<any>(null);
+  const [showCardBack, setShowCardBack] = useState(false);
+  const [readingList, setReadingList] = useState<any[]>([]);
+  const [newRead, setNewRead] = useState({ title:'', url:'' });
+  const [readFilter, setReadFilter] = useState('all');
+  const [kanban, setKanban] = useState<Record<string,any[]>>({});
+  const [newKanbanTitle, setNewKanbanTitle] = useState('');
+  const [newKanbanCol, setNewKanbanCol] = useState('backlog');
+  const [digest, setDigest] = useState<any>(null);
   const [pinnedMessages, setPinnedMessages] = useState<any[]>([]);
   const [showPinned, setShowPinned] = useState(true);
   const [tldr, setTldr] = useState<string[]|null>(null);
@@ -2638,7 +2681,322 @@ export default function ForgeApp() {
     } catch {}
   }
 
-    async function loadSimilarThreads(threadId: string) {
+  async function loadPersonas() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/personas', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setPersonas(d.personas || []); }
+    } catch {}
+  }
+
+  async function savePersona() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/personas', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify(newPersona) });
+      if (r.ok) { setShowPersonaForm(false); setNewPersona({ name:'', description:'', system_prompt:'', avatar:'🤖' }); loadPersonas(); }
+    } catch {}
+  }
+
+  async function deletePersona(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/personas/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } });
+      loadPersonas();
+    } catch {}
+  }
+
+  async function startFocus(threadId: string, minutes: number) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/focus/start', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ thread_id: threadId, duration_minutes: minutes }) });
+      if (r.ok) { const d = await r.json(); setFocusSessionId(d.sessionId); setFocusStartTime(Date.now()); setFocusPlannedMin(minutes); setFocusElapsed(0); }
+    } catch {}
+  }
+
+  async function endFocus() {
+    const tok = localStorage.getItem('forge_token');
+    if (!focusSessionId) return;
+    try {
+      await fetch('/api/focus/end', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ session_id: focusSessionId }) });
+      setFocusSessionId(null); setFocusStartTime(null); setFocusElapsed(0);
+    } catch {}
+  }
+
+  async function loadWorkspaceTemplates() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/workspace/templates', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setWorkspaceTemplates(d.templates || []); }
+    } catch {}
+  }
+
+  async function applyTemplate(tpl: any) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      // Create new thread from template
+      const r = await fetch('/api/threads', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title: tpl.name }) });
+      if (r.ok) {
+        const d = await r.json();
+        setMainTab('workspace' as any);
+        // Set input to starter message
+        if (tpl.starter_message) setInput(tpl.starter_message);
+      }
+    } catch {}
+  }
+
+      async function loadCoachingTips(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/coaching`, { method:'POST', headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setCoachingTips(d.tips || []); setShowCoaching(true); }
+    } catch {}
+  }
+
+  async function loadThreadInsights(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(`/api/threads/${threadId}/insights`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setThreadInsights(d); setShowInsights(true); }
+    } catch {}
+  }
+
+  async function loadFlashcards(deck?: string) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const url = deck ? `/api/flashcards?deck=${encodeURIComponent(deck)}` : '/api/flashcards';
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) { const d = await r.json(); setFlashcards(d.cards||[]); setFlashDecks(d.decks||[]); if (d.cards?.length) setReviewCard(d.cards[0]); }
+    } catch {}
+  }
+  async function addFlashcard() {
+    if (!newCard.front || !newCard.back) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch('/api/flashcards', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify(newCard) });
+      setNewCard({ front:'', back:'', deck: activeDeck }); setShowCardForm(false); loadFlashcards(activeDeck);
+    } catch {}
+  }
+  async function reviewFlashcard(quality: number) {
+    if (!reviewCard) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/flashcards/${reviewCard.id}/review`, { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ quality }) });
+      setShowCardBack(false);
+      const next = flashcards.find(c => c.id !== reviewCard.id);
+      setReviewCard(next || null);
+    } catch {}
+  }
+  async function deleteFlashcard(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/flashcards/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadFlashcards(activeDeck); } catch {}
+  }
+  async function loadReadingList() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const url = readFilter === 'all' ? '/api/reading-list' : `/api/reading-list?status=${readFilter}`;
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setReadingList(await r.json());
+    } catch {}
+  }
+  async function addReadingItem() {
+    if (!newRead.title.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch('/api/reading-list', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify(newRead) });
+      setNewRead({ title:'', url:'' }); loadReadingList();
+    } catch {}
+  }
+  async function updateReadStatus(id: number, status: string) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/reading-list/${id}`, { method:'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ status }) }); loadReadingList(); } catch {}
+  }
+  async function deleteReadItem(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/reading-list/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadReadingList(); } catch {}
+  }
+  async function loadKanban() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/kanban', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) { const d = await r.json(); setKanban(d.board || {}); } } catch {}
+  }
+  async function addKanbanItem() {
+    if (!newKanbanTitle.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch('/api/kanban', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title: newKanbanTitle, column_name: newKanbanCol }) });
+      setNewKanbanTitle(''); loadKanban();
+    } catch {}
+  }
+  async function moveKanbanItem(id: number, column_name: string) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/kanban/${id}`, { method:'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ column_name }) }); loadKanban(); } catch {}
+  }
+  async function deleteKanbanItem(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/kanban/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadKanban(); } catch {}
+  }
+  async function loadDigest() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/workspace/digest', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setDigest(await r.json()); } catch {}
+  }
+
+    async function loadJournal() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/journal', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setJournalEntries(await r.json()); } catch {}
+  }
+  async function saveJournalEntry() {
+    if (!journalContent.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    const today = new Date().toISOString().slice(0,10);
+    try {
+      await fetch('/api/journal', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content: journalContent, mood: journalMood, date: today }) });
+      setJournalContent(''); loadJournal();
+    } catch {}
+  }
+  async function deleteJournalEntry(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/journal/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadJournal(); } catch {}
+  }
+  async function loadHabits() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/habits', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setHabits(await r.json()); } catch {}
+  }
+  async function addHabit() {
+    if (!newHabit.name.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch('/api/habits', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify(newHabit) });
+      setNewHabit({ name:'', icon:'✅' }); loadHabits();
+    } catch {}
+  }
+  async function logHabit(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/habits/${id}/log`, { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: '{}' }); loadHabits(); } catch {}
+  }
+  async function deleteHabit(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/habits/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadHabits(); } catch {}
+  }
+  async function loadChangelog() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/workspace/changelog', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setChangelog(await r.json()); } catch {}
+  }
+
+    async function loadGoals() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/goals', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setGoals(await r.json()); } catch {}
+  }
+  async function addGoal() {
+    if (!newGoal.title.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/goals', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify(newGoal) });
+      if (r.ok) { setNewGoal({ title:'', description:'', target_value:100, unit:'%' }); setShowGoalForm(false); loadGoals(); }
+    } catch {}
+  }
+  async function updateGoalProgress(id: number, current_value: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/goals/${id}`, { method:'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ current_value }) }); loadGoals(); } catch {}
+  }
+  async function deleteGoal(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/goals/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadGoals(); } catch {}
+  }
+  async function loadCaptures() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/captures', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setCaptures(await r.json()); } catch {}
+  }
+  async function addCapture() {
+    if (!newCapture.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/captures', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content: newCapture }) });
+      if (r.ok) { setNewCapture(''); loadCaptures(); }
+    } catch {}
+  }
+  async function deleteCapture(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/captures/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadCaptures(); } catch {}
+  }
+  async function pinCapture(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try { await fetch(`/api/captures/${id}/pin`, { method:'PUT', headers: { Authorization: `Bearer ${tok}` } }); loadCaptures(); } catch {}
+  }
+  async function loadKnowledgeGraph() {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch('/api/knowledge-graph', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setKnowledgeGraph(await r.json()); } catch {}
+  }
+  async function loadMilestones(threadId: string) {
+    const tok = localStorage.getItem('forge_token');
+    try { const r = await fetch(`/api/threads/${threadId}/milestones`, { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setMilestones(await r.json()); } catch {}
+  }
+  async function addMilestone(threadId: string) {
+    if (!newMilestone.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/threads/${threadId}/milestones`, { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ label: newMilestone }) });
+      setNewMilestone(''); loadMilestones(threadId);
+    } catch {}
+  }
+
+    async function loadCollections() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/collections', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setCollections(await r.json());
+    } catch {}
+  }
+
+  async function saveCollection() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/collections', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify(newCollection) });
+      if (r.ok) { setNewCollection({ name:'', description:'', color:'#ff1f35' }); setShowCollectionForm(false); loadCollections(); }
+    } catch {}
+  }
+
+  async function deleteCollection(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/collections/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } });
+      loadCollections();
+    } catch {}
+  }
+
+  async function loadAgenda() {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch('/api/agenda', { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) setAgendaItems(await r.json());
+    } catch {}
+  }
+
+  async function addAgendaItem() {
+    if (!newAgendaTitle.trim()) return;
+    const tok = localStorage.getItem('forge_token');
+    try {
+      const today = new Date().toISOString().slice(0,10);
+      const r = await fetch('/api/agenda', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title: newAgendaTitle, due_date: today }) });
+      if (r.ok) { setNewAgendaTitle(''); loadAgenda(); }
+    } catch {}
+  }
+
+  async function toggleAgendaItem(id: number, done: boolean) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/agenda/${id}`, { method:'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ done: !done }) });
+      loadAgenda();
+    } catch {}
+  }
+
+  async function deleteAgendaItem(id: number) {
+    const tok = localStorage.getItem('forge_token');
+    try {
+      await fetch(`/api/agenda/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } });
+      loadAgenda();
+    } catch {}
+  }
+
+            async function loadSimilarThreads(threadId: string) {
     const tok = localStorage.getItem('forge_token');
     try {
       const r = await fetch(`/api/threads/${threadId}/similar`, { headers: { Authorization: `Bearer ${tok}` } });
@@ -3419,6 +3777,21 @@ export default function ForgeApp() {
           {([
             { id:'brief', icon:'☀️', label:'Morning Brief' },
             { id:'brain', icon:'🧠', label:'Forge Brain' },
+            { id:'notes', icon:'📝', label:'Notes' },
+            { id:'personas', icon:'🎭', label:'Personas' },
+            { id:'templates', icon:'📋', label:'Templates' },
+            { id:'collections', icon:'🗂️', label:'Collections' },
+            { id:'agenda', icon:'📅', label:'Agenda' },
+            { id:'goals', icon:'🎯', label:'Goals' },
+            { id:'captures', icon:'⚡', label:'Capture' },
+            { id:'graph', icon:'🕸️', label:'Graph' },
+            { id:'journal', icon:'📓', label:'Journal' },
+            { id:'habits', icon:'🔥', label:'Habits' },
+            { id:'changelog', icon:'📜', label:'Changelog' },
+            { id:'flashcards', icon:'🃏', label:'Flashcards' },
+            { id:'reading', icon:'📚', label:'Reading' },
+            { id:'kanban', icon:'🗃️', label:'Kanban' },
+            { id:'digest', icon:'☀️', label:'Digest' },
             { id:'workspace', icon:'🛠', label:'Workspace' },
             { id:'super', icon:'🌟', label:'SuperAgent' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
@@ -3804,6 +4177,41 @@ export default function ForgeApp() {
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>▶️</button>
                   <button onClick={() => activeThread && loadSmartRename(String(activeThread.id))} title="Smart rename"
                     style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>✏️</button>
+                  <button onClick={() => activeThread && loadCoachingTips(String(activeThread.id))} title="AI coaching"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🎯</button>
+                  <button onClick={() => activeThread && loadThreadInsights(String(activeThread.id))} title="Thread insights"
+                    style={{ padding:'4px 8px', background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color:'var(--fg-text3)', fontSize:11, fontWeight:600, cursor:'pointer' }}>🔍</button>
+                  {showCoaching && coachingTips.length > 0 && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:320, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🎯 AI Coaching Tips</span>
+                        <button onClick={() => setShowCoaching(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {coachingTips.map((tip, i) => (
+                        <div key={i} style={{ fontSize:12, color:'var(--fg-text2)', background:'var(--fg-bg3)', borderRadius:8, padding:'8px 10px', marginBottom:6 }}>💡 {tip}</div>
+                      ))}
+                    </div>
+                  )}
+                  {showInsights && threadInsights && (
+                    <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:300, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                        <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>🔍 Thread Insights</span>
+                        <button onClick={() => setShowInsights(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                      </div>
+                      {[
+                        ['Messages', threadInsights.messageCount],
+                        ['Your turns', threadInsights.userTurns],
+                        ['AI turns', threadInsights.aiTurns],
+                        ['Total tokens', threadInsights.totalTokens],
+                        ['Avg AI reply (chars)', threadInsights.avgResponseLength],
+                        ['Duration (min)', threadInsights.durationMinutes],
+                      ].map(([label, val]) => (
+                        <div key={label as string} style={{ display:'flex', justifyContent:'space-between', fontSize:12, color:'var(--fg-text2)', padding:'4px 0', borderBottom:'1px solid var(--fg-border2)' }}>
+                          <span>{label}</span><span style={{ fontWeight:600, color:'var(--fg-text)' }}>{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {showTokenBreakdown && tokenBreakdown && (
                     <div style={{ position:'absolute', right:0, top:32, zIndex:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, width:320, maxHeight:380, overflowY:'auto', boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
@@ -9022,6 +9430,416 @@ export default function ForgeApp() {
           </div>
           );
         })()}
+
+        {/* Personas tab */}
+        {mainTab === 'personas' && (() => {
+          if (!personas.length && !showPersonaForm) loadPersonas();
+          return (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>🎭</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Personas</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Custom AI personalities for different tasks.</p>
+                </div>
+                <button onClick={() => setShowPersonaForm(v => !v)} style={{ marginLeft:'auto', padding:'8px 16px', borderRadius:10, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>+ New Persona</button>
+              </div>
+              {showPersonaForm && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
+                  <div style={{ display:'grid', gap:10 }}>
+                    <div style={{ display:'flex', gap:10 }}>
+                      <input value={newPersona.avatar} onChange={e => setNewPersona(p => ({ ...p, avatar: e.target.value }))} placeholder="🤖" style={{ width:56, padding:'8px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:20, textAlign:'center' }} />
+                      <input value={newPersona.name} onChange={e => setNewPersona(p => ({ ...p, name: e.target.value }))} placeholder="Name (e.g. Code Reviewer)" style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                    </div>
+                    <input value={newPersona.description} onChange={e => setNewPersona(p => ({ ...p, description: e.target.value }))} placeholder="Short description" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                    <textarea value={newPersona.system_prompt} onChange={e => setNewPersona(p => ({ ...p, system_prompt: e.target.value }))} placeholder="System prompt — how this persona should behave..." rows={4} style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'vertical', fontFamily:'inherit' }} />
+                    <div style={{ display:'flex', gap:8 }}>
+                      <button onClick={savePersona} disabled={!newPersona.name || !newPersona.system_prompt} style={{ padding:'8px 20px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Save</button>
+                      <button onClick={() => setShowPersonaForm(false)} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {personas.length === 0 && !showPersonaForm && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>No personas yet. Create one to get started.</div>}
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {personas.map((p: any) => (
+                  <div key={p.id} style={{ background:'var(--fg-bg2)', border: activePersonaId===p.id ? '2px solid var(--fg-orange)' : '1px solid var(--fg-border)', borderRadius:12, padding:16, cursor:'pointer' }} onClick={() => setActivePersonaId(activePersonaId===p.id ? null : p.id)}>
+                    <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                      <span style={{ fontSize:28 }}>{p.avatar}</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{p.name}</div>
+                        <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:2 }}>{p.description}</div>
+                      </div>
+                      {activePersonaId===p.id && <span style={{ fontSize:11, color:'var(--fg-orange)', fontWeight:600 }}>ACTIVE</span>}
+                      <button onClick={e => { e.stopPropagation(); deletePersona(p.id); }} style={{ padding:'4px 10px', borderRadius:6, border:'none', background:'rgba(239,68,68,0.1)', color:'#ef4444', cursor:'pointer', fontSize:11 }}>Delete</button>
+                    </div>
+                    {activePersonaId===p.id && <div style={{ marginTop:10, padding:'8px 12px', background:'var(--fg-bg3)', borderRadius:8, fontSize:12, color:'var(--fg-text3)', fontFamily:'monospace' }}>{p.system_prompt}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          );
+        })()}
+
+        {/* Templates tab */}
+        {mainTab === 'templates' && (() => {
+          if (!workspaceTemplates.length) loadWorkspaceTemplates();
+          const cats = [...new Set(workspaceTemplates.map((t: any) => t.category))];
+          return (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:820, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                <span style={{ fontSize:36 }}>📋</span>
+                <div>
+                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Workspace Templates</h1>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Start a conversation from a proven template.</p>
+                </div>
+                <button onClick={loadWorkspaceTemplates} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻ Refresh</button>
+              </div>
+              {workspaceTemplates.length === 0 && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading templates…</div>}
+              {cats.map(cat => (
+                <div key={cat} style={{ marginBottom:24 }}>
+                  <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:10 }}>{cat}</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:12 }}>
+                    {workspaceTemplates.filter((t: any) => t.category===cat).map((tpl: any) => (
+                      <div key={tpl.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:8 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{tpl.name}</div>
+                        <div style={{ fontSize:12, color:'var(--fg-text3)', flex:1, lineHeight:1.5 }}>{tpl.description}</div>
+                        {tpl.starter_message && <div style={{ fontSize:11, color:'var(--fg-text3)', fontStyle:'italic', padding:'4px 8px', background:'var(--fg-bg3)', borderRadius:6 }}>"{tpl.starter_message}"</div>}
+                        <button onClick={() => applyTemplate(tpl)} style={{ padding:'8px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, marginTop:4 }}>Use Template →</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          );
+        })()}
+
+        {/* Collections tab */}
+        {mainTab === 'collections' && (
+          <div style={{ padding:24, maxWidth:700 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🗂️ Bookmark Collections</h2>
+              <button onClick={() => { loadCollections(); setShowCollectionForm(true); }} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>+ New Collection</button>
+            </div>
+            {showCollectionForm && (
+              <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16, marginBottom:16, display:'flex', flexDirection:'column', gap:10 }}>
+                <input value={newCollection.name} onChange={e => setNewCollection(p => ({ ...p, name: e.target.value }))} placeholder="Collection name" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                <input value={newCollection.description} onChange={e => setNewCollection(p => ({ ...p, description: e.target.value }))} placeholder="Description (optional)" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                  <label style={{ fontSize:12, color:'var(--fg-text3)' }}>Color:</label>
+                  <input type="color" value={newCollection.color} onChange={e => setNewCollection(p => ({ ...p, color: e.target.value }))} style={{ width:36, height:28, border:'none', borderRadius:4, cursor:'pointer' }} />
+                  <button onClick={saveCollection} disabled={!newCollection.name} style={{ padding:'6px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13 }}>Save</button>
+                  <button onClick={() => setShowCollectionForm(false)} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {collections.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🗂️</div>
+                <div style={{ fontSize:14 }}>No collections yet. Create one to organise your bookmarks.</div>
+                <button onClick={() => loadCollections()} style={{ marginTop:12, padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Collections</button>
+              </div>
+            ) : (
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14 }}>
+                {collections.map((col: any) => (
+                  <div key={col.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:16, borderLeft:`4px solid ${col.color}`, position:'relative' }}>
+                    <div style={{ fontSize:15, fontWeight:700, color:'var(--fg-text)', marginBottom:4 }}>{col.name}</div>
+                    {col.description && <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:8 }}>{col.description}</div>}
+                    <button onClick={() => deleteCollection(col.id)} style={{ position:'absolute', top:10, right:10, background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Agenda tab */}
+        {mainTab === 'agenda' && (
+          <div style={{ padding:24, maxWidth:600 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>📅 Today&apos;s Agenda</h2>
+              <span style={{ fontSize:12, color:'var(--fg-text3)' }}>{new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })}</span>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <input value={newAgendaTitle} onChange={e => setNewAgendaTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && addAgendaItem()} placeholder="Add agenda item..." style={{ flex:1, padding:'10px 14px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={addAgendaItem} disabled={!newAgendaTitle.trim()} style={{ padding:'10px 18px', borderRadius:10, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14, fontWeight:600 }}>Add</button>
+              <button onClick={loadAgenda} style={{ padding:'10px 14px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻</button>
+            </div>
+            {agendaItems.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>📅</div>
+                <div style={{ fontSize:14 }}>Nothing on the agenda. Add items above or press ↻ to load.</div>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {agendaItems.map((item: any) => (
+                  <div key={item.id} style={{ display:'flex', alignItems:'center', gap:12, background:'var(--fg-bg2)', borderRadius:10, padding:'12px 14px', opacity: item.done ? 0.55 : 1 }}>
+                    <input type="checkbox" checked={!!item.done} onChange={() => toggleAgendaItem(item.id, !!item.done)} style={{ width:16, height:16, cursor:'pointer', accentColor:'var(--fg-orange,#ff1f35)' }} />
+                    <span style={{ flex:1, fontSize:14, color:'var(--fg-text)', textDecoration: item.done ? 'line-through' : 'none' }}>{item.title}</span>
+                    {item.notes && <span style={{ fontSize:11, color:'var(--fg-text3)', maxWidth:100, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.notes}</span>}
+                    <button onClick={() => deleteAgendaItem(item.id)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14, padding:'0 4px' }}>×</button>
+                  </div>
+                ))}
+                <div style={{ marginTop:8, fontSize:12, color:'var(--fg-text3)', textAlign:'right' }}>
+                  {agendaItems.filter((i: any) => i.done).length}/{agendaItems.length} done
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Goals tab */}
+        {mainTab === 'goals' && (
+          <div style={{ padding:24, maxWidth:680 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🎯 Goals</h2>
+              <button onClick={() => { loadGoals(); setShowGoalForm(v => !v); }} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>+ New Goal</button>
+            </div>
+            {showGoalForm && (
+              <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:16, marginBottom:16, display:'flex', flexDirection:'column', gap:10 }}>
+                <input value={newGoal.title} onChange={e => setNewGoal(p => ({ ...p, title: e.target.value }))} placeholder="Goal title" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                <input value={newGoal.description} onChange={e => setNewGoal(p => ({ ...p, description: e.target.value }))} placeholder="Description (optional)" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                  <input type="number" value={newGoal.target_value} onChange={e => setNewGoal(p => ({ ...p, target_value: Number(e.target.value) }))} style={{ width:80, padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input value={newGoal.unit} onChange={e => setNewGoal(p => ({ ...p, unit: e.target.value }))} placeholder="unit" style={{ width:60, padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                  <button onClick={addGoal} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13 }}>Save</button>
+                  <button onClick={() => setShowGoalForm(false)} style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {goals.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🎯</div>
+                <div style={{ fontSize:14 }}>No goals yet.</div>
+                <button onClick={loadGoals} style={{ marginTop:12, padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Goals</button>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                {goals.map((g: any) => {
+                  const pct = Math.min(100, Math.round((g.current_value / g.target_value) * 100));
+                  return (
+                    <div key={g.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:16 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                        <span style={{ fontSize:14, fontWeight:600, color:'var(--fg-text)' }}>{g.title}</span>
+                        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                          <span style={{ fontSize:13, color:'var(--fg-text2)' }}>{g.current_value}/{g.target_value} {g.unit}</span>
+                          <button onClick={() => deleteGoal(g.id)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>×</button>
+                        </div>
+                      </div>
+                      <div style={{ height:8, background:'var(--fg-bg4)', borderRadius:4, overflow:'hidden', marginBottom:8 }}>
+                        <div style={{ height:'100%', width:`${pct}%`, background: pct >= 100 ? '#22c55e' : 'var(--fg-orange,#ff1f35)', borderRadius:4, transition:'width 0.3s' }} />
+                      </div>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <input type="range" min={0} max={g.target_value} value={g.current_value} onChange={e => updateGoalProgress(g.id, Number(e.target.value))} style={{ flex:1, accentColor:'var(--fg-orange,#ff1f35)' }} />
+                        <span style={{ fontSize:12, color:'var(--fg-text3)', minWidth:30, textAlign:'right' }}>{pct}%</span>
+                      </div>
+                      {g.description && <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:6 }}>{g.description}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Capture tab */}
+        {mainTab === 'captures' && (
+          <div style={{ padding:24, maxWidth:680 }}>
+            <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:'0 0 16px' }}>⚡ Quick Capture</h2>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <textarea value={newCapture} onChange={e => setNewCapture(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) addCapture(); }} placeholder="Capture a thought, idea, or snippet... (⌘Enter to save)" rows={3} style={{ flex:1, padding:'10px 14px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14, resize:'none', fontFamily:'inherit' }} />
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                <button onClick={addCapture} disabled={!newCapture.trim()} style={{ padding:'10px 18px', borderRadius:10, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14, fontWeight:600 }}>Save</button>
+                <button onClick={loadCaptures} style={{ padding:'10px 14px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻</button>
+              </div>
+            </div>
+            {captures.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>⚡</div>
+                <div style={{ fontSize:14 }}>No captures yet. Type above to save a quick thought.</div>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {captures.map((cap: any) => (
+                  <div key={cap.id} style={{ background: cap.pinned ? 'rgba(255,31,53,0.08)' : 'var(--fg-bg2)', borderRadius:10, padding:'12px 14px', borderLeft: cap.pinned ? '3px solid var(--fg-orange,#ff1f35)' : '3px solid transparent', display:'flex', gap:10 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:14, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{cap.content}</div>
+                      <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:6 }}>{new Date(cap.created_at).toLocaleString()}</div>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                      <button onClick={() => pinCapture(cap.id)} title={cap.pinned ? 'Unpin' : 'Pin'} style={{ background:'none', border:'none', color: cap.pinned ? 'var(--fg-orange,#ff1f35)' : 'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>📌</button>
+                      <button onClick={() => { setInput(cap.content); setMainTab('workspace' as any); }} title="Use in chat" style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>↗</button>
+                      <button onClick={() => deleteCapture(cap.id)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Knowledge Graph tab */}
+        {mainTab === 'graph' && (
+          <div style={{ padding:24, maxWidth:800 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🕸️ Knowledge Graph</h2>
+              <button onClick={loadKnowledgeGraph} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Load</button>
+            </div>
+            {!knowledgeGraph ? (
+              <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:48, marginBottom:16 }}>🕸️</div>
+                <div style={{ fontSize:14, marginBottom:16 }}>Click Load to build your knowledge graph from thread tags.</div>
+                <button onClick={loadKnowledgeGraph} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14 }}>Build Graph</button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display:'flex', gap:20, marginBottom:20 }}>
+                  <div style={{ background:'var(--fg-bg2)', borderRadius:10, padding:16, flex:1, textAlign:'center' }}>
+                    <div style={{ fontSize:28, fontWeight:700, color:'var(--fg-orange,#ff1f35)' }}>{knowledgeGraph.threadCount}</div>
+                    <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Threads</div>
+                  </div>
+                  <div style={{ background:'var(--fg-bg2)', borderRadius:10, padding:16, flex:1, textAlign:'center' }}>
+                    <div style={{ fontSize:28, fontWeight:700, color:'var(--fg-orange,#ff1f35)' }}>{knowledgeGraph.tagCount}</div>
+                    <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Topic clusters</div>
+                  </div>
+                  <div style={{ background:'var(--fg-bg2)', borderRadius:10, padding:16, flex:1, textAlign:'center' }}>
+                    <div style={{ fontSize:28, fontWeight:700, color:'var(--fg-orange,#ff1f35)' }}>{knowledgeGraph.edges?.length || 0}</div>
+                    <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Connections</div>
+                  </div>
+                </div>
+                <div style={{ background:'var(--fg-bg2)', borderRadius:12, padding:16 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', marginBottom:12 }}>Topic clusters</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                    {knowledgeGraph.nodes?.filter((n: any) => n.type === 'tag').map((n: any) => (
+                      <div key={n.id} style={{ padding:'6px 12px', borderRadius:20, background:'rgba(255,31,53,0.12)', border:'1px solid rgba(255,31,53,0.3)', fontSize:12, color:'var(--fg-orange,#ff1f35)', fontWeight:600 }}>
+                        {n.label} <span style={{ opacity:0.6 }}>({Math.round((n.size - 5) / 2)})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ background:'var(--fg-bg2)', borderRadius:12, padding:16, marginTop:12 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', marginBottom:12 }}>All threads ({knowledgeGraph.nodes?.filter((n: any) => n.type === 'thread').length})</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:6, maxHeight:300, overflowY:'auto' }}>
+                    {knowledgeGraph.nodes?.filter((n: any) => n.type === 'thread').map((n: any) => (
+                      <div key={n.id} style={{ fontSize:12, color:'var(--fg-text2)', padding:'6px 10px', background:'var(--fg-bg3)', borderRadius:6 }}>{n.label}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Journal tab */}
+        {mainTab === 'journal' && (
+          <div style={{ padding:24, maxWidth:700 }}>
+            <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:'0 0 16px' }}>📓 AI Journal</h2>
+            <div style={{ background:'var(--fg-bg2)', borderRadius:12, padding:16, marginBottom:20 }}>
+              <div style={{ display:'flex', gap:8, marginBottom:10, alignItems:'center' }}>
+                <span style={{ fontSize:13, color:'var(--fg-text3)' }}>Mood:</span>
+                {['😊','😐','😔','🔥','😴'].map(m => (
+                  <button key={m} onClick={() => setJournalMood(m)} style={{ fontSize:18, background: journalMood === m ? 'var(--fg-bg4)' : 'none', border: journalMood === m ? '2px solid var(--fg-orange,#ff1f35)' : '2px solid transparent', borderRadius:8, padding:'2px 6px', cursor:'pointer' }}>{m}</button>
+                ))}
+              </div>
+              <textarea value={journalContent} onChange={e => setJournalContent(e.target.value)} placeholder={`What's on your mind today? ${new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })}`} rows={5} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
+              <button onClick={saveJournalEntry} disabled={!journalContent.trim()} style={{ marginTop:10, padding:'8px 20px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Save Entry</button>
+              <button onClick={loadJournal} style={{ marginTop:10, marginLeft:8, padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Load</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {journalEntries.map((e: any) => (
+                <div key={e.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                      <span style={{ fontSize:18 }}>{e.mood}</span>
+                      <span style={{ fontSize:12, fontWeight:600, color:'var(--fg-text2)' }}>{e.date}</span>
+                    </div>
+                    <button onClick={() => deleteJournalEntry(e.id)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>×</button>
+                  </div>
+                  <div style={{ fontSize:14, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.6 }}>{e.content}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Habits tab */}
+        {mainTab === 'habits' && (
+          <div style={{ padding:24, maxWidth:600 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🔥 Habit Tracker</h2>
+              <button onClick={loadHabits} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Load</button>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <input value={newHabit.icon} onChange={e => setNewHabit(p => ({ ...p, icon: e.target.value }))} style={{ width:48, padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:18, textAlign:'center' }} />
+              <input value={newHabit.name} onChange={e => setNewHabit(p => ({ ...p, name: e.target.value }))} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="New habit (e.g. Read 30 min)" style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={addHabit} disabled={!newHabit.name.trim()} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Add</button>
+            </div>
+            {habits.length === 0 ? (
+              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🔥</div>
+                <div>No habits yet. Add one above to start tracking.</div>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {habits.map((h: any) => {
+                  const streak = h.recentLogs?.length || 0;
+                  return (
+                    <div key={h.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+                      <span style={{ fontSize:24 }}>{h.icon}</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:600, color:'var(--fg-text)' }}>{h.name}</div>
+                        <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:2 }}>{streak} day streak this week</div>
+                        <div style={{ display:'flex', gap:4, marginTop:6 }}>
+                          {Array.from({ length:7 }).map((_, i) => {
+                            const d = new Date(); d.setDate(d.getDate() - (6-i));
+                            const ds = d.toISOString().slice(0,10);
+                            const done = h.recentLogs?.includes(ds);
+                            return <div key={i} style={{ width:14, height:14, borderRadius:3, background: done ? 'var(--fg-orange,#ff1f35)' : 'var(--fg-bg4)' }} title={ds} />;
+                          })}
+                        </div>
+                      </div>
+                      <button onClick={() => logHabit(h.id)} style={{ padding:'8px 14px', borderRadius:8, border:'none', background: h.doneToday ? '#22c55e' : 'var(--fg-bg4)', color: h.doneToday ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:600 }}>{h.doneToday ? '✓ Done' : 'Mark Done'}</button>
+                      <button onClick={() => deleteHabit(h.id)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>×</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Changelog tab */}
+        {mainTab === 'changelog' && (
+          <div style={{ padding:24, maxWidth:700 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>📜 Workspace Changelog</h2>
+              <button onClick={loadChangelog} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Load</button>
+            </div>
+            {!changelog ? (
+              <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>📜</div>
+                <button onClick={loadChangelog} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14 }}>Load Changelog</button>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                {changelog.entries?.map((entry: any, i: number) => (
+                  <div key={i} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:16 }}>
+                    <div style={{ display:'flex', gap:12, alignItems:'center', marginBottom:8 }}>
+                      <span style={{ fontSize:14, fontWeight:700, color:'var(--fg-orange,#ff1f35)' }}>{entry.version}</span>
+                      {entry.date && <span style={{ fontSize:12, color:'var(--fg-text3)' }}>{entry.date}</span>}
+                    </div>
+                    <div style={{ fontSize:13, color:'var(--fg-text2)', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{entry.summary}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Forge Brain tab */}
         {mainTab === 'brain' && (

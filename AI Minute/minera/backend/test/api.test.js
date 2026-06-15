@@ -148,3 +148,41 @@ test("admin health", async () => {
   const r=await j("GET","/api/admin/health");
   assert.ok(r.body.uptimeSec>=0); assert.ok(r.body.swarm); assert.ok(r.body.counts);
 });
+
+test("openapi docs served", async () => {
+  const r=await j("GET","/api/docs/openapi.json");
+  assert.ok(r.body.openapi); assert.ok(r.body.paths["/api/insights"]);
+});
+test("digest network summary", async () => {
+  const r=await j("GET","/api/digest");
+  assert.equal(r.body.window,"24h"); assert.ok("insights" in r.body);
+});
+test("tx pagination shape", async () => {
+  const u=(await j("POST","/api/auth/login",{email:`pg${Date.now()}@x.io`})).body;
+  await j("POST","/api/insights",{prompt:"p",response:"novel pg "+Date.now(),address:u.address});
+  const r=await j("GET",`/api/users/${u.address}/transactions?limit=10`);
+  assert.ok(Array.isArray(r.body.rows)); assert.ok("total" in r.body);
+});
+test("chain events endpoint", async () => {
+  const r=await j("GET","/api/chain/events");
+  assert.ok(Array.isArray(r.body));
+});
+
+test("treasury transparency", async () => {
+  const r=await j("GET","/api/treasury");
+  assert.ok(r.body.maxSupply>0); assert.ok("burned" in r.body); assert.ok(Array.isArray(r.body.bySource));
+});
+test("notif prefs get + update", async () => {
+  const u=(await j("POST","/api/auth/login",{email:`np${Date.now()}@x.io`})).body;
+  await j("PUT",`/api/prefs/${u.address}`,{license:false});
+  const p=await j("GET",`/api/prefs/${u.address}`);
+  assert.equal(p.body.license,0);
+});
+
+test("multisig: propose, 2 approvals execute burn", async () => {
+  const id = (await j("POST","/api/treasury-actions",{kind:"burn",amount:500,threshold:2,proposer:"0xa"})).body.id;
+  let r = await j("POST",`/api/treasury-actions/${id}/approve`,{signer:"0xsig1"});
+  assert.equal(r.body.executed,false);
+  r = await j("POST",`/api/treasury-actions/${id}/approve`,{signer:"0xsig2"});
+  assert.equal(r.body.executed,true);
+});

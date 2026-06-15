@@ -4,8 +4,14 @@ import { useEffect as _ue } from "react";
 export default function Settings({ address, notify }) {
   const [keys, setKeys] = useState([]);
   const [ref, setRef] = useState(null);
+  const [prefs, setPrefs] = useState(null);
+  const [preset, setPresetState] = useState(document.body.dataset.preset||"blueprint");
+  const [hooks, setHooks] = useState([]);
+  const [hurl, setHurl] = useState("");
+  function pick(p){ setPresetState(p); if(p==="blueprint") delete document.body.dataset.preset; else document.body.dataset.preset=p; }
   const load = () => api.apiKeys(address).then(setKeys).catch(()=>{});
-  useEffect(()=>{ load(); api.referrals(address).then(setRef).catch(()=>{}); },[]);
+  function loadHooks(){ api.webhooks(address).then(setHooks).catch(()=>{}); }
+  useEffect(()=>{ load(); api.referrals(address).then(setRef).catch(()=>{}); api.prefs(address).then(setPrefs).catch(()=>{}); loadHooks(); },[]);
   async function gen(){ const r=await api.newKey(address); notify("New API key created"); load();
     try{ navigator.clipboard?.writeText(r.key);}catch{} }
   return (
@@ -18,8 +24,41 @@ export default function Settings({ address, notify }) {
         &nbsp;&nbsp;-H "x-api-key: YOUR_KEY" -H "Content-Type: application/json" \<br/>
         &nbsp;&nbsp;-d '{`{"messages":[{"role":"user","content":"hi"}]}`}'</div>
       </div>
+      <div style={{border:"3px solid var(--ink)",padding:14,marginBottom:14}}>
+        <div className="mono" style={{fontSize:11,fontWeight:700,marginBottom:8,color:"var(--blue)"}}>🎨 THEME PRESET</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {["blueprint","terminal","riso"].map((p)=>(
+            <button key={p} onClick={()=>pick(p)} className="mono" style={{border:"3px solid var(--ink)",background:preset===p?"var(--ink)":"transparent",color:preset===p?"var(--paper)":"var(--ink)",padding:"7px 14px",fontWeight:700,fontSize:11,cursor:"pointer",textTransform:"uppercase"}}>{p}</button>
+          ))}
+        </div>
+      </div>
+      {prefs && (
+        <div style={{border:"3px solid var(--ink)",padding:14,marginBottom:14}}>
+          <div className="mono" style={{fontSize:11,fontWeight:700,marginBottom:8,color:"var(--blue)"}}>🔔 NOTIFICATION PREFERENCES</div>
+          {["insight","license","referral","achievement"].map((k)=>(
+            <label key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",fontFamily:"'Space Mono',monospace",fontSize:12,fontWeight:700}}>
+              {k.toUpperCase()}
+              <input type="checkbox" checked={!!prefs[k]} onChange={(e)=>{ const np={...prefs,[k]:e.target.checked?1:0}; setPrefs(np); api.savePrefs(address,np).catch(()=>{}); }}/>
+            </label>
+          ))}
+        </div>
+      )}
       <a className="btn ghost" href={(BASE||"")+"/api/docs"} target="_blank" rel="noreferrer" style={{textDecoration:"none",marginRight:8}}>📖 API DOCS</a>
       <button className="btn" onClick={gen}>＋ GENERATE API KEY</button>
+      <div style={{border:"3px solid var(--ink)",padding:14,margin:"14px 0"}}>
+        <div className="mono" style={{fontSize:11,fontWeight:700,marginBottom:8,color:"var(--blue)"}}>🪝 WEBHOOKS — POST events to your URL</div>
+        <div style={{display:"flex",gap:8}}>
+          <input value={hurl} onChange={(e)=>setHurl(e.target.value)} placeholder="https://your-server/hook"
+            style={{flex:1,border:"3px solid var(--ink)",background:"var(--paper)",padding:9,fontFamily:"'Space Mono',monospace",fontSize:12}}/>
+          <button className="btn" onClick={async()=>{ if(!hurl)return; await api.addWebhook(address,hurl,"*").catch(()=>notify("Bad URL")); setHurl(""); loadHooks(); notify("Webhook added"); }}>ADD</button>
+        </div>
+        {hooks.map((h)=>(
+          <div key={h.id} className="mono" style={{fontSize:11,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"2px dashed var(--ink)",marginTop:6}}>
+            <span style={{wordBreak:"break-all"}}>{h.url}</span>
+            <button onClick={async()=>{ await api.delWebhook(address,h.id); loadHooks(); }} style={{border:"2px solid var(--ink)",background:"var(--red)",color:"var(--paper)",fontWeight:700,cursor:"pointer",padding:"2px 8px"}}>✕</button>
+          </div>
+        ))}
+      </div>
       <div style={{border:"3px solid var(--ink)",padding:14,margin:"14px 0",background:"var(--paper2)"}}>
         <div className="mono" style={{fontSize:11,fontWeight:700,marginBottom:6,color:"var(--blue)"}}>🎁 REFERRAL — EARN 50 MINE PER INVITE</div>
         <div className="mono" style={{fontSize:11,wordBreak:"break-all"}}>{location.origin}/?ref={address}</div>

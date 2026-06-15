@@ -47,7 +47,7 @@ r.post("/:id/license", (req, res) => {
   const submitterAddr = req.body?.submitterAddress;
   if (submitterAddr && getUser(submitterAddr)) {
     credit(submitterAddr, split.submitter, "license", `submitter royalty #${ins.id}`);
-    notifyUser(submitterAddr, `Your insight #${ins.id} licensed — +$${split.submitter.toLocaleString()}`);
+    notifyUser(submitterAddr, `Your insight #${ins.id} licensed — +$${split.submitter.toLocaleString()}`, "license");
     db.prepare("INSERT INTO royalty_payouts (insight_id,address,role,amount,ts) VALUES (?,?,?,?,?)")
       .run(ins.id, submitterAddr, "submitter", split.submitter, Date.now());
     award(submitterAddr, "first_license");

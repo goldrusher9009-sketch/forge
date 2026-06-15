@@ -7,12 +7,14 @@ export default function Admin({ address, notify }) {
   const [markets, setMarkets] = useState([]);
   const [ov, setOv] = useState(null);
   const [hl, setHl] = useState(null);
+  const [acts, setActs] = useState([]);
   function load() {
     api.pending().then(setPending).catch(()=>{});
     api.openBonds().then(setBonds).catch(()=>{});
     api.openMarkets().then(setMarkets).catch(()=>{});
     api.adminOverview().then(setOv).catch(()=>{});
     api.adminHealth().then(setHl).catch(()=>{});
+    api.treasuryActions().then(setActs).catch(()=>{});
   }
   useEffect(()=>{ load(); },[]);
 
@@ -78,6 +80,19 @@ export default function Admin({ address, notify }) {
           </div>
         ))}
         {markets.length===0 && <div className="row"><span style={{opacity:.6}}>No open markets.</span></div>}
+      </div>
+
+      <div className="feed" style={{marginTop:14}}>
+        <div className="fh"><span>🔐 MULTI-SIG TREASURY (M-of-N)</span>
+          <button className="btn" style={{padding:"4px 8px",fontSize:9}} onClick={async()=>{ await api.proposeAction({kind:"burn",amount:1000,detail:"manual burn",proposer:address,threshold:2}); api.treasuryActions().then(setActs); notify("Burn action proposed (needs 2 approvals)"); }}>+ PROPOSE BURN</button>
+        </div>
+        {acts.map((a)=>(
+          <div className="row" key={a.id}>
+            <span><b className="mono" style={{color:"var(--red)"}}>{a.kind.toUpperCase()}</b> {a.amount?Math.round(a.amount).toLocaleString():""} · {a.approvals.length}/{a.threshold} · {a.status}</span>
+            {a.status==="pending" && <button className="btn ghost" style={{padding:"5px 10px",fontSize:10}} onClick={async()=>{ const r=await api.approveAction(a.id,address); notify(r.executed?"Executed!":`Approved ${r.approvals}/${r.threshold}`); api.treasuryActions().then(setActs); }}>APPROVE</button>}
+          </div>
+        ))}
+        {acts.length===0 && <div className="row"><span style={{opacity:.6}}>No treasury actions.</span></div>}
       </div>
     </div>
   );
