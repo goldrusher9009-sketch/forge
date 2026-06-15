@@ -1196,6 +1196,8 @@ export default function ForgeApp() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifUnread, setNotifUnread] = useState(0);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [pinnedMessages, setPinnedMessages] = useState<any[]>([]);
+  const [showPinned, setShowPinned] = useState(true);
   const [checklistData, setChecklistData] = React.useState<any>(null);
   const [savingsData, setSavingsData] = useState<any>(null);
   const [activityFeed, setActivityFeed] = useState<any[]|null>(null);
@@ -2588,7 +2590,13 @@ export default function ForgeApp() {
     }
   };
 
-  const selectThread = async (t: Thread) => { setActiveThread(t); await loadMessages(t.id); loadThreadTokenStats(t.id); };
+  const selectThread = async (t: Thread) => {
+    setActiveThread(t); await loadMessages(t.id); loadThreadTokenStats(t.id);
+    setPinnedMessages([]);
+    const tok = localStorage.getItem('forge_token');
+    fetch('/api/threads/' + t.id + '/pinned', { headers: { Authorization: 'Bearer ' + tok } })
+      .then(r => r.json()).then(d => { if (d.pinned) setPinnedMessages(d.pinned); }).catch(() => {});
+  };
 
   // -- Send message -----------------------------------------------------------
   const handleNLCommand = (content: string): boolean => {
@@ -4317,6 +4325,30 @@ export default function ForgeApp() {
                     </div>
                   )}
 
+                  {pinnedMessages.length > 0 && (
+                    <div style={{ background:'rgba(255,160,0,0.07)', border:'1px solid rgba(255,160,0,0.25)', borderRadius:8, marginBottom:10, overflow:'hidden' }}>
+                      <div onClick={() => setShowPinned(p => !p)} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', cursor:'pointer', borderBottom: showPinned ? '1px solid rgba(255,160,0,0.15)' : 'none' }}>
+                        <span style={{ fontSize:13 }}>📌</span>
+                        <span style={{ fontSize:12, fontWeight:600, color:'var(--fg-orange)', flex:1 }}>{pinnedMessages.length} pinned message{pinnedMessages.length > 1 ? 's' : ''}</span>
+                        <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{showPinned ? '▲' : '▼'}</span>
+                      </div>
+                      {showPinned && pinnedMessages.map((pm: any) => (
+                        <div key={pm.id} style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'8px 12px', borderBottom:'1px solid rgba(255,160,0,0.1)' }}>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)', flexShrink:0, marginTop:1 }}>{pm.role === 'user' ? '👤' : '🤖'}</span>
+                          <span style={{ fontSize:12, color:'var(--fg-text2)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{(pm.content || '').slice(0, 120)}{(pm.content || '').length > 120 ? '…' : ''}</span>
+                          <button onClick={async (e) => {
+                            e.stopPropagation();
+                            const tok = localStorage.getItem('forge_token');
+                            await fetch('/api/messages/' + pm.id + '/pin', { method:'DELETE', headers:{ Authorization:'Bearer '+tok } });
+                            setPinnedMessages(prev => prev.filter(p => p.id !== pm.id));
+                            setMessages((prev: any[]) => prev.map((msg: any) => msg.id === pm.id ? {...msg, pinned: false} : msg));
+                            showToast('Unpinned');
+                          }} title="Unpin" style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'0 4px', flexShrink:0 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {messages.map((m, i) => {
                     // Extract first code block for inline preview
                     const extracted = m.role === 'assistant' ? extractCodeBlock(m.content) : null;
@@ -4427,14 +4459,20 @@ export default function ForgeApp() {
                             <button onClick={async () => {
                               const tok = localStorage.getItem('forge_token');
                               const newPinned = !m.pinned;
-                              await fetch('/api/messages/' + m.id + '/pin', { method:'PATCH', headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' }, body: JSON.stringify({ pinned: newPinned }) });
+                              if (newPinned) {
+                                await fetch('/api/messages/' + m.id + '/pin', { method:'POST', headers:{ Authorization:'Bearer '+tok } });
+                              } else {
+                                await fetch('/api/messages/' + m.id + '/pin', { method:'DELETE', headers:{ Authorization:'Bearer '+tok } });
+                              }
                               setMessages((prev: any[]) => prev.map((msg: any) => msg.id === m.id ? {...msg, pinned: newPinned} : msg));
-                              showToast(newPinned ? '≡ƒôî Message pinned' : 'Unpinned');
+                              if (newPinned) { setPinnedMessages(prev => [...prev.filter(p => p.id !== m.id), {...m, pinned: true}]); }
+                              else { setPinnedMessages(prev => prev.filter(p => p.id !== m.id)); }
+                              showToast(newPinned ? '📌 Message pinned' : 'Unpinned');
                             }} title={m.pinned ? 'Unpin message' : 'Pin message'}
                               style={{ background:'none', border:'none', color: m.pinned ? 'var(--fg-orange)' : 'var(--fg-text3)', cursor:'pointer', fontSize:12, padding:'2px 6px', borderRadius:4, display:'flex', alignItems:'center', gap:3 }}
                               onMouseEnter={e => (e.currentTarget.style.background='var(--fg-border)')}
                               onMouseLeave={e => (e.currentTarget.style.background='none')}>
-                              {m.pinned ? '≡ƒôî' : '≡ƒôì'} {m.pinned ? 'Pinned' : 'Pin'}
+                              {m.pinned ? '📌' : '📌'} {m.pinned ? 'Pinned' : 'Pin'}
                             </button>
                           )}
                           {m.id && (
