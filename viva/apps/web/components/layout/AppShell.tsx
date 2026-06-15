@@ -21,6 +21,7 @@ const NAV_MORE = [
   { id: 'health',        label: 'Health ZK',    path: '/health',        icon: HealthIcon },
   { id: 'token',         label: 'YouToken',     path: '/token',         icon: TokenIcon },
   { id: 'tokens',        label: 'Token Market', path: '/tokens',        icon: TokenIcon },
+  { id: 'identity',      label: 'ZK Identity',  path: '/identity',      icon: LeaderIcon },
   { id: 'leaderboard',   label: 'Leaderboard',  path: '/leaderboard',   icon: LeaderIcon },
   { id: 'notifications', label: 'Notifications',path: '/notifications', icon: BellIcon },
   { id: 'settings',      label: 'Settings',     path: '/settings',      icon: GearIcon },

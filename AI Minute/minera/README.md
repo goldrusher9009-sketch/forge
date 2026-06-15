@@ -283,3 +283,14 @@ Tests: **33/33 passing**.
 | In-app News/changelog tab + `/api/news` | ✅ |
 
 Tests: **34/34 passing**. Verified the real folder build boots all 8 services with zero import errors.
+
+
+## Wallet · FAQ · audit (latest)
+
+| Feature | Status |
+|---------|--------|
+| Connect-wallet — injected provider, reads on-chain MINE (no extra deps) | ✅ |
+| Help/FAQ tab — 10 curated Q&A covering roles + money flow | ✅ |
+| Audit log — verify/award/multisig actions recorded, admin panel | ✅ |
+
+Tests: **36/36 passing**.

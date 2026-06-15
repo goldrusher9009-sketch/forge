@@ -217,3 +217,14 @@ test("news feed", async () => {
   const r=await j("GET","/api/news");
   assert.ok(Array.isArray(r.body)); assert.ok(r.body[0].v);
 });
+
+test("faq served", async () => {
+  const r=await j("GET","/api/faq"); assert.ok(r.body.length>5); assert.ok(r.body[0].q);
+});
+test("audit log records verify", async () => {
+  const u=(await j("POST","/api/auth/login",{email:`au${Date.now()}@x.io`})).body;
+  const id=(await j("POST","/api/admin/seed-pending",{prompt:"x"})).body.id;
+  await j("POST",`/api/admin/insights/${id}/verify`,{approved:true,submitterAddress:u.address});
+  const a=await j("GET","/api/admin/audit");
+  assert.ok(a.body.some(x=>x.action==="verify-insight"));
+});
