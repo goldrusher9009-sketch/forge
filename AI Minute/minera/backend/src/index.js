@@ -18,6 +18,7 @@ import market from "./routes/market.js";
 import stats from "./routes/stats.js";
 import leaderboard from "./routes/leaderboard.js";
 import inference from "./routes/inference.js";
+import { loadConfig } from "./config.js";
 import events from "./routes/events.js";
 import admin from "./routes/admin.js";
 import chain from "./routes/chain.js";
@@ -54,6 +55,7 @@ import { startBurnEngine } from "./services/burnEngine.js";
 import { initChain } from "./services/chain.js";
 
 dotenv.config({ path: "../.env" });
+const CFG = loadConfig();
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
@@ -105,10 +107,14 @@ app.use("/api/treasury-actions", treasuryMultisig);
 app.use("/api/webhooks", webhooks);
 app.use("/v1", inference);
 
+app.use("/api", (req, res) => res.status(404).json({ error: "Not found", path: req.originalUrl }));
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
+process.on("unhandledRejection", (e) => logger.error("unhandledRejection:", e?.message || e));
+process.on("uncaughtException", (e) => logger.error("uncaughtException:", e?.message || e));
+
+const PORT = CFG.port;
+const server = app.listen(PORT, () => {
   console.log(`✦ Minera API on http://localhost:${PORT}`);
   startChainListener();
   initChain();
@@ -117,3 +123,16 @@ app.listen(PORT, () => {
   startIndexer();
   startWebhooks();
 });
+
+// graceful shutdown — close server + sqlite WAL cleanly
+import { db } from "./database/db.js";
+function shutdown(sig) {
+  logger.info(`${sig} received — shutting down`);
+  server.close(() => {
+    try { db.pragma("wal_checkpoint(TRUNCATE)"); db.close(); } catch {}
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 3000).unref();
+}
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

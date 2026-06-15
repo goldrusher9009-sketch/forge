@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -759,6 +759,14 @@ export default function ForgeApp() {
   const [newTplCategory, setNewTplCategory] = useState('general');
   const [activityHeatmap, setActivityHeatmap] = useState<any[]>([]);
   const [writingText, setWritingText] = useState('');
+  const [tokenBreakdown, setTokenBreakdown] = useState<any>(null);
+  const [tokenBreakThreadId, setTokenBreakThreadId] = useState('');
+  const [savedSearches, setSavedSearches] = useState<any[]>([]);
+  const [newSearchQuery, setNewSearchQuery] = useState('');
+  const [newSearchLabel, setNewSearchLabel] = useState('');
+  const [prodScore, setProdScore] = useState<any>(null);
+  const [renamePrompt, setRenamePrompt] = useState('');
+  const [renameTarget, setRenameTarget] = useState<any>(null);
   const [writingMode, setWritingMode] = useState('improve');
   const [writingResult, setWritingResult] = useState<any>(null);
   const [showWritingAssist, setShowWritingAssist] = useState(false);
@@ -2876,6 +2884,35 @@ export default function ForgeApp() {
     } catch {}
   }
 
+  async function loadTokenBreakdown(threadId: string) {
+    const tok = localStorage.getItem('forge_token'); if (!tok || !threadId) return;
+    try { const r = await fetch(`/api/threads/${threadId}/token-breakdown`, { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setTokenBreakdown(d); } catch {}
+  }
+  async function loadSavedSearches() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/saved-searches', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setSavedSearches(Array.isArray(d)?d:[]); } catch {}
+  }
+  async function addSavedSearch() {
+    if (!newSearchQuery.trim()) return;
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch('/api/saved-searches', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ query: newSearchQuery, label: newSearchLabel }) }); setNewSearchQuery(''); setNewSearchLabel(''); loadSavedSearches(); } catch {}
+  }
+  async function deleteSavedSearch(id: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/saved-searches/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadSavedSearches(); } catch {}
+  }
+  async function loadProdScore() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/workspace/productivity-score', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setProdScore(d); } catch {}
+  }
+  async function smartRename(threadId: string) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch(`/api/threads/${threadId}/smart-rename`, { method:'POST', headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setRenameTarget(d); setRenamePrompt(d.instruction); } catch {}
+  }
+  async function applyRename(threadId: string, title: string) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/threads/${threadId}/rename`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title }) }); setRenameTarget(null); loadThreads && loadThreads(); } catch {}
+  }
   async function loadTimers() {
     const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/timers', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setTimerSessions(Array.isArray(d)?d:[]); } catch {}
@@ -3997,6 +4034,9 @@ export default function ForgeApp() {
             { id:'calendar', icon:'📆', label:'Content Cal' },
             { id:'advstats', icon:'📊', label:'Adv. Stats' },
             { id:'timer', icon:'⏱', label:'Focus Timer' },
+            { id:'tokenbreak', icon:'🪙', label:'Token Cost' },
+            { id:'savedsearch', icon:'🔖', label:'Saved Searches' },
+            { id:'prodscore', icon:'🏆', label:'Productivity' },
             { id:'systpl', icon:'📋', label:'Sys Prompts' },
             { id:'heatmap', icon:'🌡', label:'Heatmap' },
             { id:'workspace', icon:'🛠', label:'Workspace' },

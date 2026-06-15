@@ -7540,4 +7540,141 @@ app.get('/api/workspace/activity-heatmap', authMiddleware, async (req: any, res)
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ─── Batch 20: Smart Rename, Token Breakdown, Saved Searches, Thread Compare ──
+
+// POST /api/threads/:id/smart-rename — AI-suggested thread title from messages
+app.post('/api/threads/:id/smart-rename', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const thread = db.prepare("SELECT * FROM threads WHERE id=? AND user_id=?").get(req.params.id, userId) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT content, role FROM messages WHERE thread_id=? ORDER BY created_at LIMIT 6").all(req.params.id) as any[];
+    const preview = msgs.map((m: any) => `${m.role}: ${m.content.slice(0,120)}`).join('\n');
+    res.json({
+      threadId: req.params.id,
+      currentTitle: thread.title,
+      context: preview,
+      instruction: `Based on this conversation, suggest a concise, descriptive title (max 8 words) that captures the main topic:\n\n${preview}\n\nRespond with just the title, no quotes.`
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/threads/:id/rename — apply a new title
+app.put('/api/threads/:id/rename', authMiddleware, async (req: any, res) => {
+  try {
+    const { title } = req.body;
+    if (!title) return res.status(400).json({ error: 'title required' });
+    db.prepare("UPDATE threads SET title=? WHERE id=? AND user_id=?").run(title, req.params.id, req.user.userId);
+    res.json({ ok: true, title });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/token-breakdown — token cost breakdown per message/model
+app.get('/api/threads/:id/token-breakdown', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const thread = db.prepare("SELECT * FROM threads WHERE id=? AND user_id=?").get(req.params.id, userId) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT id, role, model_used, tokens_used, created_at, content FROM messages WHERE thread_id=? ORDER BY created_at").all(req.params.id) as any[];
+    const costRates: Record<string,number> = {
+      'claude-3-5-sonnet': 0.000003,
+      'claude-3-opus': 0.000015,
+      'claude-3-haiku': 0.00000025,
+      'gpt-4o': 0.000005,
+      'gpt-4-turbo': 0.00001,
+      'gpt-3.5-turbo': 0.0000005,
+      'gemini-1.5-pro': 0.0000035,
+      'default': 0.000002
+    };
+    const breakdown = msgs.map((m: any) => {
+      const tokens = m.tokens_used || Math.round(m.content.length / 4);
+      const model = (m.model_used || 'default').toLowerCase();
+      const rate = Object.entries(costRates).find(([k]) => model.includes(k))?.[1] || costRates.default;
+      return { id: m.id, role: m.role, model: m.model_used, tokens, estimatedCost: +(tokens * rate).toFixed(6), created_at: m.created_at };
+    });
+    const totalTokens = breakdown.reduce((s: number, m: any) => s + m.tokens, 0);
+    const totalCost = breakdown.reduce((s: number, m: any) => s + m.estimatedCost, 0);
+    const byModel: Record<string,{tokens:number,cost:number,count:number}> = {};
+    breakdown.forEach((m: any) => {
+      const k = m.model || 'unknown';
+      if (!byModel[k]) byModel[k] = {tokens:0,cost:0,count:0};
+      byModel[k].tokens += m.tokens; byModel[k].cost += m.estimatedCost; byModel[k].count++;
+    });
+    res.json({ threadId: req.params.id, breakdown, totalTokens, totalCost: +totalCost.toFixed(6), byModel });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST/DELETE /api/saved-searches — save frequently used search queries
+app.get('/api/saved-searches', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS saved_searches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      query TEXT NOT NULL,
+      label TEXT DEFAULT '',
+      hit_count INTEGER DEFAULT 0,
+      last_used DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const items = db.prepare("SELECT * FROM saved_searches WHERE user_id=? ORDER BY hit_count DESC, created_at DESC").all(userId);
+    res.json(items);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/saved-searches', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { query, label = '' } = req.body;
+    if (!query) return res.status(400).json({ error: 'query required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS saved_searches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, query TEXT NOT NULL, label TEXT DEFAULT '', hit_count INTEGER DEFAULT 0, last_used DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare("INSERT INTO saved_searches (user_id,query,label) VALUES (?,?,?)").run(userId, query, label);
+    res.json({ id: r.lastInsertRowid, query, label });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/saved-searches/:id/use', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare("UPDATE saved_searches SET hit_count=hit_count+1, last_used=datetime('now') WHERE id=? AND user_id=?").run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/saved-searches/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare("DELETE FROM saved_searches WHERE id=? AND user_id=?").run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/workspace/compare-threads — side-by-side stats for 2 threads
+app.get('/api/workspace/compare-threads', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const ids = String(req.query.ids || '').split(',').slice(0,2).map(Number).filter(Boolean);
+    if (ids.length < 2) return res.status(400).json({ error: 'ids param required (comma-sep, 2 thread ids)' });
+    const result = ids.map((id: number) => {
+      const thread = db.prepare("SELECT * FROM threads WHERE id=? AND user_id=?").get(id, userId) as any;
+      if (!thread) return null;
+      const msgs = db.prepare("SELECT role, tokens_used, content FROM messages WHERE thread_id=?").all(id) as any[];
+      const tokens = msgs.reduce((s: number, m: any) => s + (m.tokens_used || 0), 0);
+      return { id, title: thread.title, messageCount: msgs.length, tokens, avgLength: msgs.length ? Math.round(msgs.reduce((s: number, m: any) => s + m.content.length, 0) / msgs.length) : 0, created_at: thread.created_at };
+    });
+    res.json({ comparison: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/workspace/productivity-score — daily productivity score based on activity
+app.get('/api/workspace/productivity-score', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const today = new Date().toISOString().slice(0,10);
+    const week = new Date(Date.now()-7*86400000).toISOString();
+    const todayMsgs = (db.prepare("SELECT COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND date(m.created_at)=?").get(userId, today) as any).c;
+    const weekMsgs = (db.prepare("SELECT COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=?").get(userId, week) as any).c;
+    const todayThreads = (db.prepare("SELECT COUNT(*) as c FROM threads WHERE user_id=? AND date(created_at)=?").get(userId, today) as any).c;
+    const todayTokens = (db.prepare("SELECT COALESCE(SUM(m.tokens_used),0) as t FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND date(m.created_at)=?").get(userId, today) as any).t;
+    const score = Math.min(100, todayMsgs * 5 + todayThreads * 10 + Math.floor(todayTokens / 100));
+    res.json({ date: today, score, todayMessages: todayMsgs, todayThreads, todayTokens, weekMessages: weekMsgs, streak: score > 0 ? 1 : 0 });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

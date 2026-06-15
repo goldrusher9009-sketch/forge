@@ -294,3 +294,36 @@ Tests: **34/34 passing**. Verified the real folder build boots all 8 services wi
 | Audit log — verify/award/multisig actions recorded, admin panel | ✅ |
 
 Tests: **36/36 passing**.
+
+
+## Deploy · palette · config (latest)
+
+| Feature | Status |
+|---------|--------|
+| Cloud deploy configs — Vercel (frontend), Render (full), nginx proxy | ✅ |
+| Command palette — Cmd/Ctrl+K fuzzy jump to any tab/action | ✅ |
+| Env validation on boot — reports swarm/dkg/chain modes, warns partial config | ✅ |
+
+Tests: **36/36 passing**.
+
+### One-command cloud deploy
+- **Vercel** (frontend): import repo, set root `frontend`, edit `vercel.json` backend URL.
+- **Render**: `render.yaml` provisions backend + static frontend.
+
+
+## Robustness + shipping (latest)
+
+| Feature | Status |
+|---------|--------|
+| Async error safety net + JSON 404 handler | ✅ |
+| Graceful shutdown (SIGINT/SIGTERM → clean SQLite close) | ✅ |
+| Git bundle + `push.sh` + `GIT.md` — push to GitHub yourself | ✅ |
+
+Tests: **36/36 passing**. Verified 404, error handling, and graceful shutdown.
+
+## Push to GitHub
+Don't need the connector — see **GIT.md**. Quickest:
+```bash
+git init && git add -A && git commit -m "Minera v0.1.0"
+bash push.sh https://github.com/YOU/minera.git
+```

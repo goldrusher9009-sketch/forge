@@ -30,6 +30,7 @@ import NetworkMap from "./components/NetworkMap.jsx";
 import Treasury from "./components/Treasury.jsx";
 import News from "./components/News.jsx";
 import Faq from "./components/Faq.jsx";
+import CommandPalette from "./components/CommandPalette.jsx";
 
 const TABS = [
   ["dash","▦ DASH"],["explore","💡 EXPLORE"],["market","◆ MARKET"],["bonds","💎 BONDS"],
@@ -48,6 +49,7 @@ export default function App() {
   const [online, setOnline] = useState(0);
   const [lang, setLangState] = useState(getLang());
   const [help, setHelp] = useState(false);
+  const [palette, setPalette] = useState(false);
   const [preset, setPreset] = useState("blueprint");
   useEffect(()=>{ if(preset==="blueprint") delete document.body.dataset.preset; else document.body.dataset.preset = preset; },[preset]);
   useEffect(()=>{ document.body.dataset.theme = theme; },[theme]);
@@ -71,6 +73,7 @@ export default function App() {
     if(!user) return;
     const onKey=(e)=>{
       if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA") return;
+      if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); setPalette(true); return; }
       if(e.key==="?"){ setHelp(true); return; }
       if(e.key==="Escape"){ setHelp(false); return; }
       const n=parseInt(e.key,10);
@@ -133,6 +136,12 @@ export default function App() {
       {toast && <div className="toast">{toast}</div>}
       {onboard && <Onboarding onClose={()=>setOnboard(false)}/>}
       {help && <Help tabs={TABS} onClose={()=>setHelp(false)}/>}
+      {palette && <CommandPalette onClose={()=>setPalette(false)} commands={[
+        ...TABS.map(([k,l])=>({label:"Go to "+l.replace(/^[^ ]+ /,""),hint:k,run:()=>setTab(k)})),
+        {label:"Toggle theme",hint:"theme",run:()=>setTheme(t=>t==="light"?"dark":"light")},
+        {label:"Sign out",hint:"auth",run:signOut},
+        {label:"Open help",hint:"?",run:()=>setHelp(true)},
+      ]}/>}
     </div>
   );
 }

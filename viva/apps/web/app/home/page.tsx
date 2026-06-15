@@ -241,8 +241,8 @@ export default function HomeCanvas() {
                   { label: 'Check Feed', href: '/feed', icon: '≡', color: 'var(--ring-social)' },
                   { label: 'AI Twin', href: '/twin', icon: '◈', color: 'var(--v)' },
                   { label: 'Markets', href: '/markets', icon: '↗', color: 'var(--ring-wealth)' },
+                  { label: 'Wallet', href: '/wallet', icon: '◎', color: '#22c55e' },
                   { label: 'ZK Identity', href: '/identity', icon: '◐', color: '#818cf8' },
-                  { label: 'Leaderboard', href: '/leaderboard', icon: '▲', color: '#f59e0b' },
                 ] as const).map(({ label, href, icon, color }) => (
                   <Link key={label} href={href}
                     className="flex items-center gap-2.5 px-3 py-2.5 border border-white/6 hover:border-white/18 hover:bg-white/2 transition-all group"
