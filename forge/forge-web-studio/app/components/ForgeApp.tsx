@@ -748,6 +748,20 @@ export default function ForgeApp() {
   const [showDebate, setShowDebate] = useState(false);
   const [advancedStats, setAdvancedStats] = useState<any>(null);
   const [showAdvStats, setShowAdvStats] = useState(false);
+  const [timerSessions, setTimerSessions] = useState<any[]>([]);
+  const [timerRunning, setTimerRunning] = useState<any>(null);
+  const [timerLabel, setTimerLabel] = useState('Focus Session');
+  const [timerDuration, setTimerDuration] = useState(25);
+  const [timerElapsed, setTimerElapsed] = useState(0);
+  const [sysTpls, setSysTpls] = useState<any[]>([]);
+  const [newTplName, setNewTplName] = useState('');
+  const [newTplContent, setNewTplContent] = useState('');
+  const [newTplCategory, setNewTplCategory] = useState('general');
+  const [activityHeatmap, setActivityHeatmap] = useState<any[]>([]);
+  const [writingText, setWritingText] = useState('');
+  const [writingMode, setWritingMode] = useState('improve');
+  const [writingResult, setWritingResult] = useState<any>(null);
+  const [showWritingAssist, setShowWritingAssist] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<any[]>([]);
   const [showPinned, setShowPinned] = useState(true);
   const [tldr, setTldr] = useState<string[]|null>(null);
@@ -2862,6 +2876,48 @@ export default function ForgeApp() {
     } catch {}
   }
 
+  async function loadTimers() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/timers', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setTimerSessions(Array.isArray(d)?d:[]); } catch {}
+  }
+  async function startTimer() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try {
+      const r = await fetch('/api/timers', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ label: timerLabel, duration_min: timerDuration }) });
+      const d = await r.json(); setTimerRunning(d); setTimerElapsed(0); loadTimers();
+    } catch {}
+  }
+  async function endTimer(notes='') {
+    if (!timerRunning) return;
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/timers/${timerRunning.id}/end`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ notes }) }); setTimerRunning(null); setTimerElapsed(0); loadTimers(); } catch {}
+  }
+  async function loadSysTpls() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/templates/system', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setSysTpls(Array.isArray(d)?d:[]); } catch {}
+  }
+  async function addSysTpl() {
+    if (!newTplName.trim() || !newTplContent.trim()) return;
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch('/api/templates/system', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ name: newTplName, content: newTplContent, category: newTplCategory }) }); setNewTplName(''); setNewTplContent(''); loadSysTpls(); } catch {}
+  }
+  async function setDefaultTpl(id: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/templates/system/${id}/default`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}` } }); loadSysTpls(); } catch {}
+  }
+  async function deleteSysTpl(id: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/templates/system/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadSysTpls(); } catch {}
+  }
+  async function loadHeatmap() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/workspace/activity-heatmap', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setActivityHeatmap(d.heatmap||[]); } catch {}
+  }
+  async function runWritingAssist() {
+    if (!writingText.trim()) return;
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch(`/api/threads/0/writing-assist`, { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ text: writingText, mode: writingMode }) }); const d = await r.json(); setWritingResult(d); } catch {}
+  }
   async function loadSnippets(q?: string) {
     const tok = localStorage.getItem('forge_token');
     try {
@@ -3940,6 +3996,9 @@ export default function ForgeApp() {
             { id:'urlsaves', icon:'🔗', label:'Link Vault' },
             { id:'calendar', icon:'📆', label:'Content Cal' },
             { id:'advstats', icon:'📊', label:'Adv. Stats' },
+            { id:'timer', icon:'⏱', label:'Focus Timer' },
+            { id:'systpl', icon:'📋', label:'Sys Prompts' },
+            { id:'heatmap', icon:'🌡', label:'Heatmap' },
             { id:'workspace', icon:'🛠', label:'Workspace' },
             { id:'super', icon:'🌟', label:'SuperAgent' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
@@ -10594,4 +10653,3 @@ export default function ForgeApp() {
       </div>
     </div>  );
 }
-

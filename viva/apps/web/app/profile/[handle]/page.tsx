@@ -207,6 +207,9 @@ function InvestTab({ profile, tier }: { profile: any; tier: any }) {
         )}
       </div>
 
+      {/* Staking section */}
+      <StakeSection symbol={symbol} tier={tier} />
+
       {/* Investors list */}
       <div>
         <p className="text-xs text-white/35 mb-3 tracking-wider">TOP INVESTORS</p>
@@ -230,6 +233,85 @@ function InvestTab({ profile, tier }: { profile: any; tier: any }) {
           })}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── Stake Section ──────────────────────────────────────────────────────────
+const STAKE_TIERS = [
+  { label: 'Bronze', min: 100, apy: 8, color: '#cd7f32' },
+  { label: 'Silver', min: 500, apy: 14, color: '#94a3b8' },
+  { label: 'Gold', min: 2000, apy: 22, color: '#f59e0b' },
+  { label: 'Diamond', min: 10000, apy: 38, color: '#38bdf8' },
+]
+function StakeSection({ symbol, tier }: { symbol: string; tier: any }) {
+  const [stakeAmt, setStakeAmt] = useState('')
+  const [staked, setStaked] = useState(false)
+  const [staking, setStaking] = useState(false)
+  const amt = Number(stakeAmt) || 0
+  const stakeTier = [...STAKE_TIERS].reverse().find(t => amt >= t.min) ?? null
+  const apy = stakeTier?.apy ?? 0
+  const monthlyEarn = ((amt * apy) / 100 / 12).toFixed(2)
+
+  async function doStake() {
+    if (!amt || staking) return
+    setStaking(true)
+    await new Promise(r => setTimeout(r, 900))
+    setStaked(true)
+    setStaking(false)
+  }
+
+  return (
+    <div className="p-5 rounded-2xl border border-white/8" style={{ background: 'rgba(255,255,255,0.018)' }}>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-xs text-white/35 tracking-wider mb-0.5">STAKE & EARN</p>
+          <p className="text-sm font-semibold text-white/80">Lock ${symbol} → earn yield</p>
+        </div>
+        {stakeTier && (
+          <span className="text-xs px-2.5 py-1 rounded-full font-bold"
+            style={{ background: `${stakeTier.color}15`, color: stakeTier.color, border: `1px solid ${stakeTier.color}30` }}>
+            {stakeTier.label} · {apy}% APY
+          </span>
+        )}
+      </div>
+
+      {/* Tier table */}
+      <div className="grid grid-cols-4 gap-1.5 mb-4">
+        {STAKE_TIERS.map(t => (
+          <div key={t.label} className="text-center p-2 rounded-lg transition-all"
+            style={{ background: amt >= t.min ? `${t.color}12` : 'rgba(255,255,255,0.03)', border: `1px solid ${amt >= t.min ? `${t.color}30` : 'rgba(255,255,255,0.05)'}` }}>
+            <p className="text-xs font-bold" style={{ color: amt >= t.min ? t.color : 'rgba(255,255,255,0.3)' }}>{t.label}</p>
+            <p className="text-xs font-mono mt-0.5" style={{ color: amt >= t.min ? '#4ade80' : 'rgba(255,255,255,0.2)' }}>{t.apy}%</p>
+            <p className="text-xs text-white/20 mt-0.5">${t.min}+</p>
+          </div>
+        ))}
+      </div>
+
+      {!staked ? (
+        <>
+          <div className="flex gap-2 mb-3">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-white/30">$</span>
+              <input value={stakeAmt} onChange={e => setStakeAmt(e.target.value)} placeholder="0.00"
+                className="w-full pl-6 pr-3 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white text-sm outline-none focus:border-white/25 font-mono" />
+            </div>
+            <button onClick={doStake} disabled={!amt || staking}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
+              style={{ background: `${tier.color}20`, border: `1px solid ${tier.color}45`, color: tier.color }}>
+              {staking ? '…' : 'Stake'}
+            </button>
+          </div>
+          {amt > 0 && (
+            <p className="text-xs text-white/40">
+              Earn <span className="text-green-400 font-mono">${monthlyEarn}/mo</span> at <span style={{ color: tier.color }}>{apy}% APY</span>
+              {stakeTier ? ` · ${stakeTier.label} tier` : ' — add more to unlock Bronze tier'}
+            </p>
+          )}
+        </>
+      ) : (
+        <div className="text-center py-2 text-sm text-green-400">✓ ${stakeAmt} ${symbol} staked · earning {apy}% APY</div>
+      )}
     </div>
   )
 }
@@ -320,8 +402,9 @@ function AdvertiseTab({ profile, tier }: { profile: any; tier: any }) {
   const [budget, setBudget] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
-  const cpmRate = Math.round(profile.vScore ?? 820 / 10) // higher V-Score = higher ad rate
-  const reach = Math.round((profile.vScore ?? 820) * 4.2)
+  const vScore = profile.vScore ?? 820
+  const cpmRate = Math.round(vScore / 10) // higher V-Score = higher ad rate
+  const reach = Math.round(vScore * 4.2)
 
   async function submit() {
     if (!brand || !tagline || !budget) return
@@ -342,6 +425,31 @@ function AdvertiseTab({ profile, tier }: { profile: any; tier: any }) {
             <p className="font-bold text-white/85">{s.val}</p>
           </div>
         ))}
+      </div>
+
+      {/* Audience breakdown */}
+      <div className="p-4 rounded-xl border border-white/6" style={{ background: 'rgba(255,255,255,0.015)' }}>
+        <p className="text-xs text-white/35 mb-3 tracking-wider">AUDIENCE BREAKDOWN</p>
+        <div className="space-y-2.5">
+          {[
+            { label: 'Health & Longevity', pct: 38, color: '#4ade80' },
+            { label: 'Wealth & DeFi', pct: 29, color: '#f59e0b' },
+            { label: 'Identity & ZKP', pct: 19, color: '#818cf8' },
+            { label: 'Other', pct: 14, color: 'rgba(255,255,255,0.3)' },
+          ].map(seg => (
+            <div key={seg.label} className="flex items-center gap-2.5">
+              <span className="text-xs text-white/40 w-32 flex-shrink-0">{seg.label}</span>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <div className="h-full rounded-full" style={{ width: `${seg.pct}%`, background: seg.color }} />
+              </div>
+              <span className="text-xs font-mono text-white/50 w-8 text-right">{seg.pct}%</span>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-white/6">
+          <div><p className="text-xs text-white/30">Avg. engagement</p><p className="text-sm font-bold text-white/80 mt-0.5">8.4%</p></div>
+          <div><p className="text-xs text-white/30">V-Score 700+ followers</p><p className="text-sm font-bold text-white/80 mt-0.5">74%</p></div>
+        </div>
       </div>
 
       {/* Why advertise here */}
