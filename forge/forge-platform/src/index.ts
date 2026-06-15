@@ -7376,4 +7376,168 @@ app.get('/api/workspace/stats/advanced', authMiddleware, async (req: any, res) =
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ─── Batch 19: Writing Assistant, Workspace Timer, Thread Stats, Formatting ───
+
+// POST /api/threads/:id/writing-assist — AI writing improvement suggestions
+app.post('/api/threads/:id/writing-assist', authMiddleware, async (req: any, res) => {
+  try {
+    const { text, mode = 'improve' } = req.body;
+    if (!text) return res.status(400).json({ error: 'text required' });
+    const modes: Record<string,string> = {
+      improve: 'Rewrite this text to be clearer, more concise, and more impactful:',
+      formal: 'Rewrite this text in a professional, formal tone:',
+      casual: 'Rewrite this text in a friendly, conversational tone:',
+      shorter: 'Shorten this text while preserving all key information:',
+      expand: 'Expand this text with more detail and examples:',
+      bullets: 'Convert this text into clear bullet points:',
+      fix: 'Fix grammar and spelling errors in this text:'
+    };
+    const prompt = modes[mode] || modes.improve;
+    res.json({
+      original: text,
+      mode,
+      instruction: `${prompt}\n\n${text}`,
+      hint: 'Send this instruction to your active model to get the rewritten version.'
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST/PUT/DELETE /api/timers — workspace focus timers
+app.get('/api/timers', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS workspace_timers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      label TEXT DEFAULT 'Focus Session',
+      duration_min INTEGER DEFAULT 25,
+      started_at DATETIME,
+      ended_at DATETIME,
+      status TEXT DEFAULT 'idle',
+      notes TEXT DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const items = db.prepare("SELECT * FROM workspace_timers WHERE user_id=? ORDER BY created_at DESC LIMIT 20").all(userId);
+    res.json(items);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/timers', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { label = 'Focus Session', duration_min = 25 } = req.body;
+    db.prepare(`CREATE TABLE IF NOT EXISTS workspace_timers (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT DEFAULT 'Focus Session', duration_min INTEGER DEFAULT 25, started_at DATETIME, ended_at DATETIME, status TEXT DEFAULT 'idle', notes TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare("INSERT INTO workspace_timers (user_id,label,duration_min,started_at,status) VALUES (?,?,?,datetime('now'),'running')").run(userId, label, duration_min);
+    res.json({ id: r.lastInsertRowid, label, duration_min, status: 'running' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/timers/:id/end', authMiddleware, async (req: any, res) => {
+  try {
+    const { notes = '' } = req.body;
+    db.prepare("UPDATE workspace_timers SET status='completed', ended_at=datetime('now'), notes=? WHERE id=? AND user_id=?").run(notes, req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/timers/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare("DELETE FROM workspace_timers WHERE id=? AND user_id=?").run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/stats — detailed stats for a single thread
+app.get('/api/threads/:id/stats', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const threadId = req.params.id;
+    const thread = db.prepare("SELECT * FROM threads WHERE id=? AND user_id=?").get(threadId, userId) as any;
+    if (!thread) return res.status(404).json({ error: 'Not found' });
+    const msgs = db.prepare("SELECT * FROM messages WHERE thread_id=? ORDER BY created_at").all(threadId) as any[];
+    const userMsgs = msgs.filter((m: any) => m.role === 'user');
+    const aiMsgs = msgs.filter((m: any) => m.role === 'assistant');
+    const totalTokens = msgs.reduce((s: number, m: any) => s + (m.tokens_used || 0), 0);
+    const avgUserLen = userMsgs.length ? Math.round(userMsgs.reduce((s: number, m: any) => s + m.content.length, 0) / userMsgs.length) : 0;
+    const avgAiLen = aiMsgs.length ? Math.round(aiMsgs.reduce((s: number, m: any) => s + m.content.length, 0) / aiMsgs.length) : 0;
+    const models = [...new Set(msgs.filter((m: any) => m.model_used).map((m: any) => m.model_used))];
+    const firstMsg = msgs[0];
+    const lastMsg = msgs[msgs.length - 1];
+    const durationMs = firstMsg && lastMsg ? new Date(lastMsg.created_at).getTime() - new Date(firstMsg.created_at).getTime() : 0;
+    // Word frequency from user messages
+    const words: Record<string,number> = {};
+    userMsgs.forEach((m: any) => {
+      m.content.toLowerCase().split(/\W+/).filter((w: string) => w.length > 4).forEach((w: string) => { words[w] = (words[w]||0)+1; });
+    });
+    const topWords = Object.entries(words).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([w,c])=>({word:w,count:c}));
+    res.json({
+      thread,
+      messageCount: msgs.length,
+      userMessages: userMsgs.length,
+      aiMessages: aiMsgs.length,
+      totalTokens,
+      avgUserLength: avgUserLen,
+      avgAiLength: avgAiLen,
+      models,
+      durationMinutes: Math.round(durationMs / 60000),
+      topWords,
+      createdAt: thread.created_at
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET/POST/DELETE /api/templates/system — system prompt templates
+app.get('/api/templates/system', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    db.prepare(`CREATE TABLE IF NOT EXISTS system_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      content TEXT NOT NULL,
+      category TEXT DEFAULT 'general',
+      is_default INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    const items = db.prepare("SELECT * FROM system_templates WHERE user_id=? ORDER BY is_default DESC, created_at DESC").all(userId);
+    res.json(items);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/templates/system', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name, content, category = 'general' } = req.body;
+    if (!name || !content) return res.status(400).json({ error: 'name and content required' });
+    db.prepare(`CREATE TABLE IF NOT EXISTS system_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, name TEXT NOT NULL, content TEXT NOT NULL, category TEXT DEFAULT 'general', is_default INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const r = db.prepare("INSERT INTO system_templates (user_id,name,content,category) VALUES (?,?,?,?)").run(userId, name, content, category);
+    res.json({ id: r.lastInsertRowid, name, category });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/templates/system/:id/default', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare("UPDATE system_templates SET is_default=0 WHERE user_id=?").run(req.user.userId);
+    db.prepare("UPDATE system_templates SET is_default=1 WHERE id=? AND user_id=?").run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/templates/system/:id', authMiddleware, async (req: any, res) => {
+  try {
+    db.prepare("DELETE FROM system_templates WHERE id=? AND user_id=?").run(req.params.id, req.user.userId);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/workspace/activity-heatmap — hourly activity data for 30 days
+app.get('/api/workspace/activity-heatmap', authMiddleware, async (req: any, res) => {
+  try {
+    const userId = req.user.userId;
+    const since = new Date(Date.now() - 30 * 86400000).toISOString();
+    const rows = db.prepare(`
+      SELECT strftime('%w', created_at) as dow, strftime('%H', created_at) as hour, COUNT(*) as count
+      FROM messages m JOIN threads t ON m.thread_id=t.id
+      WHERE t.user_id=? AND m.created_at>=?
+      GROUP BY dow, hour ORDER BY dow, hour
+    `).all(userId, since) as any[];
+    res.json({ heatmap: rows, period: 30 });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

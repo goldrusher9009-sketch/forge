@@ -212,3 +212,8 @@ test("backup snapshot has tables", async () => {
   const r=await j("GET","/api/admin/backup");
   assert.ok(r.body.tables); assert.ok(r.body.tables.users);
 });
+
+test("news feed", async () => {
+  const r=await j("GET","/api/news");
+  assert.ok(Array.isArray(r.body)); assert.ok(r.body[0].v);
+});

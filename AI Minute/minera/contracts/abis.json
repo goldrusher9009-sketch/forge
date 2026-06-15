@@ -1,0 +1,9 @@
+{
+  "MineraToken": ["balanceOf(address)","totalSupply()","transfer(address,uint256)","approve(address,uint256)","mint(address,uint256)","burn(uint256)"],
+  "Staking": ["stake(uint256)","unstake(uint256)","pendingYield(address,uint256)"],
+  "Governance": ["propose(string,uint256)","vote(uint256,bool)","execute(uint256)","proposalCount()"],
+  "InsightMarketplace": ["list(uint256,address,address,address)","license(uint256)","listingCount()"],
+  "EurekaBond": ["createBond(address,uint256,string,uint256)","awardBond(uint256,address,uint256)","refund(uint256)"],
+  "MiningPool": ["checkIn()","claimRewards()","getPendingRewards(address)"],
+  "InsightVerification": ["submitInsight(bytes32,bytes32,string,address[])","verifyInsight(uint256,bool)","licenseInsight(uint256)"]
+}

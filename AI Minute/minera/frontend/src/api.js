@@ -54,6 +54,7 @@ export const api = {
   search: (q) => j("GET", `/api/search?q=${encodeURIComponent(q)}`),
   price: () => j("GET", "/api/price"),
   treasury: () => j("GET", "/api/treasury"),
+  news: () => j("GET", "/api/news"),
   faucet: (a) => j("GET", `/api/faucet/${a}`),
   claimFaucet: (a) => j("POST", `/api/faucet/${a}/claim`),
   activity: (type) => j("GET", type?`/api/activity?type=${type}`:"/api/activity"),

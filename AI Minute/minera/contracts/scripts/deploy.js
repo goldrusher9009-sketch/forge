@@ -48,6 +48,10 @@ async function main() {
   // auto-write into ../.env (create if missing)
   const envPath = path.join(__dirname, "..", "..", ".env");
   let env = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : fs.readFileSync(path.join(__dirname, "..", "..", ".env.example"), "utf8");
+  const viteMap = { TOKEN_ADDRESS: "VITE_TOKEN_ADDRESS", STAKING_ADDRESS: "VITE_STAKING_ADDRESS", GOVERNANCE_ADDRESS: "VITE_GOVERNANCE_ADDRESS", MARKETPLACE_ADDRESS: "VITE_MARKETPLACE_ADDRESS" };
+  for (const [k, vk] of Object.entries(viteMap)) if (addrs[k]) {
+    env = env.match(new RegExp(`^${vk}=.*$`, "m")) ? env.replace(new RegExp(`^${vk}=.*$`, "m"), `${vk}=${addrs[k]}`) : env + `\n${vk}=${addrs[k]}`;
+  }
   for (const [k, v] of Object.entries(addrs)) {
     env = env.match(new RegExp(`^${k}=.*$`, "m")) ? env.replace(new RegExp(`^${k}=.*$`, "m"), `${k}=${v}`) : env + `\n${k}=${v}`;
   }

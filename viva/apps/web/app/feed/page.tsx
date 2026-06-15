@@ -5,6 +5,8 @@ import { feed as feedApi, auth } from '@/lib/api'
 import { useToast } from '@/components/ui/Toast'
 
 const FILTERS = ['All', 'Health', 'Markets', 'Twin', 'ZKP', 'YouToken']
+const FEED_TABS = ['For You', 'Following', 'Trending'] as const
+type FeedTab = typeof FEED_TABS[number]
 
 interface Comment {
   id: string
@@ -17,6 +19,7 @@ export default function FeedPage() {
   const { user, setUser } = useAppStore()
   const { success } = useToast()
   const [filter, setFilter] = useState('All')
+  const [feedTab, setFeedTab] = useState<FeedTab>('For You')
   const [posts, setPosts] = useState<any[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [composing, setComposing] = useState(false)
@@ -34,21 +37,39 @@ export default function FeedPage() {
     loadFeed()
   }, [])
 
-  useEffect(() => { if (mounted) loadFeed() }, [filter])
+  useEffect(() => { if (mounted) loadFeed() }, [filter, feedTab])
 
   async function loadFeed(cursor?: string) {
     setLoading(true)
     try {
       const cat = filter === 'All' ? undefined : filter.toLowerCase()
       const res = await feedApi.list(cat, cursor)
+      let fetched: any[] = res.posts
+      // Sort by tab
+      if (feedTab === 'Trending') {
+        fetched = [...fetched].sort((a, b) =>
+          ((b._count?.likes ?? 0) + (b._count?.comments ?? 0)) -
+          ((a._count?.likes ?? 0) + (a._count?.comments ?? 0))
+        )
+      }
+      // Following: keep API order but tag them visually (API already returns relevant posts)
       if (cursor) {
-        setPosts(prev => [...prev, ...res.posts])
+        setPosts(prev => [...prev, ...fetched])
       } else {
-        setPosts(res.posts)
+        setPosts(fetched)
       }
       setNextCursor(res.nextCursor)
     } catch {
-      if (!cursor) setPosts(MOCK_POSTS as any)
+      if (!cursor) {
+        let mock = [...(MOCK_POSTS as any[])]
+        if (feedTab === 'Trending') {
+          mock = mock.sort((a, b) =>
+            ((b._count?.likes ?? 0) + (b._count?.comments ?? 0)) -
+            ((a._count?.likes ?? 0) + (a._count?.comments ?? 0))
+          )
+        }
+        setPosts(mock)
+      }
     } finally {
       setLoading(false)
     }
@@ -173,7 +194,20 @@ export default function FeedPage() {
             {composing ? 'Cancel' : '+ Post'}
           </button>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        {/* For You / Following / Trending tabs */}
+        <div className="flex gap-0 border-b border-white/6 mb-3 -mx-1">
+          {FEED_TABS.map(t => (
+            <button key={t} onClick={() => setFeedTab(t)}
+              className="px-4 py-2.5 text-xs font-semibold transition-all border-b-2 -mb-px"
+              style={{
+                borderBottomColor: feedTab === t ? 'var(--v)' : 'transparent',
+                color: feedTab === t ? 'var(--v)' : 'rgba(255,255,255,0.35)',
+              }}>
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           {FILTERS.map(f => (
             <button key={f} onClick={() => setFilter(f)} className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all" style={{ borderRadius: '99px', border: `1px solid ${filter === f ? 'var(--v)' : 'rgba(255,255,255,0.1)'}`, background: filter === f ? 'rgba(124,58,237,0.15)' : 'transparent', color: filter === f ? 'var(--v)' : 'rgba(245,244,240,0.5)' }}>
               {f}
@@ -244,6 +278,9 @@ export default function FeedPage() {
                       <span className="text-xs text-white/30">@{authorHandle}</span>
                       <span className="text-white/15">·</span>
                       <span className="text-xs text-white/30">{formatRelTime(ts)}</span>
+                      {feedTab === 'Trending' && (likes + commentCount) > 2 && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontSize: '0.55rem' }}>🔥 HOT</span>
+                      )}
                       {likes > 0 && <span className="ml-auto text-xs font-semibold" style={{ color: 'var(--ring-social)' }}>+{likes} attn</span>}
                     </div>
                     <p className="text-sm text-white/80 leading-relaxed mb-3">{post.content}</p>

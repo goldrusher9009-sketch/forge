@@ -272,3 +272,14 @@ Tests: **31/31 passing**.
 | Daily faucet — claim +25 MINE once/24h | ✅ |
 
 Tests: **33/33 passing**.
+
+
+## Integration · ABIs · news (latest)
+
+| Feature | Status |
+|---------|--------|
+| Full-system smoke test — all 39 routes boot + respond (23/23 write paths) | ✅ |
+| Contract ABIs exported to frontend (`src/contracts/abis.js`) + deploy writes VITE addrs | ✅ |
+| In-app News/changelog tab + `/api/news` | ✅ |
+
+Tests: **34/34 passing**. Verified the real folder build boots all 8 services with zero import errors.
