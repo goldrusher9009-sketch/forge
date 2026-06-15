@@ -1,0 +1,14 @@
+{
+  "name": "minera-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Minera — decentralized AI mining network (working name).",
+  "workspaces": ["contracts", "backend", "frontend"],
+  "scripts": {
+    "dev:backend": "npm --workspace backend run dev",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "chain": "npm --workspace contracts run node",
+    "compile": "npm --workspace contracts run compile",
+    "deploy:local": "npm --workspace contracts run deploy:local"
+  }
+}

@@ -1,0 +1,68 @@
+export const BASE = import.meta.env.VITE_API_URL || "";
+export function download(path, name) {
+  const a = document.createElement("a");
+  a.href = BASE + path; a.download = name || "export"; a.click();
+}
+async function j(method, path, body) {
+  const res = await fetch(BASE + path, {
+    method, headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(`${method} ${path} -> ${res.status}`);
+  return res.json();
+}
+export const api = {
+  login: (email, ref) => j("POST", "/api/auth/login", { email, ref }),
+  user: (a) => j("GET", `/api/users/${a}`),
+  transactions: (a) => j("GET", `/api/users/${a}/transactions`),
+  credit: (a, amount) => j("POST", `/api/users/${a}/credit`, { amount }),
+  withdraw: (a, amount) => j("POST", `/api/users/${a}/withdraw`, { amount }),
+  generate: (prompt) => j("POST", "/api/generate", { prompt }),
+  insights: () => j("GET", "/api/insights"),
+  submitInsight: (prompt, response, address) => j("POST", "/api/insights", { prompt, response, address }),
+  bonds: () => j("GET", "/api/bonds"),
+  createBond: (b) => j("POST", "/api/bonds", b),
+  submitBond: (id, address, insight) => j("POST", `/api/bonds/${id}/submit`, { address, insight }),
+  dataList: () => j("GET", "/api/data"),
+  uploadData: (name, sizeBytes) => j("POST", "/api/data", { name, sizeBytes }),
+  market: () => j("GET", "/api/market"),
+  license: (id, licensee, submitterAddress) => j("POST", `/api/market/${id}/license`, { licensee, submitterAddress }),
+  predictions: (id) => j("GET", `/api/predictions/${id}`),
+  predict: (insightId, address, side, stake) => j("POST", "/api/predictions", { insightId, address, side, stake }),
+  stats: () => j("GET", "/api/stats"),
+  chainStatus: () => j("GET", "/api/chain/status"),
+  analytics: () => j("GET", "/api/analytics"),
+  subnets: () => j("GET", "/api/subnets"),
+  apiKeys: (a) => j("GET", `/api/keys/${a}`),
+  proposals: () => j("GET", "/api/governance"),
+  createProposal: (b) => j("POST", "/api/governance", b),
+  vote: (id, address, side) => j("POST", `/api/governance/${id}/vote`, { address, side }),
+  closeProposal: (id) => j("POST", `/api/governance/${id}/close`),
+  stakes: (a) => j("GET", `/api/staking/${a}`),
+  stake: (a, amount) => j("POST", `/api/staking/${a}`, { amount }),
+  unstake: (a, id) => j("POST", `/api/staking/${a}/unstake/${id}`),
+  newKey: (a) => j("POST", `/api/keys/${a}`),
+  referrals: (a) => j("GET", `/api/referrals/${a}`),
+  achievements: (a) => j("GET", `/api/achievements/${a}`),
+  profile: (a) => j("GET", `/api/users/${a}/profile`),
+  saveProfile: (a, p) => j("PUT", `/api/users/${a}/profile`, p),
+  search: (q) => j("GET", `/api/search?q=${encodeURIComponent(q)}`),
+  price: () => j("GET", "/api/price"),
+  activity: (type) => j("GET", type?`/api/activity?type=${type}`:"/api/activity"),
+  heartbeat: (address) => j("POST", "/api/presence/heartbeat", { address }),
+  presence: () => j("GET", "/api/presence"),
+  createSubnet: (b) => j("POST", "/api/subnets", b),
+  querySubnet: (id, prompt) => j("POST", `/api/subnets/${id}/query`, { prompt }),
+  notifications: (a) => j("GET", `/api/notifications/${a}`),
+  markRead: (a) => j("POST", `/api/notifications/${a}/read`),
+  leaderboard: () => j("GET", "/api/leaderboard"),
+  pending: () => j("GET", "/api/admin/pending"),
+  verify: (id, approved, submitterAddress) => j("POST", `/api/admin/insights/${id}/verify`, { approved, submitterAddress }),
+  openBonds: () => j("GET", "/api/admin/open-bonds"),
+  openMarkets: () => j("GET", "/api/admin/open-markets"),
+  adminOverview: () => j("GET", "/api/admin/overview"),
+  adminHealth: () => j("GET", "/api/admin/health"),
+  awardBond: (id, winner) => j("POST", `/api/bonds/${id}/award`, { winner }),
+  settle: (insightId, outcome) => j("POST", `/api/predictions/${insightId}/settle`, { outcome }),
+  generatePending: (prompt) => j("POST", "/api/admin/seed-pending", { prompt }),
+};

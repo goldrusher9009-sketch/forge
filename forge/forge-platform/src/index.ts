@@ -6157,4 +6157,187 @@ app.get('/api/threads/:id/similar', requireAuth, async (req: any, res) => {
 });
 
 
+
+// ── Batch 12 ─────────────────────────────────────────────────────────────────
+
+// GET /api/personas — list user chat personas
+app.get('/api/personas', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    await db.run(`CREATE TABLE IF NOT EXISTS personas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER, name TEXT, description TEXT, system_prompt TEXT,
+      avatar TEXT DEFAULT '🤖', is_active INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+    const rows = await db.all('SELECT * FROM personas WHERE user_id=? ORDER BY created_at DESC', [req.user.id]);
+    res.json({ personas: rows });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/personas — create persona
+app.post('/api/personas', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    await db.run(`CREATE TABLE IF NOT EXISTS personas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER, name TEXT, description TEXT, system_prompt TEXT,
+      avatar TEXT DEFAULT '🤖', is_active INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+    const { name, description, system_prompt, avatar } = req.body;
+    if (!name || !system_prompt) return res.status(400).json({ error: 'name and system_prompt required' });
+    const r = await db.run('INSERT INTO personas (user_id,name,description,system_prompt,avatar) VALUES (?,?,?,?,?)',
+      [req.user.id, name, description||'', system_prompt, avatar||'🤖']);
+    res.json({ id: r.lastID, name, description, system_prompt, avatar: avatar||'🤖' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/personas/:id — update persona
+app.put('/api/personas/:id', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const { name, description, system_prompt, avatar, is_active } = req.body;
+    await db.run('UPDATE personas SET name=COALESCE(?,name), description=COALESCE(?,description), system_prompt=COALESCE(?,system_prompt), avatar=COALESCE(?,avatar), is_active=COALESCE(?,is_active) WHERE id=? AND user_id=?',
+      [name, description, system_prompt, avatar, is_active, req.params.id, req.user.id]);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/personas/:id — delete persona
+app.delete('/api/personas/:id', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    await db.run('DELETE FROM personas WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/focus/start — start a focus session
+app.post('/api/focus/start', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const { thread_id, duration_minutes } = req.body;
+    const r = await db.run('INSERT INTO focus_sessions (user_id,thread_id,started_at,planned_minutes) VALUES (?,?,CURRENT_TIMESTAMP,?)',
+      [req.user.id, thread_id||null, duration_minutes||25]);
+    res.json({ sessionId: r.lastID, startedAt: new Date().toISOString(), plannedMinutes: duration_minutes||25 });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/focus/end — end focus session
+app.post('/api/focus/end', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const { session_id } = req.body;
+    const sess = await db.get('SELECT * FROM focus_sessions WHERE id=? AND user_id=?', [session_id, req.user.id]);
+    if (!sess) return res.status(404).json({ error: 'Session not found' });
+    const started = new Date(sess.started_at).getTime();
+    const actualMinutes = Math.round((Date.now() - started) / 60000);
+    await db.run('UPDATE focus_sessions SET ended_at=CURRENT_TIMESTAMP, actual_minutes=? WHERE id=?', [actualMinutes, session_id]);
+    res.json({ ok: true, actualMinutes, plannedMinutes: sess.planned_minutes });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/messages/:id/reply — create a reply to a message (threaded)
+app.post('/api/messages/:id/reply', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    await db.run('ALTER TABLE messages ADD COLUMN parent_id INTEGER').catch(() => {});
+    const parent = await db.get('SELECT * FROM messages WHERE id=?', [req.params.id]);
+    if (!parent) return res.status(404).json({ error: 'Parent message not found' });
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ error: 'content required' });
+    const r = await db.run('INSERT INTO messages (thread_id,user_id,role,content,parent_id,created_at) VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)',
+      [parent.thread_id, req.user.id, 'user', content, req.params.id]);
+    res.json({ id: r.lastID, parent_id: req.params.id, thread_id: parent.thread_id, content, role: 'user' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/messages/:id/replies — get replies to a message
+app.get('/api/messages/:id/replies', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const replies = await db.all(
+      'SELECT * FROM messages WHERE parent_id=? ORDER BY created_at ASC',
+      [req.params.id]
+    );
+    res.json({ replies, count: replies.length });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/threads/:id/export/markdown — export thread as markdown doc
+app.get('/api/threads/:id/export/markdown', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    if (!thread) return res.status(404).json({ error: 'Thread not found' });
+    const messages = await db.all('SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC', [req.params.id]);
+    const lines: string[] = [
+      `# ${thread.title || 'Untitled Thread'}`,
+      `> Exported from Forge · ${new Date().toLocaleDateString()}`,
+      '',
+    ];
+    for (const msg of messages) {
+      const role = msg.role === 'user' ? '**You**' : `**AI** _(${msg.model || 'unknown'})_`;
+      const ts = new Date(msg.created_at).toLocaleTimeString();
+      lines.push(`### ${role} · ${ts}`);
+      lines.push('');
+      lines.push(msg.content || '');
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    }
+    const markdown = lines.join('\n');
+    res.setHeader('Content-Type', 'text/markdown');
+    res.setHeader('Content-Disposition', `attachment; filename="thread-${req.params.id}.md"`);
+    res.send(markdown);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/workspace/templates — list workspace templates
+app.get('/api/workspace/templates', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    await db.run(`CREATE TABLE IF NOT EXISTS workspace_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER, name TEXT, description TEXT, category TEXT,
+      system_prompt TEXT, starter_message TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+    const rows = await db.all('SELECT * FROM workspace_templates WHERE user_id=? OR user_id IS NULL ORDER BY category,name', [req.user.id]);
+    // Add built-in templates if none exist
+    if (rows.length === 0) {
+      const builtins = [
+        { name:'Code Review', category:'engineering', description:'Review code for bugs, security, and style', system_prompt:'You are an expert code reviewer. Be thorough, constructive, and specific.', starter_message:'Please review this code:' },
+        { name:'Debug Assistant', category:'engineering', description:'Help debug and fix issues step by step', system_prompt:'You are a debugging expert. Ask clarifying questions and propose systematic fixes.', starter_message:'I have a bug:' },
+        { name:'Writing Coach', category:'writing', description:'Improve clarity, structure, and style', system_prompt:'You are a writing coach. Give specific, actionable feedback on grammar, clarity, and structure.', starter_message:'Please help me improve this:' },
+        { name:'Brainstorm Partner', category:'creativity', description:'Generate and explore ideas together', system_prompt:'You are a creative brainstorm partner. Generate diverse ideas, build on suggestions, and ask thought-provoking questions.', starter_message:'I want to brainstorm about:' },
+        { name:'Data Analyst', category:'data', description:'Analyze data and explain insights', system_prompt:'You are a data analyst. Help interpret data, suggest visualizations, and explain statistical concepts clearly.', starter_message:'Analyze this data:' },
+      ];
+      for (const t of builtins) {
+        await db.run('INSERT INTO workspace_templates (name,category,description,system_prompt,starter_message) VALUES (?,?,?,?,?)',
+          [t.name, t.category, t.description, t.system_prompt, t.starter_message]);
+      }
+      const fresh = await db.all('SELECT * FROM workspace_templates ORDER BY category,name');
+      return res.json({ templates: fresh });
+    }
+    res.json({ templates: rows });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/workspace/templates — save custom template
+app.post('/api/workspace/templates', requireAuth, async (req: any, res) => {
+  try {
+    const db = await getDb();
+    await db.run(`CREATE TABLE IF NOT EXISTS workspace_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER, name TEXT, description TEXT, category TEXT,
+      system_prompt TEXT, starter_message TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+    const { name, description, category, system_prompt, starter_message } = req.body;
+    if (!name) return res.status(400).json({ error: 'name required' });
+    const r = await db.run('INSERT INTO workspace_templates (user_id,name,description,category,system_prompt,starter_message) VALUES (?,?,?,?,?,?)',
+      [req.user.id, name, description||'', category||'custom', system_prompt||'', starter_message||'']);
+    res.json({ id: r.lastID, name, category: category||'custom' });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

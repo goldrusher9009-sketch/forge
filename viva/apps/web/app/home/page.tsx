@@ -59,7 +59,12 @@ export default function HomeCanvas() {
   useEffect(() => {
     setMounted(true)
     const tick = setInterval(() => setTime(new Date()), 60000)
-    auth.me().then(me => setUser(mapApiUser(me, mockUser()))).catch(() => { if (!user) setUser(mockUser()) })
+    auth.me().then(me => setUser(mapApiUser(me, mockUser()))).catch(() => {
+      if (!user) {
+        // In prod this would redirect to login; for now fall back to mock so UI isn't blank
+        setUser(mockUser())
+      }
+    })
     messagesApi.threads().then((t: any[]) => setUnread(t.filter((x: any) => x.unreadCount > 0).length)).catch(() => {})
     notifApi.unreadCount().then(d => setNotifCount(d.count)).catch(() => {})
     feedApi.list().then((res: any) => setRecentPosts((res.posts || []).slice(0, 3))).catch(() => {})

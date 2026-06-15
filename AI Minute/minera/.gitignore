@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+artifacts/
+cache/
+coverage/
+.env
+*.log
+.DS_Store
+typechain-types/
+
+# sqlite database files
+backend/data/
+*.db
+*.db-shm
+*.db-wal
