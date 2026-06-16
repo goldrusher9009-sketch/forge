@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1034,6 +1034,21 @@ export default function ForgeApp() {
   const [newWmTitle, setNewWmTitle] = useState('');
   const [newWmDesc, setNewWmDesc] = useState('');
   const [newWmDue, setNewWmDue] = useState('');
+  const [savedSearches, setSavedSearches] = useState<any[]>([]);
+  const [newSsQuery, setNewSsQuery] = useState('');
+  const [newSsLabel, setNewSsLabel] = useState('');
+  const [wsAnnouncementsB47, setWsAnnouncementsB47] = useState<any[]>([]);
+  const [newWanTitle, setNewWanTitle] = useState('');
+  const [newWanBody, setNewWanBody] = useState('');
+  const [aiRetryLogs, setAiRetryLogs] = useState<any[]>([]);
+  const [retryStats, setRetryStats] = useState<any[]>([]);
+  const [threadLabels, setThreadLabels] = useState<any[]>([]);
+  const [tlThreadId, setTlThreadId] = useState('');
+  const [tlLabel, setTlLabel] = useState('');
+  const [tlColor, setTlColor] = useState('#6366f1');
+  const [userPrefsV2, setUserPrefsV2] = useState<any>(null);
+  const [upv2Theme, setUpv2Theme] = useState('dark');
+  const [upv2FontSize, setUpv2FontSize] = useState(14);
 
 
 
@@ -1090,7 +1105,7 @@ export default function ForgeApp() {
   const [timeline25, setTimeline25] = useState<any>(null);
   const [rxLeader, setRxLeader] = useState<any[]>([]);
   const [qnoteEditContent, setQnoteEditContent] = useState('');
-  const [savedSearches, setSavedSearches] = useState<any[]>([]);
+  const [savedSearchesB47, setSavedSearchesB47] = useState<any[]>([]);
   const [newSearchQuery, setNewSearchQuery] = useState('');
   const [newSearchLabel, setNewSearchLabel] = useState('');
   const [prodScore, setProdScore] = useState<any>(null);
@@ -3426,7 +3441,7 @@ export default function ForgeApp() {
   }
   async function loadSavedSearches() {
     const tok = localStorage.getItem('forge_token'); if (!tok) return;
-    try { const r = await fetch('/api/saved-searches', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setSavedSearches(Array.isArray(d)?d:[]); } catch {}
+    try { const r = await fetch('/api/saved-searches', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setSavedSearchesB47(Array.isArray(d)?d:[]); } catch {}
   }
   async function addSavedSearch() {
     if (!newSearchQuery.trim()) return;
@@ -11519,6 +11534,231 @@ export default function ForgeApp() {
 {/* Prompt Library tab */}
 {/* AI Summaries v2 tab */}
 {/* Meeting Notes tab */}
+{mainTab==='savedsearch' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🔖 Saved Searches</h2>
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <input value={newSsQuery} onChange={e=>setNewSsQuery(e.target.value)} placeholder="Search query" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:2}}/>
+      <input value={newSsLabel} onChange={e=>setNewSsLabel(e.target.value)} placeholder="Label" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <button onClick={async()=>{if(!newSsQuery||!newSsLabel)return;await fetch('/api/saved-searches',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({query:newSsQuery,label:newSsLabel})});setNewSsQuery('');setNewSsLabel('');const r=await fetch('/api/saved-searches',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSavedSearchesB47(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Save</button>
+      <button onClick={async()=>{const r=await fetch('/api/saved-searches',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSavedSearchesB47(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {savedSearchesB47.map((s:any)=>(
+      <div key={s.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <span style={{color:'#f1f5f9',fontWeight:600}}>{s.label}</span>
+          <span style={{color:'#64748b',fontSize:12,marginLeft:8}}>{s.query}</span>
+          <span style={{color:'#6366f1',fontSize:11,marginLeft:8}}>{s.hits} uses</span>
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={async()=>{await fetch(`/api/saved-searches/${s.id}/use`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/saved-searches',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSavedSearchesB47(await r.json());}} style={{background:'#14532d',color:'#86efac',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Use</button>
+          <button onClick={async()=>{await fetch(`/api/saved-searches/${s.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSavedSearchesB47(savedSearchesB47.filter((x:any)=>x.id!==s.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='wsannounce' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>📢 Workspace Announcements</h2>
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+      <input value={newWanTitle} onChange={e=>setNewWanTitle(e.target.value)} placeholder="Title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+    </div>
+    <textarea value={newWanBody} onChange={e=>setNewWanBody(e.target.value)} placeholder="Body" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'8px',color:'#f1f5f9',fontSize:13,width:'100%',minHeight:60,resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <button onClick={async()=>{if(!newWanTitle||!newWanBody)return;await fetch('/api/workspace-announcements',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newWanTitle,body:newWanBody})});setNewWanTitle('');setNewWanBody('');const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsAnnouncementsB47(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Post</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsAnnouncementsB47(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {wsAnnouncementsB47.map((a:any)=>(
+      <div key={a.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{color:'#f1f5f9',fontWeight:600}}>{a.pinned?'📌 ':''}{a.title}</span>
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={async()=>{await fetch(`/api/workspace-announcements/${a.id}/pin`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsAnnouncementsB47(await r.json());}} style={{background:'#1e3a5f',color:'#93c5fd',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Pin</button>
+            <button onClick={async()=>{await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+          </div>
+        </div>
+        <div style={{color:'#94a3b8',fontSize:12,marginTop:4}}>{a.body}</div>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='airetry' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🔄 AI Retry Logs</h2>
+    {retryStats.length>0 && <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16}}>{retryStats.map((s:any,i:number)=><div key={i} style={{background:'#1e293b',borderRadius:6,padding:'8px 12px'}}><div style={{color:'#6366f1',fontSize:12}}>{s.final_model}</div><div style={{color:'#f1f5f9',fontWeight:700}}>{s.count}</div><div style={{color:'#64748b',fontSize:11}}>avg {Number(s.avg_attempts).toFixed(1)} tries</div></div>)}</div>}
+    <button onClick={async()=>{const[r,s]=await Promise.all([fetch('/api/ai-retry-logs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}}),fetch('/api/ai-retry-logs/stats',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})]);setAiRetryLogs(await r.json());setRetryStats(await s.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13,marginBottom:16}}>Load</button>
+    {aiRetryLogs.map((l:any)=>(
+      <div key={l.id} style={{background:'#1e293b',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{color:'#94a3b8',fontSize:12}}>{l.prompt.slice(0,80)}</span>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <span style={{color:'#6366f1',fontSize:11}}>{l.final_model}</span>
+          <span style={{color:l.attempts>1?'#f59e0b':'#22c55e',fontSize:11}}>{l.attempts} tries</span>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='threadlabels' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🏷️ Thread Labels</h2>
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <input value={tlThreadId} onChange={e=>setTlThreadId(e.target.value)} placeholder="Thread ID" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input value={tlLabel} onChange={e=>setTlLabel(e.target.value)} placeholder="Label" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input value={tlColor} onChange={e=>setTlColor(e.target.value)} type="color" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'2px',width:40,cursor:'pointer'}}/>
+      <button onClick={async()=>{if(!tlThreadId||!tlLabel)return;await fetch('/api/thread-labels',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:tlThreadId,label:tlLabel,color:tlColor})});const r=await fetch(`/api/thread-labels/${tlThreadId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadLabels(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Add</button>
+      <button onClick={async()=>{if(!tlThreadId)return;const r=await fetch(`/api/thread-labels/${tlThreadId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadLabels(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+      {threadLabels.map((l:any)=>(
+        <span key={l.id} style={{background:l.color+'22',border:`1px solid ${l.color}`,borderRadius:20,padding:'4px 12px',color:l.color,fontSize:13,display:'flex',alignItems:'center',gap:6}}>
+          {l.label}
+          <button onClick={async()=>{await fetch(`/api/thread-labels/${l.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadLabels(threadLabels.filter((x:any)=>x.id!==l.id));}} style={{background:'none',border:'none',color:l.color,cursor:'pointer',fontSize:11,padding:0}}>✕</button>
+        </span>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='prefsv2' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>⚙️ Preferences V2</h2>
+    <button onClick={async()=>{const r=await fetch('/api/user-preferences-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const d=await r.json();setUserPrefsV2(d);setUpv2Theme(d.theme||'dark');setUpv2FontSize(d.font_size||14);}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13,marginBottom:16}}>Load Prefs</button>
+    {userPrefsV2 && <div style={{display:'flex',flexDirection:'column',gap:12,maxWidth:400}}>
+      <div><label style={{color:'#94a3b8',fontSize:13}}>Theme</label>
+        <select value={upv2Theme} onChange={e=>setUpv2Theme(e.target.value)} style={{display:'block',marginTop:4,background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,width:'100%'}}>
+          <option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option>
+        </select>
+      </div>
+      <div><label style={{color:'#94a3b8',fontSize:13}}>Font Size: {upv2FontSize}px</label>
+        <input type="range" min={12} max={20} value={upv2FontSize} onChange={e=>setUpv2FontSize(Number(e.target.value))} style={{display:'block',marginTop:4,width:'100%'}}/>
+      </div>
+      <button onClick={async()=>{await fetch('/api/user-preferences-v2',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({theme:upv2Theme,font_size:upv2FontSize})});}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'8px 16px',cursor:'pointer',fontSize:13}}>Save Preferences</button>
+    </div>}
+  </div>
+)}
+{mainTab==='contentblocks' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>📦 Content Blocks</h2>
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+      <input value={newCbTitle} onChange={e=>setNewCbTitle(e.target.value)} placeholder="Title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <select value={newCbType} onChange={e=>setNewCbType(e.target.value)} style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13}}>
+        <option value="text">Text</option><option value="code">Code</option><option value="markdown">Markdown</option>
+      </select>
+    </div>
+    <textarea value={newCbContent} onChange={e=>setNewCbContent(e.target.value)} placeholder="Content" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'8px',color:'#f1f5f9',fontSize:13,width:'100%',minHeight:80,resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <button onClick={async()=>{if(!newCbTitle||!newCbContent)return;await fetch('/api/content-blocks',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newCbTitle,content:newCbContent,block_type:newCbType})});setNewCbTitle('');setNewCbContent('');const r=await fetch('/api/content-blocks',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setContentBlocks(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Save</button>
+      <button onClick={async()=>{const r=await fetch('/api/content-blocks',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setContentBlocks(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {contentBlocks.map((b:any)=>(
+      <div key={b.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{color:'#f1f5f9',fontWeight:600}}>{b.pinned?'📌 ':''}{b.title} <span style={{color:'#6366f1',fontSize:11}}>{b.block_type}</span></span>
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={async()=>{await fetch(`/api/content-blocks/${b.id}/pin`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/content-blocks',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setContentBlocks(await r.json());}} style={{background:'#1e3a5f',color:'#93c5fd',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Pin</button>
+            <button onClick={async()=>{await fetch(`/api/content-blocks/${b.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setContentBlocks(contentBlocks.filter((x:any)=>x.id!==b.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+          </div>
+        </div>
+        <pre style={{color:'#94a3b8',fontSize:11,marginTop:6,whiteSpace:'pre-wrap',fontFamily:'monospace'}}>{b.content.slice(0,200)}</pre>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='wstimers' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>⏱️ Workspace Timers</h2>
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <input value={newWtLabel} onChange={e=>setNewWtLabel(e.target.value)} placeholder="Label (e.g. Focus)" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input type="number" value={newWtDuration} onChange={e=>setNewWtDuration(Number(e.target.value))} placeholder="Seconds" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,width:90}}/>
+      <button onClick={async()=>{if(!newWtLabel)return;await fetch('/api/workspace-timers',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({label:newWtLabel,duration_sec:newWtDuration})});setNewWtLabel('');const r=await fetch('/api/workspace-timers',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsTimers(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-timers',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsTimers(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {wsTimers.map((t:any)=>(
+      <div key={t.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <span style={{color:'#f1f5f9',fontWeight:600}}>{t.label}</span>
+          <span style={{color:'#64748b',fontSize:12,marginLeft:8}}>{Math.floor(t.duration_sec/60)}m {t.duration_sec%60}s</span>
+          <span style={{color:t.status==='running'?'#22c55e':'#64748b',fontSize:11,marginLeft:8}}>{t.status}</span>
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={async()=>{await fetch(`/api/workspace-timers/${t.id}/start`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-timers',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsTimers(await r.json());}} style={{background:'#14532d',color:'#86efac',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Start</button>
+          <button onClick={async()=>{await fetch(`/api/workspace-timers/${t.id}/stop`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-timers',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsTimers(await r.json());}} style={{background:'#78350f',color:'#fde68a',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Stop</button>
+          <button onClick={async()=>{await fetch(`/api/workspace-timers/${t.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsTimers(wsTimers.filter((x:any)=>x.id!==t.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='aiconflogs' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>📊 AI Confidence Logs</h2>
+    {confAvg && <div style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:16}}><span style={{color:'#94a3b8'}}>Avg confidence: </span><span style={{color:'#22c55e',fontWeight:700}}>{(confAvg.avg_conf*100).toFixed(1)}%</span><span style={{color:'#64748b',marginLeft:8}}>({confAvg.total} logs)</span></div>}
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <input value={newAclPrompt} onChange={e=>setNewAclPrompt(e.target.value)} placeholder="Prompt" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:2}}/>
+      <input type="number" value={newAclConf} step={0.05} min={0} max={1} onChange={e=>setNewAclConf(Number(e.target.value))} style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,width:80}}/>
+      <button onClick={async()=>{if(!newAclPrompt)return;await fetch('/api/ai-confidence-logs',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({prompt:newAclPrompt,confidence:newAclConf})});setNewAclPrompt('');const[r,avg]=await Promise.all([fetch('/api/ai-confidence-logs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}}),fetch('/api/ai-confidence-logs/avg',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})]);setAiConfLogs(await r.json());setConfAvg(await avg.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Log</button>
+      <button onClick={async()=>{const[r,avg]=await Promise.all([fetch('/api/ai-confidence-logs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}}),fetch('/api/ai-confidence-logs/avg',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})]);setAiConfLogs(await r.json());setConfAvg(await avg.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {aiConfLogs.map((l:any)=>(
+      <div key={l.id} style={{background:'#1e293b',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between'}}>
+        <span style={{color:'#94a3b8',fontSize:12}}>{l.prompt.slice(0,80)}</span>
+        <span style={{color:l.confidence>=0.8?'#22c55e':l.confidence>=0.5?'#f59e0b':'#ef4444',fontWeight:700,fontSize:13}}>{(l.confidence*100).toFixed(0)}%</span>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='uchecklists' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>✅ Checklists</h2>
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+      <input value={newUclTitle} onChange={e=>setNewUclTitle(e.target.value)} placeholder="Checklist title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+    </div>
+    <textarea value={newUclItems} onChange={e=>setNewUclItems(e.target.value)} placeholder="Items (one per line)" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'8px',color:'#f1f5f9',fontSize:13,width:'100%',minHeight:80,resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <button onClick={async()=>{if(!newUclTitle)return;await fetch('/api/user-checklists',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newUclTitle,items:newUclItems})});setNewUclTitle('');setNewUclItems('');const r=await fetch('/api/user-checklists',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserChecklists(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Save</button>
+      <button onClick={async()=>{const r=await fetch('/api/user-checklists',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserChecklists(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {userChecklists.map((cl:any)=>(
+      <div key={cl.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{color:'#f1f5f9',fontWeight:600}}>{cl.completed?'✅ ':''}{cl.title}</span>
+          <div style={{display:'flex',gap:6}}>
+            {!cl.completed && <button onClick={async()=>{await fetch(`/api/user-checklists/${cl.id}/complete`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/user-checklists',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserChecklists(await r.json());}} style={{background:'#14532d',color:'#86efac',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Done</button>}
+            <button onClick={async()=>{await fetch(`/api/user-checklists/${cl.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserChecklists(userChecklists.filter((x:any)=>x.id!==cl.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+          </div>
+        </div>
+        {cl.items && <div style={{color:'#64748b',fontSize:12,marginTop:6,whiteSpace:'pre-line'}}>{cl.items}</div>}
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='wsmilestones' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🏆 Workspace Milestones</h2>
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+      <input value={newWmTitle} onChange={e=>setNewWmTitle(e.target.value)} placeholder="Milestone title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input value={newWmDue} onChange={e=>setNewWmDue(e.target.value)} type="date" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13}}/>
+    </div>
+    <input value={newWmDesc} onChange={e=>setNewWmDesc(e.target.value)} placeholder="Description" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,width:'100%',boxSizing:'border-box',marginBottom:8}}/>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <button onClick={async()=>{if(!newWmTitle)return;await fetch('/api/workspace-milestones',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newWmTitle,description:newWmDesc,due_date:newWmDue})});setNewWmTitle('');setNewWmDesc('');setNewWmDue('');const r=await fetch('/api/workspace-milestones',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-milestones',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {wsMilestones.map((m:any)=>(
+      <div key={m.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <div style={{color:'#f1f5f9',fontWeight:600}}>{m.achieved?'🏆 ':''}{m.title}</div>
+          {m.description && <div style={{color:'#64748b',fontSize:12,marginTop:2}}>{m.description}</div>}
+          {m.due_date && <div style={{color:'#94a3b8',fontSize:11,marginTop:2}}>Due: {m.due_date}</div>}
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          {!m.achieved && <button onClick={async()=>{await fetch(`/api/workspace-milestones/${m.id}/achieve`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-milestones',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());}} style={{background:'#713f12',color:'#fde68a',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Achieve</button>}
+          <button onClick={async()=>{await fetch(`/api/workspace-milestones/${m.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(wsMilestones.filter((x:any)=>x.id!==m.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
 {mainTab==='agentruns' && (
   <div style={{padding:24}}>
     <h2 style={{color:'#f1f5f9',marginBottom:16}}>🤖 Agent Runs</h2>
@@ -13475,11 +13715,11 @@ export default function ForgeApp() {
             </div>
             <textarea value={newAnnBody} onChange={e=>setNewAnnBody(e.target.value)} placeholder="Announcement body..." rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
             <div style={{ display:'flex', gap:8, marginBottom:20 }}>
-              <button onClick={async()=>{ if(!newAnnTitle.trim()||!newAnnBody.trim()) return; await fetch('/api/workspace-announcements',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newAnnTitle,body:newAnnBody,priority:newAnnPriority})}); setNewAnnTitle(''); setNewAnnBody(''); const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncements(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Post</button>
-              <button onClick={async()=>{ const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncements(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+              <button onClick={async()=>{ if(!newAnnTitle.trim()||!newAnnBody.trim()) return; await fetch('/api/workspace-announcements',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newAnnTitle,body:newAnnBody,priority:newAnnPriority})}); setNewAnnTitle(''); setNewAnnBody(''); const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Post</button>
+              <button onClick={async()=>{ const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {wsAnnouncements.map((a:any)=>{
+              {wsAnnouncementsB47.map((a:any)=>{
                 const prioColor:any={'low':'#6b7280','normal':'var(--accent)','high':'#f59e0b','urgent':'#ef4444'};
                 return (
                   <div key={a.id} style={{ background:'var(--bg-card)', border:`2px solid ${prioColor[a.priority]||'var(--border)'}`, borderRadius:10, padding:14 }}>
@@ -13489,15 +13729,15 @@ export default function ForgeApp() {
                         <span style={{ marginLeft:8, padding:'1px 7px', background:prioColor[a.priority]+'33', color:prioColor[a.priority], borderRadius:10, fontSize:10, fontWeight:600 }}>{a.priority.toUpperCase()}</span>
                       </div>
                       <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}/dismiss`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncements(wsAnnouncements.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Dismiss</button>
-                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncements(wsAnnouncements.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}/dismiss`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Dismiss</button>
+                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
                       </div>
                     </div>
                     <div style={{ color:'var(--fg-text2)', fontSize:13 }}>{a.body}</div>
                   </div>
                 );
               })}
-              {wsAnnouncements.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No announcements.</div>}
+              {wsAnnouncementsB47.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No announcements.</div>}
             </div>
           </div>
         )}
@@ -15144,9 +15384,9 @@ export default function ForgeApp() {
                 </div>
                 <button onClick={addSavedSearch} style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Save Search</button>
               </div>
-              {savedSearches.length === 0 ? (
+              {savedSearchesB47.length === 0 ? (
                 <button onClick={loadSavedSearches} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Searches</button>
-              ) : savedSearches.map((s:any)=>(
+              ) : savedSearchesB47.map((s:any)=>(
                 <div key={s.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 16px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                   <div>
                     {s.label && <div style={{ color:'var(--fg-text3)', fontSize:11, marginBottom:2 }}>{s.label}</div>}
