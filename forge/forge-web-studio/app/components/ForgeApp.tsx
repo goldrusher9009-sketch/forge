@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -679,6 +679,23 @@ export default function ForgeApp() {
   const [batchRenameResults, setBatchRenameResults] = useState<any[]>([]);
   const [batchRenameIds, setBatchRenameIds] = useState('');
   const [wsHealth, setWsHealth] = useState<any>(null);
+  const [pchains, setPchains] = useState<any[]>([]);
+  const [newPcName, setNewPcName] = useState('');
+  const [newPcSteps, setNewPcSteps] = useState('Step 1\nStep 2\nStep 3');
+  const [kcards, setKcards] = useState<any[]>([]);
+  const [kcardStats, setKcardStats] = useState<any>(null);
+  const [newKcFront, setNewKcFront] = useState('');
+  const [newKcBack, setNewKcBack] = useState('');
+  const [newKcCat, setNewKcCat] = useState('general');
+  const [vnotes, setVnotes] = useState<any[]>([]);
+  const [newVnTitle, setNewVnTitle] = useState('');
+  const [newVnTranscript, setNewVnTranscript] = useState('');
+  const [wevents, setWevents] = useState<any[]>([]);
+  const [newEvTitle, setNewEvTitle] = useState('');
+  const [newEvDate, setNewEvDate] = useState('');
+  const [newEvColor, setNewEvColor] = useState('#6366f1');
+  const [compareIds, setCompareIds] = useState('');
+  const [compareResults, setCompareResults] = useState<any[]>([]);
   // Batch 25 state
   const [dailyLogs, setDailyLogs] = useState<any[]>([]);
   const [dlContent, setDlContent] = useState('');
@@ -4193,6 +4210,11 @@ export default function ForgeApp() {
             { id:'archives', icon:'🗄', label:'Archives' },
             { id:'timeline', icon:'📈', label:'Timeline' },
             { id:'rxleader', icon:'🎖', label:'Top Reactions' },
+            { id:'pchains', icon:'⛓', label:'Prompt Chains' },
+            { id:'compare', icon:'🔍', label:'Compare Threads' },
+            { id:'kcards', icon:'🃏', label:'Knowledge Cards' },
+            { id:'vnotes', icon:'🎙', label:'Voice Notes' },
+            { id:'wevents', icon:'📅', label:'WS Events' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },
@@ -11020,6 +11042,185 @@ export default function ForgeApp() {
                   <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/stats-summary',{headers:{Authorization:`Bearer ${tok}`}}); setStatsSummary(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Daily Log tab */}
+        {mainTab === 'dailylog' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:20 }}>
+                <h2 style={{ color:'var(--fg-text)', fontSize:22, fontWeight:700, margin:0 }}>📓 Daily Log</h2>
+                <div style={{ background:'var(--fg-orange)', color:'#fff', borderRadius:20, padding:'4px 14px', fontSize:12, fontWeight:700 }}>🔥 {dlStreak} day streak</div>
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/daily-log/streak',{headers:{Authorization:`Bearer ${tok}`}}); const d=await r.json(); setDlStreak(d.streak); }} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻</button>
+              </div>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:20, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:10, marginBottom:12 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text2)', fontSize:12, marginBottom:6 }}>Mood</div>
+                    <select value={dlMood} onChange={e=>setDlMood(e.target.value)} style={{ width:'100%', padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
+                      {['great','good','neutral','tired','stressed'].map(m=><option key={m} value={m}>{m==='great'?'😄 great':m==='good'?'🙂 good':m==='neutral'?'😐 neutral':m==='tired'?'😴 tired':'😰 stressed'}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text2)', fontSize:12, marginBottom:6 }}>Energy (1-5): {dlEnergy}</div>
+                    <input type="range" min={1} max={5} value={dlEnergy} onChange={e=>setDlEnergy(+e.target.value)} style={{ width:'100%' }} />
+                  </div>
+                </div>
+                <textarea value={dlContent} onChange={e=>setDlContent(e.target.value)} placeholder="What happened today? What are you working on? Any blockers?..." rows={5} style={{ width:'100%', padding:'12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:12 }} />
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!dlContent.trim()) return; await fetch('/api/daily-log',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({content:dlContent,mood:dlMood,energy:dlEnergy})}); setDlContent(''); const r2=await fetch('/api/daily-log',{headers:{Authorization:`Bearer ${tok}`}}); setDailyLogs(await r2.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Save Today's Log</button>
+              </div>
+              {dailyLogs.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/daily-log',{headers:{Authorization:`Bearer ${tok}`}}); setDailyLogs(await r.json()); const r2=await fetch('/api/daily-log/streak',{headers:{Authorization:`Bearer ${tok}`}}); const d=await r2.json(); setDlStreak(d.streak); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Log History</button>
+              ) : dailyLogs.map((log:any)=>(
+                <div key={log.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'16px 20px', border:'1px solid var(--fg-border)', marginBottom:10 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <span style={{ color:'var(--fg-text)', fontWeight:700, fontSize:14 }}>{log.log_date}</span>
+                    <div style={{ display:'flex', gap:8 }}>
+                      <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{log.mood} · ⚡{log.energy}/5</span>
+                      <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/daily-log/${log.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setDailyLogs((p:any)=>p.filter((x:any)=>x.id!==log.id)); }} style={{ background:'none', border:'none', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
+                    </div>
+                  </div>
+                  <div style={{ color:'var(--fg-text2)', fontSize:13, whiteSpace:'pre-wrap', lineHeight:1.6 }}>{log.content}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Milestones tab */}
+        {mainTab === 'milestones' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🏅 Milestones</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 160px 140px', gap:10, marginBottom:10 }}>
+                  <input value={newMsTitle} onChange={e=>setNewMsTitle(e.target.value)} placeholder="Milestone title..." style={{ padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input type="date" value={newMsDate} onChange={e=>setNewMsDate(e.target.value)} style={{ padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <select value={newMsCategory} onChange={e=>setNewMsCategory(e.target.value)} style={{ padding:'10px 8px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
+                    {['general','work','personal','learning','health','finance'].map(c=><option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!newMsTitle.trim()||!newMsDate) return; const r=await fetch('/api/milestones',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({title:newMsTitle,milestone_date:newMsDate,category:newMsCategory})}); const d=await r.json(); setMilestones25((s:any)=>[d,...s]); setNewMsTitle(''); setNewMsDate(''); }} style={{ padding:'10px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Add Milestone</button>
+              </div>
+              {milestones25.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/milestones',{headers:{Authorization:`Bearer ${tok}`}}); setMilestones25(await r.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Milestones</button>
+              ) : milestones25.map((m:any)=>(
+                <div key={m.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'14px 18px', border:`1px solid ${m.achieved?'#22c55e':'var(--fg-border)'}`, marginBottom:8, display:'flex', alignItems:'center', gap:12 }}>
+                  <span style={{ fontSize:22 }}>{m.achieved?'🏆':'🎯'}</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:14 }}>{m.title}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{m.milestone_date} · {m.category}</div>
+                  </div>
+                  {!m.achieved && <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/milestones/${m.id}/achieve`,{method:'PUT',headers:{Authorization:`Bearer ${tok}`}}); setMilestones25((p:any)=>p.map((x:any)=>x.id===m.id?{...x,achieved:1}:x)); }} style={{ padding:'6px 12px', borderRadius:8, border:'none', background:'#22c55e', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:12 }}>✓ Achieve</button>}
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/milestones/${m.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setMilestones25((p:any)=>p.filter((x:any)=>x.id!==m.id)); }} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Archives tab */}
+        {mainTab === 'archives' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🗄 Thread Archives</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <p style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:12 }}>Auto-archive threads with no activity.</p>
+                <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                  <span style={{ color:'var(--fg-text2)', fontSize:13 }}>Inactive for</span>
+                  <input type="number" value={archiveAutodays} onChange={e=>setArchiveAutodays(+e.target.value)} min={7} max={365} style={{ width:70, padding:'8px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, textAlign:'center' }} />
+                  <span style={{ color:'var(--fg-text2)', fontSize:13 }}>days</span>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/thread-archives/auto',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({days:archiveAutodays})}); const d=await r.json(); alert(`Auto-archived ${d.archived} threads`); const r2=await fetch('/api/thread-archives',{headers:{Authorization:`Bearer ${tok}`}}); setArchives25(await r2.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Auto-Archive</button>
+                </div>
+              </div>
+              {archives25.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/thread-archives',{headers:{Authorization:`Bearer ${tok}`}}); setArchives25(await r.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Archives</button>
+              ) : archives25.map((a:any)=>(
+                <div key={a.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'14px 18px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', alignItems:'center', gap:12 }}>
+                  <span style={{ fontSize:20 }}>📦</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:13 }}>{a.title||`Thread #${a.thread_id}`}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{a.archived_at?.split('T')[0]} · {a.auto_archive?'Auto':'Manual'}{a.archive_reason?` · ${a.archive_reason}`:''}</div>
+                  </div>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/thread-archives/${a.thread_id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setArchives25((p:any)=>p.filter((x:any)=>x.thread_id!==a.thread_id)); }} style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'transparent', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>Unarchive</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Timeline tab */}
+        {mainTab === 'timeline' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📈 Workspace Timeline</h2>
+              {!timeline25 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/timeline?days=14',{headers:{Authorization:`Bearer ${tok}`}}); setTimeline25(await r.json()); }} style={{ padding:'12px 24px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>Load Timeline</button>
+              ) : (
+                <>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24 }}>
+                    <div style={{ background:'var(--fg-bg2)', borderRadius:12, padding:16, border:'1px solid var(--fg-border)' }}>
+                      <h3 style={{ color:'var(--fg-text2)', fontSize:13, fontWeight:600, marginBottom:10 }}>Threads Created</h3>
+                      <div style={{ display:'flex', gap:4, alignItems:'flex-end', height:60 }}>
+                        {(timeline25.threads||[]).map((d:any)=>{ const max=Math.max(...(timeline25.threads||[]).map((x:any)=>x.c),1); return <div key={d.d} title={`${d.d}: ${d.c}`} style={{ flex:1, background:'var(--fg-orange)', borderRadius:'3px 3px 0 0', height:`${Math.max(4,Math.round(56*d.c/max))}px` }} />; })}
+                      </div>
+                    </div>
+                    <div style={{ background:'var(--fg-bg2)', borderRadius:12, padding:16, border:'1px solid var(--fg-border)' }}>
+                      <h3 style={{ color:'var(--fg-text2)', fontSize:13, fontWeight:600, marginBottom:10 }}>Messages Sent</h3>
+                      <div style={{ display:'flex', gap:4, alignItems:'flex-end', height:60 }}>
+                        {(timeline25.messages||[]).map((d:any)=>{ const max=Math.max(...(timeline25.messages||[]).map((x:any)=>x.c),1); return <div key={d.d} title={`${d.d}: ${d.c}`} style={{ flex:1, background:'#6366f1', borderRadius:'3px 3px 0 0', height:`${Math.max(4,Math.round(56*d.c/max))}px` }} />; })}
+                      </div>
+                    </div>
+                  </div>
+                  {(timeline25.milestones||[]).length > 0 && <>
+                    <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, marginBottom:10 }}>Milestones</h3>
+                    {timeline25.milestones.map((m:any)=>(
+                      <div key={m.d+m.title} style={{ display:'flex', gap:10, alignItems:'center', padding:'8px 14px', background:'var(--fg-bg2)', borderRadius:10, border:'1px solid var(--fg-border)', marginBottom:6 }}>
+                        <span>{m.achieved?'🏆':'🎯'}</span>
+                        <span style={{ color:'var(--fg-text)', fontSize:13 }}>{m.title}</span>
+                        <span style={{ color:'var(--fg-text3)', fontSize:11, marginLeft:'auto' }}>{m.d}</span>
+                      </div>
+                    ))}
+                  </>}
+                  {(timeline25.logs||[]).length > 0 && <>
+                    <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, margin:'20px 0 10px' }}>Daily Mood</h3>
+                    <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                      {timeline25.logs.map((l:any)=>(
+                        <div key={l.d} title={`${l.d}: ${l.mood}, energy ${l.energy}`} style={{ padding:'6px 10px', borderRadius:8, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', fontSize:12, color:'var(--fg-text2)' }}>
+                          {l.d.slice(5)} {l.mood==='great'?'😄':l.mood==='good'?'🙂':l.mood==='neutral'?'😐':l.mood==='tired'?'😴':'😰'} ⚡{l.energy}
+                        </div>
+                      ))}
+                    </div>
+                  </>}
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/timeline?days=14',{headers:{Authorization:`Bearer ${tok}`}}); setTimeline25(await r.json()); }} style={{ marginTop:16, padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Reaction Leaderboard tab */}
+        {mainTab === 'rxleader' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🎖 Top Reacted Messages</h2>
+              {rxLeader.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/reaction-leaderboard',{headers:{Authorization:`Bearer ${tok}`}}); setRxLeader(await r.json()); }} style={{ padding:'12px 24px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>Load Leaderboard</button>
+              ) : rxLeader.map((item:any, idx:number)=>(
+                <div key={item.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'16px 20px', border:'1px solid var(--fg-border)', marginBottom:10, display:'flex', gap:14, alignItems:'flex-start' }}>
+                  <div style={{ fontSize:24, fontWeight:800, color:'var(--fg-orange)', minWidth:30, textAlign:'center' }}>#{idx+1}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginBottom:4 }}>{item.thread_title||'Thread'} · {item.role}</div>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, lineHeight:1.5 }}>{item.content?.slice(0,120)}{item.content?.length>120?'...':''}</div>
+                  </div>
+                  <div style={{ textAlign:'center', minWidth:48 }}>
+                    <div style={{ color:'var(--fg-orange)', fontSize:22, fontWeight:800 }}>{item.reaction_count}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:10 }}>reactions</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -8657,4 +8657,183 @@ app.get('/api/workspace/reaction-leaderboard', authMiddleware, (req: any, res: a
   res.json(rows);
 });
 
+
+// ── Batch 26: Prompt Chains, Thread Compare, Knowledge Cards, Voice Notes, Workspace Events ──
+
+// prompt_chains table
+db.exec(`CREATE TABLE IF NOT EXISTS prompt_chains (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  steps TEXT NOT NULL,
+  run_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// knowledge_cards table
+db.exec(`CREATE TABLE IF NOT EXISTS knowledge_cards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  front TEXT NOT NULL,
+  back TEXT NOT NULL,
+  category TEXT DEFAULT 'general',
+  review_count INTEGER DEFAULT 0,
+  confidence INTEGER DEFAULT 0,
+  last_reviewed TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// voice_notes table
+db.exec(`CREATE TABLE IF NOT EXISTS voice_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  transcript TEXT DEFAULT '',
+  duration_seconds INTEGER DEFAULT 0,
+  thread_id INTEGER,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// workspace_events table (calendar-style events)
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  event_date TEXT NOT NULL,
+  event_time TEXT DEFAULT '',
+  color TEXT DEFAULT '#6366f1',
+  recurring TEXT DEFAULT 'none',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// ── Prompt Chains ──
+app.get('/api/prompt-chains', authMiddleware, (req: any, res: any) => {
+  const rows: any[] = db.prepare('SELECT * FROM prompt_chains WHERE user_id=? ORDER BY run_count DESC, id DESC').all(req.user.id);
+  rows.forEach(r => { try { r.steps = JSON.parse(r.steps); } catch {} });
+  res.json(rows);
+});
+app.post('/api/prompt-chains', authMiddleware, (req: any, res: any) => {
+  const { name, description, steps } = req.body;
+  if (!name?.trim() || !Array.isArray(steps) || steps.length === 0) return res.status(400).json({ error: 'name and steps required' });
+  const r = db.prepare('INSERT INTO prompt_chains (user_id,name,description,steps) VALUES (?,?,?,?)').run(req.user.id, name.trim(), description||'', JSON.stringify(steps));
+  res.json({ id: r.lastInsertRowid, name, steps });
+});
+app.put('/api/prompt-chains/:id', authMiddleware, (req: any, res: any) => {
+  const { name, description, steps } = req.body;
+  db.prepare('UPDATE prompt_chains SET name=COALESCE(?,name),description=COALESCE(?,description),steps=COALESCE(?,steps) WHERE id=? AND user_id=?').run(name||null,description||null,steps?JSON.stringify(steps):null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.post('/api/prompt-chains/:id/run', authMiddleware, (req: any, res: any) => {
+  db.prepare('UPDATE prompt_chains SET run_count=run_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  const chain: any = db.prepare('SELECT * FROM prompt_chains WHERE id=?').get(req.params.id);
+  let steps: any[] = [];
+  try { steps = JSON.parse(chain.steps); } catch {}
+  res.json({ chain_id: req.params.id, steps, run_count: chain.run_count + 1 });
+});
+app.delete('/api/prompt-chains/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM prompt_chains WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Thread Comparison ──
+app.get('/api/threads/compare', authMiddleware, (req: any, res: any) => {
+  const ids = String(req.query.ids||'').split(',').map(Number).filter(Boolean).slice(0,4);
+  if (ids.length < 2) return res.status(400).json({ error: 'provide at least 2 thread ids' });
+  const results = ids.map(id => {
+    const thread: any = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(id, req.user.id);
+    if (!thread) return null;
+    const msgCount: any = db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id=?').get(id);
+    const tokenSum: any = db.prepare('SELECT SUM(tokens_used) as s FROM messages WHERE thread_id=?').get(id);
+    const firstMsg: any = db.prepare("SELECT content FROM messages WHERE thread_id=? AND role='user' ORDER BY id ASC LIMIT 1").get(id);
+    const lastMsg: any = db.prepare('SELECT created_at FROM messages WHERE thread_id=? ORDER BY id DESC LIMIT 1').get(id);
+    return { id, title: thread.title||'Untitled', message_count: msgCount?.c||0, total_tokens: tokenSum?.s||0, created_at: thread.created_at, last_activity: lastMsg?.created_at, first_message: firstMsg?.content?.slice(0,80)||'' };
+  }).filter(Boolean);
+  res.json(results);
+});
+
+// ── Knowledge Cards ──
+app.get('/api/knowledge-cards', authMiddleware, (req: any, res: any) => {
+  const { category, due } = req.query;
+  let q = 'SELECT * FROM knowledge_cards WHERE user_id=?';
+  const params: any[] = [req.user.id];
+  if (category) { q += ' AND category=?'; params.push(category); }
+  if (due === 'true') { q += ' AND (last_reviewed IS NULL OR last_reviewed < ?)'; params.push(new Date(Date.now()-86400000).toISOString()); }
+  q += ' ORDER BY confidence ASC, review_count ASC LIMIT 50';
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/knowledge-cards', authMiddleware, (req: any, res: any) => {
+  const { front, back, category } = req.body;
+  if (!front?.trim() || !back?.trim()) return res.status(400).json({ error: 'front and back required' });
+  const r = db.prepare('INSERT INTO knowledge_cards (user_id,front,back,category) VALUES (?,?,?,?)').run(req.user.id, front.trim(), back.trim(), category||'general');
+  res.json({ id: r.lastInsertRowid, front, back, category });
+});
+app.put('/api/knowledge-cards/:id/review', authMiddleware, (req: any, res: any) => {
+  const { confidence } = req.body; // 0=forgot,1=hard,2=ok,3=easy
+  db.prepare('UPDATE knowledge_cards SET review_count=review_count+1, confidence=?, last_reviewed=? WHERE id=? AND user_id=?').run(confidence||0, new Date().toISOString(), req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/knowledge-cards/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM knowledge_cards WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/knowledge-cards/stats', authMiddleware, (req: any, res: any) => {
+  const total = (db.prepare('SELECT COUNT(*) as c FROM knowledge_cards WHERE user_id=?').get(req.user.id) as any)?.c||0;
+  const mastered = (db.prepare('SELECT COUNT(*) as c FROM knowledge_cards WHERE user_id=? AND confidence>=3').get(req.user.id) as any)?.c||0;
+  const due = (db.prepare('SELECT COUNT(*) as c FROM knowledge_cards WHERE user_id=? AND (last_reviewed IS NULL OR last_reviewed < ?)').get(req.user.id, new Date(Date.now()-86400000).toISOString()) as any)?.c||0;
+  res.json({ total, mastered, due, learning: total-mastered });
+});
+
+// ── Voice Notes ──
+app.get('/api/voice-notes', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM voice_notes WHERE user_id=? ORDER BY id DESC LIMIT 50').all(req.user.id));
+});
+app.post('/api/voice-notes', authMiddleware, (req: any, res: any) => {
+  const { title, transcript, duration_seconds, thread_id } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO voice_notes (user_id,title,transcript,duration_seconds,thread_id) VALUES (?,?,?,?,?)').run(req.user.id, title.trim(), transcript||'', duration_seconds||0, thread_id||null);
+  res.json({ id: r.lastInsertRowid, title, transcript });
+});
+app.put('/api/voice-notes/:id', authMiddleware, (req: any, res: any) => {
+  const { title, transcript } = req.body;
+  db.prepare('UPDATE voice_notes SET title=COALESCE(?,title),transcript=COALESCE(?,transcript) WHERE id=? AND user_id=?').run(title||null,transcript||null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/voice-notes/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM voice_notes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Workspace Events ──
+app.get('/api/workspace-events', authMiddleware, (req: any, res: any) => {
+  const { from, to } = req.query;
+  let q = 'SELECT * FROM workspace_events WHERE user_id=?';
+  const params: any[] = [req.user.id];
+  if (from) { q += ' AND event_date>=?'; params.push(from); }
+  if (to) { q += ' AND event_date<=?'; params.push(to); }
+  q += ' ORDER BY event_date ASC, event_time ASC';
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/workspace-events', authMiddleware, (req: any, res: any) => {
+  const { title, description, event_date, event_time, color, recurring } = req.body;
+  if (!title?.trim() || !event_date) return res.status(400).json({ error: 'title and event_date required' });
+  const r = db.prepare('INSERT INTO workspace_events (user_id,title,description,event_date,event_time,color,recurring) VALUES (?,?,?,?,?,?,?)').run(req.user.id, title.trim(), description||'', event_date, event_time||'', color||'#6366f1', recurring||'none');
+  res.json({ id: r.lastInsertRowid, title, event_date });
+});
+app.put('/api/workspace-events/:id', authMiddleware, (req: any, res: any) => {
+  const { title, description, event_date, event_time, color } = req.body;
+  db.prepare('UPDATE workspace_events SET title=COALESCE(?,title),description=COALESCE(?,description),event_date=COALESCE(?,event_date),event_time=COALESCE(?,event_time),color=COALESCE(?,color) WHERE id=? AND user_id=?').run(title||null,description||null,event_date||null,event_time||null,color||null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-events/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_events WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/workspace-events/upcoming', authMiddleware, (req: any, res: any) => {
+  const today = new Date().toISOString().split('T')[0];
+  const limit = Math.min(Number(req.query.limit)||10, 30);
+  res.json(db.prepare('SELECT * FROM workspace_events WHERE user_id=? AND event_date>=? ORDER BY event_date ASC, event_time ASC LIMIT ?').all(req.user.id, today, limit));
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

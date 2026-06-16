@@ -251,6 +251,9 @@ export default function HomeCanvas() {
                   { label: 'Analytics', href: '/analytics', icon: '↗', color: '#f59e0b' },
                   { label: 'Advertise', href: '/advertise', icon: '⊕', color: '#ec4899' },
                   { label: 'ZK Identity', href: '/identity', icon: '◐', color: '#818cf8' },
+                  { label: 'Events', href: '/events', icon: '▷', color: '#a855f7' },
+                  { label: 'Grants', href: '/grants', icon: '$', color: '#22c55e' },
+                  { label: 'Airdrop', href: '/airdrop', icon: '🪂', color: '#f59e0b' },
                 ] as const).map(({ label, href, icon, color }) => (
                   <Link key={label} href={href}
                     className="flex items-center gap-2.5 px-3 py-2.5 border border-white/6 hover:border-white/18 hover:bg-white/2 transition-all group"

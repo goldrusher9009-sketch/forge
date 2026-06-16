@@ -350,3 +350,14 @@ Tests: **36/36 passing**. Git bundle refreshed (144 files).
 | Sound effects — WebAudio blips on earn/claim/burn, mutable, off by default | ✅ |
 
 Tests: **36/36 passing**. Bundle refreshed (147 files).
+
+
+## Deep-links + counters + edge tests (latest)
+
+| Item | Status |
+|------|--------|
+| Deep-link tabs — URL hash (#market), shareable, back/forward works | ✅ |
+| Animated number counters (balance tweens) | ✅ |
+| Edge-case tests — over-withdraw, over-stake, bad inputs → 400/404 not 500 | ✅ |
+
+Tests: **43/43 passing**. Bundle refreshed (148 files).
