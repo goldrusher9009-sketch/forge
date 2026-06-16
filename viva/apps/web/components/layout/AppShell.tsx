@@ -40,6 +40,7 @@ const NAV_MORE = [
   { id: 'portfolio',     label: 'Net Worth',    path: '/portfolio',     icon: TokenIcon },
   { id: 'collections',   label: 'Collections',  path: '/collections',   icon: TokenIcon },
   { id: 'nft',           label: 'NFT Vault',    path: '/nft',           icon: LeaderIcon },
+  { id: 'search',        label: 'Search',       path: '/search',        icon: ExploreIcon },
   { id: 'signals',       label: 'AI Signals',   path: '/signals',       icon: LeaderIcon },
   { id: 'watchlist',     label: 'Watchlist',    path: '/watchlist',     icon: FeedIcon },
   { id: 'swap',          label: 'Swap Tokens',  path: '/swap',          icon: TokenIcon },

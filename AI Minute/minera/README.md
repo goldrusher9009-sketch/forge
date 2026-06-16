@@ -373,3 +373,15 @@ Tests: **43/43 passing**. Bundle refreshed (148 files).
 | Contract tests expanded to 10 (cap, mining, double-license, bond award) | ✅ |
 
 Tests: **43 API passing** + 10 contract cases. Bundle refreshed.
+
+
+## Headers · checklist · tooltips · meta (latest)
+
+| Item | Status |
+|------|--------|
+| Rate-limit headers (X-RateLimit-Limit/Remaining/Reset, Retry-After) | ✅ |
+| Onboarding checklist on dashboard (5 steps, auto-ticks, dismissible) | ✅ |
+| CSS tooltip system on key terms | ✅ |
+| Favicon + OG/Twitter meta + apple-touch icon | ✅ |
+
+Tests: **43 passing**. Bundle refreshed.

@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -784,10 +784,43 @@ export default function ForgeApp() {
   const [aiJournal, setAiJournal] = useState<any[]>([]);
   const [journalStats, setJournalStats] = useState<any>(null);
   const [journalEntry, setJournalEntry] = useState('');
-  const [journalMood, setJournalMood] = useState('neutral');
+  const [journalMood32, setJournalMood32] = useState('neutral');
   const [threadPolls, setThreadPolls] = useState<any[]>([]);
-  const [newPollQ, setNewPollQ] = useState('');
-  const [newPollOpts, setNewPollOpts] = useState('Option A\nOption B\nOption C');
+  const [newPollQ32, setNewPollQ32] = useState('');
+  const [newPollOpts32, setNewPollOpts32] = useState('Option A\nOption B\nOption C');
+  const [insightCards, setInsightCards] = useState<any[]>([]);
+  const [newIcTitle, setNewIcTitle] = useState('');
+  const [newIcInsight, setNewIcInsight] = useState('');
+  const [newIcCat, setNewIcCat] = useState('general');
+  const [goalsV2, setGoalsV2] = useState<any[]>([]);
+  const [newGv2Title, setNewGv2Title] = useState('');
+  const [newGv2Date, setNewGv2Date] = useState('');
+  const [newGv2Cat, setNewGv2Cat] = useState('personal');
+  const [aiReminders, setAiReminders] = useState<any[]>([]);
+  const [newRmTitle, setNewRmTitle] = useState('');
+  const [newRmAt, setNewRmAt] = useState('');
+  const [newRmRecur, setNewRmRecur] = useState('none');
+  const [threadBookmarksV2, setThreadBookmarksV2] = useState<any[]>([]);
+  const [newTbThread, setNewTbThread] = useState('');
+  const [newTbNote, setNewTbNote] = useState('');
+  const [newTbColor, setNewTbColor] = useState('#6366f1');
+  const [exportPresets, setExportPresets] = useState<any[]>([]);
+  const [newEpName, setNewEpName] = useState('');
+  const [newEpFormat, setNewEpFormat] = useState('markdown');
+  const [wsWidgets, setWsWidgets] = useState<any[]>([]);
+  const [newWwType, setNewWwType] = useState('clock');
+  const [newWwTitle, setNewWwTitle] = useState('');
+  const [personasV2, setPersonasV2] = useState<any[]>([]);
+  const [newPv2Name, setNewPv2Name] = useState('');
+  const [newPv2Prompt, setNewPv2Prompt] = useState('');
+  const [newPv2Avatar, setNewPv2Avatar] = useState('🤖');
+  const [newPv2Model, setNewPv2Model] = useState('claude');
+  const [threadMetrics, setThreadMetrics] = useState<any[]>([]);
+  const [quickActions, setQuickActions] = useState<any[]>([]);
+  const [newQaLabel, setNewQaLabel] = useState('');
+  const [newQaType, setNewQaType] = useState('prompt');
+  const [newQaShortcut, setNewQaShortcut] = useState('');
+  const [wsSearchHistory, setWsSearchHistory] = useState<any[]>([]);
   const [boards, setBoards] = useState<any[]>([]);
   const [activeBoardId, setActiveBoardId] = useState<number|null>(null);
   const [boardItems, setBoardItems] = useState<any[]>([]);
@@ -4355,6 +4388,16 @@ export default function ForgeApp() {
           { id:'wsannounce', icon:'📢', label:'Announcements' },
           { id:'aijournal', icon:'📓', label:'AI Journal' },
           { id:'threadpolls', icon:'📊', label:'Thread Polls' },
+          { id:'insightcards', icon:'💎', label:'Insights' },
+          { id:'goalsv2', icon:'🎯', label:'Goals v2' },
+          { id:'aireminders', icon:'⏰', label:'AI Reminders' },
+          { id:'tbookmarks2', icon:'🔖', label:'Thread Marks' },
+          { id:'exportpresets', icon:'📤', label:'Export Presets' },
+          { id:'wswidgets', icon:'🧩', label:'WS Widgets' },
+          { id:'personasv2', icon:'🎭', label:'Personas v2' },
+          { id:'threadmetrics', icon:'📈', label:'Thread Metrics' },
+          { id:'quickactions', icon:'⚡', label:'Quick Actions' },
+          { id:'searchhist', icon:'🔍', label:'Search History' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },
@@ -11182,6 +11225,387 @@ export default function ForgeApp() {
                   <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/stats-summary',{headers:{Authorization:`Bearer ${tok}`}}); setStatsSummary(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Insight Cards tab */}
+        {mainTab==='insightcards' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>💎 Insight Cards</div>
+            <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
+              <input value={newIcTitle} onChange={e=>setNewIcTitle(e.target.value)} placeholder="Insight title..." style={{ flex:1, minWidth:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newIcCat} onChange={e=>setNewIcCat(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['general','product','engineering','marketing','personal','research'].map(ct=><option key={ct} value={ct}>{ct}</option>)}
+              </select>
+            </div>
+            <textarea value={newIcInsight} onChange={e=>setNewIcInsight(e.target.value)} placeholder="The insight or key learning..." rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button onClick={async()=>{ if(!newIcTitle.trim()||!newIcInsight.trim()) return; await fetch('/api/insight-cards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newIcTitle,insight:newIcInsight,category:newIcCat})}); setNewIcTitle(''); setNewIcInsight(''); const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
+              <button onClick={async()=>{ const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+              <button onClick={async()=>{ const r=await fetch('/api/insight-cards?starred=1',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>⭐ Starred</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:10 }}>
+              {insightCards.map((card:any)=>(
+                <div key={card.id} style={{ background:'var(--bg-card)', border:`1px solid ${card.starred?'#f59e0b':'var(--border)'}`, borderRadius:10, padding:14 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:14 }}>{card.title}</div>
+                      <div style={{ color:'var(--accent)', fontSize:11 }}>{card.category}</div>
+                    </div>
+                    <div style={{ display:'flex', gap:4 }}>
+                      <button onClick={async()=>{ await fetch(`/api/insight-cards/${card.id}/star`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(await r.json()); }} style={{ padding:'3px 7px', background:card.starred?'#f59e0b22':'var(--bg-input)', border:`1px solid ${card.starred?'#f59e0b':'var(--border)'}`, borderRadius:5, color:card.starred?'#f59e0b':'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>⭐</button>
+                      <button onClick={async()=>{ await fetch(`/api/insight-cards/${card.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(insightCards.filter((x:any)=>x.id!==card.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ color:'var(--fg-text2)', fontSize:13, lineHeight:1.5 }}>{card.insight}</div>
+                </div>
+              ))}
+              {insightCards.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No insights yet. Capture key learnings as insight cards.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Goals v2 tab */}
+        {mainTab==='goalsv2' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎯 Goals</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newGv2Title} onChange={e=>setNewGv2Title(e.target.value)} placeholder="Goal title..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newGv2Cat} onChange={e=>setNewGv2Cat(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['personal','work','health','learning','finance','relationships'].map(ct=><option key={ct} value={ct}>{ct}</option>)}
+              </select>
+              <input type="date" value={newGv2Date} onChange={e=>setNewGv2Date(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newGv2Title.trim()) return; await fetch('/api/goals-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newGv2Title,category:newGv2Cat,target_date:newGv2Date})}); setNewGv2Title(''); setNewGv2Date(''); const r=await fetch('/api/goals-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setGoalsV2(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add Goal</button>
+              <button onClick={async()=>{ const r=await fetch('/api/goals-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setGoalsV2(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {goalsV2.map((g:any)=>(
+                <div key={g.id} style={{ background:'var(--bg-card)', border:`1px solid ${g.status==='done'?'#22c55e':g.status==='paused'?'#6b7280':'var(--border)'}`, borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{g.title}</div>
+                      <div style={{ color:'var(--accent)', fontSize:11 }}>{g.category}{g.target_date?' · due '+g.target_date:''}</div>
+                    </div>
+                    <div style={{ display:'flex', gap:4 }}>
+                      {(['active','paused','done'] as string[]).filter(s=>s!==g.status).map(s=>(
+                        <button key={s} onClick={async()=>{ await fetch(`/api/goals-v2/${g.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({progress:g.progress,status:s})}); const r=await fetch('/api/goals-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setGoalsV2(await r.json()); }} style={{ padding:'3px 7px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text3)', cursor:'pointer', fontSize:10 }}>{s}</button>
+                      ))}
+                      <button onClick={async()=>{ await fetch(`/api/goals-v2/${g.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setGoalsV2(goalsV2.filter((x:any)=>x.id!==g.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6 }}>
+                    <input type="range" min={0} max={100} value={g.progress} onChange={async(e)=>{ const p=parseInt(e.target.value); await fetch(`/api/goals-v2/${g.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({progress:p,status:g.status})}); setGoalsV2(goalsV2.map((x:any)=>x.id===g.id?{...x,progress:p}:x)); }} style={{ flex:1 }} />
+                    <span style={{ color:'var(--accent)', fontWeight:600, fontSize:13, minWidth:36 }}>{g.progress}%</span>
+                  </div>
+                </div>
+              ))}
+              {goalsV2.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No goals yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* AI Reminders tab */}
+        {mainTab==='aireminders' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>⏰ AI Reminders</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newRmTitle} onChange={e=>setNewRmTitle(e.target.value)} placeholder="Reminder title..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="datetime-local" value={newRmAt} onChange={e=>setNewRmAt(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newRmRecur} onChange={e=>setNewRmRecur(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['none','daily','weekly','monthly'].map(r2=><option key={r2} value={r2}>{r2}</option>)}
+              </select>
+              <button onClick={async()=>{ if(!newRmTitle.trim()||!newRmAt) return; await fetch('/api/ai-reminders',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newRmTitle,remind_at:newRmAt,recur:newRmRecur})}); setNewRmTitle(''); setNewRmAt(''); const r=await fetch('/api/ai-reminders',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiReminders(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Set</button>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <button onClick={async()=>{ const r=await fetch('/api/ai-reminders',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiReminders(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load All</button>
+              <button onClick={async()=>{ const r=await fetch('/api/ai-reminders/due',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiReminders(await r.json()); }} style={{ padding:'6px 14px', background:'#f59e0b22', border:'1px solid #f59e0b', borderRadius:8, color:'#f59e0b', cursor:'pointer', fontSize:13 }}>Due Now</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {aiReminders.map((rm:any)=>(
+                <div key={rm.id} style={{ display:'flex', gap:10, alignItems:'center', background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:8, padding:'10px 14px' }}>
+                  <span style={{ fontSize:20 }}>⏰</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:13 }}>{rm.title}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{rm.remind_at?.replace('T',' ')} {rm.recur!=='none'?`· repeats ${rm.recur}`:''}</div>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/ai-reminders/${rm.id}/dismiss`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiReminders(aiReminders.filter((x:any)=>x.id!==rm.id)); }} style={{ padding:'3px 8px', background:'#22c55e', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Done</button>
+                  <button onClick={async()=>{ await fetch(`/api/ai-reminders/${rm.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiReminders(aiReminders.filter((x:any)=>x.id!==rm.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                </div>
+              ))}
+              {aiReminders.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No reminders. Set reminders with optional recurrence.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Bookmarks v2 tab */}
+        {mainTab==='tbookmarks2' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🔖 Thread Bookmarks</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newTbThread} onChange={e=>setNewTbThread(e.target.value)} placeholder="Thread ID..." style={{ width:100, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newTbNote} onChange={e=>setNewTbNote(e.target.value)} placeholder="Note about this thread..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="color" value={newTbColor} onChange={e=>setNewTbColor(e.target.value)} style={{ width:44, height:38, padding:2, background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }} />
+              <button onClick={async()=>{ if(!newTbThread.trim()) return; await fetch('/api/thread-bookmarks-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({thread_id:parseInt(newTbThread),note:newTbNote,color:newTbColor})}); setNewTbThread(''); setNewTbNote(''); const r=await fetch('/api/thread-bookmarks-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadBookmarksV2(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
+              <button onClick={async()=>{ const r=await fetch('/api/thread-bookmarks-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadBookmarksV2(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {threadBookmarksV2.map((bm:any)=>(
+                <div key={bm.id} style={{ display:'flex', gap:10, alignItems:'center', background:'var(--bg-card)', border:`2px solid ${bm.color||'var(--border)'}`, borderRadius:8, padding:'8px 12px' }}>
+                  <div style={{ width:8, height:8, borderRadius:'50%', background:bm.color||'var(--accent)', flexShrink:0 }} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:13 }}>Thread #{bm.thread_id}</div>
+                    {bm.note && <div style={{ color:'var(--fg-text2)', fontSize:12 }}>{bm.note}</div>}
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{bm.created_at?.split('T')[0]}</div>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/thread-bookmarks-v2/${bm.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadBookmarksV2(threadBookmarksV2.filter((x:any)=>x.id!==bm.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                </div>
+              ))}
+              {threadBookmarksV2.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No thread bookmarks yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Export Presets tab */}
+        {mainTab==='exportpresets' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📤 Export Presets</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newEpName} onChange={e=>setNewEpName(e.target.value)} placeholder="Preset name..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newEpFormat} onChange={e=>setNewEpFormat(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['markdown','pdf','html','json','txt','csv'].map(f=><option key={f} value={f}>{f}</option>)}
+              </select>
+              <button onClick={async()=>{ if(!newEpName.trim()) return; await fetch('/api/export-presets',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newEpName,format:newEpFormat})}); setNewEpName(''); const r=await fetch('/api/export-presets',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setExportPresets(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save Preset</button>
+              <button onClick={async()=>{ const r=await fetch('/api/export-presets',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setExportPresets(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:10 }}>
+              {exportPresets.map((ep:any)=>(
+                <div key={ep.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:14 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:13 }}>{ep.name}</div>
+                      <div style={{ color:'var(--accent)', fontSize:11 }}>.{ep.format} · used {ep.use_count}×</div>
+                    </div>
+                    <button onClick={async()=>{ await fetch(`/api/export-presets/${ep.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setExportPresets(exportPresets.filter((x:any)=>x.id!==ep.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/export-presets/${ep.id}/use`,{method:'POST',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/export-presets',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setExportPresets(await r.json()); }} style={{ padding:'5px 12px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12, width:'100%' }}>Apply Preset</button>
+                </div>
+              ))}
+              {exportPresets.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No presets yet. Save export settings for quick reuse.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Note Templates tab */}
+        {mainTab==='notetpl' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📄 Note Templates</div>
+            <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+              <input value={newNtTitle} onChange={e=>setNewNtTitle(e.target.value)} placeholder="Template title..." style={{ flex:1, minWidth:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newNtCat} onChange={e=>setNewNtCat(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['general','meeting','review','planning','brainstorm','retrospective'].map(c2=><option key={c2} value={c2}>{c2}</option>)}
+              </select>
+            </div>
+            <textarea value={newNtContent} onChange={e=>setNewNtContent(e.target.value)} placeholder="Template content... (use {{placeholder}} for variables)" rows={5} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button onClick={async()=>{ if(!newNtTitle.trim()||!newNtContent.trim()) return; await fetch('/api/note-templates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newNtTitle,content:newNtContent,category:newNtCat})}); setNewNtTitle(''); setNewNtContent(''); const r=await fetch('/api/note-templates',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setNoteTemplates(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save Template</button>
+              <button onClick={async()=>{ const r=await fetch('/api/note-templates',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setNoteTemplates(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:10 }}>
+              {noteTemplates.map((t:any)=>(
+                <div key={t.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:14 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:14 }}>{t.title}</div>
+                      <div style={{ color:'var(--accent)', fontSize:11 }}>{t.category} · used {t.use_count}×</div>
+                    </div>
+                    <div style={{ display:'flex', gap:4 }}>
+                      <button onClick={async()=>{ await fetch(`/api/note-templates/${t.id}/use`,{method:'POST',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/note-templates',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setNoteTemplates(await r.json()); }} style={{ padding:'3px 8px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Use</button>
+                      <button onClick={async()=>{ await fetch(`/api/note-templates/${t.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setNoteTemplates(noteTemplates.filter((x:any)=>x.id!==t.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ color:'var(--fg-text2)', fontSize:12, whiteSpace:'pre-wrap', maxHeight:80, overflow:'hidden' }}>{t.content.slice(0,200)}{t.content.length>200?'...':''}</div>
+                </div>
+              ))}
+              {noteTemplates.length===0 && <div style={{ color:'var(--fg-text3)', padding:24, gridColumn:'1/-1', textAlign:'center' }}>No templates yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Code Snippets v2 tab */}
+        {mainTab==='snippetsv2' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>&lt;/&gt; Code Snippets</div>
+            <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
+              <input value={newSv2Title} onChange={e=>setNewSv2Title(e.target.value)} placeholder="Snippet title..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newSv2Lang} onChange={e=>setNewSv2Lang(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['javascript','typescript','python','go','rust','sql','bash','css','html','json','yaml','text'].map(l=><option key={l} value={l}>{l}</option>)}
+              </select>
+              <input value={newSv2Desc} onChange={e=>setNewSv2Desc(e.target.value)} placeholder="Description..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+            </div>
+            <textarea value={newSv2Code} onChange={e=>setNewSv2Code(e.target.value)} placeholder="Paste your code here..." rows={6} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, marginBottom:8, boxSizing:'border-box', fontFamily:'monospace' }} />
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button onClick={async()=>{ if(!newSv2Title.trim()||!newSv2Code.trim()) return; await fetch('/api/snippets-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newSv2Title,code:newSv2Code,language:newSv2Lang,description:newSv2Desc})}); setNewSv2Title(''); setNewSv2Code(''); setNewSv2Desc(''); const r=await fetch('/api/snippets-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSnippetsV2(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
+              <input value={sv2Filter} onChange={e=>setSv2Filter(e.target.value)} placeholder="Search..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={async()=>{ const url=sv2Filter?`/api/snippets-v2?q=${encodeURIComponent(sv2Filter)}`:'/api/snippets-v2'; const r=await fetch(url,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSnippetsV2(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Search</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {snippetsV2.map((s:any)=>(
+                <div key={s.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:12 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+                    <div>
+                      <span style={{ color:'var(--fg-text)', fontWeight:600, fontSize:13 }}>{s.title}</span>
+                      <span style={{ marginLeft:8, padding:'1px 6px', background:'var(--accent)22', color:'var(--accent)', borderRadius:4, fontSize:10 }}>{s.language}</span>
+                      {s.description && <span style={{ color:'var(--fg-text3)', fontSize:11, marginLeft:8 }}>{s.description}</span>}
+                    </div>
+                    <div style={{ display:'flex', gap:4 }}>
+                      <button onClick={()=>navigator.clipboard.writeText(s.code)} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Copy</button>
+                      <button onClick={async()=>{ await fetch(`/api/snippets-v2/${s.id}/pin`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); }} style={{ padding:'3px 8px', background:'var(--accent)22', border:'1px solid var(--accent)', borderRadius:5, color:'var(--accent)', cursor:'pointer', fontSize:11 }}>📌{s.pin_count}</button>
+                      <button onClick={async()=>{ await fetch(`/api/snippets-v2/${s.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSnippetsV2(snippetsV2.filter((x:any)=>x.id!==s.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  <pre style={{ background:'var(--bg-input)', borderRadius:6, padding:'8px 10px', fontSize:11, color:'var(--fg-text2)', overflow:'auto', maxHeight:120, margin:0 }}>{s.code.slice(0,500)}{s.code.length>500?'\n...':''}</pre>
+                </div>
+              ))}
+              {snippetsV2.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No snippets yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Announcements tab */}
+        {mainTab==='wsannounce' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📢 Announcements</div>
+            <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
+              <input value={newAnnTitle} onChange={e=>setNewAnnTitle(e.target.value)} placeholder="Announcement title..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newAnnPriority} onChange={e=>setNewAnnPriority(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                <option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option>
+              </select>
+            </div>
+            <textarea value={newAnnBody} onChange={e=>setNewAnnBody(e.target.value)} placeholder="Announcement body..." rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button onClick={async()=>{ if(!newAnnTitle.trim()||!newAnnBody.trim()) return; await fetch('/api/workspace-announcements',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newAnnTitle,body:newAnnBody,priority:newAnnPriority})}); setNewAnnTitle(''); setNewAnnBody(''); const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncements(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Post</button>
+              <button onClick={async()=>{ const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncements(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {wsAnnouncements.map((a:any)=>{
+                const prioColor:any={'low':'#6b7280','normal':'var(--accent)','high':'#f59e0b','urgent':'#ef4444'};
+                return (
+                  <div key={a.id} style={{ background:'var(--bg-card)', border:`2px solid ${prioColor[a.priority]||'var(--border)'}`, borderRadius:10, padding:14 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                      <div>
+                        <span style={{ color:'var(--fg-text)', fontWeight:600 }}>{a.title}</span>
+                        <span style={{ marginLeft:8, padding:'1px 7px', background:prioColor[a.priority]+'33', color:prioColor[a.priority], borderRadius:10, fontSize:10, fontWeight:600 }}>{a.priority.toUpperCase()}</span>
+                      </div>
+                      <div style={{ display:'flex', gap:4 }}>
+                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}/dismiss`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncements(wsAnnouncements.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Dismiss</button>
+                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncements(wsAnnouncements.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                      </div>
+                    </div>
+                    <div style={{ color:'var(--fg-text2)', fontSize:13 }}>{a.body}</div>
+                  </div>
+                );
+              })}
+              {wsAnnouncements.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No announcements.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* AI Journal tab */}
+        {mainTab==='aijournal' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📓 AI Journal</div>
+            {journalStats && (
+              <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
+                {[['Entries',journalStats.total],['Words',journalStats.words]].map(([l,v])=>(
+                  <div key={l as string} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 18px', textAlign:'center' }}>
+                    <div style={{ color:'var(--accent)', fontSize:22, fontWeight:700 }}>{v}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:12 }}>{l}</div>
+                  </div>
+                ))}
+                {journalStats.moods?.map((m:any)=>(
+                  <div key={m.mood} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 16px', textAlign:'center' }}>
+                    <div style={{ fontSize:20 }}>{m.mood==='happy'?'😊':m.mood==='sad'?'😢':m.mood==='excited'?'🤩':m.mood==='frustrated'?'😤':'😐'}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{m.mood} ×{m.n}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:20 }}>
+              <div style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center' }}>
+                <span style={{ color:'var(--fg-text2)', fontSize:13 }}>Today's entry:</span>
+                <select value={journalMood32} onChange={e=>setJournalMood32(e.target.value)} style={{ padding:'4px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }}>
+                  {['neutral','happy','sad','excited','frustrated','calm','anxious'].map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <textarea value={journalEntry} onChange={e=>setJournalEntry(e.target.value)} placeholder="Write your journal entry..." rows={6} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', fontFamily:'inherit', lineHeight:1.6 }} />
+              <div style={{ display:'flex', gap:8, marginTop:8 }}>
+                <button onClick={async()=>{ if(!journalEntry.trim()) return; const today=new Date().toISOString().split('T')[0]; await fetch('/api/ai-journal',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({date:today,entry:journalEntry,mood:journalMood32})}); setJournalEntry(''); const r=await fetch('/api/ai-journal',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiJournal(await r.json()); const s=await fetch('/api/ai-journal/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setJournalStats(await s.json()); }} style={{ padding:'8px 20px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save Entry</button>
+                <button onClick={async()=>{ const r=await fetch('/api/ai-journal',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiJournal(await r.json()); const s=await fetch('/api/ai-journal/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setJournalStats(await s.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load All</button>
+              </div>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {aiJournal.map((j:any)=>(
+                <div key={j.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:14 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <div>
+                      <span style={{ color:'var(--fg-text2)', fontSize:12 }}>{j.date}</span>
+                      <span style={{ marginLeft:10, color:'var(--accent)', fontSize:11 }}>{j.mood} · {j.word_count} words</span>
+                    </div>
+                    <button onClick={async()=>{ await fetch(`/api/ai-journal/${j.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiJournal(aiJournal.filter((x:any)=>x.id!==j.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                  </div>
+                  <div style={{ color:'var(--fg-text)', fontSize:13, lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:100, overflow:'hidden' }}>{j.entry.slice(0,300)}{j.entry.length>300?'...':''}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Polls tab */}
+        {mainTab==='threadpolls' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📊 Thread Polls</div>
+            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:20 }}>
+              <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:10 }}>Create Poll</div>
+              <input value={newPollQ32} onChange={e=>setNewPollQ32(e.target.value)} placeholder="Poll question..." style={{ width:'100%', padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, marginBottom:8, boxSizing:'border-box' }} />
+              <textarea value={newPollOpts32} onChange={e=>setNewPollOpts32(e.target.value)} placeholder="Options (one per line)..." rows={3} style={{ width:'100%', padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={async()=>{ if(!newPollQ32.trim()) return; const options=newPollOpts32.split('\n').filter(Boolean); await fetch('/api/thread-polls',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({question:newPollQ32,options})}); setNewPollQ32(''); const r=await fetch('/api/thread-polls',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create Poll</button>
+                <button onClick={async()=>{ const r=await fetch('/api/thread-polls',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+              </div>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {threadPolls.map((poll:any)=>{
+                const totalVotes=Object.values(poll.votes||{}).reduce((a:any,b:any)=>a+b,0) as number;
+                return (
+                  <div key={poll.id} style={{ background:'var(--bg-card)', border:`1px solid ${poll.closed?'var(--border)':'var(--accent)'}`, borderRadius:12, padding:16 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{poll.question}</div>
+                      <div style={{ display:'flex', gap:4 }}>
+                        {!poll.closed && <button onClick={async()=>{ await fetch(`/api/thread-polls/${poll.id}/close`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/thread-polls',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(await r.json()); }} style={{ padding:'3px 8px', background:'#f59e0b', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Close</button>}
+                        <button onClick={async()=>{ await fetch(`/api/thread-polls/${poll.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(threadPolls.filter((x:any)=>x.id!==poll.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                      </div>
+                    </div>
+                    {(Array.isArray(poll.options)?poll.options:[]).map((opt:string)=>{
+                      const votes=(poll.votes||{})[opt]||0;
+                      const pct=totalVotes>0?Math.round(votes/totalVotes*100):0;
+                      return (
+                        <div key={opt} style={{ marginBottom:8 }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                            <button onClick={async()=>{ if(poll.closed) return; await fetch(`/api/thread-polls/${poll.id}/vote`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({option:opt})}); const r=await fetch('/api/thread-polls',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(await r.json()); }} disabled={poll.closed} style={{ background:'none', border:'none', color:poll.closed?'var(--fg-text2)':'var(--accent)', cursor:poll.closed?'default':'pointer', fontSize:13, textAlign:'left', padding:0 }}>{opt}</button>
+                            <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{votes} ({pct}%)</span>
+                          </div>
+                          <div style={{ height:5, background:'var(--bg-input)', borderRadius:3 }}>
+                            <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{totalVotes} total votes{poll.closed?' · CLOSED':''}</div>
+                  </div>
+                );
+              })}
+              {threadPolls.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No polls yet.</div>}
             </div>
           </div>
         )}

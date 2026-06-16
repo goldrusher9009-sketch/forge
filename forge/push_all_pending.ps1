@@ -4,6 +4,6 @@
   forge/forge-web-studio/app/components/ForgeApp.tsx `
   forge/push_all_pending.ps1
 
-& 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' commit -m "feat(forge): Batch12-31: +ai-bookmarks, focus-sessions, thread-reactions, workspace-tags, daily-intentions, project-boards, sprints, content-calendar, learning-paths"
+& 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' commit -m "feat(forge): Batch12-33: +insight-cards, goals-v2, ai-reminders, thread-bookmarks-v2, export-presets, note-templates, code-snippets-v2, ws-announcements, ai-journal, thread-polls"
 & 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' push origin main
 Write-Host "Pushed! Railway deploying in ~2 min."
