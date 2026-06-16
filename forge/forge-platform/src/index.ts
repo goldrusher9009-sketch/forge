@@ -15529,4 +15529,133 @@ app.delete('/api/ai-safety-flags/:id', requireAuth, (req: Request, res: Response
 });
 // ─── End Batch 73 ────────────────────────────────────────────────────────────
 
+
+// ─── Batch 74 ────────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS ai_chain_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  chain_name TEXT NOT NULL, steps INTEGER DEFAULT 0, result TEXT,
+  model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_integrations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  name TEXT NOT NULL, provider TEXT, config_json TEXT,
+  enabled INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS thread_mentions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id TEXT NOT NULL, mentioned_user TEXT NOT NULL,
+  message_id INTEGER, read_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS user_habit_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  habit TEXT NOT NULL, frequency TEXT DEFAULT 'daily',
+  streak INTEGER DEFAULT 0, last_done DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS ai_prompt_variations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  base_prompt TEXT NOT NULL, variation TEXT NOT NULL,
+  strategy TEXT, score REAL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
+// /api/ai-chain-log
+app.get('/api/ai-chain-log', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_chain_log WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/ai-chain-log', requireAuth, (req: Request, res: Response) => {
+  const { chain_name, steps, result, model } = req.body;
+  if (!chain_name) return res.status(400).json({ error: 'chain_name required' });
+  const r = db.prepare('INSERT INTO ai_chain_log (user_id,chain_name,steps,result,model) VALUES (?,?,?,?,?)').run((req as any).userId, chain_name, steps||0, result||null, model||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-chain-log/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM ai_chain_log WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/workspace-integrations
+app.get('/api/workspace-integrations', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM workspace_integrations WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/workspace-integrations', requireAuth, (req: Request, res: Response) => {
+  const { name, provider, config_json } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO workspace_integrations (user_id,name,provider,config_json) VALUES (?,?,?,?)').run((req as any).userId, name, provider||null, config_json||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-integrations/:id/toggle', requireAuth, (req: Request, res: Response) => {
+  db.prepare('UPDATE workspace_integrations SET enabled=1-enabled WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-integrations/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM workspace_integrations WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/thread-mentions
+app.get('/api/thread-mentions', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM thread_mentions WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/thread-mentions', requireAuth, (req: Request, res: Response) => {
+  const { thread_id, mentioned_user, message_id } = req.body;
+  if (!thread_id || !mentioned_user) return res.status(400).json({ error: 'thread_id and mentioned_user required' });
+  const r = db.prepare('INSERT INTO thread_mentions (user_id,thread_id,mentioned_user,message_id) VALUES (?,?,?,?)').run((req as any).userId, thread_id, mentioned_user, message_id||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/thread-mentions/:id/read', requireAuth, (req: Request, res: Response) => {
+  db.prepare('UPDATE thread_mentions SET read_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/thread-mentions/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM thread_mentions WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/user-habit-log
+app.get('/api/user-habit-log', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_habit_log WHERE user_id=? ORDER BY streak DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/user-habit-log', requireAuth, (req: Request, res: Response) => {
+  const { habit, frequency } = req.body;
+  if (!habit) return res.status(400).json({ error: 'habit required' });
+  const r = db.prepare('INSERT INTO user_habit_log (user_id,habit,frequency) VALUES (?,?,?)').run((req as any).userId, habit, frequency||'daily');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/user-habit-log/:id/checkin', requireAuth, (req: Request, res: Response) => {
+  db.prepare('UPDATE user_habit_log SET streak=streak+1, last_done=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/user-habit-log/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM user_habit_log WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/ai-prompt-variations
+app.get('/api/ai-prompt-variations', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_prompt_variations WHERE user_id=? ORDER BY score DESC, created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/ai-prompt-variations', requireAuth, (req: Request, res: Response) => {
+  const { base_prompt, variation, strategy, score } = req.body;
+  if (!base_prompt || !variation) return res.status(400).json({ error: 'base_prompt and variation required' });
+  const r = db.prepare('INSERT INTO ai_prompt_variations (user_id,base_prompt,variation,strategy,score) VALUES (?,?,?,?,?)').run((req as any).userId, base_prompt, variation, strategy||null, score||0);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-prompt-variations/:id/score', requireAuth, (req: Request, res: Response) => {
+  const { score } = req.body;
+  db.prepare('UPDATE ai_prompt_variations SET score=? WHERE id=? AND user_id=?').run(score||0, Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-prompt-variations/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM ai_prompt_variations WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+// ─── End Batch 74 ────────────────────────────────────────────────────────────
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

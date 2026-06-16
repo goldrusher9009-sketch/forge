@@ -6,58 +6,67 @@ interface Collection {
   id: string
   title: string
   icon: string
-  color: string
   desc: string
-  count: number
+  color: string
+  items: number
   followers: number
-  locked: boolean
+  isFollowing: boolean
+  tokenGated: boolean
   minTokens?: number
   tokenSymbol?: string
-  lastUpdated: string
+  updatedAgo: string
+  category: 'research' | 'trading' | 'fitness' | 'music' | 'general'
 }
 
 const PROFILE_COLLECTIONS: Record<string, Collection[]> = {
   sovereign_v: [
-    { id:'c1', title:'DeFi Deep Dives',       icon:'📊', color:'#a855f7', desc:'Weekly macro analysis and alpha calls', count:28, followers:1842, locked:false, lastUpdated:'2h ago' },
-    { id:'c2', title:'Diamond Members Only',  icon:'💎', color:'#818cf8', desc:'Exclusive signals for Diamond holders', count:14, followers:340, locked:true, minTokens:100, tokenSymbol:'SVRN', lastUpdated:'1d ago' },
-    { id:'c3', title:'Beginner\'s Crypto 101',icon:'📚', color:'#22c55e', desc:'Free educational series for newcomers', count:22, followers:4210, locked:false, lastUpdated:'3d ago' },
-    { id:'c4', title:'Market Recaps',         icon:'📈', color:'#f59e0b', desc:'Weekly market summary threads', count:46, followers:2840, locked:false, lastUpdated:'1d ago' },
-    { id:'c5', title:'Token Alpha (Gold+)',   icon:'⭐', color:'#f59e0b', desc:'Early token calls for Gold tier holders', count:18, followers:820, locked:true, minTokens:50, tokenSymbol:'SVRN', lastUpdated:'4h ago' },
+    { id: 'col1', title: 'DeFi Deep Dives',       icon: '📊', desc: 'Weekly on-chain analysis and protocol reviews', color: '#a855f7', items: 28, followers: 1842, isFollowing: true,  tokenGated: false,                          updatedAgo: '2h',  category: 'research' },
+    { id: 'col2', title: 'Alpha Trades',            icon: '⚡', desc: 'My live portfolio moves + thesis for each',    color: '#f59e0b', items: 42, followers: 3210, isFollowing: false, tokenGated: true,  minTokens: 25, tokenSymbol: 'SVRN', updatedAgo: '4h',  category: 'trading'  },
+    { id: 'col3', title: 'Macro Watch',             icon: '🌍', desc: 'Fed policy, macro cycles & crypto correlations', color: '#818cf8', items: 15, followers: 982,  isFollowing: false, tokenGated: false,                          updatedAgo: '1d',  category: 'research' },
+    { id: 'col4', title: 'Diamond Member Vault',    icon: '💎', desc: 'Exclusive signals for Diamond tier holders',  color: '#818cf8', items: 8,  followers: 214,  isFollowing: false, tokenGated: true,  minTokens: 100, tokenSymbol: 'SVRN', updatedAgo: '6h',  category: 'trading'  },
+    { id: 'col5', title: 'Crypto Fundamentals 101', icon: '📚', desc: 'Learning resources for new investors',        color: '#22c55e', items: 32, followers: 4400, isFollowing: true,  tokenGated: false,                          updatedAgo: '3d',  category: 'general'  },
   ],
   mayafit: [
-    { id:'c6', title:'Workout Library',       icon:'💪', color:'#22c55e', desc:'Full workout video collection', count:34, followers:4200, locked:false, lastUpdated:'5h ago' },
-    { id:'c7', title:'Meal Plans',            icon:'🥗', color:'#f59e0b', desc:'Weekly nutrition guides', count:12, followers:2100, locked:true, minTokens:10, tokenSymbol:'MAYA', lastUpdated:'2d ago' },
-    { id:'c8', title:'30-Day Challenges',     icon:'🔥', color:'#ec4899', desc:'Monthly transformation challenges', count:8,  followers:6800, locked:false, lastUpdated:'1d ago' },
+    { id: 'col6', title: 'Workout Library',   icon: '💪', desc: '200+ workout videos organized by muscle group',   color: '#22c55e', items: 34, followers: 4200, isFollowing: true,  tokenGated: false,                         updatedAgo: '1h',  category: 'fitness' },
+    { id: 'col7', title: 'Nutrition Plans',   icon: '🥗', desc: 'Meal plans, macro breakdowns, recipes',           color: '#f59e0b', items: 12, followers: 2100, isFollowing: false, tokenGated: true, minTokens: 10, tokenSymbol: 'MAYA', updatedAgo: '2d',  category: 'fitness' },
+    { id: 'col8', title: '12-Week Programs',  icon: '🗓', desc: 'Complete training programs from beginner to pro', color: '#ec4899', items: 6,  followers: 8800, isFollowing: true,  tokenGated: false,                         updatedAgo: '1w',  category: 'fitness' },
   ],
 }
 
-const MY_TOKENS: Record<string, number> = { SVRN:50, MAYA:80 }
+const MY_TOKENS: Record<string, number> = { SVRN: 50, MAYA: 80, JAX: 0 }
+const PROFILE_COLORS: Record<string, string> = { sovereign_v: '#a855f7', mayafit: '#22c55e', jaxbeats: '#ec4899' }
+
+type Cat = 'all' | 'research' | 'trading' | 'fitness' | 'music' | 'general'
 
 export default function ProfileCollectionsPage() {
   const router = useRouter()
   const params = useParams()
   const handle = typeof params.handle === 'string' ? params.handle : 'sovereign_v'
-  const collections = PROFILE_COLLECTIONS[handle] ?? PROFILE_COLLECTIONS.sovereign_v
+  const cols = PROFILE_COLLECTIONS[handle] ?? PROFILE_COLLECTIONS.sovereign_v
+  const accentColor = PROFILE_COLORS[handle] ?? '#a855f7'
 
-  const PROFILE_COLORS: Record<string, string> = { sovereign_v:'#a855f7', mayafit:'#22c55e', jaxbeats:'#ec4899' }
-  const accent = PROFILE_COLORS[handle] ?? '#a855f7'
+  const [following, setFollowing] = useState<Record<string, boolean>>(
+    Object.fromEntries(cols.map(c => [c.id, c.isFollowing]))
+  )
+  const [cat, setCat] = useState<Cat>('all')
 
-  const [following, setFollowing] = useState<Record<string, boolean>>({})
+  const categories = ['all', ...new Set(cols.map(c => c.category))] as Cat[]
+  const filtered = cols.filter(c => cat === 'all' || c.category === cat)
 
-  const canAccess = (c: Collection) => {
-    if (!c.locked) return true
-    if (!c.tokenSymbol || !c.minTokens) return false
-    return (MY_TOKENS[c.tokenSymbol] ?? 0) >= c.minTokens
+  function toggleFollow(id: string) {
+    setFollowing(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
-  const totalFollowers = collections.reduce((s, c) => s + c.followers, 0)
-  const freeCount = collections.filter(c => !c.locked).length
+  function canAccess(c: Collection) {
+    if (!c.tokenGated) return true
+    return MY_TOKENS[c.tokenSymbol ?? ''] >= (c.minTokens ?? 0)
+  }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background:'var(--ink)' }}>
+    <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
       <header className="sticky top-0 z-20 px-4 pt-4 pb-3 border-b border-white/5"
-        style={{ backdropFilter:'blur(20px)', background:'rgba(4,4,10,0.92)' }}>
-        <div className="flex items-center gap-3">
+        style={{ backdropFilter: 'blur(20px)', background: 'rgba(4,4,10,0.92)' }}>
+        <div className="flex items-center gap-3 mb-3">
           <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
@@ -65,89 +74,80 @@ export default function ProfileCollectionsPage() {
           </button>
           <div className="flex-1">
             <div className="font-black text-white">Collections</div>
-            <div className="text-xs text-white/30">@{handle} · {collections.length} collections · {(totalFollowers/1000).toFixed(1)}k followers</div>
+            <div className="text-xs text-white/30">@{handle} · {cols.length} collections</div>
           </div>
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {categories.map(c => (
+            <button key={c} onClick={() => setCat(c)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex-shrink-0 capitalize"
+              style={cat === c ? { background: accentColor, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+              {c}
+            </button>
+          ))}
         </div>
       </header>
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-3 gap-2 px-4 mt-4">
-        {[
-          { label:'Collections', value:collections.length, color:accent },
-          { label:'Free',        value:freeCount,          color:'#22c55e' },
-          { label:'Exclusive',   value:collections.length - freeCount, color:'#f59e0b' },
-        ].map(s => (
-          <div key={s.label} className="p-3 rounded-xl border border-white/5 text-center"
-            style={{ background:'rgba(255,255,255,0.018)' }}>
-            <div className="font-black text-xl" style={{ color:s.color }}>{s.value}</div>
-            <div className="text-xs text-white/25">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
       <div className="px-4 py-4 space-y-3">
-        {collections.map(c => {
-          const access  = canAccess(c)
+        {filtered.map(c => {
+          const access = canAccess(c)
           const isFollowing = following[c.id]
 
           return (
             <div key={c.id} className="rounded-2xl border border-white/4 overflow-hidden"
-              style={{ background:'rgba(255,255,255,0.015)' }}>
-              <div className="h-0.5" style={{ background:c.color }} />
-              <div className="p-4">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background:`${c.color}10` }}>{c.icon}</div>
+              style={{ background: 'rgba(255,255,255,0.018)' }}>
+              <button onClick={() => access && router.push(`/collections/${c.id}`)}
+                className="w-full p-4 text-left">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                    style={{ background: `${c.color}12`, border: `1px solid ${c.color}20` }}>
+                    {c.icon}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-black text-sm text-white/85">{c.title}</span>
-                      {c.locked && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                      {c.tokenGated && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full"
                           style={access
-                            ? { background:`${c.color}15`, color:c.color }
-                            : { background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.3)' }}>
-                          {access ? '🔓' : '🔒'} {c.minTokens}+ ${c.tokenSymbol}
+                            ? { background: `${accentColor}20`, color: accentColor }
+                            : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)' }}>
+                          {access ? `✓ ${c.tokenSymbol}` : `🔒 ${c.minTokens}+ ${c.tokenSymbol}`}
                         </span>
                       )}
-                      {!c.locked && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-                          style={{ background:'rgba(34,197,94,0.1)', color:'#22c55e' }}>FREE</span>
-                      )}
                     </div>
-                    <div className="text-xs text-white/30 mt-0.5">{c.desc}</div>
+                    <div className="text-xs text-white/35 mt-0.5 leading-relaxed">{c.desc}</div>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-white/25">
+                      <span>{c.items} items</span>
+                      <span>·</span>
+                      <span>{c.followers.toLocaleString()} followers</span>
+                      <span>·</span>
+                      <span>Updated {c.updatedAgo} ago</span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-4 mb-3 text-xs text-white/25">
-                  <span>📝 {c.count} posts</span>
-                  <span>👥 {c.followers.toLocaleString()} followers</span>
-                  <span>🕒 {c.lastUpdated}</span>
-                </div>
-
-                <div className="flex gap-2">
-                  {access ? (
-                    <>
-                      <button onClick={() => router.push(`/collections/${c.id}`)}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-black"
-                        style={{ background:`${c.color}15`, color:c.color }}>
-                        View Collection
-                      </button>
-                      <button onClick={() => setFollowing(p => ({ ...p, [c.id]: !p[c.id] }))}
-                        className="px-4 py-2.5 rounded-xl text-xs font-bold"
-                        style={isFollowing
-                          ? { background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.4)' }
-                          : { background:`${c.color}15`, color:c.color }}>
-                        {isFollowing ? 'Following' : 'Follow'}
-                      </button>
-                    </>
-                  ) : (
-                    <button onClick={() => router.push(`/tokens/${c.tokenSymbol}/chart`)}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-black"
-                      style={{ background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.4)' }}>
-                      Get ${c.tokenSymbol} to unlock →
-                    </button>
-                  )}
-                </div>
+                {!access && (
+                  <div className="mt-3 p-2.5 rounded-xl text-xs text-center"
+                    style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)' }}>
+                    Hold {c.minTokens}+ ${c.tokenSymbol} to unlock →
+                  </div>
+                )}
+              </button>
+              {/* Follow button bar */}
+              <div className="px-4 pb-3 flex gap-2">
+                <button onClick={() => toggleFollow(c.id)}
+                  className="flex-1 py-2 rounded-xl text-xs font-black"
+                  style={isFollowing
+                    ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }
+                    : { background: accentColor, color: '#04040A' }}>
+                  {isFollowing ? '✓ Following' : '+ Follow'}
+                </button>
+                {access && (
+                  <button onClick={() => router.push(`/collections/${c.id}`)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                    View →
+                  </button>
+                )}
               </div>
             </div>
           )
