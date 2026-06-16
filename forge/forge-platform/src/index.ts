@@ -11721,4 +11721,173 @@ app.delete('/api/user-badges/:id', authenticateToken, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ============================================================
+// BATCH 44: ai_flows, workspace_tags_v2, insight_cards, prompt_ratings, session_snapshots
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_flows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    steps TEXT DEFAULT '[]',
+    trigger_type TEXT DEFAULT 'manual',
+    status TEXT DEFAULT 'active',
+    runs INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_tags_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    color TEXT DEFAULT '#6366f1',
+    entity_type TEXT DEFAULT 'general',
+    uses INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, name)
+  );
+  CREATE TABLE IF NOT EXISTS insight_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    insight TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    source TEXT DEFAULT 'manual',
+    pinned INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS prompt_ratings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    prompt TEXT NOT NULL,
+    rating INTEGER CHECK(rating BETWEEN 1 AND 5),
+    tags TEXT DEFAULT '',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS session_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    data TEXT DEFAULT '{}',
+    tab TEXT DEFAULT 'workspace',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// AI Flows
+app.get('/api/ai-flows', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_flows WHERE user_id=? ORDER BY runs DESC').all(req.user.id));
+});
+app.post('/api/ai-flows', authenticateToken, (req: any, res: any) => {
+  const { name, description, steps, trigger_type } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO ai_flows (user_id,name,description,steps,trigger_type) VALUES (?,?,?,?,?)').run(req.user.id, name, description||'', JSON.stringify(steps||[]), trigger_type||'manual');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-flows/:id', authenticateToken, (req: any, res: any) => {
+  const { name, description, steps, trigger_type, status } = req.body;
+  db.prepare('UPDATE ai_flows SET name=?,description=?,steps=?,trigger_type=?,status=? WHERE id=? AND user_id=?').run(name, description||'', JSON.stringify(steps||[]), trigger_type||'manual', status||'active', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.post('/api/ai-flows/:id/run', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE ai_flows SET runs=runs+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  const flow = db.prepare('SELECT * FROM ai_flows WHERE id=?').get(req.params.id) as any;
+  res.json({ ok: true, steps: JSON.parse(flow?.steps||'[]'), runs: flow?.runs });
+});
+app.delete('/api/ai-flows/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_flows WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Tags v2
+app.get('/api/workspace-tags-v2', authenticateToken, (req: any, res: any) => {
+  const { entity_type } = req.query as any;
+  let q = 'SELECT * FROM workspace_tags_v2 WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (entity_type) { q += ' AND entity_type=?'; p.push(entity_type); }
+  q += ' ORDER BY uses DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/workspace-tags-v2', authenticateToken, (req: any, res: any) => {
+  const { name, color, entity_type } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  try {
+    const r = db.prepare('INSERT INTO workspace_tags_v2 (user_id,name,color,entity_type) VALUES (?,?,?,?)').run(req.user.id, name, color||'#6366f1', entity_type||'general');
+    res.json({ id: r.lastInsertRowid });
+  } catch { res.status(409).json({ error: 'tag exists' }); }
+});
+app.post('/api/workspace-tags-v2/:id/use', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_tags_v2 SET uses=uses+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-tags-v2/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_tags_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Insight Cards
+app.get('/api/insight-cards', authenticateToken, (req: any, res: any) => {
+  const { category, pinned } = req.query as any;
+  let q = 'SELECT * FROM insight_cards WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (category) { q += ' AND category=?'; p.push(category); }
+  if (pinned === 'true') { q += ' AND pinned=1'; }
+  q += ' ORDER BY pinned DESC, created_at DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/insight-cards', authenticateToken, (req: any, res: any) => {
+  const { title, insight, category, source } = req.body;
+  if (!title || !insight) return res.status(400).json({ error: 'title and insight required' });
+  const r = db.prepare('INSERT INTO insight_cards (user_id,title,insight,category,source) VALUES (?,?,?,?,?)').run(req.user.id, title, insight, category||'general', source||'manual');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/insight-cards/:id/pin', authenticateToken, (req: any, res: any) => {
+  const row = db.prepare('SELECT pinned FROM insight_cards WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
+  db.prepare('UPDATE insight_cards SET pinned=? WHERE id=? AND user_id=?').run(row?.pinned ? 0 : 1, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/insight-cards/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM insight_cards WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Prompt Ratings
+app.post('/api/prompt-ratings', authenticateToken, (req: any, res: any) => {
+  const { prompt, rating, tags, notes } = req.body;
+  if (!prompt || !rating) return res.status(400).json({ error: 'prompt and rating required' });
+  const r = db.prepare('INSERT INTO prompt_ratings (user_id,prompt,rating,tags,notes) VALUES (?,?,?,?,?)').run(req.user.id, prompt, rating, tags||'', notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/prompt-ratings', authenticateToken, (req: any, res: any) => {
+  const { min_rating } = req.query as any;
+  let q = 'SELECT * FROM prompt_ratings WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (min_rating) { q += ' AND rating>=?'; p.push(parseInt(min_rating)); }
+  q += ' ORDER BY rating DESC, created_at DESC LIMIT 50';
+  res.json(db.prepare(q).all(...p));
+});
+app.delete('/api/prompt-ratings/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM prompt_ratings WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Session Snapshots
+app.post('/api/session-snapshots', authenticateToken, (req: any, res: any) => {
+  const { name, data, tab } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO session_snapshots (user_id,name,data,tab) VALUES (?,?,?,?)').run(req.user.id, name, JSON.stringify(data||{}), tab||'workspace');
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/session-snapshots', authenticateToken, (req: any, res: any) => {
+  const rows = (db.prepare('SELECT * FROM session_snapshots WHERE user_id=? ORDER BY created_at DESC').all(req.user.id) as any[]).map((r: any) => ({ ...r, data: JSON.parse(r.data||'{}') }));
+  res.json(rows);
+});
+app.delete('/api/session-snapshots/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM session_snapshots WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
