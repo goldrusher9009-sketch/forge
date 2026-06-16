@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -991,15 +991,31 @@ export default function ForgeApp() {
   const [wsTagsV2, setWsTagsV2] = useState<any[]>([]);
   const [newWtv2Name, setNewWtv2Name] = useState('');
   const [newWtv2Color, setNewWtv2Color] = useState('#6366f1');
-  const [insightCards, setInsightCards] = useState<any[]>([]);
-  const [newIcTitle, setNewIcTitle] = useState('');
-  const [newIcInsight, setNewIcInsight] = useState('');
-  const [newIcCat, setNewIcCat] = useState('general');
+  const [insightCardsB44, setInsightCardsB44] = useState<any[]>([]);
+  const [newIcTitleB44, setNewIcTitleB44] = useState('');
+  const [newIcInsightB44, setNewIcInsightB44] = useState('');
+  const [newIcCatB44, setNewIcCatB44] = useState('general');
   const [promptRatings, setPromptRatings] = useState<any[]>([]);
   const [newPrPrompt, setNewPrPrompt] = useState('');
   const [newPrRating, setNewPrRating] = useState(3);
   const [sessionSnapshots, setSessionSnapshots] = useState<any[]>([]);
   const [newSsName, setNewSsName] = useState('');
+  const [agentRuns, setAgentRuns] = useState<any[]>([]);
+  const [newArName, setNewArName] = useState('');
+  const [newArPrompt, setNewArPrompt] = useState('');
+  const [wsPolicies, setWsPolicies] = useState<any[]>([]);
+  const [newWpName, setNewWpName] = useState('');
+  const [newWpRule, setNewWpRule] = useState('');
+  const [knowledgeNodes, setKnowledgeNodes] = useState<any[]>([]);
+  const [newKnTitle, setNewKnTitle] = useState('');
+  const [newKnContent, setNewKnContent] = useState('');
+  const [newKnType, setNewKnType] = useState('fact');
+  const [chatReactionsV2, setChatReactionsV2] = useState<any[]>([]);
+  const [crv2MsgId, setCrv2MsgId] = useState('');
+  const [crv2Emoji, setCrv2Emoji] = useState('❤️');
+  const [aiDraftHistory, setAiDraftHistory] = useState<any[]>([]);
+  const [newAdhPrompt, setNewAdhPrompt] = useState('');
+  const [newAdhDraft, setNewAdhDraft] = useState('');
 
 
 
@@ -11545,25 +11561,25 @@ export default function ForgeApp() {
     <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>💡 Insight Cards</h2>
     <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
       <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-        <input placeholder="Title..." value={newIcTitle} onChange={e=>setNewIcTitle(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
-        <select value={newIcCat} onChange={e=>setNewIcCat(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+        <input placeholder="Title..." value={newIcTitleB44} onChange={e=>setNewIcTitleB44(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+        <select value={newIcCatB44} onChange={e=>setNewIcCatB44(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
           <option value="general">General</option><option value="product">Product</option><option value="market">Market</option><option value="user">User</option><option value="tech">Tech</option>
         </select>
       </div>
-      <textarea placeholder="Insight..." value={newIcInsight} onChange={e=>setNewIcInsight(e.target.value)} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
+      <textarea placeholder="Insight..." value={newIcInsightB44} onChange={e=>setNewIcInsightB44(e.target.value)} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
       <div style={{display:'flex',gap:'8px'}}>
-        <button onClick={async()=>{if(!newIcTitle||!newIcInsight)return;await fetch('/api/insight-cards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newIcTitle,insight:newIcInsight,category:newIcCat})});setNewIcTitle('');setNewIcInsight('');const r=await fetch('/api/insight-cards',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setInsightCards(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
-        <button onClick={async()=>{const r=await fetch('/api/insight-cards',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setInsightCards(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+        <button onClick={async()=>{if(!newIcTitleB44||!newIcInsightB44)return;await fetch('/api/insight-cards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newIcTitleB44,insight:newIcInsightB44,category:newIcCatB44})});setNewIcTitleB44('');setNewIcInsightB44('');const r=await fetch('/api/insight-cards',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setInsightCardsB44(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+        <button onClick={async()=>{const r=await fetch('/api/insight-cards',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setInsightCardsB44(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
       </div>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'12px'}}>
-      {insightCards.map((ic:any)=>(
+      {insightCardsB44.map((ic:any)=>(
         <div key={ic.id} style={{background:'#1f2937',borderRadius:'8px',padding:'16px',position:'relative',borderTop:'3px solid '+(ic.pinned?'#f59e0b':'#6366f1')}}>
           <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
             <span style={{color:'#6366f1',fontSize:'12px'}}>{ic.category}</span>
             <div style={{display:'flex',gap:'4px'}}>
-              <button onClick={async()=>{await fetch('/api/insight-cards/'+ic.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const r=await fetch('/api/insight-cards',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setInsightCards(await r.json());}} style={{background:'none',border:'none',color:ic.pinned?'#f59e0b':'#6b7280',cursor:'pointer',fontSize:'14px'}}>📌</button>
-              <button onClick={async()=>{await fetch('/api/insight-cards/'+ic.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setInsightCards(insightCards.filter((x:any)=>x.id!==ic.id));}} style={{background:'none',border:'none',color:'#6b7280',cursor:'pointer',fontSize:'14px'}}>✕</button>
+              <button onClick={async()=>{await fetch('/api/insight-cards/'+ic.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const r=await fetch('/api/insight-cards',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setInsightCardsB44(await r.json());}} style={{background:'none',border:'none',color:ic.pinned?'#f59e0b':'#6b7280',cursor:'pointer',fontSize:'14px'}}>📌</button>
+              <button onClick={async()=>{await fetch('/api/insight-cards/'+ic.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setInsightCardsB44(insightCardsB44.filter((x:any)=>x.id!==ic.id));}} style={{background:'none',border:'none',color:'#6b7280',cursor:'pointer',fontSize:'14px'}}>✕</button>
             </div>
           </div>
           <div style={{color:'#f9fafb',fontWeight:'bold',marginBottom:'6px'}}>{ic.title}</div>
@@ -13077,19 +13093,19 @@ export default function ForgeApp() {
           <div style={{ padding:24 }}>
             <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>💎 Insight Cards</div>
             <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
-              <input value={newIcTitle} onChange={e=>setNewIcTitle(e.target.value)} placeholder="Insight title..." style={{ flex:1, minWidth:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <select value={newIcCat} onChange={e=>setNewIcCat(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+              <input value={newIcTitleB44} onChange={e=>setNewIcTitleB44(e.target.value)} placeholder="Insight title..." style={{ flex:1, minWidth:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newIcCatB44} onChange={e=>setNewIcCatB44(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
                 {['general','product','engineering','marketing','personal','research'].map(ct=><option key={ct} value={ct}>{ct}</option>)}
               </select>
             </div>
-            <textarea value={newIcInsight} onChange={e=>setNewIcInsight(e.target.value)} placeholder="The insight or key learning..." rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
+            <textarea value={newIcInsightB44} onChange={e=>setNewIcInsightB44(e.target.value)} placeholder="The insight or key learning..." rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
             <div style={{ display:'flex', gap:8, marginBottom:20 }}>
-              <button onClick={async()=>{ if(!newIcTitle.trim()||!newIcInsight.trim()) return; await fetch('/api/insight-cards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newIcTitle,insight:newIcInsight,category:newIcCat})}); setNewIcTitle(''); setNewIcInsight(''); const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
-              <button onClick={async()=>{ const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-              <button onClick={async()=>{ const r=await fetch('/api/insight-cards?starred=1',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>⭐ Starred</button>
+              <button onClick={async()=>{ if(!newIcTitleB44.trim()||!newIcInsightB44.trim()) return; await fetch('/api/insight-cards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newIcTitleB44,insight:newIcInsightB44,category:newIcCatB44})}); setNewIcTitleB44(''); setNewIcInsightB44(''); const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCardsB44(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
+              <button onClick={async()=>{ const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCardsB44(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+              <button onClick={async()=>{ const r=await fetch('/api/insight-cards?starred=1',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCardsB44(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>⭐ Starred</button>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:10 }}>
-              {insightCards.map((card:any)=>(
+              {insightCardsB44.map((card:any)=>(
                 <div key={card.id} style={{ background:'var(--bg-card)', border:`1px solid ${card.starred?'#f59e0b':'var(--border)'}`, borderRadius:10, padding:14 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
                     <div>
@@ -13097,14 +13113,14 @@ export default function ForgeApp() {
                       <div style={{ color:'var(--accent)', fontSize:11 }}>{card.category}</div>
                     </div>
                     <div style={{ display:'flex', gap:4 }}>
-                      <button onClick={async()=>{ await fetch(`/api/insight-cards/${card.id}/star`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(await r.json()); }} style={{ padding:'3px 7px', background:card.starred?'#f59e0b22':'var(--bg-input)', border:`1px solid ${card.starred?'#f59e0b':'var(--border)'}`, borderRadius:5, color:card.starred?'#f59e0b':'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>⭐</button>
-                      <button onClick={async()=>{ await fetch(`/api/insight-cards/${card.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCards(insightCards.filter((x:any)=>x.id!==card.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                      <button onClick={async()=>{ await fetch(`/api/insight-cards/${card.id}/star`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/insight-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCardsB44(await r.json()); }} style={{ padding:'3px 7px', background:card.starred?'#f59e0b22':'var(--bg-input)', border:`1px solid ${card.starred?'#f59e0b':'var(--border)'}`, borderRadius:5, color:card.starred?'#f59e0b':'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>⭐</button>
+                      <button onClick={async()=>{ await fetch(`/api/insight-cards/${card.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setInsightCardsB44(insightCardsB44.filter((x:any)=>x.id!==card.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
                     </div>
                   </div>
                   <div style={{ color:'var(--fg-text2)', fontSize:13, lineHeight:1.5 }}>{card.insight}</div>
                 </div>
               ))}
-              {insightCards.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No insights yet. Capture key learnings as insight cards.</div>}
+              {insightCardsB44.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No insights yet. Capture key learnings as insight cards.</div>}
             </div>
           </div>
         )}

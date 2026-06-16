@@ -11890,4 +11890,138 @@ app.delete('/api/session-snapshots/:id', authenticateToken, (req: any, res: any)
   res.json({ ok: true });
 });
 
+
+// ── Batch 45 ──────────────────────────────────────────────────────────────────
+
+// Tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS agent_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, prompt TEXT,
+    result TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_policies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, rule TEXT,
+    enabled INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS knowledge_nodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, content TEXT,
+    node_type TEXT DEFAULT 'fact', tags TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS chat_reactions_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, message_id TEXT,
+    emoji TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_draft_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, prompt TEXT,
+    draft TEXT, model TEXT, accepted INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/agent-runs
+app.get('/api/agent-runs', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM agent_runs WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/agent-runs', requireAuth, (req: any, res: any) => {
+  const { name, prompt } = req.body;
+  if (!name || !prompt) return res.status(400).json({ error: 'name and prompt required' });
+  const result = db.prepare('INSERT INTO agent_runs (user_id,name,prompt,status) VALUES (?,?,?,?)').run(req.user.id, name, prompt, 'pending');
+  setTimeout(() => {
+    db.prepare('UPDATE agent_runs SET result=?,status=? WHERE id=?').run(`Completed: ${prompt.slice(0,80)}`, 'done', result.lastInsertRowid);
+  }, 100);
+  res.json({ id: result.lastInsertRowid, name, prompt, status: 'pending' });
+});
+app.put('/api/agent-runs/:id/cancel', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE agent_runs SET status=? WHERE id=? AND user_id=?').run('cancelled', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/agent-runs/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM agent_runs WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-policies
+app.get('/api/workspace-policies', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM workspace_policies WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/workspace-policies', requireAuth, (req: any, res: any) => {
+  const { name, rule } = req.body;
+  if (!name || !rule) return res.status(400).json({ error: 'name and rule required' });
+  const result = db.prepare('INSERT INTO workspace_policies (user_id,name,rule) VALUES (?,?,?)').run(req.user.id, name, rule);
+  res.json({ id: result.lastInsertRowid, name, rule, enabled: 1 });
+});
+app.put('/api/workspace-policies/:id/toggle', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT enabled FROM workspace_policies WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE workspace_policies SET enabled=? WHERE id=? AND user_id=?').run(row.enabled ? 0 : 1, req.params.id, req.user.id);
+  res.json({ ok: true, enabled: !row.enabled });
+});
+app.delete('/api/workspace-policies/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_policies WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/knowledge-nodes
+app.get('/api/knowledge-nodes', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM knowledge_nodes WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/knowledge-nodes', requireAuth, (req: any, res: any) => {
+  const { title, content, node_type = 'fact', tags = '' } = req.body;
+  if (!title || !content) return res.status(400).json({ error: 'title and content required' });
+  const result = db.prepare('INSERT INTO knowledge_nodes (user_id,title,content,node_type,tags) VALUES (?,?,?,?,?)').run(req.user.id, title, content, node_type, tags);
+  res.json({ id: result.lastInsertRowid, title, content, node_type, tags });
+});
+app.put('/api/knowledge-nodes/:id', requireAuth, (req: any, res: any) => {
+  const { title, content, tags } = req.body;
+  db.prepare('UPDATE knowledge_nodes SET title=?,content=?,tags=? WHERE id=? AND user_id=?').run(title, content, tags, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/knowledge-nodes/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM knowledge_nodes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/chat-reactions-v2
+app.get('/api/chat-reactions-v2/:messageId', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM chat_reactions_v2 WHERE message_id=? AND user_id=?').all(req.params.messageId, req.user.id);
+  res.json(rows);
+});
+app.post('/api/chat-reactions-v2', requireAuth, (req: any, res: any) => {
+  const { message_id, emoji } = req.body;
+  if (!message_id || !emoji) return res.status(400).json({ error: 'message_id and emoji required' });
+  const exists = db.prepare('SELECT id FROM chat_reactions_v2 WHERE user_id=? AND message_id=? AND emoji=?').get(req.user.id, message_id, emoji);
+  if (exists) {
+    db.prepare('DELETE FROM chat_reactions_v2 WHERE id=?').run((exists as any).id);
+    return res.json({ toggled: false });
+  }
+  const result = db.prepare('INSERT INTO chat_reactions_v2 (user_id,message_id,emoji) VALUES (?,?,?)').run(req.user.id, message_id, emoji);
+  res.json({ id: result.lastInsertRowid, message_id, emoji, toggled: true });
+});
+app.delete('/api/chat-reactions-v2/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM chat_reactions_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-draft-history
+app.get('/api/ai-draft-history', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM ai_draft_history WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/ai-draft-history', requireAuth, (req: any, res: any) => {
+  const { prompt, draft, model = 'claude' } = req.body;
+  if (!prompt || !draft) return res.status(400).json({ error: 'prompt and draft required' });
+  const result = db.prepare('INSERT INTO ai_draft_history (user_id,prompt,draft,model) VALUES (?,?,?,?)').run(req.user.id, prompt, draft, model);
+  res.json({ id: result.lastInsertRowid, prompt, draft, model, accepted: 0 });
+});
+app.put('/api/ai-draft-history/:id/accept', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE ai_draft_history SET accepted=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-draft-history/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_draft_history WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
