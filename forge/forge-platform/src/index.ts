@@ -9668,4 +9668,189 @@ app.get('/api/daily-intentions/today', authenticateToken, (req: any, res: any) =
   res.json(row || null);
 });
 
+
+// ============================================================
+// BATCH 32: note_templates, code_snippets_v2, workspace_announcements, ai_journal, thread_polls
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS note_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    use_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS code_snippets_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    code TEXT NOT NULL,
+    language TEXT DEFAULT 'text',
+    description TEXT,
+    tags TEXT DEFAULT '[]',
+    pin_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_announcements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    priority TEXT DEFAULT 'normal',
+    pinned INTEGER DEFAULT 0,
+    dismissed INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_journal (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    entry TEXT NOT NULL,
+    mood TEXT DEFAULT 'neutral',
+    word_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS thread_polls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    thread_id INTEGER,
+    question TEXT NOT NULL,
+    options TEXT NOT NULL,
+    votes TEXT DEFAULT '{}',
+    closed INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// Note Templates
+app.get('/api/note-templates', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM note_templates WHERE user_id=? ORDER BY use_count DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/note-templates', authenticateToken, (req: any, res: any) => {
+  const { title, content, category } = req.body;
+  if (!title || !content) return res.status(400).json({ error: 'title and content required' });
+  const r = db.prepare('INSERT INTO note_templates (user_id,title,content,category) VALUES (?,?,?,?)').run(req.user.id, title, content, category||'general');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/note-templates/:id', authenticateToken, (req: any, res: any) => {
+  const { title, content, category } = req.body;
+  db.prepare('UPDATE note_templates SET title=?,content=?,category=? WHERE id=? AND user_id=?').run(title, content, category, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.post('/api/note-templates/:id/use', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE note_templates SET use_count=use_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  const row = db.prepare('SELECT content FROM note_templates WHERE id=?').get(req.params.id);
+  res.json(row);
+});
+app.delete('/api/note-templates/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM note_templates WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Code Snippets v2
+app.get('/api/snippets-v2', authenticateToken, (req: any, res: any) => {
+  const { lang, q } = req.query as any;
+  let query = 'SELECT * FROM code_snippets_v2 WHERE user_id=?';
+  const params: any[] = [req.user.id];
+  if (lang) { query += ' AND language=?'; params.push(lang); }
+  if (q) { query += ' AND (title LIKE ? OR description LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
+  query += ' ORDER BY pin_count DESC, created_at DESC';
+  res.json(db.prepare(query).all(...params));
+});
+app.post('/api/snippets-v2', authenticateToken, (req: any, res: any) => {
+  const { title, code, language, description, tags } = req.body;
+  if (!title || !code) return res.status(400).json({ error: 'title and code required' });
+  const r = db.prepare('INSERT INTO code_snippets_v2 (user_id,title,code,language,description,tags) VALUES (?,?,?,?,?,?)').run(req.user.id, title, code, language||'text', description||'', JSON.stringify(tags||[]));
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/snippets-v2/:id/pin', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE code_snippets_v2 SET pin_count=pin_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/snippets-v2/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM code_snippets_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Announcements
+app.get('/api/workspace-announcements', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM workspace_announcements WHERE user_id=? AND dismissed=0 ORDER BY pinned DESC, created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/workspace-announcements', authenticateToken, (req: any, res: any) => {
+  const { title, body, priority, pinned } = req.body;
+  if (!title || !body) return res.status(400).json({ error: 'title and body required' });
+  const r = db.prepare('INSERT INTO workspace_announcements (user_id,title,body,priority,pinned) VALUES (?,?,?,?,?)').run(req.user.id, title, body, priority||'normal', pinned?1:0);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-announcements/:id/dismiss', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_announcements SET dismissed=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-announcements/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_announcements WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// AI Journal
+app.get('/api/ai-journal', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM ai_journal WHERE user_id=? ORDER BY date DESC LIMIT 30').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/ai-journal', authenticateToken, (req: any, res: any) => {
+  const { date, entry, mood } = req.body;
+  if (!date || !entry) return res.status(400).json({ error: 'date and entry required' });
+  const wordCount = entry.trim().split(/\s+/).length;
+  const existing = db.prepare('SELECT id FROM ai_journal WHERE user_id=? AND date=?').get(req.user.id, date);
+  if (existing) {
+    db.prepare('UPDATE ai_journal SET entry=?,mood=?,word_count=? WHERE id=?').run(entry, mood||'neutral', wordCount, (existing as any).id);
+    return res.json({ id: (existing as any).id, updated: true });
+  }
+  const r = db.prepare('INSERT INTO ai_journal (user_id,date,entry,mood,word_count) VALUES (?,?,?,?,?)').run(req.user.id, date, entry, mood||'neutral', wordCount);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-journal/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_journal WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/ai-journal/stats', authenticateToken, (req: any, res: any) => {
+  const total = (db.prepare('SELECT COUNT(*) as n FROM ai_journal WHERE user_id=?').get(req.user.id) as any).n;
+  const words = (db.prepare('SELECT SUM(word_count) as w FROM ai_journal WHERE user_id=?').get(req.user.id) as any).w || 0;
+  const moods = db.prepare('SELECT mood, COUNT(*) as n FROM ai_journal WHERE user_id=? GROUP BY mood').all(req.user.id);
+  res.json({ total, words, moods });
+});
+
+// Thread Polls
+app.get('/api/thread-polls', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM thread_polls WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows.map((p: any) => ({ ...p, options: JSON.parse(p.options), votes: JSON.parse(p.votes) })));
+});
+app.post('/api/thread-polls', authenticateToken, (req: any, res: any) => {
+  const { thread_id, question, options } = req.body;
+  if (!question || !options?.length) return res.status(400).json({ error: 'question and options required' });
+  const r = db.prepare('INSERT INTO thread_polls (user_id,thread_id,question,options) VALUES (?,?,?,?)').run(req.user.id, thread_id||null, question, JSON.stringify(options));
+  res.json({ id: r.lastInsertRowid });
+});
+app.post('/api/thread-polls/:id/vote', authenticateToken, (req: any, res: any) => {
+  const { option } = req.body;
+  const poll = db.prepare('SELECT * FROM thread_polls WHERE id=?').get(req.params.id) as any;
+  if (!poll || poll.closed) return res.status(400).json({ error: 'poll closed or not found' });
+  const votes = JSON.parse(poll.votes);
+  votes[option] = (votes[option] || 0) + 1;
+  db.prepare('UPDATE thread_polls SET votes=? WHERE id=?').run(JSON.stringify(votes), req.params.id);
+  res.json({ votes });
+});
+app.put('/api/thread-polls/:id/close', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE thread_polls SET closed=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/thread-polls/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_polls WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

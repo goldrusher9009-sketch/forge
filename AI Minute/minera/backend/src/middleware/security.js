@@ -9,7 +9,12 @@ export function rateLimit({ windowMs = 60000, max = 200 } = {}) {
     const arr = (hits.get(ip) || []).filter((t) => now - t < windowMs);
     arr.push(now);
     hits.set(ip, arr);
-    if (arr.length > max) return res.status(429).json({ error: "rate limit exceeded" });
+    const remaining = Math.max(0, max - arr.length);
+    const reset = Math.ceil((now + windowMs) / 1000);
+    res.set("X-RateLimit-Limit", String(max));
+    res.set("X-RateLimit-Remaining", String(remaining));
+    res.set("X-RateLimit-Reset", String(reset));
+    if (arr.length > max) { res.set("Retry-After", String(Math.ceil(windowMs / 1000))); return res.status(429).json({ error: "rate limit exceeded" }); }
     next();
   };
 }

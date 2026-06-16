@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -762,11 +762,32 @@ export default function ForgeApp() {
   const [threadReactions, setThreadReactions] = useState<any[]>([]);
   const [reactionThreadId, setReactionThreadId] = useState('');
   const [wsTags, setWsTags] = useState<any[]>([]);
-  const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState('#6366f1');
+  const [wsTagName, setWsTagName] = useState('');
+  const [wsTagColor, setWsTagColor] = useState('#6366f1');
   const [dailyIntentions, setDailyIntentions] = useState<any[]>([]);
   const [todayIntention, setTodayIntention] = useState('');
   const [newIntention, setNewIntention] = useState('');
+  const [noteTemplates, setNoteTemplates] = useState<any[]>([]);
+  const [newNtTitle, setNewNtTitle] = useState('');
+  const [newNtContent, setNewNtContent] = useState('');
+  const [newNtCat, setNewNtCat] = useState('general');
+  const [snippetsV2, setSnippetsV2] = useState<any[]>([]);
+  const [newSv2Title, setNewSv2Title] = useState('');
+  const [newSv2Code, setNewSv2Code] = useState('');
+  const [newSv2Lang, setNewSv2Lang] = useState('javascript');
+  const [newSv2Desc, setNewSv2Desc] = useState('');
+  const [sv2Filter, setSv2Filter] = useState('');
+  const [wsAnnouncements, setWsAnnouncements] = useState<any[]>([]);
+  const [newAnnTitle, setNewAnnTitle] = useState('');
+  const [newAnnBody, setNewAnnBody] = useState('');
+  const [newAnnPriority, setNewAnnPriority] = useState('normal');
+  const [aiJournal, setAiJournal] = useState<any[]>([]);
+  const [journalStats, setJournalStats] = useState<any>(null);
+  const [journalEntry, setJournalEntry] = useState('');
+  const [journalMood, setJournalMood] = useState('neutral');
+  const [threadPolls, setThreadPolls] = useState<any[]>([]);
+  const [newPollQ, setNewPollQ] = useState('');
+  const [newPollOpts, setNewPollOpts] = useState('Option A\nOption B\nOption C');
   const [boards, setBoards] = useState<any[]>([]);
   const [activeBoardId, setActiveBoardId] = useState<number|null>(null);
   const [boardItems, setBoardItems] = useState<any[]>([]);
@@ -4329,6 +4350,11 @@ export default function ForgeApp() {
           { id:'treactions', icon:'💬', label:'Reactions' },
           { id:'wstags', icon:'🏷', label:'WS Tags' },
           { id:'intentions', icon:'🌅', label:'Daily Intentions' },
+          { id:'notetpl', icon:'📄', label:'Note Templates' },
+          { id:'snippetsv2', icon:'</>', label:'Code Snippets' },
+          { id:'wsannounce', icon:'📢', label:'Announcements' },
+          { id:'aijournal', icon:'📓', label:'AI Journal' },
+          { id:'threadpolls', icon:'📊', label:'Thread Polls' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },
@@ -11271,9 +11297,9 @@ export default function ForgeApp() {
           <div style={{ padding:24 }}>
             <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🏷 Workspace Tags</div>
             <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-              <input value={newTagName} onChange={e=>setNewTagName(e.target.value)} placeholder="Tag name..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input type="color" value={newTagColor} onChange={e=>setNewTagColor(e.target.value)} style={{ width:44, height:38, padding:2, background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }} />
-              <button onClick={async()=>{ if(!newTagName.trim()) return; await fetch('/api/workspace-tags',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newTagName,color:newTagColor})}); setNewTagName(''); const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create</button>
+              <input value={wsTagName} onChange={e=>setWsTagName(e.target.value)} placeholder="Tag name..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="color" value={wsTagColor} onChange={e=>setWsTagColor(e.target.value)} style={{ width:44, height:38, padding:2, background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }} />
+              <button onClick={async()=>{ if(!newTagName.trim()) return; await fetch('/api/workspace-tags',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:wsTagName,color:wsTagColor})}); setWsTagName(''); const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create</button>
               <button onClick={async()=>{ const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
             </div>
             <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
