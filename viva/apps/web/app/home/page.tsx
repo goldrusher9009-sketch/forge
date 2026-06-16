@@ -242,6 +242,7 @@ export default function HomeCanvas() {
                   { label: 'AI Twin', href: '/twin', icon: '◈', color: 'var(--v)' },
                   { label: 'Markets', href: '/markets', icon: '↗', color: 'var(--ring-wealth)' },
                   { label: 'Wallet', href: '/wallet', icon: '◎', color: '#22c55e' },
+                  { label: 'Staking', href: '/staking', icon: '⬡', color: '#f59e0b' },
                   { label: 'ZK Identity', href: '/identity', icon: '◐', color: '#818cf8' },
                 ] as const).map(({ label, href, icon, color }) => (
                   <Link key={label} href={href}

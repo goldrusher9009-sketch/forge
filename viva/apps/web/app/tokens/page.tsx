@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { tokens as tokensApi } from '@/lib/api'
 import { TIER_META } from '@/lib/store'
 
@@ -34,6 +34,7 @@ function MiniSparkline({ up, color }: { up: boolean; color: string }) {
 
 export default function TokensPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [tokens, setTokens] = useState(MOCK_TOKENS)
   const [sort, setSort] = useState<Sort>('marketCap')
   const [filter, setFilter] = useState<Filter>('all')
@@ -41,6 +42,12 @@ export default function TokensPage() {
   const [buying, setBuying] = useState<string | null>(null)
   const [bought, setBought] = useState<Set<string>>(new Set())
   const [buyAmt, setBuyAmt] = useState<Record<string, string>>({})
+
+  // Auto-redirect ?buy=SYMBOL to detail page
+  useEffect(() => {
+    const buy = searchParams.get('buy')
+    if (buy) router.replace(`/tokens/${buy.toUpperCase()}`)
+  }, [searchParams])
 
   useEffect(() => {
     tokensApi.list().then((list: any[]) => {
