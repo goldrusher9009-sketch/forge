@@ -1,6 +1,6 @@
 export default function Toasts({ items }) {
   return (
-    <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",zIndex:120,display:"flex",flexDirection:"column",gap:8,alignItems:"center",width:"min(92vw,420px)"}}>
+    <div role="status" aria-live="polite" style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",zIndex:120,display:"flex",flexDirection:"column",gap:8,alignItems:"center",width:"min(92vw,420px)"}}>
       {items.map((t)=>(
         <div key={t.id} style={{
           background:"var(--ink)",color:"var(--paper)",fontFamily:"'Space Mono',monospace",fontSize:12,fontWeight:700,

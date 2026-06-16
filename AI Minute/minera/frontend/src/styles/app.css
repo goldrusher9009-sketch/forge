@@ -188,3 +188,12 @@ body[data-preset="riso"]{
   padding:8px 10px;width:max-content;max-width:220px;border:2px solid var(--red);white-space:normal;line-height:1.4;
   opacity:0;pointer-events:none;transition:opacity .12s;z-index:130}
 .tip-w:hover::after,.tip-w:focus::after{opacity:1}
+
+/* ---------- a11y contrast ---------- */
+/* opacity-dimmed labels were low-contrast; floor them */
+.mono[style*="opacity:.6"],.mono[style*="opacity:.5"]{opacity:.75 !important}
+/* stronger focus ring on dark/preset themes */
+body[data-theme="dark"] :focus-visible,
+body[data-preset="terminal"] :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+/* ensure links/buttons meet target on small screens */
+a,button{touch-action:manipulation}

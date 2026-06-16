@@ -873,9 +873,9 @@ export default function ForgeApp() {
   const [newMetricName, setNewMetricName] = useState('');
   const [newMetricValue, setNewMetricValue] = useState('');
   const [promptChains, setPromptChains] = useState<any[]>([]);
-  const [newPcName, setNewPcName] = useState('');
+  const [newPcNameB38, setNewPcNameB38] = useState('');
   const [newPcDesc, setNewPcDesc] = useState('');
-  const [newPcSteps, setNewPcSteps] = useState('Step 1\nStep 2\nStep 3');
+  const [newPcStepsB38, setNewPcStepsB38] = useState('Step 1\nStep 2\nStep 3');
   const [fileAnnotations, setFileAnnotations] = useState<any[]>([]);
   const [newFaPath, setNewFaPath] = useState('');
   const [newFaLine, setNewFaLine] = useState('');
@@ -11332,6 +11332,169 @@ export default function ForgeApp() {
         {/* Collab Notes tab */}
 {/* Prompt Library tab */}
 {/* AI Summaries v2 tab */}
+{/* Meeting Notes tab */}
+{mainTab==='meetingnotes' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📅 Meeting Notes</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px',background:'#1f2937',padding:'12px',borderRadius:'8px',border:'1px solid #374151'}}>
+      <div style={{display:'flex',gap:'8px'}}>
+        <input placeholder="Title" value={newMnTitle} onChange={e=>setNewMnTitle(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+        <input type="date" value={newMnDate} onChange={e=>setNewMnDate(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+      </div>
+      <input placeholder="Attendees (comma separated)" value={newMnAttendees} onChange={e=>setNewMnAttendees(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+      <textarea placeholder="Meeting notes..." value={newMnNotes} onChange={e=>setNewMnNotes(e.target.value)} rows={5} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb',resize:'vertical'}} />
+      <button onClick={async()=>{if(!newMnTitle||!newMnNotes)return;const attendees=newMnAttendees.split(',').map((s:string)=>s.trim()).filter(Boolean);await fetch('/api/meeting-notes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newMnTitle,notes:newMnNotes,attendees,meeting_date:newMnDate})});setNewMnTitle('');setNewMnNotes('');setNewMnDate('');setNewMnAttendees('');const r=await fetch('/api/meeting-notes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setMeetingNotes(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save Notes</button>
+    </div>
+    <button onClick={async()=>{const r=await fetch('/api/meeting-notes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setMeetingNotes(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer',marginBottom:'12px'}}>Load</button>
+    <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+      {meetingNotes.map((m:any)=>(
+        <div key={m.id} style={{background:'#1f2937',borderRadius:'10px',padding:'14px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+            <div>
+              <span style={{fontWeight:700,color:'#f9fafb'}}>{m.title}</span>
+              {m.meeting_date&&<span style={{color:'#9ca3af',fontSize:'12px',marginLeft:'8px'}}>{m.meeting_date}</span>}
+            </div>
+            <button onClick={async()=>{await fetch('/api/meeting-notes/'+m.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setMeetingNotes(meetingNotes.filter((x:any)=>x.id!==m.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'2px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+          {m.attendees&&JSON.parse(m.attendees).length>0&&<div style={{color:'#9ca3af',fontSize:'12px',marginBottom:'6px'}}>👥 {JSON.parse(m.attendees).join(', ')}</div>}
+          <div style={{color:'#d1d5db',fontSize:'13px',whiteSpace:'pre-wrap'}}>{m.notes.substring(0,300)}{m.notes.length>300?'...':''}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* WS Metrics v2 tab */}
+{mainTab==='metricsv2' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📊 Workspace Metrics</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Metric name" value={newMetricName} onChange={e=>setNewMetricName(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'140px'}} />
+      <input type="number" placeholder="Value" value={newMetricValue} onChange={e=>setNewMetricValue(e.target.value)} style={{width:'100px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!newMetricName||!newMetricValue)return;await fetch('/api/workspace-metrics-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({metric:newMetricName,value:parseFloat(newMetricValue)})});setNewMetricName('');setNewMetricValue('');const s=await fetch('/api/workspace-metrics-v2/summary',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setMetricsV2Summary(await s.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Record</button>
+      <button onClick={async()=>{const s=await fetch('/api/workspace-metrics-v2/summary',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setMetricsV2Summary(await s.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load Summary</button>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'10px'}}>
+      {metricsV2Summary.map((m:any)=>(
+        <div key={m.metric} style={{background:'#1f2937',borderRadius:'8px',padding:'14px',border:'1px solid #374151'}}>
+          <div style={{fontWeight:700,color:'#6366f1',marginBottom:'8px'}}>{m.metric}</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px'}}>
+            {[['Avg',m.avg?.toFixed(1)],['Max',m.max],['Min',m.min],['Count',m.count]].map(([l,v]:any)=>(
+              <div key={l} style={{textAlign:'center'}}>
+                <div style={{fontSize:'16px',fontWeight:700,color:'#f9fafb'}}>{v}</div>
+                <div style={{fontSize:'10px',color:'#6b7280'}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* Prompt Chains tab */}
+{mainTab==='pchains' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🔗 Prompt Chains</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px',background:'#1f2937',padding:'12px',borderRadius:'8px',border:'1px solid #374151'}}>
+      <div style={{display:'flex',gap:'8px'}}>
+        <input placeholder="Chain name" value={newPcNameB38} onChange={e=>setNewPcNameB38(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+        <input placeholder="Description" value={newPcDesc} onChange={e=>setNewPcDesc(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+      </div>
+      <textarea placeholder={'Step 1: ...\nStep 2: ...\nStep 3: ...'} value={newPcStepsB38} onChange={e=>setNewPcStepsB38(e.target.value)} rows={4} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb',resize:'vertical'}} />
+      <button onClick={async()=>{if(!newPcNameB38||!newPcStepsB38)return;const steps=newPcStepsB38.split('\n').filter(Boolean);await fetch('/api/prompt-chains',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({name:newPcNameB38,description:newPcDesc,steps})});setNewPcNameB38('');setNewPcDesc('');const r=await fetch('/api/prompt-chains',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setPromptChains(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save Chain</button>
+    </div>
+    <button onClick={async()=>{const r=await fetch('/api/prompt-chains',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setPromptChains(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer',marginBottom:'12px'}}>Load</button>
+    <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+      {promptChains.map((pc:any)=>(
+        <div key={pc.id} style={{background:'#1f2937',borderRadius:'10px',padding:'14px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+            <div>
+              <span style={{fontWeight:700,color:'#f9fafb'}}>{pc.name}</span>
+              <span style={{color:'#6b7280',fontSize:'12px',marginLeft:'8px'}}>run {pc.run_count}x</span>
+            </div>
+            <div style={{display:'flex',gap:'6px'}}>
+              <button onClick={async()=>{const r=await fetch('/api/prompt-chains/'+pc.id+'/run',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const j=await r.json();alert('Steps:\n'+j.steps.join('\n'));const res=await fetch('/api/prompt-chains',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setPromptChains(await res.json());}} style={{padding:'4px 10px',background:'#4ade80',color:'#111',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px'}}>Run</button>
+              <button onClick={async()=>{await fetch('/api/prompt-chains/'+pc.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setPromptChains(promptChains.filter((x:any)=>x.id!==pc.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer'}}>Del</button>
+            </div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+            {JSON.parse(pc.steps).map((step:string,i:number)=>(
+              <div key={i} style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                <span style={{width:'20px',height:'20px',borderRadius:'50%',background:'#6366f1',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',color:'#fff',flexShrink:0}}>{i+1}</span>
+                <span style={{color:'#d1d5db',fontSize:'13px'}}>{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* File Annotations tab */}
+{mainTab==='fileanno' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📎 File Annotations</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="File path" value={newFaPath} onChange={e=>setNewFaPath(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'180px'}} />
+      <input placeholder="Line #" value={newFaLine} onChange={e=>setNewFaLine(e.target.value)} style={{width:'70px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <input placeholder="Annotation" value={newFaNote} onChange={e=>setNewFaNote(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'160px'}} />
+      <button onClick={async()=>{if(!newFaPath||!newFaNote)return;await fetch('/api/file-annotations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({file_path:newFaPath,line_number:newFaLine?parseInt(newFaLine):null,annotation:newFaNote})});setNewFaPath('');setNewFaLine('');setNewFaNote('');const r=await fetch('/api/file-annotations',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setFileAnnotations(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/file-annotations',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setFileAnnotations(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {fileAnnotations.map((fa:any)=>(
+        <div key={fa.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151',display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+          <div>
+            <code style={{color:'#6366f1',fontSize:'12px'}}>{fa.file_path}{fa.line_number?':'+fa.line_number:''}</code>
+            <div style={{color:'#d1d5db',fontSize:'13px',marginTop:'4px'}}>{fa.annotation}</div>
+          </div>
+          <div style={{display:'flex',gap:'6px',marginLeft:'12px'}}>
+            <button onClick={async()=>{await fetch('/api/file-annotations/'+fa.id+'/resolve',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setFileAnnotations(fileAnnotations.filter((x:any)=>x.id!==fa.id));}} style={{padding:'3px 8px',background:'#4ade80',color:'#111',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px'}}>Resolve</button>
+            <button onClick={async()=>{await fetch('/api/file-annotations/'+fa.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setFileAnnotations(fileAnnotations.filter((x:any)=>x.id!==fa.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'3px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* AI Tasks tab */}
+{mainTab==='aitasks' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>✅ AI Tasks</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Task title" value={newAtTitle} onChange={e=>setNewAtTitle(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'180px'}} />
+      <select value={newAtPriority} onChange={e=>setNewAtPriority(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <input type="date" value={newAtDue} onChange={e=>setNewAtDue(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!newAtTitle)return;await fetch('/api/ai-tasks',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newAtTitle,priority:newAtPriority,due_date:newAtDue})});setNewAtTitle('');setNewAtDue('');const r=await fetch('/api/ai-tasks',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiTasks(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/ai-tasks',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiTasks(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {aiTasks.map((t:any)=>(
+        <div key={t.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151',display:'flex',justifyContent:'space-between',alignItems:'center',opacity:t.status==='done'?0.6:1}}>
+          <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+            <input type="checkbox" checked={t.status==='done'} onChange={async()=>{await fetch('/api/ai-tasks/'+t.id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({status:t.status==='done'?'todo':'done',priority:t.priority})});const r=await fetch('/api/ai-tasks',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiTasks(await r.json());}} style={{width:'16px',height:'16px',cursor:'pointer'}} />
+            <div>
+              <span style={{fontWeight:600,color:'#f9fafb',textDecoration:t.status==='done'?'line-through':'none'}}>{t.title}</span>
+              <div style={{display:'flex',gap:'6px',marginTop:'2px'}}>
+                <span style={{fontSize:'11px',padding:'1px 6px',borderRadius:'4px',background:t.priority==='high'?'#7f1d1d':t.priority==='medium'?'#78350f':'#064e3b',color:t.priority==='high'?'#f87171':t.priority==='medium'?'#fbbf24':'#4ade80'}}>{t.priority}</span>
+                {t.due_date&&<span style={{fontSize:'11px',color:'#9ca3af'}}>Due {t.due_date}</span>}
+              </div>
+            </div>
+          </div>
+          <button onClick={async()=>{await fetch('/api/ai-tasks/'+t.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiTasks(aiTasks.filter((x:any)=>x.id!==t.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'3px 8px',cursor:'pointer'}}>Del</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 {mainTab==='summariesv2' && (
   <div style={{padding:'24px'}}>
     <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📋 AI Summaries</h2>
@@ -13181,9 +13344,9 @@ export default function ForgeApp() {
           <div style={{ padding:24 }}>
             <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>⛓ Prompt Chains</div>
             <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newPcName} onChange={e=>setNewPcName(e.target.value)} placeholder="Chain name..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <textarea value={newPcSteps} onChange={e=>setNewPcSteps(e.target.value)} placeholder="Steps (one per line)" rows={3} style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
-              <button onClick={async()=>{ if(!newPcName.trim()) return; const steps=newPcSteps.split('\n').filter(Boolean); await fetch('/api/prompt-chains',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newPcName,steps})}); setNewPcName(''); setNewPcSteps('Step 1\nStep 2\nStep 3'); const r=await fetch('/api/prompt-chains',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPchains(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add Chain</button>
+              <input value={newPcNameB38} onChange={e=>setNewPcNameB38(e.target.value)} placeholder="Chain name..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <textarea value={newPcStepsB38} onChange={e=>setNewPcStepsB38(e.target.value)} placeholder="Steps (one per line)" rows={3} style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={async()=>{ if(!newPcNameB38.trim()) return; const steps=newPcStepsB38.split('\n').filter(Boolean); await fetch('/api/prompt-chains',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newPcNameB38,steps})}); setNewPcNameB38(''); setNewPcStepsB38('Step 1\nStep 2\nStep 3'); const r=await fetch('/api/prompt-chains',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPchains(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add Chain</button>
             </div>
             <button onClick={async()=>{ const r=await fetch('/api/prompt-chains',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((c:any)=>{try{c.steps=Array.isArray(c.steps)?c.steps:JSON.parse(c.steps);}catch{}}); setPchains(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Chains</button>
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>

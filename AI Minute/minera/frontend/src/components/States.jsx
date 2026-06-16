@@ -24,3 +24,17 @@ export function ErrorState({ label = "Couldn't load this.", onRetry }) {
     </div>
   );
 }
+
+export function Skeleton({ rows = 4 }) {
+  return (
+    <div aria-busy="true" aria-label="Loading">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px",border:"3px solid var(--ink)",marginBottom:8,opacity:.5}}>
+          <span className="mn-sk" style={{height:12,width:`${50+(i%3)*12}%`,background:"var(--ink)",opacity:.18,display:"block"}}/>
+          <span className="mn-sk" style={{height:12,width:60,background:"var(--ink)",opacity:.18,display:"block"}}/>
+        </div>
+      ))}
+      <style>{`@keyframes mnsk{0%,100%{opacity:.12}50%{opacity:.28}}.mn-sk{animation:mnsk 1.2s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.mn-sk{animation:none}}`}</style>
+    </div>
+  );
+}

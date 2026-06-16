@@ -1,10 +1,11 @@
 import { useEffect, useState , memo} from "react";
 import { api } from "../api.js";
-import { Empty } from "./States.jsx";
+import { Empty, Skeleton } from "./States.jsx";
 
 function Market({ address, onBalance, notify }) {
   const [items, setItems] = useState([]);
-  const load = () => api.market().then(setItems).catch(() => notify("Backend offline"));
+  const [loaded, setLoaded] = useState(false);
+  const load = () => api.market().then((d)=>{setItems(d);setLoaded(true);}).catch(() => { setLoaded(true); notify("Backend offline"); });
   useEffect(() => { load(); }, []);
 
   async function license(id) {
@@ -23,6 +24,7 @@ function Market({ address, onBalance, notify }) {
       <p className="mono" style={{fontSize:12,fontWeight:700,marginBottom:12,color:"var(--blue)"}}>
         VERIFIED INSIGHTS FOR LICENSE · 40/35/20/5 SPLIT · 5% BURNED
       </p>
+      {!loaded && <Skeleton rows={3}/>}
       {items.map((i)=>(
         <div className="bondc" key={i.id}>
           <div className="cat">◆ ASSET #{i.id} {i.licensed && "· LICENSED"}</div>

@@ -32,6 +32,7 @@ import News from "./components/News.jsx";
 import Faq from "./components/Faq.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
 import Toasts from "./components/Toasts.jsx";
+import InstallPrompt from "./components/InstallPrompt.jsx";
 import { setSound, getSound, blip } from "./sound.js";
 
 const TABS = [
@@ -143,6 +144,7 @@ export default function App() {
         {tab==="admin" && <Admin address={user.address} notify={(m)=>{notify(m); refreshBalance();}}/>}
       </div>
       <Toasts items={toasts}/>
+      <InstallPrompt/>
       {onboard && <Onboarding onClose={()=>setOnboard(false)}/>}
       {help && <Help tabs={TABS} onClose={()=>setHelp(false)}/>}
       {palette && <CommandPalette onClose={()=>setPalette(false)} commands={[
