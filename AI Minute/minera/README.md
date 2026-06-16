@@ -327,3 +327,15 @@ Don't need the connector — see **GIT.md**. Quickest:
 git init && git add -A && git commit -m "Minera v0.1.0"
 bash push.sh https://github.com/YOU/minera.git
 ```
+
+
+## Polish pass (latest)
+
+| Item | Status |
+|------|--------|
+| Consistent loading / empty / error states (reusable States.jsx) | ✅ |
+| Visual consistency — sticky tabs, hover states, transitions | ✅ |
+| Friendlier microcopy across empty states + toasts | ✅ |
+| USER_GUIDE.md — non-technical end-user walkthrough | ✅ |
+
+Tests: **36/36 passing**. Git bundle refreshed (144 files).

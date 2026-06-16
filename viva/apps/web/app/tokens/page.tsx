@@ -239,9 +239,10 @@ export default function TokensPage() {
                   ) : (
                     <div className="flex-1 py-2 text-xs text-green-400 font-semibold">✓ Holding ${token.symbol}</div>
                   )}
-                  <button onClick={() => router.push(`/profile/${token.handle}`)}
-                    className="px-3 py-2 rounded-xl text-xs text-white/30 hover:text-white/60 border border-white/6 hover:border-white/15 transition-all">
-                    Profile →
+                  <button onClick={() => router.push(`/tokens/${token.symbol}`)}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+                    style={{ background: '#f59e0b12', color: '#f59e0b', border: '1px solid #f59e0b25' }}>
+                    Details ↗
                   </button>
                 </div>
               </div>

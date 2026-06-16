@@ -1,10 +1,44 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAppStore, mockUser, mapApiUser, MOCK_POSTS } from '@/lib/store'
-import { feed as feedApi, auth } from '@/lib/api'
+import { feed as feedApi, auth, tokens as tokensApi } from '@/lib/api'
 import { useToast } from '@/components/ui/Toast'
 
 const FILTERS = ['All', 'Health', 'Markets', 'Twin', 'ZKP', 'YouToken']
+
+const TICKER_TOKENS = [
+  { symbol: 'MAYA', price: 6.60, change: +12.3, color: '#a855f7' },
+  { symbol: 'SOVV', price: 12.40, change: +8.2,  color: '#a855f7' },
+  { symbol: 'ALEX', price:  5.10, change: +4.7,  color: '#22c55e' },
+  { symbol: 'ZERO', price:  7.20, change: +3.4,  color: '#a855f7' },
+  { symbol: 'LUNA', price:  9.80, change: +5.1,  color: '#a855f7' },
+  { symbol: 'NOAD', price:  4.10, change: -1.8,  color: '#7c3aed' },
+  { symbol: 'BIOP', price:  2.80, change: +0.9,  color: '#7c3aed' },
+  { symbol: 'ZKPR', price:  2.20, change: -3.2,  color: '#22c55e' },
+]
+
+function TickerStrip({ onNavigate }: { onNavigate: (sym: string) => void }) {
+  const items = [...TICKER_TOKENS, ...TICKER_TOKENS] // double for infinite feel
+  return (
+    <div className="overflow-x-auto no-scrollbar flex gap-3 py-2 px-1">
+      {items.map((t, i) => {
+        const up = t.change >= 0
+        return (
+          <button key={`${t.symbol}-${i}`} onClick={() => onNavigate(t.symbol)}
+            className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-white/6 hover:border-white/15 transition-all"
+            style={{ background: `${t.color}08` }}>
+            <span className="text-xs font-bold font-mono" style={{ color: t.color }}>${t.symbol}</span>
+            <span className="text-xs font-mono text-white/60">${t.price.toFixed(2)}</span>
+            <span className={`text-xs font-bold ${up ? 'text-green-400' : 'text-red-400'}`}>
+              {up ? '+' : ''}{t.change.toFixed(1)}%
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 const FEED_TABS = ['For You', 'Following', 'Trending'] as const
 type FeedTab = typeof FEED_TABS[number]
 
@@ -16,6 +50,7 @@ interface Comment {
 }
 
 export default function FeedPage() {
+  const router = useRouter()
   const { user, setUser } = useAppStore()
   const { success } = useToast()
   const [filter, setFilter] = useState('All')
@@ -213,6 +248,10 @@ export default function FeedPage() {
               {f}
             </button>
           ))}
+        </div>
+        {/* Token ticker strip */}
+        <div className="border-t border-white/5 mt-2 pt-2">
+          <TickerStrip onNavigate={(sym) => router.push(`/tokens/${sym}`)} />
         </div>
       </header>
 
