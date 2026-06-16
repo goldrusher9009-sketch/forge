@@ -13478,4 +13478,129 @@ app.delete('/api/user-preferences-v2/:id', requireAuth, (req: any, res: any) => 
   res.json({ ok: true });
 });
 
+
+// ── Batch 58 ────────────────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_response_ratings_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT, message_id TEXT,
+    accuracy INTEGER DEFAULT 3, helpfulness INTEGER DEFAULT 3,
+    clarity INTEGER DEFAULT 3, overall INTEGER DEFAULT 3,
+    note TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_milestones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, title TEXT NOT NULL, description TEXT,
+    target_date TEXT, completed INTEGER DEFAULT 0,
+    pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_context_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT, label TEXT,
+    tokens_used INTEGER DEFAULT 0, content TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_collaborators (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT NOT NULL, collaborator TEXT NOT NULL,
+    role TEXT DEFAULT 'viewer', invited_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_focus_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, label TEXT, duration_min INTEGER DEFAULT 25,
+    started_at DATETIME, ended_at DATETIME, completed INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// AI Response Ratings V2
+app.get('/api/ai-response-ratings-v2', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_response_ratings_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/ai-response-ratings-v2', requireAuth, (req:any,res:any) => {
+  const {thread_id,message_id,accuracy=3,helpfulness=3,clarity=3,overall=3,note}=req.body;
+  const r=db.prepare('INSERT INTO ai_response_ratings_v2 (user_id,thread_id,message_id,accuracy,helpfulness,clarity,overall,note) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id,thread_id,message_id,accuracy,helpfulness,clarity,overall,note);
+  res.json(db.prepare('SELECT * FROM ai_response_ratings_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/ai-response-ratings-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_response_ratings_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Workspace Milestones
+app.get('/api/workspace-milestones', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM workspace_milestones WHERE user_id=? ORDER BY pinned DESC,created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-milestones', requireAuth, (req:any,res:any) => {
+  const {title,description,target_date}=req.body;
+  if(!title) return res.status(400).json({error:'title required'});
+  const r=db.prepare('INSERT INTO workspace_milestones (user_id,title,description,target_date) VALUES (?,?,?,?)').run(req.user.id,title,description,target_date);
+  res.json(db.prepare('SELECT * FROM workspace_milestones WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/workspace-milestones/:id/complete', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE workspace_milestones SET completed=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.put('/api/workspace-milestones/:id/pin', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE workspace_milestones SET pinned=1-pinned WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-milestones/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM workspace_milestones WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// AI Context Snapshots
+app.get('/api/ai-context-snapshots', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_context_snapshots WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id));
+});
+app.post('/api/ai-context-snapshots', requireAuth, (req:any,res:any) => {
+  const {thread_id,label,tokens_used=0,content}=req.body;
+  if(!label) return res.status(400).json({error:'label required'});
+  const r=db.prepare('INSERT INTO ai_context_snapshots (user_id,thread_id,label,tokens_used,content) VALUES (?,?,?,?,?)').run(req.user.id,thread_id,label,tokens_used,content);
+  res.json(db.prepare('SELECT * FROM ai_context_snapshots WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/ai-context-snapshots/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_context_snapshots WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Thread Collaborators
+app.get('/api/thread-collaborators', requireAuth, (req:any,res:any) => {
+  const {thread_id}=req.query;
+  const sql=thread_id
+    ? 'SELECT * FROM thread_collaborators WHERE user_id=? AND thread_id=? ORDER BY invited_at DESC'
+    : 'SELECT * FROM thread_collaborators WHERE user_id=? ORDER BY invited_at DESC LIMIT 100';
+  res.json(thread_id ? db.prepare(sql).all(req.user.id,thread_id) : db.prepare(sql).all(req.user.id));
+});
+app.post('/api/thread-collaborators', requireAuth, (req:any,res:any) => {
+  const {thread_id,collaborator,role='viewer'}=req.body;
+  if(!thread_id||!collaborator) return res.status(400).json({error:'thread_id+collaborator required'});
+  const r=db.prepare('INSERT INTO thread_collaborators (user_id,thread_id,collaborator,role) VALUES (?,?,?,?)').run(req.user.id,thread_id,collaborator,role);
+  res.json(db.prepare('SELECT * FROM thread_collaborators WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/thread-collaborators/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM thread_collaborators WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// User Focus Sessions
+app.get('/api/user-focus-sessions', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM user_focus_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/user-focus-sessions', requireAuth, (req:any,res:any) => {
+  const {label,duration_min=25}=req.body;
+  const started_at=new Date().toISOString();
+  const r=db.prepare('INSERT INTO user_focus_sessions (user_id,label,duration_min,started_at) VALUES (?,?,?,?)').run(req.user.id,label,duration_min,started_at);
+  res.json(db.prepare('SELECT * FROM user_focus_sessions WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/user-focus-sessions/:id/complete', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE user_focus_sessions SET completed=1,ended_at=? WHERE id=? AND user_id=?').run(new Date().toISOString(),req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/user-focus-sessions/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM user_focus_sessions WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

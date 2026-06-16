@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1205,6 +1205,29 @@ export default function ForgeApp() {
   const [newPrefKey, setNewPrefKey] = useState('');
   const [newPrefValue, setNewPrefValue] = useState('');
   const [newPrefCat, setNewPrefCat] = useState('general');
+  const [aiRatingsV2, setAiRatingsV2] = useState<any[]>([]);
+  const [newRvThread, setNewRvThread] = useState('');
+  const [newRvMsg, setNewRvMsg] = useState('');
+  const [newRvAccuracy, setNewRvAccuracy] = useState(3);
+  const [newRvHelpfulness, setNewRvHelpfulness] = useState(3);
+  const [newRvClarity, setNewRvClarity] = useState(3);
+  const [newRvNote, setNewRvNote] = useState('');
+  const [wsMilestones, setWsMilestones] = useState<any[]>([]);
+  const [newMsTitle, setNewMsTitle] = useState('');
+  const [newMsDesc, setNewMsDesc] = useState('');
+  const [newMsDate, setNewMsDate] = useState('');
+  const [aiCtxSnapshots, setAiCtxSnapshots] = useState<any[]>([]);
+  const [newCsLabel, setNewCsLabel] = useState('');
+  const [newCsThread, setNewCsThread] = useState('');
+  const [newCsTokens, setNewCsTokens] = useState(0);
+  const [newCsContent, setNewCsContent] = useState('');
+  const [threadCollabs, setThreadCollabs] = useState<any[]>([]);
+  const [newTcThread, setNewTcThread] = useState('');
+  const [newTcCollab, setNewTcCollab] = useState('');
+  const [newTcRole, setNewTcRole] = useState('viewer');
+  const [focusSessions, setFocusSessions] = useState<any[]>([]);
+  const [newFsLabel, setNewFsLabel] = useState('');
+  const [newFsDuration, setNewFsDuration] = useState(25);
   const [newWiName, setNewWiName] = useState('');
   const [newWiType, setNewWiType] = useState('webhook');
   const [newWwResType, setNewWwResType] = useState('thread');
@@ -4935,6 +4958,11 @@ export default function ForgeApp() {
             { id:'aicostbreak', icon:'💰', label:'Cost Breakdown' },
             { id:'threadments', icon:'@️', label:'Mentions' },
             { id:'userprefsv2', icon:'⚙️', label:'Preferences V2' },
+            { id:'airatingsv2', icon:'⭐', label:'Response Ratings' },
+            { id:'wsmilestones', icon:'🏁', label:'Milestones' },
+            { id:'aictxsnaps', icon:'📸', label:'Context Snapshots' },
+            { id:'threadcollabs', icon:'👥', label:'Thread Collabs' },
+            { id:'focussessions', icon:'🎯', label:'Focus Sessions' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -16658,232 +16686,4 @@ export default function ForgeApp() {
                       <span style={{ fontSize:11, padding:'3px 10px', borderRadius:12, background: chk.severity==='ok'?'rgba(34,197,94,0.15)':chk.severity==='warn'?'rgba(251,146,60,0.15)':'rgba(59,130,246,0.15)', color: chk.severity==='ok'?'#22c55e':chk.severity==='warn'?'var(--fg-orange)':'#3b82f6', fontWeight:600 }}>{chk.severity.toUpperCase()}</span>
                     </div>
                   ))}
-                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/health',{headers:{Authorization:`Bearer ${tok}`}}); setWsHealth(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13, marginTop:8 }}>↻ Recheck</button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Folders tab */}
-        {mainTab === 'folders' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:720, margin:'0 auto' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📂 Thread Folders</h2>
-              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
-                <div style={{ display:'flex', gap:10, marginBottom:10 }}>
-                  <input value={newFolderIcon} onChange={e=>setNewFolderIcon(e.target.value)} placeholder="📁" style={{ width:48, padding:'8px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:20, textAlign:'center' }} />
-                  <input value={newFolderName} onChange={e=>setNewFolderName(e.target.value)} placeholder="Folder name..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
-                  <input type="color" value={newFolderColor} onChange={e=>setNewFolderColor(e.target.value)} style={{ width:40, height:36, borderRadius:8, border:'1px solid var(--fg-border)', cursor:'pointer' }} />
-                  <button onClick={createFolder} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Create</button>
-                </div>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'200px 1fr', gap:16 }}>
-                <div>
-                  {folders.length === 0 ? (
-                    <button onClick={loadFolders} style={{ width:'100%', padding:'10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Folders</button>
-                  ) : folders.map((f:any)=>(
-                    <div key={f.id} onClick={()=>loadFolderThreads(f.id)} style={{ padding:'10px 12px', borderRadius:10, border:`1px solid ${activeFolderId===f.id?f.color:'var(--fg-border)'}`, background: activeFolderId===f.id?'var(--fg-bg3)':'var(--fg-bg2)', cursor:'pointer', marginBottom:6, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{f.icon} {f.name} <span style={{ color:'var(--fg-text3)', fontSize:11 }}>({f.thread_count})</span></span>
-                      <button onClick={e=>{e.stopPropagation();deleteFolder(f.id);}} style={{ padding:'2px 6px', borderRadius:4, border:'none', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  {activeFolderId && (
-                    folderThreads.length === 0
-                      ? <div style={{ color:'var(--fg-text3)', fontSize:13, padding:16 }}>No threads in this folder yet.</div>
-                      : folderThreads.map((t:any)=>(
-                        <div key={t.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 14px', border:'1px solid var(--fg-border)', marginBottom:8 }}>
-                          <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{t.title||'Untitled'}</div>
-                          <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:3 }}>{new Date(t.created_at).toLocaleDateString()}</div>
-                        </div>
-                      ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Notes tab */}
-        {mainTab === 'quicknotes' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:760, margin:'0 auto' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📝 Quick Notes</h2>
-              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:24 }}>
-                <textarea value={newNoteContent} onChange={e=>setNewNoteContent(e.target.value)} placeholder="Capture a quick note..." rows={3} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14, resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
-                <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                  {['yellow','blue','green','pink','purple'].map(col=>(
-                    <button key={col} onClick={()=>setNewNoteColor(col)} style={{ width:22, height:22, borderRadius:'50%', border: newNoteColor===col?'3px solid var(--fg-text)':'2px solid transparent', background:{yellow:'#fde68a',blue:'#93c5fd',green:'#86efac',pink:'#f9a8d4',purple:'#c4b5fd'}[col as string]||'#fde68a', cursor:'pointer' }} />
-                  ))}
-                  <button onClick={addQuickNote} style={{ marginLeft:'auto', padding:'8px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Add Note</button>
-                </div>
-              </div>
-              {quickNotes.length === 0 ? (
-                <button onClick={loadQuickNotes} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Notes</button>
-              ) : (
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14 }}>
-                  {quickNotes.map((n:any)=>{
-                    const bg = {yellow:'#fde68a',blue:'#93c5fd',green:'#86efac',pink:'#f9a8d4',purple:'#c4b5fd'}[n.color as string]||'#fde68a';
-                    return (
-                      <div key={n.id} style={{ background:bg, borderRadius:12, padding:14, position:'relative', minHeight:100 }}>
-                        {n.pinned===1 && <span style={{ position:'absolute', top:8, right:30, fontSize:14 }}>📌</span>}
-                        <button onClick={()=>deleteQuickNote(n.id)} style={{ position:'absolute', top:6, right:8, background:'transparent', border:'none', cursor:'pointer', fontSize:14, color:'rgba(0,0,0,0.4)' }}>✕</button>
-                        {qnoteEditId===n.id ? (
-                          <><textarea value={qnoteEditContent} onChange={e=>setQnoteEditContent(e.target.value)} rows={3} style={{ width:'100%', background:'rgba(255,255,255,0.5)', border:'none', borderRadius:6, padding:6, fontSize:13, resize:'none', boxSizing:'border-box' }} />
-                          <button onClick={()=>updateQuickNote(n.id,qnoteEditContent)} style={{ marginTop:6, padding:'4px 10px', borderRadius:6, border:'none', background:'rgba(0,0,0,0.15)', cursor:'pointer', fontSize:12, fontWeight:600 }}>Save</button></>
-                        ) : (
-                          <div onClick={()=>{setQnoteEditId(n.id);setQnoteEditContent(n.content);}} style={{ color:'rgba(0,0,0,0.8)', fontSize:13, lineHeight:1.5, cursor:'text', whiteSpace:'pre-wrap' }}>{n.content}</div>
-                        )}
-                        <div style={{ marginTop:8, display:'flex', justifyContent:'space-between' }}>
-                          <span style={{ fontSize:10, color:'rgba(0,0,0,0.4)' }}>{new Date(n.updated_at).toLocaleDateString()}</span>
-                          <button onClick={()=>pinQuickNote(n.id, n.pinned?0:1)} style={{ background:'transparent', border:'none', cursor:'pointer', fontSize:12 }}>{n.pinned?'📌':'📍'}</button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Export Data tab */}
-        {mainTab === 'export' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:600, margin:'0 auto', textAlign:'center' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:12, fontSize:22, fontWeight:700 }}>💾 Export Workspace Data</h2>
-              <p style={{ color:'var(--fg-text2)', fontSize:14, marginBottom:32, lineHeight:1.6 }}>Download all your threads, messages, snippets, and bookmarks as a JSON file. Your data belongs to you.</p>
-              <div style={{ background:'var(--fg-bg2)', borderRadius:16, padding:32, border:'1px solid var(--fg-border)', marginBottom:24 }}>
-                <div style={{ fontSize:48, marginBottom:16 }}>📦</div>
-                <div style={{ color:'var(--fg-text)', fontSize:16, fontWeight:600, marginBottom:8 }}>Full Workspace Export</div>
-                <div style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Includes: threads, messages, snippets, bookmarks</div>
-                <button onClick={exportWorkspace} style={{ padding:'14px 32px', borderRadius:10, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:16 }}>⬇ Download JSON Export</button>
-              </div>
-              <div style={{ color:'var(--fg-text3)', fontSize:12 }}>Export is generated fresh each time and includes all data up to this moment.</div>
-            </div>
-          </div>
-        )}
-
-        {/* Token Breakdown tab */}
-        {mainTab === 'tokenbreak' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:740, margin:'0 auto' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🪙 Token Cost Breakdown</h2>
-              <div style={{ display:'flex', gap:10, marginBottom:20 }}>
-                <input value={tokenBreakThreadId} onChange={e=>setTokenBreakThreadId(e.target.value)} placeholder="Thread ID..." style={{ flex:1, padding:'9px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text)', fontSize:13 }} />
-                <button onClick={()=>loadTokenBreakdown(tokenBreakThreadId)} style={{ padding:'9px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Analyze</button>
-              </div>
-              {tokenBreakdown && (
-                <>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
-                    {[{label:'Total Tokens',val:tokenBreakdown.totalTokens?.toLocaleString()},{label:'Est. Cost',val:`$${tokenBreakdown.totalCost}`},{label:'Messages',val:tokenBreakdown.breakdown?.length}].map((s:any)=>(
-                      <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'14px 16px', border:'1px solid var(--fg-border)', textAlign:'center' }}>
-                        <div style={{ color:'var(--fg-orange)', fontSize:20, fontWeight:800 }}>{s.val}</div>
-                        <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{s.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, marginBottom:10 }}>By Model</h3>
-                  {Object.entries(tokenBreakdown.byModel||{}).map(([model,d]:any)=>(
-                    <div key={model} style={{ background:'var(--fg-bg2)', borderRadius:8, padding:'10px 14px', border:'1px solid var(--fg-border)', marginBottom:6, display:'flex', justifyContent:'space-between' }}>
-                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{model}</span>
-                      <span style={{ color:'var(--fg-text2)', fontSize:12 }}>{d.count} msgs · {d.tokens} tokens · ${d.cost.toFixed(5)}</span>
-                    </div>
-                  ))}
-                  <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, margin:'16px 0 10px' }}>Message Log</h3>
-                  <div style={{ maxHeight:300, overflowY:'auto' }}>
-                    {tokenBreakdown.breakdown?.map((m:any)=>(
-                      <div key={m.id} style={{ display:'flex', justifyContent:'space-between', padding:'6px 10px', borderBottom:'1px solid var(--fg-border2)', fontSize:12 }}>
-                        <span style={{ color: m.role==='user'?'var(--fg-orange)':'var(--fg-text2)' }}>{m.role}</span>
-                        <span style={{ color:'var(--fg-text3)' }}>{m.model||'—'}</span>
-                        <span style={{ color:'var(--fg-text)' }}>{m.tokens} tok</span>
-                        <span style={{ color:'var(--fg-text3)' }}>${m.estimatedCost}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Saved Searches tab */}
-        {mainTab === 'savedsearch' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:680, margin:'0 auto' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🔖 Saved Searches</h2>
-              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
-                <div style={{ display:'flex', gap:10, marginBottom:10 }}>
-                  <input value={newSearchQuery} onChange={e=>setNewSearchQuery(e.target.value)} placeholder="Search query..." style={{ flex:2, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
-                  <input value={newSearchLabel} onChange={e=>setNewSearchLabel(e.target.value)} placeholder="Label (optional)..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
-                </div>
-                <button onClick={addSavedSearch} style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Save Search</button>
-              </div>
-              {savedSearchesB47.length === 0 ? (
-                <button onClick={loadSavedSearches} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Searches</button>
-              ) : savedSearchesB47.map((s:any)=>(
-                <div key={s.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 16px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <div>
-                    {s.label && <div style={{ color:'var(--fg-text3)', fontSize:11, marginBottom:2 }}>{s.label}</div>}
-                    <div style={{ color:'var(--fg-text)', fontSize:14, fontWeight:600 }}>{s.query}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:2 }}>Used {s.hit_count}× · {s.last_used ? new Date(s.last_used).toLocaleDateString() : 'never'}</div>
-                  </div>
-                  <button onClick={()=>deleteSavedSearch(s.id)} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Productivity Score tab */}
-        {mainTab === 'prodscore' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:680, margin:'0 auto' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🏆 Productivity Score</h2>
-              {!prodScore ? (
-                <button onClick={loadProdScore} style={{ padding:'12px 24px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>Calculate Today's Score</button>
-              ) : (
-                <>
-                  <div style={{ textAlign:'center', padding:'32px 0', background:'var(--fg-bg2)', borderRadius:16, border:'1px solid var(--fg-border)', marginBottom:24 }}>
-                    <div style={{ fontSize:80, fontWeight:900, color: prodScore.score>=70?'#22c55e':prodScore.score>=40?'var(--fg-orange)':'#ef4444', lineHeight:1 }}>{prodScore.score}</div>
-                    <div style={{ color:'var(--fg-text2)', fontSize:14, marginTop:8 }}>/ 100 — {prodScore.date}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:12, marginTop:4 }}>{prodScore.score>=70?'🔥 Great work!':prodScore.score>=40?'⚡ Getting there':'😴 Quiet day'}</div>
-                  </div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
-                    {[
-                      {label:'Messages Today', val:prodScore.todayMessages, icon:'💬'},
-                      {label:'Threads Today', val:prodScore.todayThreads, icon:'🧵'},
-                      {label:'Tokens Today', val:(prodScore.todayTokens||0).toLocaleString(), icon:'🪙'},
-                      {label:'Messages This Week', val:prodScore.weekMessages, icon:'📅'},
-                    ].map((s:any)=>(
-                      <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'16px', border:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:12 }}>
-                        <span style={{ fontSize:24 }}>{s.icon}</span>
-                        <div><div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700 }}>{s.val}</div><div style={{ color:'var(--fg-text3)', fontSize:11 }}>{s.label}</div></div>
-                      </div>
-                    ))}
-                  </div>
-                  <button onClick={loadProdScore} style={{ marginTop:16, padding:'8px 18px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Timer tab */}
-        {mainTab === 'timer' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:680, margin:'0 auto' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>⏱ Focus Timer</h2>
-              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:20, border:'1px solid var(--fg-border)', marginBottom:20 }}>
-                <div style={{ display:'flex', gap:12, marginBottom:14, flexWrap:('wrap' as any) }}>
-                  <input value={timerLabel} onChange={e=>setTimerLabel(e.target.value)} placeholder="Session label..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
-                  <select value={timerDuration} onChange={e=>setTimerDuration(+e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
-                    {[5,10,15,20,25,30,45,60,90].map(m=><option key={m} value={m}>{m} min</option>)}
-                  </select>
-                </div>
-                {timerRunning ? (
-                  <div style={{ textAlign:'center', padding:'20px 0' }}>
-                    <div style={{ fontSize:48, fontWeight:800, color:'var(--fg-orange)', fontFamily:'monospace', marginBottom:12 }}>
-                      {String(Math.floor((timerDuration*60-timerElapsed)/60)).padStart(2,'0')}:{Strin
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/health',{headers:{Authorization:`Bearer ${tok}`}}); setWsHealth(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', 
