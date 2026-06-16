@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -732,6 +732,42 @@ export default function ForgeApp() {
   const [newClSummary, setNewClSummary] = useState('');
   const [coachText, setCoachText] = useState('');
   const [coachResult, setCoachResult] = useState<any>(null);
+  const [decisions, setDecisions] = useState<any[]>([]);
+  const [newDecTitle, setNewDecTitle] = useState('');
+  const [newDecContext, setNewDecContext] = useState('');
+  const [newDecChosen, setNewDecChosen] = useState('');
+  const [threadClones, setThreadClones] = useState<any[]>([]);
+  const [cloneSrcId, setCloneSrcId] = useState('');
+  const [cloneName29, setCloneName29] = useState('');
+  const [wsMoods, setWsMoods] = useState<any[]>([]);
+  const [wsMoodTrend, setWsMoodTrend] = useState<any>(null);
+  const [newMoodEmoji, setNewMoodEmoji] = useState('😊');
+  const [newMoodScore, setNewMoodScore] = useState(3);
+  const [readProgress, setReadProgress] = useState<any[]>([]);
+  const [newRpTitle, setNewRpTitle] = useState('');
+  const [newRpUrl, setNewRpUrl] = useState('');
+  const [newRpPages, setNewRpPages] = useState(0);
+  const [debates, setDebates] = useState<any[]>([]);
+  const [newDebateTopic, setNewDebateTopic] = useState('');
+  const [boards, setBoards] = useState<any[]>([]);
+  const [activeBoardId, setActiveBoardId] = useState<number|null>(null);
+  const [boardItems, setBoardItems] = useState<any[]>([]);
+  const [newBoardName, setNewBoardName] = useState('');
+  const [newBoardColor, setNewBoardColor] = useState('#6366f1');
+  const [newItemTitle, setNewItemTitle] = useState('');
+  const [newItemCol, setNewItemCol] = useState('todo');
+  const [sprints, setSprints] = useState<any[]>([]);
+  const [newSprintName, setNewSprintName] = useState('');
+  const [newSprintStart, setNewSprintStart] = useState('');
+  const [newSprintEnd, setNewSprintEnd] = useState('');
+  const [newSprintGoal, setNewSprintGoal] = useState('');
+  const [contentCal, setContentCal] = useState<any[]>([]);
+  const [newCcTitle, setNewCcTitle] = useState('');
+  const [newCcPlatform, setNewCcPlatform] = useState('general');
+  const [newCcDate, setNewCcDate] = useState('');
+  const [learnPaths, setLearnPaths] = useState<any[]>([]);
+  const [newLpName, setNewLpName] = useState('');
+  const [newLpTopics, setNewLpTopics] = useState('');
   // Batch 25 state
   const [dailyLogs, setDailyLogs] = useState<any[]>([]);
   const [dlContent, setDlContent] = useState('');
@@ -4261,6 +4297,15 @@ export default function ForgeApp() {
             { id:'threaddeps', icon:'🔗', label:'Thread Deps' },
             { id:'wschangelog', icon:'📝', label:'WS Changelog' },
             { id:'writingcoach', icon:'✍️', label:'Writing Coach' },
+            { id:'decisionlog', icon:'⚖️', label:'Decision Log' },
+            { id:'threadclones', icon:'🐑', label:'Thread Clones' },
+            { id:'wsmood', icon:'😊', label:'WS Mood' },
+            { id:'readprog', icon:'📖', label:'Reading Progress' },
+            { id:'aidebate', icon:'🎙', label:'AI Debate' },
+            { id:'boards', icon:'📋', label:'Project Boards' },
+            { id:'sprints', icon:'🏃', label:'Sprints' },
+            { id:'contentcal', icon:'📆', label:'Content Cal' },
+            { id:'learnpath', icon:'🎓', label:'Learning Paths' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },
@@ -11089,6 +11134,349 @@ export default function ForgeApp() {
                 </>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Decision Log tab */}
+        {mainTab==='decisionlog' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>⚖️ Decision Log</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newDecTitle} onChange={e=>setNewDecTitle(e.target.value)} placeholder="Decision title..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newDecContext} onChange={e=>setNewDecContext(e.target.value)} placeholder="Context/rationale..." style={{ flex:2, minWidth:180, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newDecChosen} onChange={e=>setNewDecChosen(e.target.value)} placeholder="Chosen option..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newDecTitle.trim()) return; await fetch('/api/decision-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newDecTitle,context:newDecContext,chosen:newDecChosen,decided_at:new Date().toISOString().split('T')[0]})}); setNewDecTitle(''); setNewDecContext(''); setNewDecChosen(''); const r=await fetch('/api/decision-log',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.options=JSON.parse(x.options);}catch{x.options=[];}}); setDecisions(data); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Log Decision</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/decision-log',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.options=JSON.parse(x.options);}catch{x.options=[];}}); setDecisions(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Log</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {decisions.map((d:any)=>(
+                <div key={d.id} style={{ background:'var(--bg-card)', border:`1px solid ${d.outcome==='success'?'#22c55e':d.outcome==='failed'?'#ef4444':'var(--border)'}`, borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:4 }}>{d.title}</div>
+                      {d.context && <div style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:4 }}>{d.context}</div>}
+                      {d.chosen && <div style={{ color:'var(--accent)', fontSize:13 }}>✓ Chose: {d.chosen}</div>}
+                      <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{d.decided_at}</div>
+                    </div>
+                    <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                      <select value={d.outcome} onChange={async e=>{ await fetch(`/api/decision-log/${d.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({outcome:e.target.value})}); const r=await fetch('/api/decision-log',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.options=JSON.parse(x.options);}catch{x.options=[];}}); setDecisions(data); }} style={{ padding:'3px 6px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
+                        <option value="pending">Pending</option><option value="success">Success</option><option value="failed">Failed</option><option value="reconsidering">Reconsidering</option>
+                      </select>
+                      <button onClick={async()=>{ await fetch(`/api/decision-log/${d.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDecisions(decisions.filter((x:any)=>x.id!==d.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {decisions.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No decisions logged yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Clones tab */}
+        {mainTab==='threadclones' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🐑 Thread Clones</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+              <input value={cloneSrcId} onChange={e=>setCloneSrcId(e.target.value)} placeholder="Source thread ID..." style={{ width:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={cloneName29} onChange={e=>setCloneName29(e.target.value)} placeholder="Clone name (optional)..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!cloneSrcId) return; const resp=await fetch(`/api/threads/${cloneSrcId}/clone`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:cloneName29})}); if(resp.ok){setCloneSrcId('');setCloneName29('');const r=await fetch('/api/thread-clones',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}});setThreadClones(await r.json());} }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Clone Thread</button>
+              <button onClick={async()=>{ const r=await fetch('/api/thread-clones',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadClones(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {threadClones.map((cl:any)=>(
+                <div key={cl.id} style={{ display:'flex', alignItems:'center', gap:10, background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px' }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{cl.original_title||`#${cl.original_thread_id}`}</span>
+                      <span style={{ color:'var(--accent)', fontSize:12 }}>→🐑→</span>
+                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{cl.clone_title||cl.clone_name}</span>
+                    </div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:3 }}>{cl.created_at?.slice(0,10)}</div>
+                  </div>
+                </div>
+              ))}
+              {threadClones.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No clones yet. Clone a thread above.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Mood tab */}
+        {mainTab==='wsmood' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>😊 Workspace Mood</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+              <div style={{ display:'flex', gap:6 }}>
+                {['😊','😐','😔','🔥','😤','🤔','😴'].map(emoji=>(
+                  <button key={emoji} onClick={()=>setNewMoodEmoji(emoji)} style={{ fontSize:24, background:newMoodEmoji===emoji?'var(--accent)22':'none', border:newMoodEmoji===emoji?'2px solid var(--accent)':'2px solid transparent', borderRadius:8, cursor:'pointer', padding:4 }}>{emoji}</button>
+                ))}
+              </div>
+              <input type="range" min={1} max={5} value={newMoodScore} onChange={e=>setNewMoodScore(Number(e.target.value))} style={{ width:100 }} />
+              <span style={{ color:'var(--fg-text)', fontWeight:700 }}>{newMoodScore}/5</span>
+              <button onClick={async()=>{ await fetch('/api/workspace-mood',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({mood:newMoodEmoji,score:newMoodScore})}); const [r,t]=await Promise.all([fetch('/api/workspace-mood',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/workspace-mood/trend',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); setWsMoods(await r.json()); setWsMoodTrend(await t.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Log Mood</button>
+            </div>
+            <button onClick={async()=>{ const [r,t]=await Promise.all([fetch('/api/workspace-mood',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/workspace-mood/trend',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); setWsMoods(await r.json()); setWsMoodTrend(await t.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Mood Log</button>
+            {wsMoodTrend && (
+              <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:16 }}>
+                <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:8 }}>14-Day Average: <span style={{ color:'var(--accent)', fontSize:20 }}>{wsMoodTrend.average_score}/5</span></div>
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                  {(wsMoodTrend.entries||[]).map((e:any)=>(
+                    <div key={e.log_date} style={{ textAlign:'center', padding:'4px 8px', background:'var(--bg-input)', borderRadius:6 }}>
+                      <div style={{ fontSize:18 }}>{e.mood}</div>
+                      <div style={{ color:'var(--fg-text3)', fontSize:10 }}>{e.log_date?.slice(5)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reading Progress tab */}
+        {mainTab==='readprog' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📖 Reading Progress</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newRpTitle} onChange={e=>setNewRpTitle(e.target.value)} placeholder="Book/article title..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newRpUrl} onChange={e=>setNewRpUrl(e.target.value)} placeholder="URL (optional)..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="number" value={newRpPages} onChange={e=>setNewRpPages(Number(e.target.value))} placeholder="Total pages" style={{ width:100, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newRpTitle.trim()) return; await fetch('/api/reading-progress',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newRpTitle,url:newRpUrl,total_pages:newRpPages})}); setNewRpTitle(''); setNewRpUrl(''); setNewRpPages(0); const r=await fetch('/api/reading-progress',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/reading-progress',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load List</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {readProgress.map((rp:any)=>(
+                <div key={rp.id} style={{ background:'var(--bg-card)', border:`1px solid ${rp.status==='done'?'#22c55e':'var(--border)'}`, borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{rp.title}</div>
+                      {rp.url && <a href={rp.url} target="_blank" rel="noreferrer" style={{ color:'var(--accent)', fontSize:12 }}>🔗 Open</a>}
+                    </div>
+                    <div style={{ display:'flex', gap:4 }}>
+                      <select value={rp.status} onChange={async e=>{ await fetch(`/api/reading-progress/${rp.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:e.target.value})}); const r=await fetch('/api/reading-progress',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(await r.json()); }} style={{ padding:'3px 6px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
+                        <option value="reading">Reading</option><option value="done">Done</option><option value="paused">Paused</option><option value="dropped">Dropped</option>
+                      </select>
+                      <button onClick={async()=>{ await fetch(`/api/reading-progress/${rp.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(readProgress.filter((x:any)=>x.id!==rp.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  {rp.total_pages > 0 && (
+                    <div>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                        <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Page {rp.current_page}/{rp.total_pages}</span>
+                        <span style={{ color:'var(--accent)', fontSize:12, fontWeight:600 }}>{Math.round(rp.current_page/rp.total_pages*100)}%</span>
+                      </div>
+                      <div style={{ height:6, background:'var(--bg-input)', borderRadius:3 }}>
+                        <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${Math.min(100,Math.round(rp.current_page/rp.total_pages*100))}%` }} />
+                      </div>
+                      <div style={{ display:'flex', gap:4, marginTop:8 }}>
+                        <input type="number" placeholder="Current page" defaultValue={rp.current_page} onBlur={async(e)=>{ await fetch(`/api/reading-progress/${rp.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({current_page:Number(e.target.value)})}); const r=await fetch('/api/reading-progress',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(await r.json()); }} style={{ width:100, padding:'4px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {readProgress.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No books tracked yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* AI Debate tab */}
+        {mainTab==='aidebate' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎙 AI Debate Generator</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <input value={newDebateTopic} onChange={e=>setNewDebateTopic(e.target.value)} placeholder="Enter debate topic (e.g. 'Remote work vs office')..." style={{ flex:1, padding:'10px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newDebateTopic.trim()) return; const r=await fetch('/api/ai-debates/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({topic:newDebateTopic})}); const debate=await r.json(); setDebates([debate,...debates]); setNewDebateTopic(''); }} style={{ padding:'10px 20px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:14 }}>Generate Debate</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/ai-debates',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.pro_points=JSON.parse(x.pro_points);x.con_points=JSON.parse(x.con_points);}catch{}}); setDebates(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load History</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+              {debates.map((db29:any)=>(
+                <div key={db29.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:20 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:700, fontSize:16 }}>⚖️ {db29.topic}</div>
+                    <button onClick={async()=>{ await fetch(`/api/ai-debates/${db29.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDebates(debates.filter((x:any)=>x.id!==db29.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:12 }}>
+                    <div style={{ background:'#22c55e11', border:'1px solid #22c55e44', borderRadius:8, padding:12 }}>
+                      <div style={{ color:'#22c55e', fontWeight:600, marginBottom:8 }}>✅ Pro</div>
+                      {(Array.isArray(db29.pro_points)?db29.pro_points:[]).map((p:string,i:number)=><div key={i} style={{ color:'var(--fg-text)', fontSize:13, marginBottom:6, lineHeight:1.4 }}>• {p}</div>)}
+                    </div>
+                    <div style={{ background:'#ef444411', border:'1px solid #ef444444', borderRadius:8, padding:12 }}>
+                      <div style={{ color:'#ef4444', fontWeight:600, marginBottom:8 }}>❌ Con</div>
+                      {(Array.isArray(db29.con_points)?db29.con_points:[]).map((p:string,i:number)=><div key={i} style={{ color:'var(--fg-text)', fontSize:13, marginBottom:6, lineHeight:1.4 }}>• {p}</div>)}
+                    </div>
+                  </div>
+                  {db29.verdict && <div style={{ color:'var(--fg-text2)', fontSize:13, padding:'10px 14px', background:'var(--bg-input)', borderRadius:8, fontStyle:'italic' }}>🏛 {db29.verdict}</div>}
+                </div>
+              ))}
+              {debates.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:48 }}>Enter a topic above to generate a debate.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Idea Inbox tab */}
+        {mainTab==='ideainbox' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📥 Idea Inbox</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newIdeaContent} onChange={e=>setNewIdeaContent(e.target.value)} placeholder="Capture an idea..." style={{ flex:1, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newIdeaPriority} onChange={e=>setNewIdeaPriority(Number(e.target.value))} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                <option value={0}>Low</option><option value={1}>Medium</option><option value={2}>High</option>
+              </select>
+              <button onClick={async()=>{ if(!newIdeaContent.trim()) return; await fetch('/api/idea-inbox',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({content:newIdeaContent,priority:newIdeaPriority})}); setNewIdeaContent(''); const [r,s]=await Promise.all([fetch('/api/idea-inbox',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/idea-inbox/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); const data=await r.json(); data.forEach((x:any)=>{try{x.tags=JSON.parse(x.tags);}catch{x.tags=[];}}); setIdeaInbox(data); setIdeaStats(await s.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Capture</button>
+            </div>
+            <button onClick={async()=>{ const [r,s]=await Promise.all([fetch('/api/idea-inbox',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/idea-inbox/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); const data=await r.json(); data.forEach((x:any)=>{try{x.tags=JSON.parse(x.tags);}catch{x.tags=[];}}); setIdeaInbox(data); setIdeaStats(await s.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Ideas</button>
+            {ideaStats && (
+              <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
+                {[['🆕 New',ideaStats.new,'var(--accent)'],['⚡ Active',ideaStats.in_progress,'#f59e0b'],['✅ Done',ideaStats.done,'#22c55e'],['📦 Archived',ideaStats.archived,'var(--fg-text3)']].map(([k,v,col])=>(
+                  <div key={String(k)} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'8px 16px', textAlign:'center' }}>
+                    <div style={{ color:String(col), fontSize:20, fontWeight:700 }}>{v}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{k}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {ideaInbox.map((idea:any)=>(
+                <div key={idea.id} style={{ display:'flex', gap:12, alignItems:'flex-start', background:'var(--bg-card)', border:`2px solid ${idea.priority===2?'#f59e0b':idea.priority===1?'var(--accent)':'var(--border)'}`, borderRadius:10, padding:'12px 14px' }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:14, lineHeight:1.5 }}>{idea.content}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{idea.created_at?.slice(0,10)} · {idea.status}</div>
+                  </div>
+                  <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                    <select value={idea.status} onChange={async e=>{ await fetch(`/api/idea-inbox/${idea.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:e.target.value})}); const r=await fetch('/api/idea-inbox',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.tags=JSON.parse(x.tags);}catch{x.tags=[];}}); setIdeaInbox(data); }} style={{ padding:'3px 6px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
+                      <option value="new">New</option><option value="in_progress">Active</option><option value="done">Done</option><option value="archived">Archive</option>
+                    </select>
+                    <button onClick={async()=>{ await fetch(`/api/idea-inbox/${idea.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setIdeaInbox(ideaInbox.filter((x:any)=>x.id!==idea.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                  </div>
+                </div>
+              ))}
+              {ideaInbox.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>Inbox zero! Capture an idea above.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Session Plans tab */}
+        {mainTab==='sessionplans' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🗓 Session Plans</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newSpTitle} onChange={e=>setNewSpTitle(e.target.value)} placeholder="Session title..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <textarea value={newSpGoals} onChange={e=>setNewSpGoals(e.target.value)} placeholder="Goals (one per line)..." rows={3} style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <input type="date" value={newSpDate} onChange={e=>setNewSpDate(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newSpTitle.trim()) return; const goals=newSpGoals.split('\n').filter(Boolean); await fetch('/api/session-plans',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newSpTitle,goals,planned_at:newSpDate||new Date().toISOString().split('T')[0]})}); setNewSpTitle(''); setNewSpGoals(''); const r=await fetch('/api/session-plans',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.goals=JSON.parse(x.goals);}catch{x.goals=[];}}); setSessionPlans(data); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Plan</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/session-plans',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.goals=JSON.parse(x.goals);}catch{x.goals=[];}}); setSessionPlans(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Plans</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {sessionPlans.map((sp:any)=>(
+                <div key={sp.id} style={{ background:'var(--bg-card)', border:`1px solid ${sp.status==='done'?'#22c55e':'var(--border)'}`, borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{sp.title}</div>
+                      <div style={{ color:'var(--fg-text3)', fontSize:12 }}>{sp.planned_at} · {sp.status}</div>
+                    </div>
+                    <div style={{ display:'flex', gap:6 }}>
+                      {sp.status!=='done' && <button onClick={async()=>{ await fetch(`/api/session-plans/${sp.id}/status`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:'done'})}); const r=await fetch('/api/session-plans',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.goals=JSON.parse(x.goals);}catch{x.goals=[];}}); setSessionPlans(data); }} style={{ padding:'4px 10px', background:'#22c55e', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>✓ Done</button>}
+                      <button onClick={async()=>{ await fetch(`/api/session-plans/${sp.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSessionPlans(sessionPlans.filter((x:any)=>x.id!==sp.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Del</button>
+                    </div>
+                  </div>
+                  {(Array.isArray(sp.goals)?sp.goals:[]).map((g:string,i:number)=>(
+                    <div key={i} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:3 }}>
+                      <span style={{ color:'var(--accent)', fontSize:12 }}>•</span>
+                      <span style={{ color:'var(--fg-text2)', fontSize:13 }}>{g}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {sessionPlans.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No session plans yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Dependencies tab */}
+        {mainTab==='threaddeps' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🔗 Thread Dependencies</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+              <input value={newDepSrc} onChange={e=>setNewDepSrc(e.target.value)} placeholder="Source thread ID..." style={{ width:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <span style={{ color:'var(--fg-text3)', fontSize:13 }}>depends on</span>
+              <input value={newDepTgt} onChange={e=>setNewDepTgt(e.target.value)} placeholder="Target thread ID..." style={{ width:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newDepSrc||!newDepTgt) return; const resp=await fetch('/api/thread-dependencies',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({source_thread_id:Number(newDepSrc),target_thread_id:Number(newDepTgt)})}); if(resp.ok){setNewDepSrc('');setNewDepTgt('');const r=await fetch('/api/thread-dependencies',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}});setThreadDeps(await r.json());} }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Link</button>
+              <button onClick={async()=>{ const r=await fetch('/api/thread-dependencies',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadDeps(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {threadDeps.map((dep:any)=>(
+                <div key={dep.id} style={{ display:'flex', alignItems:'center', gap:10, background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px' }}>
+                  <div style={{ flex:1, display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{dep.source_title||`#${dep.source_thread_id}`}</span>
+                    <span style={{ color:'var(--accent)', fontSize:12 }}>→ depends on →</span>
+                    <span style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{dep.target_title||`#${dep.target_thread_id}`}</span>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/thread-dependencies/${dep.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadDeps(threadDeps.filter((x:any)=>x.id!==dep.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Unlink</button>
+                </div>
+              ))}
+              {threadDeps.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No dependencies. Link threads above.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* WS Changelog tab */}
+        {mainTab==='wschangelog' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📝 Workspace Changelog</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newClVersion} onChange={e=>setNewClVersion(e.target.value)} placeholder="v1.0.0" style={{ width:90, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newClSummary} onChange={e=>setNewClSummary(e.target.value)} placeholder="What changed..." style={{ flex:1, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newClVersion.trim()||!newClSummary.trim()) return; await fetch('/api/workspace-changelog',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({version:newClVersion,summary:newClSummary,log_date:new Date().toISOString().split('T')[0]})}); setNewClVersion(''); setNewClSummary(''); const r=await fetch('/api/workspace-changelog',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsChangelog(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Log</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/workspace-changelog',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsChangelog(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Log</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {wsChangelog.map((entry:any)=>(
+                <div key={entry.id} style={{ display:'flex', gap:12, alignItems:'flex-start', background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 14px' }}>
+                  <div style={{ padding:'3px 10px', background:'var(--accent)', color:'#fff', borderRadius:6, fontSize:12, fontWeight:700, flexShrink:0 }}>{entry.version}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:13 }}>{entry.summary}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:3 }}>{entry.log_date}</div>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/workspace-changelog/${entry.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsChangelog(wsChangelog.filter((x:any)=>x.id!==entry.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11, flexShrink:0 }}>Del</button>
+                </div>
+              ))}
+              {wsChangelog.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No changelog entries yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Writing Coach tab */}
+        {mainTab==='writingcoach' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>✍️ AI Writing Coach</div>
+            <textarea value={coachText} onChange={e=>setCoachText(e.target.value)} placeholder="Paste your writing here for analysis..." rows={8} style={{ width:'100%', padding:'12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, lineHeight:1.6, boxSizing:'border-box', marginBottom:12 }} />
+            <button onClick={async()=>{ if(!coachText.trim()) return; const r=await fetch('/api/writing-coach/analyze',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({text:coachText,mode:'general'})}); setCoachResult(await r.json()); }} style={{ padding:'10px 24px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:14, marginBottom:20 }}>Analyze Writing</button>
+            {coachResult && (
+              <div>
+                <div style={{ display:'flex', gap:12, marginBottom:16, flexWrap:'wrap' }}>
+                  {[['📝 Words',coachResult.word_count],['📐 Sentences',coachResult.sentence_count],['📏 Avg Length',coachResult.avg_sentence_length+'w'],['🔄 Passive',coachResult.passive_count]].map(([k,v])=>(
+                    <div key={String(k)} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 16px', textAlign:'center' }}>
+                      <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700 }}>{v}</div>
+                      <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{k}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16 }}>
+                  <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:10 }}>📋 Feedback</div>
+                  {(coachResult.feedback||[]).map((f:string,i:number)=>(
+                    <div key={i} style={{ display:'flex', gap:8, alignItems:'flex-start', marginBottom:8, padding:'8px 12px', background:'var(--bg-input)', borderRadius:8 }}>
+                      <span style={{ color:'var(--accent)', fontSize:14, flexShrink:0 }}>•</span>
+                      <span style={{ color:'var(--fg-text)', fontSize:13, lineHeight:1.5 }}>{f}</span>
+                    </div>
+                  ))}
+                  {coachResult.filler_words?.length>0 && (
+                    <div style={{ marginTop:10, padding:'8px 12px', background:'var(--bg-input)', borderRadius:8 }}>
+                      <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Filler words: </span>
+                      {coachResult.filler_words.map((w:string)=>(<span key={w} style={{ background:'#f59e0b22', color:'#f59e0b', borderRadius:4, padding:'1px 6px', fontSize:12, marginLeft:4 }}>{w}</span>))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

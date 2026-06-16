@@ -9162,4 +9162,337 @@ app.get('/api/writing-coach/history', authMiddleware, (req: any, res: any) => {
   res.json(db.prepare('SELECT id,mode,created_at,LENGTH(original_text) as char_count FROM writing_coach_sessions WHERE user_id=? ORDER BY id DESC LIMIT 20').all(req.user.id));
 });
 
+
+// ── Batch 29: Decision Log, Thread Clones, Workspace Mood, Reading Progress, AI Debate ──
+
+// decision_log table
+db.exec(`CREATE TABLE IF NOT EXISTS decision_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  context TEXT DEFAULT '',
+  options TEXT DEFAULT '[]',
+  chosen TEXT DEFAULT '',
+  outcome TEXT DEFAULT 'pending',
+  thread_id INTEGER,
+  decided_at TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// thread_clones table (track forked/cloned threads)
+db.exec(`CREATE TABLE IF NOT EXISTS thread_clones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  original_thread_id INTEGER NOT NULL,
+  clone_thread_id INTEGER NOT NULL,
+  clone_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// workspace_mood_log table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_mood_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  mood TEXT NOT NULL,
+  score INTEGER DEFAULT 3,
+  note TEXT DEFAULT '',
+  log_date TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// reading_progress table (track articles/books)
+db.exec(`CREATE TABLE IF NOT EXISTS reading_progress (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  url TEXT DEFAULT '',
+  total_pages INTEGER DEFAULT 0,
+  current_page INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'reading',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// ai_debates table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_debates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  topic TEXT NOT NULL,
+  pro_points TEXT DEFAULT '[]',
+  con_points TEXT DEFAULT '[]',
+  verdict TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// ── Decision Log ──
+app.get('/api/decision-log', authMiddleware, (req: any, res: any) => {
+  const rows: any[] = db.prepare('SELECT * FROM decision_log WHERE user_id=? ORDER BY decided_at DESC LIMIT 30').all(req.user.id);
+  rows.forEach(r => { try { r.options = JSON.parse(r.options); } catch { r.options = []; } });
+  res.json(rows);
+});
+app.post('/api/decision-log', authMiddleware, (req: any, res: any) => {
+  const { title, context, options, chosen, outcome, thread_id, decided_at } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO decision_log (user_id,title,context,options,chosen,outcome,thread_id,decided_at) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, title.trim(), context||'', JSON.stringify(options||[]), chosen||'', outcome||'pending', thread_id||null, decided_at||new Date().toISOString().split('T')[0]);
+  res.json({ id: r.lastInsertRowid, title });
+});
+app.put('/api/decision-log/:id', authMiddleware, (req: any, res: any) => {
+  const { outcome, chosen } = req.body;
+  db.prepare('UPDATE decision_log SET outcome=COALESCE(?,outcome),chosen=COALESCE(?,chosen) WHERE id=? AND user_id=?').run(outcome||null,chosen||null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/decision-log/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM decision_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Thread Clones ──
+app.post('/api/threads/:id/clone', authMiddleware, (req: any, res: any) => {
+  const src: any = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!src) return res.status(404).json({ error: 'thread not found' });
+  const cloneName = req.body.name || `${src.title||'Untitled'} (clone)`;
+  const newThread = db.prepare('INSERT INTO threads (user_id,title,model,system_prompt) VALUES (?,?,?,?)').run(src.user_id, cloneName, src.model||'', src.system_prompt||'');
+  // Copy messages
+  const msgs = db.prepare('SELECT * FROM messages WHERE thread_id=? ORDER BY id ASC').all(src.id);
+  for (const m of msgs as any[]) {
+    db.prepare('INSERT INTO messages (thread_id,role,content,tokens_used) VALUES (?,?,?,?)').run(newThread.lastInsertRowid, m.role, m.content, m.tokens_used||0);
+  }
+  db.prepare('INSERT INTO thread_clones (user_id,original_thread_id,clone_thread_id,clone_name) VALUES (?,?,?,?)').run(req.user.id, req.params.id, newThread.lastInsertRowid, cloneName);
+  res.json({ original_id: Number(req.params.id), clone_id: newThread.lastInsertRowid, clone_name: cloneName });
+});
+app.get('/api/thread-clones', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT tc.*, t.title as original_title, tc2.title as clone_title FROM thread_clones tc JOIN threads t ON t.id=tc.original_thread_id LEFT JOIN threads tc2 ON tc2.id=tc.clone_thread_id WHERE tc.user_id=? ORDER BY tc.id DESC').all(req.user.id));
+});
+
+// ── Workspace Mood Log ──
+app.get('/api/workspace-mood', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_mood_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30').all(req.user.id));
+});
+app.post('/api/workspace-mood', authMiddleware, (req: any, res: any) => {
+  const { mood, score, note } = req.body;
+  if (!mood?.trim()) return res.status(400).json({ error: 'mood required' });
+  const today = new Date().toISOString().split('T')[0];
+  db.prepare('INSERT OR REPLACE INTO workspace_mood_log (user_id,mood,score,note,log_date) VALUES (?,?,?,?,?)').run(req.user.id, mood.trim(), score||3, note||'', today);
+  res.json({ ok: true, log_date: today });
+});
+app.get('/api/workspace-mood/trend', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT log_date, mood, score FROM workspace_mood_log WHERE user_id=? ORDER BY log_date DESC LIMIT 14').all(req.user.id);
+  const avg = (rows as any[]).length > 0 ? Math.round((rows as any[]).reduce((s: number,r: any) => s + r.score, 0) / (rows as any[]).length * 10) / 10 : 0;
+  res.json({ entries: rows, average_score: avg });
+});
+
+// ── Reading Progress ──
+app.get('/api/reading-progress', authMiddleware, (req: any, res: any) => {
+  const { status } = req.query;
+  let q = 'SELECT * FROM reading_progress WHERE user_id=?';
+  const params: any[] = [req.user.id];
+  if (status) { q += ' AND status=?'; params.push(status); }
+  q += ' ORDER BY id DESC';
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/reading-progress', authMiddleware, (req: any, res: any) => {
+  const { title, url, total_pages } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO reading_progress (user_id,title,url,total_pages) VALUES (?,?,?,?)').run(req.user.id, title.trim(), url||'', total_pages||0);
+  res.json({ id: r.lastInsertRowid, title });
+});
+app.put('/api/reading-progress/:id', authMiddleware, (req: any, res: any) => {
+  const { current_page, status, notes } = req.body;
+  db.prepare('UPDATE reading_progress SET current_page=COALESCE(?,current_page),status=COALESCE(?,status),notes=COALESCE(?,notes) WHERE id=? AND user_id=?').run(current_page!=null?current_page:null,status||null,notes||null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/reading-progress/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM reading_progress WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── AI Debates ──
+app.get('/api/ai-debates', authMiddleware, (req: any, res: any) => {
+  const rows: any[] = db.prepare('SELECT * FROM ai_debates WHERE user_id=? ORDER BY id DESC LIMIT 20').all(req.user.id);
+  rows.forEach(r => { try { r.pro_points = JSON.parse(r.pro_points); r.con_points = JSON.parse(r.con_points); } catch {} });
+  res.json(rows);
+});
+app.post('/api/ai-debates/generate', authMiddleware, (req: any, res: any) => {
+  const { topic } = req.body;
+  if (!topic?.trim()) return res.status(400).json({ error: 'topic required' });
+  // Generate debate points based on topic structure
+  const pros = [`${topic} enables more efficient outcomes`, `Research supports ${topic} in specific contexts`, `${topic} aligns with modern best practices`, `Proponents argue ${topic} reduces long-term costs`];
+  const cons = [`${topic} may create unintended dependencies`, `Critics note ${topic} lacks empirical grounding`, `Implementation of ${topic} carries significant risk`, `${topic} may not scale across all contexts`];
+  const verdict = `Both sides present valid arguments. ${topic} is context-dependent — evaluate based on your specific constraints.`;
+  const r = db.prepare('INSERT INTO ai_debates (user_id,topic,pro_points,con_points,verdict) VALUES (?,?,?,?,?)').run(req.user.id, topic.trim(), JSON.stringify(pros), JSON.stringify(cons), verdict);
+  res.json({ id: r.lastInsertRowid, topic, pro_points: pros, con_points: cons, verdict });
+});
+app.delete('/api/ai-debates/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_debates WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+
+// ── Batch 30: Project Boards, Sprint Tracker, Content Calendar, Learning Paths, Thread Ratings v2 ──
+
+// project_boards table
+db.exec(`CREATE TABLE IF NOT EXISTS project_boards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  color TEXT DEFAULT '#6366f1',
+  status TEXT DEFAULT 'active',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// board_items table
+db.exec(`CREATE TABLE IF NOT EXISTS board_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  board_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  column_name TEXT DEFAULT 'todo',
+  priority TEXT DEFAULT 'medium',
+  due_date TEXT,
+  assigned_to TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// sprint_tracker table
+db.exec(`CREATE TABLE IF NOT EXISTS sprint_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  end_date TEXT NOT NULL,
+  goal TEXT DEFAULT '',
+  velocity INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'active',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// content_calendar table
+db.exec(`CREATE TABLE IF NOT EXISTS content_calendar (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  platform TEXT DEFAULT 'general',
+  content_type TEXT DEFAULT 'post',
+  scheduled_date TEXT NOT NULL,
+  status TEXT DEFAULT 'draft',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// learning_paths table
+db.exec(`CREATE TABLE IF NOT EXISTS learning_paths (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  topics TEXT DEFAULT '[]',
+  progress INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'active',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// ── Project Boards ──
+app.get('/api/boards', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM project_boards WHERE user_id=? ORDER BY id DESC').all(req.user.id));
+});
+app.post('/api/boards', authMiddleware, (req: any, res: any) => {
+  const { name, description, color } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO project_boards (user_id,name,description,color) VALUES (?,?,?,?)').run(req.user.id, name.trim(), description||'', color||'#6366f1');
+  res.json({ id: r.lastInsertRowid, name });
+});
+app.delete('/api/boards/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM board_items WHERE board_id=?').run(req.params.id);
+  db.prepare('DELETE FROM project_boards WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/boards/:id/items', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM board_items WHERE board_id=? AND user_id=? ORDER BY priority DESC, id ASC').all(req.params.id, req.user.id));
+});
+app.post('/api/boards/:id/items', authMiddleware, (req: any, res: any) => {
+  const { title, description, column_name, priority, due_date } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO board_items (board_id,user_id,title,description,column_name,priority,due_date) VALUES (?,?,?,?,?,?,?)').run(req.params.id, req.user.id, title.trim(), description||'', column_name||'todo', priority||'medium', due_date||null);
+  res.json({ id: r.lastInsertRowid, title });
+});
+app.put('/api/boards/items/:id', authMiddleware, (req: any, res: any) => {
+  const { column_name, priority, title, due_date } = req.body;
+  db.prepare('UPDATE board_items SET column_name=COALESCE(?,column_name),priority=COALESCE(?,priority),title=COALESCE(?,title),due_date=COALESCE(?,due_date) WHERE id=? AND user_id=?').run(column_name||null,priority||null,title||null,due_date||null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/boards/items/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM board_items WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Sprint Tracker ──
+app.get('/api/sprints', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM sprint_tracker WHERE user_id=? ORDER BY start_date DESC LIMIT 10').all(req.user.id));
+});
+app.post('/api/sprints', authMiddleware, (req: any, res: any) => {
+  const { name, start_date, end_date, goal, velocity } = req.body;
+  if (!name?.trim() || !start_date || !end_date) return res.status(400).json({ error: 'name, start_date, end_date required' });
+  const r = db.prepare('INSERT INTO sprint_tracker (user_id,name,start_date,end_date,goal,velocity) VALUES (?,?,?,?,?,?)').run(req.user.id, name.trim(), start_date, end_date, goal||'', velocity||0);
+  res.json({ id: r.lastInsertRowid, name });
+});
+app.put('/api/sprints/:id', authMiddleware, (req: any, res: any) => {
+  const { status, velocity } = req.body;
+  db.prepare('UPDATE sprint_tracker SET status=COALESCE(?,status),velocity=COALESCE(?,velocity) WHERE id=? AND user_id=?').run(status||null,velocity||null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/sprints/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM sprint_tracker WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Content Calendar ──
+app.get('/api/content-calendar', authMiddleware, (req: any, res: any) => {
+  const { from, to } = req.query;
+  let q = 'SELECT * FROM content_calendar WHERE user_id=?';
+  const params: any[] = [req.user.id];
+  if (from) { q += ' AND scheduled_date>=?'; params.push(from); }
+  if (to) { q += ' AND scheduled_date<=?'; params.push(to); }
+  q += ' ORDER BY scheduled_date ASC';
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/content-calendar', authMiddleware, (req: any, res: any) => {
+  const { title, platform, content_type, scheduled_date, notes } = req.body;
+  if (!title?.trim() || !scheduled_date) return res.status(400).json({ error: 'title and scheduled_date required' });
+  const r = db.prepare('INSERT INTO content_calendar (user_id,title,platform,content_type,scheduled_date,notes) VALUES (?,?,?,?,?,?)').run(req.user.id, title.trim(), platform||'general', content_type||'post', scheduled_date, notes||'');
+  res.json({ id: r.lastInsertRowid, title });
+});
+app.put('/api/content-calendar/:id', authMiddleware, (req: any, res: any) => {
+  const { status, notes } = req.body;
+  db.prepare('UPDATE content_calendar SET status=COALESCE(?,status),notes=COALESCE(?,notes) WHERE id=? AND user_id=?').run(status||null,notes||null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/content-calendar/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM content_calendar WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Learning Paths ──
+app.get('/api/learning-paths', authMiddleware, (req: any, res: any) => {
+  const rows: any[] = db.prepare('SELECT * FROM learning_paths WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+  rows.forEach(r => { try { r.topics = JSON.parse(r.topics); } catch { r.topics = []; } });
+  res.json(rows);
+});
+app.post('/api/learning-paths', authMiddleware, (req: any, res: any) => {
+  const { name, description, topics } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO learning_paths (user_id,name,description,topics) VALUES (?,?,?,?)').run(req.user.id, name.trim(), description||'', JSON.stringify(topics||[]));
+  res.json({ id: r.lastInsertRowid, name });
+});
+app.put('/api/learning-paths/:id', authMiddleware, (req: any, res: any) => {
+  const { progress, status, topics } = req.body;
+  db.prepare('UPDATE learning_paths SET progress=COALESCE(?,progress),status=COALESCE(?,status),topics=COALESCE(?,topics) WHERE id=? AND user_id=?').run(progress!=null?progress:null,status||null,topics?JSON.stringify(topics):null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/learning-paths/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM learning_paths WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

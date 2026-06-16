@@ -260,6 +260,9 @@ export default function HomeCanvas() {
                   { label: 'Net Worth', href: '/portfolio', icon: '◈', color: '#a855f7' },
                   { label: 'Collections', href: '/collections', icon: '◉', color: '#818cf8' },
                   { label: 'NFT Vault', href: '/nft', icon: '◐', color: '#ec4899' },
+                  { label: 'AI Signals', href: '/signals', icon: '◆', color: '#22c55e' },
+                  { label: 'Watchlist', href: '/watchlist', icon: '◎', color: '#f59e0b' },
+                  { label: 'Swap', href: '/swap', icon: '⇄', color: '#818cf8' },
                 ] as const).map(({ label, href, icon, color }) => (
                   <Link key={label} href={href}
                     className="flex items-center gap-2.5 px-3 py-2.5 border border-white/6 hover:border-white/18 hover:bg-white/2 transition-all group"
