@@ -12663,4 +12663,120 @@ app.delete('/api/user-goals/:id', requireAuth, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ── Batch 51 ──────────────────────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_personas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    system_prompt TEXT, model TEXT DEFAULT 'claude', avatar TEXT DEFAULT '🤖',
+    active INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT,
+    description TEXT, event_date TEXT, event_type TEXT DEFAULT 'meeting',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_outputs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, prompt TEXT,
+    output TEXT, model TEXT, quality_score INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_permissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER, granted_to INTEGER,
+    permission TEXT DEFAULT 'read', granted_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_badges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, badge_name TEXT,
+    badge_icon TEXT DEFAULT '🏅', description TEXT, earned_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/ai-personas
+app.get('/api/ai-personas', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_personas WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-personas', requireAuth, (req: any, res: any) => {
+  const { name, system_prompt, model = 'claude', avatar = '🤖' } = req.body;
+  if (!name || !system_prompt) return res.status(400).json({ error: 'name and system_prompt required' });
+  const r = db.prepare('INSERT INTO ai_personas (user_id,name,system_prompt,model,avatar) VALUES (?,?,?,?,?)').run(req.user.id, name, system_prompt, model, avatar);
+  res.json({ id: r.lastInsertRowid, name, system_prompt, model, avatar, active: 1 });
+});
+app.put('/api/ai-personas/:id/toggle', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT active FROM ai_personas WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE ai_personas SET active=? WHERE id=?').run(row.active ? 0 : 1, req.params.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-personas/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_personas WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-events
+app.get('/api/workspace-events', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_events WHERE user_id=? ORDER BY event_date ASC').all(req.user.id));
+});
+app.post('/api/workspace-events', requireAuth, (req: any, res: any) => {
+  const { title, description = '', event_date, event_type = 'meeting' } = req.body;
+  if (!title || !event_date) return res.status(400).json({ error: 'title and event_date required' });
+  const r = db.prepare('INSERT INTO workspace_events (user_id,title,description,event_date,event_type) VALUES (?,?,?,?,?)').run(req.user.id, title, description, event_date, event_type);
+  res.json({ id: r.lastInsertRowid, title, description, event_date, event_type });
+});
+app.delete('/api/workspace-events/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_events WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-outputs
+app.post('/api/ai-outputs', requireAuth, (req: any, res: any) => {
+  const { prompt, output, model = 'claude', quality_score } = req.body;
+  if (!prompt || !output) return res.status(400).json({ error: 'prompt and output required' });
+  const r = db.prepare('INSERT INTO ai_outputs (user_id,prompt,output,model,quality_score) VALUES (?,?,?,?,?)').run(req.user.id, prompt, output, model, quality_score ?? null);
+  res.json({ id: r.lastInsertRowid, prompt, output, model, quality_score });
+});
+app.get('/api/ai-outputs', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_outputs WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id));
+});
+app.put('/api/ai-outputs/:id/rate', requireAuth, (req: any, res: any) => {
+  const { quality_score } = req.body;
+  db.prepare('UPDATE ai_outputs SET quality_score=? WHERE id=? AND user_id=?').run(Math.min(5, Math.max(1, Number(quality_score))), req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-outputs/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_outputs WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/thread-permissions
+app.get('/api/thread-permissions/:threadId', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM thread_permissions WHERE thread_id=?').all(req.params.threadId));
+});
+app.post('/api/thread-permissions', requireAuth, (req: any, res: any) => {
+  const { thread_id, granted_to, permission = 'read' } = req.body;
+  if (!thread_id || !granted_to) return res.status(400).json({ error: 'thread_id and granted_to required' });
+  const r = db.prepare('INSERT INTO thread_permissions (thread_id,granted_to,permission,granted_by) VALUES (?,?,?,?)').run(thread_id, granted_to, permission, req.user.id);
+  res.json({ id: r.lastInsertRowid, thread_id, granted_to, permission });
+});
+app.delete('/api/thread-permissions/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_permissions WHERE id=?').run(req.params.id);
+  res.json({ ok: true });
+});
+
+// /api/user-badges
+app.get('/api/user-badges', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM user_badges WHERE user_id=? ORDER BY earned_at DESC').all(req.user.id));
+});
+app.post('/api/user-badges', requireAuth, (req: any, res: any) => {
+  const { badge_name, badge_icon = '🏅', description = '' } = req.body;
+  if (!badge_name) return res.status(400).json({ error: 'badge_name required' });
+  const r = db.prepare('INSERT INTO user_badges (user_id,badge_name,badge_icon,description) VALUES (?,?,?,?)').run(req.user.id, badge_name, badge_icon, description);
+  res.json({ id: r.lastInsertRowid, badge_name, badge_icon, description });
+});
+app.delete('/api/user-badges/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_badges WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
