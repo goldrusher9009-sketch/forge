@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1016,6 +1016,24 @@ export default function ForgeApp() {
   const [aiDraftHistory, setAiDraftHistory] = useState<any[]>([]);
   const [newAdhPrompt, setNewAdhPrompt] = useState('');
   const [newAdhDraft, setNewAdhDraft] = useState('');
+  const [contentBlocks, setContentBlocks] = useState<any[]>([]);
+  const [newCbTitle, setNewCbTitle] = useState('');
+  const [newCbContent, setNewCbContent] = useState('');
+  const [newCbType, setNewCbType] = useState('text');
+  const [wsTimers, setWsTimers] = useState<any[]>([]);
+  const [newWtLabel, setNewWtLabel] = useState('');
+  const [newWtDuration, setNewWtDuration] = useState(25);
+  const [aiConfLogs, setAiConfLogs] = useState<any[]>([]);
+  const [confAvg, setConfAvg] = useState<any>(null);
+  const [newAclPrompt, setNewAclPrompt] = useState('');
+  const [newAclConf, setNewAclConf] = useState(0.8);
+  const [userChecklists, setUserChecklists] = useState<any[]>([]);
+  const [newUclTitle, setNewUclTitle] = useState('');
+  const [newUclItems, setNewUclItems] = useState('');
+  const [wsMilestones, setWsMilestones] = useState<any[]>([]);
+  const [newWmTitle, setNewWmTitle] = useState('');
+  const [newWmDesc, setNewWmDesc] = useState('');
+  const [newWmDue, setNewWmDue] = useState('');
 
 
 
@@ -11501,6 +11519,120 @@ export default function ForgeApp() {
 {/* Prompt Library tab */}
 {/* AI Summaries v2 tab */}
 {/* Meeting Notes tab */}
+{mainTab==='agentruns' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🤖 Agent Runs</h2>
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <input value={newArName} onChange={e=>setNewArName(e.target.value)} placeholder="Agent name" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input value={newArPrompt} onChange={e=>setNewArPrompt(e.target.value)} placeholder="Prompt/task" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:2}}/>
+      <button onClick={async()=>{if(!newArName||!newArPrompt)return;await fetch('/api/agent-runs',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newArName,prompt:newArPrompt})});setNewArName('');setNewArPrompt('');const r=await fetch('/api/agent-runs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Run</button>
+      <button onClick={async()=>{const r=await fetch('/api/agent-runs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {agentRuns.map((r:any)=>(
+      <div key={r.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+        <div>
+          <div style={{color:'#f1f5f9',fontWeight:600}}>{r.name} <span style={{color:r.status==='done'?'#22c55e':r.status==='cancelled'?'#ef4444':'#f59e0b',fontSize:11,marginLeft:6}}>{r.status}</span></div>
+          <div style={{color:'#64748b',fontSize:12,marginTop:2}}>{r.prompt}</div>
+          {r.result && <div style={{color:'#94a3b8',fontSize:12,marginTop:4}}>↳ {r.result}</div>}
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={async()=>{await fetch(`/api/agent-runs/${r.id}/cancel`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const res=await fetch('/api/agent-runs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await res.json());}} style={{background:'#78350f',color:'#fde68a',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Cancel</button>
+          <button onClick={async()=>{await fetch(`/api/agent-runs/${r.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(agentRuns.filter((x:any)=>x.id!==r.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='wspolicies' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>📋 Workspace Policies</h2>
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <input value={newWpName} onChange={e=>setNewWpName(e.target.value)} placeholder="Policy name" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input value={newWpRule} onChange={e=>setNewWpRule(e.target.value)} placeholder="Rule/description" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:2}}/>
+      <button onClick={async()=>{if(!newWpName||!newWpRule)return;await fetch('/api/workspace-policies',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newWpName,rule:newWpRule})});setNewWpName('');setNewWpRule('');const r=await fetch('/api/workspace-policies',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsPolicies(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-policies',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsPolicies(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {wsPolicies.map((p:any)=>(
+      <div key={p.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <div style={{color:'#f1f5f9',fontWeight:600}}>{p.name} <span style={{color:p.enabled?'#22c55e':'#64748b',fontSize:11}}>{p.enabled?'ON':'OFF'}</span></div>
+          <div style={{color:'#64748b',fontSize:12,marginTop:2}}>{p.rule}</div>
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={async()=>{await fetch(`/api/workspace-policies/${p.id}/toggle`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-policies',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsPolicies(await r.json());}} style={{background:'#1e3a5f',color:'#93c5fd',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Toggle</button>
+          <button onClick={async()=>{await fetch(`/api/workspace-policies/${p.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsPolicies(wsPolicies.filter((x:any)=>x.id!==p.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='knowlnodes' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🧠 Knowledge Nodes</h2>
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+      <input value={newKnTitle} onChange={e=>setNewKnTitle(e.target.value)} placeholder="Title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <select value={newKnType} onChange={e=>setNewKnType(e.target.value)} style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13}}>
+        <option value="fact">Fact</option><option value="rule">Rule</option><option value="concept">Concept</option>
+      </select>
+    </div>
+    <textarea value={newKnContent} onChange={e=>setNewKnContent(e.target.value)} placeholder="Content" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'8px',color:'#f1f5f9',fontSize:13,width:'100%',minHeight:80,resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <button onClick={async()=>{if(!newKnTitle||!newKnContent)return;await fetch('/api/knowledge-nodes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newKnTitle,content:newKnContent,node_type:newKnType})});setNewKnTitle('');setNewKnContent('');const r=await fetch('/api/knowledge-nodes',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setKnowledgeNodes(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Save</button>
+      <button onClick={async()=>{const r=await fetch('/api/knowledge-nodes',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setKnowledgeNodes(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {knowledgeNodes.map((n:any)=>(
+      <div key={n.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between'}}>
+          <span style={{color:'#f1f5f9',fontWeight:600}}>{n.title} <span style={{color:'#6366f1',fontSize:11,marginLeft:4}}>{n.node_type}</span></span>
+          <button onClick={async()=>{await fetch(`/api/knowledge-nodes/${n.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setKnowledgeNodes(knowledgeNodes.filter((x:any)=>x.id!==n.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+        </div>
+        <div style={{color:'#94a3b8',fontSize:12,marginTop:4}}>{n.content}</div>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='chatreacv2' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>💬 Chat Reactions V2</h2>
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <input value={crv2MsgId} onChange={e=>setCrv2MsgId(e.target.value)} placeholder="Message ID" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input value={crv2Emoji} onChange={e=>setCrv2Emoji(e.target.value)} placeholder="Emoji" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,width:80}}/>
+      <button onClick={async()=>{if(!crv2MsgId||!crv2Emoji)return;const resp=await fetch('/api/chat-reactions-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({message_id:crv2MsgId,emoji:crv2Emoji})});const data=await resp.json();const r=await fetch(`/api/chat-reactions-v2/${crv2MsgId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setChatReactionsV2(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Toggle</button>
+      <button onClick={async()=>{if(!crv2MsgId)return;const r=await fetch(`/api/chat-reactions-v2/${crv2MsgId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setChatReactionsV2(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+      {chatReactionsV2.map((r:any)=>(
+        <span key={r.id} style={{background:'#1e293b',borderRadius:20,padding:'4px 12px',color:'#f1f5f9',fontSize:18}}>{r.emoji}</span>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='aidrafthist' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>📝 AI Draft History</h2>
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+      <input value={newAdhPrompt} onChange={e=>setNewAdhPrompt(e.target.value)} placeholder="Prompt" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+    </div>
+    <textarea value={newAdhDraft} onChange={e=>setNewAdhDraft(e.target.value)} placeholder="Draft content" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'8px',color:'#f1f5f9',fontSize:13,width:'100%',minHeight:80,resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <button onClick={async()=>{if(!newAdhPrompt||!newAdhDraft)return;await fetch('/api/ai-draft-history',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({prompt:newAdhPrompt,draft:newAdhDraft})});setNewAdhPrompt('');setNewAdhDraft('');const r=await fetch('/api/ai-draft-history',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiDraftHistory(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Save</button>
+      <button onClick={async()=>{const r=await fetch('/api/ai-draft-history',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiDraftHistory(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {aiDraftHistory.map((d:any)=>(
+      <div key={d.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{color:'#f1f5f9',fontWeight:600,fontSize:13}}>{d.prompt.slice(0,60)}</span>
+          <div style={{display:'flex',gap:6}}>
+            {!d.accepted && <button onClick={async()=>{await fetch(`/api/ai-draft-history/${d.id}/accept`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/ai-draft-history',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiDraftHistory(await r.json());}} style={{background:'#14532d',color:'#86efac',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Accept</button>}
+            {d.accepted && <span style={{color:'#22c55e',fontSize:11}}>✓ Accepted</span>}
+            <button onClick={async()=>{await fetch(`/api/ai-draft-history/${d.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiDraftHistory(aiDraftHistory.filter((x:any)=>x.id!==d.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+          </div>
+        </div>
+        <div style={{color:'#64748b',fontSize:12,marginTop:4,fontStyle:'italic'}}>{d.draft.slice(0,120)}</div>
+      </div>
+    ))}
+  </div>
+)}
 {mainTab==='aiflows' && (
   <div style={{padding:'24px'}}>
     <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🔄 AI Flows</h2>

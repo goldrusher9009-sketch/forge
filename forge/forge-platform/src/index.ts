@@ -12024,4 +12024,133 @@ app.delete('/api/ai-draft-history/:id', requireAuth, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ── Batch 46 ──────────────────────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS content_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT,
+    content TEXT, block_type TEXT DEFAULT 'text', pinned INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_timers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, label TEXT,
+    duration_sec INTEGER, started_at DATETIME, status TEXT DEFAULT 'idle',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_confidence_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, prompt TEXT,
+    response_snippet TEXT, confidence REAL, model TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_checklists (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT,
+    items TEXT, completed INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_milestones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT,
+    description TEXT, due_date TEXT, achieved INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/content-blocks
+app.get('/api/content-blocks', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM content_blocks WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/content-blocks', requireAuth, (req: any, res: any) => {
+  const { title, content, block_type = 'text' } = req.body;
+  if (!title || !content) return res.status(400).json({ error: 'title and content required' });
+  const r = db.prepare('INSERT INTO content_blocks (user_id,title,content,block_type) VALUES (?,?,?,?)').run(req.user.id, title, content, block_type);
+  res.json({ id: r.lastInsertRowid, title, content, block_type, pinned: 0 });
+});
+app.put('/api/content-blocks/:id/pin', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT pinned FROM content_blocks WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE content_blocks SET pinned=? WHERE id=? AND user_id=?').run(row.pinned ? 0 : 1, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/content-blocks/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM content_blocks WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-timers
+app.get('/api/workspace-timers', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_timers WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-timers', requireAuth, (req: any, res: any) => {
+  const { label, duration_sec } = req.body;
+  if (!label || !duration_sec) return res.status(400).json({ error: 'label and duration_sec required' });
+  const r = db.prepare('INSERT INTO workspace_timers (user_id,label,duration_sec,status) VALUES (?,?,?,?)').run(req.user.id, label, duration_sec, 'idle');
+  res.json({ id: r.lastInsertRowid, label, duration_sec, status: 'idle' });
+});
+app.put('/api/workspace-timers/:id/start', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_timers SET status=?,started_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run('running', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.put('/api/workspace-timers/:id/stop', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_timers SET status=? WHERE id=? AND user_id=?').run('idle', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-timers/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_timers WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-confidence-logs
+app.post('/api/ai-confidence-logs', requireAuth, (req: any, res: any) => {
+  const { prompt, response_snippet, confidence, model = 'claude' } = req.body;
+  if (!prompt || confidence === undefined) return res.status(400).json({ error: 'prompt and confidence required' });
+  const r = db.prepare('INSERT INTO ai_confidence_logs (user_id,prompt,response_snippet,confidence,model) VALUES (?,?,?,?,?)').run(req.user.id, prompt, response_snippet || '', confidence, model);
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/ai-confidence-logs', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_confidence_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id));
+});
+app.get('/api/ai-confidence-logs/avg', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT AVG(confidence) as avg_conf, COUNT(*) as total FROM ai_confidence_logs WHERE user_id=?').get(req.user.id);
+  res.json(row);
+});
+
+// /api/user-checklists
+app.get('/api/user-checklists', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM user_checklists WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/user-checklists', requireAuth, (req: any, res: any) => {
+  const { title, items } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const itemStr = Array.isArray(items) ? items.join('\n') : (items || '');
+  const r = db.prepare('INSERT INTO user_checklists (user_id,title,items) VALUES (?,?,?)').run(req.user.id, title, itemStr);
+  res.json({ id: r.lastInsertRowid, title, items: itemStr, completed: 0 });
+});
+app.put('/api/user-checklists/:id/complete', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE user_checklists SET completed=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/user-checklists/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_checklists WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-milestones
+app.get('/api/workspace-milestones', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_milestones WHERE user_id=? ORDER BY due_date ASC').all(req.user.id));
+});
+app.post('/api/workspace-milestones', requireAuth, (req: any, res: any) => {
+  const { title, description = '', due_date = '' } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO workspace_milestones (user_id,title,description,due_date) VALUES (?,?,?,?)').run(req.user.id, title, description, due_date);
+  res.json({ id: r.lastInsertRowid, title, description, due_date, achieved: 0 });
+});
+app.put('/api/workspace-milestones/:id/achieve', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_milestones SET achieved=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-milestones/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_milestones WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
