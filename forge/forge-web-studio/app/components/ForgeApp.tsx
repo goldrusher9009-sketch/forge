@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1049,6 +1049,39 @@ export default function ForgeApp() {
   const [userPrefsV2, setUserPrefsV2] = useState<any>(null);
   const [upv2Theme, setUpv2Theme] = useState('dark');
   const [upv2FontSize, setUpv2FontSize] = useState(14);
+  const [projectNotes, setProjectNotes] = useState<any[]>([]);
+  const [newPnProject, setNewPnProject] = useState('');
+  const [newPnTitle, setNewPnTitle] = useState('');
+  const [newPnContent, setNewPnContent] = useState('');
+  const [aiCostEstimates, setAiCostEstimates] = useState<any[]>([]);
+  const [costTotal, setCostTotal] = useState<any>(null);
+  const [newAceModel, setNewAceModel] = useState('claude');
+  const [newAceCost, setNewAceCost] = useState(0.001);
+  const [wsLinks, setWsLinks] = useState<any[]>([]);
+  const [newWlTitle, setNewWlTitle] = useState('');
+  const [newWlUrl, setNewWlUrl] = useState('');
+  const [newWlCat, setNewWlCat] = useState('general');
+  const [messageDrafts, setMessageDrafts] = useState<any[]>([]);
+  const [newMdContent, setNewMdContent] = useState('');
+  const [newMdThreadId, setNewMdThreadId] = useState('');
+  const [aiModelStats, setAiModelStats] = useState<any[]>([]);
+  const [sprintItems, setSprintItems] = useState<any[]>([]);
+  const [newSpSprint, setNewSpSprint] = useState('');
+  const [newSpTitleB49, setNewSpTitleB49] = useState('');
+  const [newSpPoints, setNewSpPoints] = useState(1);
+  const [aiSummariesV2B49, setAiSummariesV2B49] = useState<any[]>([]);
+  const [newAsvType, setNewAsvType] = useState('thread');
+  const [newAsvSummary, setNewAsvSummary] = useState('');
+  const [wsColors, setWsColors] = useState<any[]>([]);
+  const [newWcNameB49, setNewWcNameB49] = useState('');
+  const [newWcHex, setNewWcHex] = useState('#6366f1');
+  const [threadClips, setThreadClips] = useState<any[]>([]);
+  const [newTcClip, setNewTcClip] = useState('');
+  const [newTcNote, setNewTcNote] = useState('');
+  const [promptsLibrary, setPromptsLibrary] = useState<any[]>([]);
+  const [newPlTitleB49, setNewPlTitleB49] = useState('');
+  const [newPlPromptB49, setNewPlPromptB49] = useState('');
+  const [newPlCat, setNewPlCat] = useState('general');
 
 
 
@@ -11534,6 +11567,120 @@ export default function ForgeApp() {
 {/* Prompt Library tab */}
 {/* AI Summaries v2 tab */}
 {/* Meeting Notes tab */}
+{mainTab==='projnotes' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>📓 Project Notes</h2>
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+      <input value={newPnProject} onChange={e=>setNewPnProject(e.target.value)} placeholder="Project name" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input value={newPnTitle} onChange={e=>setNewPnTitle(e.target.value)} placeholder="Note title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+    </div>
+    <textarea value={newPnContent} onChange={e=>setNewPnContent(e.target.value)} placeholder="Content" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'8px',color:'#f1f5f9',fontSize:13,width:'100%',minHeight:80,resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <button onClick={async()=>{if(!newPnProject||!newPnTitle)return;await fetch('/api/project-notes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({project:newPnProject,title:newPnTitle,content:newPnContent})});setNewPnTitle('');setNewPnContent('');const r=await fetch(`/api/project-notes?project=${encodeURIComponent(newPnProject)}`,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setProjectNotes(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Save</button>
+      <button onClick={async()=>{const r=await fetch('/api/project-notes',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setProjectNotes(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load All</button>
+    </div>
+    {projectNotes.map((n:any)=>(
+      <div key={n.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{color:'#f1f5f9',fontWeight:600}}>{n.title} <span style={{color:'#6366f1',fontSize:11}}>{n.project}</span></span>
+          <button onClick={async()=>{await fetch(`/api/project-notes/${n.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setProjectNotes(projectNotes.filter((x:any)=>x.id!==n.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+        </div>
+        {n.content && <div style={{color:'#94a3b8',fontSize:12,marginTop:4}}>{n.content.slice(0,150)}</div>}
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='aicostests' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>💰 AI Cost Estimates</h2>
+    {costTotal && <div style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:16,display:'flex',gap:24}}>
+      <div><div style={{color:'#94a3b8',fontSize:12}}>Total Cost</div><div style={{color:'#22c55e',fontWeight:700,fontSize:18}}>${Number(costTotal.total||0).toFixed(4)}</div></div>
+      <div><div style={{color:'#94a3b8',fontSize:12}}>Calls</div><div style={{color:'#f1f5f9',fontWeight:700,fontSize:18}}>{costTotal.calls}</div></div>
+      <div><div style={{color:'#94a3b8',fontSize:12}}>Tokens</div><div style={{color:'#f1f5f9',fontWeight:700,fontSize:18}}>{Number(costTotal.total_tokens||0).toLocaleString()}</div></div>
+    </div>}
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <select value={newAceModel} onChange={e=>setNewAceModel(e.target.value)} style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13}}>
+        <option value="claude">Claude</option><option value="gpt-4">GPT-4</option><option value="gemini">Gemini</option>
+      </select>
+      <input type="number" value={newAceCost} step={0.0001} min={0} onChange={e=>setNewAceCost(Number(e.target.value))} placeholder="Estimated cost $" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,width:140}}/>
+      <button onClick={async()=>{await fetch('/api/ai-cost-estimates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({model:newAceModel,estimated_cost:newAceCost,prompt_tokens:0,completion_tokens:0})});const[r,t]=await Promise.all([fetch('/api/ai-cost-estimates',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}}),fetch('/api/ai-cost-estimates/total',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})]);setAiCostEstimates(await r.json());setCostTotal(await t.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Log</button>
+      <button onClick={async()=>{const[r,t]=await Promise.all([fetch('/api/ai-cost-estimates',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}}),fetch('/api/ai-cost-estimates/total',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})]);setAiCostEstimates(await r.json());setCostTotal(await t.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {aiCostEstimates.slice(0,20).map((e:any)=>(
+      <div key={e.id} style={{background:'#1e293b',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between'}}>
+        <span style={{color:'#6366f1',fontSize:12}}>{e.model}</span>
+        <span style={{color:'#22c55e',fontSize:13,fontWeight:600}}>${Number(e.estimated_cost).toFixed(4)}</span>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='wslinks' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🔗 Workspace Links</h2>
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <input value={newWlTitle} onChange={e=>setNewWlTitle(e.target.value)} placeholder="Title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+      <input value={newWlUrl} onChange={e=>setNewWlUrl(e.target.value)} placeholder="https://..." style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:2}}/>
+      <select value={newWlCat} onChange={e=>setNewWlCat(e.target.value)} style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13}}>
+        <option value="general">General</option><option value="docs">Docs</option><option value="tool">Tool</option><option value="ref">Reference</option>
+      </select>
+      <button onClick={async()=>{if(!newWlTitle||!newWlUrl)return;await fetch('/api/workspace-links',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newWlTitle,url:newWlUrl,category:newWlCat})});setNewWlTitle('');setNewWlUrl('');const r=await fetch('/api/workspace-links',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsLinks(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-links',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsLinks(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {wsLinks.map((l:any)=>(
+      <div key={l.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <a href={l.url} target="_blank" rel="noreferrer" onClick={async()=>{await fetch(`/api/workspace-links/${l.id}/click`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});}} style={{color:'#93c5fd',fontWeight:600,textDecoration:'none'}}>{l.title}</a>
+          <span style={{color:'#6366f1',fontSize:11,marginLeft:8}}>{l.category}</span>
+          <span style={{color:'#64748b',fontSize:11,marginLeft:8}}>{l.clicks} clicks</span>
+        </div>
+        <button onClick={async()=>{await fetch(`/api/workspace-links/${l.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsLinks(wsLinks.filter((x:any)=>x.id!==l.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='msgdrafts' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>✏️ Message Drafts</h2>
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+      <input value={newMdThreadId} onChange={e=>setNewMdThreadId(e.target.value)} placeholder="Thread ID (optional)" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
+    </div>
+    <textarea value={newMdContent} onChange={e=>setNewMdContent(e.target.value)} placeholder="Draft content" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'8px',color:'#f1f5f9',fontSize:13,width:'100%',minHeight:80,resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <button onClick={async()=>{if(!newMdContent)return;await fetch('/api/message-drafts',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({content:newMdContent,thread_id:newMdThreadId})});setNewMdContent('');const r=await fetch('/api/message-drafts',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setMessageDrafts(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Save Draft</button>
+      <button onClick={async()=>{const r=await fetch('/api/message-drafts',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setMessageDrafts(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
+    </div>
+    {messageDrafts.map((d:any)=>(
+      <div key={d.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{color:'#64748b',fontSize:11}}>{d.thread_id?`Thread: ${d.thread_id}`:'No thread'}</span>
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={()=>setNewMdContent(d.content)} style={{background:'#1e3a5f',color:'#93c5fd',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Use</button>
+            <button onClick={async()=>{await fetch(`/api/message-drafts/${d.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setMessageDrafts(messageDrafts.filter((x:any)=>x.id!==d.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
+          </div>
+        </div>
+        <div style={{color:'#94a3b8',fontSize:12,marginTop:4}}>{d.content.slice(0,200)}</div>
+      </div>
+    ))}
+  </div>
+)}
+{mainTab==='modelstats' && (
+  <div style={{padding:24}}>
+    <h2 style={{color:'#f1f5f9',marginBottom:16}}>📊 Model Stats</h2>
+    <button onClick={async()=>{const r=await fetch('/api/ai-model-stats',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiModelStats(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13,marginBottom:16}}>Load</button>
+    <div style={{display:'flex',flexWrap:'wrap',gap:12}}>
+      {aiModelStats.map((s:any)=>(
+        <div key={s.id} style={{background:'#1e293b',borderRadius:8,padding:16,minWidth:140}}>
+          <div style={{color:'#6366f1',fontWeight:700,marginBottom:8}}>{s.model}</div>
+          <div style={{color:'#f1f5f9',fontSize:20,fontWeight:700}}>{s.calls}</div>
+          <div style={{color:'#94a3b8',fontSize:11}}>calls</div>
+          <div style={{color:'#22c55e',fontSize:14,fontWeight:600,marginTop:4}}>{Number(s.tokens_used).toLocaleString()}</div>
+          <div style={{color:'#64748b',fontSize:11}}>tokens</div>
+          {s.errors>0 && <div style={{color:'#ef4444',fontSize:11,marginTop:4}}>{s.errors} errors</div>}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 {mainTab==='savedsearch' && (
   <div style={{padding:24}}>
     <h2 style={{color:'#f1f5f9',marginBottom:16}}>🔖 Saved Searches</h2>

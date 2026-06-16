@@ -12400,4 +12400,132 @@ app.get('/api/ai-model-stats', requireAuth, (req: any, res: any) => {
   res.json(db.prepare('SELECT * FROM ai_model_stats WHERE user_id=? ORDER BY calls DESC').all(req.user.id));
 });
 
+
+// ── Batch 49 ──────────────────────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sprint_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, sprint TEXT,
+    title TEXT, status TEXT DEFAULT 'todo', points INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_summaries_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, source_type TEXT,
+    source_id TEXT, summary TEXT, model TEXT DEFAULT 'claude',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_colors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    hex TEXT, usage TEXT DEFAULT 'accent', created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_clips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT,
+    message_id TEXT, clip_text TEXT, note TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_prompts_library (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT,
+    prompt TEXT, category TEXT DEFAULT 'general', uses INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/sprint-items
+app.get('/api/sprint-items', requireAuth, (req: any, res: any) => {
+  const { sprint } = req.query;
+  const rows = sprint
+    ? db.prepare('SELECT * FROM sprint_items WHERE user_id=? AND sprint=? ORDER BY status, created_at').all(req.user.id, sprint)
+    : db.prepare('SELECT * FROM sprint_items WHERE user_id=? ORDER BY sprint DESC, created_at').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/sprint-items', requireAuth, (req: any, res: any) => {
+  const { sprint, title, points = 1 } = req.body;
+  if (!sprint || !title) return res.status(400).json({ error: 'sprint and title required' });
+  const r = db.prepare('INSERT INTO sprint_items (user_id,sprint,title,points) VALUES (?,?,?,?)').run(req.user.id, sprint, title, points);
+  res.json({ id: r.lastInsertRowid, sprint, title, status: 'todo', points });
+});
+app.put('/api/sprint-items/:id/status', requireAuth, (req: any, res: any) => {
+  const { status } = req.body;
+  db.prepare('UPDATE sprint_items SET status=? WHERE id=? AND user_id=?').run(status, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/sprint-items/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM sprint_items WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-summaries-v2
+app.post('/api/ai-summaries-v2', requireAuth, (req: any, res: any) => {
+  const { source_type, source_id, summary, model = 'claude' } = req.body;
+  if (!source_type || !summary) return res.status(400).json({ error: 'source_type and summary required' });
+  const r = db.prepare('INSERT INTO ai_summaries_v2 (user_id,source_type,source_id,summary,model) VALUES (?,?,?,?,?)').run(req.user.id, source_type, source_id || '', summary, model);
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/ai-summaries-v2', requireAuth, (req: any, res: any) => {
+  const { source_type } = req.query;
+  const rows = source_type
+    ? db.prepare('SELECT * FROM ai_summaries_v2 WHERE user_id=? AND source_type=? ORDER BY created_at DESC').all(req.user.id, source_type)
+    : db.prepare('SELECT * FROM ai_summaries_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id);
+  res.json(rows);
+});
+app.delete('/api/ai-summaries-v2/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_summaries_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-colors
+app.get('/api/workspace-colors', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_colors WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-colors', requireAuth, (req: any, res: any) => {
+  const { name, hex, usage = 'accent' } = req.body;
+  if (!name || !hex) return res.status(400).json({ error: 'name and hex required' });
+  const r = db.prepare('INSERT INTO workspace_colors (user_id,name,hex,usage) VALUES (?,?,?,?)').run(req.user.id, name, hex, usage);
+  res.json({ id: r.lastInsertRowid, name, hex, usage });
+});
+app.delete('/api/workspace-colors/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_colors WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/thread-clips
+app.get('/api/thread-clips', requireAuth, (req: any, res: any) => {
+  const { thread_id } = req.query;
+  const rows = thread_id
+    ? db.prepare('SELECT * FROM thread_clips WHERE user_id=? AND thread_id=? ORDER BY created_at DESC').all(req.user.id, thread_id)
+    : db.prepare('SELECT * FROM thread_clips WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/thread-clips', requireAuth, (req: any, res: any) => {
+  const { thread_id, message_id, clip_text, note = '' } = req.body;
+  if (!clip_text) return res.status(400).json({ error: 'clip_text required' });
+  const r = db.prepare('INSERT INTO thread_clips (user_id,thread_id,message_id,clip_text,note) VALUES (?,?,?,?,?)').run(req.user.id, thread_id || '', message_id || '', clip_text, note);
+  res.json({ id: r.lastInsertRowid, clip_text, note });
+});
+app.delete('/api/thread-clips/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_clips WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/prompts-library
+app.get('/api/prompts-library', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_prompts_library WHERE user_id=? ORDER BY uses DESC').all(req.user.id));
+});
+app.post('/api/prompts-library', requireAuth, (req: any, res: any) => {
+  const { title, prompt, category = 'general' } = req.body;
+  if (!title || !prompt) return res.status(400).json({ error: 'title and prompt required' });
+  const r = db.prepare('INSERT INTO ai_prompts_library (user_id,title,prompt,category) VALUES (?,?,?,?)').run(req.user.id, title, prompt, category);
+  res.json({ id: r.lastInsertRowid, title, prompt, category, uses: 0 });
+});
+app.put('/api/prompts-library/:id/use', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT prompt FROM ai_prompts_library WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE ai_prompts_library SET uses=uses+1 WHERE id=?').run(req.params.id);
+  res.json({ prompt: row.prompt });
+});
+app.delete('/api/prompts-library/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_prompts_library WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
