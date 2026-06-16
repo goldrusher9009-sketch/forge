@@ -10194,4 +10194,199 @@ app.delete('/api/workspace-search-history', authenticateToken, (req: any, res: a
   res.json({ ok: true });
 });
 
+
+// ============================================================
+// BATCH 35: collaboration_notes, ai_experiments, workspace_rules, content_drafts, user_achievements
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS collaboration_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    shared INTEGER DEFAULT 0,
+    collaborators TEXT DEFAULT '[]',
+    version INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_experiments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    hypothesis TEXT,
+    prompt_a TEXT NOT NULL,
+    prompt_b TEXT NOT NULL,
+    result_a TEXT,
+    result_b TEXT,
+    winner TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    condition TEXT NOT NULL,
+    action TEXT NOT NULL,
+    enabled INTEGER DEFAULT 1,
+    trigger_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS content_drafts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    type TEXT DEFAULT 'post',
+    status TEXT DEFAULT 'draft',
+    word_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_achievements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    achievement TEXT NOT NULL,
+    description TEXT,
+    icon TEXT DEFAULT '🏆',
+    unlocked_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, achievement)
+  );
+`);
+
+// Collaboration Notes
+app.get('/api/collab-notes', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM collaboration_notes WHERE user_id=? ORDER BY updated_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/collab-notes', authenticateToken, (req: any, res: any) => {
+  const { title, content, shared } = req.body;
+  if (!title || !content) return res.status(400).json({ error: 'title and content required' });
+  const r = db.prepare('INSERT INTO collaboration_notes (user_id,title,content,shared) VALUES (?,?,?,?)').run(req.user.id, title, content, shared?1:0);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/collab-notes/:id', authenticateToken, (req: any, res: any) => {
+  const { title, content, shared } = req.body;
+  const now = new Date().toISOString();
+  db.prepare('UPDATE collaboration_notes SET title=?,content=?,shared=?,updated_at=?,version=version+1 WHERE id=? AND user_id=?').run(title, content, shared?1:0, now, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/collab-notes/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM collaboration_notes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// AI Experiments
+app.get('/api/ai-experiments', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM ai_experiments WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/ai-experiments', authenticateToken, (req: any, res: any) => {
+  const { name, hypothesis, prompt_a, prompt_b } = req.body;
+  if (!name || !prompt_a || !prompt_b) return res.status(400).json({ error: 'name, prompt_a, prompt_b required' });
+  const r = db.prepare('INSERT INTO ai_experiments (user_id,name,hypothesis,prompt_a,prompt_b) VALUES (?,?,?,?,?)').run(req.user.id, name, hypothesis||'', prompt_a, prompt_b);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-experiments/:id/result', authenticateToken, (req: any, res: any) => {
+  const { result_a, result_b, winner, notes } = req.body;
+  db.prepare('UPDATE ai_experiments SET result_a=?,result_b=?,winner=?,notes=? WHERE id=? AND user_id=?').run(result_a||'', result_b||'', winner||null, notes||'', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-experiments/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_experiments WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Rules
+app.get('/api/workspace-rules', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM workspace_rules WHERE user_id=? ORDER BY enabled DESC, trigger_count DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/workspace-rules', authenticateToken, (req: any, res: any) => {
+  const { name, condition, action } = req.body;
+  if (!name || !condition || !action) return res.status(400).json({ error: 'name, condition, action required' });
+  const r = db.prepare('INSERT INTO workspace_rules (user_id,name,condition,action) VALUES (?,?,?,?)').run(req.user.id, name, condition, action);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-rules/:id/toggle', authenticateToken, (req: any, res: any) => {
+  const row = db.prepare('SELECT enabled FROM workspace_rules WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE workspace_rules SET enabled=? WHERE id=?').run(row.enabled ? 0 : 1, req.params.id);
+  res.json({ enabled: !row.enabled });
+});
+app.post('/api/workspace-rules/:id/trigger', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_rules SET trigger_count=trigger_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-rules/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_rules WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Content Drafts
+app.get('/api/content-drafts', authenticateToken, (req: any, res: any) => {
+  const { type, status } = req.query as any;
+  let q = 'SELECT * FROM content_drafts WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (type) { q += ' AND type=?'; p.push(type); }
+  if (status) { q += ' AND status=?'; p.push(status); }
+  q += ' ORDER BY updated_at DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/content-drafts', authenticateToken, (req: any, res: any) => {
+  const { title, content, type } = req.body;
+  if (!title || !content) return res.status(400).json({ error: 'title and content required' });
+  const wc = content.trim().split(/\s+/).length;
+  const r = db.prepare('INSERT INTO content_drafts (user_id,title,content,type,word_count) VALUES (?,?,?,?,?)').run(req.user.id, title, content, type||'post', wc);
+  res.json({ id: r.lastInsertRowid, word_count: wc });
+});
+app.put('/api/content-drafts/:id', authenticateToken, (req: any, res: any) => {
+  const { title, content, status } = req.body;
+  const now = new Date().toISOString();
+  const wc = content?.trim().split(/\s+/).length || 0;
+  db.prepare('UPDATE content_drafts SET title=?,content=?,status=?,word_count=?,updated_at=? WHERE id=? AND user_id=?').run(title, content, status||'draft', wc, now, req.params.id, req.user.id);
+  res.json({ ok: true, word_count: wc });
+});
+app.delete('/api/content-drafts/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM content_drafts WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// User Achievements
+app.get('/api/achievements', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM user_achievements WHERE user_id=? ORDER BY unlocked_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/achievements', authenticateToken, (req: any, res: any) => {
+  const { achievement, description, icon } = req.body;
+  if (!achievement) return res.status(400).json({ error: 'achievement required' });
+  try {
+    const r = db.prepare('INSERT INTO user_achievements (user_id,achievement,description,icon) VALUES (?,?,?,?)').run(req.user.id, achievement, description||'', icon||'🏆');
+    res.json({ id: r.lastInsertRowid, new: true });
+  } catch {
+    res.json({ new: false });
+  }
+});
+app.get('/api/achievements/check', authenticateToken, (req: any, res: any) => {
+  const count = (db.prepare('SELECT COUNT(*) as n FROM ai_conversations WHERE user_id=?').get(req.user.id) as any)?.n || 0;
+  const unlocked: string[] = [];
+  const defs = [
+    { key: 'first_chat', thresh: 1, icon: '💬', desc: 'Started first conversation' },
+    { key: 'ten_chats', thresh: 10, icon: '🔟', desc: 'Completed 10 conversations' },
+    { key: 'hundred_chats', thresh: 100, icon: '💯', desc: 'Completed 100 conversations' },
+  ];
+  for (const def of defs) {
+    if (count >= def.thresh) {
+      const existing = db.prepare('SELECT id FROM user_achievements WHERE user_id=? AND achievement=?').get(req.user.id, def.key);
+      if (!existing) {
+        db.prepare('INSERT OR IGNORE INTO user_achievements (user_id,achievement,description,icon) VALUES (?,?,?,?)').run(req.user.id, def.key, def.desc, def.icon);
+        unlocked.push(def.key);
+      }
+    }
+  }
+  res.json({ unlocked });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

@@ -11229,6 +11229,158 @@ export default function ForgeApp() {
           </div>
         )}
 
+        {/* Workspace Widgets tab */}
+        {mainTab==='wswidgets' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🧩 Workspace Widgets</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <select value={newWwType} onChange={e=>setNewWwType(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['clock','stats','recent-threads','quick-notes','weather','countdown','goal-progress','word-count','streak'].map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+              <input value={newWwTitle} onChange={e=>setNewWwTitle(e.target.value)} placeholder="Widget title (optional)..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ await fetch('/api/workspace-widgets',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({type:newWwType,title:newWwTitle||newWwType,position:wsWidgets.length})}); setNewWwTitle(''); const r=await fetch('/api/workspace-widgets',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsWidgets(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add Widget</button>
+              <button onClick={async()=>{ const r=await fetch('/api/workspace-widgets',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsWidgets(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:10 }}>
+              {wsWidgets.map((w:any)=>(
+                <div key={w.id} style={{ background:'var(--bg-card)', border:`1px solid ${w.enabled?'var(--accent)':'var(--border)'}`, borderRadius:10, padding:14, opacity:w.enabled?1:0.5 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:13 }}>{w.title}</div>
+                      <div style={{ color:'var(--accent)', fontSize:11 }}>{w.type}</div>
+                    </div>
+                    <div style={{ display:'flex', gap:4 }}>
+                      <button onClick={async()=>{ await fetch(`/api/workspace-widgets/${w.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:w.title,config:w.config,position:w.position,enabled:w.enabled?0:1})}); const r=await fetch('/api/workspace-widgets',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsWidgets(await r.json()); }} style={{ padding:'3px 7px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>{w.enabled?'Off':'On'}</button>
+                      <button onClick={async()=>{ await fetch(`/api/workspace-widgets/${w.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsWidgets(wsWidgets.filter((x:any)=>x.id!==w.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ color:'var(--fg-text3)', fontSize:11 }}>Position: {w.position}</div>
+                </div>
+              ))}
+              {wsWidgets.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No widgets added yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Personas v2 tab */}
+        {mainTab==='personasv2' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎭 AI Personas v2</div>
+            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:20 }}>
+              <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
+                <input value={newPv2Avatar} onChange={e=>setNewPv2Avatar(e.target.value)} placeholder="🤖" style={{ width:52, padding:'8px 10px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:20, textAlign:'center' }} />
+                <input value={newPv2Name} onChange={e=>setNewPv2Name(e.target.value)} placeholder="Persona name..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+                <select value={newPv2Model} onChange={e=>setNewPv2Model(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                  {['claude','gpt-4o','gemini','groq','mistral'].map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <textarea value={newPv2Prompt} onChange={e=>setNewPv2Prompt(e.target.value)} placeholder="System prompt for this persona..." rows={4} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={async()=>{ if(!newPv2Name.trim()||!newPv2Prompt.trim()) return; await fetch('/api/personas-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newPv2Name,system_prompt:newPv2Prompt,avatar:newPv2Avatar,model:newPv2Model})}); setNewPv2Name(''); setNewPv2Prompt(''); const r=await fetch('/api/personas-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasV2(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create Persona</button>
+                <button onClick={async()=>{ const r=await fetch('/api/personas-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasV2(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:10 }}>
+              {personasV2.map((p:any)=>(
+                <div key={p.id} style={{ background:'var(--bg-card)', border:`1px solid ${p.pinned?'#f59e0b':'var(--border)'}`, borderRadius:12, padding:14 }}>
+                  <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:8 }}>
+                    <span style={{ fontSize:28 }}>{p.avatar}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{p.name}</div>
+                      <div style={{ color:'var(--accent)', fontSize:11 }}>{p.model} · used {p.use_count}×</div>
+                    </div>
+                    <div style={{ display:'flex', gap:4 }}>
+                      <button onClick={async()=>{ await fetch(`/api/personas-v2/${p.id}/pin`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/personas-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasV2(await r.json()); }} style={{ padding:'3px 7px', background:p.pinned?'#f59e0b22':'var(--bg-input)', border:`1px solid ${p.pinned?'#f59e0b':'var(--border)'}`, borderRadius:5, color:p.pinned?'#f59e0b':'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>📌</button>
+                      <button onClick={async()=>{ await fetch(`/api/personas-v2/${p.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasV2(personasV2.filter((x:any)=>x.id!==p.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ color:'var(--fg-text2)', fontSize:12, lineHeight:1.4, maxHeight:60, overflow:'hidden' }}>{p.system_prompt.slice(0,150)}</div>
+                  <button onClick={async()=>{ await fetch(`/api/personas-v2/${p.id}/use`,{method:'POST',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/personas-v2',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasV2(await r.json()); }} style={{ marginTop:10, padding:'5px 12px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12, width:'100%' }}>Use Persona</button>
+                </div>
+              ))}
+              {personasV2.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No personas yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Metrics tab */}
+        {mainTab==='threadmetrics' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📈 Thread Metrics</div>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button onClick={async()=>{ const r=await fetch('/api/thread-metrics',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadMetrics(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Load Recent</button>
+              <button onClick={async()=>{ const r=await fetch('/api/thread-metrics/top',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadMetrics(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Top Active</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {threadMetrics.map((m:any)=>(
+                <div key={m.id} style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr 1fr 1fr', gap:12, alignItems:'center', background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:8, padding:'10px 14px' }}>
+                  <div style={{ color:'var(--accent)', fontWeight:600, fontSize:13 }}>#{m.thread_id}</div>
+                  <div style={{ textAlign:'center' }}><div style={{ color:'var(--fg-text)', fontWeight:600 }}>{m.message_count}</div><div style={{ color:'var(--fg-text3)', fontSize:10 }}>msgs</div></div>
+                  <div style={{ textAlign:'center' }}><div style={{ color:'var(--fg-text)', fontWeight:600 }}>{(m.token_count/1000).toFixed(1)}k</div><div style={{ color:'var(--fg-text3)', fontSize:10 }}>tokens</div></div>
+                  <div style={{ textAlign:'center' }}><div style={{ color:'var(--fg-text)', fontWeight:600 }}>{m.avg_response_ms}ms</div><div style={{ color:'var(--fg-text3)', fontSize:10 }}>avg resp</div></div>
+                  <div style={{ textAlign:'right', color:'var(--fg-text3)', fontSize:11 }}>{m.last_activity?.split('T')[0]}</div>
+                </div>
+              ))}
+              {threadMetrics.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No thread metrics yet. Metrics are recorded as you chat.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions tab */}
+        {mainTab==='quickactions' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>⚡ Quick Actions</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newQaLabel} onChange={e=>setNewQaLabel(e.target.value)} placeholder="Action label..." style={{ flex:1, minWidth:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newQaType} onChange={e=>setNewQaType(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['prompt','navigate','api-call','copy','export','notify'].map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+              <input value={newQaShortcut} onChange={e=>setNewQaShortcut(e.target.value)} placeholder="Shortcut (e.g. ctrl+1)..." style={{ flex:1, minWidth:120, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={async()=>{ if(!newQaLabel.trim()) return; await fetch('/api/quick-actions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({label:newQaLabel,action_type:newQaType,shortcut:newQaShortcut})}); setNewQaLabel(''); setNewQaShortcut(''); const r=await fetch('/api/quick-actions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setQuickActions(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
+              <button onClick={async()=>{ const r=await fetch('/api/quick-actions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setQuickActions(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8 }}>
+              {quickActions.map((qa:any)=>(
+                <div key={qa.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:12 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:13 }}>{qa.label}</div>
+                      <div style={{ color:'var(--accent)', fontSize:11 }}>{qa.action_type}{qa.shortcut?' · '+qa.shortcut:''}</div>
+                      <div style={{ color:'var(--fg-text3)', fontSize:10 }}>used {qa.use_count}×</div>
+                    </div>
+                    <button onClick={async()=>{ await fetch(`/api/quick-actions/${qa.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setQuickActions(quickActions.filter((x:any)=>x.id!==qa.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11, alignSelf:'flex-start' }}>Del</button>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/quick-actions/${qa.id}/trigger`,{method:'POST',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/quick-actions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setQuickActions(await r.json()); }} style={{ padding:'5px 10px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12, width:'100%' }}>▶ Run</button>
+                </div>
+              ))}
+              {quickActions.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No quick actions yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Search History tab */}
+        {mainTab==='searchhist' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🔍 Search History</div>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button onClick={async()=>{ const r=await fetch('/api/workspace-search-history',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsSearchHistory(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Load History</button>
+              <button onClick={async()=>{ await fetch('/api/workspace-search-history',{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsSearchHistory([]); }} style={{ padding:'8px 14px', background:'#ef4444', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Clear All</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+              {wsSearchHistory.map((h:any)=>(
+                <div key={h.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 14px', background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:8 }}>
+                  <div>
+                    <span style={{ color:'var(--fg-text)', fontSize:13 }}>"{h.query}"</span>
+                    <span style={{ color:'var(--accent)', fontSize:11, marginLeft:10 }}>{h.results_count} results</span>
+                  </div>
+                  <span style={{ color:'var(--fg-text3)', fontSize:11 }}>{h.searched_at?.split('T')[0]}</span>
+                </div>
+              ))}
+              {wsSearchHistory.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No search history yet.</div>}
+            </div>
+          </div>
+        )}
+
         {/* Insight Cards tab */}
         {mainTab==='insightcards' && (
           <div style={{ padding:24 }}>
