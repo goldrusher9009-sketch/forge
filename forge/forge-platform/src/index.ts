@@ -9495,4 +9495,177 @@ app.delete('/api/learning-paths/:id', authMiddleware, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ============================================================
+// BATCH 31: ai_bookmarks, focus_sessions, thread_reactions, workspace_tags, daily_intentions
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_bookmarks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    title TEXT,
+    summary TEXT,
+    tags TEXT DEFAULT '[]',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS focus_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    label TEXT,
+    duration_min INTEGER DEFAULT 25,
+    started_at TEXT,
+    ended_at TEXT,
+    completed INTEGER DEFAULT 0,
+    notes TEXT
+  );
+  CREATE TABLE IF NOT EXISTS thread_reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    thread_id INTEGER NOT NULL,
+    emoji TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    color TEXT DEFAULT '#6366f1',
+    usage_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS daily_intentions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    intention TEXT NOT NULL,
+    achieved INTEGER DEFAULT 0,
+    reflection TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// AI Bookmarks
+app.get('/api/ai-bookmarks', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM ai_bookmarks WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/ai-bookmarks', authenticateToken, (req: any, res: any) => {
+  const { url, title, summary, tags } = req.body;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  const r = db.prepare('INSERT INTO ai_bookmarks (user_id,url,title,summary,tags) VALUES (?,?,?,?,?)').run(req.user.id, url, title||'', summary||'', JSON.stringify(tags||[]));
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-bookmarks/:id', authenticateToken, (req: any, res: any) => {
+  const { title, summary, tags } = req.body;
+  db.prepare('UPDATE ai_bookmarks SET title=?,summary=?,tags=? WHERE id=? AND user_id=?').run(title, summary, JSON.stringify(tags||[]), req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-bookmarks/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_bookmarks WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/ai-bookmarks/search', authenticateToken, (req: any, res: any) => {
+  const q = `%${req.query.q||''}%`;
+  const rows = db.prepare('SELECT * FROM ai_bookmarks WHERE user_id=? AND (title LIKE ? OR summary LIKE ? OR url LIKE ?) ORDER BY created_at DESC').all(req.user.id, q, q, q);
+  res.json(rows);
+});
+
+// Focus Sessions
+app.get('/api/focus-sessions', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM focus_sessions WHERE user_id=? ORDER BY started_at DESC LIMIT 50').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/focus-sessions', authenticateToken, (req: any, res: any) => {
+  const { label, duration_min, notes } = req.body;
+  const started = new Date().toISOString();
+  const r = db.prepare('INSERT INTO focus_sessions (user_id,label,duration_min,started_at,notes) VALUES (?,?,?,?,?)').run(req.user.id, label||'Focus', duration_min||25, started, notes||'');
+  res.json({ id: r.lastInsertRowid, started_at: started });
+});
+app.put('/api/focus-sessions/:id/complete', authenticateToken, (req: any, res: any) => {
+  const { notes } = req.body;
+  const ended = new Date().toISOString();
+  db.prepare('UPDATE focus_sessions SET completed=1,ended_at=?,notes=? WHERE id=? AND user_id=?').run(ended, notes||'', req.params.id, req.user.id);
+  res.json({ ok: true, ended_at: ended });
+});
+app.delete('/api/focus-sessions/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM focus_sessions WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/focus-sessions/stats', authenticateToken, (req: any, res: any) => {
+  const total = (db.prepare('SELECT COUNT(*) as n FROM focus_sessions WHERE user_id=?').get(req.user.id) as any).n;
+  const completed = (db.prepare('SELECT COUNT(*) as n FROM focus_sessions WHERE user_id=? AND completed=1').get(req.user.id) as any).n;
+  const totalMin = (db.prepare('SELECT SUM(duration_min) as s FROM focus_sessions WHERE user_id=? AND completed=1').get(req.user.id) as any).s || 0;
+  res.json({ total, completed, totalMin });
+});
+
+// Thread Reactions
+app.get('/api/thread-reactions/:threadId', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT emoji, COUNT(*) as count FROM thread_reactions WHERE thread_id=? GROUP BY emoji').all(req.params.threadId);
+  res.json(rows);
+});
+app.post('/api/thread-reactions', authenticateToken, (req: any, res: any) => {
+  const { thread_id, emoji } = req.body;
+  if (!thread_id || !emoji) return res.status(400).json({ error: 'thread_id and emoji required' });
+  const existing = db.prepare('SELECT id FROM thread_reactions WHERE user_id=? AND thread_id=? AND emoji=?').get(req.user.id, thread_id, emoji);
+  if (existing) {
+    db.prepare('DELETE FROM thread_reactions WHERE user_id=? AND thread_id=? AND emoji=?').run(req.user.id, thread_id, emoji);
+    return res.json({ toggled: 'removed' });
+  }
+  db.prepare('INSERT INTO thread_reactions (user_id,thread_id,emoji) VALUES (?,?,?)').run(req.user.id, thread_id, emoji);
+  res.json({ toggled: 'added' });
+});
+
+// Workspace Tags
+app.get('/api/workspace-tags', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM workspace_tags WHERE user_id=? ORDER BY usage_count DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/workspace-tags', authenticateToken, (req: any, res: any) => {
+  const { name, color } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO workspace_tags (user_id,name,color) VALUES (?,?,?)').run(req.user.id, name, color||'#6366f1');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-tags/:id/use', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_tags SET usage_count=usage_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-tags/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_tags WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Daily Intentions
+app.get('/api/daily-intentions', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM daily_intentions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/daily-intentions', authenticateToken, (req: any, res: any) => {
+  const { date, intention } = req.body;
+  if (!date || !intention) return res.status(400).json({ error: 'date and intention required' });
+  const existing = db.prepare('SELECT id FROM daily_intentions WHERE user_id=? AND date=?').get(req.user.id, date);
+  if (existing) {
+    db.prepare('UPDATE daily_intentions SET intention=? WHERE id=?').run(intention, (existing as any).id);
+    return res.json({ id: (existing as any).id, updated: true });
+  }
+  const r = db.prepare('INSERT INTO daily_intentions (user_id,date,intention) VALUES (?,?,?)').run(req.user.id, date, intention);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/daily-intentions/:id/reflect', authenticateToken, (req: any, res: any) => {
+  const { achieved, reflection } = req.body;
+  db.prepare('UPDATE daily_intentions SET achieved=?,reflection=? WHERE id=? AND user_id=?').run(achieved?1:0, reflection||'', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/daily-intentions/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM daily_intentions WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/daily-intentions/today', authenticateToken, (req: any, res: any) => {
+  const today = new Date().toISOString().split('T')[0];
+  const row = db.prepare('SELECT * FROM daily_intentions WHERE user_id=? AND date=?').get(req.user.id, today);
+  res.json(row || null);
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
