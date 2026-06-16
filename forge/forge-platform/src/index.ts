@@ -10910,4 +10910,162 @@ app.delete('/api/ai-tasks/:id', authenticateToken, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ============================================================
+// BATCH 39: idea_votes, workspace_broadcasts, ai_debug_logs, note_links, user_profiles_v2
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS idea_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    idea TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    votes INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'open',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_broadcasts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT DEFAULT 'info',
+    expires_at TEXT,
+    dismissed INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_debug_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    prompt TEXT NOT NULL,
+    response TEXT,
+    model TEXT,
+    tokens_in INTEGER DEFAULT 0,
+    tokens_out INTEGER DEFAULT 0,
+    latency_ms INTEGER DEFAULT 0,
+    error TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS note_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    source_id INTEGER NOT NULL,
+    target_id INTEGER NOT NULL,
+    link_type TEXT DEFAULT 'related',
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, source_id, target_id)
+  );
+  CREATE TABLE IF NOT EXISTS user_profiles_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL,
+    display_name TEXT,
+    bio TEXT,
+    avatar_emoji TEXT DEFAULT '👤',
+    timezone TEXT DEFAULT 'UTC',
+    preferred_model TEXT DEFAULT 'claude',
+    weekly_goal_hours INTEGER DEFAULT 10,
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// Idea Votes
+app.get('/api/idea-votes', authenticateToken, (req: any, res: any) => {
+  const { status } = req.query as any;
+  let q = 'SELECT * FROM idea_votes WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (status) { q += ' AND status=?'; p.push(status); }
+  q += ' ORDER BY votes DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/idea-votes', authenticateToken, (req: any, res: any) => {
+  const { idea, category } = req.body;
+  if (!idea) return res.status(400).json({ error: 'idea required' });
+  const r = db.prepare('INSERT INTO idea_votes (user_id,idea,category) VALUES (?,?,?)').run(req.user.id, idea, category||'general');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/idea-votes/:id/vote', authenticateToken, (req: any, res: any) => {
+  const { dir } = req.body;
+  db.prepare('UPDATE idea_votes SET votes=votes+? WHERE id=? AND user_id=?').run(dir === 'down' ? -1 : 1, req.params.id, req.user.id);
+  const row = db.prepare('SELECT votes FROM idea_votes WHERE id=?').get(req.params.id) as any;
+  res.json({ votes: row?.votes });
+});
+app.put('/api/idea-votes/:id/status', authenticateToken, (req: any, res: any) => {
+  const { status } = req.body;
+  db.prepare('UPDATE idea_votes SET status=? WHERE id=? AND user_id=?').run(status||'open', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/idea-votes/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM idea_votes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Broadcasts
+app.get('/api/workspace-broadcasts', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare("SELECT * FROM workspace_broadcasts WHERE user_id=? AND dismissed=0 AND (expires_at IS NULL OR expires_at > datetime('now')) ORDER BY created_at DESC").all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/workspace-broadcasts', authenticateToken, (req: any, res: any) => {
+  const { message, type, expires_at } = req.body;
+  if (!message) return res.status(400).json({ error: 'message required' });
+  const r = db.prepare('INSERT INTO workspace_broadcasts (user_id,message,type,expires_at) VALUES (?,?,?,?)').run(req.user.id, message, type||'info', expires_at||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-broadcasts/:id/dismiss', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_broadcasts SET dismissed=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-broadcasts/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_broadcasts WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// AI Debug Logs
+app.post('/api/ai-debug-logs', authenticateToken, (req: any, res: any) => {
+  const { prompt, response, model, tokens_in, tokens_out, latency_ms, error } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'prompt required' });
+  const r = db.prepare('INSERT INTO ai_debug_logs (user_id,prompt,response,model,tokens_in,tokens_out,latency_ms,error) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, prompt, response||'', model||'unknown', tokens_in||0, tokens_out||0, latency_ms||0, error||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/ai-debug-logs', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM ai_debug_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id);
+  res.json(rows);
+});
+app.get('/api/ai-debug-logs/stats', authenticateToken, (req: any, res: any) => {
+  const stats = db.prepare('SELECT model, COUNT(*) as calls, AVG(latency_ms) as avg_latency, SUM(tokens_in+tokens_out) as total_tokens, COUNT(error) as errors FROM ai_debug_logs WHERE user_id=? GROUP BY model').all(req.user.id);
+  res.json(stats);
+});
+app.delete('/api/ai-debug-logs', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_debug_logs WHERE user_id=?').run(req.user.id);
+  res.json({ ok: true });
+});
+
+// Note Links
+app.get('/api/note-links/:source_id', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM note_links WHERE user_id=? AND source_id=?').all(req.user.id, req.params.source_id));
+});
+app.post('/api/note-links', authenticateToken, (req: any, res: any) => {
+  const { source_id, target_id, link_type } = req.body;
+  if (!source_id || !target_id) return res.status(400).json({ error: 'source_id and target_id required' });
+  try {
+    const r = db.prepare('INSERT INTO note_links (user_id,source_id,target_id,link_type) VALUES (?,?,?,?)').run(req.user.id, source_id, target_id, link_type||'related');
+    res.json({ id: r.lastInsertRowid });
+  } catch { res.status(409).json({ error: 'link exists' }); }
+});
+app.delete('/api/note-links/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM note_links WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// User Profiles v2
+app.get('/api/user-profile-v2', authenticateToken, (req: any, res: any) => {
+  const row = db.prepare('SELECT * FROM user_profiles_v2 WHERE user_id=?').get(req.user.id);
+  res.json(row || { user_id: req.user.id, display_name: '', bio: '', avatar_emoji: '👤', timezone: 'UTC', preferred_model: 'claude', weekly_goal_hours: 10 });
+});
+app.put('/api/user-profile-v2', authenticateToken, (req: any, res: any) => {
+  const { display_name, bio, avatar_emoji, timezone, preferred_model, weekly_goal_hours } = req.body;
+  const now = new Date().toISOString();
+  db.prepare(`INSERT INTO user_profiles_v2 (user_id,display_name,bio,avatar_emoji,timezone,preferred_model,weekly_goal_hours,updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET display_name=excluded.display_name,bio=excluded.bio,avatar_emoji=excluded.avatar_emoji,timezone=excluded.timezone,preferred_model=excluded.preferred_model,weekly_goal_hours=excluded.weekly_goal_hours,updated_at=excluded.updated_at`).run(req.user.id, display_name||'', bio||'', avatar_emoji||'👤', timezone||'UTC', preferred_model||'claude', weekly_goal_hours||10, now);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

@@ -385,3 +385,14 @@ Tests: **43 API passing** + 10 contract cases. Bundle refreshed.
 | Favicon + OG/Twitter meta + apple-touch icon | ✅ |
 
 Tests: **43 passing**. Bundle refreshed.
+
+
+## Skeletons · install · contrast (latest)
+
+| Item | Status |
+|------|--------|
+| Skeleton loaders on Market + Leaderboard while data loads | ✅ |
+| PWA install prompt (beforeinstallprompt → Install button) | ✅ |
+| A11y — aria-live toasts, raised muted-text contrast, focus rings on all themes | ✅ |
+
+Tests: **43 passing**. Bundle refreshed.
