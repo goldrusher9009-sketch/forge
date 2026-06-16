@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -825,6 +825,26 @@ export default function ForgeApp() {
   const [newDraftContent, setNewDraftContent] = useState('');
   const [newDraftType, setNewDraftType] = useState('post');
   const [achievements, setAchievements] = useState<any[]>([]);
+  const [promptLibrary, setPromptLibrary] = useState<any[]>([]);
+  const [newPlTitle, setNewPlTitle] = useState('');
+  const [newPlPromptB36, setNewPlPromptB36] = useState('');
+  const [newPlCat, setNewPlCat] = useState('general');
+  const [wsConnections, setWsConnections] = useState<any[]>([]);
+  const [newWcName, setNewWcName] = useState('');
+  const [newWcType, setNewWcType] = useState('api');
+  const [newWcEndpoint, setNewWcEndpoint] = useState('');
+  const [aiGlossary, setAiGlossary] = useState<any[]>([]);
+  const [glossarySearch, setGlossarySearch] = useState('');
+  const [newGlTermB36, setNewGlTermB36] = useState('');
+  const [newGlDefB36, setNewGlDefB36] = useState('');
+  const [newGlCatB36, setNewGlCatB36] = useState('general');
+  const [readingQueueV2, setReadingQueueV2] = useState<any[]>([]);
+  const [rqv2Stats, setRqv2Stats] = useState<any>(null);
+  const [newRqUrl, setNewRqUrl] = useState('');
+  const [newRqTitle, setNewRqTitle] = useState('');
+  const [kanbanLabels, setKanbanLabels] = useState<any[]>([]);
+  const [newKlName, setNewKlName] = useState('');
+  const [newKlColor, setNewKlColor] = useState('#6366f1');
   const [wsWidgets, setWsWidgets] = useState<any[]>([]);
   const [newWwType, setNewWwType] = useState('clock');
   const [newWwTitle, setNewWwTitle] = useState('');
@@ -4411,7 +4431,12 @@ export default function ForgeApp() {
           { id:'aireminders', icon:'⏰', label:'AI Reminders' },
           { id:'tbookmarks2', icon:'🔖', label:'Thread Marks' },
           { id:'exportpresets', icon:'📤', label:'Export Presets' },
-          { id:'collabnotes', icon:'📝', label:'Collab Notes' },
+          { id:'promptlib', icon:'📚', label:'Prompt Library' },
+              { id:'wsconnect', icon:'🔗', label:'WS Connections' },
+              { id:'aiglossary', icon:'📖', label:'AI Glossary' },
+              { id:'rqv2', icon:'📰', label:'Reading Queue' },
+              { id:'kanlabels', icon:'🎨', label:'Kanban Labels' },
+              { id:'collabnotes', icon:'📝', label:'Collab Notes' },
               { id:'aiexp', icon:'🧪', label:'AI Experiments' },
               { id:'wsrules', icon:'⚙️', label:'WS Rules' },
               { id:'cdrafts', icon:'✍️', label:'Content Drafts' },
@@ -11254,6 +11279,152 @@ export default function ForgeApp() {
 
         {/* Workspace Widgets tab */}
         {/* Collab Notes tab */}
+{/* Prompt Library tab */}
+{mainTab==='promptlib' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📚 Prompt Library</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px',background:'#1f2937',padding:'12px',borderRadius:'8px',border:'1px solid #374151'}}>
+      <input placeholder="Title" value={newPlTitle} onChange={e=>setNewPlTitle(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+      <select value={newPlCat} onChange={e=>setNewPlCat(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}}>
+        {['general','coding','writing','analysis','creative','productivity'].map(cat=><option key={cat} value={cat}>{cat}</option>)}
+      </select>
+      <textarea placeholder="Prompt text..." value={newPlPromptB36} onChange={e=>setNewPlPromptB36(e.target.value)} rows={4} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb',resize:'vertical'}} />
+      <button onClick={async()=>{if(!newPlTitle||!newPlPromptB36)return;await fetch('/api/prompt-library',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newPlTitle,prompt:newPlPromptB36,category:newPlCat})});setNewPlTitle('');setNewPlPromptB36('');const r=await fetch('/api/prompt-library',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setPromptLibrary(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save Prompt</button>
+    </div>
+    <button onClick={async()=>{const r=await fetch('/api/prompt-library',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setPromptLibrary(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer',marginBottom:'12px'}}>Load</button>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {promptLibrary.map((p:any)=>(
+        <div key={p.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
+            <span style={{fontWeight:600,color:'#f9fafb'}}>{p.title} <span style={{fontSize:'11px',color:'#6b7280',background:'#374151',padding:'1px 6px',borderRadius:'4px'}}>{p.category}</span></span>
+            <div style={{display:'flex',gap:'6px'}}>
+              <button onClick={async()=>{const r=await fetch('/api/prompt-library/'+p.id+'/use',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const j=await r.json();navigator.clipboard.writeText(j.prompt);}} style={{padding:'3px 8px',background:'#4ade80',color:'#111',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px'}}>Copy</button>
+              <button onClick={async()=>{await fetch('/api/prompt-library/'+p.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setPromptLibrary(promptLibrary.filter((x:any)=>x.id!==p.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'3px 8px',cursor:'pointer'}}>Del</button>
+            </div>
+          </div>
+          <div style={{color:'#d1d5db',fontSize:'13px'}}>{p.prompt.substring(0,150)}{p.prompt.length>150?'...':''}</div>
+          <div style={{color:'#6b7280',fontSize:'11px',marginTop:'4px'}}>Used {p.use_count}x</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* WS Connections tab */}
+{mainTab==='wsconnect' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🔗 Workspace Connections</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Name" value={newWcName} onChange={e=>setNewWcName(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'120px'}} />
+      <select value={newWcType} onChange={e=>setNewWcType(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+        {['api','database','webhook','oauth','mcp'].map(t=><option key={t} value={t}>{t}</option>)}
+      </select>
+      <input placeholder="Endpoint URL" value={newWcEndpoint} onChange={e=>setNewWcEndpoint(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'160px'}} />
+      <button onClick={async()=>{if(!newWcName)return;await fetch('/api/workspace-connections',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({name:newWcName,type:newWcType,endpoint:newWcEndpoint})});setNewWcName('');setNewWcEndpoint('');const r=await fetch('/api/workspace-connections',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsConnections(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-connections',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsConnections(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {wsConnections.map((conn:any)=>(
+        <div key={conn.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <span style={{fontWeight:600,color:'#f9fafb'}}>{conn.name}</span>
+            <span style={{fontSize:'11px',color:'#6b7280',background:'#374151',padding:'1px 6px',borderRadius:'4px',marginLeft:'8px'}}>{conn.type}</span>
+            {conn.endpoint&&<div style={{color:'#9ca3af',fontSize:'12px',marginTop:'2px'}}>{conn.endpoint}</div>}
+          </div>
+          <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+            <span style={{fontSize:'11px',color:conn.status==='active'?'#4ade80':'#f87171'}}>{conn.status}</span>
+            <button onClick={async()=>{await fetch('/api/workspace-connections/'+conn.id+'/ping',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const r=await fetch('/api/workspace-connections',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsConnections(await r.json());}} style={{padding:'3px 8px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px'}}>Ping</button>
+            <button onClick={async()=>{await fetch('/api/workspace-connections/'+conn.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsConnections(wsConnections.filter((x:any)=>x.id!==conn.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'3px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* AI Glossary tab */}
+{mainTab==='aiglossary' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📖 AI Glossary</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Search terms..." value={glossarySearch} onChange={e=>setGlossarySearch(e.target.value)} onKeyDown={async(e)=>{if(e.key==='Enter'){const r=await fetch('/api/ai-glossary?search='+encodeURIComponent(glossarySearch),{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiGlossary(await r.json());}}} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'160px'}} />
+      <input placeholder="Term" value={newGlTermB36} onChange={e=>setNewGlTermB36(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'120px'}} />
+      <input placeholder="Definition" value={newGlDefB36} onChange={e=>setNewGlDefB36(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'180px'}} />
+      <button onClick={async()=>{if(!newGlTermB36||!newGlDefB36)return;await fetch('/api/ai-glossary',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({term:newGlTermB36,definition:newGlDefB36,category:newGlCatB36})});setNewGlTermB36('');setNewGlDefB36('');const r=await fetch('/api/ai-glossary',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiGlossary(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/ai-glossary',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiGlossary(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:'10px'}}>
+      {aiGlossary.map((g:any)=>(
+        <div key={g.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+            <span style={{fontWeight:700,color:'#6366f1'}}>{g.term}</span>
+            <button onClick={async()=>{await fetch('/api/ai-glossary/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiGlossary(aiGlossary.filter((x:any)=>x.id!==g.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'1px 6px',cursor:'pointer',fontSize:'11px'}}>Del</button>
+          </div>
+          <div style={{color:'#d1d5db',fontSize:'13px'}}>{g.definition}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* Reading Queue v2 tab */}
+{mainTab==='rqv2' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📰 Reading Queue</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="URL" value={newRqUrl} onChange={e=>setNewRqUrl(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'200px'}} />
+      <input placeholder="Title (optional)" value={newRqTitle} onChange={e=>setNewRqTitle(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'140px'}} />
+      <button onClick={async()=>{if(!newRqUrl)return;await fetch('/api/reading-queue-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({url:newRqUrl,title:newRqTitle})});setNewRqUrl('');setNewRqTitle('');const r=await fetch('/api/reading-queue-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setReadingQueueV2(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/reading-queue-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setReadingQueueV2(await r.json());const s=await fetch('/api/reading-queue-v2/stats',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setRqv2Stats(await s.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    {rqv2Stats&&<div style={{display:'flex',gap:'12px',marginBottom:'12px'}}>
+      {[['Total',rqv2Stats.total,'#6366f1'],['Done',rqv2Stats.done,'#4ade80'],['Pending',rqv2Stats.pending,'#f59e0b']].map(([l,v,c]:any)=>(
+        <div key={l} style={{background:'#1f2937',borderRadius:'8px',padding:'10px 16px',border:'1px solid #374151',textAlign:'center'}}>
+          <div style={{fontSize:'20px',fontWeight:700,color:c}}>{v}</div>
+          <div style={{color:'#9ca3af',fontSize:'12px'}}>{l}</div>
+        </div>
+      ))}
+    </div>}
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {readingQueueV2.map((item:any)=>(
+        <div key={item.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151',display:'flex',justifyContent:'space-between',alignItems:'center',opacity:item.read?0.6:1}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:600,color:'#f9fafb',marginBottom:'2px'}}>{item.title}</div>
+            <div style={{color:'#9ca3af',fontSize:'12px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.url}</div>
+          </div>
+          <div style={{display:'flex',gap:'6px',marginLeft:'12px'}}>
+            {!item.read&&<button onClick={async()=>{await fetch('/api/reading-queue-v2/'+item.id+'/read',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const r=await fetch('/api/reading-queue-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setReadingQueueV2(await r.json());}} style={{padding:'3px 8px',background:'#4ade80',color:'#111',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px'}}>Read</button>}
+            <button onClick={async()=>{await fetch('/api/reading-queue-v2/'+item.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setReadingQueueV2(readingQueueV2.filter((x:any)=>x.id!==item.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'3px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* Kanban Labels tab */}
+{mainTab==='kanlabels' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🎨 Kanban Labels</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Label name" value={newKlName} onChange={e=>setNewKlName(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'140px'}} />
+      <input type="color" value={newKlColor} onChange={e=>setNewKlColor(e.target.value)} style={{width:'48px',height:'36px',border:'none',borderRadius:'6px',cursor:'pointer',background:'transparent'}} />
+      <button onClick={async()=>{if(!newKlName)return;await fetch('/api/kanban-labels',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({name:newKlName,color:newKlColor})});setNewKlName('');const r=await fetch('/api/kanban-labels',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setKanbanLabels(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/kanban-labels',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setKanbanLabels(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexWrap:'wrap',gap:'10px'}}>
+      {kanbanLabels.map((lbl:any)=>(
+        <div key={lbl.id} style={{display:'flex',alignItems:'center',gap:'8px',background:'#1f2937',borderRadius:'20px',padding:'6px 14px',border:'2px solid '+lbl.color}}>
+          <div style={{width:'10px',height:'10px',borderRadius:'50%',background:lbl.color}} />
+          <span style={{color:'#f9fafb',fontWeight:600,fontSize:'14px'}}>{lbl.name}</span>
+          <button onClick={async()=>{await fetch('/api/kanban-labels/'+lbl.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setKanbanLabels(kanbanLabels.filter((x:any)=>x.id!==lbl.id));}} style={{background:'transparent',color:'#6b7280',border:'none',cursor:'pointer',fontSize:'16px',lineHeight:1}}>×</button>
+        </div>
+      ))}
+      {kanbanLabels.length===0&&<div style={{color:'#6b7280',padding:'20px'}}>No labels yet.</div>}
+    </div>
+  </div>
+)}
+
 {mainTab==='collabnotes' && (
   <div style={{padding:'24px'}}>
     <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📝 Collaboration Notes</h2>
@@ -12615,8 +12786,8 @@ export default function ForgeApp() {
             <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
               <input value={newPlAvatar} onChange={e=>setNewPlAvatar(e.target.value)} placeholder="🤖" style={{ width:56, padding:'8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:20, textAlign:'center' }} />
               <input value={newPlName} onChange={e=>setNewPlName(e.target.value)} placeholder="Persona name..." style={{ flex:1, minWidth:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <textarea value={newPlPrompt} onChange={e=>setNewPlPrompt(e.target.value)} placeholder="System prompt for this persona..." rows={3} style={{ flex:2, minWidth:220, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
-              <button onClick={async()=>{ if(!newPlName.trim()||!newPlPrompt.trim()) return; await fetch('/api/personas-lib',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newPlName,system_prompt:newPlPrompt,avatar:newPlAvatar})}); setNewPlName(''); setNewPlPrompt(''); setNewPlAvatar('🤖'); const r=await fetch('/api/personas-lib',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasLib(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
+              <textarea value={newPlPromptB36} onChange={e=>setNewPlPromptB36(e.target.value)} placeholder="System prompt for this persona..." rows={3} style={{ flex:2, minWidth:220, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={async()=>{ if(!newPlName.trim()||!newPlPromptB36.trim()) return; await fetch('/api/personas-lib',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newPlName,system_prompt:newPlPromptB36,avatar:newPlAvatar})}); setNewPlName(''); setNewPlPromptB36(''); setNewPlAvatar('🤖'); const r=await fetch('/api/personas-lib',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasLib(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
             </div>
             <button onClick={async()=>{ const r=await fetch('/api/personas-lib',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasLib(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Personas</button>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:12 }}>
@@ -12693,12 +12864,12 @@ export default function ForgeApp() {
           <div style={{ padding:24 }}>
             <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📖 Workspace Glossary</div>
             <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newGlTerm} onChange={e=>setNewGlTerm(e.target.value)} placeholder="Term..." style={{ flex:1, minWidth:120, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={newGlDef} onChange={e=>setNewGlDef(e.target.value)} placeholder="Definition..." style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <select value={newGlCat} onChange={e=>setNewGlCat(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+              <input value={newGlTermB36} onChange={e=>setNewGlTermB36(e.target.value)} placeholder="Term..." style={{ flex:1, minWidth:120, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newGlDefB36} onChange={e=>setNewGlDefB36(e.target.value)} placeholder="Definition..." style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newGlCatB36} onChange={e=>setNewGlCatB36(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
                 {['general','tech','ai','business','personal'].map(c=><option key={c} value={c}>{c}</option>)}
               </select>
-              <button onClick={async()=>{ if(!newGlTerm.trim()||!newGlDef.trim()) return; await fetch('/api/workspace-glossary',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({term:newGlTerm,definition:newGlDef,category:newGlCat})}); setNewGlTerm(''); setNewGlDef(''); const r=await fetch('/api/workspace-glossary',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWglossary(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
+              <button onClick={async()=>{ if(!newGlTermB36.trim()||!newGlDefB36.trim()) return; await fetch('/api/workspace-glossary',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({term:newGlTermB36,definition:newGlDefB36,category:newGlCatB36})}); setNewGlTermB36(''); setNewGlDefB36(''); const r=await fetch('/api/workspace-glossary',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWglossary(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
             </div>
             <div style={{ display:'flex', gap:8, marginBottom:16 }}>
               <input value={glossaryQ} onChange={e=>setGlossaryQ(e.target.value)} placeholder="Search glossary..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />

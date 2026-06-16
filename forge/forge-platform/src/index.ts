@@ -10580,4 +10580,166 @@ app.delete('/api/kanban-labels/:id', authenticateToken, (req: any, res: any) => 
   res.json({ ok: true });
 });
 
+
+// ============================================================
+// BATCH 37: ai_summaries_v2, workspace_themes, user_shortcuts, thread_labels, collaboration_rooms
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_summaries_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    source_type TEXT NOT NULL,
+    source_id TEXT,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    key_points TEXT DEFAULT '[]',
+    model TEXT DEFAULT 'unknown',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_themes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    primary_color TEXT DEFAULT '#6366f1',
+    bg_color TEXT DEFAULT '#111827',
+    accent TEXT DEFAULT '#8b5cf6',
+    font TEXT DEFAULT 'Inter',
+    is_active INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_shortcuts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    label TEXT NOT NULL,
+    command TEXT NOT NULL,
+    shortcut_key TEXT,
+    icon TEXT DEFAULT '⌨️',
+    use_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS thread_labels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    thread_id INTEGER NOT NULL,
+    label TEXT NOT NULL,
+    color TEXT DEFAULT '#6366f1',
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, thread_id, label)
+  );
+  CREATE TABLE IF NOT EXISTS collaboration_rooms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    invite_code TEXT UNIQUE,
+    member_count INTEGER DEFAULT 1,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// AI Summaries v2
+app.get('/api/ai-summaries-v2', authenticateToken, (req: any, res: any) => {
+  const { source_type } = req.query as any;
+  let q = 'SELECT * FROM ai_summaries_v2 WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (source_type) { q += ' AND source_type=?'; p.push(source_type); }
+  q += ' ORDER BY created_at DESC LIMIT 50';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/ai-summaries-v2', authenticateToken, (req: any, res: any) => {
+  const { source_type, source_id, title, summary, key_points, model } = req.body;
+  if (!source_type || !title || !summary) return res.status(400).json({ error: 'source_type, title, summary required' });
+  const r = db.prepare('INSERT INTO ai_summaries_v2 (user_id,source_type,source_id,title,summary,key_points,model) VALUES (?,?,?,?,?,?,?)').run(req.user.id, source_type, source_id||null, title, summary, JSON.stringify(key_points||[]), model||'unknown');
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-summaries-v2/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_summaries_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Themes
+app.get('/api/workspace-themes', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_themes WHERE user_id=? ORDER BY is_active DESC, name').all(req.user.id));
+});
+app.post('/api/workspace-themes', authenticateToken, (req: any, res: any) => {
+  const { name, primary_color, bg_color, accent, font } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO workspace_themes (user_id,name,primary_color,bg_color,accent,font) VALUES (?,?,?,?,?,?)').run(req.user.id, name, primary_color||'#6366f1', bg_color||'#111827', accent||'#8b5cf6', font||'Inter');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-themes/:id/activate', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_themes SET is_active=0 WHERE user_id=?').run(req.user.id);
+  db.prepare('UPDATE workspace_themes SET is_active=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  const theme = db.prepare('SELECT * FROM workspace_themes WHERE id=?').get(req.params.id) as any;
+  res.json(theme);
+});
+app.delete('/api/workspace-themes/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_themes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// User Shortcuts
+app.get('/api/user-shortcuts', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM user_shortcuts WHERE user_id=? ORDER BY use_count DESC').all(req.user.id));
+});
+app.post('/api/user-shortcuts', authenticateToken, (req: any, res: any) => {
+  const { label, command, shortcut_key, icon } = req.body;
+  if (!label || !command) return res.status(400).json({ error: 'label and command required' });
+  const r = db.prepare('INSERT INTO user_shortcuts (user_id,label,command,shortcut_key,icon) VALUES (?,?,?,?,?)').run(req.user.id, label, command, shortcut_key||null, icon||'⌨️');
+  res.json({ id: r.lastInsertRowid });
+});
+app.post('/api/user-shortcuts/:id/trigger', authenticateToken, (req: any, res: any) => {
+  const row = db.prepare('SELECT command FROM user_shortcuts WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE user_shortcuts SET use_count=use_count+1 WHERE id=?').run(req.params.id);
+  res.json({ command: row.command });
+});
+app.delete('/api/user-shortcuts/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_shortcuts WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Thread Labels
+app.get('/api/thread-labels', authenticateToken, (req: any, res: any) => {
+  const { thread_id } = req.query as any;
+  if (thread_id) return res.json(db.prepare('SELECT * FROM thread_labels WHERE user_id=? AND thread_id=?').all(req.user.id, thread_id));
+  res.json(db.prepare('SELECT * FROM thread_labels WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/thread-labels', authenticateToken, (req: any, res: any) => {
+  const { thread_id, label, color } = req.body;
+  if (!thread_id || !label) return res.status(400).json({ error: 'thread_id and label required' });
+  try {
+    const r = db.prepare('INSERT INTO thread_labels (user_id,thread_id,label,color) VALUES (?,?,?,?)').run(req.user.id, thread_id, label, color||'#6366f1');
+    res.json({ id: r.lastInsertRowid });
+  } catch { res.status(409).json({ error: 'label already applied' }); }
+});
+app.delete('/api/thread-labels/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_labels WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Collaboration Rooms
+app.get('/api/collab-rooms', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM collaboration_rooms WHERE user_id=? ORDER BY is_active DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/collab-rooms', authenticateToken, (req: any, res: any) => {
+  const { name, description } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const r = db.prepare('INSERT INTO collaboration_rooms (user_id,name,description,invite_code) VALUES (?,?,?,?)').run(req.user.id, name, description||'', code);
+  res.json({ id: r.lastInsertRowid, invite_code: code });
+});
+app.get('/api/collab-rooms/join/:code', authenticateToken, (req: any, res: any) => {
+  const room = db.prepare('SELECT id,name,description,member_count FROM collaboration_rooms WHERE invite_code=? AND is_active=1').get(req.params.code) as any;
+  if (!room) return res.status(404).json({ error: 'room not found or inactive' });
+  db.prepare('UPDATE collaboration_rooms SET member_count=member_count+1 WHERE id=?').run(room.id);
+  res.json(room);
+});
+app.delete('/api/collab-rooms/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE collaboration_rooms SET is_active=0 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
