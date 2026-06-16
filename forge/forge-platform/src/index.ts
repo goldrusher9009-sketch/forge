@@ -15658,4 +15658,141 @@ app.delete('/api/ai-prompt-variations/:id', requireAuth, (req: Request, res: Res
 });
 // ─── End Batch 74 ────────────────────────────────────────────────────────────
 
+
+// ─── Batch 75 ────────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS ai_debug_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  session_name TEXT NOT NULL, error_msg TEXT, stack_trace TEXT,
+  resolved INTEGER DEFAULT 0, model TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_templates_v2 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  name TEXT NOT NULL, category TEXT, content TEXT NOT NULL,
+  pinned INTEGER DEFAULT 0, use_count INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS thread_polls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id TEXT NOT NULL, question TEXT NOT NULL,
+  options_json TEXT, votes_json TEXT DEFAULT '{}', closed INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS user_time_blocks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  label TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL,
+  category TEXT, color TEXT DEFAULT '#ff8800',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS ai_critique_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  content TEXT NOT NULL, critique TEXT NOT NULL,
+  score REAL DEFAULT 0, model TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
+// /api/ai-debug-sessions
+app.get('/api/ai-debug-sessions', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_debug_sessions WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/ai-debug-sessions', requireAuth, (req: Request, res: Response) => {
+  const { session_name, error_msg, stack_trace, model } = req.body;
+  if (!session_name) return res.status(400).json({ error: 'session_name required' });
+  const r = db.prepare('INSERT INTO ai_debug_sessions (user_id,session_name,error_msg,stack_trace,model) VALUES (?,?,?,?,?)').run((req as any).userId, session_name, error_msg||null, stack_trace||null, model||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-debug-sessions/:id/resolve', requireAuth, (req: Request, res: Response) => {
+  db.prepare('UPDATE ai_debug_sessions SET resolved=1 WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-debug-sessions/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM ai_debug_sessions WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/workspace-templates-v2
+app.get('/api/workspace-templates-v2', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM workspace_templates_v2 WHERE user_id=? ORDER BY pinned DESC, use_count DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/workspace-templates-v2', requireAuth, (req: Request, res: Response) => {
+  const { name, category, content } = req.body;
+  if (!name || !content) return res.status(400).json({ error: 'name and content required' });
+  const r = db.prepare('INSERT INTO workspace_templates_v2 (user_id,name,category,content) VALUES (?,?,?,?)').run((req as any).userId, name, category||null, content);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-templates-v2/:id/use', requireAuth, (req: Request, res: Response) => {
+  const t = db.prepare('SELECT * FROM workspace_templates_v2 WHERE id=? AND user_id=?').get(Number(req.params.id), (req as any).userId) as any;
+  if (!t) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE workspace_templates_v2 SET use_count=use_count+1 WHERE id=?').run(Number(req.params.id));
+  res.json({ content: t.content });
+});
+app.put('/api/workspace-templates-v2/:id/pin', requireAuth, (req: Request, res: Response) => {
+  db.prepare('UPDATE workspace_templates_v2 SET pinned=1-pinned WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-templates-v2/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM workspace_templates_v2 WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/thread-polls
+app.get('/api/thread-polls', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM thread_polls WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/thread-polls', requireAuth, (req: Request, res: Response) => {
+  const { thread_id, question, options_json } = req.body;
+  if (!thread_id || !question) return res.status(400).json({ error: 'thread_id and question required' });
+  const r = db.prepare('INSERT INTO thread_polls (user_id,thread_id,question,options_json) VALUES (?,?,?,?)').run((req as any).userId, thread_id, question, options_json||'[]');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/thread-polls/:id/vote', requireAuth, (req: Request, res: Response) => {
+  const { option } = req.body;
+  const poll = db.prepare('SELECT * FROM thread_polls WHERE id=? AND user_id=?').get(Number(req.params.id), (req as any).userId) as any;
+  if (!poll) return res.status(404).json({ error: 'not found' });
+  const votes = JSON.parse(poll.votes_json || '{}');
+  votes[option] = (votes[option] || 0) + 1;
+  db.prepare('UPDATE thread_polls SET votes_json=? WHERE id=?').run(JSON.stringify(votes), Number(req.params.id));
+  res.json({ votes });
+});
+app.delete('/api/thread-polls/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM thread_polls WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/user-time-blocks
+app.get('/api/user-time-blocks', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_time_blocks WHERE user_id=? ORDER BY start_time ASC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/user-time-blocks', requireAuth, (req: Request, res: Response) => {
+  const { label, start_time, end_time, category, color } = req.body;
+  if (!label || !start_time || !end_time) return res.status(400).json({ error: 'label, start_time, end_time required' });
+  const r = db.prepare('INSERT INTO user_time_blocks (user_id,label,start_time,end_time,category,color) VALUES (?,?,?,?,?,?)').run((req as any).userId, label, start_time, end_time, category||null, color||'#ff8800');
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/user-time-blocks/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM user_time_blocks WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/ai-critique-log
+app.get('/api/ai-critique-log', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_critique_log WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/ai-critique-log', requireAuth, (req: Request, res: Response) => {
+  const { content, critique, score, model } = req.body;
+  if (!content || !critique) return res.status(400).json({ error: 'content and critique required' });
+  const r = db.prepare('INSERT INTO ai_critique_log (user_id,content,critique,score,model) VALUES (?,?,?,?,?)').run((req as any).userId, content, critique, score||0, model||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-critique-log/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM ai_critique_log WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+// ─── End Batch 75 ────────────────────────────────────────────────────────────
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

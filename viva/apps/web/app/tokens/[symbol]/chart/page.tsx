@@ -2,89 +2,60 @@
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
-interface TokenData {
-  name: string
-  handle: string
-  color: string
-  price: number
-  change24h: number
-  marketCap: number
-  volume24h: number
-  holders: number
-  supply: number
+interface TokenMeta {
+  name: string; color: string; price: number; change24h: number; change7d: number
+  high24h: number; low24h: number; volume24h: number; marketCap: number
+  totalSupply: number; circulatingSupply: number; holders: number
+  stakedPct: number; creatorHandle: string
 }
 
-const TOKENS: Record<string, TokenData> = {
-  SVRN: { name: 'Sovereign V',  handle: 'sovereign_v', color: '#a855f7', price: 8.75,  change24h: 4.2,   marketCap: 875000,  volume24h: 124000, holders: 2840, supply: 100000 },
-  MAYA: { name: 'Maya Chen',    handle: 'mayafit',     color: '#22c55e', price: 5.20,  change24h: -1.8,  marketCap: 520000,  volume24h: 48000,  holders: 1620, supply: 100000 },
-  JAX:  { name: 'Jax Beats',   handle: 'jaxbeats',    color: '#ec4899', price: 3.80,  change24h: 7.1,   marketCap: 380000,  volume24h: 67000,  holders: 980,  supply: 100000 },
+const TOKEN_META: Record<string, TokenMeta> = {
+  SVRN: { name:'Sovereign V', color:'#a855f7', price:8.75, change24h:4.2, change7d:18.4, high24h:9.10, low24h:8.20, volume24h:128400, marketCap:875000, totalSupply:100000, circulatingSupply:68000, holders:2840, stakedPct:42, creatorHandle:'sovereign_v' },
+  MAYA: { name:'Maya Chen',   color:'#22c55e', price:5.20, change24h:-1.8, change7d:6.2,  high24h:5.45, low24h:5.05, volume24h:84200,  marketCap:416000, totalSupply:80000,  circulatingSupply:52000, holders:1620, stakedPct:38, creatorHandle:'mayafit'     },
+  JAX:  { name:'Jax Beats',  color:'#ec4899', price:3.80, change24h:7.1,  change7d:22.1, high24h:3.95, low24h:3.50, volume24h:61000,  marketCap:190000, totalSupply:50000,  circulatingSupply:42000, holders:980,  stakedPct:28, creatorHandle:'jaxbeats'    },
 }
 
-type Period = '1H' | '4H' | '1D' | '1W' | '1M' | 'ALL'
+type Period = '1H' | '4H' | '1D' | '1W' | '1M'
 
-// Generate synthetic price chart data
-function generateChart(basePrice: number, change: number, points: number): { x: number; y: number }[] {
-  const data = []
-  let price = basePrice * (1 - change / 100)
-  for (let i = 0; i < points; i++) {
-    price += (Math.random() - 0.48) * basePrice * 0.015
-    price = Math.max(basePrice * 0.5, price)
-    data.push({ x: i, y: price })
+function genCandles(base: number, n: number, vol: number) {
+  const candles = []
+  let price = base * 0.75
+  for (let i = 0; i < n; i++) {
+    const o = price
+    const move = (Math.random() - 0.48) * vol * price
+    const c = Math.max(price + move, base * 0.3)
+    const h = Math.max(o, c) * (1 + Math.random() * 0.008)
+    const l = Math.min(o, c) * (1 - Math.random() * 0.008)
+    candles.push({ o, h, l, c })
+    price = c
   }
-  data.push({ x: points - 1, y: basePrice })
-  return data
-}
-
-function ChartSVG({ data, color, width = 340, height = 160 }: { data: {x:number;y:number}[]; color: string; width?: number; height?: number }) {
-  if (data.length === 0) return null
-  const minY = Math.min(...data.map(d => d.y))
-  const maxY = Math.max(...data.map(d => d.y))
-  const rangeY = maxY - minY || 1
-  const pad = { t: 8, b: 8, l: 8, r: 8 }
-  const W = width - pad.l - pad.r
-  const H = height - pad.t - pad.b
-  const pts = data.map(d => ({
-    px: pad.l + (d.x / (data.length - 1)) * W,
-    py: pad.t + H - ((d.y - minY) / rangeY) * H,
-  }))
-  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.px.toFixed(1)},${p.py.toFixed(1)}`).join(' ')
-  const fill = `${path} L${pts[pts.length-1].px},${pad.t+H} L${pad.l},${pad.t+H} Z`
-  const id = `grad-${color.replace('#','')}`
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="w-full">
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor={color} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.01" />
-        </linearGradient>
-      </defs>
-      <path d={fill} fill={`url(#${id})`} />
-      <path d={path} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
+  candles[candles.length - 1].c = base
+  return candles
 }
 
 export default function TokenChartPage() {
   const router = useRouter()
   const params = useParams()
-  const symbol = typeof params.symbol === 'string' ? params.symbol.toUpperCase() : 'SVRN'
-  const token = TOKENS[symbol] ?? TOKENS.SVRN
+  const symbol = typeof params.symbol === 'string' ? params.symbol : 'SVRN'
+  const meta = TOKEN_META[symbol] ?? TOKEN_META.SVRN
 
   const [period, setPeriod] = useState<Period>('1D')
-  const [hovered, setHovered] = useState<number | null>(null)
+  const [tab, setTab] = useState<'chart' | 'info'>('chart')
 
-  const PERIODS: Period[] = ['1H', '4H', '1D', '1W', '1M', 'ALL']
-  const POINT_COUNTS: Record<Period, number> = { '1H': 60, '4H': 96, '1D': 96, '1W': 168, '1M': 120, ALL: 200 }
+  const PERIODS: Period[] = ['1H', '4H', '1D', '1W', '1M']
+  const N_CANDLES: Record<Period, number> = { '1H': 60, '4H': 48, '1D': 90, '1W': 52, '1M': 30 }
+  const VOL: Record<Period, number> = { '1H': 0.005, '4H': 0.012, '1D': 0.025, '1W': 0.05, '1M': 0.08 }
 
-  const chartData = generateChart(token.price, token.change24h, POINT_COUNTS[period])
-  const displayPrice = hovered !== null ? chartData[hovered]?.y ?? token.price : token.price
-  const startPrice = chartData[0]?.y ?? token.price
-  const priceDiff = displayPrice - startPrice
-  const pctDiff = (priceDiff / startPrice) * 100
+  const candles = genCandles(meta.price, N_CANDLES[period], VOL[period])
+  const allH = Math.max(...candles.map(c => c.h))
+  const allL = Math.min(...candles.map(c => c.l))
+  const range = allH - allL || 0.01
 
-  const positive = token.change24h >= 0
-  const green = '#22c55e'
-  const red = '#f87171'
+  const W = 360; const H = 180; const padX = 4; const padY = 8
+  const cw = (W - padX * 2) / candles.length
+  const green = '#22c55e'; const red = '#f87171'
+
+  const positive = meta.change24h >= 0
 
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
@@ -96,94 +67,131 @@ export default function TokenChartPage() {
               <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs"
-            style={{ background: `${token.color}18`, color: token.color }}>
-            {symbol[0]}
-          </div>
-          <div>
-            <div className="font-black text-white text-sm">${symbol}</div>
-            <div className="text-xs text-white/30">{token.name}</div>
-          </div>
-          <button onClick={() => router.push(`/tokens/${symbol}/trade`)}
-            className="ml-auto px-3 py-1.5 rounded-xl text-xs font-black"
-            style={{ background: token.color, color: '#04040A' }}>
-            Trade
+          <button onClick={() => router.push(`/profile/${meta.creatorHandle}`)}
+            className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs"
+              style={{ background: `${meta.color}18`, color: meta.color }}>{symbol[0]}</div>
+            <div>
+              <div className="font-black text-sm text-white">${symbol}</div>
+              <div className="text-xs text-white/30">{meta.name}</div>
+            </div>
           </button>
+          <div className="ml-auto text-right">
+            <div className="font-black text-lg text-white">${meta.price}</div>
+            <div className="text-xs font-bold" style={{ color: positive ? green : red }}>
+              {positive ? '+' : ''}{meta.change24h}% 24h
+            </div>
+          </div>
         </div>
       </header>
 
-      <div className="px-4 py-5">
-        {/* Price header */}
-        <div className="mb-5">
-          <div className="text-3xl font-black text-white">${displayPrice.toFixed(2)}</div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-sm font-bold" style={{ color: pctDiff >= 0 ? green : red }}>
-              {pctDiff >= 0 ? '+' : ''}{pctDiff.toFixed(2)}%
-            </span>
-            <span className="text-xs text-white/25">{period}</span>
+      <div className="px-4 py-4 space-y-3">
+        {/* High / Low bar */}
+        <div className="flex justify-between text-xs text-white/30">
+          <span>L ${meta.low24h}</span>
+          <div className="flex-1 mx-3 flex items-center">
+            <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <div className="h-full rounded-full" style={{
+                background: meta.color,
+                marginLeft: `${((meta.price - meta.low24h) / (meta.high24h - meta.low24h)) * 80}%`,
+                width: '6px'
+              }} />
+            </div>
           </div>
+          <span>H ${meta.high24h}</span>
         </div>
 
-        {/* Chart */}
-        <div className="mb-4 rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.01)' }}>
-          <ChartSVG data={chartData} color={positive ? green : red} width={380} height={180} />
-        </div>
-
-        {/* Period pills */}
-        <div className="flex gap-1.5 mb-6">
-          {PERIODS.map(p => (
-            <button key={p} onClick={() => setPeriod(p)}
-              className="flex-1 py-1.5 rounded-full text-xs font-bold"
-              style={period === p ? { background: token.color, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
-              {p}
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          {(['chart','info'] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className="flex-1 py-2 rounded-lg text-xs font-bold capitalize"
+              style={tab === t ? { background: 'rgba(255,255,255,0.08)', color: 'white' } : { color: 'rgba(255,255,255,0.3)' }}>
+              {t}
             </button>
           ))}
         </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {[
-            { label: '24h Change',  value: `${positive ? '+' : ''}${token.change24h}%`, color: positive ? green : red },
-            { label: 'Market Cap',  value: `$${(token.marketCap/1000).toFixed(0)}k` },
-            { label: '24h Volume',  value: `$${(token.volume24h/1000).toFixed(0)}k` },
-            { label: 'Holders',     value: token.holders.toLocaleString() },
-            { label: 'Supply',      value: token.supply.toLocaleString() },
-            { label: 'Your Rank',   value: '#12',  color: '#f59e0b' },
-          ].map(s => (
-            <div key={s.label} className="p-3 rounded-xl border border-white/5 text-center"
-              style={{ background: 'rgba(255,255,255,0.018)' }}>
-              <div className="text-xs text-white/25 mb-0.5">{s.label}</div>
-              <div className="font-black text-sm" style={{ color: s.color ?? 'rgba(255,255,255,0.75)' }}>{s.value}</div>
+        {tab === 'chart' && (
+          <>
+            {/* Period selector */}
+            <div className="flex gap-1.5">
+              {PERIODS.map(p => (
+                <button key={p} onClick={() => setPeriod(p)}
+                  className="flex-1 py-1.5 rounded-full text-xs font-bold"
+                  style={period === p ? { background: meta.color, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+                  {p}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Creator link */}
-        <button onClick={() => router.push(`/profile/${token.handle}`)}
-          className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/5 text-left"
-          style={{ background: 'rgba(255,255,255,0.018)' }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs"
-            style={{ background: `${token.color}18`, color: token.color }}>
-            {token.name[0]}
+            {/* Candlestick chart */}
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.01)' }}>
+              <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="w-full">
+                {/* Grid lines */}
+                {[0.25, 0.5, 0.75].map(f => {
+                  const y = padY + (1 - f) * (H - padY * 2)
+                  return <line key={f} x1={padX} y1={y} x2={W-padX} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+                })}
+                {/* Candles */}
+                {candles.map((c, i) => {
+                  const x = padX + i * cw + cw * 0.1
+                  const w = cw * 0.8
+                  const bullish = c.c >= c.o
+                  const col = bullish ? green : red
+                  const bodyY = padY + (1 - (Math.max(c.o,c.c) - allL) / range) * (H - padY*2)
+                  const bodyH = Math.max(1, ((Math.abs(c.c - c.o)) / range) * (H - padY*2))
+                  const wickTopY = padY + (1 - (c.h - allL) / range) * (H - padY*2)
+                  const wickBotY = padY + (1 - (c.l - allL) / range) * (H - padY*2)
+                  const midX = x + w/2
+                  return (
+                    <g key={i}>
+                      <line x1={midX} y1={wickTopY} x2={midX} y2={wickBotY} stroke={col} strokeWidth="0.6" strokeOpacity="0.7"/>
+                      <rect x={x} y={bodyY} width={w} height={bodyH} fill={bullish ? `${col}80` : col} rx="0.5"/>
+                    </g>
+                  )
+                })}
+              </svg>
+            </div>
+          </>
+        )}
+
+        {tab === 'info' && (
+          <div className="space-y-2">
+            {[
+              { l:'Market Cap',         v:`$${(meta.marketCap/1000).toFixed(0)}k`,        c: meta.color },
+              { l:'24h Volume',         v:`$${(meta.volume24h/1000).toFixed(0)}k`,        c: 'rgba(255,255,255,0.7)' },
+              { l:'Total Supply',       v:meta.totalSupply.toLocaleString(),               c: 'rgba(255,255,255,0.7)' },
+              { l:'Circulating',        v:`${meta.circulatingSupply.toLocaleString()} (${((meta.circulatingSupply/meta.totalSupply)*100).toFixed(0)}%)`, c: 'rgba(255,255,255,0.7)' },
+              { l:'Holders',            v:meta.holders.toLocaleString(),                   c: 'rgba(255,255,255,0.7)' },
+              { l:'% Staked',           v:`${meta.stakedPct}%`,                            c: '#f59e0b' },
+              { l:'7D Change',          v:`${meta.change7d >= 0 ? '+' : ''}${meta.change7d}%`, c: meta.change7d >= 0 ? green : red },
+            ].map(r => (
+              <div key={r.l} className="flex justify-between p-3 rounded-xl border border-white/4"
+                style={{ background: 'rgba(255,255,255,0.015)' }}>
+                <span className="text-xs text-white/30">{r.l}</span>
+                <span className="font-black text-sm" style={{ color: r.c }}>{r.v}</span>
+              </div>
+            ))}
           </div>
-          <div className="flex-1">
-            <div className="font-bold text-sm text-white/80">{token.name}</div>
-            <div className="text-xs text-white/25">@{token.handle} · Creator</div>
-          </div>
-          <span className="text-white/20 text-xs">Profile →</span>
-        </button>
+        )}
 
         {/* Actions */}
-        <div className="flex gap-2 mt-4">
-          <button onClick={() => router.push(`/staking/${token.handle}`)}
+        <div className="flex gap-2 pt-2">
+          <button onClick={() => router.push(`/profile/${meta.creatorHandle}/invest`)}
             className="flex-1 py-3 rounded-xl font-black text-sm"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}>
-            🔒 Stake
+            style={{ background: meta.color, color: '#04040A' }}>
+            Buy ${symbol}
           </button>
-          <button onClick={() => router.push(`/tokens/${symbol}/trade`)}
+          <button onClick={() => router.push(`/tokens/${symbol}/staking`)}
             className="flex-1 py-3 rounded-xl font-black text-sm"
-            style={{ background: token.color, color: '#04040A' }}>
-            Trade ${symbol}
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+            Stake
+          </button>
+          <button onClick={() => router.push(`/tokens/${symbol}/holders`)}
+            className="px-4 py-3 rounded-xl font-black text-sm"
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+            👥
           </button>
         </div>
       </div>
