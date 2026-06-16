@@ -23,6 +23,7 @@ const NAV_MORE = [
   { id: 'tokens',        label: 'Token Market', path: '/tokens',        icon: TokenIcon },
   { id: 'wallet',        label: 'Wallet',       path: '/wallet',        icon: TokenIcon },
   { id: 'staking',       label: 'Staking',      path: '/staking',       icon: TokenIcon },
+  { id: 'advertise',     label: 'Advertise',    path: '/advertise',     icon: TokenIcon },
   { id: 'identity',      label: 'ZK Identity',  path: '/identity',      icon: LeaderIcon },
   { id: 'leaderboard',   label: 'Leaderboard',  path: '/leaderboard',   icon: LeaderIcon },
   { id: 'notifications', label: 'Notifications',path: '/notifications', icon: BellIcon },

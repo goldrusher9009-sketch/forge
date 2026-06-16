@@ -18,6 +18,39 @@ const TICKER_TOKENS = [
   { symbol: 'ZKPR', price:  2.20, change: -3.2,  color: '#22c55e' },
 ]
 
+const ACTIVITY_CARDS = [
+  { type: 'invest',  actor: 'luna_apex',   actorName: 'Luna Apex',   subject: 'sovereign_v', subjectName: 'Sovereign V', amount: 500,  symbol: 'SOVV', color: '#a855f7', ts: '2m ago' },
+  { type: 'stake',   actor: 'alexwave',    actorName: 'Alex Wave',   subject: 'mayafit',     subjectName: 'Maya Chen',   amount: 250,  symbol: 'MAYA', color: '#a855f7', ts: '8m ago' },
+  { type: 'invest',  actor: 'zeronode',    actorName: 'ZeroNode',    subject: 'alexwave',    subjectName: 'Alex Wave',   amount: 100,  symbol: 'ALEX', color: '#22c55e', ts: '14m ago' },
+  { type: 'stake',   actor: 'sovereign_v', actorName: 'Sovereign V', subject: 'luna_apex',   subjectName: 'Luna Apex',   amount: 800,  symbol: 'LUNA', color: '#a855f7', ts: '21m ago' },
+  { type: 'invest',  actor: 'aisham_x',   actorName: 'Aisham X',    subject: 'zeronode',    subjectName: 'ZeroNode',    amount: 300,  symbol: 'ZERO', color: '#a855f7', ts: '35m ago' },
+]
+
+function ActivityCard({ activity, onNavigate }: { activity: typeof ACTIVITY_CARDS[0]; onNavigate: (h: string) => void }) {
+  const isInvest = activity.type === 'invest'
+  return (
+    <div className="mx-0 my-2 px-4 py-3 flex items-center gap-3 border-y border-white/4"
+      style={{ background: isInvest ? 'rgba(245,158,11,0.04)' : 'rgba(124,58,237,0.04)' }}>
+      <div className="text-lg">{isInvest ? '↗' : '⬡'}</div>
+      <div className="flex-1 min-w-0 text-xs text-white/50">
+        <button onClick={() => onNavigate(activity.actor)}
+          className="font-bold hover:text-white/80 transition-colors"
+          style={{ color: activity.color }}>
+          {activity.actorName}
+        </button>
+        <span> {isInvest ? 'bought' : 'staked'} </span>
+        <span className="font-bold text-white/70">{activity.amount} ${activity.symbol}</span>
+        <span> on </span>
+        <button onClick={() => onNavigate(activity.subject)}
+          className="font-bold hover:text-white/80 transition-colors text-white/60">
+          {activity.subjectName}
+        </button>
+      </div>
+      <span className="text-xs text-white/20 flex-shrink-0">{activity.ts}</span>
+    </div>
+  )
+}
+
 function TickerStrip({ onNavigate }: { onNavigate: (sym: string) => void }) {
   const items = [...TICKER_TOKENS, ...TICKER_TOKENS] // double for infinite feel
   return (
@@ -295,7 +328,10 @@ export default function FeedPage() {
 
         <div className="space-y-0">
           {loading && <p className="py-8 text-center text-white/30 text-sm">Loading feed...</p>}
-          {!loading && posts.map((post) => {
+          {!loading && posts.map((post, postIdx) => {
+            const activityCard = !loading && postIdx > 0 && postIdx % 3 === 0
+              ? ACTIVITY_CARDS[(postIdx / 3 - 1) % ACTIVITY_CARDS.length]
+              : null
             const authorName = post.author?.displayName ?? post.author ?? 'Unknown'
             const authorHandle = post.author?.handle ?? post.handle ?? 'unknown'
             const avatarSrc = post.author?.avatarUrl ?? post.avatar ?? ('https://api.dicebear.com/7.x/shapes/svg?seed=' + authorHandle)
@@ -306,7 +342,9 @@ export default function FeedPage() {
             const cs = commentState[post.id]
 
             return (
-              <article key={post.id} id={post.id} className="py-6 border-b border-white/5 last:border-b-0 group">
+              <div key={post.id}>
+                {activityCard && <ActivityCard activity={activityCard} onNavigate={(h) => router.push(`/profile/${h}`)} />}
+              <article id={post.id} className="py-6 border-b border-white/5 last:border-b-0 group">
                 <div className="flex gap-4">
                   <a href={`/profile/${authorHandle}`} className="flex-shrink-0">
                     <img src={avatarSrc} alt={authorName} className="w-9 h-9 rounded-full hover:ring-2 hover:ring-white/20 transition-all" />
@@ -414,6 +452,7 @@ export default function FeedPage() {
                   </div>
                 </div>
               </article>
+              </div>
             )
           })}
         </div>
