@@ -2,82 +2,81 @@
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
-const CREATOR_DATA: Record<string, { name: string; color: string; tokenSymbol: string }> = {
-  sovereign_v: { name:'Sovereign V', color:'#a855f7', tokenSymbol:'SVRN' },
-  mayafit:     { name:'Maya Chen',   color:'#22c55e', tokenSymbol:'MAYA' },
-  jaxbeats:    { name:'Jax Beats',  color:'#ec4899', tokenSymbol:'JAX'  },
-}
-
-type ContentType = 'post' | 'live' | 'analysis' | 'tutorial' | 'ama' | 'drop'
-type Visibility  = 'public' | 'holders' | 'diamond'
+type EventType = 'live' | 'post' | 'drop' | 'ama' | 'workshop'
 
 interface ScheduledItem {
   id: string
+  type: EventType
   title: string
-  type: ContentType
-  visibility: Visibility
   date: string
   time: string
-  dayLabel: string
+  day: string
+  month: string
+  tokenGated: boolean
   minTokens?: number
-  teaser?: string
+  tokenSymbol?: string
+  rsvpd: boolean
+  rsvpCount: number
+  color: string
 }
 
-const SCHEDULE: Record<string, ScheduledItem[]> = {
+const CREATOR_SCHEDULE: Record<string, ScheduledItem[]> = {
   sovereign_v: [
-    { id:'s1', title:'BTC weekly close analysis',       type:'analysis',  visibility:'public',  date:'Jun 16', time:'21:00', dayLabel:'Mon', teaser:'Watching this key resistance level closely' },
-    { id:'s2', title:'DeFi gem deep dive — live',       type:'live',      visibility:'holders', date:'Jun 17', time:'19:00', dayLabel:'Tue', minTokens:10 },
-    { id:'s3', title:'Portfolio update post',            type:'post',      visibility:'public',  date:'Jun 18', time:'12:00', dayLabel:'Wed' },
-    { id:'s4', title:'Diamond AMA session',              type:'ama',       visibility:'diamond', date:'Jun 19', time:'20:00', dayLabel:'Thu', minTokens:100 },
-    { id:'s5', title:'New signal alert drop',            type:'drop',      visibility:'holders', date:'Jun 20', time:'09:00', dayLabel:'Fri', minTokens:10 },
-    { id:'s6', title:'Weekend macro read',               type:'analysis',  visibility:'public',  date:'Jun 22', time:'10:00', dayLabel:'Sun' },
-    { id:'s7', title:'Tutorial: Reading on-chain data',  type:'tutorial',  visibility:'holders', date:'Jun 23', time:'18:00', dayLabel:'Mon', minTokens:10 },
+    { id: 's1', type: 'live',     title: 'Live Market Analysis — Weekly DeFi Alpha', date: 'Jun 17',  time: '8:00 PM', day: '17', month: 'JUN', tokenGated: false,       rsvpd: true,  rsvpCount: 284, color: '#a855f7' },
+    { id: 's2', type: 'drop',     title: 'DeFi Signal Pack Q2 — Exclusive Drop',     date: 'Jun 19',  time: '12:00 PM',day: '19', month: 'JUN', tokenGated: true, minTokens: 25, tokenSymbol: 'SVRN', rsvpd: true, rsvpCount: 92, color: '#f59e0b' },
+    { id: 's3', type: 'ama',      title: 'Q&A — Ask Me Anything (Gold+ only)',        date: 'Jun 21',  time: '7:00 PM', day: '21', month: 'JUN', tokenGated: true, minTokens: 50, tokenSymbol: 'SVRN', rsvpd: false, rsvpCount: 48, color: '#818cf8' },
+    { id: 's4', type: 'live',     title: 'Trading Session: Altcoin Season Setup',     date: 'Jun 24',  time: '9:00 PM', day: '24', month: 'JUN', tokenGated: false,       rsvpd: false, rsvpCount: 156, color: '#a855f7' },
+    { id: 's5', type: 'workshop', title: 'DeFi 101 Workshop — Beginner Friendly',     date: 'Jun 28',  time: '6:00 PM', day: '28', month: 'JUN', tokenGated: false,       rsvpd: false, rsvpCount: 412, color: '#22c55e' },
+    { id: 's6', type: 'drop',     title: 'Diamond NFT Pass — Limited 10 Spots',       date: 'Jul 1',   time: '3:00 PM', day: '01', month: 'JUL', tokenGated: true, minTokens: 100, tokenSymbol: 'SVRN', rsvpd: false, rsvpCount: 8, color: '#818cf8' },
   ],
   mayafit: [
-    { id:'s1', title:'Full body HIIT — live',           type:'live',      visibility:'public',  date:'Jun 16', time:'07:00', dayLabel:'Mon' },
-    { id:'s2', title:'Meal prep Sunday post',           type:'post',      visibility:'public',  date:'Jun 17', time:'11:00', dayLabel:'Tue' },
-    { id:'s3', title:'Transformation Tuesday AMA',      type:'ama',       visibility:'holders', date:'Jun 18', time:'19:00', dayLabel:'Wed', minTokens:25 },
-    { id:'s4', title:'Advanced training drop',          type:'drop',      visibility:'diamond', date:'Jun 20', time:'08:00', dayLabel:'Fri', minTokens:100 },
+    { id: 's7', type: 'live',     title: 'Morning Burn — Full Body HIIT',            date: 'Jun 17',  time: '6:00 AM', day: '17', month: 'JUN', tokenGated: false,       rsvpd: false, rsvpCount: 180, color: '#22c55e' },
+    { id: 's8', type: 'drop',     title: '12-Week Shred Program — Summer Edition',   date: 'Jun 20',  time: '9:00 AM', day: '20', month: 'JUN', tokenGated: true, minTokens: 10, tokenSymbol: 'MAYA', rsvpd: false, rsvpCount: 64, color: '#f59e0b' },
+    { id: 's9', type: 'ama',      title: 'Nutrition Q&A — Ask a Coach Anything',     date: 'Jun 22',  time: '8:00 PM', day: '22', month: 'JUN', tokenGated: false,       rsvpd: false, rsvpCount: 310, color: '#22c55e' },
   ],
 }
 
-const TYPE_COLOR: Record<ContentType, string> = {
-  post:'#818cf8', live:'#f87171', analysis:'#a855f7', tutorial:'#22c55e', ama:'#f59e0b', drop:'#ec4899',
-}
-const TYPE_ICON: Record<ContentType, string> = {
-  post:'📝', live:'🔴', analysis:'📊', tutorial:'🎓', ama:'💬', drop:'📦',
-}
-const VIS_BADGE: Record<Visibility, { label: string; color: string }> = {
-  public:  { label:'Public',   color:'rgba(255,255,255,0.25)' },
-  holders: { label:'Holders',  color:'#f59e0b'               },
-  diamond: { label:'Diamond',  color:'#818cf8'               },
+const PROFILE_COLORS: Record<string, string> = { sovereign_v: '#a855f7', mayafit: '#22c55e', jaxbeats: '#ec4899' }
+
+const TYPE_META: Record<EventType, { icon: string; label: string }> = {
+  live:     { icon: '🔴', label: 'Live Stream' },
+  post:     { icon: '📝', label: 'Post' },
+  drop:     { icon: '🎁', label: 'Drop' },
+  ama:      { icon: '💬', label: 'AMA' },
+  workshop: { icon: '🎓', label: 'Workshop' },
 }
 
-const MY_TOKENS: Record<string, number> = { SVRN:50, MAYA:80, JAX:0 }
+const MY_TOKENS: Record<string, number> = { SVRN: 50, MAYA: 80, JAX: 0 }
 
 export default function CreatorSchedulePage() {
   const router = useRouter()
   const params = useParams()
-  const handle  = typeof params.handle === 'string' ? params.handle : 'sovereign_v'
-  const creator = CREATOR_DATA[handle] ?? CREATOR_DATA.sovereign_v
-  const items   = SCHEDULE[handle] ?? SCHEDULE.sovereign_v
+  const handle = typeof params.handle === 'string' ? params.handle : 'sovereign_v'
+  const items = CREATOR_SCHEDULE[handle] ?? CREATOR_SCHEDULE.sovereign_v
+  const accentColor = PROFILE_COLORS[handle] ?? '#a855f7'
 
-  const [filter, setFilter] = useState<'all' | ContentType>('all')
-  const [notified, setNotified] = useState<Record<string, boolean>>({})
+  const [rsvps, setRsvps] = useState<Record<string, boolean>>(
+    Object.fromEntries(items.map(i => [i.id, i.rsvpd]))
+  )
+  const [counts, setCounts] = useState<Record<string, number>>(
+    Object.fromEntries(items.map(i => [i.id, i.rsvpCount]))
+  )
+  const [loading, setLoading] = useState<Record<string, boolean>>({})
 
-  const visible = items.filter(i => filter === 'all' || i.type === filter)
-  const userTokens = MY_TOKENS[creator.tokenSymbol] ?? 0
-
-  function canAccess(item: ScheduledItem) {
-    if (item.visibility === 'public') return true
-    return userTokens >= (item.minTokens ?? 999)
+  async function toggleRsvp(id: string) {
+    setLoading(prev => ({ ...prev, [id]: true }))
+    await new Promise(r => setTimeout(r, 700))
+    setRsvps(prev => {
+      const newVal = !prev[id]
+      setCounts(c => ({ ...c, [id]: newVal ? c[id] + 1 : c[id] - 1 }))
+      return { ...prev, [id]: newVal }
+    })
+    setLoading(prev => ({ ...prev, [id]: false }))
   }
 
-  function toggleNotify(id: string) {
-    setNotified(prev => ({ ...prev, [id]: !prev[id] }))
-  }
-
-  const FILTER_TYPES: (ContentType | 'all')[] = ['all', 'live', 'analysis', 'post', 'tutorial', 'ama', 'drop']
+  const typeFilters: (EventType | 'all')[] = ['all', 'live', 'drop', 'ama', 'workshop']
+  const [typeFilter, setTypeFilter] = useState<EventType | 'all'>('all')
+  const filtered = typeFilter === 'all' ? items : items.filter(i => i.type === typeFilter)
 
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
@@ -93,73 +92,76 @@ export default function CreatorSchedulePage() {
             <div className="font-black text-white">Schedule</div>
             <div className="text-xs text-white/30">@{handle} · {items.length} upcoming</div>
           </div>
+          <div className="text-xs px-2 py-1 rounded-full font-bold"
+            style={{ background: `${accentColor}15`, color: accentColor }}>
+            {items.filter(i => rsvps[i.id]).length} RSVP'd
+          </div>
         </div>
+
+        {/* Type filter */}
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-          {FILTER_TYPES.map(t => (
-            <button key={t} onClick={() => setFilter(t)}
-              className="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex-shrink-0 capitalize"
-              style={filter === t
-                ? { background: creator.color, color: '#04040A' }
-                : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
-              {t === 'all' ? 'All' : `${TYPE_ICON[t as ContentType]} ${t}`}
+          {typeFilters.map(f => (
+            <button key={f} onClick={() => setTypeFilter(f)}
+              className="px-2.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex-shrink-0 capitalize"
+              style={typeFilter === f ? { background: accentColor, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+              {f === 'all' ? 'All' : `${TYPE_META[f].icon} ${TYPE_META[f].label}`}
             </button>
           ))}
         </div>
       </header>
 
       <div className="px-4 py-4 space-y-3">
-        {visible.map(item => {
-          const access  = canAccess(item)
-          const notif   = notified[item.id]
-          const vis     = VIS_BADGE[item.visibility]
-          return (
-            <div key={item.id} className="p-4 rounded-2xl border"
-              style={{ background: 'rgba(255,255,255,0.018)', borderColor: access ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)' }}>
-              <div className="flex items-start gap-3">
-                {/* Day/time column */}
-                <div className="flex flex-col items-center flex-shrink-0 w-12">
-                  <div className="text-xs text-white/25">{item.dayLabel}</div>
-                  <div className="font-black text-sm text-white/50">{item.time}</div>
-                </div>
+        {filtered.map(item => {
+          const canAccess = !item.tokenGated || (item.tokenSymbol && (MY_TOKENS[item.tokenSymbol] ?? 0) >= (item.minTokens ?? 0))
+          const isRsvpd = rsvps[item.id]
+          const isLoading = loading[item.id]
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-base">{TYPE_ICON[item.type]}</span>
-                    <span className="font-black text-sm text-white/85 leading-tight">{item.title}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-xs font-bold" style={{ color: TYPE_COLOR[item.type] }}>{item.type}</span>
-                    <span className="text-xs px-1.5 py-0.5 rounded-full"
-                      style={{ background: `${vis.color}15`, color: vis.color }}>
-                      {vis.label}
-                    </span>
-                    {item.minTokens && (
-                      <span className="text-xs" style={{ color: access ? '#22c55e' : 'rgba(255,255,255,0.2)' }}>
-                        {access ? '✓' : `🔒 ${item.minTokens}+ $${creator.tokenSymbol}`}
-                      </span>
-                    )}
-                  </div>
-                  {item.teaser && access && (
-                    <p className="text-xs text-white/30 italic">"{item.teaser}"</p>
+          return (
+            <div key={item.id} className="flex gap-3">
+              {/* Date block */}
+              <div className="flex-shrink-0 w-12 flex flex-col items-center pt-3">
+                <div className="text-xs font-black text-white/25">{item.month}</div>
+                <div className="text-2xl font-black text-white/70">{item.day}</div>
+              </div>
+
+              {/* Card */}
+              <div className="flex-1 rounded-2xl border border-white/4 p-3" style={{ background: 'rgba(255,255,255,0.018)' }}>
+                {/* Type + time */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+                    style={{ background: `${item.color}15`, color: item.color }}>
+                    {TYPE_META[item.type].icon} {TYPE_META[item.type].label}
+                  </span>
+                  <span className="text-xs text-white/25">{item.time}</span>
+                  {item.tokenGated && (
+                    <span className="ml-auto text-xs text-white/20">🔒 {item.minTokens}+ ${item.tokenSymbol}</span>
                   )}
                 </div>
 
-                {/* Notify bell */}
-                <button onClick={() => toggleNotify(item.id)}
-                  className="p-2 rounded-xl flex-shrink-0"
-                  style={{ background: notif ? `${creator.color}18` : 'rgba(255,255,255,0.04)',
-                    color: notif ? creator.color : 'rgba(255,255,255,0.2)' }}>
-                  {notif ? '🔔' : '🔕'}
-                </button>
+                <div className="font-bold text-sm text-white/80 mb-2">{item.title}</div>
+
+                <div className="flex items-center gap-3">
+                  <div className="text-xs text-white/25">{counts[item.id]} going</div>
+                  {canAccess ? (
+                    <button onClick={() => toggleRsvp(item.id)} disabled={isLoading}
+                      className="ml-auto px-3 py-1.5 rounded-xl text-xs font-black disabled:opacity-50"
+                      style={isRsvpd
+                        ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }
+                        : { background: item.color, color: '#04040A' }}>
+                      {isLoading ? '…' : isRsvpd ? '✓ Going' : 'RSVP'}
+                    </button>
+                  ) : (
+                    <button onClick={() => router.push(`/tokens/${item.tokenSymbol}/chart`)}
+                      className="ml-auto px-3 py-1.5 rounded-xl text-xs font-black"
+                      style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }}>
+                      Get ${item.tokenSymbol} →
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )
         })}
-
-        {visible.length === 0 && (
-          <div className="text-center py-12 text-white/25">Nothing scheduled for this type</div>
-        )}
       </div>
     </div>
   )
