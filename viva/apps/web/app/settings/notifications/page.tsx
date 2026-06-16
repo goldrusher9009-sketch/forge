@@ -2,239 +2,155 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-interface NotifSetting {
-  push: boolean
-  email: boolean
-  inApp: boolean
-}
+interface NotifSetting { id:string; label:string; desc:string; push:boolean; email:boolean; inApp:boolean; category:string }
 
-type Category = 'social' | 'token' | 'earnings' | 'platform' | 'marketing'
-
-interface NotifGroup {
-  id: Category
-  icon: string
-  label: string
-  desc: string
-  color: string
-  items: { id: string; label: string }[]
-}
-
-const GROUPS: NotifGroup[] = [
-  {
-    id: 'social', icon: '👥', label: 'Social', desc: 'Follows, mentions, comments, reactions', color: '#818cf8',
-    items: [
-      { id: 'new_follower', label: 'New follower' },
-      { id: 'mention',      label: 'Mentions & tags' },
-      { id: 'comment',      label: 'Comments on your posts' },
-      { id: 'reaction',     label: 'Post reactions' },
-      { id: 'dm',           label: 'Direct messages' },
-    ],
-  },
-  {
-    id: 'token', icon: '🪙', label: 'Token', desc: 'Price alerts, buys, sells, tier changes', color: '#a855f7',
-    items: [
-      { id: 'token_buy',      label: 'Someone buys your token' },
-      { id: 'token_sell',     label: 'Someone sells your token' },
-      { id: 'price_milestone', label: 'Price milestones' },
-      { id: 'tier_change',    label: 'Holder tier upgrades' },
-      { id: 'staking_reward', label: 'Staking rewards earned' },
-    ],
-  },
-  {
-    id: 'earnings', icon: '💰', label: 'Earnings', desc: 'Ad revenue, payouts, referrals', color: '#22c55e',
-    items: [
-      { id: 'ad_revenue',   label: 'Ad revenue earned' },
-      { id: 'payout_ready', label: 'Payout ready to claim' },
-      { id: 'referral',     label: 'Referral bonuses' },
-      { id: 'airdrop',      label: 'Token airdrops' },
-    ],
-  },
-  {
-    id: 'platform', icon: '🔔', label: 'Platform', desc: 'System updates, security alerts', color: '#f59e0b',
-    items: [
-      { id: 'security',     label: 'Security alerts' },
-      { id: 'login',        label: 'New sign-in detected' },
-      { id: 'product_news', label: 'Product updates' },
-      { id: 'challenges',   label: 'New challenges & rewards' },
-    ],
-  },
-  {
-    id: 'marketing', icon: '📣', label: 'Marketing', desc: 'Promotional offers from VIVA', color: '#ec4899',
-    items: [
-      { id: 'promotions',  label: 'Special offers & discounts' },
-      { id: 'weekly_recap', label: 'Weekly activity recap' },
-    ],
-  },
+const DEFAULTS: NotifSetting[] = [
+  { id:'n1',  label:'Token price alerts',       desc:'When tokens you hold move ±5%',              push:true,  email:false, inApp:true,  category:'tokens'   },
+  { id:'n2',  label:'New token holders',        desc:'When someone buys your token',               push:true,  email:false, inApp:true,  category:'tokens'   },
+  { id:'n3',  label:'Staking rewards',          desc:'Daily staking reward updates',               push:false, email:true,  inApp:true,  category:'tokens'   },
+  { id:'n4',  label:'Token drops',              desc:'When creators you follow drop new tokens',   push:true,  email:false, inApp:true,  category:'tokens'   },
+  { id:'n5',  label:'New followers',            desc:'When someone follows you',                   push:false, email:false, inApp:true,  category:'social'   },
+  { id:'n6',  label:'Post likes',               desc:'When someone likes your content',            push:false, email:false, inApp:true,  category:'social'   },
+  { id:'n7',  label:'Tips received',            desc:'When you receive a tip',                     push:true,  email:true,  inApp:true,  category:'social'   },
+  { id:'n8',  label:'New posts from creators',  desc:'Content from creators you follow',           push:false, email:false, inApp:true,  category:'social'   },
+  { id:'n9',  label:'Live rooms',               desc:'When creators you follow go live',           push:true,  email:false, inApp:true,  category:'social'   },
+  { id:'n10', label:'DAO proposals',            desc:'New governance votes',                       push:true,  email:true,  inApp:true,  category:'platform' },
+  { id:'n11', label:'Deposit confirmations',    desc:'When deposits arrive',                       push:true,  email:true,  inApp:true,  category:'platform' },
+  { id:'n12', label:'Withdrawal confirmations', desc:'When withdrawals process',                   push:true,  email:true,  inApp:true,  category:'platform' },
+  { id:'n13', label:'Security alerts',          desc:'Login and account activity',                 push:true,  email:true,  inApp:true,  category:'platform' },
+  { id:'n14', label:'Events & RSVP reminders',  desc:'Upcoming events you\'re attending',         push:true,  email:false, inApp:true,  category:'platform' },
+  { id:'n15', label:'Weekly digest',            desc:'Weekly summary of your VIVA activity',      push:false, email:true,  inApp:false, category:'platform' },
 ]
 
-type SettingsMap = Record<string, Record<string, NotifSetting>>
+const CATEGORIES = ['tokens', 'social', 'platform']
+const CAT_LABELS: Record<string, string> = { tokens:'💎 Tokens', social:'👥 Social', platform:'⚙️ Platform' }
 
-function defaultSettings(): SettingsMap {
-  const s: SettingsMap = {}
-  for (const g of GROUPS) {
-    s[g.id] = {}
-    for (const item of g.items) {
-      s[g.id][item.id] = {
-        push:  g.id !== 'marketing',
-        email: g.id === 'earnings' || g.id === 'platform',
-        inApp: true,
-      }
-    }
-  }
-  return s
-}
+type Channel = 'push' | 'email' | 'inApp'
 
 export default function NotificationSettingsPage() {
   const router = useRouter()
-  const [settings, setSettings] = useState<SettingsMap>(defaultSettings)
-  const [saving, setSaving] = useState(false)
+  const [settings, setSettings] = useState<NotifSetting[]>(DEFAULTS)
   const [saved, setSaved] = useState(false)
-  const [expanded, setExpanded] = useState<Category | null>('social')
 
-  function toggle(cat: Category, itemId: string, channel: keyof NotifSetting) {
-    setSettings(s => ({
-      ...s,
-      [cat]: {
-        ...s[cat],
-        [itemId]: { ...s[cat][itemId], [channel]: !s[cat][itemId][channel] },
-      },
-    }))
+  function toggle(id: string, channel: Channel) {
+    setSettings(prev => prev.map(s => s.id === id ? { ...s, [channel]: !s[channel as keyof NotifSetting] } : s))
   }
 
-  function toggleAll(cat: Category, channel: keyof NotifSetting, value: boolean) {
-    setSettings(s => {
-      const updated = { ...s[cat] }
-      for (const k of Object.keys(updated)) {
-        updated[k] = { ...updated[k], [channel]: value }
-      }
-      return { ...s, [cat]: updated }
-    })
+  function toggleAll(category: string, channel: Channel, val: boolean) {
+    setSettings(prev => prev.map(s => s.category === category ? { ...s, [channel]: val } : s))
   }
 
   async function save() {
-    setSaving(true)
-    await new Promise(r => setTimeout(r, 700))
-    setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
+    <div className="min-h-screen pb-24" style={{ background:'var(--ink)' }}>
       <header className="sticky top-0 z-20 px-4 pt-4 pb-3 border-b border-white/5"
-        style={{ backdropFilter: 'blur(20px)', background: 'rgba(4,4,10,0.92)' }}>
+        style={{ backdropFilter:'blur(20px)', background:'rgba(4,4,10,0.92)' }}>
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <div className="font-black text-white flex-1">Notification Settings</div>
-          <button onClick={save} disabled={saving}
-            className="px-3 py-1.5 rounded-xl text-xs font-black disabled:opacity-50"
-            style={{ background: saved ? '#22c55e' : '#a855f7', color: '#04040A' }}>
-            {saved ? '✓ Saved' : saving ? '…' : 'Save'}
+          <div className="flex-1 font-black text-white">Notification Settings</div>
+          <button onClick={save}
+            className="px-3 py-1.5 rounded-xl text-xs font-black"
+            style={saved ? { background:'#22c55e', color:'#04040A' } : { background:'#a855f7', color:'#04040A' }}>
+            {saved ? '✓ Saved' : 'Save'}
           </button>
         </div>
       </header>
 
-      <div className="px-4 py-4 space-y-3">
-        {/* Channel header */}
-        <div className="flex justify-end gap-6 pr-1 text-xs text-white/25 font-semibold uppercase tracking-wider mb-1">
-          <span>Push</span>
-          <span>Email</span>
-          <span>In-App</span>
+      {/* Column headers */}
+      <div className="sticky top-[60px] z-10 px-4 py-2 border-b border-white/4"
+        style={{ backdropFilter:'blur(20px)', background:'rgba(4,4,10,0.88)' }}>
+        <div className="flex items-center">
+          <div className="flex-1" />
+          {(['push','email','inApp'] as Channel[]).map(c => (
+            <div key={c} className="w-14 text-center text-[10px] text-white/25 font-bold uppercase">
+              {c === 'inApp' ? 'In-App' : c}
+            </div>
+          ))}
         </div>
+      </div>
 
-        {GROUPS.map(g => {
-          const isOpen = expanded === g.id
-          const catSettings = settings[g.id]
-          const allPush = Object.values(catSettings).every(s => s.push)
-          const allEmail = Object.values(catSettings).every(s => s.email)
+      <div className="px-4 py-4 space-y-6">
+        {CATEGORIES.map(cat => {
+          const catSettings = settings.filter(s => s.category === cat)
           return (
-            <div key={g.id} className="rounded-2xl border border-white/5 overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.018)' }}>
-              {/* Group header */}
-              <button
-                onClick={() => setExpanded(isOpen ? null : g.id)}
-                className="w-full flex items-center gap-3 px-4 py-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                  style={{ background: `${g.color}12` }}>
-                  {g.icon}
-                </div>
-                <div className="flex-1 text-left">
-                  <div className="font-bold text-sm text-white/80">{g.label}</div>
-                  <div className="text-xs text-white/25">{g.desc}</div>
-                </div>
-                {/* Group-level toggles */}
-                <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
-                  <Toggle value={allPush} color={g.color} onChange={v => toggleAll(g.id, 'push', v)} />
-                  <Toggle value={allEmail} color={g.color} onChange={v => toggleAll(g.id, 'email', v)} />
-                  <Toggle value={true} color={g.color} onChange={() => {}} disabled />
-                </div>
-                <span className="text-white/20 text-xs ml-1">{isOpen ? '▲' : '▼'}</span>
-              </button>
-
-              {/* Items */}
-              {isOpen && (
-                <div className="border-t border-white/5">
-                  {g.items.map(item => {
-                    const s = catSettings[item.id]
+            <div key={cat}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-black text-sm text-white/70">{CAT_LABELS[cat]}</div>
+                <div className="flex gap-1">
+                  {(['push','email','inApp'] as Channel[]).map(ch => {
+                    const allOn = catSettings.every(s => s[ch as keyof NotifSetting])
                     return (
-                      <div key={item.id}
-                        className="flex items-center gap-3 px-4 py-2.5 border-b border-white/3 last:border-0">
-                        <div className="flex-1 text-sm text-white/50 pl-11">{item.label}</div>
-                        <div className="flex items-center gap-4">
-                          <Toggle value={s.push} color={g.color} onChange={() => toggle(g.id, item.id, 'push')} />
-                          <Toggle value={s.email} color={g.color} onChange={() => toggle(g.id, item.id, 'email')} />
-                          <Toggle value={s.inApp} color={g.color} onChange={() => toggle(g.id, item.id, 'inApp')} />
-                        </div>
-                        <span className="w-5" />
-                      </div>
+                      <button key={ch} onClick={() => toggleAll(cat, ch, !allOn)}
+                        className="w-14 text-center text-[10px] font-bold"
+                        style={{ color:allOn?'#a855f7':'rgba(255,255,255,0.2)' }}>
+                        {allOn ? 'All ✓' : 'All'}
+                      </button>
                     )
                   })}
                 </div>
-              )}
+              </div>
+              <div className="space-y-1">
+                {catSettings.map(s => (
+                  <div key={s.id} className="flex items-center px-3 py-3 rounded-2xl border border-white/4"
+                    style={{ background:'rgba(255,255,255,0.015)' }}>
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="text-sm font-bold text-white/75">{s.label}</div>
+                      <div className="text-xs text-white/25">{s.desc}</div>
+                    </div>
+                    {(['push','email','inApp'] as Channel[]).map(ch => {
+                      const val = s[ch as keyof NotifSetting] as boolean
+                      return (
+                        <button key={ch} onClick={() => toggle(s.id, ch)}
+                          className="w-14 flex justify-center">
+                          <div className="w-8 h-4 rounded-full relative transition-all"
+                            style={{ background:val?'#a855f7':'rgba(255,255,255,0.1)' }}>
+                            <div className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all"
+                              style={{ left:val?'calc(100% - 14px)':'2px' }} />
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           )
         })}
 
         {/* Quiet hours */}
-        <div className="p-4 rounded-2xl border border-white/5 space-y-3"
-          style={{ background: 'rgba(255,255,255,0.018)' }}>
-          <div className="font-bold text-sm text-white/80">🌙 Quiet Hours</div>
-          <div className="text-xs text-white/30">Suppress push notifications during these hours</div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/6 text-sm text-white/50 text-center">
-              10:00 PM
+        <div>
+          <div className="font-black text-sm text-white/70 mb-3">🌙 Quiet Hours</div>
+          <div className="p-4 rounded-2xl border border-white/5" style={{ background:'rgba(255,255,255,0.018)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-sm font-bold text-white/75">Do Not Disturb</div>
+                <div className="text-xs text-white/30">Mute push notifications during quiet hours</div>
+              </div>
+              <div className="w-10 h-5 rounded-full" style={{ background:'rgba(255,255,255,0.1)' }}>
+                <div className="w-4 h-4 rounded-full bg-white m-0.5" />
+              </div>
             </div>
-            <span className="text-white/20 text-sm">to</span>
-            <div className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/6 text-sm text-white/50 text-center">
-              7:00 AM
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <div className="text-xs text-white/25 mb-1">From</div>
+                <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/8 text-sm text-white/50">10:00 PM</div>
+              </div>
+              <div className="flex-1">
+                <div className="text-xs text-white/25 mb-1">Until</div>
+                <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/8 text-sm text-white/50">8:00 AM</div>
+              </div>
             </div>
           </div>
         </div>
-
-        <button onClick={save} disabled={saving}
-          className="w-full py-3.5 rounded-2xl font-black transition-all"
-          style={{ background: saved ? '#22c55e' : '#a855f7', color: '#04040A' }}>
-          {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save Preferences'}
-        </button>
       </div>
     </div>
-  )
-}
-
-function Toggle({ value, color, onChange, disabled }: {
-  value: boolean; color: string; onChange: (v: boolean) => void; disabled?: boolean
-}) {
-  return (
-    <button
-      onClick={() => !disabled && onChange(!value)}
-      className="relative w-9 h-5 rounded-full transition-all flex-shrink-0"
-      style={{ background: value ? color : 'rgba(255,255,255,0.08)', opacity: disabled ? 0.3 : 1 }}>
-      <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow-sm"
-        style={{ left: value ? '18px' : '2px' }} />
-    </button>
   )
 }

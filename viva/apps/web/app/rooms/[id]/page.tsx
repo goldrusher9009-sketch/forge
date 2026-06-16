@@ -1,232 +1,240 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
-const ROOM = {
-  id: 'r1',
-  title: 'Token Economy 101 — Live Q&A',
-  host: { name: 'Sovereign V', handle: 'sovereign_v', color: '#a855f7', avatar: 'SV' },
-  topic: 'Finance & Token Economy',
-  tokenGate: { symbol: 'SOVV', tier: 'Bronze', min: 10 },
-  live: true,
-  listeners: 284,
-  speakers: [
-    { name: 'Sovereign V', handle: 'sovereign_v', color: '#a855f7', avatar: 'SV', role: 'Host',     speaking: true  },
-    { name: 'Maya Chen',   handle: 'mayafit',     color: '#22c55e', avatar: 'MC', role: 'Co-host',  speaking: false },
-    { name: 'ZeroNode',    handle: 'zeronode',    color: '#818cf8', avatar: 'ZN', role: 'Speaker',  speaking: false },
-    { name: 'Luna Apex',   handle: 'luna_apex',   color: '#f59e0b', avatar: 'LA', role: 'Speaker',  speaking: true  },
-  ],
+interface Speaker { handle:string; name:string; color:string; verified:boolean; muted:boolean; role:'host'|'speaker'|'listener' }
+interface Message { id:string; handle:string; color:string; text:string; ts:string }
+
+const ROOM_DATA: Record<string, { title:string; host:string; hostColor:string; tokenSymbol:string; color:string; minTokens:number; listeners:number; live:boolean; topic:string }> = {
+  r1: { title:'DeFi Alpha Room',      host:'sovereign_v', hostColor:'#a855f7', tokenSymbol:'SVRN', color:'#a855f7', minTokens:0,  listeners:284, live:true,  topic:'Weekly DeFi analysis and market alpha' },
+  r2: { title:'Beats & Vibes',         host:'jaxbeats',    hostColor:'#ec4899', tokenSymbol:'JAX',  color:'#ec4899', minTokens:5,  listeners:0,   live:false, topic:'Music production and beat drops' },
+  r3: { title:'Fitness Accountability',host:'mayafit',     hostColor:'#22c55e', tokenSymbol:'MAYA', color:'#22c55e', minTokens:0,  listeners:128, live:true,  topic:'Monday morning fitness check-in' },
 }
 
-const INITIAL_CHAT = [
-  { id: 'm1', handle: 'cryptomind', color: '#ec4899', text: 'Just joined! What\'s the best way to launch a creator token?', ts: '3m ago' },
-  { id: 'm2', handle: 'sovereign_v', color: '#a855f7', text: 'Great Q! Start with value, not hype. Holders should get real utility on day 1.', ts: '2m ago', isHost: true },
-  { id: 'm3', handle: 'wave_99', color: '#818cf8', text: '🔥🔥🔥', ts: '2m ago' },
-  { id: 'm4', handle: 'hodler_x', color: '#22c55e', text: 'The staking tiers model is genius — creates real lock-in incentive', ts: '1m ago' },
-  { id: 'm5', handle: 'newuser_42', color: '#f59e0b', text: 'How do you set initial token price?', ts: '45s ago' },
+const SPEAKERS: Speaker[] = [
+  { handle:'sovereign_v', name:'Sovereign V', color:'#a855f7', verified:true,  muted:false, role:'host'     },
+  { handle:'atlas_k',     name:'Atlas K',     color:'#818cf8', verified:true,  muted:false, role:'speaker'  },
+  { handle:'luna_w',      name:'Luna W.',     color:'#f87171', verified:false, muted:true,  role:'speaker'  },
+  { handle:'you',         name:'You',         color:'#a855f7', verified:false, muted:true,  role:'listener' },
+  { handle:'kai_r',       name:'Kai R.',      color:'#22c55e', verified:false, muted:true,  role:'listener' },
+  { handle:'marco_v',     name:'Marco V.',    color:'#f87171', verified:false, muted:true,  role:'listener' },
+  { handle:'jade_l',      name:'Jade L.',     color:'#a855f7', verified:false, muted:true,  role:'listener' },
+  { handle:'noa_d',       name:'Noa D.',      color:'#f59e0b', verified:false, muted:true,  role:'listener' },
 ]
+
+const MESSAGES: Message[] = [
+  { id:'m1', handle:'atlas_k',   color:'#818cf8', text:'Great alpha on ETH this week, totally agree with the setup', ts:'2m' },
+  { id:'m2', handle:'luna_w',    color:'#f87171', text:'What\'s your target for the BTC move?',                       ts:'1m' },
+  { id:'m3', handle:'sovereign_v',color:'#a855f7',text:'Targeting 72k retest before next leg up. Hold tight 🎯',     ts:'45s' },
+  { id:'m4', handle:'kai_r',     color:'#22c55e', text:'This room is gold every week 🔥',                             ts:'30s' },
+]
+
+const MY_TOKENS: Record<string, number> = { SVRN:50, MAYA:80, JAX:0 }
 
 export default function RoomPage() {
   const router = useRouter()
   const params = useParams()
-  const [joined, setJoined] = useState(false)
-  const [muted, setMuted] = useState(true)
-  const [handRaised, setHandRaised] = useState(false)
-  const [chat, setChat] = useState(INITIAL_CHAT)
-  const [msg, setMsg] = useState('')
-  const [listeners, setListeners] = useState(ROOM.listeners)
-  const [speakers, setSpeakers] = useState(ROOM.speakers)
-  const chatRef = useRef<HTMLDivElement>(null)
+  const id     = typeof params.id === 'string' ? params.id : 'r1'
+  const room   = ROOM_DATA[id] ?? ROOM_DATA.r1
 
-  // Simulate live listener count drift
-  useEffect(() => {
-    const iv = setInterval(() => {
-      setListeners(l => l + Math.floor(Math.random() * 3 - 1))
-    }, 4000)
-    return () => clearInterval(iv)
-  }, [])
+  const [muted, setMuted]     = useState(true)
+  const [msg, setMsg]         = useState('')
+  const [msgs, setMsgs]       = useState<Message[]>(MESSAGES)
+  const [listeners, setListeners] = useState(room.listeners)
+  const [raised, setRaised]   = useState(false)
+  const [tab, setTab]         = useState<'room'|'chat'>('room')
 
-  // Simulate speaking indicators toggling
+  // Simulate listener count fluctuating
   useEffect(() => {
-    if (!joined) return
-    const iv = setInterval(() => {
-      setSpeakers(prev => prev.map(s =>
-        s.role !== 'Host' ? { ...s, speaking: Math.random() > 0.6 } : s
-      ))
-    }, 2500)
-    return () => clearInterval(iv)
-  }, [joined])
+    if (!room.live) return
+    const t = setInterval(() => {
+      setListeners(l => l + (Math.random() > 0.5 ? 1 : -1))
+    }, 3000)
+    return () => clearInterval(t)
+  }, [room.live])
 
-  // Simulate incoming chat messages
-  useEffect(() => {
-    if (!joined) return
-    const msgs = [
-      { handle: 'lurker_01', color: '#94a3b8', text: '🙌' },
-      { handle: 'builder_x', color: '#818cf8', text: 'This explains so much. Thank you!' },
-      { handle: 'apex_fan',  color: '#f59e0b', text: '@luna_apex when is your token launching??' },
-      { handle: 'degen_88',  color: '#ec4899', text: 'Pumping my SOVV bags rn 📈' },
-    ]
-    let idx = 0
-    const iv = setInterval(() => {
-      if (idx < msgs.length) {
-        const m = msgs[idx++]
-        setChat(prev => [...prev, { id: `live_${Date.now()}`, ts: 'just now', ...m }])
-        setTimeout(() => chatRef.current?.scrollTo({ top: 9999, behavior: 'smooth' }), 50)
-      }
-    }, 7000)
-    return () => clearInterval(iv)
-  }, [joined])
+  const canAccess = !room.minTokens || (MY_TOKENS[room.tokenSymbol] ?? 0) >= room.minTokens
+  const accent = room.color
 
   function sendMsg() {
     if (!msg.trim()) return
-    setChat(prev => [...prev, { id: `me_${Date.now()}`, handle: 'you', color: '#a855f7', text: msg, ts: 'now' }])
+    setMsgs(prev => [...prev, { id:String(Date.now()), handle:'you', color:'#a855f7', text:msg, ts:'now' }])
     setMsg('')
-    setTimeout(() => chatRef.current?.scrollTo({ top: 9999, behavior: 'smooth' }), 50)
   }
 
-  if (!joined) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 pb-24" style={{ background: 'var(--ink)' }}>
-        <button onClick={() => router.back()} className="self-start mb-8 text-white/35 hover:text-white transition-colors text-sm">← Back</button>
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl mb-4"
-          style={{ background: `${ROOM.host.color}18`, color: ROOM.host.color }}>{ROOM.host.avatar}</div>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#22c55e' }} />
-          <span className="text-xs text-green-400 font-semibold">LIVE</span>
-        </div>
-        <h1 className="text-xl font-black text-white text-center mb-2">{ROOM.title}</h1>
-        <p className="text-sm text-white/40 text-center mb-1">Hosted by {ROOM.host.name}</p>
-        <p className="text-xs text-white/25 mb-6">{listeners} listening</p>
-
-        {ROOM.tokenGate && (
-          <div className="mb-6 px-4 py-3 rounded-xl text-sm text-center"
-            style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', color: '#a855f7' }}>
-            🔑 Requires {ROOM.tokenGate.min}+ ${ROOM.tokenGate.symbol} ({ROOM.tokenGate.tier} tier)
-          </div>
-        )}
-
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
-          {ROOM.speakers.map(s => (
-            <div key={s.handle} className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm relative"
-                style={{ background: `${s.color}18`, color: s.color }}>
-                {s.avatar}
-                {s.speaking && (
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2"
-                    style={{ background: '#22c55e', borderColor: '#04040A' }} />
-                )}
-              </div>
-              <div className="text-xs text-white/35">{s.role}</div>
-            </div>
-          ))}
-        </div>
-
-        <button onClick={() => setJoined(true)}
-          className="w-full max-w-xs py-4 rounded-2xl font-black text-base"
-          style={{ background: '#22c55e', color: '#04040A' }}>
-          🎙 Join Room
-        </button>
-      </div>
-    )
-  }
+  const hosts   = SPEAKERS.filter(s => s.role === 'host')
+  const speakers= SPEAKERS.filter(s => s.role === 'speaker')
+  const listeners_list = SPEAKERS.filter(s => s.role === 'listener')
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: 'var(--ink)' }}>
-      {/* Header */}
-      <header className="px-4 pt-4 pb-3 border-b border-white/5 flex-shrink-0"
-        style={{ backdropFilter: 'blur(20px)', background: 'rgba(4,4,10,0.92)' }}>
+    <div className="min-h-screen flex flex-col pb-24" style={{ background:'var(--ink)' }}>
+      <header className="sticky top-0 z-20 px-4 pt-4 pb-3 border-b border-white/5"
+        style={{ backdropFilter:'blur(20px)', background:'rgba(4,4,10,0.92)' }}>
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()}
-            className="p-1.5 rounded-lg hover:bg-white/5 text-white/50 hover:text-white transition-colors">
+          <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
           <div className="flex-1 min-w-0">
+            <div className="font-black text-white text-sm truncate">{room.title}</div>
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#22c55e' }} />
-              <p className="text-xs text-green-400 font-semibold">LIVE</p>
-              <span className="text-xs text-white/25">{listeners} listening</span>
+              {room.live ? (
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ background:'rgba(248,113,113,0.15)', color:'#f87171' }}>● LIVE</span>
+              ) : (
+                <span className="text-xs text-white/30">Offline</span>
+              )}
+              <span className="text-xs text-white/25">{listeners.toLocaleString()} listening</span>
             </div>
-            <h1 className="font-bold text-white text-sm truncate">{ROOM.title}</h1>
           </div>
+          {room.live && (
+            <button onClick={() => router.back()}
+              className="px-3 py-1.5 rounded-xl text-xs font-black"
+              style={{ background:'rgba(248,113,113,0.12)', color:'#f87171' }}>
+              Leave
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Speakers */}
-      <div className="px-4 py-4 border-b border-white/5 flex-shrink-0">
-        <div className="flex flex-wrap gap-4 justify-center">
-          {speakers.map(s => (
-            <div key={s.handle} className="flex flex-col items-center gap-1.5">
-              <div className="relative">
-                <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-black text-base transition-all ${s.speaking ? 'ring-2' : ''}`}
-                  style={{ background: `${s.color}18`, color: s.color, ringColor: s.color }}>
-                  {s.avatar}
-                </div>
-                {s.speaking && (
-                  <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center"
-                    style={{ background: '#22c55e', borderColor: '#04040A' }}>
-                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  </div>
-                )}
-              </div>
-              <div className="text-xs text-white/60 font-semibold">{s.name.split(' ')[0]}</div>
-              <div className="text-xs text-white/25">{s.role}</div>
-            </div>
-          ))}
+      {/* Gate check */}
+      {!canAccess ? (
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+          <div className="text-5xl mb-4">🔒</div>
+          <div className="font-black text-white/70 mb-2">Token-Gated Room</div>
+          <div className="text-sm text-white/30 mb-6">Hold {room.minTokens}+ ${room.tokenSymbol} to join</div>
+          <button onClick={() => router.push(`/tokens/${room.tokenSymbol}/chart`)}
+            className="px-6 py-3 rounded-2xl font-black text-sm"
+            style={{ background:accent, color:'#04040A' }}>
+            Get ${room.tokenSymbol} →
+          </button>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Topic banner */}
+          <div className="mx-4 mt-4 p-3 rounded-xl border flex gap-2"
+            style={{ background:`${accent}06`, borderColor:`${accent}15` }}>
+            <span className="text-sm">📌</span>
+            <div className="text-xs text-white/50">{room.topic}</div>
+          </div>
 
-      {/* Chat */}
-      <div ref={chatRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {chat.map(m => (
-          <div key={m.id} className="flex items-start gap-2">
-            <div className="w-5 h-5 rounded-md flex items-center justify-center text-xs font-black flex-shrink-0 mt-0.5"
-              style={{ background: `${m.color}18`, color: m.color }}>{m.handle[0].toUpperCase()}</div>
-            <div>
-              <span className="text-xs font-bold" style={{ color: (m as any).isHost ? m.color : 'rgba(255,255,255,0.5)' }}>
-                @{m.handle}
-                {(m as any).isHost && <span className="ml-1 text-xs" style={{ color: m.color }}>· Host</span>}
-              </span>
-              <span className="text-xs text-white/55 ml-2">{m.text}</span>
+          {/* Tab switcher */}
+          <div className="flex gap-1 mx-4 mt-3 p-1 rounded-xl" style={{ background:'rgba(255,255,255,0.04)' }}>
+            {(['room','chat'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)}
+                className="flex-1 py-2 rounded-lg text-xs font-bold capitalize"
+                style={tab===t ? { background:'rgba(255,255,255,0.08)', color:'white' } : { color:'rgba(255,255,255,0.3)' }}>
+                {t === 'room' ? '🎙 Room' : '💬 Chat'}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'room' && (
+            <div className="px-4 py-4 flex-1 overflow-y-auto">
+              {/* Host */}
+              <div className="text-xs text-white/25 font-semibold uppercase tracking-wider mb-3">Host</div>
+              <div className="flex gap-3 mb-4">
+                {hosts.map(s => (
+                  <div key={s.handle} className="flex flex-col items-center gap-1">
+                    <div className="relative w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl"
+                      style={{ background:`${s.color}15`, border:`2px solid ${s.color}`, boxShadow:`0 0 16px ${s.color}40` }}>
+                      {s.name[0]}
+                      {!s.muted && <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full text-[10px] flex items-center justify-center"
+                        style={{ background:accent }}>🎤</div>}
+                    </div>
+                    <div className="text-[10px] text-white/50 font-bold">@{s.handle}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Speakers */}
+              <div className="text-xs text-white/25 font-semibold uppercase tracking-wider mb-3">Speakers</div>
+              <div className="flex gap-3 flex-wrap mb-4">
+                {speakers.map(s => (
+                  <div key={s.handle} className="flex flex-col items-center gap-1">
+                    <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-base"
+                      style={{ background:`${s.color}12`, border:`1.5px solid ${s.color}40` }}>
+                      {s.name[0]}
+                      {s.muted && <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full text-[9px] flex items-center justify-center"
+                        style={{ background:'rgba(248,113,113,0.2)', color:'#f87171' }}>🔇</div>}
+                    </div>
+                    <div className="text-[10px] text-white/40">{s.name.split(' ')[0]}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Listeners */}
+              <div className="text-xs text-white/25 font-semibold uppercase tracking-wider mb-3">
+                Listeners ({listeners_list.length}+)
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {listeners_list.map(s => (
+                  <div key={s.handle} className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm"
+                    style={{ background:`${s.color}10`, color:s.color }}>
+                    {s.handle === 'you' ? 'Y' : s.name[0]}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === 'chat' && (
+            <div className="flex-1 flex flex-col">
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                {msgs.map(m => (
+                  <div key={m.id} className="flex gap-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs flex-shrink-0"
+                      style={{ background:`${m.color}15`, color:m.color }}>
+                      {m.handle === 'you' ? 'Y' : m.handle[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold" style={{ color:m.color }}>@{m.handle}</span>
+                        <span className="text-[10px] text-white/20">{m.ts}</span>
+                      </div>
+                      <div className="text-sm text-white/70 mt-0.5">{m.text}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="px-4 pb-2 flex gap-2">
+                <input value={msg} onChange={e => setMsg(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendMsg()}
+                  placeholder="Say something…"
+                  className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/8 text-sm text-white placeholder-white/20 outline-none" />
+                <button onClick={sendMsg}
+                  className="px-3 py-2.5 rounded-xl font-black text-sm"
+                  style={{ background:accent, color:'#04040A' }}>→</button>
+              </div>
+            </div>
+          )}
+
+          {/* Bottom controls */}
+          <div className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 border-t border-white/5"
+            style={{ background:'rgba(4,4,10,0.95)', backdropFilter:'blur(20px)' }}>
+            <div className="flex items-center justify-center gap-4">
+              <button onClick={() => setMuted(m => !m)}
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+                style={muted ? { background:'rgba(248,113,113,0.12)', border:'1px solid rgba(248,113,113,0.2)' }
+                             : { background:`${accent}15`, border:`1px solid ${accent}30` }}>
+                {muted ? '🔇' : '🎤'}
+              </button>
+              <button onClick={() => setRaised(r => !r)}
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl"
+                style={raised ? { background:`${accent}15`, border:`1px solid ${accent}30` }
+                              : { background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)' }}>
+                ✋
+              </button>
+              <button onClick={() => router.back()}
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl"
+                style={{ background:'rgba(248,113,113,0.12)', border:'1px solid rgba(248,113,113,0.2)' }}>
+                📵
+              </button>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Controls */}
-      <div className="px-4 pb-6 pt-3 border-t border-white/5 flex-shrink-0" style={{ background: 'rgba(4,4,10,0.92)' }}>
-        <div className="flex items-center gap-2 mb-3">
-          <input value={msg} onChange={e => setMsg(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && sendMsg()}
-            placeholder="Say something…"
-            className="flex-1 px-3 py-2 rounded-xl text-sm bg-white/5 border border-white/8 text-white placeholder-white/20 outline-none" />
-          <button onClick={sendMsg}
-            className="px-3 py-2 rounded-xl font-bold text-xs"
-            style={{ background: '#a855f7', color: '#04040A' }}>→</button>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setMuted(m => !m)}
-            className="flex-1 py-2.5 rounded-xl font-bold text-xs transition-all"
-            style={muted
-              ? { background: 'rgba(248,113,113,0.12)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }
-              : { background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
-            {muted ? '🔇 Muted' : '🎙 Speaking'}
-          </button>
-          <button onClick={() => setHandRaised(h => !h)}
-            className="flex-1 py-2.5 rounded-xl font-bold text-xs transition-all"
-            style={handRaised
-              ? { background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }
-              : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
-            {handRaised ? '✋ Hand Raised' : '✋ Raise Hand'}
-          </button>
-          <button onClick={() => { setJoined(false); router.back() }}
-            className="py-2.5 px-3 rounded-xl font-bold text-xs"
-            style={{ background: 'rgba(248,113,113,0.12)', color: '#f87171' }}>
-            Leave
-          </button>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   )
 }

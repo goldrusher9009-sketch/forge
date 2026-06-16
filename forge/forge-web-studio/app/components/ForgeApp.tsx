@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1063,6 +1063,28 @@ export default function ForgeApp() {
   const [newMpTemp, setNewMpTemp] = useState(0.7);
   const [newMpMaxTok, setNewMpMaxTok] = useState(4096);
   const [newMpSysPrompt, setNewMpSysPrompt] = useState('');
+  // Batch 66 state
+  const [aiDraftReviews, setAiDraftReviews] = useState<any[]>([]);
+  const [newDrDraft, setNewDrDraft] = useState('');
+  const [newDrModel, setNewDrModel] = useState('claude');
+  const [newDrScore, setNewDrScore] = useState(0);
+  const [newDrFeedback, setNewDrFeedback] = useState('');
+  const [wsMilestones, setWsMilestones] = useState<any[]>([]);
+  const [newMsTitle, setNewMsTitle] = useState('');
+  const [newMsDesc, setNewMsDesc] = useState('');
+  const [newMsDue, setNewMsDue] = useState('');
+  const [threadReactionsV2, setThreadReactionsV2] = useState<any[]>([]);
+  const [newTrV2Thread, setNewTrV2Thread] = useState('');
+  const [newTrV2Emoji, setNewTrV2Emoji] = useState('👍');
+  const [userEnergyLog, setUserEnergyLog] = useState<any[]>([]);
+  const [newElLevel, setNewElLevel] = useState(3);
+  const [newElLabel, setNewElLabel] = useState('');
+  const [newElNote, setNewElNote] = useState('');
+  const [aiEvalResults, setAiEvalResults] = useState<any[]>([]);
+  const [newErName, setNewErName] = useState('');
+  const [newErModel, setNewErModel] = useState('claude');
+  const [newErScore, setNewErScore] = useState(0);
+  const [newErDetails, setNewErDetails] = useState('');
   const [threadArchivesV3, setThreadArchivesV3] = useState<any[]>([]);
   const [tav3ThreadId, setTav3ThreadId] = useState('');
   const [tav3Title, setTav3Title] = useState('');
@@ -12535,6 +12557,101 @@ export default function ForgeApp() {
               </div>
               {s.goal&&<div style={{fontSize:12,color:'var(--fg-text2)',marginTop:4}}>Goal: {s.goal}</div>}
               {(s.start_date||s.end_date)&&<div style={{fontSize:11,color:'var(--fg-text2)',marginTop:2}}>{s.start_date} &#8594; {s.end_date}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='aidraftreviews' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128203; Draft Reviews</h3>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
+            <textarea placeholder="Draft text..." value={newDrDraft} onChange={e=>setNewDrDraft(e.target.value)} rows={2} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical',boxSizing:'border-box'}}/>
+            <input placeholder="Model" value={newDrModel} onChange={e=>setNewDrModel(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="number" placeholder="Score 0-10" value={newDrScore} onChange={e=>setNewDrScore(Number(e.target.value))} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Feedback..." value={newDrFeedback} onChange={e=>setNewDrFeedback(e.target.value)} style={{flex:1,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newDrDraft)return;await fetch('/api/ai-draft-reviews',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({draft:newDrDraft,reviewer_model:newDrModel,score:newDrScore,feedback:newDrFeedback})});const r=await fetch('/api/ai-draft-reviews',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiDraftReviews(await r.json());setNewDrDraft('');setNewDrFeedback('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add Review</button>
+          </div>
+          {aiDraftReviews.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No draft reviews yet.</p>}
+          {aiDraftReviews.map((dr:any)=>(
+            <div key={dr.id} style={{background:'var(--bg2)',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div><div style={{fontWeight:600,fontSize:13,marginBottom:4}}>{dr.draft.slice(0,80)}{dr.draft.length>80?'...':''}</div><div style={{fontSize:12,color:'var(--fg-muted)'}}>{dr.reviewer_model} &#8226; Score: {dr.score} &#8226; {dr.feedback}</div></div>
+              <button onClick={async()=>{await fetch('/api/ai-draft-reviews/'+dr.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiDraftReviews(aiDraftReviews.filter((x:any)=>x.id!==dr.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wsmilestones' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#127919; Workspace Milestones</h3>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
+            <input placeholder="Title..." value={newMsTitle} onChange={e=>setNewMsTitle(e.target.value)} style={{flex:1,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Description..." value={newMsDesc} onChange={e=>setNewMsDesc(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="date" value={newMsDue} onChange={e=>setNewMsDue(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newMsTitle)return;await fetch('/api/workspace-milestones',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newMsTitle,description:newMsDesc,due_date:newMsDue})});const r=await fetch('/api/workspace-milestones',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());setNewMsTitle('');setNewMsDesc('');setNewMsDue('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          {wsMilestones.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No milestones yet.</p>}
+          {wsMilestones.map((ms:any)=>(
+            <div key={ms.id} style={{background:'var(--bg2)',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><span style={{fontWeight:600,fontSize:13,textDecoration:ms.completed?'line-through':'none'}}>{ms.title}</span>{ms.due_date&&<span style={{fontSize:12,color:'var(--fg-muted)',marginLeft:8}}>Due: {ms.due_date}</span>}{ms.pinned?<span style={{marginLeft:6,fontSize:11,color:'var(--fg-orange)'}}>&#128204;</span>:null}</div>
+              <div style={{display:'flex',gap:6}}>
+                <button onClick={async()=>{await fetch('/api/workspace-milestones/'+ms.id+'/complete',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-milestones',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:14}}>&#10003;</button>
+                <button onClick={async()=>{await fetch('/api/workspace-milestones/'+ms.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-milestones',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:14}}>&#128204;</button>
+                <button onClick={async()=>{await fetch('/api/workspace-milestones/'+ms.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(wsMilestones.filter((x:any)=>x.id!==ms.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='threadreactionsv2' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128522; Thread Reactions V2</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Thread ID..." value={newTrV2Thread} onChange={e=>setNewTrV2Thread(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Emoji" value={newTrV2Emoji} onChange={e=>setNewTrV2Emoji(e.target.value)} style={{width:80,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newTrV2Thread||!newTrV2Emoji)return;await fetch('/api/thread-reactions-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newTrV2Thread,emoji:newTrV2Emoji})});const r=await fetch('/api/thread-reactions-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadReactionsV2(await r.json());setNewTrV2Thread('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>React</button>
+          </div>
+          {threadReactionsV2.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No reactions yet.</p>}
+          {threadReactionsV2.map((tr:any)=>(
+            <div key={tr.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:14}}>{tr.emoji} <span style={{color:'var(--fg-muted)',fontSize:12}}>Thread: {tr.thread_id}</span></span>
+              <button onClick={async()=>{await fetch('/api/thread-reactions-v2',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:tr.thread_id,emoji:tr.emoji})});setThreadReactionsV2(threadReactionsV2.filter((x:any)=>x.id!==tr.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='userenergylog' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#9889; Energy Log</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input type="number" min={1} max={5} placeholder="Level 1-5" value={newElLevel} onChange={e=>setNewElLevel(Number(e.target.value))} style={{width:100,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Label (high/low/...)" value={newElLabel} onChange={e=>setNewElLabel(e.target.value)} style={{width:150,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Note..." value={newElNote} onChange={e=>setNewElNote(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{await fetch('/api/user-energy-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({level:newElLevel,label:newElLabel,note:newElNote})});const r=await fetch('/api/user-energy-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserEnergyLog(await r.json());setNewElLabel('');setNewElNote('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+          </div>
+          {userEnergyLog.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No energy entries yet.</p>}
+          {userEnergyLog.map((el:any)=>(
+            <div key={el.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><span style={{fontWeight:600}}>{'&#9889;'.repeat(el.level)}</span> <span style={{fontSize:13}}>{el.label}</span>{el.note&&<span style={{color:'var(--fg-muted)',fontSize:12,marginLeft:8}}>{el.note}</span>}</div>
+              <button onClick={async()=>{await fetch('/api/user-energy-log/'+el.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserEnergyLog(userEnergyLog.filter((x:any)=>x.id!==el.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='aievalresults' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128202; AI Eval Results</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Eval name..." value={newErName} onChange={e=>setNewErName(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Model" value={newErModel} onChange={e=>setNewErModel(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="number" step={0.1} placeholder="Score" value={newErScore} onChange={e=>setNewErScore(Number(e.target.value))} style={{width:90,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Details..." value={newErDetails} onChange={e=>setNewErDetails(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newErName)return;await fetch('/api/ai-eval-results',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({eval_name:newErName,model:newErModel,score:newErScore,details:newErDetails})});const r=await fetch('/api/ai-eval-results',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiEvalResults(await r.json());setNewErName('');setNewErDetails('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          {aiEvalResults.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No eval results yet.</p>}
+          {aiEvalResults.map((er:any)=>(
+            <div key={er.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><span style={{fontWeight:600,fontSize:13}}>{er.eval_name}</span> <span style={{color:'var(--fg-muted)',fontSize:12}}>{er.model} &#8226; Score: {er.score}</span>{er.details&&<span style={{color:'var(--fg-muted)',fontSize:12,marginLeft:8}}>{er.details}</span>}</div>
+              <button onClick={async()=>{await fetch('/api/ai-eval-results/'+er.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiEvalResults(aiEvalResults.filter((x:any)=>x.id!==er.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
             </div>
           ))}
         </div>
