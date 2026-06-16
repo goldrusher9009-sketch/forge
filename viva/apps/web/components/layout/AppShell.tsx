@@ -25,6 +25,7 @@ const NAV_MORE = [
   { id: 'staking',       label: 'Staking',      path: '/staking',       icon: TokenIcon },
   { id: 'invest',        label: 'Portfolio',    path: '/invest',        icon: TokenIcon },
   { id: 'creator',       label: 'Creator Hub',  path: '/creator',       icon: TokenIcon },
+  { id: 'dao',           label: 'Governance',   path: '/dao',           icon: LeaderIcon },
   { id: 'advertise',     label: 'Advertise',    path: '/advertise',     icon: TokenIcon },
   { id: 'identity',      label: 'ZK Identity',  path: '/identity',      icon: LeaderIcon },
   { id: 'leaderboard',   label: 'Leaderboard',  path: '/leaderboard',   icon: LeaderIcon },
