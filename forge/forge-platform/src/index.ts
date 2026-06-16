@@ -12528,4 +12528,139 @@ app.delete('/api/prompts-library/:id', requireAuth, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ── Batch 50 ──────────────────────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_chains (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    steps TEXT, status TEXT DEFAULT 'draft', last_run DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT,
+    content TEXT, report_type TEXT DEFAULT 'weekly', generated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_test_cases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    input TEXT, expected TEXT, actual TEXT, passed INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS context_windows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    content TEXT, token_count INTEGER DEFAULT 0, pinned INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT,
+    description TEXT, target_date TEXT, progress INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/ai-chains
+app.get('/api/ai-chains', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_chains WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-chains', requireAuth, (req: any, res: any) => {
+  const { name, steps } = req.body;
+  if (!name || !steps) return res.status(400).json({ error: 'name and steps required' });
+  const stepsStr = Array.isArray(steps) ? steps.join('\n') : steps;
+  const r = db.prepare('INSERT INTO ai_chains (user_id,name,steps) VALUES (?,?,?)').run(req.user.id, name, stepsStr);
+  res.json({ id: r.lastInsertRowid, name, steps: stepsStr, status: 'draft' });
+});
+app.put('/api/ai-chains/:id/run', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE ai_chains SET status=?,last_run=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run('running', req.params.id, req.user.id);
+  setTimeout(() => {
+    db.prepare('UPDATE ai_chains SET status=? WHERE id=?').run('completed', req.params.id);
+  }, 200);
+  res.json({ ok: true, status: 'running' });
+});
+app.delete('/api/ai-chains/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_chains WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-reports
+app.get('/api/workspace-reports', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_reports WHERE user_id=? ORDER BY generated_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-reports', requireAuth, (req: any, res: any) => {
+  const { title, content, report_type = 'weekly' } = req.body;
+  if (!title || !content) return res.status(400).json({ error: 'title and content required' });
+  const r = db.prepare('INSERT INTO workspace_reports (user_id,title,content,report_type) VALUES (?,?,?,?)').run(req.user.id, title, content, report_type);
+  res.json({ id: r.lastInsertRowid, title, content, report_type });
+});
+app.delete('/api/workspace-reports/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_reports WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-test-cases
+app.get('/api/ai-test-cases', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_test_cases WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-test-cases', requireAuth, (req: any, res: any) => {
+  const { name, input, expected } = req.body;
+  if (!name || !input) return res.status(400).json({ error: 'name and input required' });
+  const r = db.prepare('INSERT INTO ai_test_cases (user_id,name,input,expected) VALUES (?,?,?,?)').run(req.user.id, name, input, expected || '');
+  res.json({ id: r.lastInsertRowid, name, input, expected });
+});
+app.put('/api/ai-test-cases/:id/run', requireAuth, (req: any, res: any) => {
+  const { actual } = req.body;
+  const row: any = db.prepare('SELECT expected FROM ai_test_cases WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  const passed = actual && row.expected && actual.toLowerCase().includes(row.expected.toLowerCase()) ? 1 : 0;
+  db.prepare('UPDATE ai_test_cases SET actual=?,passed=? WHERE id=?').run(actual || '', passed, req.params.id);
+  res.json({ passed: !!passed, actual });
+});
+app.delete('/api/ai-test-cases/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_test_cases WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/context-windows
+app.get('/api/context-windows', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM context_windows WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/context-windows', requireAuth, (req: any, res: any) => {
+  const { name, content } = req.body;
+  if (!name || !content) return res.status(400).json({ error: 'name and content required' });
+  const tokens = Math.ceil(content.length / 4);
+  const r = db.prepare('INSERT INTO context_windows (user_id,name,content,token_count) VALUES (?,?,?,?)').run(req.user.id, name, content, tokens);
+  res.json({ id: r.lastInsertRowid, name, content, token_count: tokens, pinned: 0 });
+});
+app.put('/api/context-windows/:id/pin', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT pinned FROM context_windows WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE context_windows SET pinned=? WHERE id=?').run(row.pinned ? 0 : 1, req.params.id);
+  res.json({ ok: true });
+});
+app.delete('/api/context-windows/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM context_windows WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/user-goals
+app.get('/api/user-goals', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM user_goals WHERE user_id=? ORDER BY status, target_date ASC').all(req.user.id));
+});
+app.post('/api/user-goals', requireAuth, (req: any, res: any) => {
+  const { title, description = '', target_date = '' } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO user_goals (user_id,title,description,target_date) VALUES (?,?,?,?)').run(req.user.id, title, description, target_date);
+  res.json({ id: r.lastInsertRowid, title, description, target_date, progress: 0, status: 'active' });
+});
+app.put('/api/user-goals/:id/progress', requireAuth, (req: any, res: any) => {
+  const { progress } = req.body;
+  const p = Math.min(100, Math.max(0, Number(progress) || 0));
+  const status = p >= 100 ? 'completed' : 'active';
+  db.prepare('UPDATE user_goals SET progress=?,status=? WHERE id=? AND user_id=?').run(p, status, req.params.id, req.user.id);
+  res.json({ ok: true, progress: p, status });
+});
+app.delete('/api/user-goals/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_goals WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
