@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -943,6 +943,27 @@ export default function ForgeApp() {
   const [taskComments, setTaskComments] = useState<any[]>([]);
   const [tcTaskId, setTcTaskId] = useState('');
   const [tcComment, setTcComment] = useState('');
+
+  const [aiChatMemory, setAiChatMemory] = useState<any[]>([]);
+  const [newAcmKey, setNewAcmKey] = useState('');
+  const [newAcmValue, setNewAcmValue] = useState('');
+  const [newAcmCat, setNewAcmCat] = useState('general');
+  const [searchIndexResults, setSearchIndexResults] = useState<any[]>([]);
+  const [searchIndexQuery, setSearchIndexQuery] = useState('');
+  const [siEntityType, setSiEntityType] = useState('note');
+  const [siEntityId, setSiEntityId] = useState('');
+  const [siTitle, setSiTitle] = useState('');
+  const [siBody, setSiBody] = useState('');
+  const [customMetrics, setCustomMetrics] = useState<any[]>([]);
+  const [cmSummary, setCmSummary] = useState<any[]>([]);
+  const [newCmName, setNewCmName] = useState('');
+  const [newCmValue, setNewCmValue] = useState('');
+  const [newCmUnit, setNewCmUnit] = useState('');
+  const [fileQueue, setFileQueue] = useState<any[]>([]);
+  const [newFqFile, setNewFqFile] = useState('');
+  const [tokenLedger, setTokenLedger] = useState<any[]>([]);
+  const [tokenSummary, setTokenSummary] = useState<any>(null);
+
 
 
 
@@ -4534,7 +4555,12 @@ export default function ForgeApp() {
           { id:'aireminders', icon:'⏰', label:'AI Reminders' },
           { id:'tbookmarks2', icon:'🔖', label:'Thread Marks' },
           { id:'exportpresets', icon:'📤', label:'Export Presets' },
-          { id:'thrxv2', icon:'😊', label:'Thread Reactions' },
+          { id:'chatmem', icon:'🧠', label:'Chat Memory' },
+            { id:'searchidx', icon:'🔍', label:'Search Index' },
+            { id:'custmetrics', icon:'📈', label:'Custom Metrics' },
+            { id:'filequeue', icon:'📁', label:'File Queue' },
+            { id:'tokledger', icon:'🪙', label:'Token Ledger' },
+            { id:'thrxv2', icon:'😊', label:'Thread Reactions' },
             { id:'wsalertsv2', icon:'🔔', label:'WS Alerts' },
             { id:'personasv3', icon:'🤖', label:'AI Personas v3' },
             { id:'docversions', icon:'📄', label:'Doc Versions' },
@@ -11410,6 +11436,141 @@ export default function ForgeApp() {
 {/* Prompt Library tab */}
 {/* AI Summaries v2 tab */}
 {/* Meeting Notes tab */}
+{mainTab==='thrxv2' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>😊 Thread Reactions v2</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Thread ID" value={trv2ThreadId} onChange={e=>setTrv2ThreadId(e.target.value)} style={{width:'120px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <select value={trv2Emoji} onChange={e=>setTrv2Emoji(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',fontSize:'18px'}}>
+        <option value="👍">👍</option><option value="❤️">❤️</option><option value="🔥">🔥</option><option value="😂">😂</option><option value="😮">😮</option><option value="👎">👎</option>
+      </select>
+      <button onClick={async()=>{if(!trv2ThreadId)return;await fetch('/api/thread-reactions-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({thread_id:parseInt(trv2ThreadId),emoji:trv2Emoji})});const r=await fetch('/api/thread-reactions-v2/'+trv2ThreadId,{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setThreadReactionsV2(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>React</button>
+      <button onClick={async()=>{if(!trv2ThreadId)return;const r=await fetch('/api/thread-reactions-v2/'+trv2ThreadId,{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setThreadReactionsV2(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+      {threadReactionsV2.map((rx:any)=>(
+        <div key={rx.id} style={{background:'#1f2937',borderRadius:'8px',padding:'8px 16px',display:'flex',alignItems:'center',gap:'8px'}}>
+          <span style={{fontSize:'20px'}}>{rx.emoji}</span>
+          <span style={{color:'#f9fafb',fontWeight:'bold'}}>{rx.count}</span>
+          <button onClick={async()=>{await fetch('/api/thread-reactions-v2/'+rx.thread_id+'/'+encodeURIComponent(rx.emoji),{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setThreadReactionsV2(threadReactionsV2.filter((x:any)=>x.id!==rx.id));}} style={{background:'none',border:'none',color:'#9ca3af',cursor:'pointer',fontSize:'12px'}}>✕</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='wsalertsv2' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🔔 Workspace Alerts</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Title..." value={newWaTitle} onChange={e=>setNewWaTitle(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <input placeholder="Message..." value={newWaMsg} onChange={e=>setNewWaMsg(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <select value={newWaLevel} onChange={e=>setNewWaLevel(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+        <option value="info">Info</option><option value="warning">Warning</option><option value="error">Error</option><option value="success">Success</option>
+      </select>
+      <button onClick={async()=>{if(!newWaTitle||!newWaMsg)return;await fetch('/api/workspace-alerts',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newWaTitle,message:newWaMsg,level:newWaLevel})});setNewWaTitle('');setNewWaMsg('');const r=await fetch('/api/workspace-alerts',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsAlerts(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Create</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-alerts',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsAlerts(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {wsAlerts.map((a:any)=>(
+        <div key={a.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',display:'flex',justifyContent:'space-between',alignItems:'center',opacity:a.read?0.5:1,borderLeft:'4px solid '+(a.level==='error'?'#ef4444':a.level==='warning'?'#f59e0b':a.level==='success'?'#10b981':'#6366f1')}}>
+          <div>
+            <div style={{color:'#f9fafb',fontWeight:'bold'}}>{a.title}</div>
+            <div style={{color:'#d1d5db',fontSize:'13px'}}>{a.message}</div>
+          </div>
+          <div style={{display:'flex',gap:'6px'}}>
+            {!a.read && <button onClick={async()=>{await fetch('/api/workspace-alerts/'+a.id+'/read',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsAlerts(wsAlerts.map((x:any)=>x.id===a.id?{...x,read:1}:x));}} style={{background:'#374151',border:'none',color:'#9ca3af',cursor:'pointer',borderRadius:'4px',padding:'4px 8px',fontSize:'12px'}}>Read</button>}
+            <button onClick={async()=>{await fetch('/api/workspace-alerts/'+a.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsAlerts(wsAlerts.filter((x:any)=>x.id!==a.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px',fontSize:'12px'}}>Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='personasv3' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🤖 AI Personas v3</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+        <input placeholder="Name..." value={newP3Name} onChange={e=>setNewP3Name(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+        <input placeholder="Avatar emoji" value={newP3Emoji} onChange={e=>setNewP3Emoji(e.target.value)} style={{width:'70px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',textAlign:'center',fontSize:'18px'}} />
+        <select value={newP3Model} onChange={e=>setNewP3Model(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+          <option value="claude">Claude</option><option value="gpt-4">GPT-4</option><option value="gemini">Gemini</option>
+        </select>
+      </div>
+      <textarea placeholder="System prompt..." value={newP3Prompt} onChange={e=>setNewP3Prompt(e.target.value)} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
+      <div style={{display:'flex',gap:'8px'}}>
+        <button onClick={async()=>{if(!newP3Name||!newP3Prompt)return;await fetch('/api/ai-personas-v3',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({name:newP3Name,system_prompt:newP3Prompt,model:newP3Model,avatar_emoji:newP3Emoji})});setNewP3Name('');setNewP3Prompt('');const r=await fetch('/api/ai-personas-v3',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiPersonasV3(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Create</button>
+        <button onClick={async()=>{const r=await fetch('/api/ai-personas-v3',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiPersonasV3(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+      </div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'12px'}}>
+      {aiPersonasV3.map((p:any)=>(
+        <div key={p.id} style={{background:'#1f2937',borderRadius:'8px',padding:'16px'}}>
+          <div style={{fontSize:'32px',textAlign:'center',marginBottom:'8px'}}>{p.avatar_emoji}</div>
+          <div style={{color:'#f9fafb',fontWeight:'bold',textAlign:'center',marginBottom:'4px'}}>{p.name}</div>
+          <div style={{color:'#9ca3af',fontSize:'12px',textAlign:'center',marginBottom:'8px'}}>{p.model} · {p.uses} uses</div>
+          <div style={{color:'#d1d5db',fontSize:'12px',marginBottom:'8px',overflow:'hidden',textOverflow:'ellipsis',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{p.system_prompt}</div>
+          <div style={{display:'flex',gap:'6px',justifyContent:'center'}}>
+            <button onClick={async()=>{await fetch('/api/ai-personas-v3/'+p.id+'/use',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});}} style={{background:'#6366f1',border:'none',color:'#fff',cursor:'pointer',borderRadius:'4px',padding:'4px 12px',fontSize:'12px'}}>Use</button>
+            <button onClick={async()=>{await fetch('/api/ai-personas-v3/'+p.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiPersonasV3(aiPersonasV3.filter((x:any)=>x.id!==p.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px',fontSize:'12px'}}>Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='docversions' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>📄 Doc Versions</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+        <input placeholder="Doc ID (e.g. readme)" value={dvDocId} onChange={e=>setDvDocId(e.target.value)} style={{width:'150px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+        <input placeholder="Title..." value={dvTitle} onChange={e=>setDvTitle(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+        <input placeholder="Change summary" value={dvSummary} onChange={e=>setDvSummary(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      </div>
+      <textarea placeholder="Content..." value={dvContent} onChange={e=>setDvContent(e.target.value)} rows={4} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
+      <div style={{display:'flex',gap:'8px'}}>
+        <button onClick={async()=>{if(!dvDocId||!dvTitle||!dvContent)return;await fetch('/api/doc-versions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({doc_id:dvDocId,title:dvTitle,content:dvContent,change_summary:dvSummary})});setDvContent('');setDvSummary('');const r=await fetch('/api/doc-versions/'+dvDocId,{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setDocVersions(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save Version</button>
+        <button onClick={async()=>{if(!dvDocId)return;const r=await fetch('/api/doc-versions/'+dvDocId,{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setDocVersions(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load History</button>
+      </div>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {docVersions.map((v:any)=>(
+        <div key={v.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <span style={{color:'#6366f1',fontWeight:'bold',marginRight:'8px'}}>v{v.version}</span>
+            <span style={{color:'#f9fafb'}}>{v.title}</span>
+            {v.change_summary && <div style={{color:'#9ca3af',fontSize:'12px',marginTop:'2px'}}>{v.change_summary}</div>}
+            <div style={{color:'#6b7280',fontSize:'11px'}}>{v.created_at}</div>
+          </div>
+          <button onClick={async()=>{const r=await fetch('/api/doc-versions/'+dvDocId+'/'+v.version,{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const d=await r.json();setDvContent(d.content);setDvTitle(d.title);}} style={{background:'#374151',border:'none',color:'#f9fafb',cursor:'pointer',borderRadius:'4px',padding:'4px 12px',fontSize:'12px'}}>Restore</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='taskcomments' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>💬 Task Comments</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Task ID" value={tcTaskId} onChange={e=>setTcTaskId(e.target.value)} style={{width:'120px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <input placeholder="Comment..." value={tcComment} onChange={e=>setTcComment(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!tcTaskId||!tcComment)return;await fetch('/api/task-comments',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({task_id:parseInt(tcTaskId),comment:tcComment})});setTcComment('');const r=await fetch('/api/task-comments/'+tcTaskId,{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setTaskComments(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Post</button>
+      <button onClick={async()=>{if(!tcTaskId)return;const r=await fetch('/api/task-comments/'+tcTaskId,{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setTaskComments(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {taskComments.map((tc:any)=>(
+        <div key={tc.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+          <div>
+            <div style={{color:'#f9fafb'}}>{tc.comment}</div>
+            <div style={{color:'#9ca3af',fontSize:'12px',marginTop:'4px'}}>{tc.created_at}</div>
+          </div>
+          <button onClick={async()=>{await fetch('/api/task-comments/'+tc.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setTaskComments(taskComments.filter((x:any)=>x.id!==tc.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px',flexShrink:0}}>Del</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 {mainTab==='aisuggv2' && (
   <div style={{padding:'24px'}}>
     <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>✨ AI Suggestions v2</h2>

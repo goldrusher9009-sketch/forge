@@ -11405,4 +11405,161 @@ app.delete('/api/task-comments/:id', authenticateToken, (req: any, res: any) => 
   res.json({ ok: true });
 });
 
+
+// ============================================================
+// BATCH 42: ai_chat_memory, workspace_search_index, custom_metrics, file_queue, token_ledger
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_chat_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    expires_at TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, key)
+  );
+  CREATE TABLE IF NOT EXISTS workspace_search_index (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    tags TEXT DEFAULT '',
+    indexed_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS custom_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    value REAL NOT NULL,
+    unit TEXT DEFAULT '',
+    category TEXT DEFAULT 'general',
+    recorded_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS file_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    filename TEXT NOT NULL,
+    size_bytes INTEGER DEFAULT 0,
+    mime_type TEXT DEFAULT 'application/octet-stream',
+    status TEXT DEFAULT 'pending',
+    error TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    processed_at TEXT
+  );
+  CREATE TABLE IF NOT EXISTS token_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    tokens_in INTEGER DEFAULT 0,
+    tokens_out INTEGER DEFAULT 0,
+    model TEXT,
+    cost_usd REAL DEFAULT 0,
+    recorded_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// AI Chat Memory
+app.get('/api/ai-chat-memory', authenticateToken, (req: any, res: any) => {
+  const { category } = req.query as any;
+  let q = "SELECT * FROM ai_chat_memory WHERE user_id=? AND (expires_at IS NULL OR expires_at > datetime('now'))";
+  const p: any[] = [req.user.id];
+  if (category) { q += ' AND category=?'; p.push(category); }
+  q += ' ORDER BY created_at DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.put('/api/ai-chat-memory', authenticateToken, (req: any, res: any) => {
+  const { key, value, category, expires_at } = req.body;
+  if (!key || !value) return res.status(400).json({ error: 'key and value required' });
+  db.prepare('INSERT INTO ai_chat_memory (user_id,key,value,category,expires_at) VALUES (?,?,?,?,?) ON CONFLICT(user_id,key) DO UPDATE SET value=excluded.value,category=excluded.category,expires_at=excluded.expires_at').run(req.user.id, key, value, category||'general', expires_at||null);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-chat-memory/:key', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_chat_memory WHERE user_id=? AND key=?').run(req.user.id, req.params.key);
+  res.json({ ok: true });
+});
+
+// Workspace Search Index
+app.post('/api/search-index', authenticateToken, (req: any, res: any) => {
+  const { entity_type, entity_id, title, body, tags } = req.body;
+  if (!entity_type || !entity_id || !title) return res.status(400).json({ error: 'entity_type, entity_id, title required' });
+  db.prepare('INSERT OR REPLACE INTO workspace_search_index (user_id,entity_type,entity_id,title,body,tags) VALUES (?,?,?,?,?,?)').run(req.user.id, entity_type, entity_id, title, body||'', tags||'');
+  res.json({ ok: true });
+});
+app.get('/api/search-index', authenticateToken, (req: any, res: any) => {
+  const { q } = req.query as any;
+  if (!q) return res.json([]);
+  const like = '%'+q+'%';
+  const rows = db.prepare("SELECT * FROM workspace_search_index WHERE user_id=? AND (title LIKE ? OR body LIKE ? OR tags LIKE ?) ORDER BY indexed_at DESC LIMIT 20").all(req.user.id, like, like, like);
+  res.json(rows);
+});
+
+// Custom Metrics
+app.post('/api/custom-metrics', authenticateToken, (req: any, res: any) => {
+  const { name, value, unit, category } = req.body;
+  if (!name || value === undefined) return res.status(400).json({ error: 'name and value required' });
+  const r = db.prepare('INSERT INTO custom_metrics (user_id,name,value,unit,category) VALUES (?,?,?,?,?)').run(req.user.id, name, value, unit||'', category||'general');
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/custom-metrics', authenticateToken, (req: any, res: any) => {
+  const { name, category } = req.query as any;
+  let q = 'SELECT * FROM custom_metrics WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (name) { q += ' AND name=?'; p.push(name); }
+  if (category) { q += ' AND category=?'; p.push(category); }
+  q += ' ORDER BY recorded_at DESC LIMIT 200';
+  res.json(db.prepare(q).all(...p));
+});
+app.get('/api/custom-metrics/summary', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT name, unit, category, COUNT(*) as points, MIN(value) as min_val, MAX(value) as max_val, AVG(value) as avg_val, MAX(recorded_at) as last_recorded FROM custom_metrics WHERE user_id=? GROUP BY name ORDER BY last_recorded DESC').all(req.user.id);
+  res.json(rows);
+});
+
+// File Queue
+app.get('/api/file-queue', authenticateToken, (req: any, res: any) => {
+  const { status } = req.query as any;
+  let q = 'SELECT * FROM file_queue WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (status) { q += ' AND status=?'; p.push(status); }
+  q += ' ORDER BY created_at DESC LIMIT 50';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/file-queue', authenticateToken, (req: any, res: any) => {
+  const { filename, size_bytes, mime_type } = req.body;
+  if (!filename) return res.status(400).json({ error: 'filename required' });
+  const r = db.prepare('INSERT INTO file_queue (user_id,filename,size_bytes,mime_type) VALUES (?,?,?,?)').run(req.user.id, filename, size_bytes||0, mime_type||'application/octet-stream');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/file-queue/:id/status', authenticateToken, (req: any, res: any) => {
+  const { status, error } = req.body;
+  const now = new Date().toISOString();
+  db.prepare('UPDATE file_queue SET status=?,error=?,processed_at=? WHERE id=? AND user_id=?').run(status||'pending', error||null, now, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/file-queue/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM file_queue WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Token Ledger
+app.post('/api/token-ledger', authenticateToken, (req: any, res: any) => {
+  const { action, tokens_in, tokens_out, model, cost_usd } = req.body;
+  if (!action) return res.status(400).json({ error: 'action required' });
+  const r = db.prepare('INSERT INTO token_ledger (user_id,action,tokens_in,tokens_out,model,cost_usd) VALUES (?,?,?,?,?,?)').run(req.user.id, action, tokens_in||0, tokens_out||0, model||'unknown', cost_usd||0);
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/token-ledger', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM token_ledger WHERE user_id=? ORDER BY recorded_at DESC LIMIT 100').all(req.user.id);
+  res.json(rows);
+});
+app.get('/api/token-ledger/summary', authenticateToken, (req: any, res: any) => {
+  const daily = db.prepare("SELECT date(recorded_at) as day, SUM(tokens_in+tokens_out) as total_tokens, SUM(cost_usd) as total_cost, COUNT(*) as calls FROM token_ledger WHERE user_id=? GROUP BY day ORDER BY day DESC LIMIT 30").all(req.user.id);
+  const byModel = db.prepare('SELECT model, SUM(tokens_in+tokens_out) as total_tokens, SUM(cost_usd) as total_cost, COUNT(*) as calls FROM token_ledger WHERE user_id=? GROUP BY model').all(req.user.id);
+  res.json({ daily, byModel });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
