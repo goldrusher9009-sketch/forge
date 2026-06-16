@@ -228,3 +228,38 @@ test("audit log records verify", async () => {
   const a=await j("GET","/api/admin/audit");
   assert.ok(a.body.some(x=>x.action==="verify-insight"));
 });
+
+test("edge: over-withdraw rejected 400", async () => {
+  const u=(await j("POST","/api/auth/login",{email:`ow${Date.now()}@x.io`})).body;
+  const r=await j("POST",`/api/users/${u.address}/withdraw`,{amount:9_999_999});
+  assert.equal(r.status,400);
+});
+test("edge: stake more than balance rejected", async () => {
+  const u=(await j("POST","/api/auth/login",{email:`os${Date.now()}@x.io`})).body;
+  const r=await j("POST",`/api/staking/${u.address}`,{amount:9_999_999});
+  assert.equal(r.status,400);
+});
+test("edge: license unverified insight rejected", async () => {
+  const id=(await j("POST","/api/admin/seed-pending",{prompt:"unv"})).body.id;
+  const r=await j("POST",`/api/market/${id}/license`,{licensee:"x"});
+  assert.equal(r.status,400);
+});
+test("edge: duplicate vote rejected", async () => {
+  const u=(await j("POST","/api/auth/login",{email:`dv${Date.now()}@x.io`})).body;
+  const p=(await j("POST","/api/governance",{title:"dup",creator:u.address})).body;
+  await j("POST",`/api/governance/${p.id}/vote`,{address:u.address,side:"yes"});
+  const r=await j("POST",`/api/governance/${p.id}/vote`,{address:u.address,side:"no"});
+  assert.equal(r.status,400);
+});
+test("edge: bad prediction side rejected", async () => {
+  const r=await j("POST","/api/predictions",{insightId:1,side:"maybe",stake:5});
+  assert.equal(r.status,400);
+});
+test("edge: missing prompt rejected", async () => {
+  const r=await j("POST","/api/generate",{});
+  assert.equal(r.status,400);
+});
+test("edge: unknown api route 404 not 500", async () => {
+  const r=await j("GET","/api/totally-not-real");
+  assert.equal(r.status,404);
+});

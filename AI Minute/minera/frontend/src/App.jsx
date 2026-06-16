@@ -31,6 +31,8 @@ import Treasury from "./components/Treasury.jsx";
 import News from "./components/News.jsx";
 import Faq from "./components/Faq.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
+import Toasts from "./components/Toasts.jsx";
+import { setSound, getSound, blip } from "./sound.js";
 
 const TABS = [
   ["dash","▦ DASH"],["explore","💡 EXPLORE"],["market","◆ MARKET"],["bonds","💎 BONDS"],
@@ -39,10 +41,13 @@ const TABS = [
 
 export default function App() {
   const { user, offline, signIn, signOut, setBalance } = useAuth();
-  const [tab, setTab] = useState("dash");
+  const [tab, setTabRaw] = useState(() => (location.hash||"").replace("#","") || "dash");
+  function setTab(t){ setTabRaw(t); if(location.hash!=="#"+t) location.hash = t; }
+  useEffect(()=>{ const onHash=()=>{ const h=(location.hash||"").replace("#",""); if(h) setTabRaw(h); };
+    window.addEventListener("hashchange",onHash); return ()=>window.removeEventListener("hashchange",onHash); },[]);
   const [miners, setMiners] = useState({ compute:true, explore:false, data:true, validate:true });
   const [insights, setInsights] = useState([]);
-  const [toast, setToast] = useState(null);
+  const [toasts, setToasts] = useState([]);
   const toastT = useRef(); const accrued = useRef(0);
   const [theme, setTheme] = useState("light");
   const [onboard, setOnboard] = useState(false);
@@ -50,10 +55,14 @@ export default function App() {
   const [lang, setLangState] = useState(getLang());
   const [help, setHelp] = useState(false);
   const [palette, setPalette] = useState(false);
+  const [sound, setSoundState] = useState(false);
   const [preset, setPreset] = useState("blueprint");
   useEffect(()=>{ if(preset==="blueprint") delete document.body.dataset.preset; else document.body.dataset.preset = preset; },[preset]);
   useEffect(()=>{ document.body.dataset.theme = theme; },[theme]);
-  function notify(m){ setToast(m); clearTimeout(toastT.current); toastT.current=setTimeout(()=>setToast(null),2600); }
+  function notify(m, kind){ const id=Date.now()+Math.random();
+    if(kind==="error") blip.error(); else if(/claim|faucet/i.test(m)) blip.claim(); else if(/\+|earn|verified|reward/i.test(m)) blip.earn();
+    setToasts((t)=>[...t,{id,msg:m,kind}].slice(-4));
+    setTimeout(()=>setToasts((t)=>t.filter(x=>x.id!==id)),2800); }
   const balance = user?.balance ?? 0;
 
   useEffect(()=>{ if(user){ api.insights().then(setInsights).catch(()=>{}); setOnboard(true);} },[user]);
@@ -103,7 +112,7 @@ export default function App() {
     <div className="app">
       <div className="tb">
         <div><span className="sq"></span>{BRAND.toUpperCase()} // OPERATOR TERMINAL{offline && " · OFFLINE (demo mode)"}{online>0 && ` · ${online.toLocaleString()} ONLINE`}</div>
-        <div className="u"><Search onGo={setTab}/><button aria-label="Toggle theme" onClick={()=>setTheme(t=>t==="light"?"dark":"light")} style={{background:"transparent",border:"none",color:"var(--paper)",cursor:"pointer",fontSize:15}}>{theme==="light"?"🌙":"☀️"}</button><Bell address={user.address}/><span>{user.address}</span><button onClick={signOut}>{t("signout")}</button></div>
+        <div className="u"><Search onGo={setTab}/><button aria-label="Toggle sound" onClick={()=>{ const v=!sound; setSoundState(v); setSound(v); if(v) blip.earn(); }} style={{background:"transparent",border:"none",color:"var(--paper)",cursor:"pointer",fontSize:15}}>{sound?"🔊":"🔇"}</button><button aria-label="Toggle theme" onClick={()=>setTheme(t=>t==="light"?"dark":"light")} style={{background:"transparent",border:"none",color:"var(--paper)",cursor:"pointer",fontSize:15}}>{theme==="light"?"🌙":"☀️"}</button><Bell address={user.address}/><span>{user.address}</span><button onClick={signOut}>{t("signout")}</button></div>
       </div>
       <StatsBanner/>
       <LiveTicker/>
@@ -133,7 +142,7 @@ export default function App() {
         {tab==="faq" && <Faq/>}
         {tab==="admin" && <Admin address={user.address} notify={(m)=>{notify(m); refreshBalance();}}/>}
       </div>
-      {toast && <div className="toast">{toast}</div>}
+      <Toasts items={toasts}/>
       {onboard && <Onboarding onClose={()=>setOnboard(false)}/>}
       {help && <Help tabs={TABS} onClose={()=>setHelp(false)}/>}
       {palette && <CommandPalette onClose={()=>setPalette(false)} commands={[

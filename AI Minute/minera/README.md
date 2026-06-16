@@ -339,3 +339,14 @@ bash push.sh https://github.com/YOU/minera.git
 | USER_GUIDE.md — non-technical end-user walkthrough | ✅ |
 
 Tests: **36/36 passing**. Git bundle refreshed (144 files).
+
+
+## Resilience + feel (latest)
+
+| Item | Status |
+|------|--------|
+| React error boundary — crash → recover screen, not white page | ✅ |
+| Toast queue — stacked, color-coded success/error/info | ✅ |
+| Sound effects — WebAudio blips on earn/claim/burn, mutable, off by default | ✅ |
+
+Tests: **36/36 passing**. Bundle refreshed (147 files).

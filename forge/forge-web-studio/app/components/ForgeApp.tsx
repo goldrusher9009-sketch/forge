@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -679,6 +679,20 @@ export default function ForgeApp() {
   const [batchRenameResults, setBatchRenameResults] = useState<any[]>([]);
   const [batchRenameIds, setBatchRenameIds] = useState('');
   const [wsHealth, setWsHealth] = useState<any>(null);
+  // Batch 25 state
+  const [dailyLogs, setDailyLogs] = useState<any[]>([]);
+  const [dlContent, setDlContent] = useState('');
+  const [dlMood, setDlMood] = useState('neutral');
+  const [dlEnergy, setDlEnergy] = useState(3);
+  const [dlStreak, setDlStreak] = useState(0);
+  const [milestones25, setMilestones25] = useState<any[]>([]);
+  const [newMsTitle, setNewMsTitle] = useState('');
+  const [newMsDate, setNewMsDate] = useState('');
+  const [newMsCategory, setNewMsCategory] = useState('general');
+  const [archives25, setArchives25] = useState<any[]>([]);
+  const [archiveAutodays, setArchiveAutodays] = useState(30);
+  const [timeline25, setTimeline25] = useState<any>(null);
+  const [rxLeader, setRxLeader] = useState<any[]>([]);
   const [qnoteEditContent, setQnoteEditContent] = useState('');
   const [savedSearches, setSavedSearches] = useState<any[]>([]);
   const [newSearchQuery, setNewSearchQuery] = useState('');
@@ -4174,6 +4188,11 @@ export default function ForgeApp() {
             { id:'wtags', icon:'🏷', label:'Tag Manager' },
             { id:'batchrename', icon:'✏️', label:'Batch Rename' },
             { id:'wshealth', icon:'❤️', label:'WS Health' },
+            { id:'dailylog', icon:'📓', label:'Daily Log' },
+            { id:'milestones', icon:'🏅', label:'Milestones' },
+            { id:'archives', icon:'🗄', label:'Archives' },
+            { id:'timeline', icon:'📈', label:'Timeline' },
+            { id:'rxleader', icon:'🎖', label:'Top Reactions' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },

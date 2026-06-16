@@ -8473,4 +8473,188 @@ app.get('/api/workspace/health', authMiddleware, (req: any, res: any) => {
   res.json({ overall, checks, generated_at: new Date().toISOString() });
 });
 
+
+// ── Batch 25: Daily Log, Message Reactions v2, Thread Archives, Workspace Milestones, Link Previews ──
+
+// daily_log table
+db.exec(`CREATE TABLE IF NOT EXISTS daily_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  log_date TEXT NOT NULL,
+  content TEXT NOT NULL,
+  mood TEXT DEFAULT 'neutral',
+  energy INTEGER DEFAULT 3,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(user_id, log_date)
+)`);
+
+// workspace_milestones table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_milestones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  milestone_date TEXT NOT NULL,
+  achieved INTEGER DEFAULT 0,
+  category TEXT DEFAULT 'general',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// link_previews cache table
+db.exec(`CREATE TABLE IF NOT EXISTS link_previews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  url TEXT NOT NULL UNIQUE,
+  title TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  image TEXT DEFAULT '',
+  fetched_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// thread_archive_metadata table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_archive_metadata (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  thread_id INTEGER NOT NULL UNIQUE,
+  archived_at TEXT DEFAULT (datetime('now')),
+  archive_reason TEXT DEFAULT '',
+  auto_archive INTEGER DEFAULT 0
+)`);
+
+// ── Daily Log ──
+app.get('/api/daily-log', authMiddleware, (req: any, res: any) => {
+  const { date, limit } = req.query;
+  let q = 'SELECT * FROM daily_log WHERE user_id=?';
+  const params: any[] = [req.user.id];
+  if (date) { q += ' AND log_date=?'; params.push(date); }
+  q += ' ORDER BY log_date DESC LIMIT ?';
+  params.push(Math.min(Number(limit)||30, 90));
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/daily-log', authMiddleware, (req: any, res: any) => {
+  const { content, mood, energy, log_date } = req.body;
+  if (!content?.trim()) return res.status(400).json({ error: 'content required' });
+  const date = log_date || new Date().toISOString().split('T')[0];
+  try {
+    const r = db.prepare('INSERT INTO daily_log (user_id,log_date,content,mood,energy) VALUES (?,?,?,?,?)').run(req.user.id, date, content.trim(), mood||'neutral', energy||3);
+    res.json({ id: r.lastInsertRowid, log_date: date, content, mood, energy });
+  } catch {
+    db.prepare('UPDATE daily_log SET content=?,mood=?,energy=? WHERE user_id=? AND log_date=?').run(content.trim(), mood||'neutral', energy||3, req.user.id, date);
+    res.json({ updated: true, log_date: date });
+  }
+});
+app.put('/api/daily-log/:id', authMiddleware, (req: any, res: any) => {
+  const { content, mood, energy } = req.body;
+  db.prepare('UPDATE daily_log SET content=COALESCE(?,content),mood=COALESCE(?,mood),energy=COALESCE(?,energy) WHERE id=? AND user_id=?').run(content||null,mood||null,energy??null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/daily-log/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM daily_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/daily-log/streak', authMiddleware, (req: any, res: any) => {
+  const entries: any[] = db.prepare('SELECT log_date FROM daily_log WHERE user_id=? ORDER BY log_date DESC').all(req.user.id);
+  let streak = 0;
+  let cur = new Date(); cur.setHours(0,0,0,0);
+  for (const e of entries) {
+    const d = new Date(e.log_date);
+    const diff = Math.round((cur.getTime()-d.getTime())/(86400000));
+    if (diff === streak) streak++;
+    else break;
+  }
+  res.json({ streak, total: entries.length });
+});
+
+// ── Workspace Milestones ──
+app.get('/api/milestones', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_milestones WHERE user_id=? ORDER BY milestone_date DESC').all(req.user.id));
+});
+app.post('/api/milestones', authMiddleware, (req: any, res: any) => {
+  const { title, description, milestone_date, category } = req.body;
+  if (!title?.trim() || !milestone_date) return res.status(400).json({ error: 'title and milestone_date required' });
+  const r = db.prepare('INSERT INTO workspace_milestones (user_id,title,description,milestone_date,category) VALUES (?,?,?,?,?)').run(req.user.id, title.trim(), description||'', milestone_date, category||'general');
+  res.json({ id: r.lastInsertRowid, title, milestone_date });
+});
+app.put('/api/milestones/:id/achieve', authMiddleware, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_milestones SET achieved=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/milestones/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_milestones WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Thread Archive Metadata ──
+app.get('/api/thread-archives', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT tam.*, t.title, t.created_at as thread_created FROM thread_archive_metadata tam JOIN threads t ON tam.thread_id=t.id WHERE tam.user_id=? ORDER BY tam.archived_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/thread-archives', authMiddleware, (req: any, res: any) => {
+  const { thread_id, archive_reason, auto_archive } = req.body;
+  if (!thread_id) return res.status(400).json({ error: 'thread_id required' });
+  try {
+    const r = db.prepare('INSERT INTO thread_archive_metadata (user_id,thread_id,archive_reason,auto_archive) VALUES (?,?,?,?)').run(req.user.id, thread_id, archive_reason||'', auto_archive?1:0);
+    res.json({ id: r.lastInsertRowid, thread_id, archive_reason });
+  } catch { res.status(409).json({ error: 'already archived' }); }
+});
+app.delete('/api/thread-archives/:threadId', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_archive_metadata WHERE thread_id=? AND user_id=?').run(req.params.threadId, req.user.id);
+  res.json({ ok: true });
+});
+app.post('/api/thread-archives/auto', authMiddleware, (req: any, res: any) => {
+  // Auto-archive threads older than N days with no recent messages
+  const days = Number(req.body.days) || 30;
+  const cutoff = new Date(Date.now() - days*86400000).toISOString();
+  const stale: any[] = db.prepare(`SELECT t.id FROM threads t WHERE t.user_id=? AND t.created_at < ? AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.thread_id=t.id AND m.created_at > ?) AND NOT EXISTS (SELECT 1 FROM thread_archive_metadata tam WHERE tam.thread_id=t.id) LIMIT 50`).all(req.user.id, cutoff, cutoff);
+  let archived = 0;
+  for (const t of stale) {
+    try { db.prepare('INSERT INTO thread_archive_metadata (user_id,thread_id,archive_reason,auto_archive) VALUES (?,?,?,1)').run(req.user.id, t.id, `Auto-archived: no activity for ${days} days`); archived++; } catch {}
+  }
+  res.json({ archived });
+});
+
+// ── Link Preview Cache ──
+app.post('/api/link-preview', authMiddleware, async(req: any, res: any) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  // Check cache first
+  const cached: any = db.prepare('SELECT * FROM link_previews WHERE url=?').get(url);
+  if (cached) return res.json(cached);
+  // Basic metadata fetch (title from URL pattern since no external fetch)
+  const domain = (() => { try { return new URL(url).hostname; } catch { return url; } })();
+  const preview = { url, title: domain, description: '', image: '' };
+  try { db.prepare('INSERT OR IGNORE INTO link_previews (url,title,description,image) VALUES (?,?,?,?)').run(url, preview.title, preview.description, preview.image); } catch {}
+  res.json(preview);
+});
+
+// ── Message Reactions v2 (extended emoji set + reaction summary) ──
+app.get('/api/threads/:id/reaction-summary', authMiddleware, (req: any, res: any) => {
+  const msgs: any[] = db.prepare('SELECT id FROM messages WHERE thread_id=?').all(req.params.id);
+  if (msgs.length === 0) return res.json({ total: 0, byEmoji: {} });
+  const msgIds = msgs.map((m:any)=>m.id);
+  const placeholders = msgIds.map(()=>'?').join(',');
+  const reactions: any[] = db.prepare(`SELECT emoji, COUNT(*) as c FROM message_reactions WHERE message_id IN (${placeholders}) GROUP BY emoji ORDER BY c DESC`).all(...msgIds) as any[];
+  const byEmoji: any = {};
+  let total = 0;
+  reactions.forEach((r:any) => { byEmoji[r.emoji] = r.c; total += r.c; });
+  res.json({ total, byEmoji, topEmoji: reactions[0]?.emoji||null });
+});
+
+// ── Workspace Timeline ──
+app.get('/api/workspace/timeline', authMiddleware, (req: any, res: any) => {
+  const uid = req.user.id;
+  const days = Math.min(Number(req.query.days)||14, 60);
+  const since = new Date(Date.now()-days*86400000).toISOString().split('T')[0];
+  const threads: any[] = db.prepare("SELECT DATE(created_at) as d, COUNT(*) as c FROM threads WHERE user_id=? AND DATE(created_at)>=? GROUP BY d").all(uid, since);
+  const messages: any[] = db.prepare("SELECT DATE(m.created_at) as d, COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND DATE(m.created_at)>=? GROUP BY d").all(uid, since);
+  const logs: any[] = db.prepare("SELECT log_date as d, mood, energy FROM daily_log WHERE user_id=? AND log_date>=? ORDER BY log_date ASC").all(uid, since);
+  const milestones: any[] = db.prepare("SELECT milestone_date as d, title, achieved, category FROM workspace_milestones WHERE user_id=? AND milestone_date>=? ORDER BY milestone_date ASC").all(uid, since);
+  res.json({ threads, messages, logs, milestones, days });
+});
+
+// ── Reaction Leaderboard (most reacted messages) ──
+app.get('/api/workspace/reaction-leaderboard', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare(`SELECT m.id, m.content, m.role, t.title as thread_title, COUNT(r.id) as reaction_count FROM messages m JOIN threads t ON m.thread_id=t.id JOIN message_reactions r ON r.message_id=m.id WHERE t.user_id=? GROUP BY m.id ORDER BY reaction_count DESC LIMIT 10`).all(req.user.id);
+  res.json(rows);
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

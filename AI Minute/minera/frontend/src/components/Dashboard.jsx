@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../api.js";
 import ConnectWallet from "./ConnectWallet.jsx";
+import AnimatedNumber from "./AnimatedNumber.jsx";
 import { TOKEN, PRICE_USD } from "../brand.js";
 
 export default function Dashboard({ balance, miners, toggleMiner, insights, address, notify, onChange }) {
@@ -12,7 +13,7 @@ export default function Dashboard({ balance, miners, toggleMiner, insights, addr
     <div>
       <div className="balbox">
         <div className="l">YOUR BALANCE</div>
-        <div className="amt">{balance.toLocaleString(undefined,{maximumFractionDigits:2})} {TOKEN}</div>
+        <div className="amt"><AnimatedNumber value={balance}/> {TOKEN}</div>
         <div className="usd">≈ ${(balance*PRICE_USD).toFixed(2)} USD</div>
         <div className="sub"><span>PRICE <b>${PRICE_USD}</b></span><span>ROLES ACTIVE <b>{Object.values(miners).filter(Boolean).length}/4</b></span></div>
       </div>

@@ -246,6 +246,9 @@ export default function HomeCanvas() {
                   { label: 'Portfolio', href: '/invest', icon: '◈', color: '#a855f7' },
                   { label: 'Creator Hub', href: '/creator', icon: '◉', color: '#ec4899' },
                   { label: 'Governance', href: '/dao', icon: '◎', color: '#818cf8' },
+                  { label: 'Refer & Earn', href: '/referral', icon: '⟳', color: '#22c55e' },
+                  { label: 'Live Activity', href: '/activity', icon: '▸', color: '#ec4899' },
+                  { label: 'Analytics', href: '/analytics', icon: '↗', color: '#f59e0b' },
                   { label: 'Advertise', href: '/advertise', icon: '⊕', color: '#ec4899' },
                   { label: 'ZK Identity', href: '/identity', icon: '◐', color: '#818cf8' },
                 ] as const).map(({ label, href, icon, color }) => (
