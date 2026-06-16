@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1228,6 +1228,46 @@ export default function ForgeApp() {
   const [focusSessions, setFocusSessions] = useState<any[]>([]);
   const [newFsLabel, setNewFsLabel] = useState('');
   const [newFsDuration, setNewFsDuration] = useState(25);
+  const [aiDebugLogs, setAiDebugLogs] = useState<any[]>([]);
+  const [newDlModel, setNewDlModel] = useState('claude');
+  const [newDlHash, setNewDlHash] = useState('');
+  const [newDlLatency, setNewDlLatency] = useState(0);
+  const [newDlError, setNewDlError] = useState('');
+  const [wsPolls2, setWsPolls2] = useState<any[]>([]);
+  const [newPl2Question, setNewPl2Question] = useState('');
+  const [newPl2Options, setNewPl2Options] = useState('Option A,Option B');
+  const [threadReactionsV2, setThreadReactionsV2] = useState<any[]>([]);
+  const [newTrThread2, setNewTrThread2] = useState('');
+  const [newTrEmoji2, setNewTrEmoji2] = useState('👍');
+  const [userAchievementsV2, setUserAchievementsV2] = useState<any[]>([]);
+  const [newAcTitle, setNewAcTitle] = useState('');
+  const [newAcDesc, setNewAcDesc] = useState('');
+  const [newAcIcon, setNewAcIcon] = useState('🏆');
+  const [aiOutputCache, setAiOutputCache] = useState<any[]>([]);
+  const [newOcHash, setNewOcHash] = useState('');
+  const [newOcModel, setNewOcModel] = useState('claude');
+  const [newOcOutput, setNewOcOutput] = useState('');
+  const [aiChainSteps, setAiChainSteps] = useState<any[]>([]);
+  const [newCsChainId, setNewCsChainId] = useState('');
+  const [newCsStepOrder, setNewCsStepOrder] = useState(0);
+  const [newCsPrompt, setNewCsPrompt] = useState('');
+  const [newCsStepOut, setNewCsStepOut] = useState('');
+  const [wsTagsV3, setWsTagsV3] = useState<any[]>([]);
+  const [newT3Name, setNewT3Name] = useState('');
+  const [newT3Color, setNewT3Color] = useState('#6366f1');
+  const [newT3Cat, setNewT3Cat] = useState('general');
+  const [threadNotesV2, setThreadNotesV2] = useState<any[]>([]);
+  const [newTnThread, setNewTnThread] = useState('');
+  const [newTnNote, setNewTnNote] = useState('');
+  const [userRituals, setUserRituals] = useState<any[]>([]);
+  const [newRitTitle, setNewRitTitle] = useState('');
+  const [newRitDesc, setNewRitDesc] = useState('');
+  const [newRitFreq, setNewRitFreq] = useState('daily');
+  const [aiPersonasV2, setAiPersonasV2] = useState<any[]>([]);
+  const [newPv2Name, setNewPv2Name] = useState('');
+  const [newPv2Prompt, setNewPv2Prompt] = useState('');
+  const [newPv2Avatar, setNewPv2Avatar] = useState('🤖');
+  const [newPv2Temp, setNewPv2Temp] = useState(0.7);
   const [newWiName, setNewWiName] = useState('');
   const [newWiType, setNewWiType] = useState('webhook');
   const [newWwResType, setNewWwResType] = useState('thread');
@@ -4963,6 +5003,16 @@ export default function ForgeApp() {
             { id:'aictxsnaps', icon:'📸', label:'Context Snapshots' },
             { id:'threadcollabs', icon:'👥', label:'Thread Collabs' },
             { id:'focussessions', icon:'🎯', label:'Focus Sessions' },
+            { id:'aidebuglogsb59', icon:'🐛', label:'Debug Logs' },
+            { id:'wspollsv2', icon:'📊', label:'Polls V2' },
+            { id:'threadreactv2', icon:'😄', label:'Reactions V2' },
+            { id:'userachievv2', icon:'🏆', label:'Achievements V2' },
+            { id:'aioutcache', icon:'💾', label:'Output Cache' },
+            { id:'aichainsteps', icon:'⛓️', label:'Chain Steps' },
+            { id:'wstagsv3', icon:'🏷️', label:'Tags V3' },
+            { id:'threadnotesv2', icon:'📝', label:'Thread Notes V2' },
+            { id:'userrituals', icon:'🕯️', label:'Rituals' },
+            { id:'aipersonasv2', icon:'🎭', label:'Personas V2' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -11794,6 +11844,314 @@ export default function ForgeApp() {
       
       
       
+      {mainTab==='aidebuglogsb59' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#128027; AI Debug Logs</h2>
+          <div className="flex gap-2 flex-wrap">
+            <select value={newDlModel} onChange={e=>setNewDlModel(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['claude','gpt-4o','gemini','groq','mistral'].map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+            <input value={newDlHash} onChange={e=>setNewDlHash(e.target.value)} placeholder="Prompt hash" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input type="number" value={newDlLatency} onChange={e=>setNewDlLatency(+e.target.value)} placeholder="Latency ms" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:100}} />
+            <input value={newDlError} onChange={e=>setNewDlError(e.target.value)} placeholder="Error (blank=ok)" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;await fetch('/api/ai-debug-logs',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({model:newDlModel,prompt_hash:newDlHash,latency_ms:newDlLatency,error:newDlError||null})});const r=await fetch('/api/ai-debug-logs',{headers:{'Authorization':'Bearer '+tok}});setAiDebugLogs(await r.json());setNewDlHash('');setNewDlError('');setNewDlLatency(0);}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Log</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/ai-debug-logs',{headers:{'Authorization':'Bearer '+tok}});setAiDebugLogs(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-1">
+            {aiDebugLogs.map((l:any)=>(
+              <div key={l.id} className="rounded px-3 py-2 flex justify-between items-center text-xs" style={{background:l.error?'rgba(239,68,68,0.08)':'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <span style={{color:'var(--fg-text)'}}>{l.model}</span>
+                <span style={{color:'var(--fg-text3)'}}>{l.latency_ms}ms</span>
+                <span style={{color:l.error?'#f87171':'#4ade80'}}>{l.error||'ok'}</span>
+                <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/ai-debug-logs/'+l.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiDebugLogs(aiDebugLogs.filter((x:any)=>x.id!==l.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'1px 6px',cursor:'pointer',fontSize:10}}>Del</button>
+              </div>
+            ))}
+            {aiDebugLogs.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No debug logs.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='wspollsv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#128202; Workspace Polls V2</h2>
+          <input value={newPl2Question} onChange={e=>setNewPl2Question(e.target.value)} placeholder="Poll question?" className="w-full border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <div className="flex gap-2">
+            <input value={newPl2Options} onChange={e=>setNewPl2Options(e.target.value)} placeholder="Comma-separated options" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newPl2Question)return;const opts=newPl2Options.split(',').map(s=>s.trim()).filter(Boolean);await fetch('/api/workspace-polls-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({question:newPl2Question,options:opts})});const r=await fetch('/api/workspace-polls-v2',{headers:{'Authorization':'Bearer '+tok}});setWsPolls2(await r.json());setNewPl2Question('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Create</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/workspace-polls-v2',{headers:{'Authorization':'Bearer '+tok}});setWsPolls2(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-3">
+            {wsPolls2.map((p:any)=>{
+              const opts=JSON.parse(p.options||'[]');
+              const votes=JSON.parse(p.votes||'{}');
+              const total=Object.values(votes).reduce((a:any,b:any)=>a+b,0) as number;
+              return <div key={p.id} className="rounded p-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{p.question}</span>
+                  <div className="flex gap-1">
+                    {!p.closed&&<button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/workspace-polls-v2/'+p.id+'/close',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setWsPolls2(wsPolls2.map((x:any)=>x.id===p.id?{...x,closed:1}:x));}} style={{background:'rgba(251,146,60,0.15)',color:'var(--fg-orange)',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Close</button>}
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/workspace-polls-v2/'+p.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setWsPolls2(wsPolls2.filter((x:any)=>x.id!==p.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+                {opts.map((opt:string)=>{
+                  const cnt=(votes[opt]||0) as number;
+                  const pct=total?Math.round(cnt/total*100):0;
+                  return <div key={opt} className="mb-1">
+                    <div className="flex justify-between text-xs mb-0.5" style={{color:'var(--fg-text2)'}}><span>{opt}</span><span>{cnt} ({pct}%)</span></div>
+                    <div className="w-full rounded-full overflow-hidden" style={{height:6,background:'var(--fg-bg3)'}}>
+                      <div style={{width:pct+'%',height:6,background:'var(--fg-orange)',transition:'width 0.3s'}} />
+                    </div>
+                    {!p.closed&&<button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/workspace-polls-v2/'+p.id+'/vote',{method:'PUT',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({option:opt})});const r=await fetch('/api/workspace-polls-v2',{headers:{'Authorization':'Bearer '+tok}});setWsPolls2(await r.json());}} style={{marginTop:2,background:'rgba(249,115,22,0.1)',color:'var(--fg-orange)',border:'none',borderRadius:4,padding:'1px 6px',cursor:'pointer',fontSize:10}}>Vote</button>}
+                  </div>;
+                })}
+              </div>;
+            })}
+            {wsPolls2.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No polls.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='threadreactv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#128516; Thread Reactions V2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newTrThread2} onChange={e=>setNewTrThread2(e.target.value)} placeholder="Thread ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:120}} />
+            <div className="flex gap-1">
+              {['👍','❤️','😂','🔥','💯','🎉','👏','🤔'].map(em=>(
+                <button key={em} onClick={()=>setNewTrEmoji2(em)} style={{fontSize:18,background:newTrEmoji2===em?'rgba(249,115,22,0.2)':'transparent',border:newTrEmoji2===em?'1px solid var(--fg-orange)':'1px solid transparent',borderRadius:6,padding:'2px 4px',cursor:'pointer'}}>{em}</button>
+              ))}
+            </div>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newTrThread2)return;await fetch('/api/thread-reactions-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({thread_id:newTrThread2,emoji:newTrEmoji2})});const r=await fetch('/api/thread-reactions-v2',{headers:{'Authorization':'Bearer '+tok}});setThreadReactionsV2(await r.json());}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>React</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/thread-reactions-v2',{headers:{'Authorization':'Bearer '+tok}});setThreadReactionsV2(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-1">
+            {threadReactionsV2.map((r:any)=>(
+              <div key={r.id} className="rounded px-3 py-2 flex justify-between items-center" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <span style={{fontSize:20}}>{r.emoji}</span>
+                <span className="text-sm" style={{color:'var(--fg-text)'}}>{r.thread_id}</span>
+                <span className="text-xs px-2 py-0.5 rounded" style={{background:'rgba(249,115,22,0.15)',color:'var(--fg-orange)'}}>{r.count}x</span>
+                <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/thread-reactions-v2/'+r.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setThreadReactionsV2(threadReactionsV2.filter((x:any)=>x.id!==r.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+              </div>
+            ))}
+            {threadReactionsV2.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No reactions.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='userachievv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#127942; Achievements V2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newAcIcon} onChange={e=>setNewAcIcon(e.target.value)} placeholder="Icon" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:60}} />
+            <input value={newAcTitle} onChange={e=>setNewAcTitle(e.target.value)} placeholder="Achievement title" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input value={newAcDesc} onChange={e=>setNewAcDesc(e.target.value)} placeholder="Description" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newAcTitle)return;await fetch('/api/user-achievements-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newAcTitle,description:newAcDesc,icon:newAcIcon})});const r=await fetch('/api/user-achievements-v2',{headers:{'Authorization':'Bearer '+tok}});setUserAchievementsV2(await r.json());setNewAcTitle('');setNewAcDesc('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Award</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/user-achievements-v2',{headers:{'Authorization':'Bearer '+tok}});setUserAchievementsV2(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {userAchievementsV2.map((a:any)=>(
+              <div key={a.id} className="rounded p-3" style={{background:a.pinned?'rgba(249,115,22,0.08)':'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-start">
+                  <span style={{fontSize:24}}>{a.icon}</span>
+                  <div className="flex gap-1">
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/user-achievements-v2/'+a.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setUserAchievementsV2(userAchievementsV2.map((x:any)=>x.id===a.id?{...x,pinned:1-x.pinned}:x));}} style={{background:'transparent',color:'var(--fg-text3)',border:'none',cursor:'pointer',fontSize:12}}>&#128204;</button>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/user-achievements-v2/'+a.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setUserAchievementsV2(userAchievementsV2.filter((x:any)=>x.id!==a.id));}} style={{background:'transparent',color:'#fca5a5',border:'none',cursor:'pointer',fontSize:12}}>&#10005;</button>
+                  </div>
+                </div>
+                <p className="text-sm font-semibold mt-1" style={{color:'var(--fg-text)'}}>{a.title}</p>
+                {a.description&&<p className="text-xs" style={{color:'var(--fg-text3)'}}>{a.description}</p>}
+              </div>
+            ))}
+          </div>
+          {userAchievementsV2.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No achievements yet.</div>}
+        </div>
+      )}
+      {mainTab==='aioutcache' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#128190; AI Output Cache</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newOcHash} onChange={e=>setNewOcHash(e.target.value)} placeholder="Prompt hash / key" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <select value={newOcModel} onChange={e=>setNewOcModel(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['claude','gpt-4o','gemini','groq'].map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+          <textarea value={newOcOutput} onChange={e=>setNewOcOutput(e.target.value)} placeholder="Cached output..." rows={3} className="w-full border rounded px-2 py-1 text-sm font-mono" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <div className="flex gap-2">
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newOcHash||!newOcOutput)return;await fetch('/api/ai-output-cache',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({prompt_hash:newOcHash,model:newOcModel,output:newOcOutput})});const r=await fetch('/api/ai-output-cache',{headers:{'Authorization':'Bearer '+tok}});setAiOutputCache(await r.json());setNewOcHash('');setNewOcOutput('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Cache</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/ai-output-cache',{headers:{'Authorization':'Bearer '+tok}});setAiOutputCache(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {aiOutputCache.map((c:any)=>(
+              <div key={c.id} className="rounded p-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs font-mono" style={{color:'var(--fg-text3)'}}>{c.prompt_hash}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{color:'#4ade80'}}>{c.hit_count} hits</span>
+                    <span className="text-xs" style={{color:'var(--fg-text3)'}}>[{c.model}]</span>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/ai-output-cache/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiOutputCache(aiOutputCache.filter((x:any)=>x.id!==c.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+                <pre className="text-xs" style={{color:'var(--fg-text2)',whiteSpace:'pre-wrap'}}>{c.output?.slice(0,150)}</pre>
+              </div>
+            ))}
+            {aiOutputCache.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No cached outputs.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='airatingsv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">⭐ Response Ratings V2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newRvThread} onChange={e=>setNewRvThread(e.target.value)} placeholder="Thread ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:110}} />
+            <input value={newRvMsg} onChange={e=>setNewRvMsg(e.target.value)} placeholder="Message ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:110}} />
+          </div>
+          <div className="flex gap-4 flex-wrap">
+            {(['Accuracy','Helpfulness','Clarity'] as const).map((dim:string)=>{
+              const val=dim==='Accuracy'?newRvAccuracy:dim==='Helpfulness'?newRvHelpfulness:newRvClarity;
+              const set=dim==='Accuracy'?setNewRvAccuracy:dim==='Helpfulness'?setNewRvHelpfulness:setNewRvClarity;
+              return <div key={dim} className="flex items-center gap-2">
+                <span className="text-xs" style={{color:'var(--fg-text3)'}}>{dim}</span>
+                {[1,2,3,4,5].map(n=><button key={n} onClick={()=>set(n)} style={{background:n<=val?'var(--fg-orange)':'var(--fg-bg-card)',color:n<=val?'#fff':'var(--fg-text3)',border:'1px solid var(--fg-border)',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:12}}>{n}</button>)}
+              </div>;
+            })}
+          </div>
+          <div className="flex gap-2">
+            <input value={newRvNote} onChange={e=>setNewRvNote(e.target.value)} placeholder="Note (optional)" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;await fetch('/api/ai-response-ratings-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({thread_id:newRvThread,message_id:newRvMsg,accuracy:newRvAccuracy,helpfulness:newRvHelpfulness,clarity:newRvClarity,overall:Math.round((newRvAccuracy+newRvHelpfulness+newRvClarity)/3),note:newRvNote})});const r=await fetch('/api/ai-response-ratings-v2',{headers:{'Authorization':'Bearer '+tok}});setAiRatingsV2(await r.json());setNewRvNote('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Rate</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/ai-response-ratings-v2',{headers:{'Authorization':'Bearer '+tok}});setAiRatingsV2(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {aiRatingsV2.map((rv:any)=>(
+              <div key={rv.id} className="rounded p-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-3 text-xs">
+                    <span style={{color:'var(--fg-orange)'}}>&#11088;{rv.overall}/5</span>
+                    <span style={{color:'var(--fg-text3)'}}>Acc:{rv.accuracy} Help:{rv.helpfulness} Clar:{rv.clarity}</span>
+                    {rv.thread_id&&<span style={{color:'var(--fg-text3)'}}>#{rv.thread_id}</span>}
+                  </div>
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/ai-response-ratings-v2/'+rv.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiRatingsV2(aiRatingsV2.filter((x:any)=>x.id!==rv.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+                {rv.note&&<p className="text-xs mt-1" style={{color:'var(--fg-text2)'}}>{rv.note}</p>}
+              </div>
+            ))}
+            {aiRatingsV2.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No ratings yet.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='wsmilestones' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#127937; Workspace Milestones</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newMsTitle} onChange={e=>setNewMsTitle(e.target.value)} placeholder="Milestone title" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input value={newMsDate} onChange={e=>setNewMsDate(e.target.value)} type="date" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          </div>
+          <div className="flex gap-2">
+            <input value={newMsDesc} onChange={e=>setNewMsDesc(e.target.value)} placeholder="Description" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newMsTitle)return;await fetch('/api/workspace-milestones',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newMsTitle,description:newMsDesc,target_date:newMsDate})});const r=await fetch('/api/workspace-milestones',{headers:{'Authorization':'Bearer '+tok}});setWsMilestones(await r.json());setNewMsTitle('');setNewMsDesc('');setNewMsDate('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/workspace-milestones',{headers:{'Authorization':'Bearer '+tok}});setWsMilestones(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {wsMilestones.map((m:any)=>(
+              <div key={m.id} className="rounded p-3" style={{background:m.completed?'rgba(34,197,94,0.06)':'var(--fg-bg-card)',border:'1px solid var(--fg-border)',opacity:m.completed?0.7:1}}>
+                <div className="flex justify-between items-center">
+                  <div><span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{m.pinned?'&#128204; ':''}{m.completed?'&#9989; ':''}{m.title}</span>{m.target_date&&<span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>{m.target_date}</span>}</div>
+                  <div className="flex gap-1">
+                    {!m.completed&&<button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/workspace-milestones/'+m.id+'/complete',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setWsMilestones(wsMilestones.map((x:any)=>x.id===m.id?{...x,completed:1}:x));}} style={{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Done</button>}
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/workspace-milestones/'+m.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setWsMilestones(wsMilestones.map((x:any)=>x.id===m.id?{...x,pinned:1-x.pinned}:x));}} style={{background:'var(--fg-bg3)',color:'var(--fg-text3)',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>&#128204;</button>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/workspace-milestones/'+m.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setWsMilestones(wsMilestones.filter((x:any)=>x.id!==m.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+                {m.description&&<p className="text-xs mt-1" style={{color:'var(--fg-text2)'}}>{m.description}</p>}
+              </div>
+            ))}
+            {wsMilestones.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No milestones.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='aictxsnaps' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#128248; Context Snapshots</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newCsLabel} onChange={e=>setNewCsLabel(e.target.value)} placeholder="Snapshot label" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input value={newCsThread} onChange={e=>setNewCsThread(e.target.value)} placeholder="Thread ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:100}} />
+            <input type="number" value={newCsTokens} onChange={e=>setNewCsTokens(+e.target.value)} placeholder="Tokens" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:90}} />
+          </div>
+          <textarea value={newCsContent} onChange={e=>setNewCsContent(e.target.value)} placeholder="Context content..." rows={3} className="w-full border rounded px-2 py-1 text-sm font-mono" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <div className="flex gap-2">
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newCsLabel)return;await fetch('/api/ai-context-snapshots',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({thread_id:newCsThread,label:newCsLabel,tokens_used:newCsTokens,content:newCsContent})});const r=await fetch('/api/ai-context-snapshots',{headers:{'Authorization':'Bearer '+tok}});setAiCtxSnapshots(await r.json());setNewCsLabel('');setNewCsContent('');setNewCsTokens(0);}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Save Snapshot</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/ai-context-snapshots',{headers:{'Authorization':'Bearer '+tok}});setAiCtxSnapshots(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {aiCtxSnapshots.map((s:any)=>(
+              <div key={s.id} className="rounded p-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{s.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{color:'var(--fg-text3)'}}>{(s.tokens_used||0).toLocaleString()} tok</span>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/ai-context-snapshots/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiCtxSnapshots(aiCtxSnapshots.filter((x:any)=>x.id!==s.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+                {s.content&&<pre className="text-xs" style={{color:'var(--fg-text2)',whiteSpace:'pre-wrap'}}>{s.content.slice(0,150)}</pre>}
+              </div>
+            ))}
+            {aiCtxSnapshots.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No snapshots saved.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='threadcollabs' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#128101; Thread Collaborators</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newTcThread} onChange={e=>setNewTcThread(e.target.value)} placeholder="Thread ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:110}} />
+            <input value={newTcCollab} onChange={e=>setNewTcCollab(e.target.value)} placeholder="@username or email" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <select value={newTcRole} onChange={e=>setNewTcRole(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['viewer','commenter','editor'].map(r=><option key={r} value={r}>{r}</option>)}
+            </select>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newTcCollab||!newTcThread)return;await fetch('/api/thread-collaborators',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({thread_id:newTcThread,collaborator:newTcCollab,role:newTcRole})});const r=await fetch('/api/thread-collaborators',{headers:{'Authorization':'Bearer '+tok}});setThreadCollabs(await r.json());setNewTcCollab('');setNewTcThread('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Invite</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/thread-collaborators',{headers:{'Authorization':'Bearer '+tok}});setThreadCollabs(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {threadCollabs.map((c:any)=>(
+              <div key={c.id} className="rounded p-3 flex justify-between items-center" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div>
+                  <span className="text-sm font-semibold" style={{color:'#818cf8'}}>@{c.collaborator}</span>
+                  <span className="ml-2 text-xs px-2 py-0.5 rounded" style={{background:'rgba(99,102,241,0.15)',color:'#a5b4fc'}}>{c.role}</span>
+                  {c.thread_id&&<span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>#{c.thread_id}</span>}
+                </div>
+                <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/thread-collaborators/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setThreadCollabs(threadCollabs.filter((x:any)=>x.id!==c.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Remove</button>
+              </div>
+            ))}
+            {threadCollabs.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No collaborators.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='focussessions' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#127919; Focus Sessions</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newFsLabel} onChange={e=>setNewFsLabel(e.target.value)} placeholder="What are you focusing on?" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <select value={newFsDuration} onChange={e=>setNewFsDuration(+e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {[15,25,45,60,90].map(d=><option key={d} value={d}>{d} min</option>)}
+            </select>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;await fetch('/api/user-focus-sessions',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({label:newFsLabel,duration_min:newFsDuration})});const r=await fetch('/api/user-focus-sessions',{headers:{'Authorization':'Bearer '+tok}});setFocusSessions(await r.json());setNewFsLabel('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>&#9654; Start</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/user-focus-sessions',{headers:{'Authorization':'Bearer '+tok}});setFocusSessions(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {focusSessions.map((s:any)=>(
+              <div key={s.id} className="rounded p-3" style={{background:s.completed?'rgba(34,197,94,0.06)':'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{s.completed?'&#9989; ':'&#9201; '}{s.label||'Focus session'}</span>
+                    <span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>{s.duration_min}min</span>
+                  </div>
+                  <div className="flex gap-1">
+                    {!s.completed&&<button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/user-focus-sessions/'+s.id+'/complete',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setFocusSessions(focusSessions.map((x:any)=>x.id===s.id?{...x,completed:1}:x));}} style={{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Complete</button>}
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/user-focus-sessions/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setFocusSessions(focusSessions.filter((x:any)=>x.id!==s.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {focusSessions.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No focus sessions. Start one above!</div>}
+          </div>
+        </div>
+      )}
       {mainTab==='aipromptver' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">📜 Prompt Versions</h2>

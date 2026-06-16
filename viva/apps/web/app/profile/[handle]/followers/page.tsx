@@ -2,159 +2,142 @@
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
-const PROFILES: Record<string, { name: string; handle: string; color: string; followers: number; following: number }> = {
-  sovereign_v: { name: 'Sovereign V', handle: 'sovereign_v', color: '#a855f7', followers: 148000, following: 420 },
-  mayafit:     { name: 'Maya Chen',   handle: 'mayafit',     color: '#22c55e', followers: 92000,  following: 310 },
-  jaxbeats:    { name: 'Jax Beats',   handle: 'jaxbeats',    color: '#ec4899', followers: 67000,  following: 880 },
+interface Follower {
+  handle: string
+  name: string
+  color: string
+  verified: boolean
+  vscore: number
+  tokenSymbol: string
+  tokenPrice: number
+  myTokens: number
+  followedSince: string
+  tier?: 'Diamond' | 'Gold' | 'Silver' | 'Bronze'
 }
 
-const FOLLOWERS = [
-  { handle: 'crypto_kat',   name: 'Kat Zhou',       color: '#818cf8', tokens: 50,  tier: 'Gold',    bio: 'DeFi trader. Long $VIVA.', mutual: true  },
-  { handle: 'moonset99',    name: 'Moonset',         color: '#22c55e', tokens: 120, tier: 'Diamond', bio: 'Token maximalist. Always staking.', mutual: false },
-  { handle: 'aisham',       name: 'Aisha M.',        color: '#f59e0b', tokens: 25,  tier: 'Silver',  bio: 'Building in public. Health + web3.', mutual: true  },
-  { handle: 'reed_cross',   name: 'Reed Cross',      color: '#ec4899', tokens: 10,  tier: 'Bronze',  bio: 'Founder. Early adopter.', mutual: false },
-  { handle: 'noa_d',        name: 'Noa D.',          color: '#a855f7', tokens: 200, tier: 'Diamond', bio: 'ZK researcher. VIVA OG.', mutual: true  },
-  { handle: 'zara_voss',    name: 'Zara Voss',       color: '#f87171', tokens: 15,  tier: 'Bronze',  bio: 'Longevity nerd. Track everything.', mutual: false },
-  { handle: 'danr',         name: 'Dan R.',           color: '#34d399', tokens: 30,  tier: 'Silver',  bio: 'ML engineer. Building agents.', mutual: true  },
-  { handle: 'mateuso',      name: 'Mateus O.',        color: '#fbbf24', tokens: 5,   tier: null,      bio: 'New to VIVA. Learning.', mutual: false },
-  { handle: 'luna_arts',    name: 'Luna Arts',        color: '#c084fc', tokens: 80,  tier: 'Gold',    bio: 'NFT artist. Generative & abstract.', mutual: true  },
-  { handle: 'atlas_burns',  name: 'Atlas Burns',      color: '#60a5fa', tokens: 45,  tier: 'Silver',  bio: 'V-Score 890. Living optimized.', mutual: false },
-]
-
-const FOLLOWING = [
-  { handle: 'sovereign_v',  name: 'Sovereign V',     color: '#a855f7', tokens: 320, tier: 'Diamond', bio: 'Finance & crypto alpha.', mutual: true  },
-  { handle: 'mayafit',      name: 'Maya Chen',        color: '#22c55e', tokens: 180, tier: 'Diamond', bio: 'Biohack your life.', mutual: true  },
-  { handle: 'jaxbeats',     name: 'Jax Beats',        color: '#ec4899', tokens: 90,  tier: 'Gold',    bio: 'Beat lab is open.', mutual: true  },
-  { handle: 'alexpark',     name: 'Alex Park',         color: '#818cf8', tokens: 60,  tier: 'Gold',    bio: 'Web3 dev. Open source.', mutual: false },
-  { handle: 'lunaarts',     name: 'Luna Arts',         color: '#c084fc', tokens: 80,  tier: 'Gold',    bio: 'NFT art. Generative.', mutual: true  },
-]
-
-const TIER_COLORS: Record<string, string> = {
-  Diamond: '#818cf8', Gold: '#f59e0b', Silver: '#94a3b8', Bronze: '#b45309',
+const PROFILE_FOLLOWERS: Record<string, Follower[]> = {
+  sovereign_v: [
+    { handle:'atlas_k',  name:'Atlas K',   color:'#818cf8', verified:false, vscore:6820, tokenSymbol:'ATLK', tokenPrice:4.20, myTokens:80,  followedSince:'Jan 2026', tier:'Diamond' },
+    { handle:'lily_p',   name:'Lily Park',  color:'#f59e0b', verified:true,  vscore:6410, tokenSymbol:'LILY', tokenPrice:2.80, myTokens:72,  followedSince:'Feb 2026', tier:'Gold'    },
+    { handle:'luna_w',   name:'Luna Walsh', color:'#f87171', verified:false, vscore:5900, tokenSymbol:'LUNA', tokenPrice:1.95, myTokens:60,  followedSince:'Mar 2026', tier:'Gold'    },
+    { handle:'jade_l',   name:'Jade Lee',   color:'#a855f7', verified:false, vscore:5200, tokenSymbol:'JADL', tokenPrice:1.20, myTokens:180, followedSince:'Dec 2025', tier:'Diamond' },
+    { handle:'noa_d',    name:'Noa Davis',  color:'#f59e0b', verified:false, vscore:4800, tokenSymbol:'NOAD', tokenPrice:0.95, myTokens:35,  followedSince:'Apr 2026', tier:'Silver'  },
+    { handle:'kai_r',    name:'Kai Reed',   color:'#22c55e', verified:false, vscore:4200, tokenSymbol:'KAIR', tokenPrice:0.60, myTokens:12,  followedSince:'May 2026', tier:'Bronze'  },
+    { handle:'max_t',    name:'Max Tran',   color:'#ec4899', verified:false, vscore:3800, tokenSymbol:'MAXT', tokenPrice:0.55, myTokens:30,  followedSince:'May 2026', tier:'Silver'  },
+    { handle:'marco_v',  name:'Marco V.',   color:'#f87171', verified:false, vscore:3200, tokenSymbol:'MARV', tokenPrice:0.40, myTokens:14,  followedSince:'Jun 2026', tier:'Bronze'  },
+    { handle:'dex_n',    name:'Dex North',  color:'#818cf8', verified:false, vscore:2800, tokenSymbol:'DEXN', tokenPrice:0.30, myTokens:0,   followedSince:'Jun 2026'               },
+    { handle:'sam_q',    name:'Sam Quinn',  color:'#22c55e', verified:false, vscore:1900, tokenSymbol:'SAMQ', tokenPrice:0.20, myTokens:0,   followedSince:'Jun 2026'               },
+  ],
 }
 
-export default function FollowersPage() {
+const PROFILE_COLORS: Record<string, string> = { sovereign_v:'#a855f7', mayafit:'#22c55e', jaxbeats:'#ec4899' }
+const TIER_COLOR: Record<string, string> = { Diamond:'#818cf8', Gold:'#f59e0b', Silver:'#94a3b8', Bronze:'#b45309' }
+const TIER_EMOJI: Record<string, string> = { Diamond:'💎', Gold:'🥇', Silver:'🥈', Bronze:'🥉' }
+
+export default function ProfileFollowersPage() {
   const router = useRouter()
   const params = useParams()
-  const handle = typeof params.handle === 'string' ? params.handle : 'sovereign_v'
-  const profile = PROFILES[handle] ?? PROFILES.sovereign_v
+  const handle   = typeof params.handle === 'string' ? params.handle : 'sovereign_v'
+  const list     = PROFILE_FOLLOWERS[handle] ?? PROFILE_FOLLOWERS.sovereign_v
+  const accent   = PROFILE_COLORS[handle] ?? '#a855f7'
 
-  const [tab, setTab] = useState<'followers' | 'following'>('followers')
-  const [search, setSearch] = useState('')
-  const [following, setFollowing] = useState<Set<string>>(new Set(FOLLOWERS.filter(f => f.mutual).map(f => f.handle)))
+  const [search,  setSearch ] = useState('')
+  const [filter,  setFilter ] = useState<'all' | 'diamond' | 'gold' | 'holding'>('all')
+  const [followed, setFollowed] = useState<Record<string, boolean>>({})
 
-  const list = tab === 'followers' ? FOLLOWERS : FOLLOWING
-  const filtered = list.filter(u =>
-    !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.handle.toLowerCase().includes(search.toLowerCase())
-  )
+  const visible = list.filter(f => {
+    if (filter === 'diamond' && f.tier !== 'Diamond') return false
+    if (filter === 'gold' && f.tier !== 'Gold') return false
+    if (filter === 'holding' && f.myTokens === 0) return false
+    if (search && !f.name.toLowerCase().includes(search.toLowerCase()) && !f.handle.includes(search.toLowerCase())) return false
+    return true
+  })
 
-  function toggleFollow(h: string) {
-    setFollowing(s => {
-      const n = new Set(s)
-      n.has(h) ? n.delete(h) : n.add(h)
-      return n
-    })
-  }
+  const diamondCt = list.filter(f => f.tier === 'Diamond').length
+  const goldCt    = list.filter(f => f.tier === 'Gold').length
+  const holdingCt = list.filter(f => f.myTokens > 0).length
 
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
       <header className="sticky top-0 z-20 px-4 pt-4 pb-3 border-b border-white/5"
         style={{ backdropFilter: 'blur(20px)', background: 'rgba(4,4,10,0.92)' }}>
         <div className="flex items-center gap-3 mb-3">
-          <button onClick={() => router.back()}
-            className="p-1.5 rounded-lg hover:bg-white/5 text-white/50 hover:text-white transition-colors">
+          <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <div>
-            <div className="font-black text-white">@{handle}</div>
-            <div className="text-xs text-white/30">
-              {(profile.followers / 1000).toFixed(0)}k followers · {profile.following} following
-            </div>
+          <div className="flex-1">
+            <div className="font-black text-white">Followers</div>
+            <div className="text-xs text-white/30">@{handle} · {list.length.toLocaleString()}</div>
           </div>
         </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-3">
-          <button onClick={() => setTab('followers')}
-            className="flex-1 py-2 rounded-xl text-sm font-black transition-all"
-            style={tab === 'followers'
-              ? { background: profile.color, color: '#04040A' }
-              : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
-            {(profile.followers / 1000).toFixed(0)}k Followers
-          </button>
-          <button onClick={() => setTab('following')}
-            className="flex-1 py-2 rounded-xl text-sm font-black transition-all"
-            style={tab === 'following'
-              ? { background: profile.color, color: '#04040A' }
-              : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
-            {profile.following} Following
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" width="14" height="14" viewBox="0 0 20 20" fill="none">
-            <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6"/>
-            <path d="M15 15l3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-          </svg>
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder={`Search ${tab}…`}
-            className="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm bg-white/5 border border-white/6 text-white placeholder-white/20 outline-none" />
-        </div>
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search followers…"
+          className="w-full px-3 py-2 rounded-xl text-sm bg-white/5 border border-white/6 text-white placeholder-white/20 outline-none" />
       </header>
 
-      <div className="px-4 py-3 space-y-1.5">
-        {filtered.length === 0 && (
-          <div className="text-center py-12 text-white/20 text-sm">No results</div>
-        )}
-        {filtered.map(u => (
-          <div key={u.handle} className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all hover:bg-white/3">
-            {/* Avatar */}
-            <button onClick={() => router.push(`/profile/${u.handle}`)}>
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0"
-                style={{ background: `${u.color}18`, color: u.color, border: `1.5px solid ${u.color}25` }}>
-                {u.name[0]}
-              </div>
-            </button>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => router.push(`/profile/${u.handle}`)}
-                  className="font-bold text-white/85 text-sm hover:text-white transition-colors">
-                  {u.name}
-                </button>
-                {u.tier && (
-                  <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
-                    style={{ background: `${TIER_COLORS[u.tier]}15`, color: TIER_COLORS[u.tier] }}>
-                    {u.tier}
-                  </span>
-                )}
-                {u.mutual && (
-                  <span className="text-xs text-white/25">Mutual</span>
-                )}
-              </div>
-              <div className="text-xs text-white/30">@{u.handle}</div>
-              {u.bio && <div className="text-xs text-white/35 mt-0.5 truncate">{u.bio}</div>}
-              {u.tokens > 0 && (
-                <div className="text-xs mt-0.5" style={{ color: profile.color }}>
-                  {u.tokens} ${handle.replace(/[^a-z]/gi, '').toUpperCase().slice(0, 5)} held
-                </div>
-              )}
+      <div className="px-4 py-4 space-y-4">
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label:'Total',    value:list.length, color:'rgba(255,255,255,0.5)' },
+            { label:'💎',       value:diamondCt,   color:'#818cf8' },
+            { label:'🥇',       value:goldCt,      color:'#f59e0b' },
+            { label:'Holders',  value:holdingCt,   color:accent },
+          ].map(s => (
+            <div key={s.label} className="p-2 rounded-xl border border-white/5 text-center"
+              style={{ background: 'rgba(255,255,255,0.018)' }}>
+              <div className="font-black text-sm" style={{ color: s.color }}>{s.value}</div>
+              <div className="text-xs text-white/20">{s.label}</div>
             </div>
+          ))}
+        </div>
 
-            {/* Follow button */}
-            <button onClick={() => toggleFollow(u.handle)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black transition-all"
-              style={following.has(u.handle)
-                ? { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.1)' }
-                : { background: profile.color, color: '#04040A' }}>
-              {following.has(u.handle) ? 'Following' : 'Follow'}
+        {/* Filter */}
+        <div className="flex gap-1.5 flex-wrap">
+          {([['all','All'],['diamond','💎 Diamond'],['gold','🥇 Gold'],['holding','Holding']] as const).map(([k,l]) => (
+            <button key={k} onClick={() => setFilter(k)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold"
+              style={filter === k ? { background: accent, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+              {l}
             </button>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {/* List */}
+        <div className="space-y-2">
+          {visible.map(f => (
+            <div key={f.handle} className="flex items-center gap-3 p-3 rounded-2xl border border-white/4"
+              style={{ background: 'rgba(255,255,255,0.015)' }}>
+              <button onClick={() => router.push(`/profile/${f.handle}`)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0"
+                  style={{ background: `${f.color}15`, color: f.color }}>
+                  {f.name[0]}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-sm text-white/85">{f.name}</span>
+                    {f.verified && <span className="text-xs" style={{ color: accent }}>✓</span>}
+                    {f.tier && <span className="text-xs" style={{ color: TIER_COLOR[f.tier] }}>{TIER_EMOJI[f.tier]}</span>}
+                  </div>
+                  <div className="text-xs text-white/25">
+                    @{f.handle}
+                    {f.myTokens > 0 && <span className="ml-1" style={{ color: accent }}>· {f.myTokens} ${f.tokenSymbol}</span>}
+                  </div>
+                </div>
+              </button>
+              <button onClick={() => setFollowed(p => ({ ...p, [f.handle]: !p[f.handle] }))}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-bold flex-shrink-0"
+                style={followed[f.handle]
+                  ? { background: `${f.color}18`, color: f.color }
+                  : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)' }}>
+                {followed[f.handle] ? 'Following' : 'Follow'}
+              </button>
+            </div>
+          ))}
+          {visible.length === 0 && <div className="text-center py-12 text-white/25">No results</div>}
+        </div>
       </div>
     </div>
   )

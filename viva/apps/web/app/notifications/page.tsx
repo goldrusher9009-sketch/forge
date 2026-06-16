@@ -1,229 +1,125 @@
 'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { notifications as notifApi } from '@/lib/api'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-// ── Types ─────────────────────────────────────────────────
-type NType = 'like' | 'comment' | 'invest' | 'stake' | 'follow' | 'system' | 'yield'
+type NotifType = 'trade' | 'tip' | 'follow' | 'reward' | 'alert' | 'social' | 'dao' | 'system'
 
 interface Notif {
   id: string
-  type: NType
-  actor: string
-  handle: string
-  avatar: string
+  type: NotifType
+  title: string
   body: string
-  time: string
+  ago: string
   read: boolean
-  link?: string
-  amount?: number
+  href?: string
+  actorColor?: string
 }
 
-// ── Mock data ─────────────────────────────────────────────
-const MOCK: Notif[] = [
-  { id:'1',  type:'invest',  actor:'Maya Chen',     handle:'mayafit',     avatar:'MC', body:'invested $500 in your profile',             time:'2m ago',  read:false, link:'/profile/you', amount:500  },
-  { id:'2',  type:'like',    actor:'Alex Rivera',   handle:'alexribs',    avatar:'AR', body:'liked your post about morning routines',     time:'5m ago',  read:false, link:'/feed'         },
-  { id:'3',  type:'follow',  actor:'Sara Kim',      handle:'sarakim',     avatar:'SK', body:'started following you',                      time:'12m ago', read:false, link:'/profile/sarakim' },
-  { id:'4',  type:'yield',   actor:'VIVA Protocol', handle:'viva',        avatar:'VP', body:'Monthly staking yield: $36.67 from MAYA',    time:'1h ago',  read:false, link:'/wallet', amount:36.67 },
-  { id:'5',  type:'comment', actor:'Joe Martinez',  handle:'joemartinez', avatar:'JM', body:'commented: "This is exactly what I needed"', time:'2h ago',  read:true,  link:'/feed'         },
-  { id:'6',  type:'stake',   actor:'Zena Okafor',   handle:'zenaokafor',  avatar:'ZO', body:'staked 2000 tokens at Gold tier',            time:'3h ago',  read:true,  link:'/wallet', amount:2000 },
-  { id:'7',  type:'invest',  actor:'Mike Thompson', handle:'mikethompson',avatar:'MT', body:'invested $200 in your profile',              time:'5h ago',  read:true,  link:'/profile/you', amount:200  },
-  { id:'8',  type:'like',    actor:'Priya Nair',    handle:'priyanair',   avatar:'PN', body:'liked your photo',                           time:'8h ago',  read:true,  link:'/feed'         },
-  { id:'9',  type:'follow',  actor:'Carlos Mendez', handle:'carlosmendez',avatar:'CM', body:'started following you',                     time:'12h ago', read:true,  link:'/profile/carlosmendez' },
-  { id:'10', type:'system',  actor:'VIVA',          handle:'viva',        avatar:'V',  body:'Your V-Score increased to 847 ✦',            time:'1d ago',  read:true                         },
-  { id:'11', type:'invest',  actor:'Lin Wei',       handle:'linwei',      avatar:'LW', body:'invested $1,000 in your profile',            time:'2d ago',  read:true,  link:'/wallet', amount:1000 },
-  { id:'12', type:'comment', actor:'Amara Osei',    handle:'amaraosei',   avatar:'AO', body:'commented: "Love your health journey!"',     time:'2d ago',  read:true,  link:'/feed'         },
+const NOTIFS: Notif[] = [
+  { id:'n1',  type:'trade',  title:'Buy order filled',           body:'Bought 10 $SVRN @ $8.75',                 ago:'2m',    read:false, href:'/wallet/history',             actorColor:'#a855f7' },
+  { id:'n2',  type:'tip',    title:'You received a tip!',        body:'@atlas_k tipped you 40 $SVRN ($350)',      ago:'6m',    read:false, href:'/creator/sovereign_v/tips',   actorColor:'#818cf8' },
+  { id:'n3',  type:'follow', title:'New follower',               body:'@lily_p started following you',            ago:'14m',   read:false, href:'/profile/lily_p',             actorColor:'#f59e0b' },
+  { id:'n4',  type:'reward', title:'Staking reward distributed', body:'+$12.40 from $SVRN staking (22% APY)',     ago:'1h',    read:false, href:'/wallet/staking',             actorColor:'#22c55e' },
+  { id:'n5',  type:'dao',    title:'New governance proposal',    body:'"Reduce lock period to 60 days" is live',  ago:'2h',    read:false, href:'/dao/vote/p1',                actorColor:'#818cf8' },
+  { id:'n6',  type:'alert',  title:'$SVRN price alert',          body:'$SVRN crossed $8.75 (+5%)',                ago:'3h',    read:true,  href:'/tokens/SVRN/chart',          actorColor:'#a855f7' },
+  { id:'n7',  type:'social', title:'Your post is trending',      body:'"BTC accumulation zone" hit 800+ likes',   ago:'4h',    read:true,  href:'/feed/p1'                                       },
+  { id:'n8',  type:'follow', title:'New follower',               body:'@max_t started following you',             ago:'5h',    read:true,  href:'/profile/max_t',              actorColor:'#ec4899' },
+  { id:'n9',  type:'trade',  title:'Token listed for sale',      body:'@marco_v listed 8 $SVRN @ $8.90',         ago:'5h',    read:true,  href:'/tokens/SVRN/activity',       actorColor:'#f87171' },
+  { id:'n10', type:'system', title:'V-Score updated',            body:'Your V-Score is now 9,840 (+120)',          ago:'6h',    read:true,  href:'/profile/sovereign_v'                           },
+  { id:'n11', type:'reward', title:'Referral bonus earned',      body:'+$18.50 from @jade_l referral signup',     ago:'1d',    read:true,  href:'/wallet/earn',                actorColor:'#a855f7' },
+  { id:'n12', type:'tip',    title:'You received a tip!',        body:'@luna_w tipped you 15 $SVRN ($131.25)',    ago:'1d',    read:true,  href:'/creator/sovereign_v/tips',   actorColor:'#f87171' },
 ]
 
-// ── Icon/color per type ───────────────────────────────────
-const TYPE_META: Record<NType, { icon: string; color: string; label: string }> = {
-  like:    { icon: '♥',  color: '#e11d48', label: 'Likes'     },
-  comment: { icon: '◉',  color: '#0891b2', label: 'Comments'  },
-  invest:  { icon: '↗',  color: '#f59e0b', label: 'Invest'    },
-  stake:   { icon: '⬡',  color: '#a855f7', label: 'Staking'   },
-  follow:  { icon: '◈',  color: '#059669', label: 'Followers' },
-  system:  { icon: '✦',  color: '#7c3aed', label: 'VIVA'      },
-  yield:   { icon: '◎',  color: '#22c55e', label: 'Yield'     },
+const TYPE_ICON: Record<NotifType, string>  = { trade:'💹', tip:'💸', follow:'👤', reward:'⭐', alert:'🔔', social:'🔥', dao:'🗳', system:'⚙' }
+const TYPE_COLOR: Record<NotifType, string> = {
+  trade:'#22c55e', tip:'#ec4899', follow:'#818cf8', reward:'#f59e0b',
+  alert:'#a855f7', social:'#f87171', dao:'#818cf8', system:'rgba(255,255,255,0.3)',
 }
 
-type Tab = 'all' | NType
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'all',     label: 'All'      },
-  { id: 'invest',  label: '↗ Invest' },
-  { id: 'stake',   label: '⬡ Stake'  },
-  { id: 'follow',  label: '◈ Follow' },
-  { id: 'like',    label: '♥ Likes'  },
-  { id: 'yield',   label: '◎ Yield'  },
-]
-
-// ── Main ──────────────────────────────────────────────────
 export default function NotificationsPage() {
-  const [tab, setTab]         = useState<Tab>('all')
-  const [notifs, setNotifs]   = useState<Notif[]>(MOCK)
-  const [mounted, setMounted] = useState(false)
+  const router = useRouter()
+  const [notifs, setNotifs] = useState(NOTIFS)
+  const [filter, setFilter] = useState<'all' | 'unread' | NotifType>('all')
 
-  useEffect(() => {
-    setMounted(true)
-    notifApi.list?.()?.then?.((res: any[]) => {
-      if (!res?.length) return
-      const mapped: Notif[] = res.map((n: any, i: number) => ({
-        id:     String(n.id ?? i),
-        type:   (n.type ?? 'system') as NType,
-        actor:  n.sender?.name ?? 'VIVA',
-        handle: n.sender?.handle ?? 'viva',
-        avatar: (n.sender?.name ?? 'V').slice(0, 2).toUpperCase(),
-        body:   n.content ?? n.message ?? '',
-        time:   n.createdAt ? new Date(n.createdAt).toLocaleTimeString() : '',
-        read:   !!n.read,
-        link:   n.link,
-        amount: n.amount,
-      }))
-      setNotifs(mapped)
-    }).catch(() => {})
-  }, [])
+  const unread = notifs.filter(n => !n.read).length
 
-  if (!mounted) return null
-
-  const filtered = tab === 'all' ? notifs : notifs.filter(n => n.type === tab)
-  const unread   = notifs.filter(n => !n.read).length
+  const visible = notifs.filter(n => {
+    if (filter === 'unread') return !n.read
+    if (filter !== 'all') return n.type === filter
+    return true
+  })
 
   function markAllRead() {
     setNotifs(prev => prev.map(n => ({ ...n, read: true })))
-    notifApi.markAllRead?.()?.catch?.(() => {})
   }
 
   function markRead(id: string) {
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
   }
 
-  // Financial summary for current month
-  const investTotal = MOCK.filter(n => n.type === 'invest').reduce((s, n) => s + (n.amount ?? 0), 0)
-  const yieldTotal  = MOCK.filter(n => n.type === 'yield').reduce((s, n) => s + (n.amount ?? 0), 0)
-  const newInvestors = new Set(MOCK.filter(n => n.type === 'invest').map(n => n.handle)).size
+  const FILTER_TABS = [
+    { key:'all',    label:'All'     },
+    { key:'unread', label:`Unread ${unread > 0 ? `(${unread})` : ''}` },
+    { key:'trade',  label:'Trades'  },
+    { key:'social', label:'Social'  },
+    { key:'reward', label:'Rewards' },
+    { key:'dao',    label:'DAO'     },
+  ] as const
 
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
-      {/* Sticky header */}
-      <div className="sticky top-0 z-20 px-4 pt-4 pb-3"
-        style={{ background: 'rgba(4,4,10,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-base font-bold">Notifications</span>
-            {unread > 0 && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
-                style={{ background: 'rgba(124,58,237,0.25)', color: '#a855f7' }}>
-                {unread}
-              </span>
-            )}
-          </div>
+      <header className="sticky top-0 z-20 px-4 pt-4 pb-3 border-b border-white/5"
+        style={{ backdropFilter: 'blur(20px)', background: 'rgba(4,4,10,0.92)' }}>
+        <div className="flex items-center gap-3 mb-3">
+          <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <div className="flex-1 font-black text-white">Notifications</div>
           {unread > 0 && (
-            <button onClick={markAllRead}
-              className="text-xs transition-opacity"
-              style={{ opacity: 0.5 }}
-              onMouseEnter={e => (e.currentTarget.style.opacity='1')}
-              onMouseLeave={e => (e.currentTarget.style.opacity='0.5')}>
-              Mark all read
-            </button>
+            <button onClick={markAllRead} className="text-xs text-white/30 font-bold">Mark all read</button>
           )}
         </div>
-
-        {/* Tab scroll */}
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-              style={tab === t.id
-                ? { background: 'rgba(124,58,237,0.25)', color: '#a855f7', border: '1px solid rgba(124,58,237,0.3)' }
-                : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {FILTER_TABS.map(t => (
+            <button key={t.key} onClick={() => setFilter(t.key as any)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex-shrink-0"
+              style={filter === t.key ? { background: '#a855f7', color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
               {t.label}
             </button>
           ))}
         </div>
-      </div>
+      </header>
 
-      <div className="px-4 pt-3 space-y-1.5">
-
-        {/* Financial summary banner */}
-        {(tab === 'all' || tab === 'invest' || tab === 'yield') && (
-          <div className="rounded-xl px-4 py-3 mb-3"
-            style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)' }}>
-            <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ opacity: 0.5 }}>This Month · Your Profile as Asset</p>
-            <div className="flex gap-5">
-              <div>
-                <p className="text-xs opacity-40">Invested in you</p>
-                <p className="text-lg font-bold" style={{ color: '#f59e0b' }}>${investTotal.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-xs opacity-40">Investors</p>
-                <p className="text-lg font-bold">{newInvestors}</p>
-              </div>
-              <div>
-                <p className="text-xs opacity-40">Yield paid</p>
-                <p className="text-lg font-bold" style={{ color: '#22c55e' }}>${yieldTotal.toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
+      <div className="divide-y divide-white/5">
+        {visible.length === 0 && (
+          <div className="text-center py-16 text-white/25">All caught up ✓</div>
         )}
-
-        {filtered.length === 0 && (
-          <div className="text-center py-16 opacity-30">
-            <p className="text-3xl mb-2">🔔</p>
-            <p className="text-sm">No {tab === 'all' ? '' : tab} notifications yet</p>
-          </div>
-        )}
-
-        {filtered.map(n => {
-          const meta = TYPE_META[n.type] ?? TYPE_META.system
-
-          const card = (
-            <div
-              onClick={() => markRead(n.id)}
-              className="flex items-start gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer"
-              style={{
-                background: n.read ? 'rgba(255,255,255,0.02)' : 'rgba(124,58,237,0.07)',
-                border: `1px solid ${n.read ? 'rgba(255,255,255,0.05)' : 'rgba(124,58,237,0.18)'}`,
-              }}>
-
-              {/* Avatar + badge */}
-              <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-                  style={{ background: `${meta.color}18`, border: `1.5px solid ${meta.color}35`, color: meta.color }}>
-                  {n.avatar}
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
-                  style={{ background: meta.color, fontSize: '0.5rem' }}>
-                  {meta.icon}
-                </div>
-              </div>
-
-              {/* Text */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm leading-snug">
-                  <span className="font-semibold">{n.actor}</span>
-                  {' '}
-                  <span style={{ opacity: 0.7 }}>{n.body}</span>
-                  {n.amount != null && (
-                    <span className="ml-1 font-bold" style={{ color: meta.color }}>
-                      ${n.amount.toLocaleString()}
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs mt-0.5" style={{ opacity: 0.35 }}>{n.time}</p>
-              </div>
-
-              {/* Unread dot */}
-              {!n.read && (
-                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2"
-                  style={{ background: '#a855f7' }} />
-              )}
+        {visible.map(n => (
+          <button key={n.id}
+            onClick={() => { markRead(n.id); if (n.href) router.push(n.href) }}
+            className="w-full flex items-start gap-3 px-4 py-3.5 text-left"
+            style={{ background: n.read ? 'transparent' : 'rgba(168,85,247,0.03)' }}>
+            {/* Icon */}
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 mt-0.5"
+              style={{ background: `${TYPE_COLOR[n.type]}12` }}>
+              {TYPE_ICON[n.type]}
             </div>
-          )
-
-          return n.link
-            ? <Link key={n.id} href={n.link}>{card}</Link>
-            : <div key={n.id}>{card}</div>
-        })}
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-bold text-sm text-white/85">{n.title}</span>
+                <span className="text-xs text-white/20 flex-shrink-0">{n.ago}</span>
+              </div>
+              <div className="text-xs text-white/40 mt-0.5 leading-relaxed">{n.body}</div>
+            </div>
+            {/* Unread dot */}
+            {!n.read && (
+              <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ background: '#a855f7' }} />
+            )}
+          </button>
+        ))}
       </div>
     </div>
   )
