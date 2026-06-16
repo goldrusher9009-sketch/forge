@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1136,8 +1136,8 @@ export default function ForgeApp() {
   const [newTqPriority, setNewTqPriority] = useState(5);
   const [wsGlossary, setWsGlossary] = useState<any[]>([]);
   const [newGlTermB54, setNewGlTermB54] = useState('');
-  const [newGlDef, setNewGlDef] = useState('');
-  const [newGlCat, setNewGlCat] = useState('general');
+  const [newGlDefB54, setNewGlDefB54] = useState('');
+  const [newGlCatB54, setNewGlCatB54] = useState('general');
   const [aiRoutingRules, setAiRoutingRules] = useState<any[]>([]);
   const [newRrName, setNewRrName] = useState('');
   const [newRrCondition, setNewRrCondition] = useState('');
@@ -1146,6 +1146,26 @@ export default function ForgeApp() {
   const [trThreadId, setTrThreadId] = useState('');
   const [trEmoji, setTrEmoji] = useState('❤️');
   const [wsIntegrations, setWsIntegrations] = useState<any[]>([]);
+  const [aiPlaybooks, setAiPlaybooks] = useState<any[]>([]);
+  const [newPbName, setNewPbName] = useState('');
+  const [newPbDesc, setNewPbDesc] = useState('');
+  const [newPbSteps, setNewPbSteps] = useState('');
+  const [wsChannels, setWsChannels] = useState<any[]>([]);
+  const [newChName, setNewChName] = useState('');
+  const [newChDesc, setNewChDesc] = useState('');
+  const [newChPrivate, setNewChPrivate] = useState(false);
+  const [aiBenchmarks, setAiBenchmarks] = useState<any[]>([]);
+  const [benchCompare, setBenchCompare] = useState<any[]>([]);
+  const [newBmName, setNewBmName] = useState('');
+  const [newBmModel, setNewBmModel] = useState('claude');
+  const [newBmScore, setNewBmScore] = useState(0);
+  const [newBmLatency, setNewBmLatency] = useState(0);
+  const [msgThreadsArch, setMsgThreadsArch] = useState<any[]>([]);
+  const [newMtaThreadId, setNewMtaThreadId] = useState('');
+  const [newMtaReason, setNewMtaReason] = useState('completed');
+  const [aiUsageBudgets, setAiUsageBudgets] = useState<any[]>([]);
+  const [newUbBudgetUsd, setNewUbBudgetUsd] = useState(10);
+  const [newUbPeriod, setNewUbPeriod] = useState('monthly');
   const [newWiName, setNewWiName] = useState('');
   const [newWiType, setNewWiType] = useState('webhook');
   const [newWwResType, setNewWwResType] = useState('thread');
@@ -11665,7 +11685,239 @@ export default function ForgeApp() {
       
       
       
-      {mainTab==='aievalsb53' && (
+      
+      
+      {mainTab==='aiplaybooks' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">📒 AI Playbooks</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Playbook name" value={newPbName} onChange={e=>setNewPbName(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Description" value={newPbDesc} onChange={e=>setNewPbDesc(e.target.value)}/>
+            <textarea className="border p-2 rounded flex-1" placeholder="Steps (one per line)" value={newPbSteps} onChange={e=>setNewPbSteps(e.target.value)} rows={2}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-playbooks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newPbName,description:newPbDesc,steps:newPbSteps})}).then(r=>r.json()).then(d=>{setAiPlaybooks(p=>[d,...p]);setNewPbName('');setNewPbDesc('');setNewPbSteps('');})}>Save</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/ai-playbooks').then(r=>r.json()).then(setAiPlaybooks)}>Load</button>
+          {aiPlaybooks.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-start">
+              <div>
+                <div className="font-semibold">{x.name} <span className="text-xs text-gray-400">▶ {x.run_count}x</span></div>
+                <div className="text-xs text-gray-500">{x.description}</div>
+                <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 whitespace-pre-wrap">{x.steps}</pre>
+              </div>
+              <div className="flex gap-2 ml-2 flex-shrink-0">
+                <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-playbooks/${x.id}/run`,{method:'PUT'}).then(()=>fetch('/api/ai-playbooks').then(r=>r.json()).then(setAiPlaybooks))}>▶ Run</button>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-playbooks/${x.id}`,{method:'DELETE'}).then(()=>setAiPlaybooks(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wschannels' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">#️⃣ Workspace Channels</h2>
+          <div className="flex gap-2 flex-wrap items-center">
+            <input className="border p-2 rounded flex-1" placeholder="Channel name" value={newChName} onChange={e=>setNewChName(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Description" value={newChDesc} onChange={e=>setNewChDesc(e.target.value)}/>
+            <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={newChPrivate} onChange={e=>setNewChPrivate(e.target.checked)}/> Private</label>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/workspace-channels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newChName,description:newChDesc,is_private:newChPrivate?1:0})}).then(r=>r.json()).then(d=>{setWsChannels(p=>[...p,d].sort((a,b)=>a.name.localeCompare(b.name)));setNewChName('');setNewChDesc('');})}>Create</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/workspace-channels').then(r=>r.json()).then(setWsChannels)}>Load</button>
+          {wsChannels.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <div className="font-semibold"># {x.name} {x.is_private?'🔒':''}</div>
+                <div className="text-xs text-gray-500">{x.description} · {x.member_count} members</div>
+              </div>
+              <div className="flex gap-2">
+                <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-channels/${x.id}/join`,{method:'PUT'}).then(()=>fetch('/api/workspace-channels').then(r=>r.json()).then(setWsChannels))}>Join</button>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-channels/${x.id}`,{method:'DELETE'}).then(()=>setWsChannels(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='aibenchmarks' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">⚡ AI Benchmarks</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Benchmark name" value={newBmName} onChange={e=>setNewBmName(e.target.value)}/>
+            <select className="border p-2 rounded" value={newBmModel} onChange={e=>setNewBmModel(e.target.value)}>
+              <option value="claude">Claude</option><option value="gpt-4">GPT-4</option><option value="gemini">Gemini</option><option value="groq">Groq</option>
+            </select>
+            <input className="border p-2 rounded w-20" type="number" placeholder="Score" value={newBmScore} onChange={e=>setNewBmScore(Number(e.target.value))}/>
+            <input className="border p-2 rounded w-24" type="number" placeholder="Latency ms" value={newBmLatency} onChange={e=>setNewBmLatency(Number(e.target.value))}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-benchmarks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({benchmark_name:newBmName,model:newBmModel,score:newBmScore,latency_ms:newBmLatency})}).then(r=>r.json()).then(d=>{setAiBenchmarks(p=>[d,...p]);setNewBmName('');})}>Run</button>
+          </div>
+          <div className="flex gap-2">
+            <button className="text-sm underline" onClick={()=>fetch('/api/ai-benchmarks').then(r=>r.json()).then(setAiBenchmarks)}>Load All</button>
+            <button className="text-sm underline" onClick={()=>fetch('/api/ai-benchmarks/compare').then(r=>r.json()).then(setBenchCompare)}>Compare Models</button>
+          </div>
+          {benchCompare.length>0&&<div className="border p-3 rounded"><div className="font-semibold mb-2">Model Comparison</div>{benchCompare.map((x:any)=><div key={x.model} className="flex justify-between text-sm py-1"><span>{x.model}</span><span>avg score: {(x.avg_score||0).toFixed(1)} · {(x.avg_latency||0).toFixed(0)}ms</span></div>)}</div>}
+          {aiBenchmarks.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div><div className="font-semibold">{x.benchmark_name}</div><div className="text-xs text-gray-500">{x.model} · score {x.score} · {x.latency_ms}ms</div></div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='msgthreadarch' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🗃️ Message Thread Archive</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Thread ID" value={newMtaThreadId} onChange={e=>setNewMtaThreadId(e.target.value)}/>
+            <select className="border p-2 rounded" value={newMtaReason} onChange={e=>setNewMtaReason(e.target.value)}>
+              <option value="completed">Completed</option><option value="spam">Spam</option><option value="duplicate">Duplicate</option><option value="off-topic">Off-topic</option>
+            </select>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/message-threads-archive',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({thread_id:newMtaThreadId,archive_reason:newMtaReason})}).then(r=>r.json()).then(d=>{setMsgThreadsArch(p=>[d,...p]);setNewMtaThreadId('');})}>Archive</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/message-threads-archive').then(r=>r.json()).then(setMsgThreadsArch)}>Load</button>
+          {msgThreadsArch.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div><div className="text-sm">Thread #{x.thread_id}</div><div className="text-xs text-gray-500">{x.archive_reason} · {x.archived_at}</div></div>
+              <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/message-threads-archive/${x.id}`,{method:'DELETE'}).then(()=>setMsgThreadsArch(p=>p.filter(i=>i.id!==x.id)))}>Remove</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='aibudgets' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">💵 AI Usage Budgets</h2>
+          <div className="flex gap-2 flex-wrap items-center">
+            <select className="border p-2 rounded" value={newUbPeriod} onChange={e=>setNewUbPeriod(e.target.value)}>
+              <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option>
+            </select>
+            <input className="border p-2 rounded w-32" type="number" step="0.01" placeholder="Budget $" value={newUbBudgetUsd} onChange={e=>setNewUbBudgetUsd(Number(e.target.value))}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-usage-budgets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({period:newUbPeriod,budget_usd:newUbBudgetUsd})}).then(r=>r.json()).then(d=>{setAiUsageBudgets(p=>[d,...p]);})}>Set Budget</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/ai-usage-budgets').then(r=>r.json()).then(setAiUsageBudgets)}>Load</button>
+          {aiUsageBudgets.map(x=>(
+            <div key={x.id} className="border p-3 rounded space-y-2">
+              <div className="flex justify-between items-center">
+                <div><div className="font-semibold">{x.period} budget: ${x.budget_usd}</div><div className="text-sm">${(x.spent_usd||0).toFixed(3)} spent</div></div>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-usage-budgets/${x.id}`,{method:'DELETE'}).then(()=>setAiUsageBudgets(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+              <div className="w-full h-2 bg-gray-200 rounded"><div className="h-2 rounded" style={{width:`${Math.min(100,((x.spent_usd||0)/x.budget_usd)*100)}%`,background:(x.spent_usd||0)/x.budget_usd>=(x.alert_threshold||0.8)?'#ef4444':'#22c55e'}}/></div>
+            </div>
+          ))}
+        </div>
+      )}
+{mainTab==='aitaskq' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">📋 AI Task Queue</h2>
+          <div className="flex gap-2 flex-wrap">
+            <select className="border p-2 rounded" value={newTqType} onChange={e=>setNewTqType(e.target.value)}>
+              <option value="summarize">Summarize</option><option value="translate">Translate</option><option value="classify">Classify</option><option value="generate">Generate</option><option value="analyze">Analyze</option>
+            </select>
+            <input className="border p-2 rounded flex-1" placeholder="Payload / input" value={newTqPayload} onChange={e=>setNewTqPayload(e.target.value)}/>
+            <input className="border p-2 rounded w-20" type="number" min={1} max={10} value={newTqPriority} onChange={e=>setNewTqPriority(Number(e.target.value))} placeholder="Priority"/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-task-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_type:newTqType,payload:newTqPayload,priority:newTqPriority})}).then(r=>r.json()).then(d=>{setAiTaskQueue(p=>[d,...p]);setNewTqPayload('');})}>Enqueue</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/ai-task-queue').then(r=>r.json()).then(setAiTaskQueue)}>Load</button>
+          {aiTaskQueue.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <div className="font-semibold">{x.task_type} <span className={`text-xs px-1 rounded ${x.status==='completed'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{x.status}</span></div>
+                <div className="text-xs text-gray-500 truncate">{x.payload} · p{x.priority}</div>
+              </div>
+              <div className="flex gap-2">
+                {x.status==='pending'&&<button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-task-queue/${x.id}/process`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({result:'done'})}).then(()=>fetch('/api/ai-task-queue').then(r=>r.json()).then(setAiTaskQueue))}>Process</button>}
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-task-queue/${x.id}`,{method:'DELETE'}).then(()=>setAiTaskQueue(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wsglossary' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">📖 Workspace Glossary</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Term" value={newGlTermB54} onChange={e=>setNewGlTermB54(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Definition" value={newGlDefB54} onChange={e=>setNewGlDefB54(e.target.value)}/>
+            <select className="border p-2 rounded" value={newGlCatB54} onChange={e=>setNewGlCatB54(e.target.value)}>
+              <option value="general">General</option><option value="technical">Technical</option><option value="business">Business</option><option value="ai">AI</option>
+            </select>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/workspace-glossary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({term:newGlTermB54,definition:newGlDefB54,category:newGlCatB54})}).then(r=>r.json()).then(d=>{setWsGlossary(p=>[...p,d].sort((a,b)=>a.term.localeCompare(b.term)));setNewGlTermB54('');setNewGlDefB54('');})}>Add</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/workspace-glossary').then(r=>r.json()).then(setWsGlossary)}>Load</button>
+          {wsGlossary.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-start">
+              <div><div className="font-semibold">{x.term} <span className="text-xs text-gray-400">[{x.category}]</span></div><div className="text-sm text-gray-600 dark:text-gray-300">{x.definition}</div></div>
+              <button className="bg-red-500 text-white px-2 py-1 rounded text-xs ml-2 flex-shrink-0" onClick={()=>fetch(`/api/workspace-glossary/${x.id}`,{method:'DELETE'}).then(()=>setWsGlossary(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='airoutingrules' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🔀 AI Routing Rules</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Rule name" value={newRrName} onChange={e=>setNewRrName(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Condition (e.g. 'code')" value={newRrCondition} onChange={e=>setNewRrCondition(e.target.value)}/>
+            <select className="border p-2 rounded" value={newRrModel} onChange={e=>setNewRrModel(e.target.value)}>
+              <option value="claude">Claude</option><option value="gpt-4">GPT-4</option><option value="gemini">Gemini</option><option value="groq">Groq</option>
+            </select>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-routing-rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newRrName,condition:newRrCondition,target_model:newRrModel})}).then(r=>r.json()).then(d=>{setAiRoutingRules(p=>[d,...p]);setNewRrName('');setNewRrCondition('');})}>Add</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/ai-routing-rules').then(r=>r.json()).then(setAiRoutingRules)}>Load</button>
+          {aiRoutingRules.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <div className="font-semibold">{x.name} {x.active?'✅':'⛔'}</div>
+                <div className="text-xs text-gray-500">IF "{x.condition}" → {x.target_model}</div>
+              </div>
+              <div className="flex gap-2">
+                <button className="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-routing-rules/${x.id}/toggle`,{method:'PUT'}).then(()=>fetch('/api/ai-routing-rules').then(r=>r.json()).then(setAiRoutingRules))}>Toggle</button>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-routing-rules/${x.id}`,{method:'DELETE'}).then(()=>setAiRoutingRules(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='threadreactsum' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">😄 Thread Reactions</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Thread ID" value={trThreadId} onChange={e=>setTrThreadId(e.target.value)}/>
+            <input className="border p-2 rounded w-24 text-center text-xl" placeholder="😀" value={trEmoji} onChange={e=>setTrEmoji(e.target.value)}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/thread-reactions-summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({thread_id:trThreadId,emoji:trEmoji})}).then(()=>{if(trThreadId)fetch(`/api/thread-reactions-summary/${trThreadId}`).then(r=>r.json()).then(setThreadReactSum)})}>React</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>trThreadId&&fetch(`/api/thread-reactions-summary/${trThreadId}`).then(r=>r.json()).then(setThreadReactSum)}>Load for Thread</button>
+          <div className="flex flex-wrap gap-3">
+            {threadReactSum.map(x=>(
+              <div key={x.emoji} className="border p-3 rounded text-center">
+                <div className="text-3xl">{x.emoji}</div>
+                <div className="text-sm font-semibold">{x.count}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {mainTab==='wsintegrations' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🔌 Workspace Integrations</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Integration name" value={newWiName} onChange={e=>setNewWiName(e.target.value)}/>
+            <select className="border p-2 rounded" value={newWiType} onChange={e=>setNewWiType(e.target.value)}>
+              <option value="webhook">Webhook</option><option value="api">API</option><option value="slack">Slack</option><option value="github">GitHub</option><option value="zapier">Zapier</option>
+            </select>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/workspace-integrations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newWiName,integration_type:newWiType})}).then(r=>r.json()).then(d=>{setWsIntegrations(p=>[d,...p]);setNewWiName('');})}>Connect</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/workspace-integrations').then(r=>r.json()).then(setWsIntegrations)}>Load</button>
+          {wsIntegrations.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <div className="font-semibold">{x.name} <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">{x.integration_type}</span></div>
+                <div className="text-xs text-gray-500">Last sync: {x.last_sync||'Never'}</div>
+              </div>
+              <div className="flex gap-2">
+                <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-integrations/${x.id}/sync`,{method:'PUT'}).then(()=>fetch('/api/workspace-integrations').then(r=>r.json()).then(setWsIntegrations))}>Sync</button>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-integrations/${x.id}`,{method:'DELETE'}).then(()=>setWsIntegrations(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+{mainTab==='aievalsb53' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">📝 AI Evaluations</h2>
           <div className="flex gap-2 flex-wrap">

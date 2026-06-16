@@ -13157,4 +13157,127 @@ app.delete('/api/workspace-integrations/:id', requireAuth, (req: any, res: any) 
   res.json({ ok: true });
 });
 
+
+// ── Batch 55 ──────────────────────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_playbooks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    description TEXT, steps TEXT, category TEXT DEFAULT 'general',
+    run_count INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_channels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    description TEXT, is_private INTEGER DEFAULT 0, member_count INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_benchmarks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, benchmark_name TEXT,
+    model TEXT, score REAL, latency_ms INTEGER, tokens_used INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS message_threads_archive (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id INTEGER,
+    archive_reason TEXT DEFAULT 'completed', message_count INTEGER DEFAULT 0,
+    archived_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_usage_budgets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, period TEXT DEFAULT 'monthly',
+    budget_usd REAL, spent_usd REAL DEFAULT 0, alert_threshold REAL DEFAULT 0.8,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/ai-playbooks
+app.get('/api/ai-playbooks', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_playbooks WHERE user_id=? ORDER BY run_count DESC').all(req.user.id));
+});
+app.post('/api/ai-playbooks', requireAuth, (req: any, res: any) => {
+  const { name, description = '', steps, category = 'general' } = req.body;
+  if (!name || !steps) return res.status(400).json({ error: 'name and steps required' });
+  const stepsStr = Array.isArray(steps) ? steps.join('\n') : steps;
+  const r = db.prepare('INSERT INTO ai_playbooks (user_id,name,description,steps,category) VALUES (?,?,?,?,?)').run(req.user.id, name, description, stepsStr, category);
+  res.json({ id: r.lastInsertRowid, name, description, steps: stepsStr, category, run_count: 0 });
+});
+app.put('/api/ai-playbooks/:id/run', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE ai_playbooks SET run_count=run_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-playbooks/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_playbooks WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-channels
+app.get('/api/workspace-channels', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_channels WHERE user_id=? ORDER BY name ASC').all(req.user.id));
+});
+app.post('/api/workspace-channels', requireAuth, (req: any, res: any) => {
+  const { name, description = '', is_private = 0 } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO workspace_channels (user_id,name,description,is_private) VALUES (?,?,?,?)').run(req.user.id, name, description, is_private ? 1 : 0);
+  res.json({ id: r.lastInsertRowid, name, description, is_private, member_count: 1 });
+});
+app.put('/api/workspace-channels/:id/join', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_channels SET member_count=member_count+1 WHERE id=?').run(req.params.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-channels/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_channels WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-benchmarks
+app.post('/api/ai-benchmarks', requireAuth, (req: any, res: any) => {
+  const { benchmark_name, model, score, latency_ms, tokens_used } = req.body;
+  if (!benchmark_name || !model) return res.status(400).json({ error: 'benchmark_name and model required' });
+  const r = db.prepare('INSERT INTO ai_benchmarks (user_id,benchmark_name,model,score,latency_ms,tokens_used) VALUES (?,?,?,?,?,?)').run(req.user.id, benchmark_name, model, score ?? null, latency_ms ?? null, tokens_used ?? null);
+  res.json({ id: r.lastInsertRowid, benchmark_name, model, score, latency_ms, tokens_used });
+});
+app.get('/api/ai-benchmarks', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_benchmarks WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.get('/api/ai-benchmarks/compare', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare('SELECT model, AVG(score) as avg_score, AVG(latency_ms) as avg_latency FROM ai_benchmarks WHERE user_id=? GROUP BY model').all(req.user.id);
+  res.json(rows);
+});
+
+// /api/message-threads-archive
+app.get('/api/message-threads-archive', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM message_threads_archive WHERE user_id=? ORDER BY archived_at DESC').all(req.user.id));
+});
+app.post('/api/message-threads-archive', requireAuth, (req: any, res: any) => {
+  const { thread_id, archive_reason = 'completed', message_count = 0 } = req.body;
+  if (!thread_id) return res.status(400).json({ error: 'thread_id required' });
+  const r = db.prepare('INSERT INTO message_threads_archive (user_id,thread_id,archive_reason,message_count) VALUES (?,?,?,?)').run(req.user.id, thread_id, archive_reason, message_count);
+  res.json({ id: r.lastInsertRowid, thread_id, archive_reason, message_count });
+});
+app.delete('/api/message-threads-archive/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM message_threads_archive WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-usage-budgets
+app.get('/api/ai-usage-budgets', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_usage_budgets WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-usage-budgets', requireAuth, (req: any, res: any) => {
+  const { period = 'monthly', budget_usd, alert_threshold = 0.8 } = req.body;
+  if (!budget_usd) return res.status(400).json({ error: 'budget_usd required' });
+  const r = db.prepare('INSERT INTO ai_usage_budgets (user_id,period,budget_usd,alert_threshold) VALUES (?,?,?,?)').run(req.user.id, period, budget_usd, alert_threshold);
+  res.json({ id: r.lastInsertRowid, period, budget_usd, spent_usd: 0, alert_threshold });
+});
+app.put('/api/ai-usage-budgets/:id/spend', requireAuth, (req: any, res: any) => {
+  const { amount } = req.body;
+  if (!amount) return res.status(400).json({ error: 'amount required' });
+  db.prepare('UPDATE ai_usage_budgets SET spent_usd=spent_usd+? WHERE id=? AND user_id=?').run(amount, req.params.id, req.user.id);
+  const row: any = db.prepare('SELECT * FROM ai_usage_budgets WHERE id=?').get(req.params.id);
+  const alert = row && row.spent_usd / row.budget_usd >= row.alert_threshold;
+  res.json({ ok: true, alert, spent_usd: row?.spent_usd });
+});
+app.delete('/api/ai-usage-budgets/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_usage_budgets WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
