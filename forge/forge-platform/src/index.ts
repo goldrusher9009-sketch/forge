@@ -10742,4 +10742,172 @@ app.delete('/api/collab-rooms/:id', authenticateToken, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ============================================================
+// BATCH 38: ai_meeting_notes, workspace_metrics_v2, prompt_chains, file_annotations, ai_tasks
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_meeting_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    attendees TEXT DEFAULT '[]',
+    agenda TEXT,
+    notes TEXT NOT NULL,
+    action_items TEXT DEFAULT '[]',
+    meeting_date TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_metrics_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    metric TEXT NOT NULL,
+    value REAL NOT NULL,
+    unit TEXT DEFAULT 'count',
+    recorded_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS prompt_chains (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    steps TEXT NOT NULL,
+    run_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS file_annotations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    file_path TEXT NOT NULL,
+    line_number INTEGER,
+    annotation TEXT NOT NULL,
+    type TEXT DEFAULT 'note',
+    resolved INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT DEFAULT 'todo',
+    priority TEXT DEFAULT 'medium',
+    due_date TEXT,
+    completed_at TEXT,
+    ai_suggested INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// AI Meeting Notes
+app.get('/api/meeting-notes', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_meeting_notes WHERE user_id=? ORDER BY meeting_date DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/meeting-notes', authenticateToken, (req: any, res: any) => {
+  const { title, attendees, agenda, notes, action_items, meeting_date } = req.body;
+  if (!title || !notes) return res.status(400).json({ error: 'title and notes required' });
+  const r = db.prepare('INSERT INTO ai_meeting_notes (user_id,title,attendees,agenda,notes,action_items,meeting_date) VALUES (?,?,?,?,?,?,?)').run(req.user.id, title, JSON.stringify(attendees||[]), agenda||'', notes, JSON.stringify(action_items||[]), meeting_date||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/meeting-notes/:id', authenticateToken, (req: any, res: any) => {
+  const { notes, action_items } = req.body;
+  db.prepare('UPDATE ai_meeting_notes SET notes=?,action_items=? WHERE id=? AND user_id=?').run(notes, JSON.stringify(action_items||[]), req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/meeting-notes/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_meeting_notes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Metrics v2
+app.post('/api/workspace-metrics-v2', authenticateToken, (req: any, res: any) => {
+  const { metric, value, unit } = req.body;
+  if (!metric || value === undefined) return res.status(400).json({ error: 'metric and value required' });
+  const r = db.prepare('INSERT INTO workspace_metrics_v2 (user_id,metric,value,unit) VALUES (?,?,?,?)').run(req.user.id, metric, value, unit||'count');
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/workspace-metrics-v2', authenticateToken, (req: any, res: any) => {
+  const { metric, days } = req.query as any;
+  let q = 'SELECT * FROM workspace_metrics_v2 WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (metric) { q += ' AND metric=?'; p.push(metric); }
+  if (days) { q += ` AND recorded_at >= datetime('now', '-${parseInt(days)} days')`; }
+  q += ' ORDER BY recorded_at DESC LIMIT 200';
+  res.json(db.prepare(q).all(...p));
+});
+app.get('/api/workspace-metrics-v2/summary', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare("SELECT metric, AVG(value) as avg, MAX(value) as max, MIN(value) as min, COUNT(*) as count FROM workspace_metrics_v2 WHERE user_id=? GROUP BY metric").all(req.user.id);
+  res.json(rows);
+});
+
+// Prompt Chains
+app.get('/api/prompt-chains', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM prompt_chains WHERE user_id=? ORDER BY run_count DESC').all(req.user.id));
+});
+app.post('/api/prompt-chains', authenticateToken, (req: any, res: any) => {
+  const { name, description, steps } = req.body;
+  if (!name || !steps?.length) return res.status(400).json({ error: 'name and steps required' });
+  const r = db.prepare('INSERT INTO prompt_chains (user_id,name,description,steps) VALUES (?,?,?,?)').run(req.user.id, name, description||'', JSON.stringify(steps));
+  res.json({ id: r.lastInsertRowid });
+});
+app.post('/api/prompt-chains/:id/run', authenticateToken, (req: any, res: any) => {
+  const row = db.prepare('SELECT steps FROM prompt_chains WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE prompt_chains SET run_count=run_count+1 WHERE id=?').run(req.params.id);
+  res.json({ steps: JSON.parse(row.steps) });
+});
+app.delete('/api/prompt-chains/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM prompt_chains WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// File Annotations
+app.get('/api/file-annotations', authenticateToken, (req: any, res: any) => {
+  const { file_path } = req.query as any;
+  if (file_path) return res.json(db.prepare('SELECT * FROM file_annotations WHERE user_id=? AND file_path=? ORDER BY line_number').all(req.user.id, file_path));
+  res.json(db.prepare('SELECT * FROM file_annotations WHERE user_id=? AND resolved=0 ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/file-annotations', authenticateToken, (req: any, res: any) => {
+  const { file_path, line_number, annotation, type } = req.body;
+  if (!file_path || !annotation) return res.status(400).json({ error: 'file_path and annotation required' });
+  const r = db.prepare('INSERT INTO file_annotations (user_id,file_path,line_number,annotation,type) VALUES (?,?,?,?,?)').run(req.user.id, file_path, line_number||null, annotation, type||'note');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/file-annotations/:id/resolve', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE file_annotations SET resolved=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/file-annotations/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM file_annotations WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// AI Tasks
+app.get('/api/ai-tasks', authenticateToken, (req: any, res: any) => {
+  const { status, priority } = req.query as any;
+  let q = 'SELECT * FROM ai_tasks WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (status) { q += ' AND status=?'; p.push(status); }
+  if (priority) { q += ' AND priority=?'; p.push(priority); }
+  q += " ORDER BY CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, due_date ASC NULLS LAST";
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/ai-tasks', authenticateToken, (req: any, res: any) => {
+  const { title, description, priority, due_date, ai_suggested } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO ai_tasks (user_id,title,description,priority,due_date,ai_suggested) VALUES (?,?,?,?,?,?)').run(req.user.id, title, description||'', priority||'medium', due_date||null, ai_suggested?1:0);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-tasks/:id', authenticateToken, (req: any, res: any) => {
+  const { status, priority } = req.body;
+  const completed_at = status === 'done' ? new Date().toISOString() : null;
+  db.prepare('UPDATE ai_tasks SET status=?,priority=?,completed_at=? WHERE id=? AND user_id=?').run(status||'todo', priority||'medium', completed_at, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-tasks/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_tasks WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

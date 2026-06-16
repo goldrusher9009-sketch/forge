@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -843,6 +843,47 @@ export default function ForgeApp() {
   const [newRqUrl, setNewRqUrl] = useState('');
   const [newRqTitle, setNewRqTitle] = useState('');
   const [kanbanLabels, setKanbanLabels] = useState<any[]>([]);
+  const [aiSummariesV2, setAiSummariesV2] = useState<any[]>([]);
+  const [newSv2TitleB37, setNewSv2TitleB37] = useState('');
+  const [newSv2Summary, setNewSv2Summary] = useState('');
+  const [newSv2Source, setNewSv2Source] = useState('thread');
+  const [wsThemes, setWsThemes] = useState<any[]>([]);
+  const [newThemeName, setNewThemeName] = useState('');
+  const [newThemePrimary, setNewThemePrimary] = useState('#6366f1');
+  const [newThemeBg, setNewThemeBg] = useState('#111827');
+  const [userShortcuts, setUserShortcuts] = useState<any[]>([]);
+  const [newScLabel, setNewScLabel] = useState('');
+  const [newScCommand, setNewScCommand] = useState('');
+  const [newScKey, setNewScKey] = useState('');
+  const [threadLabelsB37, setThreadLabelsB37] = useState<any[]>([]);
+  const [newTlThread, setNewTlThread] = useState('');
+  const [newTlLabel, setNewTlLabel] = useState('');
+  const [newTlColor, setNewTlColor] = useState('#6366f1');
+  const [collabRooms, setCollabRooms] = useState<any[]>([]);
+  const [newCrName, setNewCrName] = useState('');
+  const [newCrDesc, setNewCrDesc] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [meetingNotes, setMeetingNotes] = useState<any[]>([]);
+  const [newMnTitle, setNewMnTitle] = useState('');
+  const [newMnNotes, setNewMnNotes] = useState('');
+  const [newMnDate, setNewMnDate] = useState('');
+  const [newMnAttendees, setNewMnAttendees] = useState('');
+  const [wsMetricsV2, setWsMetricsV2] = useState<any[]>([]);
+  const [metricsV2Summary, setMetricsV2Summary] = useState<any[]>([]);
+  const [newMetricName, setNewMetricName] = useState('');
+  const [newMetricValue, setNewMetricValue] = useState('');
+  const [promptChains, setPromptChains] = useState<any[]>([]);
+  const [newPcName, setNewPcName] = useState('');
+  const [newPcDesc, setNewPcDesc] = useState('');
+  const [newPcSteps, setNewPcSteps] = useState('Step 1\nStep 2\nStep 3');
+  const [fileAnnotations, setFileAnnotations] = useState<any[]>([]);
+  const [newFaPath, setNewFaPath] = useState('');
+  const [newFaLine, setNewFaLine] = useState('');
+  const [newFaNote, setNewFaNote] = useState('');
+  const [aiTasks, setAiTasks] = useState<any[]>([]);
+  const [newAtTitle, setNewAtTitle] = useState('');
+  const [newAtPriority, setNewAtPriority] = useState('medium');
+  const [newAtDue, setNewAtDue] = useState('');
   const [newKlName, setNewKlName] = useState('');
   const [newKlColor, setNewKlColor] = useState('#6366f1');
   const [wsWidgets, setWsWidgets] = useState<any[]>([]);
@@ -4431,7 +4472,17 @@ export default function ForgeApp() {
           { id:'aireminders', icon:'⏰', label:'AI Reminders' },
           { id:'tbookmarks2', icon:'🔖', label:'Thread Marks' },
           { id:'exportpresets', icon:'📤', label:'Export Presets' },
-          { id:'promptlib', icon:'📚', label:'Prompt Library' },
+          { id:'meetingnotes', icon:'📅', label:'Meeting Notes' },
+              { id:'metricsv2', icon:'📊', label:'WS Metrics' },
+              { id:'pchains', icon:'🔗', label:'Prompt Chains' },
+              { id:'fileanno', icon:'📎', label:'File Annotations' },
+              { id:'aitasks', icon:'✅', label:'AI Tasks' },
+              { id:'summariesv2', icon:'📋', label:'AI Summaries' },
+              { id:'wsthemes', icon:'🎨', label:'WS Themes' },
+              { id:'shortcuts', icon:'⌨️', label:'Shortcuts' },
+              { id:'threadlabels', icon:'🏷️', label:'Thread Labels' },
+              { id:'collabrooms', icon:'🚪', label:'Collab Rooms' },
+              { id:'promptlib', icon:'📚', label:'Prompt Library' },
               { id:'wsconnect', icon:'🔗', label:'WS Connections' },
               { id:'aiglossary', icon:'📖', label:'AI Glossary' },
               { id:'rqv2', icon:'📰', label:'Reading Queue' },
@@ -11280,6 +11331,160 @@ export default function ForgeApp() {
         {/* Workspace Widgets tab */}
         {/* Collab Notes tab */}
 {/* Prompt Library tab */}
+{/* AI Summaries v2 tab */}
+{mainTab==='summariesv2' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📋 AI Summaries</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px',background:'#1f2937',padding:'12px',borderRadius:'8px',border:'1px solid #374151'}}>
+      <div style={{display:'flex',gap:'8px'}}>
+        <input placeholder="Title" value={newSv2TitleB37} onChange={e=>setNewSv2TitleB37(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+        <select value={newSv2Source} onChange={e=>setNewSv2Source(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}}>
+          {['thread','document','meeting','article','custom'].map(s=><option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      <textarea placeholder="Summary..." value={newSv2Summary} onChange={e=>setNewSv2Summary(e.target.value)} rows={4} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb',resize:'vertical'}} />
+      <button onClick={async()=>{if(!newSv2Title||!newSv2Summary)return;await fetch('/api/ai-summaries-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({source_type:newSv2Source,title:newSv2Title,summary:newSv2Summary})});setNewSv2TitleB37('');setNewSv2Summary('');const r=await fetch('/api/ai-summaries-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiSummariesV2(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save Summary</button>
+    </div>
+    <button onClick={async()=>{const r=await fetch('/api/ai-summaries-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiSummariesV2(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer',marginBottom:'12px'}}>Load</button>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {aiSummariesV2.map((s:any)=>(
+        <div key={s.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
+            <span style={{fontWeight:600,color:'#f9fafb'}}>{s.title} <span style={{fontSize:'11px',color:'#6b7280',background:'#374151',padding:'1px 6px',borderRadius:'4px'}}>{s.source_type}</span></span>
+            <button onClick={async()=>{await fetch('/api/ai-summaries-v2/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiSummariesV2(aiSummariesV2.filter((x:any)=>x.id!==s.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'2px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+          <div style={{color:'#d1d5db',fontSize:'13px'}}>{s.summary}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* WS Themes tab */}
+{mainTab==='wsthemes' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🎨 Workspace Themes</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap',background:'#1f2937',padding:'12px',borderRadius:'8px',border:'1px solid #374151'}}>
+      <input placeholder="Theme name" value={newThemeName} onChange={e=>setNewThemeName(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb',minWidth:'130px'}} />
+      <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+        <span style={{color:'#9ca3af',fontSize:'12px'}}>Primary</span>
+        <input type="color" value={newThemePrimary} onChange={e=>setNewThemePrimary(e.target.value)} style={{width:'40px',height:'32px',border:'none',borderRadius:'4px',cursor:'pointer'}} />
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+        <span style={{color:'#9ca3af',fontSize:'12px'}}>BG</span>
+        <input type="color" value={newThemeBg} onChange={e=>setNewThemeBg(e.target.value)} style={{width:'40px',height:'32px',border:'none',borderRadius:'4px',cursor:'pointer'}} />
+      </div>
+      <button onClick={async()=>{if(!newThemeName)return;await fetch('/api/workspace-themes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({name:newThemeName,primary_color:newThemePrimary,bg_color:newThemeBg})});setNewThemeName('');const r=await fetch('/api/workspace-themes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsThemes(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-themes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsThemes(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'12px'}}>
+      {wsThemes.map((t:any)=>(
+        <div key={t.id} style={{borderRadius:'12px',padding:'16px',border:t.is_active?'2px solid #4ade80':'1px solid #374151',background:'linear-gradient(135deg,'+t.bg_color+',#1f2937)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'10px'}}>
+            <span style={{fontWeight:700,color:'#f9fafb'}}>{t.name}</span>
+            {t.is_active&&<span style={{fontSize:'11px',color:'#4ade80'}}>ACTIVE</span>}
+          </div>
+          <div style={{display:'flex',gap:'6px',marginBottom:'10px'}}>
+            <div style={{width:'24px',height:'24px',borderRadius:'50%',background:t.primary_color}} title="Primary" />
+            <div style={{width:'24px',height:'24px',borderRadius:'50%',background:t.bg_color,border:'1px solid #374151'}} title="BG" />
+            <div style={{width:'24px',height:'24px',borderRadius:'50%',background:t.accent}} title="Accent" />
+          </div>
+          <div style={{display:'flex',gap:'6px'}}>
+            <button onClick={async()=>{await fetch('/api/workspace-themes/'+t.id+'/activate',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const r=await fetch('/api/workspace-themes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsThemes(await r.json());}} style={{flex:1,padding:'4px',background:t.primary_color,color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer',fontSize:'12px'}}>Activate</button>
+            <button onClick={async()=>{await fetch('/api/workspace-themes/'+t.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsThemes(wsThemes.filter((x:any)=>x.id!==t.id));}} style={{padding:'4px 8px',background:'#ef4444',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* User Shortcuts tab */}
+{mainTab==='shortcuts' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>⌨️ User Shortcuts</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Label" value={newScLabel} onChange={e=>setNewScLabel(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'120px'}} />
+      <input placeholder="Command / prompt text" value={newScCommand} onChange={e=>setNewScCommand(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'180px'}} />
+      <input placeholder="Key (e.g. ctrl+1)" value={newScKey} onChange={e=>setNewScKey(e.target.value)} style={{width:'120px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!newScLabel||!newScCommand)return;await fetch('/api/user-shortcuts',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({label:newScLabel,command:newScCommand,shortcut_key:newScKey})});setNewScLabel('');setNewScCommand('');setNewScKey('');const r=await fetch('/api/user-shortcuts',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setUserShortcuts(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/user-shortcuts',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setUserShortcuts(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {userShortcuts.map((sc:any)=>(
+        <div key={sc.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <span style={{fontWeight:600,color:'#f9fafb'}}>{sc.icon} {sc.label}</span>
+            {sc.shortcut_key&&<kbd style={{marginLeft:'8px',padding:'2px 6px',background:'#374151',borderRadius:'4px',fontSize:'11px',color:'#d1d5db'}}>{sc.shortcut_key}</kbd>}
+            <div style={{color:'#9ca3af',fontSize:'12px',marginTop:'2px'}}>{sc.command.substring(0,80)}</div>
+          </div>
+          <div style={{display:'flex',gap:'6px'}}>
+            <button onClick={async()=>{const r=await fetch('/api/user-shortcuts/'+sc.id+'/trigger',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const j=await r.json();navigator.clipboard.writeText(j.command);}} style={{padding:'4px 10px',background:'#4ade80',color:'#111',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px'}}>Copy</button>
+            <button onClick={async()=>{await fetch('/api/user-shortcuts/'+sc.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setUserShortcuts(userShortcuts.filter((x:any)=>x.id!==sc.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* Thread Labels tab */}
+{mainTab==='threadlabels' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🏷️ Thread Labels</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Thread ID" value={newTlThread} onChange={e=>setNewTlThread(e.target.value)} style={{width:'100px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <input placeholder="Label" value={newTlLabel} onChange={e=>setNewTlLabel(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'120px'}} />
+      <input type="color" value={newTlColor} onChange={e=>setNewTlColor(e.target.value)} style={{width:'40px',height:'36px',border:'none',borderRadius:'4px',cursor:'pointer'}} />
+      <button onClick={async()=>{if(!newTlThread||!newTlLabel)return;await fetch('/api/thread-labels',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({thread_id:newTlThread,label:newTlLabel,color:newTlColor})});setNewTlThread('');setNewTlLabel('');const r=await fetch('/api/thread-labels',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setThreadLabelsB37(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/thread-labels',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setThreadLabelsB37(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
+      {threadLabelsB37.map((lbl:any)=>(
+        <div key={lbl.id} style={{display:'flex',alignItems:'center',gap:'6px',padding:'4px 12px',borderRadius:'20px',border:'1.5px solid '+lbl.color,background:'#1f2937'}}>
+          <div style={{width:'8px',height:'8px',borderRadius:'50%',background:lbl.color}} />
+          <span style={{color:'#f9fafb',fontSize:'13px'}}>{lbl.label}</span>
+          <span style={{color:'#6b7280',fontSize:'11px'}}>#{lbl.thread_id}</span>
+          <button onClick={async()=>{await fetch('/api/thread-labels/'+lbl.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setThreadLabelsB37(threadLabelsB37.filter((x:any)=>x.id!==lbl.id));}} style={{background:'transparent',color:'#6b7280',border:'none',cursor:'pointer',fontSize:'14px',lineHeight:1}}>×</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* Collab Rooms tab */}
+{mainTab==='collabrooms' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🚪 Collaboration Rooms</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Room name" value={newCrName} onChange={e=>setNewCrName(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'140px'}} />
+      <input placeholder="Description" value={newCrDesc} onChange={e=>setNewCrDesc(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'160px'}} />
+      <button onClick={async()=>{if(!newCrName)return;const r=await fetch('/api/collab-rooms',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({name:newCrName,description:newCrDesc})});const j=await r.json();setNewCrName('');setNewCrDesc('');alert('Room created! Invite code: '+j.invite_code);const res=await fetch('/api/collab-rooms',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCollabRooms(await res.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Create</button>
+    </div>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+      <input placeholder="Invite code to join" value={joinCode} onChange={e=>setJoinCode(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!joinCode)return;const r=await fetch('/api/collab-rooms/join/'+joinCode.toUpperCase(),{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const j=await r.json();if(j.error)alert(j.error);else alert('Joined: '+j.name);setJoinCode('');}} style={{padding:'8px 16px',background:'#4ade80',color:'#111',border:'none',borderRadius:'6px',cursor:'pointer',fontWeight:600}}>Join</button>
+      <button onClick={async()=>{const r=await fetch('/api/collab-rooms',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCollabRooms(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+      {collabRooms.map((room:any)=>(
+        <div key={room.id} style={{background:'#1f2937',borderRadius:'10px',padding:'14px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'6px'}}>
+            <span style={{fontWeight:700,color:'#f9fafb',fontSize:'16px'}}>{room.name}</span>
+            <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+              <span style={{fontSize:'12px',color:'#9ca3af'}}>{room.member_count} members</span>
+              <span style={{fontSize:'11px',padding:'2px 8px',borderRadius:'10px',background:room.is_active?'#052e16':'#374151',color:room.is_active?'#4ade80':'#6b7280'}}>{room.is_active?'Active':'Closed'}</span>
+              <button onClick={async()=>{await fetch('/api/collab-rooms/'+room.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const r=await fetch('/api/collab-rooms',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCollabRooms(await r.json());}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'3px 8px',cursor:'pointer'}}>Close</button>
+            </div>
+          </div>
+          {room.description&&<div style={{color:'#9ca3af',fontSize:'13px',marginBottom:'6px'}}>{room.description}</div>}
+          <div style={{fontSize:'12px',color:'#6b7280'}}>Code: <kbd style={{background:'#374151',padding:'1px 6px',borderRadius:'4px',color:'#d1d5db'}}>{room.invite_code}</kbd></div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 {mainTab==='promptlib' && (
   <div style={{padding:'24px'}}>
     <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📚 Prompt Library</h2>
@@ -11921,7 +12126,7 @@ export default function ForgeApp() {
           <div style={{ padding:24 }}>
             <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>&lt;/&gt; Code Snippets</div>
             <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
-              <input value={newSv2Title} onChange={e=>setNewSv2Title(e.target.value)} placeholder="Snippet title..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newSv2TitleB37} onChange={e=>setNewSv2Title(e.target.value)} placeholder="Snippet title..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
               <select value={newSv2Lang} onChange={e=>setNewSv2Lang(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
                 {['javascript','typescript','python','go','rust','sql','bash','css','html','json','yaml','text'].map(l=><option key={l} value={l}>{l}</option>)}
               </select>
