@@ -11137,6 +11137,179 @@ export default function ForgeApp() {
           </div>
         )}
 
+        {/* Project Boards tab */}
+        {mainTab==='boards' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📋 Project Boards</div>
+            {!activeBoardId ? (
+              <>
+                <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                  <input value={newBoardName} onChange={e=>setNewBoardName(e.target.value)} placeholder="Board name..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+                  <input type="color" value={newBoardColor} onChange={e=>setNewBoardColor(e.target.value)} style={{ width:44, height:38, padding:2, background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }} />
+                  <button onClick={async()=>{ if(!newBoardName.trim()) return; await fetch('/api/boards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newBoardName,color:newBoardColor})}); setNewBoardName(''); const r=await fetch('/api/boards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoards(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create Board</button>
+                  <button onClick={async()=>{ const r=await fetch('/api/boards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoards(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:12 }}>
+                  {boards.map((b:any)=>(
+                    <div key={b.id} onClick={async()=>{ setActiveBoardId(b.id); const r=await fetch(`/api/boards/${b.id}/items`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoardItems(await r.json()); }} style={{ background:'var(--bg-card)', border:`2px solid ${b.color||'var(--border)'}`, borderRadius:12, padding:20, cursor:'pointer' }}>
+                      <div style={{ color:b.color||'var(--accent)', fontSize:24, marginBottom:8 }}>📋</div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{b.name}</div>
+                      <button onClick={async(e)=>{ e.stopPropagation(); await fetch(`/api/boards/${b.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoards(boards.filter((x:any)=>x.id!==b.id)); }} style={{ marginTop:8, padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Delete</button>
+                    </div>
+                  ))}
+                  {boards.length===0 && <div style={{ color:'var(--fg-text3)', padding:32, gridColumn:'1/-1', textAlign:'center' }}>No boards yet.</div>}
+                </div>
+              </>
+            ) : (
+              <div>
+                <button onClick={()=>setActiveBoardId(null)} style={{ marginBottom:16, padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>← Back to Boards</button>
+                <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                  <input value={newItemTitle} onChange={e=>setNewItemTitle(e.target.value)} placeholder="New item..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+                  <select value={newItemCol} onChange={e=>setNewItemCol(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                    <option value="todo">To Do</option><option value="in_progress">In Progress</option><option value="review">Review</option><option value="done">Done</option>
+                  </select>
+                  <button onClick={async()=>{ if(!newItemTitle.trim()) return; await fetch(`/api/boards/${activeBoardId}/items`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newItemTitle,column_name:newItemCol})}); setNewItemTitle(''); const r=await fetch(`/api/boards/${activeBoardId}/items`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoardItems(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+                  {['todo','in_progress','review','done'].map(col=>(
+                    <div key={col} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:12, minHeight:200 }}>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:10, fontSize:13, textTransform:'uppercase', letterSpacing:1 }}>{col.replace('_',' ')}</div>
+                      {boardItems.filter((i:any)=>i.column_name===col).map((item:any)=>(
+                        <div key={item.id} style={{ background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', marginBottom:6 }}>
+                          <div style={{ color:'var(--fg-text)', fontSize:13 }}>{item.title}</div>
+                          <div style={{ display:'flex', gap:4, marginTop:6 }}>
+                            {['todo','in_progress','review','done'].filter(c=>c!==col).slice(0,2).map(c2=>(
+                              <button key={c2} onClick={async()=>{ await fetch(`/api/boards/items/${item.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({column_name:c2})}); const r=await fetch(`/api/boards/${activeBoardId}/items`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoardItems(await r.json()); }} style={{ padding:'2px 6px', fontSize:10, background:'var(--accent)22', color:'var(--accent)', border:'1px solid var(--accent)', borderRadius:4, cursor:'pointer' }}>→{c2.slice(0,4)}</button>
+                            ))}
+                            <button onClick={async()=>{ await fetch(`/api/boards/items/${item.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoardItems(boardItems.filter((x:any)=>x.id!==item.id)); }} style={{ padding:'2px 6px', fontSize:10, background:'#ef444422', color:'#ef4444', border:'1px solid #ef4444', borderRadius:4, cursor:'pointer' }}>✕</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sprints tab */}
+        {mainTab==='sprints' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🏃 Sprint Tracker</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newSprintName} onChange={e=>setNewSprintName(e.target.value)} placeholder="Sprint name..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="date" value={newSprintStart} onChange={e=>setNewSprintStart(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="date" value={newSprintEnd} onChange={e=>setNewSprintEnd(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newSprintGoal} onChange={e=>setNewSprintGoal(e.target.value)} placeholder="Sprint goal..." style={{ flex:2, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newSprintName.trim()||!newSprintStart||!newSprintEnd) return; await fetch('/api/sprints',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newSprintName,start_date:newSprintStart,end_date:newSprintEnd,goal:newSprintGoal})}); setNewSprintName(''); setNewSprintGoal(''); const r=await fetch('/api/sprints',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSprints(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Start Sprint</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/sprints',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSprints(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Sprints</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {sprints.map((s:any)=>{
+                const today=new Date(); const end=new Date(s.end_date); const start=new Date(s.start_date);
+                const pct=Math.min(100,Math.max(0,Math.round((today.getTime()-start.getTime())/(end.getTime()-start.getTime())*100)));
+                return (
+                  <div key={s.id} style={{ background:'var(--bg-card)', border:`1px solid ${s.status==='done'?'#22c55e':'var(--border)'}`, borderRadius:12, padding:16 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                      <div>
+                        <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{s.name}</div>
+                        {s.goal && <div style={{ color:'var(--fg-text2)', fontSize:13 }}>🎯 {s.goal}</div>}
+                        <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{s.start_date} → {s.end_date}</div>
+                      </div>
+                      <div style={{ display:'flex', gap:6 }}>
+                        {s.status!=='done' && <button onClick={async()=>{ await fetch(`/api/sprints/${s.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:'done'})}); const r=await fetch('/api/sprints',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSprints(await r.json()); }} style={{ padding:'4px 10px', background:'#22c55e', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>✓ Done</button>}
+                        <button onClick={async()=>{ await fetch(`/api/sprints/${s.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSprints(sprints.filter((x:any)=>x.id!==s.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Del</button>
+                      </div>
+                    </div>
+                    <div style={{ height:6, background:'var(--bg-input)', borderRadius:3 }}>
+                      <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${pct}%` }} />
+                    </div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{pct}% elapsed</div>
+                  </div>
+                );
+              })}
+              {sprints.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No sprints yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Content Calendar tab */}
+        {mainTab==='contentcal' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📆 Content Calendar</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newCcTitle} onChange={e=>setNewCcTitle(e.target.value)} placeholder="Content title..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newCcPlatform} onChange={e=>setNewCcPlatform(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['general','twitter','linkedin','instagram','youtube','blog','newsletter','tiktok'].map(p=><option key={p} value={p}>{p}</option>)}
+              </select>
+              <input type="date" value={newCcDate} onChange={e=>setNewCcDate(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newCcTitle.trim()||!newCcDate) return; await fetch('/api/content-calendar',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newCcTitle,platform:newCcPlatform,scheduled_date:newCcDate})}); setNewCcTitle(''); setNewCcDate(''); const r=await fetch('/api/content-calendar',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setContentCal(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Schedule</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/content-calendar',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setContentCal(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Calendar</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {contentCal.map((cc:any)=>(
+                <div key={cc.id} style={{ display:'flex', gap:12, alignItems:'center', background:'var(--bg-card)', border:`1px solid ${cc.status==='published'?'#22c55e':'var(--border)'}`, borderRadius:10, padding:'10px 14px' }}>
+                  <div style={{ padding:'2px 8px', background:'var(--accent)22', color:'var(--accent)', borderRadius:6, fontSize:11, fontWeight:600, minWidth:60, textAlign:'center' }}>{cc.platform}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{cc.title}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{cc.scheduled_date}</div>
+                  </div>
+                  <select value={cc.status} onChange={async e=>{ await fetch(`/api/content-calendar/${cc.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:e.target.value})}); const r=await fetch('/api/content-calendar',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setContentCal(await r.json()); }} style={{ padding:'3px 6px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
+                    <option value="draft">Draft</option><option value="ready">Ready</option><option value="published">Published</option>
+                  </select>
+                  <button onClick={async()=>{ await fetch(`/api/content-calendar/${cc.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setContentCal(contentCal.filter((x:any)=>x.id!==cc.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                </div>
+              ))}
+              {contentCal.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No content scheduled yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Learning Paths tab */}
+        {mainTab==='learnpath' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎓 Learning Paths</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newLpName} onChange={e=>setNewLpName(e.target.value)} placeholder="Learning path name..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <textarea value={newLpTopics} onChange={e=>setNewLpTopics(e.target.value)} placeholder="Topics (one per line)..." rows={3} style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={async()=>{ if(!newLpName.trim()) return; const topics=newLpTopics.split('\n').filter(Boolean); await fetch('/api/learning-paths',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newLpName,topics})}); setNewLpName(''); setNewLpTopics(''); const r=await fetch('/api/learning-paths',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.topics=JSON.parse(x.topics);}catch{x.topics=[];}}); setLearnPaths(data); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create Path</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/learning-paths',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.topics=JSON.parse(x.topics);}catch{x.topics=[];}}); setLearnPaths(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Paths</button>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:12 }}>
+              {learnPaths.map((lp:any)=>(
+                <div key={lp.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{lp.name}</div>
+                    <button onClick={async()=>{ await fetch(`/api/learning-paths/${lp.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setLearnPaths(learnPaths.filter((x:any)=>x.id!==lp.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                  </div>
+                  <div style={{ marginBottom:10 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                      <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Progress</span>
+                      <span style={{ color:'var(--accent)', fontWeight:600, fontSize:12 }}>{lp.progress}%</span>
+                    </div>
+                    <div style={{ height:6, background:'var(--bg-input)', borderRadius:3 }}>
+                      <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${lp.progress}%` }} />
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', gap:4, marginBottom:10, flexWrap:'wrap' }}>
+                    {[0,25,50,75,100].map(p=>(
+                      <button key={p} onClick={async()=>{ await fetch(`/api/learning-paths/${lp.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({progress:p})}); const r=await fetch('/api/learning-paths',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.topics=JSON.parse(x.topics);}catch{x.topics=[];}}); setLearnPaths(data); }} style={{ padding:'3px 8px', background:lp.progress===p?'var(--accent)':'var(--bg-input)', color:lp.progress===p?'#fff':'var(--fg-text3)', border:'1px solid var(--border)', borderRadius:4, cursor:'pointer', fontSize:11 }}>{p}%</button>
+                    ))}
+                  </div>
+                  {(Array.isArray(lp.topics)?lp.topics:[]).map((t:string,i:number)=>(
+                    <div key={i} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:3 }}>
+                      <span style={{ color:'var(--accent)', fontSize:11 }}>#{i+1}</span>
+                      <span style={{ color:'var(--fg-text2)', fontSize:13 }}>{t}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {learnPaths.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No learning paths yet.</div>}
+            </div>
+          </div>
+        )}
+
         {/* Decision Log tab */}
         {mainTab==='decisionlog' && (
           <div style={{ padding:24 }}>
