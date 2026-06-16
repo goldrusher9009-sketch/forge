@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1097,6 +1097,62 @@ export default function ForgeApp() {
   const [tpThreadId, setTpThreadId] = useState('');
   const [tpGrantTo, setTpGrantTo] = useState('');
   const [userBadgesB51, setUserBadgesB51] = useState<any[]>([]);
+  const [aiFeedbackLoops, setAiFeedbackLoops] = useState<any[]>([]);
+  const [newFlPrompt, setNewFlPrompt] = useState('');
+  const [newFlOriginal, setNewFlOriginal] = useState('');
+  const [newFlImproved, setNewFlImproved] = useState('');
+  const [wsRulesB52, setWsRulesB52] = useState<any[]>([]);
+  const [newWrName, setNewWrName] = useState('');
+  const [newWrCondition, setNewWrCondition] = useState('');
+  const [newWrAction, setNewWrAction] = useState('');
+  const [msgThreadsV2, setMsgThreadsV2] = useState<any[]>([]);
+  const [newMtSubject, setNewMtSubject] = useState('');
+  const [newMtParticipants, setNewMtParticipants] = useState('');
+  const [embeddingsMeta, setEmbeddingsMeta] = useState<any[]>([]);
+  const [newEmSrcType, setNewEmSrcType] = useState('thread');
+  const [newEmSrcId, setNewEmSrcId] = useState('');
+  const [wsShortcuts, setWsShortcuts] = useState<any[]>([]);
+  const [aiEvaluationsB53, setAiEvaluationsB53] = useState<any[]>([]);
+  const [newEvName, setNewEvName] = useState('');
+  const [newEvPromptB53, setNewEvPromptB53] = useState('');
+  const [newEvCriteria, setNewEvCriteria] = useState('');
+  const [newEvScoreB53, setNewEvScoreB53] = useState(5);
+  const [wsKpis, setWsKpis] = useState<any[]>([]);
+  const [newKpiName, setNewKpiName] = useState('');
+  const [newKpiValue, setNewKpiValue] = useState(0);
+  const [newKpiUnit, setNewKpiUnit] = useState('');
+  const [newKpiTarget, setNewKpiTarget] = useState(0);
+  const [threadArchivesB53, setThreadArchivesB53] = useState<any[]>([]);
+  const [newTaThreadId, setNewTaThreadId] = useState('');
+  const [newTaReason, setNewTaReason] = useState('manual');
+  const [contextInjections, setContextInjections] = useState<any[]>([]);
+  const [newCiName, setNewCiName] = useState('');
+  const [newCiContent, setNewCiContent] = useState('');
+  const [newCiKeyword, setNewCiKeyword] = useState('');
+  const [wsWatchers, setWsWatchers] = useState<any[]>([]);
+  const [aiTaskQueue, setAiTaskQueue] = useState<any[]>([]);
+  const [newTqType, setNewTqType] = useState('summarize');
+  const [newTqPayload, setNewTqPayload] = useState('');
+  const [newTqPriority, setNewTqPriority] = useState(5);
+  const [wsGlossary, setWsGlossary] = useState<any[]>([]);
+  const [newGlTermB54, setNewGlTermB54] = useState('');
+  const [newGlDef, setNewGlDef] = useState('');
+  const [newGlCat, setNewGlCat] = useState('general');
+  const [aiRoutingRules, setAiRoutingRules] = useState<any[]>([]);
+  const [newRrName, setNewRrName] = useState('');
+  const [newRrCondition, setNewRrCondition] = useState('');
+  const [newRrModel, setNewRrModel] = useState('claude');
+  const [threadReactSum, setThreadReactSum] = useState<any[]>([]);
+  const [trThreadId, setTrThreadId] = useState('');
+  const [trEmoji, setTrEmoji] = useState('❤️');
+  const [wsIntegrations, setWsIntegrations] = useState<any[]>([]);
+  const [newWiName, setNewWiName] = useState('');
+  const [newWiType, setNewWiType] = useState('webhook');
+  const [newWwResType, setNewWwResType] = useState('thread');
+  const [newWwResId, setNewWwResId] = useState('');
+  const [newWsKey, setNewWsKey] = useState('');
+  const [newWsAction, setNewWsAction] = useState('');
+  const [newWsDesc, setNewWsDesc] = useState('');
   const [newBadgeName, setNewBadgeName] = useState('');
   const [newBadgeIcon, setNewBadgeIcon] = useState('🏅');
   const [newBadgeDesc, setNewBadgeDesc] = useState('');
@@ -11607,7 +11663,226 @@ export default function ForgeApp() {
 {/* Meeting Notes tab */}
 
       
-      {mainTab==='aipersonas' && (
+      
+      
+      {mainTab==='aievalsb53' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">📝 AI Evaluations</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Eval name" value={newEvName} onChange={e=>setNewEvName(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Prompt" value={newEvPromptB53} onChange={e=>setNewEvPromptB53(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Criteria" value={newEvCriteria} onChange={e=>setNewEvCriteria(e.target.value)}/>
+            <input className="border p-2 rounded w-20" type="number" min={1} max={10} value={newEvScoreB53} onChange={e=>setNewEvScoreB53(Number(e.target.value))} placeholder="Score"/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-evaluations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eval_name:newEvName,prompt:newEvPromptB53,criteria:newEvCriteria,score:newEvScoreB53})}).then(r=>r.json()).then(d=>{setAiEvaluationsB53(p=>[d,...p]);setNewEvName('');setNewEvPromptB53('');setNewEvCriteria('');})}>Add</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/ai-evaluations').then(r=>r.json()).then(setAiEvaluationsB53)}>Load</button>
+          {aiEvaluationsB53.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <div className="font-semibold">{x.eval_name} <span className="text-yellow-500">{'★'.repeat(Math.round(x.score||0))}</span></div>
+                <div className="text-xs text-gray-500 truncate">{x.prompt}</div>
+              </div>
+              <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-evaluations/${x.id}`,{method:'DELETE'}).then(()=>setAiEvaluationsB53(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wskpis' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">📈 Workspace KPIs</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="KPI name" value={newKpiName} onChange={e=>setNewKpiName(e.target.value)}/>
+            <input className="border p-2 rounded w-24" type="number" value={newKpiValue} onChange={e=>setNewKpiValue(Number(e.target.value))} placeholder="Value"/>
+            <input className="border p-2 rounded w-20" placeholder="Unit" value={newKpiUnit} onChange={e=>setNewKpiUnit(e.target.value)}/>
+            <input className="border p-2 rounded w-24" type="number" value={newKpiTarget} onChange={e=>setNewKpiTarget(Number(e.target.value))} placeholder="Target"/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/workspace-kpis',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newKpiName,value:newKpiValue,unit:newKpiUnit,target:newKpiTarget})}).then(r=>r.json()).then(d=>{setWsKpis(p=>[d,...p]);setNewKpiName('');})}>Add</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/workspace-kpis').then(r=>r.json()).then(setWsKpis)}>Load</button>
+          {wsKpis.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <div className="font-semibold">{x.name}</div>
+                <div className="text-sm">{x.value}{x.unit} <span className="text-gray-400">/ {x.target||'—'}{x.unit} target</span></div>
+                {x.target>0&&<div className="w-32 h-1.5 bg-gray-200 rounded mt-1"><div className="h-1.5 bg-blue-500 rounded" style={{width:`${Math.min(100,(x.value/x.target)*100)}%`}}/></div>}
+              </div>
+              <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-kpis/${x.id}`,{method:'DELETE'}).then(()=>setWsKpis(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='threadarchb53' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🗄️ Thread Archives</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Thread ID" value={newTaThreadId} onChange={e=>setNewTaThreadId(e.target.value)}/>
+            <select className="border p-2 rounded" value={newTaReason} onChange={e=>setNewTaReason(e.target.value)}>
+              <option value="manual">Manual</option><option value="completed">Completed</option><option value="stale">Stale</option><option value="spam">Spam</option>
+            </select>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/thread-archives',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({thread_id:newTaThreadId,reason:newTaReason})}).then(r=>r.json()).then(d=>{setThreadArchivesB53(p=>[d,...p]);setNewTaThreadId('');})}>Archive</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/thread-archives').then(r=>r.json()).then(setThreadArchivesB53)}>Load</button>
+          {threadArchivesB53.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div><div className="text-sm">Thread #{x.thread_id}</div><div className="text-xs text-gray-500">{x.reason} · {x.archived_at}</div></div>
+              <button className="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/thread-archives/${x.thread_id}`,{method:'DELETE'}).then(()=>setThreadArchivesB53(p=>p.filter(i=>i.id!==x.id)))}>Restore</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='ctxinject' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">💉 Context Injections</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Name" value={newCiName} onChange={e=>setNewCiName(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Content" value={newCiContent} onChange={e=>setNewCiContent(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Trigger keyword" value={newCiKeyword} onChange={e=>setNewCiKeyword(e.target.value)}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-context-injections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newCiName,content:newCiContent,trigger_keyword:newCiKeyword})}).then(r=>r.json()).then(d=>{setContextInjections(p=>[d,...p]);setNewCiName('');setNewCiContent('');setNewCiKeyword('');})}>Add</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/ai-context-injections').then(r=>r.json()).then(setContextInjections)}>Load</button>
+          {contextInjections.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <div className="font-semibold">{x.name} {x.auto_inject?'🔄':''}</div>
+                <div className="text-xs text-gray-500">Keyword: {x.trigger_keyword||'—'} · Used: {x.use_count}x</div>
+              </div>
+              <div className="flex gap-2">
+                <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-context-injections/${x.id}/use`,{method:'PUT'}).then(()=>fetch('/api/ai-context-injections').then(r=>r.json()).then(setContextInjections))}>Use</button>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-context-injections/${x.id}`,{method:'DELETE'}).then(()=>setContextInjections(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wswatchers' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">👁️ Workspace Watchers</h2>
+          <div className="flex gap-2 flex-wrap">
+            <select className="border p-2 rounded" value={newWwResType} onChange={e=>setNewWwResType(e.target.value)}>
+              <option value="thread">Thread</option><option value="document">Document</option><option value="project">Project</option><option value="user">User</option>
+            </select>
+            <input className="border p-2 rounded flex-1" placeholder="Resource ID" value={newWwResId} onChange={e=>setNewWwResId(e.target.value)}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/workspace-watchers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resource_type:newWwResType,resource_id:newWwResId})}).then(r=>r.json()).then(d=>{setWsWatchers(p=>[d,...p]);setNewWwResId('');})}>Watch</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/workspace-watchers').then(r=>r.json()).then(setWsWatchers)}>Load</button>
+          {wsWatchers.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div><div className="text-sm">👁 {x.resource_type} #{x.resource_id}</div><div className="text-xs text-gray-500">on {x.notify_on}</div></div>
+              <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-watchers/${x.id}`,{method:'DELETE'}).then(()=>setWsWatchers(p=>p.filter(i=>i.id!==x.id)))}>Unwatch</button>
+            </div>
+          ))}
+        </div>
+      )}
+{mainTab==='aifeedback' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🔁 AI Feedback Loops</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Original prompt" value={newFlPrompt} onChange={e=>setNewFlPrompt(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Original output" value={newFlOriginal} onChange={e=>setNewFlOriginal(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Improved output" value={newFlImproved} onChange={e=>setNewFlImproved(e.target.value)}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-feedback-loops',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:newFlPrompt,original_output:newFlOriginal,improved_output:newFlImproved})}).then(r=>r.json()).then(d=>{setAiFeedbackLoops(p=>[d,...p]);setNewFlPrompt('');setNewFlOriginal('');setNewFlImproved('');})}>Save</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/ai-feedback-loops').then(r=>r.json()).then(setAiFeedbackLoops)}>Load</button>
+          {aiFeedbackLoops.map(x=>(
+            <div key={x.id} className="border p-3 rounded space-y-1">
+              <div className="text-sm font-semibold truncate">{x.prompt}</div>
+              <div className="text-xs text-red-400 truncate">Before: {x.original_output}</div>
+              <div className="text-xs text-green-400 truncate">After: {x.improved_output||'—'}</div>
+              <button className="bg-red-500 text-white px-2 py-0.5 rounded text-xs" onClick={()=>fetch(`/api/ai-feedback-loops/${x.id}`,{method:'DELETE'}).then(()=>setAiFeedbackLoops(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wsrulesb52' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">⚖️ Workspace Rules</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Rule name" value={newWrName} onChange={e=>setNewWrName(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="If condition..." value={newWrCondition} onChange={e=>setNewWrCondition(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Then action..." value={newWrAction} onChange={e=>setNewWrAction(e.target.value)}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/workspace-rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newWrName,condition_text:newWrCondition,action_text:newWrAction})}).then(r=>r.json()).then(d=>{setWsRulesB52(p=>[d,...p]);setNewWrName('');setNewWrCondition('');setNewWrAction('');})}>Add</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/workspace-rules').then(r=>r.json()).then(setWsRulesB52)}>Load</button>
+          {wsRulesB52.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <div className="font-semibold">{x.name} {x.active?'✅':'⛔'}</div>
+                <div className="text-xs text-gray-500">IF {x.condition_text} → {x.action_text}</div>
+                <div className="text-xs text-gray-400">Triggered: {x.triggered_count}x</div>
+              </div>
+              <div className="flex gap-2">
+                <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-rules/${x.id}/trigger`,{method:'PUT'}).then(()=>fetch('/api/workspace-rules').then(r=>r.json()).then(setWsRulesB52))}>Fire</button>
+                <button className="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-rules/${x.id}/toggle`,{method:'PUT'}).then(()=>fetch('/api/workspace-rules').then(r=>r.json()).then(setWsRulesB52))}>Toggle</button>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-rules/${x.id}`,{method:'DELETE'}).then(()=>setWsRulesB52(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='msgthreadsv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">💬 Message Threads v2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded flex-1" placeholder="Subject" value={newMtSubject} onChange={e=>setNewMtSubject(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Participants (comma-separated)" value={newMtParticipants} onChange={e=>setNewMtParticipants(e.target.value)}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/message-threads-v2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:newMtSubject,participants:newMtParticipants})}).then(r=>r.json()).then(d=>{setMsgThreadsV2(p=>[d,...p]);setNewMtSubject('');setNewMtParticipants('');})}>Create</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/message-threads-v2').then(r=>r.json()).then(setMsgThreadsV2)}>Load</button>
+          {msgThreadsV2.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div><div className="font-semibold">{x.subject}</div><div className="text-xs text-gray-500">{x.message_count} msgs · {x.participants||'solo'}</div></div>
+              <div className="flex gap-2">
+                <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/message-threads-v2/${x.id}/bump`,{method:'PUT'}).then(()=>fetch('/api/message-threads-v2').then(r=>r.json()).then(setMsgThreadsV2))}>+Msg</button>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/message-threads-v2/${x.id}`,{method:'DELETE'}).then(()=>setMsgThreadsV2(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='embedmeta' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🧮 Embeddings Meta</h2>
+          <div className="flex gap-2 flex-wrap">
+            <select className="border p-2 rounded" value={newEmSrcType} onChange={e=>setNewEmSrcType(e.target.value)}>
+              <option value="thread">Thread</option><option value="message">Message</option><option value="document">Document</option><option value="note">Note</option>
+            </select>
+            <input className="border p-2 rounded flex-1" placeholder="Source ID" value={newEmSrcId} onChange={e=>setNewEmSrcId(e.target.value)}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/ai-embeddings-meta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_type:newEmSrcType,source_id:newEmSrcId})}).then(r=>r.json()).then(d=>{setEmbeddingsMeta(p=>[d,...p]);setNewEmSrcId('');})}>Index</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/ai-embeddings-meta').then(r=>r.json()).then(setEmbeddingsMeta)}>Load</button>
+          {embeddingsMeta.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div><div className="text-sm">{x.source_type} #{x.source_id}</div><div className="text-xs text-gray-500">{x.embedding_model} · {x.dimension}d</div></div>
+              <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-embeddings-meta/${x.id}`,{method:'DELETE'}).then(()=>setEmbeddingsMeta(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wsshortcuts' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">⌨️ Workspace Shortcuts</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input className="border p-2 rounded w-32" placeholder="Key (e.g. Ctrl+K)" value={newWsKey} onChange={e=>setNewWsKey(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Action" value={newWsAction} onChange={e=>setNewWsAction(e.target.value)}/>
+            <input className="border p-2 rounded flex-1" placeholder="Description" value={newWsDesc} onChange={e=>setNewWsDesc(e.target.value)}/>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch('/api/workspace-shortcuts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({shortcut_key:newWsKey,action:newWsAction,description:newWsDesc})}).then(r=>r.json()).then(d=>{setWsShortcuts(p=>[d,...p]);setNewWsKey('');setNewWsAction('');setNewWsDesc('');})}>Add</button>
+          </div>
+          <button className="text-sm underline" onClick={()=>fetch('/api/workspace-shortcuts').then(r=>r.json()).then(setWsShortcuts)}>Load</button>
+          {wsShortcuts.map(x=>(
+            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
+              <div>
+                <kbd className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-sm font-mono">{x.shortcut_key}</kbd>
+                <span className="ml-2 text-sm">{x.action}</span>
+                {x.description&&<div className="text-xs text-gray-500">{x.description}</div>}
+              </div>
+              <div className="flex gap-2">
+                <button className="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-shortcuts/${x.id}/toggle`,{method:'PUT'}).then(()=>fetch('/api/workspace-shortcuts').then(r=>r.json()).then(setWsShortcuts))}>{x.active?'On':'Off'}</button>
+                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-shortcuts/${x.id}`,{method:'DELETE'}).then(()=>setWsShortcuts(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+{mainTab==='aipersonas' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">🎭 AI Personas</h2>
           <div className="flex gap-2 flex-wrap">
@@ -12550,14 +12825,14 @@ export default function ForgeApp() {
   <div style={{padding:'24px'}}>
     <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>⭐ AI Evaluations</h2>
     <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
-      <textarea placeholder="Prompt..." value={newEvPrompt} onChange={e=>setNewEvPrompt(e.target.value)} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
+      <textarea placeholder="Prompt..." value={newEvPromptB53} onChange={e=>setNewEvPromptB53(e.target.value)} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
       <textarea placeholder="Response..." value={newEvResponse} onChange={e=>setNewEvResponse(e.target.value)} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
       <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
         <span style={{color:'#9ca3af'}}>Score:</span>
         {[1,2,3,4,5].map(n=>(
-          <button key={n} onClick={()=>setNewEvScore(n)} style={{padding:'4px 10px',background:newEvScore>=n?'#f59e0b':'#374151',border:'none',color:'#fff',borderRadius:'4px',cursor:'pointer'}}>{'★'}</button>
+          <button key={n} onClick={()=>setNewEvScoreB53(n)} style={{padding:'4px 10px',background:newEvScoreB53>=n?'#f59e0b':'#374151',border:'none',color:'#fff',borderRadius:'4px',cursor:'pointer'}}>{'★'}</button>
         ))}
-        <button onClick={async()=>{if(!newEvPrompt||!newEvResponse)return;await fetch('/api/ai-evaluations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({prompt:newEvPrompt,response:newEvResponse,score:newEvScore})});setNewEvPrompt('');setNewEvResponse('');const r=await fetch('/api/ai-evaluations',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiEvaluations(await r.json());const s=await fetch('/api/ai-evaluations/stats',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setEvalStats(await s.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer',marginLeft:'auto'}}>Save</button>
+        <button onClick={async()=>{if(!newEvPromptB53||!newEvResponse)return;await fetch('/api/ai-evaluations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({prompt:newEvPromptB53,response:newEvResponse,score:newEvScoreB53})});setNewEvPromptB53('');setNewEvResponse('');const r=await fetch('/api/ai-evaluations',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiEvaluations(await r.json());const s=await fetch('/api/ai-evaluations/stats',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setEvalStats(await s.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer',marginLeft:'auto'}}>Save</button>
         <button onClick={async()=>{const r=await fetch('/api/ai-evaluations',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiEvaluations(await r.json());const s=await fetch('/api/ai-evaluations/stats',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setEvalStats(await s.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
       </div>
     </div>

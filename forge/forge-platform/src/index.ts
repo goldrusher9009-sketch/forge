@@ -12779,4 +12779,382 @@ app.delete('/api/user-badges/:id', requireAuth, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ── Batch 52 ──────────────────────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_feedback_loops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, prompt TEXT,
+    original_output TEXT, improved_output TEXT, improvement_type TEXT DEFAULT 'manual',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    condition_text TEXT, action_text TEXT, active INTEGER DEFAULT 1,
+    triggered_count INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS message_threads_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, subject TEXT,
+    participants TEXT, message_count INTEGER DEFAULT 0, last_activity DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_embeddings_meta (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, source_type TEXT,
+    source_id INTEGER, embedding_model TEXT DEFAULT 'text-embedding-3-small',
+    dimension INTEGER DEFAULT 1536, indexed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_shortcuts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, shortcut_key TEXT,
+    action TEXT, description TEXT, active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/ai-feedback-loops
+app.get('/api/ai-feedback-loops', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_feedback_loops WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-feedback-loops', requireAuth, (req: any, res: any) => {
+  const { prompt, original_output, improved_output, improvement_type = 'manual' } = req.body;
+  if (!prompt || !original_output) return res.status(400).json({ error: 'prompt and original_output required' });
+  const r = db.prepare('INSERT INTO ai_feedback_loops (user_id,prompt,original_output,improved_output,improvement_type) VALUES (?,?,?,?,?)').run(req.user.id, prompt, original_output, improved_output || '', improvement_type);
+  res.json({ id: r.lastInsertRowid, prompt, original_output, improved_output, improvement_type });
+});
+app.put('/api/ai-feedback-loops/:id', requireAuth, (req: any, res: any) => {
+  const { improved_output } = req.body;
+  db.prepare('UPDATE ai_feedback_loops SET improved_output=? WHERE id=? AND user_id=?').run(improved_output || '', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-feedback-loops/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_feedback_loops WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-rules
+app.get('/api/workspace-rules', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_rules WHERE user_id=? ORDER BY active DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-rules', requireAuth, (req: any, res: any) => {
+  const { name, condition_text, action_text } = req.body;
+  if (!name || !condition_text || !action_text) return res.status(400).json({ error: 'name, condition_text, action_text required' });
+  const r = db.prepare('INSERT INTO workspace_rules (user_id,name,condition_text,action_text) VALUES (?,?,?,?)').run(req.user.id, name, condition_text, action_text);
+  res.json({ id: r.lastInsertRowid, name, condition_text, action_text, active: 1, triggered_count: 0 });
+});
+app.put('/api/workspace-rules/:id/trigger', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_rules SET triggered_count=triggered_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.put('/api/workspace-rules/:id/toggle', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT active FROM workspace_rules WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE workspace_rules SET active=? WHERE id=?').run(row.active ? 0 : 1, req.params.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-rules/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_rules WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/message-threads-v2
+app.get('/api/message-threads-v2', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM message_threads_v2 WHERE user_id=? ORDER BY last_activity DESC').all(req.user.id));
+});
+app.post('/api/message-threads-v2', requireAuth, (req: any, res: any) => {
+  const { subject, participants = '' } = req.body;
+  if (!subject) return res.status(400).json({ error: 'subject required' });
+  const r = db.prepare('INSERT INTO message_threads_v2 (user_id,subject,participants) VALUES (?,?,?)').run(req.user.id, subject, participants);
+  res.json({ id: r.lastInsertRowid, subject, participants, message_count: 0 });
+});
+app.put('/api/message-threads-v2/:id/bump', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE message_threads_v2 SET message_count=message_count+1,last_activity=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/message-threads-v2/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM message_threads_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-embeddings-meta
+app.post('/api/ai-embeddings-meta', requireAuth, (req: any, res: any) => {
+  const { source_type, source_id, embedding_model = 'text-embedding-3-small', dimension = 1536 } = req.body;
+  if (!source_type || !source_id) return res.status(400).json({ error: 'source_type and source_id required' });
+  const r = db.prepare('INSERT INTO ai_embeddings_meta (user_id,source_type,source_id,embedding_model,dimension) VALUES (?,?,?,?,?)').run(req.user.id, source_type, source_id, embedding_model, dimension);
+  res.json({ id: r.lastInsertRowid, source_type, source_id, embedding_model, dimension });
+});
+app.get('/api/ai-embeddings-meta', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_embeddings_meta WHERE user_id=? ORDER BY indexed_at DESC LIMIT 100').all(req.user.id));
+});
+app.delete('/api/ai-embeddings-meta/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_embeddings_meta WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-shortcuts
+app.get('/api/workspace-shortcuts', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_shortcuts WHERE user_id=? ORDER BY shortcut_key ASC').all(req.user.id));
+});
+app.post('/api/workspace-shortcuts', requireAuth, (req: any, res: any) => {
+  const { shortcut_key, action, description = '' } = req.body;
+  if (!shortcut_key || !action) return res.status(400).json({ error: 'shortcut_key and action required' });
+  const r = db.prepare('INSERT INTO workspace_shortcuts (user_id,shortcut_key,action,description) VALUES (?,?,?,?)').run(req.user.id, shortcut_key, action, description);
+  res.json({ id: r.lastInsertRowid, shortcut_key, action, description, active: 1 });
+});
+app.put('/api/workspace-shortcuts/:id/toggle', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT active FROM workspace_shortcuts WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE workspace_shortcuts SET active=? WHERE id=?').run(row.active ? 0 : 1, req.params.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-shortcuts/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_shortcuts WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+
+// ── Batch 53 ──────────────────────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_evaluations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, eval_name TEXT,
+    prompt TEXT, criteria TEXT, score REAL, notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_kpis (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    value REAL, unit TEXT DEFAULT '', target REAL, period TEXT DEFAULT 'monthly',
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_archives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id INTEGER,
+    reason TEXT DEFAULT 'manual', archived_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_context_injections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    content TEXT, trigger_keyword TEXT, auto_inject INTEGER DEFAULT 0,
+    use_count INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_watchers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, resource_type TEXT,
+    resource_id INTEGER, notify_on TEXT DEFAULT 'change',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/ai-evaluations
+app.get('/api/ai-evaluations', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_evaluations WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-evaluations', requireAuth, (req: any, res: any) => {
+  const { eval_name, prompt, criteria, score, notes = '' } = req.body;
+  if (!eval_name || !prompt) return res.status(400).json({ error: 'eval_name and prompt required' });
+  const r = db.prepare('INSERT INTO ai_evaluations (user_id,eval_name,prompt,criteria,score,notes) VALUES (?,?,?,?,?,?)').run(req.user.id, eval_name, prompt, criteria || '', score ?? null, notes);
+  res.json({ id: r.lastInsertRowid, eval_name, prompt, criteria, score, notes });
+});
+app.put('/api/ai-evaluations/:id/score', requireAuth, (req: any, res: any) => {
+  const { score, notes } = req.body;
+  db.prepare('UPDATE ai_evaluations SET score=?,notes=? WHERE id=? AND user_id=?').run(score ?? null, notes || '', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-evaluations/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_evaluations WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-kpis
+app.get('/api/workspace-kpis', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_kpis WHERE user_id=? ORDER BY recorded_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-kpis', requireAuth, (req: any, res: any) => {
+  const { name, value, unit = '', target, period = 'monthly' } = req.body;
+  if (!name || value === undefined) return res.status(400).json({ error: 'name and value required' });
+  const r = db.prepare('INSERT INTO workspace_kpis (user_id,name,value,unit,target,period) VALUES (?,?,?,?,?,?)').run(req.user.id, name, value, unit, target ?? null, period);
+  res.json({ id: r.lastInsertRowid, name, value, unit, target, period });
+});
+app.delete('/api/workspace-kpis/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_kpis WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/thread-archives
+app.get('/api/thread-archives', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM thread_archives WHERE user_id=? ORDER BY archived_at DESC').all(req.user.id));
+});
+app.post('/api/thread-archives', requireAuth, (req: any, res: any) => {
+  const { thread_id, reason = 'manual' } = req.body;
+  if (!thread_id) return res.status(400).json({ error: 'thread_id required' });
+  const existing: any = db.prepare('SELECT id FROM thread_archives WHERE thread_id=? AND user_id=?').get(thread_id, req.user.id);
+  if (existing) return res.status(409).json({ error: 'already archived' });
+  const r = db.prepare('INSERT INTO thread_archives (user_id,thread_id,reason) VALUES (?,?,?)').run(req.user.id, thread_id, reason);
+  res.json({ id: r.lastInsertRowid, thread_id, reason });
+});
+app.delete('/api/thread-archives/:threadId', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_archives WHERE thread_id=? AND user_id=?').run(req.params.threadId, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-context-injections
+app.get('/api/ai-context-injections', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_context_injections WHERE user_id=? ORDER BY use_count DESC').all(req.user.id));
+});
+app.post('/api/ai-context-injections', requireAuth, (req: any, res: any) => {
+  const { name, content, trigger_keyword = '', auto_inject = 0 } = req.body;
+  if (!name || !content) return res.status(400).json({ error: 'name and content required' });
+  const r = db.prepare('INSERT INTO ai_context_injections (user_id,name,content,trigger_keyword,auto_inject) VALUES (?,?,?,?,?)').run(req.user.id, name, content, trigger_keyword, auto_inject ? 1 : 0);
+  res.json({ id: r.lastInsertRowid, name, content, trigger_keyword, auto_inject, use_count: 0 });
+});
+app.put('/api/ai-context-injections/:id/use', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE ai_context_injections SET use_count=use_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-context-injections/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_context_injections WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-watchers
+app.get('/api/workspace-watchers', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_watchers WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-watchers', requireAuth, (req: any, res: any) => {
+  const { resource_type, resource_id, notify_on = 'change' } = req.body;
+  if (!resource_type || !resource_id) return res.status(400).json({ error: 'resource_type and resource_id required' });
+  const r = db.prepare('INSERT INTO workspace_watchers (user_id,resource_type,resource_id,notify_on) VALUES (?,?,?,?)').run(req.user.id, resource_type, resource_id, notify_on);
+  res.json({ id: r.lastInsertRowid, resource_type, resource_id, notify_on });
+});
+app.delete('/api/workspace-watchers/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_watchers WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+
+// ── Batch 54 ──────────────────────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_task_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, task_type TEXT,
+    payload TEXT, status TEXT DEFAULT 'pending', priority INTEGER DEFAULT 5,
+    result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    processed_at DATETIME
+  );
+  CREATE TABLE IF NOT EXISTS workspace_glossary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, term TEXT,
+    definition TEXT, category TEXT DEFAULT 'general',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_routing_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    condition TEXT, target_model TEXT, priority INTEGER DEFAULT 5,
+    active INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_reactions_summary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER, emoji TEXT,
+    count INTEGER DEFAULT 1, last_reacted DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(thread_id, emoji)
+  );
+  CREATE TABLE IF NOT EXISTS workspace_integrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT,
+    integration_type TEXT, config TEXT, active INTEGER DEFAULT 1,
+    last_sync DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// /api/ai-task-queue
+app.get('/api/ai-task-queue', requireAuth, (req: any, res: any) => {
+  const status = req.query.status as string;
+  const q = status
+    ? db.prepare('SELECT * FROM ai_task_queue WHERE user_id=? AND status=? ORDER BY priority DESC, created_at ASC').all(req.user.id, status)
+    : db.prepare('SELECT * FROM ai_task_queue WHERE user_id=? ORDER BY priority DESC, created_at ASC').all(req.user.id);
+  res.json(q);
+});
+app.post('/api/ai-task-queue', requireAuth, (req: any, res: any) => {
+  const { task_type, payload = '{}', priority = 5 } = req.body;
+  if (!task_type) return res.status(400).json({ error: 'task_type required' });
+  const r = db.prepare('INSERT INTO ai_task_queue (user_id,task_type,payload,priority) VALUES (?,?,?,?)').run(req.user.id, task_type, typeof payload === 'string' ? payload : JSON.stringify(payload), priority);
+  res.json({ id: r.lastInsertRowid, task_type, status: 'pending', priority });
+});
+app.put('/api/ai-task-queue/:id/process', requireAuth, (req: any, res: any) => {
+  const { result = '' } = req.body;
+  db.prepare('UPDATE ai_task_queue SET status=?,result=?,processed_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run('completed', result, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-task-queue/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_task_queue WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/workspace-glossary
+app.get('/api/workspace-glossary', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_glossary WHERE user_id=? ORDER BY term ASC').all(req.user.id));
+});
+app.post('/api/workspace-glossary', requireAuth, (req: any, res: any) => {
+  const { term, definition, category = 'general' } = req.body;
+  if (!term || !definition) return res.status(400).json({ error: 'term and definition required' });
+  const r = db.prepare('INSERT INTO workspace_glossary (user_id,term,definition,category) VALUES (?,?,?,?)').run(req.user.id, term, definition, category);
+  res.json({ id: r.lastInsertRowid, term, definition, category });
+});
+app.put('/api/workspace-glossary/:id', requireAuth, (req: any, res: any) => {
+  const { definition } = req.body;
+  db.prepare('UPDATE workspace_glossary SET definition=? WHERE id=? AND user_id=?').run(definition || '', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-glossary/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_glossary WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/ai-routing-rules
+app.get('/api/ai-routing-rules', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_routing_rules WHERE user_id=? ORDER BY priority DESC').all(req.user.id));
+});
+app.post('/api/ai-routing-rules', requireAuth, (req: any, res: any) => {
+  const { name, condition, target_model, priority = 5 } = req.body;
+  if (!name || !condition || !target_model) return res.status(400).json({ error: 'name, condition, target_model required' });
+  const r = db.prepare('INSERT INTO ai_routing_rules (user_id,name,condition,target_model,priority) VALUES (?,?,?,?,?)').run(req.user.id, name, condition, target_model, priority);
+  res.json({ id: r.lastInsertRowid, name, condition, target_model, priority, active: 1 });
+});
+app.put('/api/ai-routing-rules/:id/toggle', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT active FROM ai_routing_rules WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE ai_routing_rules SET active=? WHERE id=?').run(row.active ? 0 : 1, req.params.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-routing-rules/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_routing_rules WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// /api/thread-reactions-summary
+app.get('/api/thread-reactions-summary/:threadId', (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM thread_reactions_summary WHERE thread_id=? ORDER BY count DESC').all(req.params.threadId));
+});
+app.post('/api/thread-reactions-summary', requireAuth, (req: any, res: any) => {
+  const { thread_id, emoji } = req.body;
+  if (!thread_id || !emoji) return res.status(400).json({ error: 'thread_id and emoji required' });
+  db.prepare('INSERT INTO thread_reactions_summary (thread_id,emoji,count) VALUES (?,?,1) ON CONFLICT(thread_id,emoji) DO UPDATE SET count=count+1,last_reacted=CURRENT_TIMESTAMP').run(thread_id, emoji);
+  res.json({ ok: true });
+});
+app.delete('/api/thread-reactions-summary/:threadId/:emoji', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_reactions_summary WHERE thread_id=? AND emoji=?').run(req.params.threadId, req.params.emoji);
+  res.json({ ok: true });
+});
+
+// /api/workspace-integrations
+app.get('/api/workspace-integrations', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_integrations WHERE user_id=? ORDER BY name ASC').all(req.user.id));
+});
+app.post('/api/workspace-integrations', requireAuth, (req: any, res: any) => {
+  const { name, integration_type, config = '{}' } = req.body;
+  if (!name || !integration_type) return res.status(400).json({ error: 'name and integration_type required' });
+  const r = db.prepare('INSERT INTO workspace_integrations (user_id,name,integration_type,config) VALUES (?,?,?,?)').run(req.user.id, name, integration_type, typeof config === 'string' ? config : JSON.stringify(config));
+  res.json({ id: r.lastInsertRowid, name, integration_type, active: 1 });
+});
+app.put('/api/workspace-integrations/:id/sync', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_integrations SET last_sync=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true, synced_at: new Date().toISOString() });
+});
+app.delete('/api/workspace-integrations/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_integrations WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
