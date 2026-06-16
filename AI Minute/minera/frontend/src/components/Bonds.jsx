@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { Empty } from "./States.jsx";
 
 export default function Bonds({ address, onBalance, notify }) {
   const [bonds, setBonds] = useState([]);
@@ -39,6 +40,7 @@ export default function Bonds({ address, onBalance, notify }) {
           <button className="btn" style={{marginTop:10,width:"100%",justifyContent:"center"}} onClick={create}>► POST BOND (reward + 2% fee)</button>
         </div>
       )}
+      {bonds.length===0 && <Empty icon="💎" label="No active bounties yet"/>}
       {bonds.map((b)=>(
         <div className="bondc" key={b.id}>
           <div className="cat">◆ {b.category} {b.status!=="open" && `· ${b.status.toUpperCase()}`}</div>

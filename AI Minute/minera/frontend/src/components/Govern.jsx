@@ -42,7 +42,7 @@ export default function Govern({ address, notify }) {
           </div>
         );
       })}
-      {props.length===0 && <p className="mono" style={{fontSize:12}}>No proposals yet.</p>}
+      {props.length===0 && <p className="mono" style={{fontSize:12}}>No proposals yet — start one to shape the network.</p>}
     </div>
   );
 }

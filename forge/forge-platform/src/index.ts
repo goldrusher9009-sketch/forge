@@ -8269,4 +8269,208 @@ app.get('/api/workspace/stats-summary', authMiddleware, (req: any, res: any) => 
   res.json({ totalThreads, totalMessages, totalTokens, totalBookmarks, totalSnippets, totalGoals, completedGoals, activeStreaks, readingItems });
 });
 
+
+// ── Batch 24: Focus Modes, Thread Polls, Workspace Tags, AI Rename Batch, Context Windows ──
+
+// focus_modes table
+db.exec(`CREATE TABLE IF NOT EXISTS focus_modes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  icon TEXT DEFAULT '🎯',
+  color TEXT DEFAULT '#6366f1',
+  blocked_tabs TEXT DEFAULT '',
+  auto_timer_minutes INTEGER DEFAULT 0,
+  active INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// thread_polls table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_polls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  thread_id INTEGER,
+  question TEXT NOT NULL,
+  options TEXT NOT NULL,
+  votes TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// workspace_tags table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_tags (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL UNIQUE,
+  color TEXT DEFAULT '#6366f1',
+  usage_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// context_windows table (save conversation context slices)
+db.exec(`CREATE TABLE IF NOT EXISTS context_windows (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  thread_id INTEGER NOT NULL,
+  label TEXT NOT NULL,
+  start_message_id INTEGER,
+  end_message_id INTEGER,
+  message_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// ── Focus Modes ──
+app.get('/api/focus-modes', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM focus_modes WHERE user_id=? ORDER BY id DESC').all(req.user.id));
+});
+app.post('/api/focus-modes', authMiddleware, (req: any, res: any) => {
+  const { name, icon, color, blocked_tabs, auto_timer_minutes } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO focus_modes (user_id,name,icon,color,blocked_tabs,auto_timer_minutes) VALUES (?,?,?,?,?,?)').run(req.user.id, name.trim(), icon||'🎯', color||'#6366f1', blocked_tabs||'', auto_timer_minutes||0);
+  res.json({ id: r.lastInsertRowid, name, icon, color });
+});
+app.put('/api/focus-modes/:id/activate', authMiddleware, (req: any, res: any) => {
+  db.prepare('UPDATE focus_modes SET active=0 WHERE user_id=?').run(req.user.id);
+  db.prepare('UPDATE focus_modes SET active=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  const mode: any = db.prepare('SELECT * FROM focus_modes WHERE id=?').get(req.params.id);
+  res.json(mode);
+});
+app.put('/api/focus-modes/deactivate', authMiddleware, (req: any, res: any) => {
+  db.prepare('UPDATE focus_modes SET active=0 WHERE user_id=?').run(req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/focus-modes/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM focus_modes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Thread Polls ──
+app.get('/api/polls', authMiddleware, (req: any, res: any) => {
+  const rows: any[] = db.prepare('SELECT * FROM thread_polls WHERE user_id=? ORDER BY id DESC LIMIT 50').all(req.user.id);
+  rows.forEach(r => { try { r.options = JSON.parse(r.options); r.votes = JSON.parse(r.votes||'{}'); } catch {} });
+  res.json(rows);
+});
+app.post('/api/polls', authMiddleware, (req: any, res: any) => {
+  const { question, options, thread_id } = req.body;
+  if (!question?.trim() || !Array.isArray(options) || options.length < 2) return res.status(400).json({ error: 'question and 2+ options required' });
+  const r = db.prepare('INSERT INTO thread_polls (user_id,thread_id,question,options) VALUES (?,?,?,?)').run(req.user.id, thread_id||null, question.trim(), JSON.stringify(options));
+  res.json({ id: r.lastInsertRowid, question, options });
+});
+app.post('/api/polls/:id/vote', authMiddleware, (req: any, res: any) => {
+  const { option_index } = req.body;
+  const poll: any = db.prepare('SELECT * FROM thread_polls WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!poll) return res.status(404).json({ error: 'not found' });
+  let votes: any = {};
+  try { votes = JSON.parse(poll.votes||'{}'); } catch {}
+  votes[option_index] = (votes[option_index]||0) + 1;
+  db.prepare('UPDATE thread_polls SET votes=? WHERE id=?').run(JSON.stringify(votes), poll.id);
+  res.json({ votes });
+});
+app.delete('/api/polls/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_polls WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Workspace Tags ──
+app.get('/api/workspace-tags', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_tags WHERE user_id=? ORDER BY usage_count DESC, id DESC').all(req.user.id));
+});
+app.post('/api/workspace-tags', authMiddleware, (req: any, res: any) => {
+  const { name, color } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'name required' });
+  try {
+    const r = db.prepare('INSERT INTO workspace_tags (user_id,name,color) VALUES (?,?,?)').run(req.user.id, name.trim().toLowerCase(), color||'#6366f1');
+    res.json({ id: r.lastInsertRowid, name: name.trim().toLowerCase(), color });
+  } catch { res.status(409).json({ error: 'tag exists' }); }
+});
+app.put('/api/workspace-tags/:id', authMiddleware, (req: any, res: any) => {
+  const { color } = req.body;
+  db.prepare('UPDATE workspace_tags SET color=COALESCE(?,color) WHERE id=? AND user_id=?').run(color||null, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-tags/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_tags WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.post('/api/workspace-tags/apply', authMiddleware, (req: any, res: any) => {
+  // Apply a tag to a thread (reuse existing thread tags if available)
+  const { tag_name, thread_id } = req.body;
+  db.prepare('UPDATE workspace_tags SET usage_count=usage_count+1 WHERE user_id=? AND name=?').run(req.user.id, tag_name);
+  // Store tag on thread using existing thread_tags column pattern
+  const thread: any = db.prepare('SELECT tags FROM threads WHERE id=? AND user_id=?').get(thread_id, req.user.id);
+  if (thread) {
+    const tags = thread.tags ? thread.tags.split(',').filter(Boolean) : [];
+    if (!tags.includes(tag_name)) { tags.push(tag_name); db.prepare('UPDATE threads SET tags=? WHERE id=?').run(tags.join(','), thread_id); }
+  }
+  res.json({ ok: true });
+});
+
+// ── AI Batch Rename Threads ──
+app.post('/api/threads/batch-rename', authMiddleware, (req: any, res: any) => {
+  const { thread_ids } = req.body;
+  if (!Array.isArray(thread_ids) || thread_ids.length === 0) return res.status(400).json({ error: 'thread_ids required' });
+  const results: any[] = [];
+  for (const tid of thread_ids.slice(0, 20)) {
+    const thread: any = db.prepare('SELECT id, title FROM threads WHERE id=? AND user_id=?').get(tid, req.user.id);
+    if (!thread) continue;
+    const firstMsg: any = db.prepare('SELECT content FROM messages WHERE thread_id=? ORDER BY id ASC LIMIT 1').get(tid);
+    const suggestion = firstMsg ? firstMsg.content.slice(0, 60).replace(/\n/g,' ').trim() + (firstMsg.content.length > 60 ? '...' : '') : 'Untitled Thread';
+    results.push({ thread_id: tid, current_title: thread.title, suggested_title: suggestion });
+  }
+  res.json({ results });
+});
+app.post('/api/threads/batch-rename/apply', authMiddleware, (req: any, res: any) => {
+  const { renames } = req.body; // [{thread_id, new_title}]
+  if (!Array.isArray(renames)) return res.status(400).json({ error: 'renames array required' });
+  let updated = 0;
+  for (const { thread_id, new_title } of renames) {
+    if (!new_title?.trim()) continue;
+    db.prepare('UPDATE threads SET title=? WHERE id=? AND user_id=?').run(new_title.trim(), thread_id, req.user.id);
+    updated++;
+  }
+  res.json({ updated });
+});
+
+// ── Context Windows ──
+app.get('/api/threads/:id/context-windows', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM context_windows WHERE thread_id=? AND user_id=? ORDER BY id DESC').all(req.params.id, req.user.id));
+});
+app.post('/api/threads/:id/context-windows', authMiddleware, (req: any, res: any) => {
+  const { label, start_message_id, end_message_id } = req.body;
+  if (!label?.trim()) return res.status(400).json({ error: 'label required' });
+  let msgCount = 0;
+  if (start_message_id && end_message_id) {
+    const c: any = db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id=? AND id BETWEEN ? AND ?').get(req.params.id, start_message_id, end_message_id);
+    msgCount = c?.c || 0;
+  } else {
+    const c: any = db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id=?').get(req.params.id);
+    msgCount = c?.c || 0;
+  }
+  const r = db.prepare('INSERT INTO context_windows (user_id,thread_id,label,start_message_id,end_message_id,message_count) VALUES (?,?,?,?,?,?)').run(req.user.id, req.params.id, label.trim(), start_message_id||null, end_message_id||null, msgCount);
+  res.json({ id: r.lastInsertRowid, label, message_count: msgCount });
+});
+app.delete('/api/threads/:id/context-windows/:cwId', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM context_windows WHERE id=? AND user_id=?').run(req.params.cwId, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Workspace Health Check ──
+app.get('/api/workspace/health', authMiddleware, (req: any, res: any) => {
+  const uid = req.user.id;
+  const checks: any[] = [];
+  // Check for orphan threads (no messages)
+  const emptyThreads: any = db.prepare('SELECT COUNT(*) as c FROM threads t WHERE t.user_id=? AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.thread_id=t.id)').get(uid);
+  checks.push({ check: 'empty_threads', count: emptyThreads?.c||0, severity: emptyThreads?.c > 5 ? 'warn' : 'ok' });
+  // Check for very long threads (>200 messages)
+  const longThreads: any = db.prepare('SELECT COUNT(*) as c FROM (SELECT thread_id, COUNT(*) as mc FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? GROUP BY thread_id HAVING mc > 200)').get(uid);
+  checks.push({ check: 'long_threads', count: longThreads?.c||0, severity: longThreads?.c > 0 ? 'info' : 'ok' });
+  // Check for active streaks
+  const streaks: any = db.prepare("SELECT COUNT(*) as c FROM streak_tracker WHERE user_id=? AND current_streak>0").get(uid);
+  checks.push({ check: 'active_streaks', count: streaks?.c||0, severity: 'ok' });
+  // Check for unread reading items
+  const reading: any = db.prepare("SELECT COUNT(*) as c FROM reading_list WHERE user_id=? AND status='unread'").get(uid);
+  checks.push({ check: 'unread_reading', count: reading?.c||0, severity: reading?.c > 20 ? 'warn' : 'ok' });
+  const overall = checks.some(c=>c.severity==='warn') ? 'warn' : 'ok';
+  res.json({ overall, checks, generated_at: new Date().toISOString() });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

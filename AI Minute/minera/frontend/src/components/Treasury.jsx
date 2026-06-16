@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { Loading } from "./States.jsx";
 export default function Treasury({ notify }) {
   const [d, setD] = useState(null);
   useEffect(()=>{ const l=()=>api.treasury().then(setD).catch(()=>notify&&notify("Backend offline")); l(); const t=setInterval(l,6000); return ()=>clearInterval(t); },[]);
-  if(!d) return <p className="mono" style={{fontSize:12}}>Loading treasury…</p>;
+  if(!d) return <Loading label="Loading treasury…"/>;
   const s=d.series||[]; const max=Math.max(1,...s.map(x=>x.cumulative));
   const pts=s.map((x,i)=>`${i/(s.length-1||1)*100},${40-(x.cumulative/max)*38}`).join(" ");
   const bmax=Math.max(1,...d.bySource.map(b=>b.total));

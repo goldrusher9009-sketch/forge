@@ -16,7 +16,9 @@ export const metadata: Metadata = {
   authors: [{ name: 'VIVA' }],
   creator: 'VIVA',
   robots: { index: true, follow: true },
-  icons: { icon: '/favicon.ico', apple: '/favicon.ico' },
+  icons: { icon: '/favicon.ico', apple: '/favicon.ico', other: [{ rel: 'manifest', url: '/manifest.json' }] },
+  manifest: '/manifest.json',
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'VIVA' },
   openGraph: {
     type: 'website',
     url: SITE_URL,
@@ -36,9 +38,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#04040A',
+  themeColor: '#7C3AED',
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
   viewportFit: 'cover',
 }
 

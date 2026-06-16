@@ -150,3 +150,21 @@ body[data-preset="riso"]{
   --blue:#0046FF;--blue2:#3366FF;--red:#FF2D78;--green:#00A878;--amber:#FFB100;
   --grid:rgba(255,45,120,.10);--gridb:rgba(255,45,120,.20);
 }
+
+/* ---------- consistency polish ---------- */
+.tabs{position:sticky;top:0;z-index:40;background:var(--paper)}
+.tabs::-webkit-scrollbar{height:0}
+.btn{min-height:40px}
+.feed .row:hover{background:var(--paper2)}
+.bondc{transition:transform .12s}
+.bondc:hover{transform:translateX(2px)}
+/* unify card feel */
+.panel{animation:panelin .25s ease}
+@keyframes panelin{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.panel{animation:none}}
+/* scrollable tabs get a subtle edge fade hint on mobile */
+@media(max-width:720px){
+  .tabs{box-shadow:inset -16px 0 12px -12px rgba(20,17,12,.25)}
+}
+/* tap targets */
+@media(hover:none){ .feed .row{padding:13px 12px} .atile{padding:15px} }

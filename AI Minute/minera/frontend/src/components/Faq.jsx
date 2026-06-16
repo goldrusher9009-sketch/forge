@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { Loading } from "./States.jsx";
 export default function Faq() {
   const [faq, setFaq] = useState([]);
   const [open, setOpen] = useState(0);
   useEffect(()=>{ api.faq().then(setFaq).catch(()=>{}); },[]);
+  if(faq.length===0) return <Loading label="Loading help…"/>;
   return (
     <div>
       {faq.map((f,i)=>(

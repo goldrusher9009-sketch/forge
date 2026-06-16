@@ -31,7 +31,7 @@ export default function Activity({ notify }) {
             <b className="mono" style={{fontSize:10,opacity:.5}}>{new Date(a.ts).toLocaleTimeString()}</b>
           </div>
         ))}
-        {rows.length===0 && <div className="row"><span style={{opacity:.6}}>No activity yet.</span></div>}
+        {rows.length===0 && <div className="row"><span style={{opacity:.6}}>Quiet for now — events appear here in real time.</span></div>}
       </div>
     </div>
   );

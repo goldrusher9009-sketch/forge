@@ -39,7 +39,7 @@ export default function Subnets({ address, notify }) {
           <button className="btn ghost" onClick={()=>query(s.id)}>► SEND TEST QUERY ($10)</button>
         </div>
       ))}
-      {subs.length===0 && <p className="mono" style={{fontSize:12}}>No subnets yet — launch one.</p>}
+      {subs.length===0 && <p className="mono" style={{fontSize:12}}>No subnets yet — launch one to serve a niche market.</p>}
     </div>
   );
 }

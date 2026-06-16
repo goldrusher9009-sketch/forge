@@ -41,7 +41,7 @@ export default function DataUpload({ notify }) {
             <b style={{color:"var(--blue)",fontSize:11}}>{f.cid}</b>
           </div>
         ))}
-        {files.length===0 && <div className="row"><span style={{opacity:.6}}>No datasets yet.</span></div>}
+        {files.length===0 && <div className="row"><span style={{opacity:.6}}>No datasets staked yet — upload one to start earning royalties.</span></div>}
       </div>
     </div>
   );

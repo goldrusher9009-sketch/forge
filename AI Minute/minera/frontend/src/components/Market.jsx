@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { Empty } from "./States.jsx";
 
 export default function Market({ address, onBalance, notify }) {
   const [items, setItems] = useState([]);
@@ -37,7 +38,7 @@ export default function Market({ address, onBalance, notify }) {
           </div>
         </div>
       ))}
-      {items.length===0 && <p className="mono" style={{fontSize:12}}>No assets (is the API running?)</p>}
+      {items.length===0 && <Empty icon="◆" label="No verified assets to license yet"/>}
     </div>
   );
 }

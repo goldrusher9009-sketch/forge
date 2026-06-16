@@ -1,0 +1,42 @@
+{
+  "name": "VIVA — Your Profile is Property",
+  "short_name": "VIVA",
+  "description": "The social platform where your identity is a financial asset. Invest, stake, and advertise on human potential.",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#04040A",
+  "theme_color": "#7C3AED",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "VIVA Home — Your Live V-Score Dashboard"
+    }
+  ],
+  "categories": ["social", "finance", "health", "lifestyle"],
+  "shortcuts": [
+    { "name": "Feed",         "url": "/feed",         "description": "Your VIVA feed" },
+    { "name": "Token Market", "url": "/tokens",       "description": "Buy and sell YouTokens" },
+    { "name": "ZK Identity",  "url": "/identity",     "description": "Your zero-knowledge proof vault" },
+    { "name": "Wallet",       "url": "/wallet",       "description": "Your portfolio" }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

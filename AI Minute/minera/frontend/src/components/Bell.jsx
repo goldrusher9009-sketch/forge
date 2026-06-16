@@ -17,7 +17,7 @@ export default function Bell({ address }) {
         <div style={{position:"absolute",right:0,top:30,width:280,maxHeight:320,overflow:"auto",
           background:"var(--paper)",border:"3px solid var(--ink)",boxShadow:"6px 6px 0 var(--red)",zIndex:80}}>
           <div style={{background:"var(--ink)",color:"var(--paper)",padding:"8px 12px",fontFamily:"'Space Mono',monospace",fontSize:11,fontWeight:700}}>NOTIFICATIONS</div>
-          {items.length===0 && <div style={{padding:12,fontSize:12,opacity:.6}}>Nothing yet.</div>}
+          {items.length===0 && <div style={{padding:12,fontSize:12,opacity:.6}}>No notifications yet.</div>}
           {items.map((n)=>(
             <div key={n.id} style={{padding:"10px 12px",borderTop:"2px dashed var(--ink)",fontSize:12.5,fontWeight:500}}>{n.text}</div>
           ))}

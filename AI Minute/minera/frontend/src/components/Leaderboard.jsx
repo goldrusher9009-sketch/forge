@@ -13,7 +13,7 @@ export default function Leaderboard({ notify }){
           <b className="mono" style={{color:"var(--green)"}}>{u.balance.toLocaleString(undefined,{maximumFractionDigits:0})} {TOKEN}</b>
         </div>
       ))}
-      {rows.length===0 && <div className="row"><span style={{opacity:.6}}>No operators yet.</span></div>}
+      {rows.length===0 && <div className="row"><span style={{opacity:.6}}>Be the first on the board — start mining!</span></div>}
     </div>
   );
 }

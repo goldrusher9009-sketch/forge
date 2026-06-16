@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, download } from "../api.js";
+import { Loading } from "./States.jsx";
 
 function Bars({ data, color="var(--blue)", label }) {
   const max = Math.max(1, ...data.map((d)=>d.value));
@@ -20,7 +21,7 @@ function Bars({ data, color="var(--blue)", label }) {
 export default function Analytics({ notify }) {
   const [d, setD] = useState(null);
   useEffect(()=>{ api.analytics().then(setD).catch(()=>notify&&notify("Backend offline")); },[]);
-  if(!d) return <p className="mono" style={{fontSize:12}}>Loading analytics…</p>;
+  if(!d) return <Loading label="Loading analytics…"/>;
   const earn = Object.entries(d.earningsByType||{});
   const emax = Math.max(1, ...earn.map(([,v])=>v));
   return (

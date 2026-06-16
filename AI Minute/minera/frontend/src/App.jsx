@@ -102,7 +102,7 @@ export default function App() {
   return (
     <div className="app">
       <div className="tb">
-        <div><span className="sq"></span>{BRAND.toUpperCase()} // OPERATOR TERMINAL{offline && " · OFFLINE"}{online>0 && ` · ${online.toLocaleString()} ONLINE`}</div>
+        <div><span className="sq"></span>{BRAND.toUpperCase()} // OPERATOR TERMINAL{offline && " · OFFLINE (demo mode)"}{online>0 && ` · ${online.toLocaleString()} ONLINE`}</div>
         <div className="u"><Search onGo={setTab}/><button aria-label="Toggle theme" onClick={()=>setTheme(t=>t==="light"?"dark":"light")} style={{background:"transparent",border:"none",color:"var(--paper)",cursor:"pointer",fontSize:15}}>{theme==="light"?"🌙":"☀️"}</button><Bell address={user.address}/><span>{user.address}</span><button onClick={signOut}>{t("signout")}</button></div>
       </div>
       <StatsBanner/>

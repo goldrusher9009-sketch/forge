@@ -40,7 +40,7 @@ export default function Wallet({ address, balance }) {
             <b className="mono" style={{color:t.amount>=0?"var(--green)":"var(--red)"}}>{t.amount>=0?"+":""}{t.amount.toFixed(2)}</b>
           </div>
         ))}
-        {rows.length===0 && <div className="row"><span style={{opacity:.6}}>No transactions.</span></div>}
+        {rows.length===0 && <div className="row"><span style={{opacity:.6}}>No activity yet — your earnings will show here.</span></div>}
       </div>
       {rows.length<total && (
         <button className="btn ghost" style={{marginTop:12,width:"100%",justifyContent:"center"}}

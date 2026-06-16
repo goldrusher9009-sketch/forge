@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -664,6 +664,21 @@ export default function ForgeApp() {
   const [tdiffLabel, setTdiffLabel] = useState('');
   const [aiFeed, setAiFeed] = useState<any[]>([]);
   const [statsSummary, setStatsSummary] = useState<any>(null);
+  // Batch 24 state
+  const [focusModes, setFocusModes] = useState<any[]>([]);
+  const [activeFocusMode, setActiveFocusMode] = useState<any>(null);
+  const [newFmName, setNewFmName] = useState('');
+  const [newFmIcon, setNewFmIcon] = useState('🎯');
+  const [newFmColor, setNewFmColor] = useState('#6366f1');
+  const [polls, setPolls] = useState<any[]>([]);
+  const [newPollQ, setNewPollQ] = useState('');
+  const [newPollOpts, setNewPollOpts] = useState('Option A\nOption B');
+  const [wtags, setWtags] = useState<any[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#6366f1');
+  const [batchRenameResults, setBatchRenameResults] = useState<any[]>([]);
+  const [batchRenameIds, setBatchRenameIds] = useState('');
+  const [wsHealth, setWsHealth] = useState<any>(null);
   const [qnoteEditContent, setQnoteEditContent] = useState('');
   const [savedSearches, setSavedSearches] = useState<any[]>([]);
   const [newSearchQuery, setNewSearchQuery] = useState('');
@@ -4154,6 +4169,11 @@ export default function ForgeApp() {
             { id:'tdiffs', icon:'🔀', label:'Thread Diffs' },
             { id:'aifeed', icon:'🤖', label:'AI Insights' },
             { id:'statssummary', icon:'📊', label:'Stats Hub' },
+            { id:'focusmodes', icon:'🧘', label:'Focus Modes' },
+            { id:'polls', icon:'🗳', label:'Polls' },
+            { id:'wtags', icon:'🏷', label:'Tag Manager' },
+            { id:'batchrename', icon:'✏️', label:'Batch Rename' },
+            { id:'wshealth', icon:'❤️', label:'WS Health' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },
@@ -10979,6 +10999,173 @@ export default function ForgeApp() {
                     ))}
                   </div>
                   <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/stats-summary',{headers:{Authorization:`Bearer ${tok}`}}); setStatsSummary(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Focus Modes tab */}
+        {mainTab === 'focusmodes' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🧘 Focus Modes</h2>
+              {activeFocusMode && (
+                <div style={{ background:'rgba(251,146,60,0.12)', borderRadius:12, padding:'14px 20px', border:'2px solid var(--fg-orange)', marginBottom:20, display:'flex', alignItems:'center', gap:12 }}>
+                  <span style={{ fontSize:24 }}>{activeFocusMode.icon}</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:700, fontSize:15 }}>Active: {activeFocusMode.name}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:12 }}>Focus mode is on</div>
+                  </div>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch('/api/focus-modes/deactivate',{method:'PUT',headers:{Authorization:`Bearer ${tok}`}}); setActiveFocusMode(null); }} style={{ padding:'8px 14px', borderRadius:8, border:'none', background:'#ef4444', color:'#fff', fontWeight:600, cursor:'pointer' }}>End Focus</button>
+                </div>
+              )}
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:10 }}>
+                  <input value={newFmIcon} onChange={e=>setNewFmIcon(e.target.value)} placeholder="🎯" style={{ width:48, padding:'8px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:20, textAlign:'center' }} />
+                  <input value={newFmName} onChange={e=>setNewFmName(e.target.value)} placeholder="Mode name (e.g. Deep Work)..." style={{ flex:1, padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input type="color" value={newFmColor} onChange={e=>setNewFmColor(e.target.value)} style={{ width:40, height:38, borderRadius:8, border:'1px solid var(--fg-border)', cursor:'pointer' }} />
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!newFmName.trim()) return; const r=await fetch('/api/focus-modes',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({name:newFmName,icon:newFmIcon,color:newFmColor})}); const d=await r.json(); setFocusModes((s:any)=>[d,...s]); setNewFmName(''); }} style={{ padding:'10px 16px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Add</button>
+                </div>
+              </div>
+              {focusModes.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/focus-modes',{headers:{Authorization:`Bearer ${tok}`}}); setFocusModes(await r.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Modes</button>
+              ) : focusModes.map((m:any)=>(
+                <div key={m.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'14px 18px', border:`1px solid ${m.active?'var(--fg-orange)':'var(--fg-border)'}`, marginBottom:10, display:'flex', alignItems:'center', gap:12 }}>
+                  <span style={{ fontSize:24 }}>{m.icon}</span>
+                  <div style={{ width:10, height:10, borderRadius:'50%', background:m.color, flexShrink:0 }} />
+                  <span style={{ flex:1, color:'var(--fg-text)', fontWeight:600, fontSize:14 }}>{m.name}</span>
+                  {m.active && <span style={{ fontSize:11, padding:'2px 8px', borderRadius:12, background:'var(--fg-orange)', color:'#fff', fontWeight:600 }}>ACTIVE</span>}
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch(`/api/focus-modes/${m.id}/activate`,{method:'PUT',headers:{Authorization:`Bearer ${tok}`}}); const d=await r.json(); setActiveFocusMode(d); setFocusModes((prev:any)=>prev.map((x:any)=>({...x,active:x.id===m.id?1:0}))); }} style={{ padding:'7px 14px', borderRadius:8, border:'none', background:'#22c55e', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:12 }}>Activate</button>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/focus-modes/${m.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setFocusModes((prev:any)=>prev.filter((x:any)=>x.id!==m.id)); }} style={{ padding:'7px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Polls tab */}
+        {mainTab === 'polls' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🗳 Polls</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <input value={newPollQ} onChange={e=>setNewPollQ(e.target.value)} placeholder="Poll question..." style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, marginBottom:10, boxSizing:'border-box' }} />
+                <textarea value={newPollOpts} onChange={e=>setNewPollOpts(e.target.value)} placeholder="One option per line..." rows={3} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!newPollQ.trim()) return; const opts=newPollOpts.split('\n').map((o:string)=>o.trim()).filter(Boolean); if(opts.length<2) return; const r=await fetch('/api/polls',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({question:newPollQ,options:opts})}); const d=await r.json(); setPolls((s:any)=>[{...d,votes:{}},...s]); setNewPollQ(''); setNewPollOpts('Option A\nOption B'); }} style={{ padding:'10px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Create Poll</button>
+              </div>
+              {polls.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/polls',{headers:{Authorization:`Bearer ${tok}`}}); setPolls(await r.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Polls</button>
+              ) : polls.map((p:any)=>{
+                const totalVotes = Object.values(p.votes||{}).reduce((a:any,b:any)=>a+b,0) as number;
+                return (
+                  <div key={p.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'16px 20px', border:'1px solid var(--fg-border)', marginBottom:12 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:14, fontWeight:700, marginBottom:14 }}>{p.question}</div>
+                    {(Array.isArray(p.options)?p.options:[]).map((opt:string, idx:number)=>{
+                      const v = (p.votes||{})[idx]||0;
+                      const pct = totalVotes > 0 ? Math.round(100*v/totalVotes) : 0;
+                      return (
+                        <div key={idx} style={{ marginBottom:8 }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                            <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch(`/api/polls/${p.id}/vote`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({option_index:idx})}); const d=await r.json(); setPolls((prev:any)=>prev.map((x:any)=>x.id===p.id?{...x,votes:d.votes}:x)); }} style={{ color:'var(--fg-text)', fontSize:13, background:'none', border:'none', cursor:'pointer', padding:0, textAlign:'left' }}>👆 {opt}</button>
+                            <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{v} ({pct}%)</span>
+                          </div>
+                          <div style={{ height:6, borderRadius:3, background:'var(--fg-bg3)', overflow:'hidden' }}>
+                            <div style={{ width:`${pct}%`, height:'100%', background:'var(--fg-orange)', transition:'width 0.3s' }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:10 }}>{totalVotes} total votes</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Tag Manager tab */}
+        {mainTab === 'wtags' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🏷 Tag Manager</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:10 }}>
+                  <input value={newTagName} onChange={e=>setNewTagName(e.target.value)} placeholder="Tag name..." style={{ flex:1, padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input type="color" value={newTagColor} onChange={e=>setNewTagColor(e.target.value)} style={{ width:40, height:38, borderRadius:8, border:'1px solid var(--fg-border)', cursor:'pointer' }} />
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!newTagName.trim()) return; const r=await fetch('/api/workspace-tags',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({name:newTagName,color:newTagColor})}); const d=await r.json(); setWtags((s:any)=>[d,...s]); setNewTagName(''); }} style={{ padding:'10px 16px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Add</button>
+                </div>
+              </div>
+              {wtags.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace-tags',{headers:{Authorization:`Bearer ${tok}`}}); setWtags(await r.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Tags</button>
+              ) : (
+                <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
+                  {wtags.map((t:any)=>(
+                    <div key={t.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:20, border:`2px solid ${t.color}`, background:`${t.color}18` }}>
+                      <div style={{ width:8, height:8, borderRadius:'50%', background:t.color }} />
+                      <span style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{t.name}</span>
+                      <span style={{ color:'var(--fg-text3)', fontSize:11 }}>{t.usage_count}x</span>
+                      <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/workspace-tags/${t.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setWtags((prev:any)=>prev.filter((x:any)=>x.id!==t.id)); }} style={{ background:'none', border:'none', color:'#ef4444', cursor:'pointer', fontSize:12, padding:0, lineHeight:1 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Batch Rename tab */}
+        {mainTab === 'batchrename' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>✏️ Batch Rename Threads</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <p style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:12 }}>Enter thread IDs (comma-separated) to auto-generate title suggestions from first message.</p>
+                <div style={{ display:'flex', gap:10 }}>
+                  <input value={batchRenameIds} onChange={e=>setBatchRenameIds(e.target.value)} placeholder="1,2,3,4,5..." style={{ flex:1, padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!batchRenameIds.trim()) return; const ids=batchRenameIds.split(',').map((s:string)=>parseInt(s.trim())).filter(Boolean); const r=await fetch('/api/threads/batch-rename',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({thread_ids:ids})}); const d=await r.json(); setBatchRenameResults(d.results||[]); }} style={{ padding:'10px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Generate</button>
+                </div>
+              </div>
+              {batchRenameResults.length > 0 && (
+                <>
+                  {batchRenameResults.map((item:any, idx:number)=>(
+                    <div key={item.thread_id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'14px 18px', border:'1px solid var(--fg-border)', marginBottom:8 }}>
+                      <div style={{ color:'var(--fg-text3)', fontSize:11, marginBottom:6 }}>Thread #{item.thread_id} · Current: {item.current_title||'Untitled'}</div>
+                      <input defaultValue={item.suggested_title} onChange={e=>{ const copy=[...batchRenameResults]; copy[idx]={...copy[idx],suggested_title:e.target.value}; setBatchRenameResults(copy); }} style={{ width:'100%', padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+                    </div>
+                  ))}
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const renames=batchRenameResults.map((x:any)=>({thread_id:x.thread_id,new_title:x.suggested_title})); const r=await fetch('/api/threads/batch-rename/apply',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({renames})}); const d=await r.json(); alert(`Updated ${d.updated} threads!`); setBatchRenameResults([]); setBatchRenameIds(''); }} style={{ padding:'10px 20px', borderRadius:8, border:'none', background:'#22c55e', color:'#fff', fontWeight:700, cursor:'pointer', marginTop:8 }}>Apply All Renames</button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Health tab */}
+        {mainTab === 'wshealth' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>❤️ Workspace Health</h2>
+              {!wsHealth ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/health',{headers:{Authorization:`Bearer ${tok}`}}); setWsHealth(await r.json()); }} style={{ padding:'12px 24px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>Run Health Check</button>
+              ) : (
+                <>
+                  <div style={{ background: wsHealth.overall==='ok' ? 'rgba(34,197,94,0.1)' : 'rgba(251,146,60,0.1)', borderRadius:14, padding:'20px 24px', border:`2px solid ${wsHealth.overall==='ok'?'#22c55e':'var(--fg-orange)'}`, marginBottom:24, textAlign:'center' }}>
+                    <div style={{ fontSize:40, marginBottom:8 }}>{wsHealth.overall==='ok'?'✅':'⚠️'}</div>
+                    <div style={{ color:'var(--fg-text)', fontSize:18, fontWeight:700 }}>{wsHealth.overall==='ok'?'Workspace Healthy':'Needs Attention'}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:12, marginTop:4 }}>Checked {wsHealth.generated_at}</div>
+                  </div>
+                  {(wsHealth.checks||[]).map((chk:any)=>(
+                    <div key={chk.check} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'14px 18px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', alignItems:'center', gap:12 }}>
+                      <span style={{ fontSize:20 }}>{chk.severity==='ok'?'✅':chk.severity==='warn'?'⚠️':'ℹ️'}</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{chk.check.replace(/_/g,' ')}</div>
+                        <div style={{ color:'var(--fg-text3)', fontSize:12 }}>Count: {chk.count}</div>
+                      </div>
+                      <span style={{ fontSize:11, padding:'3px 10px', borderRadius:12, background: chk.severity==='ok'?'rgba(34,197,94,0.15)':chk.severity==='warn'?'rgba(251,146,60,0.15)':'rgba(59,130,246,0.15)', color: chk.severity==='ok'?'#22c55e':chk.severity==='warn'?'var(--fg-orange)':'#3b82f6', fontWeight:600 }}>{chk.severity.toUpperCase()}</span>
+                    </div>
+                  ))}
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/health',{headers:{Authorization:`Bearer ${tok}`}}); setWsHealth(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13, marginTop:8 }}>↻ Recheck</button>
                 </>
               )}
             </div>
