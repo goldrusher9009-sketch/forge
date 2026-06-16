@@ -4,6 +4,6 @@
   forge/forge-web-studio/app/components/ForgeApp.tsx `
   forge/push_all_pending.ps1
 
-& 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' commit -m "feat(forge): Batch12-60: +ai-chain-steps, ws-tags-v3, thread-notes-v2, user-rituals, ai-personas-v2"
+& 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' commit -m "feat(forge): Batch12-61: +ai-wf-triggers, ws-notices, thread-sums-v2, time-blocks, resp-templates"
 & 'C:\Program Files\Git\cmd\git.exe' -C 'C:\Users\teste\OneDrive\Documents\Claude\Projects' push origin main
 Write-Host "Pushed! Railway deploying in ~2 min."

@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -976,6 +976,26 @@ export default function ForgeApp() {
   const [newRtName, setNewRtName] = useState('');
   const [newRtTemplate, setNewRtTemplate] = useState('');
   const [newRtCat, setNewRtCat] = useState('general');
+  const [aiKnowledgeGaps, setAiKnowledgeGaps] = useState<any[]>([]);
+  const [newKgDomain, setNewKgDomain] = useState('');
+  const [newKgGap, setNewKgGap] = useState('');
+  const [newKgSeverity, setNewKgSeverity] = useState('medium');
+  const [wsBkmksV2, setWsBkmksV2] = useState<any[]>([]);
+  const [newBk2Url, setNewBk2Url] = useState('');
+  const [newBk2Title, setNewBk2Title] = useState('');
+  const [newBk2Desc, setNewBk2Desc] = useState('');
+  const [threadEventsV2, setThreadEventsV2] = useState<any[]>([]);
+  const [newTev2Thread, setNewTev2Thread] = useState('');
+  const [newTev2Type, setNewTev2Type] = useState('note');
+  const [newTev2Desc, setNewTev2Desc] = useState('');
+  const [userSkillRatings, setUserSkillRatings] = useState<any[]>([]);
+  const [newSrSkill, setNewSrSkill] = useState('');
+  const [newSrRating, setNewSrRating] = useState(3);
+  const [newSrNotes, setNewSrNotes] = useState('');
+  const [aiPromptChainsV2, setAiPromptChainsV2] = useState<any[]>([]);
+  const [newPc2Name, setNewPc2Name] = useState('');
+  const [newPc2Desc, setNewPc2Desc] = useState('');
+  const [newPc2Steps, setNewPc2Steps] = useState('Step 1,Step 2');
   const [threadArchivesV3, setThreadArchivesV3] = useState<any[]>([]);
   const [tav3ThreadId, setTav3ThreadId] = useState('');
   const [tav3Title, setTav3Title] = useState('');
@@ -5041,6 +5061,11 @@ export default function ForgeApp() {
             { id:'threadsumv2', icon:'📋', label:'Thread Sums V2' },
             { id:'usertimeblocks', icon:'⏰', label:'Time Blocks' },
             { id:'airesptemplates', icon:'📄', label:'Resp Templates' },
+            { id:'aiknowledgegaps', icon:'🧩', label:'Knowledge Gaps' },
+            { id:'wsbkmksv2', icon:'🔖', label:'Bookmarks V2' },
+            { id:'threadeventsv2', icon:'📅', label:'Thread Events V2' },
+            { id:'userskillratings', icon:'📊', label:'Skill Ratings' },
+            { id:'aipromptchainsv2', icon:'🔗', label:'Prompt Chains V2' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -11872,6 +11897,284 @@ export default function ForgeApp() {
       
       
       
+      
+      {mainTab==='airesptemplates' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128196; AI Response Templates</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Name" value={newRtName} onChange={e=>setNewRtName(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <input placeholder="Category" value={newRtCat} onChange={e=>setNewRtCat(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newRtName||!newRtTemplate)return;await fetch('/api/ai-response-templates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newRtName,template:newRtTemplate,category:newRtCat})});const r=await fetch('/api/ai-response-templates',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiRespTemplates(await r.json());setNewRtName('');setNewRtTemplate('');setNewRtCat('general');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          <textarea placeholder="Template text..." value={newRtTemplate} onChange={e=>setNewRtTemplate(e.target.value)} rows={3} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical',marginBottom:12,boxSizing:'border-box'}}/>
+          {aiRespTemplates.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-response-templates',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiRespTemplates(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {aiRespTemplates.map((t:any)=>(
+            <div key={t.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontWeight:600}}>{t.pinned?'&#128204; ':''}{t.name}</span>
+                <div style={{display:'flex',gap:6}}>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',background:'var(--bg3)',padding:'2px 6px',borderRadius:4}}>{t.category}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)'}}>used {t.use_count}x</span>
+                  <button onClick={async()=>{await fetch('/api/ai-response-templates/'+t.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/ai-response-templates',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiRespTemplates(await r.json());}} style={{padding:'2px 6px',background:'var(--bg3)',border:'none',borderRadius:4,color:'var(--fg-text2)',cursor:'pointer',fontSize:11}}>Pin</button>
+                  <button onClick={async()=>{await fetch('/api/ai-response-templates/'+t.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiRespTemplates((p:any)=>p.filter((x:any)=>x.id!==t.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+              <div style={{fontSize:12,color:'var(--fg-text2)',marginTop:4,whiteSpace:'pre-wrap'}}>{t.template}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='usertimeblocks' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#9200; Time Blocks</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Title" value={newTbTitle} onChange={e=>setNewTbTitle(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <input type="date" value={newTbDate} onChange={e=>setNewTbDate(e.target.value)} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="time" value={newTbStart} onChange={e=>setNewTbStart(e.target.value)} style={{width:100,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="time" value={newTbEnd} onChange={e=>setNewTbEnd(e.target.value)} style={{width:100,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <select value={newTbCat} onChange={e=>setNewTbCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              {['focus','meeting','break','admin','learning'].map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <button onClick={async()=>{if(!newTbTitle)return;await fetch('/api/user-time-blocks',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newTbTitle,start_time:newTbStart,end_time:newTbEnd,date:newTbDate,category:newTbCat})});const r=await fetch('/api/user-time-blocks',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserTimeBlocks(await r.json());setNewTbTitle('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          {userTimeBlocks.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-time-blocks',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserTimeBlocks(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {userTimeBlocks.map((b:any)=>(
+            <div key={b.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',opacity:b.completed?0.6:1}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <span style={{fontWeight:600,textDecoration:b.completed?'line-through':'none'}}>{b.title}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{b.date} {b.start_time}-{b.end_time}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',background:'var(--bg3)',padding:'2px 6px',borderRadius:4,marginLeft:6}}>{b.category}</span>
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  {!b.completed&&<button onClick={async()=>{await fetch('/api/user-time-blocks/'+b.id+'/complete',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserTimeBlocks((p:any)=>p.map((x:any)=>x.id===b.id?{...x,completed:1}:x));}} style={{padding:'2px 6px',background:'#16a34a',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Done</button>}
+                  <button onClick={async()=>{await fetch('/api/user-time-blocks/'+b.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserTimeBlocks((p:any)=>p.filter((x:any)=>x.id!==b.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='threadsumv2' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128203; Thread Summaries V2</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Thread ID" value={newTs2Thread} onChange={e=>setNewTs2Thread(e.target.value)} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Model" value={newTs2Model} onChange={e=>setNewTs2Model(e.target.value)} style={{width:100,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newTs2Thread||!newTs2Summary)return;await fetch('/api/thread-summaries-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newTs2Thread,summary:newTs2Summary,model:newTs2Model})});const r=await fetch('/api/thread-summaries-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadSummariesV2(await r.json());setNewTs2Thread('');setNewTs2Summary('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Save</button>
+          </div>
+          <textarea placeholder="Summary text..." value={newTs2Summary} onChange={e=>setNewTs2Summary(e.target.value)} rows={3} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical',marginBottom:12,boxSizing:'border-box'}}/>
+          {threadSummariesV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/thread-summaries-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadSummariesV2(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {threadSummariesV2.map((s:any)=>(
+            <div key={s.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                <span style={{fontWeight:600,fontSize:12}}>Thread: {s.thread_id}</span>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{fontSize:11,color:'var(--fg-text2)'}}>{s.model} &#8226; {s.word_count}w</span>
+                  <button onClick={async()=>{await fetch('/api/thread-summaries-v2/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadSummariesV2((p:any)=>p.filter((x:any)=>x.id!==s.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+              <div style={{fontSize:12,color:'var(--fg-text2)',whiteSpace:'pre-wrap'}}>{s.summary}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wsnotices' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128227; Workspace Notices</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Title" value={newWnTitle} onChange={e=>setNewWnTitle(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <select value={newWnLevel} onChange={e=>setNewWnLevel(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              {['info','warning','error','success'].map(l=><option key={l} value={l}>{l}</option>)}
+            </select>
+            <button onClick={async()=>{if(!newWnTitle)return;await fetch('/api/workspace-notices',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newWnTitle,body:newWnBody,level:newWnLevel})});const r=await fetch('/api/workspace-notices',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsNotices(await r.json());setNewWnTitle('');setNewWnBody('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Post</button>
+          </div>
+          <textarea placeholder="Body (optional)..." value={newWnBody} onChange={e=>setNewWnBody(e.target.value)} rows={2} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical',marginBottom:12,boxSizing:'border-box'}}/>
+          {wsNotices.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-notices',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsNotices(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {wsNotices.map((n:any)=>{
+            const colors:any={info:'#3b82f6',warning:'#f59e0b',error:'#dc2626',success:'#16a34a'};
+            return(
+            <div key={n.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'2px solid '+(colors[n.level]||'var(--border)')}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontWeight:600,color:colors[n.level]}}>{n.pinned?'&#128204; ':''}{n.title}</span>
+                <div style={{display:'flex',gap:6}}>
+                  <span style={{fontSize:11,padding:'2px 6px',borderRadius:4,background:colors[n.level],color:'#fff'}}>{n.level}</span>
+                  <button onClick={async()=>{await fetch('/api/workspace-notices/'+n.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-notices',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsNotices(await r.json());}} style={{padding:'2px 6px',background:'var(--bg3)',border:'none',borderRadius:4,color:'var(--fg-text2)',cursor:'pointer',fontSize:11}}>Pin</button>
+                  <button onClick={async()=>{await fetch('/api/workspace-notices/'+n.id+'/dismiss',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsNotices((p:any)=>p.filter((x:any)=>x.id!==n.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Dismiss</button>
+                </div>
+              </div>
+              {n.body&&<div style={{fontSize:12,color:'var(--fg-text2)',marginTop:4}}>{n.body}</div>}
+            </div>
+            );
+          })}
+        </div>
+      )}
+      
+      {mainTab==='aipromptchainsv2' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128279; Prompt Chains V2</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Name" value={newPc2Name} onChange={e=>setNewPc2Name(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <input placeholder="Description" value={newPc2Desc} onChange={e=>setNewPc2Desc(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <button onClick={async()=>{if(!newPc2Name||!newPc2Steps)return;await fetch('/api/ai-prompt-chains-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newPc2Name,description:newPc2Desc,steps:newPc2Steps.split(',').map((s:string)=>s.trim())})});const r=await fetch('/api/ai-prompt-chains-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPromptChainsV2(await r.json());setNewPc2Name('');setNewPc2Desc('');setNewPc2Steps('Step 1,Step 2');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          <input placeholder="Steps (comma-separated)" value={newPc2Steps} onChange={e=>setNewPc2Steps(e.target.value)} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',marginBottom:12,boxSizing:'border-box'}}/>
+          {aiPromptChainsV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-prompt-chains-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPromptChainsV2(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {aiPromptChainsV2.map((c:any)=>(
+            <div key={c.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div><span style={{fontWeight:600}}>{c.pinned?'&#128204; ':''}{c.name}</span><span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>runs: {c.run_count}</span></div>
+                <div style={{display:'flex',gap:6}}>
+                  <button onClick={async()=>{await fetch('/api/ai-prompt-chains-v2/'+c.id+'/run',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPromptChainsV2((p:any)=>p.map((x:any)=>x.id===c.id?{...x,run_count:x.run_count+1}:x));}} style={{padding:'2px 6px',background:'#7c3aed',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Run</button>
+                  <button onClick={async()=>{await fetch('/api/ai-prompt-chains-v2/'+c.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/ai-prompt-chains-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPromptChainsV2(await r.json());}} style={{padding:'2px 6px',background:'var(--bg3)',border:'none',borderRadius:4,color:'var(--fg-text2)',cursor:'pointer',fontSize:11}}>Pin</button>
+                  <button onClick={async()=>{await fetch('/api/ai-prompt-chains-v2/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPromptChainsV2((p:any)=>p.filter((x:any)=>x.id!==c.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+              {c.description&&<div style={{fontSize:11,color:'var(--fg-text2)',marginTop:4}}>{c.description}</div>}
+              <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:6}}>
+                {(()=>{try{const steps=JSON.parse(c.steps);return steps.map((s:string,i:number)=><span key={i} style={{fontSize:11,padding:'2px 8px',background:'var(--bg3)',borderRadius:12,color:'var(--fg-text2)'}}>{i+1}. {s}</span>);}catch(e){return <span style={{fontSize:11,color:'var(--fg-text2)'}}>{c.steps}</span>;}})()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='userskillratings' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128202; Skill Ratings</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Skill" value={newSrSkill} onChange={e=>setNewSrSkill(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <select value={newSrRating} onChange={e=>setNewSrRating(Number(e.target.value))} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              {[1,2,3,4,5].map(n=><option key={n} value={n}>{'&#11088;'.repeat(n)} {n}</option>)}
+            </select>
+            <input placeholder="Notes" value={newSrNotes} onChange={e=>setNewSrNotes(e.target.value)} style={{width:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newSrSkill)return;await fetch('/api/user-skill-ratings',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({skill:newSrSkill,rating:newSrRating,notes:newSrNotes})});const r=await fetch('/api/user-skill-ratings',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserSkillRatings(await r.json());setNewSrSkill('');setNewSrNotes('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Save</button>
+          </div>
+          {userSkillRatings.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-skill-ratings',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserSkillRatings(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {userSkillRatings.map((s:any)=>(
+            <div key={s.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontWeight:600}}>{s.skill}</span>
+                <span style={{marginLeft:8}}>{'&#11088;'.repeat(s.rating)}</span>
+                {s.notes&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{s.notes}</span>}
+              </div>
+              <button onClick={async()=>{await fetch('/api/user-skill-ratings/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserSkillRatings((p:any)=>p.filter((x:any)=>x.id!==s.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='threadeventsv2' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128197; Thread Events V2</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Thread ID" value={newTev2Thread} onChange={e=>setNewTev2Thread(e.target.value)} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Event type" value={newTev2Type} onChange={e=>setNewTev2Type(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Description" value={newTev2Desc} onChange={e=>setNewTev2Desc(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <button onClick={async()=>{if(!newTev2Thread||!newTev2Type)return;await fetch('/api/thread-events-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newTev2Thread,event_type:newTev2Type,description:newTev2Desc})});const r=await fetch('/api/thread-events-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadEventsV2(await r.json());setNewTev2Thread('');setNewTev2Desc('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          {threadEventsV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/thread-events-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadEventsV2(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {threadEventsV2.map((e:any)=>(
+            <div key={e.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontSize:11,padding:'2px 6px',background:'var(--bg3)',borderRadius:4,color:'var(--fg-text2)',marginRight:8}}>{e.event_type}</span>
+                <span style={{fontWeight:600,fontSize:12}}>#{e.thread_id}</span>
+                {e.description&&<span style={{fontSize:12,color:'var(--fg-text2)',marginLeft:8}}>{e.description}</span>}
+              </div>
+              <button onClick={async()=>{await fetch('/api/thread-events-v2/'+e.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadEventsV2((p:any)=>p.filter((x:any)=>x.id!==e.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wsbkmksv2' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128278; Bookmarks V2</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="URL" value={newBk2Url} onChange={e=>setNewBk2Url(e.target.value)} style={{flex:2,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:160}}/>
+            <input placeholder="Title" value={newBk2Title} onChange={e=>setNewBk2Title(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:100}}/>
+            <button onClick={async()=>{if(!newBk2Url)return;await fetch('/api/workspace-bookmarks-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({url:newBk2Url,title:newBk2Title,description:newBk2Desc})});const r=await fetch('/api/workspace-bookmarks-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBkmksV2(await r.json());setNewBk2Url('');setNewBk2Title('');setNewBk2Desc('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Save</button>
+          </div>
+          <input placeholder="Description" value={newBk2Desc} onChange={e=>setNewBk2Desc(e.target.value)} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',marginBottom:12,boxSizing:'border-box'}}/>
+          {wsBkmksV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-bookmarks-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBkmksV2(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {wsBkmksV2.map((b:any)=>(
+            <div key={b.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <span style={{fontWeight:600}}>{b.pinned?'&#128204; ':''}{b.title||b.url}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>visits: {b.visit_count}</span>
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  <button onClick={async()=>{await fetch('/api/workspace-bookmarks-v2/'+b.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-bookmarks-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBkmksV2(await r.json());}} style={{padding:'2px 6px',background:'var(--bg3)',border:'none',borderRadius:4,color:'var(--fg-text2)',cursor:'pointer',fontSize:11}}>Pin</button>
+                  <button onClick={async()=>{await fetch('/api/workspace-bookmarks-v2/'+b.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBkmksV2((p:any)=>p.filter((x:any)=>x.id!==b.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+              <div style={{fontSize:11,color:'var(--fg-text2)',marginTop:2,wordBreak:'break-all'}}>{b.url}</div>
+              {b.description&&<div style={{fontSize:11,color:'var(--fg-text2)',marginTop:2}}>{b.description}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='aiknowledgegaps' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#129329; AI Knowledge Gaps</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Domain" value={newKgDomain} onChange={e=>setNewKgDomain(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Gap description" value={newKgGap} onChange={e=>setNewKgGap(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:160}}/>
+            <select value={newKgSeverity} onChange={e=>setNewKgSeverity(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              {['low','medium','high','critical'].map(s=><option key={s} value={s}>{s}</option>)}
+            </select>
+            <button onClick={async()=>{if(!newKgDomain||!newKgGap)return;await fetch('/api/ai-knowledge-gaps',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({domain:newKgDomain,gap:newKgGap,severity:newKgSeverity})});const r=await fetch('/api/ai-knowledge-gaps',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps(await r.json());setNewKgDomain('');setNewKgGap('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          {aiKnowledgeGaps.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-knowledge-gaps',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {aiKnowledgeGaps.map((g:any)=>{
+            const sColors:any={low:'#6b7280',medium:'#f59e0b',high:'#f97316',critical:'#dc2626'};
+            return(
+            <div key={g.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',opacity:g.resolved?0.5:1}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <span style={{fontWeight:600,textDecoration:g.resolved?'line-through':'none'}}>{g.gap}</span>
+                  <span style={{fontSize:11,padding:'2px 6px',borderRadius:4,background:sColors[g.severity],color:'#fff',marginLeft:8}}>{g.severity}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',background:'var(--bg3)',padding:'2px 6px',borderRadius:4,marginLeft:6}}>{g.domain}</span>
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  {!g.resolved&&<button onClick={async()=>{await fetch('/api/ai-knowledge-gaps/'+g.id+'/resolve',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps((p:any)=>p.map((x:any)=>x.id===g.id?{...x,resolved:1}:x));}} style={{padding:'2px 6px',background:'#16a34a',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Resolve</button>}
+                  <button onClick={async()=>{await fetch('/api/ai-knowledge-gaps/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps((p:any)=>p.filter((x:any)=>x.id!==g.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+            </div>
+            );
+          })}
+        </div>
+      )}
+      {mainTab==='aiwftriggers' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#9889; Workflow Triggers</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Name" value={newWtName} onChange={e=>setNewWtName(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:100}}/>
+            <input placeholder="Event type" value={newWtEvent} onChange={e=>setNewWtEvent(e.target.value)} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Action" value={newWtAction} onChange={e=>setNewWtAction(e.target.value)} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newWtName||!newWtAction)return;await fetch('/api/ai-workflow-triggers',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newWtName,event_type:newWtEvent,condition:newWtCondition,action:newWtAction})});const r=await fetch('/api/ai-workflow-triggers',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiWorkflowTriggers(await r.json());setNewWtName('');setNewWtAction('');setNewWtCondition('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          <input placeholder="Condition (optional)" value={newWtCondition} onChange={e=>setNewWtCondition(e.target.value)} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',marginBottom:12,boxSizing:'border-box'}}/>
+          {aiWorkflowTriggers.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-workflow-triggers',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiWorkflowTriggers(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {aiWorkflowTriggers.map((t:any)=>(
+            <div key={t.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <span style={{fontWeight:600}}>{t.name}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>on: {t.event_type}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:6}}>fires: {t.fire_count}x</span>
+                </div>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{fontSize:11,padding:'2px 6px',borderRadius:4,background:t.enabled?'#16a34a':'#6b7280',color:'#fff'}}>{t.enabled?'ON':'OFF'}</span>
+                  <button onClick={async()=>{await fetch('/api/ai-workflow-triggers/'+t.id+'/toggle',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiWorkflowTriggers((p:any)=>p.map((x:any)=>x.id===t.id?{...x,enabled:x.enabled?0:1}:x));}} style={{padding:'2px 6px',background:'var(--bg3)',border:'none',borderRadius:4,color:'var(--fg-text2)',cursor:'pointer',fontSize:11}}>Toggle</button>
+                  <button onClick={async()=>{await fetch('/api/ai-workflow-triggers/'+t.id+'/fire',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiWorkflowTriggers((p:any)=>p.map((x:any)=>x.id===t.id?{...x,fire_count:x.fire_count+1}:x));}} style={{padding:'2px 6px',background:'#7c3aed',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Fire</button>
+                  <button onClick={async()=>{await fetch('/api/ai-workflow-triggers/'+t.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiWorkflowTriggers((p:any)=>p.filter((x:any)=>x.id!==t.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+              <div style={{fontSize:11,color:'var(--fg-text2)',marginTop:4}}>&#10230; {t.action}{t.condition?' | if: '+t.condition:''}</div>
+            </div>
+          ))}
+        </div>
+      )}
       {mainTab==='aichainsteps' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">&#9939; AI Chain Steps</h2>

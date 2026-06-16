@@ -14015,4 +14015,136 @@ app.delete('/api/ai-response-templates/:id', requireAuth, (req:any,res:any) => {
   res.json({ok:true});
 });
 
+
+// -- Batch 62 ----------------------------------------------------------------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_knowledge_gaps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, domain TEXT NOT NULL, gap TEXT NOT NULL,
+    severity TEXT DEFAULT 'medium', resolved INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_bookmarks_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, url TEXT NOT NULL, title TEXT,
+    description TEXT, tags TEXT, pinned INTEGER DEFAULT 0,
+    visit_count INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_events_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT NOT NULL, event_type TEXT NOT NULL,
+    description TEXT, metadata TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_skill_ratings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, skill TEXT NOT NULL, rating INTEGER DEFAULT 1,
+    notes TEXT, last_practiced TEXT,
+    UNIQUE(user_id, skill)
+  );
+  CREATE TABLE IF NOT EXISTS ai_prompt_chains_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, name TEXT NOT NULL, description TEXT,
+    steps TEXT NOT NULL, pinned INTEGER DEFAULT 0, run_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// AI Knowledge Gaps
+app.get('/api/ai-knowledge-gaps', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_knowledge_gaps WHERE user_id=? ORDER BY severity DESC,created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-knowledge-gaps', requireAuth, (req:any,res:any) => {
+  const {domain,gap,severity='medium'}=req.body;
+  if(!domain||!gap) return res.status(400).json({error:'domain+gap required'});
+  const r=db.prepare('INSERT INTO ai_knowledge_gaps (user_id,domain,gap,severity) VALUES (?,?,?,?)').run(req.user.id,domain,gap,severity);
+  res.json(db.prepare('SELECT * FROM ai_knowledge_gaps WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/ai-knowledge-gaps/:id/resolve', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_knowledge_gaps SET resolved=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-knowledge-gaps/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_knowledge_gaps WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Workspace Bookmarks V2
+app.get('/api/workspace-bookmarks-v2', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM workspace_bookmarks_v2 WHERE user_id=? ORDER BY pinned DESC,created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-bookmarks-v2', requireAuth, (req:any,res:any) => {
+  const {url,title,description,tags}=req.body;
+  if(!url) return res.status(400).json({error:'url required'});
+  const r=db.prepare('INSERT INTO workspace_bookmarks_v2 (user_id,url,title,description,tags) VALUES (?,?,?,?,?)').run(req.user.id,url,title,description,tags?JSON.stringify(tags):null);
+  res.json(db.prepare('SELECT * FROM workspace_bookmarks_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/workspace-bookmarks-v2/:id/visit', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE workspace_bookmarks_v2 SET visit_count=visit_count+1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.put('/api/workspace-bookmarks-v2/:id/pin', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE workspace_bookmarks_v2 SET pinned=1-pinned WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-bookmarks-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM workspace_bookmarks_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Thread Events V2
+app.get('/api/thread-events-v2', requireAuth, (req:any,res:any) => {
+  const {thread_id}=req.query;
+  if(thread_id) return res.json(db.prepare('SELECT * FROM thread_events_v2 WHERE user_id=? AND thread_id=? ORDER BY created_at DESC').all(req.user.id,thread_id));
+  res.json(db.prepare('SELECT * FROM thread_events_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/thread-events-v2', requireAuth, (req:any,res:any) => {
+  const {thread_id,event_type,description,metadata}=req.body;
+  if(!thread_id||!event_type) return res.status(400).json({error:'thread_id+event_type required'});
+  const r=db.prepare('INSERT INTO thread_events_v2 (user_id,thread_id,event_type,description,metadata) VALUES (?,?,?,?,?)').run(req.user.id,thread_id,event_type,description,metadata?JSON.stringify(metadata):null);
+  res.json(db.prepare('SELECT * FROM thread_events_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/thread-events-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM thread_events_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// User Skill Ratings
+app.get('/api/user-skill-ratings', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM user_skill_ratings WHERE user_id=? ORDER BY rating DESC').all(req.user.id));
+});
+app.post('/api/user-skill-ratings', requireAuth, (req:any,res:any) => {
+  const {skill,rating=1,notes,last_practiced}=req.body;
+  if(!skill) return res.status(400).json({error:'skill required'});
+  const r=db.prepare('INSERT INTO user_skill_ratings (user_id,skill,rating,notes,last_practiced) VALUES (?,?,?,?,?) ON CONFLICT(user_id,skill) DO UPDATE SET rating=excluded.rating,notes=excluded.notes,last_practiced=excluded.last_practiced').run(req.user.id,skill,rating,notes,last_practiced);
+  res.json(db.prepare('SELECT * FROM user_skill_ratings WHERE user_id=? AND skill=?').get(req.user.id,skill));
+});
+app.delete('/api/user-skill-ratings/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM user_skill_ratings WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// AI Prompt Chains V2
+app.get('/api/ai-prompt-chains-v2', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_prompt_chains_v2 WHERE user_id=? ORDER BY pinned DESC,run_count DESC').all(req.user.id));
+});
+app.post('/api/ai-prompt-chains-v2', requireAuth, (req:any,res:any) => {
+  const {name,description,steps}=req.body;
+  if(!name||!steps) return res.status(400).json({error:'name+steps required'});
+  const r=db.prepare('INSERT INTO ai_prompt_chains_v2 (user_id,name,description,steps) VALUES (?,?,?,?)').run(req.user.id,name,description,typeof steps==='string'?steps:JSON.stringify(steps));
+  res.json(db.prepare('SELECT * FROM ai_prompt_chains_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/ai-prompt-chains-v2/:id/run', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_prompt_chains_v2 SET run_count=run_count+1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json(db.prepare('SELECT * FROM ai_prompt_chains_v2 WHERE id=?').get(req.params.id));
+});
+app.put('/api/ai-prompt-chains-v2/:id/pin', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_prompt_chains_v2 SET pinned=1-pinned WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-prompt-chains-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_prompt_chains_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
