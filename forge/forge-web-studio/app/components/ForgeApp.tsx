@@ -4874,6 +4874,41 @@ export default function ForgeApp() {
             { id:'workspace', icon:'🛠', label:'Workspace' },
             { id:'super', icon:'🌟', label:'SuperAgent' },
             { id:'skills', icon:'🧩', label:'Skills & Tools' },
+            { id:'aichains', icon:'⛓️', label:'AI Chains' },
+            { id:'wsreports', icon:'📊', label:'WS Reports' },
+            { id:'aitestcases', icon:'🧪', label:'AI Test Cases' },
+            { id:'ctxwindows', icon:'🪟', label:'Context Windows' },
+            { id:'usergoals', icon:'🎯', label:'User Goals' },
+            { id:'aipersonas', icon:'🎭', label:'AI Personas' },
+            { id:'wseventsb51', icon:'📅', label:'WS Events' },
+            { id:'aioutputs', icon:'🖨️', label:'AI Outputs' },
+            { id:'threadperms', icon:'🔐', label:'Thread Perms' },
+            { id:'userbadges', icon:'🏅', label:'User Badges' },
+            { id:'aifeedback', icon:'🔁', label:'AI Feedback' },
+            { id:'wsrulesb52', icon:'⚖️', label:'WS Rules' },
+            { id:'msgthreadsv2', icon:'💬', label:'Threads V2' },
+            { id:'embedmeta', icon:'🧮', label:'Embed Meta' },
+            { id:'wsshortcuts', icon:'⌨️', label:'WS Shortcuts' },
+            { id:'aievalsb53', icon:'📝', label:'AI Evals' },
+            { id:'wskpis', icon:'📈', label:'WS KPIs' },
+            { id:'threadarchb53', icon:'🗄️', label:'Thread Archive' },
+            { id:'ctxinject', icon:'💉', label:'Ctx Inject' },
+            { id:'wswatchers', icon:'👁️', label:'WS Watchers' },
+            { id:'aitaskq', icon:'📋', label:'AI Task Queue' },
+            { id:'wsglossary', icon:'📖', label:'WS Glossary' },
+            { id:'airoutingrules', icon:'🔀', label:'AI Routing' },
+            { id:'threadreactsum', icon:'😄', label:'Reactions' },
+            { id:'wsintegrations', icon:'🔌', label:'WS Integrations' },
+            { id:'aiplaybooks', icon:'📒', label:'AI Playbooks' },
+            { id:'wschannels', icon:'#️⃣', label:'WS Channels' },
+            { id:'aibenchmarks', icon:'⚡', label:'AI Benchmarks' },
+            { id:'msgthreadarch', icon:'🗃️', label:'Thread Archive' },
+            { id:'aibudgets', icon:'💵', label:'AI Budgets' },
+            { id:'aisnippets', icon:'✂️', label:'AI Snippets' },
+            { id:'wsannounceb56', icon:'📢', label:'Announcements' },
+            { id:'aimnodes', icon:'🧠', label:'Memory Nodes' },
+            { id:'threadlabv2', icon:'🏷️', label:'Thread Labels' },
+            { id:'ustreaksv2', icon:'🔥', label:'Streaks' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -11705,6 +11740,148 @@ export default function ForgeApp() {
       
       
       
+      {mainTab==='aisnippets' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">✂️ AI Snippets</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newSnTitle} onChange={e=>setNewSnTitle(e.target.value)} placeholder="Title" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <select value={newSnLang} onChange={e=>setNewSnLang(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['text','javascript','typescript','python','bash','sql','json'].map(l=><option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+          <textarea value={newSnContent} onChange={e=>setNewSnContent(e.target.value)} placeholder="Snippet content..." rows={4} className="w-full border rounded px-2 py-1 text-sm font-mono" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newSnTitle)return;await fetch('/api/ai-snippets',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newSnTitle,content:newSnContent,language:newSnLang})});const r=await fetch('/api/ai-snippets',{headers:{'Authorization':'Bearer '+tok}});setAiSnippets(await r.json());setNewSnTitle('');setNewSnContent('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add Snippet</button>
+          <div className="space-y-2">
+            {aiSnippets.map((s:any)=>(
+              <div key={s.id} className="rounded p-3 flex justify-between items-start gap-2" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{s.pinned?'📌 ':''}{s.title}</span>
+                    <span className="text-xs px-1 rounded" style={{background:'rgba(99,102,241,0.2)',color:'#818cf8'}}>{s.language}</span>
+                  </div>
+                  <pre className="text-xs overflow-x-auto" style={{color:'var(--fg-text2)',whiteSpace:'pre-wrap',wordBreak:'break-all'}}>{s.content?.slice(0,200)}</pre>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/ai-snippets/${s.id}/pin`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});const r=await fetch('/api/ai-snippets',{headers:{'Authorization':'Bearer '+tok}});setAiSnippets(await r.json());}} style={{background:'var(--fg-bg)',border:'1px solid var(--fg-border)',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11,color:'var(--fg-text3)'}}>📌</button>
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/ai-snippets/${s.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiSnippets(aiSnippets.filter((x:any)=>x.id!==s.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+            ))}
+            {aiSnippets.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No snippets yet.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='wsannounceb56' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">📢 Workspace Announcements</h2>
+          <input value={newAnTitle} onChange={e=>setNewAnTitle(e.target.value)} placeholder="Title" className="w-full border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <textarea value={newAnBody} onChange={e=>setNewAnBody(e.target.value)} placeholder="Announcement body..." rows={3} className="w-full border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <div className="flex gap-2">
+            <select value={newAnAudience} onChange={e=>setNewAnAudience(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['all','admins','team','public'].map(a=><option key={a} value={a}>{a}</option>)}
+            </select>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newAnTitle)return;await fetch('/api/workspace-announcements',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newAnTitle,body:newAnBody,audience:newAnAudience})});const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':'Bearer '+tok}});setWsAnnouncementsB56(await r.json());setNewAnTitle('');setNewAnBody('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Post</button>
+          </div>
+          <div className="space-y-2">
+            {wsAnnouncementsB56.map((a:any)=>(
+              <div key={a.id} className="rounded p-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-start">
+                  <div><span className="font-semibold text-sm" style={{color:'var(--fg-text)'}}>{a.pinned?'📌 ':''}{a.title}</span><span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>[{a.audience}]</span></div>
+                  <div className="flex gap-1">
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/workspace-announcements/${a.id}/pin`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':'Bearer '+tok}});setWsAnnouncementsB56(await r.json());}} style={{background:'var(--fg-bg)',border:'1px solid var(--fg-border)',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11,color:'var(--fg-text3)'}}>📌</button>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setWsAnnouncementsB56(wsAnnouncementsB56.filter((x:any)=>x.id!==a.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+                <p className="text-xs mt-1" style={{color:'var(--fg-text2)'}}>{a.body}</p>
+              </div>
+            ))}
+            {wsAnnouncementsB56.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No announcements.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='aimnodes' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🧠 AI Memory Nodes</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newMnLabel} onChange={e=>setNewMnLabel(e.target.value)} placeholder="Label" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <select value={newMnType} onChange={e=>setNewMnType(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['fact','preference','context','skill','memory'].map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <textarea value={newMnContent} onChange={e=>setNewMnContent(e.target.value)} placeholder="Memory content..." rows={3} className="w-full border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newMnLabel)return;await fetch('/api/ai-memory-nodes',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({label:newMnLabel,content:newMnContent,node_type:newMnType})});const r=await fetch('/api/ai-memory-nodes',{headers:{'Authorization':'Bearer '+tok}});setAiMemoryNodes(await r.json());setNewMnLabel('');setNewMnContent('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add Node</button>
+          <div className="space-y-2">
+            {aiMemoryNodes.map((n:any)=>(
+              <div key={n.id} className="rounded p-3 flex justify-between items-center gap-2" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{n.label}</span>
+                  <span className="ml-2 text-xs px-1 rounded" style={{background:'rgba(99,102,241,0.2)',color:'#818cf8'}}>{n.node_type}</span>
+                  <span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>str:{Number(n.strength).toFixed(1)}</span>
+                  <p className="text-xs mt-1 truncate" style={{color:'var(--fg-text2)'}}>{n.content}</p>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/ai-memory-nodes/${n.id}/reinforce`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});const r=await fetch('/api/ai-memory-nodes',{headers:{'Authorization':'Bearer '+tok}});setAiMemoryNodes(await r.json());}} style={{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>+Reinforce</button>
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/ai-memory-nodes/${n.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiMemoryNodes(aiMemoryNodes.filter((x:any)=>x.id!==n.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+            ))}
+            {aiMemoryNodes.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No memory nodes.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='threadlabv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🏷️ Thread Labels V2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newTlThreadId} onChange={e=>setNewTlThreadId(e.target.value)} placeholder="Thread ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:120}} />
+            <input value={newTlLabelB56} onChange={e=>setNewTlLabelB56(e.target.value)} placeholder="Label" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input type="color" value={newTlColorB56} onChange={e=>setNewTlColorB56(e.target.value)} style={{width:36,height:32,borderRadius:4,border:'1px solid var(--fg-border)',cursor:'pointer',background:'none'}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newTlLabelB56)return;await fetch('/api/thread-labels-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({thread_id:newTlThreadId,label:newTlLabelB56,color:newTlColorB56})});const r=await fetch('/api/thread-labels-v2',{headers:{'Authorization':'Bearer '+tok}});setThreadLabelsV2(await r.json());setNewTlLabelB56('');setNewTlThreadId('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add Label</button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {threadLabelsV2.map((l:any)=>(
+              <div key={l.id} className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{background:l.color+'22',color:l.color,border:`1px solid ${l.color}44`}}>
+                <span>{l.label}</span>
+                {l.thread_id&&<span style={{opacity:0.6}}>#{l.thread_id}</span>}
+                <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/thread-labels-v2/${l.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setThreadLabelsV2(threadLabelsV2.filter((x:any)=>x.id!==l.id));}} style={{background:'none',border:'none',cursor:'pointer',color:'inherit',opacity:0.7,fontSize:10,marginLeft:2}}>✕</button>
+              </div>
+            ))}
+            {threadLabelsV2.length===0&&<div style={{color:'var(--fg-text3)',fontSize:13}}>No labels yet.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='ustreaksv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">🔥 User Streaks V2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <select value={newStType} onChange={e=>setNewStType(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['daily','weekly','writing','coding','review','focus'].map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;await fetch('/api/user-streaks-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({streak_type:newStType})});const r=await fetch('/api/user-streaks-v2',{headers:{'Authorization':'Bearer '+tok}});setUserStreaksV2(await r.json());}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add Streak</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/user-streaks-v2',{headers:{'Authorization':'Bearer '+tok}});setUserStreaksV2(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Refresh</button>
+          </div>
+          <div className="space-y-3">
+            {userStreaksV2.map((s:any)=>(
+              <div key={s.id} className="rounded p-3 flex justify-between items-center gap-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div>
+                  <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{s.streak_type}</span>
+                  <div className="flex gap-4 mt-1">
+                    <span className="text-xs" style={{color:'#f97316'}}>🔥 Current: {s.current_count}</span>
+                    <span className="text-xs" style={{color:'var(--fg-text3)'}}>Best: {s.best_count}</span>
+                    <span className="text-xs" style={{color:'var(--fg-text3)'}}>Last: {s.last_date||'never'}</span>
+                  </div>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');const res=await fetch(`/api/user-streaks-v2/${s.id}/increment`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});const data=await res.json();setUserStreaksV2(userStreaksV2.map((x:any)=>x.id===s.id?{...x,...data}:x));}} style={{background:'rgba(249,115,22,0.15)',color:'#fb923c',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>+1🔥</button>
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/user-streaks-v2/${s.id}/reset`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setUserStreaksV2(userStreaksV2.map((x:any)=>x.id===s.id?{...x,current_count:0}:x));}} style={{background:'var(--fg-bg)',border:'1px solid var(--fg-border)',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11,color:'var(--fg-text3)'}}>Reset</button>
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/user-streaks-v2/${s.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setUserStreaksV2(userStreaksV2.filter((x:any)=>x.id!==s.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+            ))}
+            {userStreaksV2.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No streaks tracked.</div>}
+          </div>
+        </div>
+      )}
       {mainTab==='aiplaybooks' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">📒 AI Playbooks</h2>
