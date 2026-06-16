@@ -11562,4 +11562,163 @@ app.get('/api/token-ledger/summary', authenticateToken, (req: any, res: any) => 
   res.json({ daily, byModel });
 });
 
+
+// ============================================================
+// BATCH 43: ai_evaluations, workspace_events, response_templates, thread_archives_v3, user_badges
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_evaluations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    prompt TEXT NOT NULL,
+    response TEXT NOT NULL,
+    score INTEGER CHECK(score BETWEEN 1 AND 5),
+    criteria TEXT DEFAULT 'general',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    event_type TEXT NOT NULL,
+    payload TEXT DEFAULT '{}',
+    source TEXT DEFAULT 'user',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS response_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    template TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    variables TEXT DEFAULT '[]',
+    uses INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS thread_archives_v3 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    thread_id INTEGER NOT NULL,
+    title TEXT,
+    summary TEXT,
+    message_count INTEGER DEFAULT 0,
+    archived_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, thread_id)
+  );
+  CREATE TABLE IF NOT EXISTS user_badges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    badge TEXT NOT NULL,
+    label TEXT NOT NULL,
+    description TEXT,
+    earned_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, badge)
+  );
+`);
+
+// AI Evaluations
+app.post('/api/ai-evaluations', authenticateToken, (req: any, res: any) => {
+  const { prompt, response, score, criteria, notes } = req.body;
+  if (!prompt || !response || !score) return res.status(400).json({ error: 'prompt, response, score required' });
+  const r = db.prepare('INSERT INTO ai_evaluations (user_id,prompt,response,score,criteria,notes) VALUES (?,?,?,?,?,?)').run(req.user.id, prompt, response, score, criteria||'general', notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/ai-evaluations', authenticateToken, (req: any, res: any) => {
+  const { criteria, min_score } = req.query as any;
+  let q = 'SELECT * FROM ai_evaluations WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (criteria) { q += ' AND criteria=?'; p.push(criteria); }
+  if (min_score) { q += ' AND score>=?'; p.push(parseInt(min_score)); }
+  q += ' ORDER BY created_at DESC LIMIT 50';
+  res.json(db.prepare(q).all(...p));
+});
+app.get('/api/ai-evaluations/stats', authenticateToken, (req: any, res: any) => {
+  const stats = db.prepare('SELECT criteria, AVG(score) as avg_score, COUNT(*) as count, MIN(score) as min_score, MAX(score) as max_score FROM ai_evaluations WHERE user_id=? GROUP BY criteria').all(req.user.id);
+  res.json(stats);
+});
+app.delete('/api/ai-evaluations/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_evaluations WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Events
+app.post('/api/workspace-events', authenticateToken, (req: any, res: any) => {
+  const { event_type, payload, source } = req.body;
+  if (!event_type) return res.status(400).json({ error: 'event_type required' });
+  const r = db.prepare('INSERT INTO workspace_events (user_id,event_type,payload,source) VALUES (?,?,?,?)').run(req.user.id, event_type, JSON.stringify(payload||{}), source||'user');
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/workspace-events', authenticateToken, (req: any, res: any) => {
+  const { event_type, limit } = req.query as any;
+  let q = 'SELECT * FROM workspace_events WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (event_type) { q += ' AND event_type=?'; p.push(event_type); }
+  q += ' ORDER BY created_at DESC LIMIT ' + (parseInt(limit)||50);
+  const rows = (db.prepare(q).all(...p) as any[]).map((r: any) => ({ ...r, payload: JSON.parse(r.payload||'{}') }));
+  res.json(rows);
+});
+app.get('/api/workspace-events/types', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT event_type, COUNT(*) as count, MAX(created_at) as last_seen FROM workspace_events WHERE user_id=? GROUP BY event_type ORDER BY count DESC').all(req.user.id));
+});
+
+// Response Templates
+app.get('/api/response-templates', authenticateToken, (req: any, res: any) => {
+  const { category } = req.query as any;
+  let q = 'SELECT * FROM response_templates WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (category) { q += ' AND category=?'; p.push(category); }
+  q += ' ORDER BY uses DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/response-templates', authenticateToken, (req: any, res: any) => {
+  const { name, template, category, variables } = req.body;
+  if (!name || !template) return res.status(400).json({ error: 'name and template required' });
+  const r = db.prepare('INSERT INTO response_templates (user_id,name,template,category,variables) VALUES (?,?,?,?,?)').run(req.user.id, name, template, category||'general', JSON.stringify(variables||[]));
+  res.json({ id: r.lastInsertRowid });
+});
+app.post('/api/response-templates/:id/use', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE response_templates SET uses=uses+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  const row = db.prepare('SELECT * FROM response_templates WHERE id=?').get(req.params.id);
+  res.json(row);
+});
+app.delete('/api/response-templates/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM response_templates WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Thread Archives v3
+app.post('/api/thread-archives-v3', authenticateToken, (req: any, res: any) => {
+  const { thread_id, title, summary, message_count } = req.body;
+  if (!thread_id) return res.status(400).json({ error: 'thread_id required' });
+  try {
+    const r = db.prepare('INSERT INTO thread_archives_v3 (user_id,thread_id,title,summary,message_count) VALUES (?,?,?,?,?) ON CONFLICT(user_id,thread_id) DO UPDATE SET title=excluded.title,summary=excluded.summary,archived_at=datetime("now")').run(req.user.id, thread_id, title||'', summary||'', message_count||0);
+    res.json({ id: r.lastInsertRowid });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/thread-archives-v3', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM thread_archives_v3 WHERE user_id=? ORDER BY archived_at DESC').all(req.user.id));
+});
+app.delete('/api/thread-archives-v3/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_archives_v3 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// User Badges
+app.get('/api/user-badges', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM user_badges WHERE user_id=? ORDER BY earned_at DESC').all(req.user.id));
+});
+app.post('/api/user-badges', authenticateToken, (req: any, res: any) => {
+  const { badge, label, description } = req.body;
+  if (!badge || !label) return res.status(400).json({ error: 'badge and label required' });
+  try {
+    const r = db.prepare('INSERT INTO user_badges (user_id,badge,label,description) VALUES (?,?,?,?)').run(req.user.id, badge, label, description||'');
+    res.json({ id: r.lastInsertRowid });
+  } catch { res.status(409).json({ error: 'badge already earned' }); }
+});
+app.delete('/api/user-badges/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_badges WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
