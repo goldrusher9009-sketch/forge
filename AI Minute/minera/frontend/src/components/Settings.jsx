@@ -25,6 +25,27 @@ export default function Settings({ address, notify }) {
         &nbsp;&nbsp;-d '{`{"messages":[{"role":"user","content":"hi"}]}`}'</div>
       </div>
       <div style={{border:"3px solid var(--ink)",padding:14,marginBottom:14}}>
+        <div className="mono" style={{fontSize:11,fontWeight:700,marginBottom:8,color:"var(--blue)"}}>⚙ SETTINGS BACKUP</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn ghost" style={{fontSize:11,padding:"8px 12px"}} onClick={()=>{
+            const data={theme:document.body.dataset.theme||"light",preset:document.body.dataset.preset||"blueprint"};
+            const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+            const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="minera-settings.json"; a.click();
+            notify("Settings exported");
+          }}>⬇ EXPORT</button>
+          <label className="btn ghost" style={{fontSize:11,padding:"8px 12px",cursor:"pointer"}}>⬆ IMPORT
+            <input type="file" accept="application/json" style={{display:"none"}} onChange={(e)=>{
+              const file=e.target.files?.[0]; if(!file)return; const rd=new FileReader();
+              rd.onload=()=>{ try{ const d=JSON.parse(rd.result);
+                if(d.theme){document.body.dataset.theme=d.theme;}
+                if(d.preset && d.preset!=="blueprint"){document.body.dataset.preset=d.preset;} else delete document.body.dataset.preset;
+                pick(d.preset||"blueprint"); notify("Settings imported"); }catch{ notify("Invalid settings file"); } };
+              rd.readAsText(file); e.target.value="";
+            }}/>
+          </label>
+        </div>
+      </div>
+      <div style={{border:"3px solid var(--ink)",padding:14,marginBottom:14}}>
         <div className="mono" style={{fontSize:11,fontWeight:700,marginBottom:8,color:"var(--blue)"}}>🎨 THEME PRESET</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           {["blueprint","terminal","riso"].map((p)=>(

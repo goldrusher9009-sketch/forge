@@ -8836,4 +8836,160 @@ app.get('/api/workspace-events/upcoming', authMiddleware, (req: any, res: any) =
   res.json(db.prepare('SELECT * FROM workspace_events WHERE user_id=? AND event_date>=? ORDER BY event_date ASC, event_time ASC LIMIT ?').all(req.user.id, today, limit));
 });
 
+
+// ── Batch 27: AI Personas Library, Thread Challenges, Workspace Glossary, Smart Suggestions, Thread Scoring ──
+
+// ai_personas_lib table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_personas_lib (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  system_prompt TEXT NOT NULL,
+  avatar TEXT DEFAULT '🤖',
+  use_count INTEGER DEFAULT 0,
+  is_favorite INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// thread_challenges table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_challenges (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  target_threads INTEGER DEFAULT 10,
+  current_threads INTEGER DEFAULT 0,
+  target_messages INTEGER DEFAULT 100,
+  current_messages INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'active',
+  deadline TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// workspace_glossary table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_glossary (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  term TEXT NOT NULL,
+  definition TEXT NOT NULL,
+  category TEXT DEFAULT 'general',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// thread_scores table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  thread_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  clarity INTEGER DEFAULT 0,
+  depth INTEGER DEFAULT 0,
+  usefulness INTEGER DEFAULT 0,
+  notes TEXT DEFAULT '',
+  scored_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(thread_id, user_id)
+)`);
+
+// ── AI Personas Library ──
+app.get('/api/personas-lib', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_personas_lib WHERE user_id=? ORDER BY is_favorite DESC, use_count DESC, id DESC').all(req.user.id));
+});
+app.post('/api/personas-lib', authMiddleware, (req: any, res: any) => {
+  const { name, description, system_prompt, avatar } = req.body;
+  if (!name?.trim() || !system_prompt?.trim()) return res.status(400).json({ error: 'name and system_prompt required' });
+  const r = db.prepare('INSERT INTO ai_personas_lib (user_id,name,description,system_prompt,avatar) VALUES (?,?,?,?,?)').run(req.user.id, name.trim(), description||'', system_prompt.trim(), avatar||'🤖');
+  res.json({ id: r.lastInsertRowid, name, avatar });
+});
+app.put('/api/personas-lib/:id/favorite', authMiddleware, (req: any, res: any) => {
+  const p: any = db.prepare('SELECT is_favorite FROM ai_personas_lib WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!p) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE ai_personas_lib SET is_favorite=? WHERE id=?').run(p.is_favorite?0:1, req.params.id);
+  res.json({ is_favorite: p.is_favorite?0:1 });
+});
+app.post('/api/personas-lib/:id/use', authMiddleware, (req: any, res: any) => {
+  db.prepare('UPDATE ai_personas_lib SET use_count=use_count+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  const p: any = db.prepare('SELECT * FROM ai_personas_lib WHERE id=?').get(req.params.id);
+  res.json({ system_prompt: p?.system_prompt || '' });
+});
+app.delete('/api/personas-lib/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_personas_lib WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Thread Challenges ──
+app.get('/api/thread-challenges', authMiddleware, (req: any, res: any) => {
+  // Sync current stats before returning
+  const stats: any = db.prepare('SELECT COUNT(*) as threads, SUM(1) as msgs FROM threads WHERE user_id=?').get(req.user.id);
+  const msgCount: any = db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?)').get(req.user.id);
+  db.prepare('UPDATE thread_challenges SET current_threads=?, current_messages=? WHERE user_id=? AND status="active"').run(stats?.threads||0, msgCount?.c||0, req.user.id);
+  res.json(db.prepare('SELECT * FROM thread_challenges WHERE user_id=? ORDER BY status ASC, id DESC').all(req.user.id));
+});
+app.post('/api/thread-challenges', authMiddleware, (req: any, res: any) => {
+  const { title, description, target_threads, target_messages, deadline } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO thread_challenges (user_id,title,description,target_threads,target_messages,deadline) VALUES (?,?,?,?,?,?)').run(req.user.id, title.trim(), description||'', target_threads||10, target_messages||100, deadline||null);
+  res.json({ id: r.lastInsertRowid, title });
+});
+app.put('/api/thread-challenges/:id/complete', authMiddleware, (req: any, res: any) => {
+  db.prepare('UPDATE thread_challenges SET status="completed" WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/thread-challenges/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_challenges WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Workspace Glossary ──
+app.get('/api/workspace-glossary', authMiddleware, (req: any, res: any) => {
+  const { category, q } = req.query;
+  let query = 'SELECT * FROM workspace_glossary WHERE user_id=?';
+  const params: any[] = [req.user.id];
+  if (category) { query += ' AND category=?'; params.push(category); }
+  if (q) { query += ' AND (term LIKE ? OR definition LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
+  query += ' ORDER BY term ASC';
+  res.json(db.prepare(query).all(...params));
+});
+app.post('/api/workspace-glossary', authMiddleware, (req: any, res: any) => {
+  const { term, definition, category } = req.body;
+  if (!term?.trim() || !definition?.trim()) return res.status(400).json({ error: 'term and definition required' });
+  const r = db.prepare('INSERT INTO workspace_glossary (user_id,term,definition,category) VALUES (?,?,?,?)').run(req.user.id, term.trim(), definition.trim(), category||'general');
+  res.json({ id: r.lastInsertRowid, term, definition });
+});
+app.put('/api/workspace-glossary/:id', authMiddleware, (req: any, res: any) => {
+  const { term, definition, category } = req.body;
+  db.prepare('UPDATE workspace_glossary SET term=COALESCE(?,term),definition=COALESCE(?,definition),category=COALESCE(?,category) WHERE id=? AND user_id=?').run(term||null,definition||null,category||null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-glossary/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_glossary WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Thread Scoring ──
+app.get('/api/thread-scores', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT ts.*, t.title FROM thread_scores ts JOIN threads t ON ts.thread_id=t.id WHERE ts.user_id=? ORDER BY ts.scored_at DESC LIMIT 20').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/thread-scores', authMiddleware, (req: any, res: any) => {
+  const { thread_id, clarity, depth, usefulness, notes } = req.body;
+  if (!thread_id) return res.status(400).json({ error: 'thread_id required' });
+  db.prepare('INSERT OR REPLACE INTO thread_scores (thread_id,user_id,clarity,depth,usefulness,notes,scored_at) VALUES (?,?,?,?,?,?,?)').run(thread_id, req.user.id, clarity||0, depth||0, usefulness||0, notes||'', new Date().toISOString());
+  res.json({ ok: true });
+});
+app.get('/api/thread-scores/leaderboard', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT ts.thread_id, t.title, (ts.clarity+ts.depth+ts.usefulness) as total_score, ts.clarity, ts.depth, ts.usefulness FROM thread_scores ts JOIN threads t ON ts.thread_id=t.id WHERE ts.user_id=? ORDER BY total_score DESC LIMIT 10').all(req.user.id);
+  res.json(rows);
+});
+app.get('/api/workspace/smart-suggestions', authMiddleware, (req: any, res: any) => {
+  const unscored: any = db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=? AND id NOT IN (SELECT thread_id FROM thread_scores WHERE user_id=?)').get(req.user.id, req.user.id);
+  const longThreads: any[] = db.prepare('SELECT t.id, t.title, COUNT(m.id) as msg_count FROM threads t JOIN messages m ON m.thread_id=t.id WHERE t.user_id=? GROUP BY t.id HAVING msg_count>20 ORDER BY msg_count DESC LIMIT 3').all(req.user.id);
+  const dueCards: any = db.prepare('SELECT COUNT(*) as c FROM knowledge_cards WHERE user_id=? AND (last_reviewed IS NULL OR last_reviewed < ?)').get(req.user.id, new Date(Date.now()-86400000).toISOString());
+  const suggestions: string[] = [];
+  if (unscored?.c > 0) suggestions.push(`Score ${unscored.c} unrated thread${unscored.c>1?'s':''} to track quality`);
+  longThreads.forEach((t:any) => suggestions.push(`Thread "${t.title}" has ${t.msg_count} messages — consider archiving`));
+  if (dueCards?.c > 0) suggestions.push(`${dueCards.c} knowledge card${dueCards.c>1?'s':''} due for review`);
+  suggestions.push('Create a prompt chain for your most-used workflows');
+  res.json({ suggestions: suggestions.slice(0,5) });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -696,6 +696,26 @@ export default function ForgeApp() {
   const [newEvColor, setNewEvColor] = useState('#6366f1');
   const [compareIds, setCompareIds] = useState('');
   const [compareResults, setCompareResults] = useState<any[]>([]);
+  const [personasLib, setPersonasLib] = useState<any[]>([]);
+  const [newPlName, setNewPlName] = useState('');
+  const [newPlPrompt, setNewPlPrompt] = useState('');
+  const [newPlAvatar, setNewPlAvatar] = useState('🤖');
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [newChTitle, setNewChTitle] = useState('');
+  const [newChTargetT, setNewChTargetT] = useState(10);
+  const [newChTargetM, setNewChTargetM] = useState(100);
+  const [glossary, setGlossary] = useState<any[]>([]);
+  const [newGlTerm, setNewGlTerm] = useState('');
+  const [newGlDef, setNewGlDef] = useState('');
+  const [newGlCat, setNewGlCat] = useState('general');
+  const [glossaryQ, setGlossaryQ] = useState('');
+  const [tscores, setTscores] = useState<any[]>([]);
+  const [scoreLeader, setScoreLeader] = useState<any[]>([]);
+  const [newScoreThread, setNewScoreThread] = useState('');
+  const [newScoreClarity, setNewScoreClarity] = useState(3);
+  const [newScoreDepth, setNewScoreDepth] = useState(3);
+  const [newScoreUse, setNewScoreUse] = useState(3);
+  const [smartSuggestions, setSmartSuggestions] = useState<string[]>([]);
   // Batch 25 state
   const [dailyLogs, setDailyLogs] = useState<any[]>([]);
   const [dlContent, setDlContent] = useState('');
@@ -4215,6 +4235,11 @@ export default function ForgeApp() {
             { id:'kcards', icon:'🃏', label:'Knowledge Cards' },
             { id:'vnotes', icon:'🎙', label:'Voice Notes' },
             { id:'wevents', icon:'📅', label:'WS Events' },
+            { id:'personaslib', icon:'🎭', label:'Personas Lib' },
+            { id:'challenges', icon:'🏆', label:'Challenges' },
+            { id:'glossary', icon:'📖', label:'Glossary' },
+            { id:'tscores', icon:'⭐', label:'Thread Scores' },
+            { id:'suggestions', icon:'💡', label:'Suggestions' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },
@@ -11042,6 +11067,170 @@ export default function ForgeApp() {
                   <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/stats-summary',{headers:{Authorization:`Bearer ${tok}`}}); setStatsSummary(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Prompt Chains tab */}
+        {mainTab==='pchains' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>⛓ Prompt Chains</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newPcName} onChange={e=>setNewPcName(e.target.value)} placeholder="Chain name..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <textarea value={newPcSteps} onChange={e=>setNewPcSteps(e.target.value)} placeholder="Steps (one per line)" rows={3} style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={async()=>{ if(!newPcName.trim()) return; const steps=newPcSteps.split('\n').filter(Boolean); await fetch('/api/prompt-chains',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newPcName,steps})}); setNewPcName(''); setNewPcSteps('Step 1\nStep 2\nStep 3'); const r=await fetch('/api/prompt-chains',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPchains(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add Chain</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/prompt-chains',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((c:any)=>{try{c.steps=Array.isArray(c.steps)?c.steps:JSON.parse(c.steps);}catch{}}); setPchains(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Chains</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {pchains.map((ch:any)=>(
+                <div key={ch.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{ch.name}</div>
+                    <div style={{ display:'flex', gap:8 }}>
+                      <span style={{ color:'var(--fg-text3)', fontSize:12 }}>▶ {ch.run_count} runs</span>
+                      <button onClick={async()=>{ await fetch(`/api/prompt-chains/${ch.id}/run`,{method:'POST',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/prompt-chains',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((c:any)=>{try{c.steps=Array.isArray(c.steps)?c.steps:JSON.parse(c.steps);}catch{}}); setPchains(data); }} style={{ padding:'4px 10px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>▶ Run</button>
+                      <button onClick={async()=>{ await fetch(`/api/prompt-chains/${ch.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPchains(pchains.filter((x:any)=>x.id!==ch.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                    {(Array.isArray(ch.steps)?ch.steps:[]).map((s:string,i:number)=>(
+                      <div key={i} style={{ display:'flex', gap:8, alignItems:'center' }}>
+                        <span style={{ color:'var(--accent)', fontSize:12, minWidth:20 }}>{i+1}.</span>
+                        <span style={{ color:'var(--fg-text)', fontSize:13 }}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {pchains.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No chains yet. Create one above.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Compare Threads tab */}
+        {mainTab==='compare' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🔍 Compare Threads</div>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <input value={compareIds} onChange={e=>setCompareIds(e.target.value)} placeholder="Thread IDs comma-separated (e.g. 1,2,3)" style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ const r=await fetch(`/api/threads/compare?ids=${encodeURIComponent(compareIds)}`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setCompareResults(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Compare</button>
+            </div>
+            {compareResults.length>0 && (
+              <div style={{ display:'grid', gridTemplateColumns:`repeat(${compareResults.length},1fr)`, gap:12 }}>
+                {compareResults.map((t:any)=>(
+                  <div key={t.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:700, marginBottom:8, fontSize:15 }}>{t.title}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:12, marginBottom:12 }}>"{t.first_message}"</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                      {[['💬 Messages', t.message_count],['🪙 Tokens', (t.total_tokens||0).toLocaleString()],['📅 Created', t.created_at?.slice(0,10)],['🕐 Last Active', t.last_activity?.slice(0,10)||'—']].map(([k,v])=>(
+                        <div key={String(k)} style={{ display:'flex', justifyContent:'space-between' }}>
+                          <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{k}</span>
+                          <span style={{ color:'var(--fg-text)', fontSize:12, fontWeight:600 }}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {compareResults.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:48 }}>Enter thread IDs above and click Compare.</div>}
+          </div>
+        )}
+
+        {/* Knowledge Cards tab */}
+        {mainTab==='kcards' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🃏 Knowledge Cards</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newKcFront} onChange={e=>setNewKcFront(e.target.value)} placeholder="Front (question)..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newKcBack} onChange={e=>setNewKcBack(e.target.value)} placeholder="Back (answer)..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newKcCat} onChange={e=>setNewKcCat(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['general','coding','concepts','math','language','science'].map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+              <button onClick={async()=>{ if(!newKcFront.trim()||!newKcBack.trim()) return; await fetch('/api/knowledge-cards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({front:newKcFront,back:newKcBack,category:newKcCat})}); setNewKcFront(''); setNewKcBack(''); const [r,s]=await Promise.all([fetch('/api/knowledge-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/knowledge-cards/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); setKcards(await r.json()); setKcardStats(await s.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add Card</button>
+            </div>
+            <button onClick={async()=>{ const [r,s]=await Promise.all([fetch('/api/knowledge-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/knowledge-cards/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); setKcards(await r.json()); setKcardStats(await s.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Cards</button>
+            {kcardStats && (
+              <div style={{ display:'flex', gap:12, marginBottom:16, flexWrap:'wrap' }}>
+                {[['Total',kcardStats.total,'var(--accent)'],['Mastered',kcardStats.mastered,'#22c55e'],['Due',kcardStats.due,'#f59e0b'],['Learning',kcardStats.learning,'#8b5cf6']].map(([k,v,col])=>(
+                  <div key={String(k)} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 18px', textAlign:'center' }}>
+                    <div style={{ color:String(col), fontSize:22, fontWeight:700 }}>{v}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{k}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:12 }}>
+              {kcards.map((kc:any)=>(
+                <div key={kc.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16 }}>
+                  <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:6, fontSize:14 }}>{kc.front}</div>
+                  <div style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:10, padding:'8px 10px', background:'var(--bg-input)', borderRadius:6 }}>{kc.back}</div>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <div style={{ display:'flex', gap:4 }}>
+                      {[0,1,2,3].map(conf=>(
+                        <button key={conf} onClick={async()=>{ await fetch(`/api/knowledge-cards/${kc.id}/review`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({confidence:conf})}); const r=await fetch('/api/knowledge-cards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setKcards(await r.json()); }} style={{ padding:'3px 8px', fontSize:11, background:kc.confidence===conf?'var(--accent)':'var(--bg-input)', color:kc.confidence===conf?'#fff':'var(--fg-text3)', border:'1px solid var(--border)', borderRadius:4, cursor:'pointer' }}>{['😕','😐','🙂','😄'][conf]}</button>
+                      ))}
+                    </div>
+                    <button onClick={async()=>{ await fetch(`/api/knowledge-cards/${kc.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setKcards(kcards.filter((x:any)=>x.id!==kc.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                  </div>
+                </div>
+              ))}
+              {kcards.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No cards yet. Add one above.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Voice Notes tab */}
+        {mainTab==='vnotes' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎙 Voice Notes</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newVnTitle} onChange={e=>setNewVnTitle(e.target.value)} placeholder="Note title..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <textarea value={newVnTranscript} onChange={e=>setNewVnTranscript(e.target.value)} placeholder="Transcript / note content..." rows={3} style={{ flex:2, minWidth:220, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={async()=>{ if(!newVnTitle.trim()) return; await fetch('/api/voice-notes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newVnTitle,transcript:newVnTranscript})}); setNewVnTitle(''); setNewVnTranscript(''); const r=await fetch('/api/voice-notes',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setVnotes(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save Note</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/voice-notes',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setVnotes(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Notes</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {vnotes.map((vn:any)=>(
+                <div key={vn.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                    <div>
+                      <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:4 }}>🎙 {vn.title}</div>
+                      {vn.transcript && <div style={{ color:'var(--fg-text2)', fontSize:13, lineHeight:1.5 }}>{vn.transcript}</div>}
+                      <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:6 }}>{vn.created_at?.slice(0,16)}</div>
+                    </div>
+                    <button onClick={async()=>{ await fetch(`/api/voice-notes/${vn.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setVnotes(vnotes.filter((x:any)=>x.id!==vn.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Del</button>
+                  </div>
+                </div>
+              ))}
+              {vnotes.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No voice notes yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Events tab */}
+        {mainTab==='wevents' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📅 Workspace Events</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newEvTitle} onChange={e=>setNewEvTitle(e.target.value)} placeholder="Event title..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="date" value={newEvDate} onChange={e=>setNewEvDate(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="color" value={newEvColor} onChange={e=>setNewEvColor(e.target.value)} style={{ width:44, height:38, padding:2, background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }} />
+              <button onClick={async()=>{ if(!newEvTitle.trim()||!newEvDate) return; await fetch('/api/workspace-events',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newEvTitle,event_date:newEvDate,color:newEvColor})}); setNewEvTitle(''); setNewEvDate(''); const r=await fetch('/api/workspace-events/upcoming',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWevents(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add Event</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/workspace-events/upcoming',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWevents(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Upcoming</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {wevents.map((ev:any)=>(
+                <div key={ev.id} style={{ display:'flex', alignItems:'center', gap:12, background:'var(--bg-card)', border:`2px solid ${ev.color||'var(--border)'}`, borderRadius:10, padding:'12px 16px' }}>
+                  <div style={{ width:12, height:12, borderRadius:'50%', background:ev.color||'var(--accent)', flexShrink:0 }} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{ev.title}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:12 }}>{ev.event_date}{ev.event_time?' · '+ev.event_time:''}</div>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/workspace-events/${ev.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWevents(wevents.filter((x:any)=>x.id!==ev.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Del</button>
+                </div>
+              ))}
+              {wevents.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No upcoming events.</div>}
             </div>
           </div>
         )}
