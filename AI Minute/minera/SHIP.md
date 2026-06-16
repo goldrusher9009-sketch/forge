@@ -3,9 +3,12 @@
 Run these on YOUR computer (PowerShell), inside the `minera` folder.
 You're already logged into GitHub + Vercel, so this is copy-paste.
 
-## 1. Push to GitHub
-First make an EMPTY repo at https://github.com/new (name it `minera`, no README/license).
-Then:
+## 1. Push to GitHub (PRIVATE)
+1. Go to https://github.com/new
+2. Name it `minera`
+3. **⚠️ Select "Private"** (not Public)
+4. Do NOT add a README, .gitignore, or license (keep it empty)
+5. Create repository, then run:
 
 ```powershell
 cd "C:\Users\teste\OneDrive\Documents\Claude\Projects\AI Minute\minera"
@@ -15,6 +18,11 @@ git commit -m "Minera v0.1.0"
 git branch -M main
 git remote add origin https://github.com/YOUR_USERNAME/minera.git
 git push -u origin main
+```
+
+### Alternative: GitHub CLI (creates it private in one step)
+```powershell
+gh repo create minera --private --source . --remote origin --push
 ```
 
 ## 2. Deploy the frontend to Vercel

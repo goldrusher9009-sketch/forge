@@ -1,0 +1,18 @@
+============================================================
+  PUSH MINERA TO GITHUB  (repo already created, PRIVATE)
+  Repo: https://github.com/goldrusher9009-sketch/minera
+============================================================
+
+Open PowerShell and paste these, one block:
+
+cd "C:\Users\teste\OneDrive\Documents\Claude\Projects\AI Minute\minera"
+git init
+git add -A
+git commit -m "Minera v0.1.0"
+git branch -M main
+git remote add origin https://github.com/goldrusher9009-sketch/minera.git
+git push -u origin main
+
+If git asks you to sign in, use your GitHub login (browser popup or token).
+When it finishes, refresh the repo page — your 170 files will be there.
+============================================================
