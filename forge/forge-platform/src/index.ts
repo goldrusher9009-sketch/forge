@@ -13282,12 +13282,11 @@ app.delete('/api/ai-usage-budgets/:id', requireAuth, (req: any, res: any) => {
 
 // Batch 56: ai_snippets, workspace_announcements, ai_memory_nodes, thread_labels, user_streaks_v2
 db.prepare(`CREATE TABLE IF NOT EXISTS ai_snippets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, content TEXT, language TEXT DEFAULT 'text', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, body TEXT, audience TEXT DEFAULT 'all', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, body TEXT, audience TEXT DEFAULT 'all', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS ai_memory_nodes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, label TEXT, content TEXT, node_type TEXT DEFAULT 'fact', strength REAL DEFAULT 1.0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS thread_labels_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, label TEXT, color TEXT DEFAULT '#6366f1', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, streak_type TEXT, current_count INTEGER DEFAULT 0, best_count INTEGER DEFAULT 0, last_date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
 
-// AI Snippets
 app.get('/api/ai-snippets', requireAuth, (req: any, res: any) => {
   res.json(db.prepare('SELECT * FROM ai_snippets WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all(req.user.id));
 });
@@ -13307,27 +13306,25 @@ app.delete('/api/ai-snippets/:id', requireAuth, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
-// Workspace Announcements
-app.get('/api/workspace-announcements', requireAuth, (req: any, res: any) => {
-  res.json(db.prepare('SELECT * FROM workspace_announcements WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all(req.user.id));
+app.get('/api/workspace-announcements-v2', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_announcements_v2 WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all(req.user.id));
 });
-app.post('/api/workspace-announcements', requireAuth, (req: any, res: any) => {
+app.post('/api/workspace-announcements-v2', requireAuth, (req: any, res: any) => {
   const { title, body, audience } = req.body;
-  const r = db.prepare('INSERT INTO workspace_announcements (user_id,title,body,audience) VALUES (?,?,?,?)').run(req.user.id, title, body, audience||'all');
+  const r = db.prepare('INSERT INTO workspace_announcements_v2 (user_id,title,body,audience) VALUES (?,?,?,?)').run(req.user.id, title, body, audience||'all');
   res.json({ id: r.lastInsertRowid });
 });
-app.put('/api/workspace-announcements/:id/pin', requireAuth, (req: any, res: any) => {
-  const row: any = db.prepare('SELECT pinned FROM workspace_announcements WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+app.put('/api/workspace-announcements-v2/:id/pin', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT pinned FROM workspace_announcements_v2 WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
   if (!row) return res.status(404).json({ error: 'not found' });
-  db.prepare('UPDATE workspace_announcements SET pinned=? WHERE id=? AND user_id=?').run(row.pinned ? 0 : 1, req.params.id, req.user.id);
+  db.prepare('UPDATE workspace_announcements_v2 SET pinned=? WHERE id=? AND user_id=?').run(row.pinned ? 0 : 1, req.params.id, req.user.id);
   res.json({ ok: true });
 });
-app.delete('/api/workspace-announcements/:id', requireAuth, (req: any, res: any) => {
-  db.prepare('DELETE FROM workspace_announcements WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+app.delete('/api/workspace-announcements-v2/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_announcements_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ ok: true });
 });
 
-// AI Memory Nodes
 app.get('/api/ai-memory-nodes', requireAuth, (req: any, res: any) => {
   res.json(db.prepare('SELECT * FROM ai_memory_nodes WHERE user_id=? ORDER BY strength DESC, created_at DESC').all(req.user.id));
 });
@@ -13345,15 +13342,11 @@ app.delete('/api/ai-memory-nodes/:id', requireAuth, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
-// Thread Labels V2
 app.get('/api/thread-labels-v2', requireAuth, (req: any, res: any) => {
-  const { thread_id } = req.query;
-  const sql = thread_id
-    ? 'SELECT * FROM thread_labels_v2 WHERE user_id=? AND thread_id=? ORDER BY created_at DESC'
-    : 'SELECT * FROM thread_labels_v2 WHERE user_id=? ORDER BY created_at DESC';
+  const { thread_id } = req.query as any;
   const rows = thread_id
-    ? db.prepare(sql).all(req.user.id, thread_id)
-    : db.prepare(sql).all(req.user.id);
+    ? db.prepare('SELECT * FROM thread_labels_v2 WHERE user_id=? AND thread_id=? ORDER BY created_at DESC').all(req.user.id, thread_id)
+    : db.prepare('SELECT * FROM thread_labels_v2 WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
   res.json(rows);
 });
 app.post('/api/thread-labels-v2', requireAuth, (req: any, res: any) => {
@@ -13366,7 +13359,6 @@ app.delete('/api/thread-labels-v2/:id', requireAuth, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
-// User Streaks V2
 app.get('/api/user-streaks-v2', requireAuth, (req: any, res: any) => {
   res.json(db.prepare('SELECT * FROM user_streaks_v2 WHERE user_id=? ORDER BY current_count DESC').all(req.user.id));
 });
@@ -13389,6 +13381,100 @@ app.put('/api/user-streaks-v2/:id/reset', requireAuth, (req: any, res: any) => {
 });
 app.delete('/api/user-streaks-v2/:id', requireAuth, (req: any, res: any) => {
   db.prepare('DELETE FROM user_streaks_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+
+// Batch 57: ai_prompt_versions, workspace_digests, ai_cost_breakdown, thread_mentions, user_preferences_v2
+db.prepare(`CREATE TABLE IF NOT EXISTS ai_prompt_versions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, prompt_id TEXT, version INTEGER DEFAULT 1, content TEXT, note TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS workspace_digests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, body TEXT, digest_type TEXT DEFAULT 'weekly', sent INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS ai_cost_breakdown (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, model TEXT, input_tokens INTEGER DEFAULT 0, output_tokens INTEGER DEFAULT 0, cost_usd REAL DEFAULT 0, thread_id TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS thread_mentions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, mentioned_user TEXT, context TEXT, seen INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS user_preferences_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pref_key TEXT, pref_value TEXT, category TEXT DEFAULT 'general', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, pref_key))`).run();
+
+// AI Prompt Versions
+app.get('/api/ai-prompt-versions', requireAuth, (req: any, res: any) => {
+  const { prompt_id } = req.query as any;
+  const rows = prompt_id
+    ? db.prepare('SELECT * FROM ai_prompt_versions WHERE user_id=? AND prompt_id=? ORDER BY version DESC').all(req.user.id, prompt_id)
+    : db.prepare('SELECT * FROM ai_prompt_versions WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/ai-prompt-versions', requireAuth, (req: any, res: any) => {
+  const { prompt_id, content, note } = req.body;
+  const last: any = db.prepare('SELECT MAX(version) as v FROM ai_prompt_versions WHERE user_id=? AND prompt_id=?').get(req.user.id, prompt_id);
+  const version = (last?.v || 0) + 1;
+  const r = db.prepare('INSERT INTO ai_prompt_versions (user_id,prompt_id,version,content,note) VALUES (?,?,?,?,?)').run(req.user.id, prompt_id, version, content, note||'');
+  res.json({ id: r.lastInsertRowid, version });
+});
+app.delete('/api/ai-prompt-versions/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_prompt_versions WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Digests
+app.get('/api/workspace-digests', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_digests WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-digests', requireAuth, (req: any, res: any) => {
+  const { title, body, digest_type } = req.body;
+  const r = db.prepare('INSERT INTO workspace_digests (user_id,title,body,digest_type) VALUES (?,?,?,?)').run(req.user.id, title, body, digest_type||'weekly');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-digests/:id/send', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_digests SET sent=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-digests/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_digests WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// AI Cost Breakdown
+app.get('/api/ai-cost-breakdown', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM ai_cost_breakdown WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id);
+  const totals: any = db.prepare('SELECT model, SUM(cost_usd) as total_cost, SUM(input_tokens) as total_in, SUM(output_tokens) as total_out FROM ai_cost_breakdown WHERE user_id=? GROUP BY model').all(req.user.id);
+  res.json({ rows, totals });
+});
+app.post('/api/ai-cost-breakdown', requireAuth, (req: any, res: any) => {
+  const { model, input_tokens, output_tokens, cost_usd, thread_id } = req.body;
+  const r = db.prepare('INSERT INTO ai_cost_breakdown (user_id,model,input_tokens,output_tokens,cost_usd,thread_id) VALUES (?,?,?,?,?,?)').run(req.user.id, model, input_tokens||0, output_tokens||0, cost_usd||0, thread_id||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-cost-breakdown/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_cost_breakdown WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Thread Mentions
+app.get('/api/thread-mentions', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM thread_mentions WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/thread-mentions', requireAuth, (req: any, res: any) => {
+  const { thread_id, mentioned_user, context } = req.body;
+  const r = db.prepare('INSERT INTO thread_mentions (user_id,thread_id,mentioned_user,context) VALUES (?,?,?,?)').run(req.user.id, thread_id, mentioned_user, context||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/thread-mentions/:id/seen', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE thread_mentions SET seen=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/thread-mentions/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_mentions WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// User Preferences V2
+app.get('/api/user-preferences-v2', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM user_preferences_v2 WHERE user_id=? ORDER BY category, pref_key').all(req.user.id));
+});
+app.post('/api/user-preferences-v2', requireAuth, (req: any, res: any) => {
+  const { pref_key, pref_value, category } = req.body;
+  db.prepare('INSERT INTO user_preferences_v2 (user_id,pref_key,pref_value,category) VALUES (?,?,?,?) ON CONFLICT(user_id,pref_key) DO UPDATE SET pref_value=excluded.pref_value, category=excluded.category').run(req.user.id, pref_key, pref_value, category||'general');
+  res.json({ ok: true });
+});
+app.delete('/api/user-preferences-v2/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_preferences_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ ok: true });
 });
 

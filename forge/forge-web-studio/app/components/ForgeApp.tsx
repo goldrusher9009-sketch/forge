@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1184,6 +1184,27 @@ export default function ForgeApp() {
   const [newTlThreadId, setNewTlThreadId] = useState('');
   const [userStreaksV2, setUserStreaksV2] = useState<any[]>([]);
   const [newStType, setNewStType] = useState('daily');
+  const [aiPromptVersions, setAiPromptVersions] = useState<any[]>([]);
+  const [newPvPromptId, setNewPvPromptId] = useState('');
+  const [newPvContent, setNewPvContent] = useState('');
+  const [newPvNote, setNewPvNote] = useState('');
+  const [wsDigests, setWsDigests] = useState<any[]>([]);
+  const [newDgTitle, setNewDgTitle] = useState('');
+  const [newDgBody, setNewDgBody] = useState('');
+  const [newDgType, setNewDgType] = useState('weekly');
+  const [aiCostBreakdown, setAiCostBreakdown] = useState<{rows:any[];totals:any[]}>({rows:[],totals:[]});
+  const [newCbModel, setNewCbModel] = useState('claude');
+  const [newCbInputTok, setNewCbInputTok] = useState(0);
+  const [newCbOutputTok, setNewCbOutputTok] = useState(0);
+  const [newCbCost, setNewCbCost] = useState(0);
+  const [threadMentions, setThreadMentions] = useState<any[]>([]);
+  const [newTmThread, setNewTmThread] = useState('');
+  const [newTmMentioned, setNewTmMentioned] = useState('');
+  const [newTmContext, setNewTmContext] = useState('');
+  const [userPrefsV2B57, setUserPrefsV2B57] = useState<any[]>([]);
+  const [newPrefKey, setNewPrefKey] = useState('');
+  const [newPrefValue, setNewPrefValue] = useState('');
+  const [newPrefCat, setNewPrefCat] = useState('general');
   const [newWiName, setNewWiName] = useState('');
   const [newWiType, setNewWiType] = useState('webhook');
   const [newWwResType, setNewWwResType] = useState('thread');
@@ -4909,6 +4930,11 @@ export default function ForgeApp() {
             { id:'aimnodes', icon:'🧠', label:'Memory Nodes' },
             { id:'threadlabv2', icon:'🏷️', label:'Thread Labels' },
             { id:'ustreaksv2', icon:'🔥', label:'Streaks' },
+            { id:'aipromptver', icon:'📜', label:'Prompt Versions' },
+            { id:'wsdigests', icon:'📰', label:'WS Digests' },
+            { id:'aicostbreak', icon:'💰', label:'Cost Breakdown' },
+            { id:'threadments', icon:'@️', label:'Mentions' },
+            { id:'userprefsv2', icon:'⚙️', label:'Preferences V2' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -11740,6 +11766,158 @@ export default function ForgeApp() {
       
       
       
+      {mainTab==='aipromptver' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">📜 Prompt Versions</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newPvPromptId} onChange={e=>setNewPvPromptId(e.target.value)} placeholder="Prompt ID / name" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:140}} />
+            <input value={newPvNote} onChange={e=>setNewPvNote(e.target.value)} placeholder="Version note" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          </div>
+          <textarea value={newPvContent} onChange={e=>setNewPvContent(e.target.value)} placeholder="Prompt content..." rows={4} className="w-full border rounded px-2 py-1 text-sm font-mono" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newPvPromptId||!newPvContent)return;await fetch('/api/ai-prompt-versions',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({prompt_id:newPvPromptId,content:newPvContent,note:newPvNote})});const r=await fetch('/api/ai-prompt-versions',{headers:{'Authorization':'Bearer '+tok}});setAiPromptVersions(await r.json());setNewPvContent('');setNewPvNote('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Save Version</button>
+          <div className="space-y-2">
+            {aiPromptVersions.map((v:any)=>(
+              <div key={v.id} className="rounded p-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{v.prompt_id} <span style={{color:'var(--fg-text3)'}}>v{v.version}</span></span>
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/ai-prompt-versions/${v.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiPromptVersions(aiPromptVersions.filter((x:any)=>x.id!==v.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+                {v.note&&<p className="text-xs mb-1" style={{color:'var(--fg-text3)'}}>{v.note}</p>}
+                <pre className="text-xs overflow-x-auto" style={{color:'var(--fg-text2)',whiteSpace:'pre-wrap'}}>{v.content?.slice(0,200)}</pre>
+              </div>
+            ))}
+            {aiPromptVersions.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No versions saved.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='wsdigests' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">📰 Workspace Digests</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newDgTitle} onChange={e=>setNewDgTitle(e.target.value)} placeholder="Digest title" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <select value={newDgType} onChange={e=>setNewDgType(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['daily','weekly','monthly','custom'].map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <textarea value={newDgBody} onChange={e=>setNewDgBody(e.target.value)} placeholder="Digest content..." rows={4} className="w-full border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <div className="flex gap-2">
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newDgTitle)return;await fetch('/api/workspace-digests',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newDgTitle,body:newDgBody,digest_type:newDgType})});const r=await fetch('/api/workspace-digests',{headers:{'Authorization':'Bearer '+tok}});setWsDigests(await r.json());setNewDgTitle('');setNewDgBody('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Create</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/workspace-digests',{headers:{'Authorization':'Bearer '+tok}});setWsDigests(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {wsDigests.map((d:any)=>(
+              <div key={d.id} className="rounded p-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-center">
+                  <div><span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{d.title}</span><span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>[{d.digest_type}]{d.sent?' ✅':''}</span></div>
+                  <div className="flex gap-1">
+                    {!d.sent&&<button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/workspace-digests/${d.id}/send`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setWsDigests(wsDigests.map((x:any)=>x.id===d.id?{...x,sent:1}:x));}} style={{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Send</button>}
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/workspace-digests/${d.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setWsDigests(wsDigests.filter((x:any)=>x.id!==d.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+                <p className="text-xs mt-1" style={{color:'var(--fg-text2)'}}>{d.body?.slice(0,120)}</p>
+              </div>
+            ))}
+            {wsDigests.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No digests.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='aicostbreak' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">💰 AI Cost Breakdown</h2>
+          <div className="flex gap-2 flex-wrap items-end">
+            <select value={newCbModel} onChange={e=>setNewCbModel(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['claude','gpt-4o','gpt-4','gemini','groq','mistral','openrouter'].map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+            <input type="number" value={newCbInputTok} onChange={e=>setNewCbInputTok(+e.target.value)} placeholder="Input tokens" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:110}} />
+            <input type="number" value={newCbOutputTok} onChange={e=>setNewCbOutputTok(+e.target.value)} placeholder="Output tokens" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:110}} />
+            <input type="number" step="0.0001" value={newCbCost} onChange={e=>setNewCbCost(+e.target.value)} placeholder="Cost USD" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:90}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;await fetch('/api/ai-cost-breakdown',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({model:newCbModel,input_tokens:newCbInputTok,output_tokens:newCbOutputTok,cost_usd:newCbCost})});const r=await fetch('/api/ai-cost-breakdown',{headers:{'Authorization':'Bearer '+tok}});setAiCostBreakdown(await r.json());setNewCbInputTok(0);setNewCbOutputTok(0);setNewCbCost(0);}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Log</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/ai-cost-breakdown',{headers:{'Authorization':'Bearer '+tok}});setAiCostBreakdown(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          {aiCostBreakdown.totals?.length>0&&(
+            <div className="flex gap-3 flex-wrap">
+              {aiCostBreakdown.totals.map((t:any)=>(
+                <div key={t.model} className="rounded p-2 text-xs" style={{background:'rgba(249,115,22,0.1)',border:'1px solid rgba(249,115,22,0.2)'}}>
+                  <span className="font-semibold" style={{color:'var(--fg-orange)'}}>{t.model}</span>
+                  <span className="ml-2" style={{color:'var(--fg-text2)'}}>${Number(t.total_cost).toFixed(4)}</span>
+                  <span className="ml-1" style={{color:'var(--fg-text3)'}}>{(t.total_in+t.total_out).toLocaleString()} tok</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="space-y-1">
+            {aiCostBreakdown.rows?.map((r:any)=>(
+              <div key={r.id} className="rounded px-3 py-2 flex justify-between items-center text-xs" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <span style={{color:'var(--fg-text)'}}>{r.model}</span>
+                <span style={{color:'var(--fg-text3)'}}>{r.input_tokens}in / {r.output_tokens}out</span>
+                <span style={{color:'#4ade80'}}>${Number(r.cost_usd).toFixed(4)}</span>
+                <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/ai-cost-breakdown/${r.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiCostBreakdown({...aiCostBreakdown,rows:aiCostBreakdown.rows.filter((x:any)=>x.id!==r.id)});}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'1px 6px',cursor:'pointer',fontSize:10}}>Del</button>
+              </div>
+            ))}
+            {!aiCostBreakdown.rows?.length&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No cost records.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='threadments' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">@️ Thread Mentions</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newTmThread} onChange={e=>setNewTmThread(e.target.value)} placeholder="Thread ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:120}} />
+            <input value={newTmMentioned} onChange={e=>setNewTmMentioned(e.target.value)} placeholder="@user" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input value={newTmContext} onChange={e=>setNewTmContext(e.target.value)} placeholder="Context" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newTmMentioned)return;await fetch('/api/thread-mentions',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({thread_id:newTmThread,mentioned_user:newTmMentioned,context:newTmContext})});const r=await fetch('/api/thread-mentions',{headers:{'Authorization':'Bearer '+tok}});setThreadMentions(await r.json());setNewTmThread('');setNewTmMentioned('');setNewTmContext('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/thread-mentions',{headers:{'Authorization':'Bearer '+tok}});setThreadMentions(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {threadMentions.map((m:any)=>(
+              <div key={m.id} className="rounded p-3 flex justify-between items-center gap-2" style={{background:m.seen?'var(--fg-bg-card)':'rgba(99,102,241,0.08)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-semibold" style={{color:'#818cf8'}}>@{m.mentioned_user}</span>
+                  {m.thread_id&&<span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>in #{m.thread_id}</span>}
+                  {!m.seen&&<span className="ml-2 text-xs px-1 rounded" style={{background:'rgba(99,102,241,0.3)',color:'#a5b4fc'}}>new</span>}
+                  <p className="text-xs mt-1 truncate" style={{color:'var(--fg-text2)'}}>{m.context}</p>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  {!m.seen&&<button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/thread-mentions/${m.id}/seen`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setThreadMentions(threadMentions.map((x:any)=>x.id===m.id?{...x,seen:1}:x));}} style={{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Mark seen</button>}
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/thread-mentions/${m.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setThreadMentions(threadMentions.filter((x:any)=>x.id!==m.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+            ))}
+            {threadMentions.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No mentions.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='userprefsv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">⚙️ User Preferences V2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newPrefKey} onChange={e=>setNewPrefKey(e.target.value)} placeholder="Key (e.g. theme)" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input value={newPrefValue} onChange={e=>setNewPrefValue(e.target.value)} placeholder="Value" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <select value={newPrefCat} onChange={e=>setNewPrefCat(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['general','ui','notifications','ai','workspace','privacy'].map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newPrefKey)return;await fetch('/api/user-preferences-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({pref_key:newPrefKey,pref_value:newPrefValue,category:newPrefCat})});const r=await fetch('/api/user-preferences-v2',{headers:{'Authorization':'Bearer '+tok}});setUserPrefsV2B57(await r.json());setNewPrefKey('');setNewPrefValue('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Save</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/user-preferences-v2',{headers:{'Authorization':'Bearer '+tok}});setUserPrefsV2B57(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-1">
+            {['general','ui','notifications','ai','workspace','privacy'].map(cat=>{
+              const catPrefs=userPrefsV2B57.filter((p:any)=>p.category===cat);
+              if(!catPrefs.length) return null;
+              return <div key={cat} className="mb-3">
+                <div className="text-xs font-semibold mb-1 uppercase tracking-wide" style={{color:'var(--fg-text3)'}}>{cat}</div>
+                {catPrefs.map((p:any)=>(
+                  <div key={p.id} className="rounded px-3 py-2 flex justify-between items-center text-sm mb-1" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                    <span style={{color:'var(--fg-text)'}}>{p.pref_key}</span>
+                    <span style={{color:'var(--fg-text2)'}}>{p.pref_value}</span>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/user-preferences-v2/${p.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setUserPrefsV2B57(userPrefsV2B57.filter((x:any)=>x.id!==p.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'1px 6px',cursor:'pointer',fontSize:10}}>Del</button>
+                  </div>
+                ))}
+              </div>;
+            })}
+            {userPrefsV2B57.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No preferences set.</div>}
+          </div>
+        </div>
+      )}
       {mainTab==='aisnippets' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">✂️ AI Snippets</h2>
@@ -11780,7 +11958,7 @@ export default function ForgeApp() {
             <select value={newAnAudience} onChange={e=>setNewAnAudience(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
               {['all','admins','team','public'].map(a=><option key={a} value={a}>{a}</option>)}
             </select>
-            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newAnTitle)return;await fetch('/api/workspace-announcements',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newAnTitle,body:newAnBody,audience:newAnAudience})});const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':'Bearer '+tok}});setWsAnnouncementsB56(await r.json());setNewAnTitle('');setNewAnBody('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Post</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newAnTitle)return;await fetch('/api/workspace-announcements-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newAnTitle,body:newAnBody,audience:newAnAudience})});const r=await fetch('/api/workspace-announcements-v2',{headers:{'Authorization':'Bearer '+tok}});setWsAnnouncementsB56(await r.json());setNewAnTitle('');setNewAnBody('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Post</button>
           </div>
           <div className="space-y-2">
             {wsAnnouncementsB56.map((a:any)=>(
@@ -11788,7 +11966,7 @@ export default function ForgeApp() {
                 <div className="flex justify-between items-start">
                   <div><span className="font-semibold text-sm" style={{color:'var(--fg-text)'}}>{a.pinned?'📌 ':''}{a.title}</span><span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>[{a.audience}]</span></div>
                   <div className="flex gap-1">
-                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/workspace-announcements/${a.id}/pin`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});const r=await fetch('/api/workspace-announcements',{headers:{'Authorization':'Bearer '+tok}});setWsAnnouncementsB56(await r.json());}} style={{background:'var(--fg-bg)',border:'1px solid var(--fg-border)',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11,color:'var(--fg-text3)'}}>📌</button>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/workspace-announcements-v2/${a.id}/pin`,{method:'PUT',headers:{'Authorization':'Bearer '+tok}});const r=await fetch('/api/workspace-announcements-v2',{headers:{'Authorization':'Bearer '+tok}});setWsAnnouncementsB56(await r.json());}} style={{background:'var(--fg-bg)',border:'1px solid var(--fg-border)',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11,color:'var(--fg-text3)'}}>📌</button>
                     <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setWsAnnouncementsB56(wsAnnouncementsB56.filter((x:any)=>x.id!==a.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
                   </div>
                 </div>
@@ -16708,246 +16886,4 @@ export default function ForgeApp() {
                 {timerRunning ? (
                   <div style={{ textAlign:'center', padding:'20px 0' }}>
                     <div style={{ fontSize:48, fontWeight:800, color:'var(--fg-orange)', fontFamily:'monospace', marginBottom:12 }}>
-                      {String(Math.floor((timerDuration*60-timerElapsed)/60)).padStart(2,'0')}:{String((timerDuration*60-timerElapsed)%60).padStart(2,'0')}
-                    </div>
-                    <div style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:16 }}>🔥 {timerRunning.label}</div>
-                    <button onClick={()=>endTimer('')} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'#ef4444', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:14 }}>End Session</button>
-                  </div>
-                ) : (
-                  <button onClick={startTimer} style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>▶ Start Focus Session</button>
-                )}
-              </div>
-              <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, marginBottom:10 }}>Recent Sessions</h3>
-              {timerSessions.length === 0 ? (
-                <button onClick={loadTimers} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Sessions</button>
-              ) : timerSessions.map((t:any) => (
-                <div key={t.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 16px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <div>
-                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{t.label}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:2 }}>{t.duration_min} min · {t.status} · {new Date(t.created_at).toLocaleDateString()}</div>
-                    {t.notes && <div style={{ color:'var(--fg-text2)', fontSize:11, marginTop:2 }}>{t.notes}</div>}
-                  </div>
-                  <span style={{ fontSize:18 }}>{t.status==='completed'?'✅':'🔄'}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* System Prompt Templates tab */}
-        {mainTab === 'systpl' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:720, margin:'0 auto' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📋 System Prompt Templates</h2>
-              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:20, border:'1px solid var(--fg-border)', marginBottom:20 }}>
-                <div style={{ display:'flex', gap:10, marginBottom:10 }}>
-                  <input value={newTplName} onChange={e=>setNewTplName(e.target.value)} placeholder="Template name..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
-                  <select value={newTplCategory} onChange={e=>setNewTplCategory(e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
-                    {['general','coding','writing','analysis','creative','customer'].map(c=><option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <textarea value={newTplContent} onChange={e=>setNewTplContent(e.target.value)} placeholder="System prompt content..." rows={4} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
-                <button onClick={addSysTpl} style={{ marginTop:10, padding:'9px 20px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Save Template</button>
-              </div>
-              {sysTpls.length === 0 ? (
-                <button onClick={loadSysTpls} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Templates</button>
-              ) : sysTpls.map((t:any) => (
-                <div key={t.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'14px 16px', border:`1px solid ${t.is_default?'var(--fg-orange)':'var(--fg-border)'}`, marginBottom:10 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
-                    <div>
-                      <span style={{ color:'var(--fg-text)', fontWeight:600, fontSize:14 }}>{t.name}</span>
-                      <span style={{ marginLeft:8, fontSize:10, padding:'2px 7px', borderRadius:10, background:'var(--fg-bg4)', color:'var(--fg-text3)' }}>{t.category}</span>
-                      {t.is_default===1 && <span style={{ marginLeft:6, fontSize:10, padding:'2px 7px', borderRadius:10, background:'var(--fg-orange)', color:'#fff' }}>DEFAULT</span>}
-                    </div>
-                    <div style={{ display:'flex', gap:6 }}>
-                      <button onClick={()=>setDefaultTpl(t.id)} title="Set as default" style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>⭐</button>
-                      <button onClick={()=>deleteSysTpl(t.id)} style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'#ef4444', cursor:'pointer', fontSize:11 }}>✕</button>
-                    </div>
-                  </div>
-                  <div style={{ color:'var(--fg-text2)', fontSize:12, lineHeight:1.5, maxHeight:80, overflowY:'auto', whiteSpace:'pre-wrap' }}>{t.content}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Activity Heatmap tab */}
-        {mainTab === 'heatmap' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:780, margin:'0 auto' }}>
-              <h2 style={{ color:'var(--fg-text)', marginBottom:8, fontSize:22, fontWeight:700 }}>🌡 Activity Heatmap</h2>
-              <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:20 }}>Message frequency by day of week × hour — last 30 days</p>
-              {activityHeatmap.length === 0 ? (
-                <button onClick={loadHeatmap} style={{ padding:'10px 20px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:14 }}>Load Heatmap</button>
-              ) : (() => {
-                const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-                const maxCount = Math.max(...activityHeatmap.map((r:any)=>r.count), 1);
-                const grid: Record<string,number> = {};
-                activityHeatmap.forEach((r:any)=>{ grid[`${r.dow}-${r.hour}`]=r.count; });
-                return (
-                  <div style={{ overflowX:'auto' }}>
-                    <div style={{ display:'grid', gridTemplateColumns:'40px repeat(24, 28px)', gap:3, minWidth:700 }}>
-                      <div/>
-                      {Array.from({length:24},(_,h)=><div key={h} style={{ color:'var(--fg-text3)', fontSize:9, textAlign:'center' }}>{h}</div>)}
-                      {days.map((day,dow)=>(
-                        <>
-                          <div key={`l${dow}`} style={{ color:'var(--fg-text2)', fontSize:11, display:'flex', alignItems:'center' }}>{day}</div>
-                          {Array.from({length:24},(_,h)=>{
-                            const v = grid[`${dow}-${String(h).padStart(2,'0')}`]||0;
-                            const alpha = v ? 0.15 + 0.85*(v/maxCount) : 0.06;
-                            return <div key={h} title={`${day} ${h}:00 — ${v} msgs`} style={{ width:24, height:22, borderRadius:4, background:`rgba(255,107,0,${alpha})`, cursor:'default' }}/>;
-                          })}
-                        </>
-                      ))}
-                    </div>
-                    <div style={{ marginTop:16, color:'var(--fg-text3)', fontSize:12 }}>Total activity points: {activityHeatmap.reduce((s:number,r:any)=>s+r.count,0)}</div>
-                  </div>
-                );
-              })()}
-
-              <div style={{ marginTop:32, background:'var(--fg-bg2)', borderRadius:14, padding:20, border:'1px solid var(--fg-border)' }}>
-                <h3 style={{ color:'var(--fg-text)', fontSize:16, fontWeight:700, marginBottom:14 }}>✍️ Writing Assistant</h3>
-                <div style={{ display:'flex', gap:10, marginBottom:10, flexWrap:('wrap' as any) }}>
-                  <select value={writingMode} onChange={e=>setWritingMode(e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
-                    {['improve','formal','casual','shorter','expand','bullets','fix'].map(m=><option key={m} value={m}>{m}</option>)}
-                  </select>
-                  <button onClick={runWritingAssist} style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Enhance ✨</button>
-                </div>
-                <textarea value={writingText} onChange={e=>setWritingText(e.target.value)} placeholder="Paste text to rewrite..." rows={5} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
-                {writingResult && (
-                  <div style={{ background:'var(--fg-bg3)', borderRadius:10, padding:14, border:'1px solid var(--fg-border)' }}>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginBottom:6 }}>Mode: <strong>{writingResult.mode}</strong> — send this to your AI:</div>
-                    <div style={{ color:'var(--fg-text)', fontSize:13, lineHeight:1.6, whiteSpace:'pre-wrap', fontStyle:'italic' }}>{writingResult.instruction}</div>
-                    <button onClick={()=>{navigator.clipboard.writeText(writingResult.instruction);}} style={{ marginTop:10, padding:'6px 14px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg4)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>📋 Copy Prompt</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Forge Brain tab */}
-        {mainTab === 'brain' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:820, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>&#x1F9E0;</span>
-                <div>
-                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Forge Brain</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Everything Forge knows about you.</p>
-                </div>
-                <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
-                  <button onClick={() => loadBrainCodeBlocks()} title="Recent code blocks" style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>{'</>'}</button>
-                  <button onClick={() => loadGlobalStats()} title="Usage stats" style={{ padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>&#x1F4C8;</button>
-                  <button onClick={() => { setBrainData(null); setBrainLoading(true); setBrainError(''); fetch('/api/brain/summary',{headers:{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}}).then(r=>r.json()).then(d=>{setBrainData(d);setBrainLoading(false);}).catch(()=>{setBrainError('Failed.');setBrainLoading(false);}); }} style={{ padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>&#x21BB; Refresh</button>
-                </div>
-              </div>
-              {brainLoading && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading...</div>}
-              {brainError && <div style={{ textAlign:'center', padding:40, color:'#f87171', fontSize:13 }}>{brainError}</div>}
-              {showCodeBlocks && brainCodeBlocks.length > 0 && (
-                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, marginBottom:16 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                    <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Recent Code Blocks</span>
-                    <button onClick={() => setShowCodeBlocks(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>x</button>
-                  </div>
-                  {brainCodeBlocks.map((b: any, i: number) => (
-                    <div key={i} style={{ background:'var(--fg-bg3)', borderRadius:8, padding:10, marginBottom:8, cursor:'pointer' }} onClick={() => setActiveThread(threads.find((t: any) => t.id === b.thread_id) || null)}>
-                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                        <span style={{ fontSize:10, color:'var(--fg-accent)', fontWeight:600 }}>{b.lang || 'code'}</span>
-                        <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{b.thread_title}</span>
-                      </div>
-                      <pre style={{ margin:0, fontSize:10, color:'var(--fg-text2)', whiteSpace:'pre-wrap', overflow:'hidden', maxHeight:60 }}>{b.preview}</pre>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {showGlobalStats && (
-                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, marginBottom:16 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                    <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Usage Stats</span>
-                    <button onClick={() => setShowGlobalStats(false)} style={{ background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>x</button>
-                  </div>
-                  {streakData && (
-                    <div style={{ display:'flex', gap:16, marginBottom:12 }}>
-                      <div style={{ textAlign:'center' }}>
-                        <div style={{ fontSize:22, fontWeight:800, color:'var(--fg-accent)' }}>{streakData.currentStreak}</div>
-                        <div style={{ fontSize:10, color:'var(--fg-text3)' }}>day streak</div>
-                      </div>
-                      <div style={{ textAlign:'center' }}>
-                        <div style={{ fontSize:22, fontWeight:800, color:'#6366f1' }}>{streakData.longestStreak}</div>
-                        <div style={{ fontSize:10, color:'var(--fg-text3)' }}>longest</div>
-                      </div>
-                      <div style={{ textAlign:'center' }}>
-                        <div style={{ fontSize:22, fontWeight:800, color:'#4ade80' }}>{streakData.activeDays}</div>
-                        <div style={{ fontSize:10, color:'var(--fg-text3)' }}>active days</div>
-                      </div>
-                    </div>
-                  )}
-                  {modelBreakdownGlobal.length > 0 && (
-                    <div style={{ marginBottom:12 }}>
-                      <div style={{ fontSize:11, fontWeight:600, color:'var(--fg-text3)', marginBottom:6 }}>Model usage</div>
-                      {modelBreakdownGlobal.slice(0,5).map((m: any) => (
-                        <div key={m.model} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                          <div style={{ fontSize:11, color:'var(--fg-text2)', width:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.model}</div>
-                          <div style={{ flex:1, height:6, background:'var(--fg-bg4)', borderRadius:3, overflow:'hidden' }}>
-                            <div style={{ width:`${m.pct}%`, height:'100%', background:'var(--fg-accent)', borderRadius:3 }} />
-                          </div>
-                          <div style={{ fontSize:11, color:'var(--fg-text3)', width:32, textAlign:'right' }}>{m.pct}%</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {topThreads.length > 0 && (
-                    <div>
-                      <div style={{ fontSize:11, fontWeight:600, color:'var(--fg-text3)', marginBottom:6 }}>Longest threads</div>
-                      {topThreads.slice(0,5).map((t: any) => (
-                        <div key={t.id} style={{ display:'flex', justifyContent:'space-between', fontSize:11, padding:'3px 0', borderBottom:'1px solid var(--fg-border)' }}>
-                          <span style={{ color:'var(--fg-text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:200 }}>{t.title || 'Untitled'}</span>
-                          <span style={{ color:'var(--fg-text3)', flexShrink:0 }}>{t.msg_count} msgs</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              {brainData && !brainLoading && (() => {
-                const bd = brainData.summary || brainData;
-                const cats: Record<string,any[]> = bd.by_category || {};
-                const top: any[] = bd.top_insights || [];
-                return (
-                  <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-                    {top.length > 0 && (
-                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>✨ Top Insights</div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                          {top.slice(0,5).map((ins: any, i: number) => (
-                            <div key={i} style={{ background:'var(--fg-bg3)', borderRadius:10, padding:'10px 14px', fontSize:13, color:'var(--fg-text2)', lineHeight:1.5 }}>{typeof ins === 'string' ? ins : ins.content || JSON.stringify(ins)}</div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {Object.keys(cats).length > 0 && (
-                      <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                        <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--fg-text3)', marginBottom:12 }}>🗂 By Category</div>
-                        {Object.entries(cats).map(([cat, items]: [string, any[]]) => (
-                          <div key={cat} style={{ marginBottom:12 }}>
-                            <div style={{ fontSize:11, fontWeight:600, color:'var(--fg-text3)', marginBottom:4, textTransform:'capitalize' }}>{cat}</div>
-                            {items.slice(0,3).map((it: any, i: number) => (
-                              <div key={i} style={{ fontSize:12, color:'var(--fg-text2)', padding:'4px 0', borderBottom:'1px solid var(--fg-border)', lineHeight:1.4 }}>{typeof it === 'string' ? it : it.content || JSON.stringify(it)}</div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {!top.length && !Object.keys(cats).length && (
-                      <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)', fontSize:13 }}>No brain data yet. Chat to build your profile.</div>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>  );
-}
+                      {String(Math.floor((timerDuration*60-timerElapsed)/60)).padStart(2,'0')}:{Strin
