@@ -243,7 +243,8 @@ export default function HomeCanvas() {
                   { label: 'Markets', href: '/markets', icon: '↗', color: 'var(--ring-wealth)' },
                   { label: 'Wallet', href: '/wallet', icon: '◎', color: '#22c55e' },
                   { label: 'Staking', href: '/staking', icon: '⬡', color: '#f59e0b' },
-                  { label: 'Advertise', href: '/advertise', icon: '◈', color: '#ec4899' },
+                  { label: 'Portfolio', href: '/invest', icon: '◈', color: '#a855f7' },
+                  { label: 'Advertise', href: '/advertise', icon: '⊕', color: '#ec4899' },
                   { label: 'ZK Identity', href: '/identity', icon: '◐', color: '#818cf8' },
                 ] as const).map(({ label, href, icon, color }) => (
                   <Link key={label} href={href}
