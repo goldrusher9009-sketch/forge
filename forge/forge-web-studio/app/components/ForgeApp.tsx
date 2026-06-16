@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -629,6 +629,42 @@ export default function ForgeApp() {
   const [tokenBreakdown, setTokenBreakdown] = useState<any>(null);
   const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
   const [tokenBreakThreadId, setTokenBreakThreadId] = useState('');
+  const [folders, setFolders] = useState<any[]>([]);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderColor, setNewFolderColor] = useState('#6366f1');
+  const [newFolderIcon, setNewFolderIcon] = useState('📁');
+  const [activeFolderId, setActiveFolderId] = useState<number|null>(null);
+  const [folderThreads, setFolderThreads] = useState<any[]>([]);
+  const [quickNotes, setQuickNotes] = useState<any[]>([]);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [newNoteColor, setNewNoteColor] = useState('yellow');
+  const [qnoteEditId, setQnoteEditId] = useState<number|null>(null);
+  const [wgoals, setWgoals] = useState<any[]>([]);
+  const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [newGoalPriority, setNewGoalPriority] = useState('medium');
+  const [newGoalDate, setNewGoalDate] = useState('');
+  const [formatterText, setFormatterText] = useState('');
+  const [formatterOp, setFormatterOp] = useState('clean');
+  const [formatterResult, setFormatterResult] = useState('');
+  const [weeklySummary, setWeeklySummary] = useState<any>(null);
+  const [pinnedThreadsList, setPinnedThreadsList] = useState<any[]>([]);
+  // Batch 23 state
+  const [streaks, setStreaks] = useState<any[]>([]);
+  const [newStreakHabit, setNewStreakHabit] = useState('');
+  const [readlist, setReadlist] = useState<any[]>([]);
+  const [newReadTitle, setNewReadTitle] = useState('');
+  const [newReadUrl, setNewReadUrl] = useState('');
+  const [csnippets, setCsnippets] = useState<any[]>([]);
+  const [newCsTitle, setNewCsTitle] = useState('');
+  const [newCsCode, setNewCsCode] = useState('');
+  const [newCsLang, setNewCsLang] = useState('javascript');
+  const [newCsTags, setNewCsTags] = useState('');
+  const [tdiffs, setTdiffs] = useState<any[]>([]);
+  const [tdiffThread, setTdiffThread] = useState('');
+  const [tdiffLabel, setTdiffLabel] = useState('');
+  const [aiFeed, setAiFeed] = useState<any[]>([]);
+  const [statsSummary, setStatsSummary] = useState<any>(null);
+  const [qnoteEditContent, setQnoteEditContent] = useState('');
   const [savedSearches, setSavedSearches] = useState<any[]>([]);
   const [newSearchQuery, setNewSearchQuery] = useState('');
   const [newSearchLabel, setNewSearchLabel] = useState('');
@@ -2883,6 +2919,86 @@ export default function ForgeApp() {
     } catch {}
   }
 
+  async function loadWgoals() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/workspace-goals', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setWgoals(Array.isArray(d)?d:[]); } catch {}
+  }
+  async function addWgoal() {
+    if (!newGoalTitle.trim()) return;
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch('/api/workspace-goals', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title: newGoalTitle, priority: newGoalPriority, target_date: newGoalDate }) }); setNewGoalTitle(''); loadWgoals(); } catch {}
+  }
+  async function updateWgoalProgress(id: number, progress: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/workspace-goals/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ progress }) }); loadWgoals(); } catch {}
+  }
+  async function updateWgoalStatus(id: number, status: string) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/workspace-goals/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ status }) }); loadWgoals(); } catch {}
+  }
+  async function deleteWgoal(id: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/workspace-goals/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadWgoals(); } catch {}
+  }
+  async function runFormatter() {
+    if (!formatterText.trim()) return;
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/format-text', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ text: formatterText, operation: formatterOp }) }); const d = await r.json(); setFormatterResult(d.result||''); } catch {}
+  }
+  async function loadWeeklySummary() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/workspace/weekly-summary', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setWeeklySummary(d); } catch {}
+  }
+  async function loadFolders() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/folders', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setFolders(Array.isArray(d)?d:[]); } catch {}
+  }
+  async function createFolder() {
+    if (!newFolderName.trim()) return;
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch('/api/folders', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ name: newFolderName, color: newFolderColor, icon: newFolderIcon }) }); setNewFolderName(''); loadFolders(); } catch {}
+  }
+  async function deleteFolder(id: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/folders/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadFolders(); if (activeFolderId===id) setActiveFolderId(null); } catch {}
+  }
+  async function loadFolderThreads(folderId: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    setActiveFolderId(folderId);
+    try { const r = await fetch(`/api/folders/${folderId}/threads`, { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setFolderThreads(Array.isArray(d)?d:[]); } catch {}
+  }
+  async function loadQuickNotes() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { const r = await fetch('/api/quick-notes', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setQuickNotes(Array.isArray(d)?d:[]); } catch {}
+  }
+  async function addQuickNote() {
+    if (!newNoteContent.trim()) return;
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch('/api/quick-notes', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content: newNoteContent, color: newNoteColor }) }); setNewNoteContent(''); loadQuickNotes(); } catch {}
+  }
+  async function updateQuickNote(id: number, content: string) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/quick-notes/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content }) }); setQnoteEditId(null); loadQuickNotes(); } catch {}
+  }
+  async function pinQuickNote(id: number, pinned: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/quick-notes/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ pinned }) }); loadQuickNotes(); } catch {}
+  }
+  async function deleteQuickNote(id: number) {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try { await fetch(`/api/quick-notes/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadQuickNotes(); } catch {}
+  }
+  async function exportWorkspace() {
+    const tok = localStorage.getItem('forge_token'); if (!tok) return;
+    try {
+      const r = await fetch('/api/workspace/export', { headers:{ Authorization:`Bearer ${tok}` } });
+      const d = await r.json();
+      const blob = new Blob([JSON.stringify(d, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download=`forge-export-${new Date().toISOString().slice(0,10)}.json`; a.click();
+      URL.revokeObjectURL(url);
+    } catch {}
+  }
   async function loadSavedSearches() {
     const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/saved-searches', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setSavedSearches(Array.isArray(d)?d:[]); } catch {}
@@ -4029,6 +4145,18 @@ export default function ForgeApp() {
             { id:'calendar', icon:'📆', label:'Content Cal' },
             { id:'advstats', icon:'📊', label:'Adv. Stats' },
             { id:'timer', icon:'⏱', label:'Focus Timer' },
+            { id:'wgoals', icon:'🎯', label:'Goals' },
+            { id:'formatter', icon:'✂️', label:'Formatter' },
+            { id:'weeksummary', icon:'📅', label:'Week Summary' },
+            { id:'streaks', icon:'🔥', label:'Streaks' },
+            { id:'readlist', icon:'📚', label:'Reading List' },
+            { id:'csnippets', icon:'🧩', label:'Code Snippets' },
+            { id:'tdiffs', icon:'🔀', label:'Thread Diffs' },
+            { id:'aifeed', icon:'🤖', label:'AI Insights' },
+            { id:'statssummary', icon:'📊', label:'Stats Hub' },
+            { id:'folders', icon:'📂', label:'Folders' },
+            { id:'quicknotes', icon:'📝', label:'Quick Notes' },
+            { id:'export', icon:'💾', label:'Export Data' },
             { id:'tokenbreak', icon:'🪙', label:'Token Cost' },
             { id:'savedsearch', icon:'🔖', label:'Saved Searches' },
             { id:'prodscore', icon:'🏆', label:'Productivity' },
@@ -10560,6 +10688,401 @@ export default function ForgeApp() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Workspace Goals tab */}
+        {mainTab === 'wgoals' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🎯 Workspace Goals</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:10, marginBottom:10, flexWrap:('wrap' as any) }}>
+                  <input value={newGoalTitle} onChange={e=>setNewGoalTitle(e.target.value)} placeholder="Goal title..." style={{ flex:2, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <select value={newGoalPriority} onChange={e=>setNewGoalPriority(e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
+                    {['high','medium','low'].map(p=><option key={p} value={p}>{p}</option>)}
+                  </select>
+                  <input type="date" value={newGoalDate} onChange={e=>setNewGoalDate(e.target.value)} style={{ padding:'8px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <button onClick={addWgoal} style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Add Goal</button>
+                </div>
+              </div>
+              {wgoals.length === 0 ? (
+                <button onClick={loadWgoals} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Goals</button>
+              ) : wgoals.map((g:any)=>(
+                <div key={g.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'16px', border:'1px solid var(--fg-border)', marginBottom:12 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+                    <div>
+                      <span style={{ color:'var(--fg-text)', fontWeight:700, fontSize:15 }}>{g.title}</span>
+                      <span style={{ marginLeft:8, fontSize:10, padding:'2px 7px', borderRadius:10, background:{high:'#ef444420',medium:'#f9730020',low:'#22c55e20'}[g.priority as string]||'var(--fg-bg4)', color:{high:'#ef4444',medium:'var(--fg-orange)',low:'#22c55e'}[g.priority as string]||'var(--fg-text3)' }}>{g.priority}</span>
+                      {g.target_date && <span style={{ marginLeft:6, color:'var(--fg-text3)', fontSize:11 }}>📅 {g.target_date}</span>}
+                    </div>
+                    <div style={{ display:'flex', gap:6 }}>
+                      <button onClick={()=>updateWgoalStatus(g.id, g.status==='active'?'completed':'active')} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color: g.status==='completed'?'#22c55e':'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>{g.status==='completed'?'✅':'○'}</button>
+                      <button onClick={()=>deleteWgoal(g.id)} style={{ padding:'4px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'#ef4444', cursor:'pointer', fontSize:11 }}>✕</button>
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ flex:1, height:6, background:'var(--fg-bg4)', borderRadius:3 }}>
+                      <div style={{ height:'100%', width:`${g.progress}%`, background: g.progress===100?'#22c55e':'var(--fg-orange)', borderRadius:3, transition:'width 0.3s' }} />
+                    </div>
+                    <span style={{ color:'var(--fg-text3)', fontSize:11, minWidth:30 }}>{g.progress}%</span>
+                    <input type="range" min={0} max={100} value={g.progress} onChange={e=>updateWgoalProgress(g.id,+e.target.value)} style={{ width:80 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Text Formatter tab */}
+        {mainTab === 'formatter' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:760, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>✂️ Text Formatter</h2>
+              <div style={{ display:'flex', gap:10, marginBottom:12, flexWrap:('wrap' as any) }}>
+                {['clean','bullet','numbered','extract-links','extract-code','word-count'].map(op=>(
+                  <button key={op} onClick={()=>setFormatterOp(op)} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid ${formatterOp===op?'var(--fg-orange)':'var(--fg-border)'}`, background: formatterOp===op?'rgba(255,107,0,0.12)':'var(--fg-bg2)', color: formatterOp===op?'var(--fg-orange)':'var(--fg-text2)', cursor:'pointer', fontSize:12, fontWeight: formatterOp===op?700:400 }}>{op}</button>
+                ))}
+              </div>
+              <textarea value={formatterText} onChange={e=>setFormatterText(e.target.value)} placeholder="Paste text to format..." rows={6} style={{ width:'100%', padding:'12px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
+              <button onClick={runFormatter} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:14, marginBottom:16 }}>Format ✨</button>
+              {formatterResult && (
+                <div style={{ background:'var(--fg-bg2)', borderRadius:10, padding:16, border:'1px solid var(--fg-border)' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Result ({formatterOp})</span>
+                    <button onClick={()=>navigator.clipboard.writeText(formatterResult)} style={{ padding:'3px 10px', borderRadius:6, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>📋 Copy</button>
+                  </div>
+                  <pre style={{ color:'var(--fg-text)', fontSize:13, lineHeight:1.6, whiteSpace:'pre-wrap', margin:0 }}>{formatterResult}</pre>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Weekly Summary tab */}
+        {mainTab === 'weeksummary' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📅 Weekly Summary</h2>
+              {!weeklySummary ? (
+                <button onClick={loadWeeklySummary} style={{ padding:'12px 24px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>Load This Week</button>
+              ) : (
+                <>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
+                    {[{label:'New Threads',val:weeklySummary.newThreads,icon:'🧵'},{label:'Messages Sent',val:weeklySummary.newMessages,icon:'💬'},{label:'Tokens Used',val:(weeklySummary.totalTokens||0).toLocaleString(),icon:'🪙'}].map((s:any)=>(
+                      <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'16px', border:'1px solid var(--fg-border)', textAlign:'center' }}>
+                        <div style={{ fontSize:28, marginBottom:6 }}>{s.icon}</div>
+                        <div style={{ color:'var(--fg-orange)', fontSize:24, fontWeight:800 }}>{s.val}</div>
+                        <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, marginBottom:10 }}>Most Active Threads</h3>
+                  {(weeklySummary.topThreads||[]).map((t:any)=>(
+                    <div key={t.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 16px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', justifyContent:'space-between' }}>
+                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{t.title||'Untitled'}</span>
+                      <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{t.msg_count} msgs</span>
+                    </div>
+                  ))}
+                  <h3 style={{ color:'var(--fg-text2)', fontSize:14, fontWeight:600, margin:'20px 0 10px' }}>Activity by Day</h3>
+                  <div style={{ display:'flex', gap:6, alignItems:'flex-end', height:80 }}>
+                    {(weeklySummary.byDay||[]).map((d:any)=>{
+                      const max = Math.max(...(weeklySummary.byDay||[]).map((x:any)=>x.count),1);
+                      return <div key={d.day} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                        <div style={{ width:'100%', background:'var(--fg-orange)', borderRadius:'4px 4px 0 0', height:`${Math.round(60*(d.count/max))}px`, minHeight:4 }} />
+                        <span style={{ color:'var(--fg-text3)', fontSize:9 }}>{d.day.slice(5)}</span>
+                      </div>;
+                    })}
+                  </div>
+                  <button onClick={loadWeeklySummary} style={{ marginTop:16, padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Streaks tab */}
+        {mainTab === 'streaks' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🔥 Habit Streaks</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:10 }}>
+                  <input value={newStreakHabit} onChange={e=>setNewStreakHabit(e.target.value)} placeholder="New habit (e.g. Daily journaling)..." style={{ flex:1, padding:'10px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!newStreakHabit.trim()) return; const r=await fetch('/api/streaks',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({habit:newStreakHabit})}); const d=await r.json(); setStreaks((s:any)=>[d,...s]); setNewStreakHabit(''); }} style={{ padding:'10px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Add</button>
+                </div>
+              </div>
+              {streaks.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/streaks',{headers:{Authorization:`Bearer ${tok}`}}); setStreaks(await r.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Streaks</button>
+              ) : streaks.map((s:any)=>(
+                <div key={s.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'16px 20px', border:'1px solid var(--fg-border)', marginBottom:10, display:'flex', alignItems:'center', gap:16 }}>
+                  <div style={{ fontSize:32 }}>🔥</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:14, fontWeight:600 }}>{s.habit}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:12, marginTop:3 }}>Longest: {s.longest_streak} days · Last: {s.last_checked_date||'never'}</div>
+                  </div>
+                  <div style={{ textAlign:'center' }}>
+                    <div style={{ color:'var(--fg-orange)', fontSize:28, fontWeight:800 }}>{s.current_streak}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:10 }}>days</div>
+                  </div>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch(`/api/streaks/${s.id}/check`,{method:'PUT',headers:{Authorization:`Bearer ${tok}`}}); const d=await r.json(); setStreaks((prev:any)=>prev.map((x:any)=>x.id===s.id?{...x,...d}:x)); }} style={{ padding:'8px 14px', borderRadius:8, border:'none', background:'#22c55e', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:12 }}>✓ Check In</button>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/streaks/${s.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setStreaks((prev:any)=>prev.filter((x:any)=>x.id!==s.id)); }} style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reading List tab */}
+        {mainTab === 'readlist' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📚 Reading List</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+                  <input value={newReadTitle} onChange={e=>setNewReadTitle(e.target.value)} placeholder="Title..." style={{ padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input value={newReadUrl} onChange={e=>setNewReadUrl(e.target.value)} placeholder="URL (optional)..." style={{ padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                </div>
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!newReadTitle.trim()) return; const r=await fetch('/api/reading-list',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({title:newReadTitle,url:newReadUrl})}); const d=await r.json(); setReadlist((s:any)=>[d,...s]); setNewReadTitle(''); setNewReadUrl(''); }} style={{ padding:'10px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Add to List</button>
+              </div>
+              {readlist.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/reading-list',{headers:{Authorization:`Bearer ${tok}`}}); setReadlist(await r.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Reading List</button>
+              ) : readlist.map((item:any)=>(
+                <div key={item.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'14px 18px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', alignItems:'center', gap:12 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{item.title}</div>
+                    {item.url && <a href={item.url} target="_blank" rel="noreferrer" style={{ color:'var(--fg-orange)', fontSize:11, textDecoration:'none' }}>{item.url.slice(0,60)}</a>}
+                  </div>
+                  <select value={item.status} onChange={async(e)=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/reading-list/${item.id}`,{method:'PUT',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({status:e.target.value})}); setReadlist((prev:any)=>prev.map((x:any)=>x.id===item.id?{...x,status:e.target.value}:x)); }} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:12 }}>
+                    <option value="unread">Unread</option>
+                    <option value="reading">Reading</option>
+                    <option value="done">Done</option>
+                  </select>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/reading-list/${item.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setReadlist((prev:any)=>prev.filter((x:any)=>x.id!==item.id)); }} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Code Snippets Manager tab */}
+        {mainTab === 'csnippets' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:780, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🧩 Code Snippets</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 120px', gap:10, marginBottom:10 }}>
+                  <input value={newCsTitle} onChange={e=>setNewCsTitle(e.target.value)} placeholder="Snippet title..." style={{ padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input value={newCsTags} onChange={e=>setNewCsTags(e.target.value)} placeholder="Tags (comma-sep)..." style={{ padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <select value={newCsLang} onChange={e=>setNewCsLang(e.target.value)} style={{ padding:'10px 8px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }}>
+                    {['javascript','typescript','python','bash','sql','json','html','css','go','rust','other'].map(l=><option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+                <textarea value={newCsCode} onChange={e=>setNewCsCode(e.target.value)} placeholder="Paste your code here..." rows={4} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:12, fontFamily:'monospace', resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!newCsTitle.trim()||!newCsCode.trim()) return; const r=await fetch('/api/code-snippets-mgr',{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({title:newCsTitle,code:newCsCode,language:newCsLang,tags:newCsTags})}); const d=await r.json(); setCsnippets((s:any)=>[d,...s]); setNewCsTitle(''); setNewCsCode(''); setNewCsTags(''); }} style={{ padding:'10px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Save Snippet</button>
+              </div>
+              {csnippets.length === 0 ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/code-snippets-mgr',{headers:{Authorization:`Bearer ${tok}`}}); setCsnippets(await r.json()); }} style={{ padding:'10px 20px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Snippets</button>
+              ) : csnippets.map((s:any)=>(
+                <div key={s.id} style={{ background:'var(--fg-bg2)', borderRadius:12, border:'1px solid var(--fg-border)', marginBottom:12, overflow:'hidden' }}>
+                  <div style={{ display:'flex', alignItems:'center', padding:'12px 16px', borderBottom:'1px solid var(--fg-border)' }}>
+                    <span style={{ fontSize:10, padding:'2px 8px', borderRadius:12, background:'var(--fg-orange)', color:'#fff', fontWeight:600, marginRight:10 }}>{s.language}</span>
+                    <span style={{ flex:1, color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{s.title}</span>
+                    {s.tags && <span style={{ color:'var(--fg-text3)', fontSize:11, marginRight:10 }}>{s.tags}</span>}
+                    <span style={{ color:'var(--fg-text3)', fontSize:11, marginRight:10 }}>Used {s.use_count}x</span>
+                    <button onClick={async()=>{ await navigator.clipboard.writeText(s.code); const tok=localStorage.getItem('forge_token'); if(tok) await fetch(`/api/code-snippets-mgr/${s.id}/use`,{method:'POST',headers:{Authorization:`Bearer ${tok}`}}); }} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid var(--fg-border)', background:'transparent', color:'var(--fg-text2)', cursor:'pointer', fontSize:11, marginRight:6 }}>📋 Copy</button>
+                    <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/code-snippets-mgr/${s.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setCsnippets((prev:any)=>prev.filter((x:any)=>x.id!==s.id)); }} style={{ padding:'5px 8px', borderRadius:6, border:'1px solid var(--fg-border)', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:11 }}>✕</button>
+                  </div>
+                  <pre style={{ margin:0, padding:'12px 16px', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:12, fontFamily:'monospace', overflowX:'auto', maxHeight:200, whiteSpace:'pre-wrap', wordBreak:'break-all' }}>{s.code}</pre>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Diffs tab */}
+        {mainTab === 'tdiffs' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🔀 Thread Snapshots</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <p style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:12 }}>Save a snapshot of any thread to compare changes over time.</p>
+                <div style={{ display:'flex', gap:10, marginBottom:10 }}>
+                  <input value={tdiffThread} onChange={e=>setTdiffThread(e.target.value)} placeholder="Thread ID..." style={{ width:120, padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input value={tdiffLabel} onChange={e=>setTdiffLabel(e.target.value)} placeholder="Snapshot label..." style={{ flex:1, padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!tdiffThread) return; const r=await fetch(`/api/threads/${tdiffThread}/diffs`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({diff_label:tdiffLabel||undefined})}); const d=await r.json(); setTdiffs((s:any)=>[d,...s]); setTdiffLabel(''); }} style={{ padding:'10px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>Snapshot</button>
+                </div>
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!tdiffThread) return; const r=await fetch(`/api/threads/${tdiffThread}/diffs`,{headers:{Authorization:`Bearer ${tok}`}}); setTdiffs(await r.json()); }} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>Load Snapshots for Thread</button>
+              </div>
+              {tdiffs.map((d:any)=>(
+                <div key={d.id} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'14px 18px', border:'1px solid var(--fg-border)', marginBottom:8, display:'flex', alignItems:'center', gap:12 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{d.diff_label}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:3 }}>{d.created_at} · {d.message_count||'?'} messages</div>
+                  </div>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; await fetch(`/api/threads/${tdiffThread}/diffs/${d.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}}); setTdiffs((prev:any)=>prev.filter((x:any)=>x.id!==d.id)); }} style={{ padding:'6px 10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:11 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* AI Insights Feed tab */}
+        {mainTab === 'aifeed' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>🤖 AI Insights Feed</h2>
+              <div style={{ display:'flex', gap:10, marginBottom:20 }}>
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/insights-feed/generate',{method:'POST',headers:{Authorization:`Bearer ${tok}`}}); const d=await r.json(); setAiFeed((s:any)=>[...d.insights,...s]); }} style={{ padding:'10px 20px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer' }}>✨ Generate Insights</button>
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/insights-feed',{headers:{Authorization:`Bearer ${tok}`}}); setAiFeed(await r.json()); }} style={{ padding:'10px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Load Feed</button>
+              </div>
+              {aiFeed.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:13 }}>No insights yet. Click Generate to create personalized insights from your workspace activity.</p>}
+              {aiFeed.map((ins:any)=>(
+                <div key={ins.id||Math.random()} style={{ background: ins.read ? 'var(--fg-bg2)' : 'rgba(251,146,60,0.08)', borderRadius:12, padding:'16px 20px', border:`1px solid ${ins.read?'var(--fg-border)':'rgba(251,146,60,0.3)'}`, marginBottom:10, display:'flex', gap:12 }}>
+                  <div style={{ fontSize:24 }}>{ins.insight_type==='milestone'?'🏆':ins.insight_type==='top_thread'?'🔝':'💡'}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:13 }}>{ins.content}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{ins.created_at}</div>
+                  </div>
+                  {!ins.read && <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok||!ins.id) return; await fetch(`/api/insights-feed/${ins.id}/read`,{method:'PUT',headers:{Authorization:`Bearer ${tok}`}}); setAiFeed((prev:any)=>prev.map((x:any)=>x.id===ins.id?{...x,read:1}:x)); }} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid var(--fg-border)', background:'transparent', color:'var(--fg-text2)', cursor:'pointer', fontSize:11, whiteSpace:'nowrap' }}>Mark Read</button>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Stats Summary Hub tab */}
+        {mainTab === 'statssummary' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📊 Stats Hub</h2>
+              {!statsSummary ? (
+                <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/stats-summary',{headers:{Authorization:`Bearer ${tok}`}}); setStatsSummary(await r.json()); }} style={{ padding:'12px 24px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:15 }}>Load Stats</button>
+              ) : (
+                <>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
+                    {[
+                      { label:'Threads', val: statsSummary.totalThreads, icon:'🧵' },
+                      { label:'Messages', val: statsSummary.totalMessages, icon:'💬' },
+                      { label:'Tokens', val: (statsSummary.totalTokens||0).toLocaleString(), icon:'🪙' },
+                      { label:'Bookmarks', val: statsSummary.totalBookmarks, icon:'🔖' },
+                      { label:'Code Snippets', val: statsSummary.totalSnippets, icon:'🧩' },
+                      { label:'Goals', val: `${statsSummary.completedGoals}/${statsSummary.totalGoals}`, icon:'🎯' },
+                      { label:'Active Streaks', val: statsSummary.activeStreaks, icon:'🔥' },
+                      { label:'Unread Articles', val: statsSummary.readingItems, icon:'📚' },
+                    ].map((s:any)=>(
+                      <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:12, padding:'18px 14px', border:'1px solid var(--fg-border)', textAlign:'center' }}>
+                        <div style={{ fontSize:26, marginBottom:6 }}>{s.icon}</div>
+                        <div style={{ color:'var(--fg-orange)', fontSize:22, fontWeight:800 }}>{s.val}</div>
+                        <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/stats-summary',{headers:{Authorization:`Bearer ${tok}`}}); setStatsSummary(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Folders tab */}
+        {mainTab === 'folders' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:720, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📂 Thread Folders</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:20 }}>
+                <div style={{ display:'flex', gap:10, marginBottom:10 }}>
+                  <input value={newFolderIcon} onChange={e=>setNewFolderIcon(e.target.value)} placeholder="📁" style={{ width:48, padding:'8px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:20, textAlign:'center' }} />
+                  <input value={newFolderName} onChange={e=>setNewFolderName(e.target.value)} placeholder="Folder name..." style={{ flex:1, padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
+                  <input type="color" value={newFolderColor} onChange={e=>setNewFolderColor(e.target.value)} style={{ width:40, height:36, borderRadius:8, border:'1px solid var(--fg-border)', cursor:'pointer' }} />
+                  <button onClick={createFolder} style={{ padding:'8px 16px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Create</button>
+                </div>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'200px 1fr', gap:16 }}>
+                <div>
+                  {folders.length === 0 ? (
+                    <button onClick={loadFolders} style={{ width:'100%', padding:'10px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Folders</button>
+                  ) : folders.map((f:any)=>(
+                    <div key={f.id} onClick={()=>loadFolderThreads(f.id)} style={{ padding:'10px 12px', borderRadius:10, border:`1px solid ${activeFolderId===f.id?f.color:'var(--fg-border)'}`, background: activeFolderId===f.id?'var(--fg-bg3)':'var(--fg-bg2)', cursor:'pointer', marginBottom:6, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{f.icon} {f.name} <span style={{ color:'var(--fg-text3)', fontSize:11 }}>({f.thread_count})</span></span>
+                      <button onClick={e=>{e.stopPropagation();deleteFolder(f.id);}} style={{ padding:'2px 6px', borderRadius:4, border:'none', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:12 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  {activeFolderId && (
+                    folderThreads.length === 0
+                      ? <div style={{ color:'var(--fg-text3)', fontSize:13, padding:16 }}>No threads in this folder yet.</div>
+                      : folderThreads.map((t:any)=>(
+                        <div key={t.id} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:'12px 14px', border:'1px solid var(--fg-border)', marginBottom:8 }}>
+                          <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{t.title||'Untitled'}</div>
+                          <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:3 }}>{new Date(t.created_at).toLocaleDateString()}</div>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Notes tab */}
+        {mainTab === 'quicknotes' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:760, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>📝 Quick Notes</h2>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:14, padding:18, border:'1px solid var(--fg-border)', marginBottom:24 }}>
+                <textarea value={newNoteContent} onChange={e=>setNewNoteContent(e.target.value)} placeholder="Capture a quick note..." rows={3} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14, resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
+                <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                  {['yellow','blue','green','pink','purple'].map(col=>(
+                    <button key={col} onClick={()=>setNewNoteColor(col)} style={{ width:22, height:22, borderRadius:'50%', border: newNoteColor===col?'3px solid var(--fg-text)':'2px solid transparent', background:{yellow:'#fde68a',blue:'#93c5fd',green:'#86efac',pink:'#f9a8d4',purple:'#c4b5fd'}[col as string]||'#fde68a', cursor:'pointer' }} />
+                  ))}
+                  <button onClick={addQuickNote} style={{ marginLeft:'auto', padding:'8px 18px', borderRadius:8, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>Add Note</button>
+                </div>
+              </div>
+              {quickNotes.length === 0 ? (
+                <button onClick={loadQuickNotes} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Load Notes</button>
+              ) : (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14 }}>
+                  {quickNotes.map((n:any)=>{
+                    const bg = {yellow:'#fde68a',blue:'#93c5fd',green:'#86efac',pink:'#f9a8d4',purple:'#c4b5fd'}[n.color as string]||'#fde68a';
+                    return (
+                      <div key={n.id} style={{ background:bg, borderRadius:12, padding:14, position:'relative', minHeight:100 }}>
+                        {n.pinned===1 && <span style={{ position:'absolute', top:8, right:30, fontSize:14 }}>📌</span>}
+                        <button onClick={()=>deleteQuickNote(n.id)} style={{ position:'absolute', top:6, right:8, background:'transparent', border:'none', cursor:'pointer', fontSize:14, color:'rgba(0,0,0,0.4)' }}>✕</button>
+                        {qnoteEditId===n.id ? (
+                          <><textarea value={qnoteEditContent} onChange={e=>setQnoteEditContent(e.target.value)} rows={3} style={{ width:'100%', background:'rgba(255,255,255,0.5)', border:'none', borderRadius:6, padding:6, fontSize:13, resize:'none', boxSizing:'border-box' }} />
+                          <button onClick={()=>updateQuickNote(n.id,qnoteEditContent)} style={{ marginTop:6, padding:'4px 10px', borderRadius:6, border:'none', background:'rgba(0,0,0,0.15)', cursor:'pointer', fontSize:12, fontWeight:600 }}>Save</button></>
+                        ) : (
+                          <div onClick={()=>{setQnoteEditId(n.id);setQnoteEditContent(n.content);}} style={{ color:'rgba(0,0,0,0.8)', fontSize:13, lineHeight:1.5, cursor:'text', whiteSpace:'pre-wrap' }}>{n.content}</div>
+                        )}
+                        <div style={{ marginTop:8, display:'flex', justifyContent:'space-between' }}>
+                          <span style={{ fontSize:10, color:'rgba(0,0,0,0.4)' }}>{new Date(n.updated_at).toLocaleDateString()}</span>
+                          <button onClick={()=>pinQuickNote(n.id, n.pinned?0:1)} style={{ background:'transparent', border:'none', cursor:'pointer', fontSize:12 }}>{n.pinned?'📌':'📍'}</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Export Data tab */}
+        {mainTab === 'export' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:600, margin:'0 auto', textAlign:'center' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:12, fontSize:22, fontWeight:700 }}>💾 Export Workspace Data</h2>
+              <p style={{ color:'var(--fg-text2)', fontSize:14, marginBottom:32, lineHeight:1.6 }}>Download all your threads, messages, snippets, and bookmarks as a JSON file. Your data belongs to you.</p>
+              <div style={{ background:'var(--fg-bg2)', borderRadius:16, padding:32, border:'1px solid var(--fg-border)', marginBottom:24 }}>
+                <div style={{ fontSize:48, marginBottom:16 }}>📦</div>
+                <div style={{ color:'var(--fg-text)', fontSize:16, fontWeight:600, marginBottom:8 }}>Full Workspace Export</div>
+                <div style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Includes: threads, messages, snippets, bookmarks</div>
+                <button onClick={exportWorkspace} style={{ padding:'14px 32px', borderRadius:10, border:'none', background:'var(--fg-orange)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:16 }}>⬇ Download JSON Export</button>
+              </div>
+              <div style={{ color:'var(--fg-text3)', fontSize:12 }}>Export is generated fresh each time and includes all data up to this moment.</div>
+            </div>
           </div>
         )}
 
