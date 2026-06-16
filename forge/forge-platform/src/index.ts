@@ -15795,4 +15795,247 @@ app.delete('/api/ai-critique-log/:id', requireAuth, (req: Request, res: Response
 });
 // ─── End Batch 75 ────────────────────────────────────────────────────────────
 
+
+// ─── Batch 76 ────────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS ai_knowledge_gaps (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  topic TEXT NOT NULL, description TEXT, priority TEXT DEFAULT 'medium',
+  resolved INTEGER DEFAULT 0, model TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_roles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  name TEXT NOT NULL, permissions_json TEXT, description TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS thread_highlights (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id TEXT NOT NULL, message_id INTEGER, highlight_text TEXT NOT NULL,
+  color TEXT DEFAULT '#ffeb3b', note TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS user_journal (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  title TEXT, body TEXT NOT NULL, mood TEXT,
+  tags TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS ai_ranking_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  item TEXT NOT NULL, rank INTEGER DEFAULT 0,
+  category TEXT, model TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
+// /api/ai-knowledge-gaps
+app.get('/api/ai-knowledge-gaps', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_knowledge_gaps WHERE user_id=? ORDER BY resolved ASC, created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/ai-knowledge-gaps', requireAuth, (req: Request, res: Response) => {
+  const { topic, description, priority, model } = req.body;
+  if (!topic) return res.status(400).json({ error: 'topic required' });
+  const r = db.prepare('INSERT INTO ai_knowledge_gaps (user_id,topic,description,priority,model) VALUES (?,?,?,?,?)').run((req as any).userId, topic, description||null, priority||'medium', model||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-knowledge-gaps/:id/resolve', requireAuth, (req: Request, res: Response) => {
+  db.prepare('UPDATE ai_knowledge_gaps SET resolved=1 WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-knowledge-gaps/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM ai_knowledge_gaps WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/workspace-roles
+app.get('/api/workspace-roles', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM workspace_roles WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/workspace-roles', requireAuth, (req: Request, res: Response) => {
+  const { name, permissions_json, description } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO workspace_roles (user_id,name,permissions_json,description) VALUES (?,?,?,?)').run((req as any).userId, name, permissions_json||'[]', description||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/workspace-roles/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM workspace_roles WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/thread-highlights
+app.get('/api/thread-highlights', requireAuth, (req: Request, res: Response) => {
+  const thread_id = req.query.thread_id as string;
+  const rows = thread_id
+    ? db.prepare('SELECT * FROM thread_highlights WHERE user_id=? AND thread_id=? ORDER BY created_at DESC').all((req as any).userId, thread_id)
+    : db.prepare('SELECT * FROM thread_highlights WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/thread-highlights', requireAuth, (req: Request, res: Response) => {
+  const { thread_id, message_id, highlight_text, color, note } = req.body;
+  if (!thread_id || !highlight_text) return res.status(400).json({ error: 'thread_id and highlight_text required' });
+  const r = db.prepare('INSERT INTO thread_highlights (user_id,thread_id,message_id,highlight_text,color,note) VALUES (?,?,?,?,?,?)').run((req as any).userId, thread_id, message_id||null, highlight_text, color||'#ffeb3b', note||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/thread-highlights/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM thread_highlights WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/user-journal
+app.get('/api/user-journal', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_journal WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/user-journal', requireAuth, (req: Request, res: Response) => {
+  const { title, body, mood, tags } = req.body;
+  if (!body) return res.status(400).json({ error: 'body required' });
+  const r = db.prepare('INSERT INTO user_journal (user_id,title,body,mood,tags) VALUES (?,?,?,?,?)').run((req as any).userId, title||null, body, mood||null, tags||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/user-journal/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM user_journal WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/ai-ranking-log
+app.get('/api/ai-ranking-log', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_ranking_log WHERE user_id=? ORDER BY rank ASC, created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/ai-ranking-log', requireAuth, (req: Request, res: Response) => {
+  const { item, rank, category, model } = req.body;
+  if (!item) return res.status(400).json({ error: 'item required' });
+  const r = db.prepare('INSERT INTO ai_ranking_log (user_id,item,rank,category,model) VALUES (?,?,?,?,?)').run((req as any).userId, item, rank||0, category||null, model||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-ranking-log/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM ai_ranking_log WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+// ─── End Batch 76 ────────────────────────────────────────────────────────────
+
+
+// ─── Batch 77 ────────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS ai_confidence_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  prompt TEXT, response TEXT, confidence REAL DEFAULT 0,
+  model TEXT, topic TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_boards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  name TEXT NOT NULL, description TEXT, columns_json TEXT DEFAULT '[]',
+  pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS thread_revisions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id TEXT NOT NULL, revision_num INTEGER DEFAULT 1,
+  summary TEXT, delta TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS user_commitments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  commitment TEXT NOT NULL, deadline TEXT, fulfilled INTEGER DEFAULT 0,
+  category TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS ai_question_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  question TEXT NOT NULL, answer TEXT, source TEXT,
+  model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
+// /api/ai-confidence-scores
+app.get('/api/ai-confidence-scores', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_confidence_scores WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/ai-confidence-scores', requireAuth, (req: Request, res: Response) => {
+  const { prompt, response, confidence, model, topic } = req.body;
+  if (confidence === undefined) return res.status(400).json({ error: 'confidence required' });
+  const r = db.prepare('INSERT INTO ai_confidence_scores (user_id,prompt,response,confidence,model,topic) VALUES (?,?,?,?,?,?)').run((req as any).userId, prompt||null, response||null, confidence, model||null, topic||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-confidence-scores/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM ai_confidence_scores WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/workspace-boards
+app.get('/api/workspace-boards', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM workspace_boards WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/workspace-boards', requireAuth, (req: Request, res: Response) => {
+  const { name, description, columns_json } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const r = db.prepare('INSERT INTO workspace_boards (user_id,name,description,columns_json) VALUES (?,?,?,?)').run((req as any).userId, name, description||null, columns_json||'["To Do","In Progress","Done"]');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-boards/:id/pin', requireAuth, (req: Request, res: Response) => {
+  db.prepare('UPDATE workspace_boards SET pinned=1-pinned WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-boards/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM workspace_boards WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/thread-revisions
+app.get('/api/thread-revisions', requireAuth, (req: Request, res: Response) => {
+  const thread_id = req.query.thread_id as string;
+  const rows = thread_id
+    ? db.prepare('SELECT * FROM thread_revisions WHERE user_id=? AND thread_id=? ORDER BY revision_num DESC').all((req as any).userId, thread_id)
+    : db.prepare('SELECT * FROM thread_revisions WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/thread-revisions', requireAuth, (req: Request, res: Response) => {
+  const { thread_id, summary, delta } = req.body;
+  if (!thread_id) return res.status(400).json({ error: 'thread_id required' });
+  const last = db.prepare('SELECT MAX(revision_num) as max FROM thread_revisions WHERE thread_id=? AND user_id=?').get(thread_id, (req as any).userId) as any;
+  const rev = (last?.max || 0) + 1;
+  const r = db.prepare('INSERT INTO thread_revisions (user_id,thread_id,revision_num,summary,delta) VALUES (?,?,?,?,?)').run((req as any).userId, thread_id, rev, summary||null, delta||null);
+  res.json({ id: r.lastInsertRowid, revision_num: rev });
+});
+app.delete('/api/thread-revisions/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM thread_revisions WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/user-commitments
+app.get('/api/user-commitments', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_commitments WHERE user_id=? ORDER BY fulfilled ASC, created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/user-commitments', requireAuth, (req: Request, res: Response) => {
+  const { commitment, deadline, category } = req.body;
+  if (!commitment) return res.status(400).json({ error: 'commitment required' });
+  const r = db.prepare('INSERT INTO user_commitments (user_id,commitment,deadline,category) VALUES (?,?,?,?)').run((req as any).userId, commitment, deadline||null, category||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/user-commitments/:id/fulfill', requireAuth, (req: Request, res: Response) => {
+  db.prepare('UPDATE user_commitments SET fulfilled=1 WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+app.delete('/api/user-commitments/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM user_commitments WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+
+// /api/ai-question-log
+app.get('/api/ai-question-log', requireAuth, (req: Request, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_question_log WHERE user_id=? ORDER BY created_at DESC').all((req as any).userId);
+  res.json(rows);
+});
+app.post('/api/ai-question-log', requireAuth, (req: Request, res: Response) => {
+  const { question, answer, source, model } = req.body;
+  if (!question) return res.status(400).json({ error: 'question required' });
+  const r = db.prepare('INSERT INTO ai_question_log (user_id,question,answer,source,model) VALUES (?,?,?,?,?)').run((req as any).userId, question, answer||null, source||null, model||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-question-log/:id', requireAuth, (req: Request, res: Response) => {
+  db.prepare('DELETE FROM ai_question_log WHERE id=? AND user_id=?').run(Number(req.params.id), (req as any).userId);
+  res.json({ ok: true });
+});
+// ─── End Batch 77 ────────────────────────────────────────────────────────────
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

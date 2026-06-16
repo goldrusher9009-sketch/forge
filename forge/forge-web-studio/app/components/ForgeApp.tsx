@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1266,6 +1266,45 @@ export default function ForgeApp() {
   const [newCrContent, setNewCrContent] = useState('');
   const [newCrCritique, setNewCrCritique] = useState('');
   const [newCrModel, setNewCrModel] = useState('');
+  // Batch 76
+  const [aiKnowledgeGaps, setAiKnowledgeGaps] = useState<any[]>([]);
+  const [newKgTopic, setNewKgTopic] = useState('');
+  const [newKgDesc, setNewKgDesc] = useState('');
+  const [newKgPriority, setNewKgPriority] = useState('medium');
+  const [wsRoles, setWsRoles] = useState<any[]>([]);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleDesc, setNewRoleDesc] = useState('');
+  const [threadHighlights, setThreadHighlights] = useState<any[]>([]);
+  const [newThThread, setNewThThread] = useState('');
+  const [newThText, setNewThText] = useState('');
+  const [newThColor, setNewThColor] = useState('#ffeb3b');
+  const [userJournal, setUserJournal] = useState<any[]>([]);
+  const [newJnTitle, setNewJnTitle] = useState('');
+  const [newJnBody, setNewJnBody] = useState('');
+  const [newJnMood, setNewJnMood] = useState('');
+  const [aiRankingLog, setAiRankingLog] = useState<any[]>([]);
+  const [newRlItem, setNewRlItem] = useState('');
+  const [newRlRank, setNewRlRank] = useState(1);
+  const [newRlCategory, setNewRlCategory] = useState('');
+  const [aiConfidenceScores, setAiConfidenceScores] = useState<any[]>([]);
+  const [newCfPrompt, setNewCfPrompt] = useState('');
+  const [newCfConfidence, setNewCfConfidence] = useState(0.9);
+  const [newCfModel, setNewCfModel] = useState('');
+  const [newCfTopic, setNewCfTopic] = useState('');
+  const [wsBoards, setWsBoards] = useState<any[]>([]);
+  const [newBdName, setNewBdName] = useState('');
+  const [newBdDesc, setNewBdDesc] = useState('');
+  const [threadRevisions, setThreadRevisions] = useState<any[]>([]);
+  const [newTrThread, setNewTrThread] = useState('');
+  const [newTrSummary, setNewTrSummary] = useState('');
+  const [userCommitments, setUserCommitments] = useState<any[]>([]);
+  const [newUcCommitment, setNewUcCommitment] = useState('');
+  const [newUcDeadline, setNewUcDeadline] = useState('');
+  const [newUcCategory, setNewUcCategory] = useState('');
+  const [aiQuestionLog, setAiQuestionLog] = useState<any[]>([]);
+  const [newQlQuestion, setNewQlQuestion] = useState('');
+  const [newQlAnswer, setNewQlAnswer] = useState('');
+  const [newQlModel, setNewQlModel] = useState('');
   const [threadArchivesV3, setThreadArchivesV3] = useState<any[]>([]);
   const [tav3ThreadId, setTav3ThreadId] = useState('');
   const [tav3Title, setTav3Title] = useState('');
@@ -5332,6 +5371,15 @@ export default function ForgeApp() {
             { id:'usertimeblocks', icon:'⏰', label:'Time Blocks' },
             { id:'airesptemplates', icon:'📄', label:'Resp Templates' },
             { id:'aiknowledgegaps', icon:'🧩', label:'Knowledge Gaps' },
+            { id:'wsroles', icon:'🏘', label:'WS Roles' },
+            { id:'threadhighlights2', icon:'📝', label:'Thread Highlights' },
+            { id:'userjournal', icon:'📓', label:'User Journal' },
+            { id:'airankinglog', icon:'🏆', label:'Ranking Log' },
+            { id:'aiconfidencescores', icon:'📊', label:'Confidence Scores' },
+            { id:'wsboards', icon:'🗂', label:'WS Boards' },
+            { id:'threadrevisions', icon:'🔄', label:'Thread Revisions' },
+            { id:'usercommitments', icon:'🤝', label:'Commitments' },
+            { id:'aiquestionlog', icon:'❓', label:'Question Log' },
             { id:'wsbkmksv2', icon:'🔖', label:'Bookmarks V2' },
             { id:'threadeventsv2', icon:'📅', label:'Thread Events V2' },
             { id:'userskillratings', icon:'📊', label:'Skill Ratings' },
@@ -12742,6 +12790,164 @@ export default function ForgeApp() {
           ))}
         </div>
       )}
+      {mainTab==='aiconfidencescores' && (
+        <div style={{padding:20}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128202; AI Confidence Scores</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Prompt..." value={newCfPrompt} onChange={e=>setNewCfPrompt(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Confidence 0-1" type="number" step="0.01" min="0" max="1" value={newCfConfidence} onChange={e=>setNewCfConfidence(parseFloat(e.target.value))} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Model..." value={newCfModel} onChange={e=>setNewCfModel(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Topic..." value={newCfTopic} onChange={e=>setNewCfTopic(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(newCfConfidence===undefined)return;await fetch('/api/ai-confidence-scores',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({prompt:newCfPrompt,confidence:newCfConfidence,model:newCfModel,topic:newCfTopic})});const r=await fetch('/api/ai-confidence-scores',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiConfidenceScores(await r.json());setNewCfPrompt('');setNewCfConfidence(0.9);setNewCfModel('');setNewCfTopic('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+          </div>
+          {aiConfidenceScores.map(s=><div key={s.id} style={{background:'var(--bg2)',borderRadius:8,padding:'10px 14px',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{color:'var(--fg-text)',fontSize:13}}>{s.prompt||'(no prompt)'} <b style={{color:'var(--fg-orange)'}}>{s.confidence}</b> {s.model&&<span style={{color:'var(--fg-muted)',fontSize:11}}>[{s.model}]</span>} {s.topic&&<span style={{color:'var(--fg-muted)',fontSize:11}}>#{s.topic}</span>}</span><button onClick={async()=>{await fetch('/api/ai-confidence-scores/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/ai-confidence-scores',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiConfidenceScores(await r.json());}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#128465;</button></div>)}
+        </div>
+      )}
+      {mainTab==='wsboards' && (
+        <div style={{padding:20}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128450; Workspace Boards</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Board name..." value={newBdName} onChange={e=>setNewBdName(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Description..." value={newBdDesc} onChange={e=>setNewBdDesc(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newBdName)return;await fetch('/api/workspace-boards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newBdName,description:newBdDesc})});const r=await fetch('/api/workspace-boards',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBoards(await r.json());setNewBdName('');setNewBdDesc('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Create</button>
+          </div>
+          {wsBoards.map(b=><div key={b.id} style={{background:'var(--bg2)',borderRadius:8,padding:'10px 14px',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{color:'var(--fg-text)',fontSize:13}}>{b.pinned?'&#128204; ':''}{b.name}{b.description&&<span style={{color:'var(--fg-muted)',fontSize:11}}> — {b.description}</span>}</span><div style={{display:'flex',gap:6}}><button onClick={async()=>{await fetch('/api/workspace-boards/'+b.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-boards',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBoards(await r.json());}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:14}}>&#128204;</button><button onClick={async()=>{await fetch('/api/workspace-boards/'+b.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-boards',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBoards(await r.json());}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#128465;</button></div></div>)}
+        </div>
+      )}
+      {mainTab==='threadrevisions' && (
+        <div style={{padding:20}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128260; Thread Revisions</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Thread ID..." value={newTrThread} onChange={e=>setNewTrThread(e.target.value)} style={{width:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Summary..." value={newTrSummary} onChange={e=>setNewTrSummary(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newTrThread)return;await fetch('/api/thread-revisions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newTrThread,summary:newTrSummary})});const r=await fetch('/api/thread-revisions',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadRevisions(await r.json());setNewTrThread('');setNewTrSummary('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Save</button>
+          </div>
+          {threadRevisions.map(r=><div key={r.id} style={{background:'var(--bg2)',borderRadius:8,padding:'10px 14px',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{color:'var(--fg-text)',fontSize:13}}>#{r.thread_id} v{r.revision_num} {r.summary&&<span style={{color:'var(--fg-muted)'}}> — {r.summary}</span>}</span><button onClick={async()=>{await fetch('/api/thread-revisions/'+r.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const res=await fetch('/api/thread-revisions',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadRevisions(await res.json());}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#128465;</button></div>)}
+        </div>
+      )}
+      {mainTab==='usercommitments' && (
+        <div style={{padding:20}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#129309; User Commitments</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Commitment..." value={newUcCommitment} onChange={e=>setNewUcCommitment(e.target.value)} style={{flex:1,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Deadline..." type="date" value={newUcDeadline} onChange={e=>setNewUcDeadline(e.target.value)} style={{width:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Category..." value={newUcCategory} onChange={e=>setNewUcCategory(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newUcCommitment)return;await fetch('/api/user-commitments',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({commitment:newUcCommitment,deadline:newUcDeadline,category:newUcCategory})});const r=await fetch('/api/user-commitments',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserCommitments(await r.json());setNewUcCommitment('');setNewUcDeadline('');setNewUcCategory('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          {userCommitments.map(c=><div key={c.id} style={{background:'var(--bg2)',borderRadius:8,padding:'10px 14px',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{color:c.fulfilled?'var(--fg-muted)':'var(--fg-text)',fontSize:13,textDecoration:c.fulfilled?'line-through':'none'}}>{c.commitment}{c.deadline&&<span style={{color:'var(--fg-muted)',fontSize:11}}> &#128197; {c.deadline}</span>}{c.category&&<span style={{color:'var(--fg-orange)',fontSize:11}}> #{c.category}</span>}</span><div style={{display:'flex',gap:6}}>{!c.fulfilled&&<button onClick={async()=>{await fetch('/api/user-commitments/'+c.id+'/fulfill',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/user-commitments',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserCommitments(await r.json());}} style={{background:'none',border:'none',color:'var(--fg-orange)',cursor:'pointer',fontSize:14}}>&#10003;</button>}<button onClick={async()=>{await fetch('/api/user-commitments/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/user-commitments',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserCommitments(await r.json());}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#128465;</button></div></div>)}
+        </div>
+      )}
+      {mainTab==='aiquestionlog' && (
+        <div style={{padding:20}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#10067; AI Question Log</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Question..." value={newQlQuestion} onChange={e=>setNewQlQuestion(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Answer..." value={newQlAnswer} onChange={e=>setNewQlAnswer(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Model..." value={newQlModel} onChange={e=>setNewQlModel(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newQlQuestion)return;await fetch('/api/ai-question-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({question:newQlQuestion,answer:newQlAnswer,model:newQlModel})});const r=await fetch('/api/ai-question-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiQuestionLog(await r.json());setNewQlQuestion('');setNewQlAnswer('');setNewQlModel('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+          </div>
+          {aiQuestionLog.map(q=><div key={q.id} style={{background:'var(--bg2)',borderRadius:8,padding:'10px 14px',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{color:'var(--fg-text)',fontSize:13}}><b>Q:</b> {q.question}{q.answer&&<span style={{color:'var(--fg-muted)'}}> &#10132; {q.answer}</span>}{q.model&&<span style={{color:'var(--fg-orange)',fontSize:11}}> [{q.model}]</span>}</span><button onClick={async()=>{await fetch('/api/ai-question-log/'+q.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/ai-question-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiQuestionLog(await r.json());}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#128465;</button></div>)}
+        </div>
+      )}
+      {mainTab==='aiknowledgegaps' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#129488; Knowledge Gaps</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Topic..." value={newKgTopic} onChange={e=>setNewKgTopic(e.target.value)} style={{flex:2,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <select value={newKgPriority} onChange={e=>setNewKgPriority(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
+            </select>
+            <input placeholder="Description..." value={newKgDesc} onChange={e=>setNewKgDesc(e.target.value)} style={{flex:1,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newKgTopic)return;await fetch('/api/ai-knowledge-gaps',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({topic:newKgTopic,description:newKgDesc,priority:newKgPriority})});const r=await fetch('/api/ai-knowledge-gaps',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps(await r.json());setNewKgTopic('');setNewKgDesc('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          {aiKnowledgeGaps.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No gaps identified.</p>}
+          {aiKnowledgeGaps.map((kg:any)=>(
+            <div key={kg.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center',opacity:kg.resolved?0.6:1}}>
+              <div><span style={{fontWeight:600,fontSize:13}}>&#129488; {kg.topic}</span><span style={{fontSize:11,marginLeft:8,padding:'2px 6px',borderRadius:10,background:kg.priority==='high'?'#f4433622':kg.priority==='medium'?'#ff980022':'var(--bg3)',color:kg.priority==='high'?'#f44336':kg.priority==='medium'?'#ff9800':'var(--fg-muted)'}}>{kg.priority}</span>{kg.resolved&&<span style={{fontSize:11,marginLeft:8,color:'#4caf50'}}>&#10003; resolved</span>}{kg.description&&<div style={{fontSize:12,color:'var(--fg-muted)'}}>{kg.description}</div>}</div>
+              <div style={{display:'flex',gap:6}}>
+                {!kg.resolved&&<button onClick={async()=>{await fetch('/api/ai-knowledge-gaps/'+kg.id+'/resolve',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/ai-knowledge-gaps',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps(await r.json());}} style={{background:'none',border:'none',color:'#4caf50',cursor:'pointer',fontSize:14}}>&#10003;</button>}
+                <button onClick={async()=>{await fetch('/api/ai-knowledge-gaps/'+kg.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps(aiKnowledgeGaps.filter((x:any)=>x.id!==kg.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='wsroles' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#127970; Workspace Roles</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Role name..." value={newRoleName} onChange={e=>setNewRoleName(e.target.value)} style={{flex:1,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Description..." value={newRoleDesc} onChange={e=>setNewRoleDesc(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newRoleName)return;await fetch('/api/workspace-roles',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newRoleName,description:newRoleDesc})});const r=await fetch('/api/workspace-roles',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsRoles(await r.json());setNewRoleName('');setNewRoleDesc('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Create Role</button>
+          </div>
+          {wsRoles.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No roles defined.</p>}
+          {wsRoles.map((rl:any)=>(
+            <div key={rl.id} style={{background:'var(--bg2)',borderRadius:8,padding:12,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><span style={{fontWeight:600,fontSize:13}}>&#127970; {rl.name}</span>{rl.description&&<div style={{fontSize:12,color:'var(--fg-muted)'}}>{rl.description}</div>}</div>
+              <button onClick={async()=>{await fetch('/api/workspace-roles/'+rl.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsRoles(wsRoles.filter((x:any)=>x.id!==rl.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='threadhighlights' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128396; Thread Highlights</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Thread ID..." value={newThThread} onChange={e=>setNewThThread(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Highlight text..." value={newThText} onChange={e=>setNewThText(e.target.value)} style={{flex:2,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="color" value={newThColor} onChange={e=>setNewThColor(e.target.value)} style={{width:44,padding:'2px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,cursor:'pointer'}}/>
+            <button onClick={async()=>{if(!newThThread||!newThText)return;await fetch('/api/thread-highlights',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newThThread,highlight_text:newThText,color:newThColor})});const r=await fetch('/api/thread-highlights',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadHighlights(await r.json());setNewThThread('');setNewThText('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Highlight</button>
+          </div>
+          {threadHighlights.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No highlights.</p>}
+          {threadHighlights.map((hl:any)=>(
+            <div key={hl.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center',borderLeft:'3px solid '+(hl.color||'#ffeb3b')}}>
+              <div><span style={{fontSize:13,background:hl.color+'33',padding:'2px 6px',borderRadius:4}}>{hl.highlight_text.slice(0,80)}</span><div style={{fontSize:11,color:'var(--fg-muted)',marginTop:2}}>Thread: {hl.thread_id}</div></div>
+              <button onClick={async()=>{await fetch('/api/thread-highlights/'+hl.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadHighlights(threadHighlights.filter((x:any)=>x.id!==hl.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='userjournal' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128221; Journal</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Title (optional)..." value={newJnTitle} onChange={e=>setNewJnTitle(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <select value={newJnMood} onChange={e=>setNewJnMood(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              <option value="">-- mood --</option><option value="happy">&#128515; Happy</option><option value="neutral">&#128528; Neutral</option><option value="stressed">&#128543; Stressed</option><option value="inspired">&#129299; Inspired</option>
+            </select>
+          </div>
+          <textarea placeholder="Write your journal entry..." value={newJnBody} onChange={e=>setNewJnBody(e.target.value)} rows={4} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+          <button onClick={async()=>{if(!newJnBody)return;await fetch('/api/user-journal',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newJnTitle,body:newJnBody,mood:newJnMood})});const r=await fetch('/api/user-journal',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserJournal(await r.json());setNewJnTitle('');setNewJnBody('');setNewJnMood('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',marginBottom:12}}>Save Entry</button>
+          {userJournal.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No journal entries.</p>}
+          {userJournal.map((jn:any)=>(
+            <div key={jn.id} style={{background:'var(--bg2)',borderRadius:8,padding:12,marginBottom:8}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                <span style={{fontWeight:600,fontSize:13}}>{jn.title||'Entry'}{jn.mood&&<span style={{fontSize:14,marginLeft:8}}>{jn.mood==='happy'?'&#128515;':jn.mood==='inspired'?'&#129299;':jn.mood==='stressed'?'&#128543;':'&#128528;'}</span>}</span>
+                <button onClick={async()=>{await fetch('/api/user-journal/'+jn.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserJournal(userJournal.filter((x:any)=>x.id!==jn.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+              </div>
+              <div style={{fontSize:13,color:'var(--fg-text)'}}>{jn.body.slice(0,140)}{jn.body.length>140?'...':''}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='airankinglog' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#127942; AI Ranking Log</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Item..." value={newRlItem} onChange={e=>setNewRlItem(e.target.value)} style={{flex:2,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="number" placeholder="Rank" value={newRlRank||''} onChange={e=>setNewRlRank(Number(e.target.value))} style={{width:80,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Category..." value={newRlCategory} onChange={e=>setNewRlCategory(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newRlItem)return;await fetch('/api/ai-ranking-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({item:newRlItem,rank:newRlRank,category:newRlCategory})});const r=await fetch('/api/ai-ranking-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiRankingLog(await r.json());setNewRlItem('');setNewRlRank(1);setNewRlCategory('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+          </div>
+          {aiRankingLog.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No rankings logged.</p>}
+          {aiRankingLog.map((rl:any)=>(
+            <div key={rl.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><span style={{fontSize:18,fontWeight:700,color:'var(--fg-orange)',marginRight:10}}>#{rl.rank}</span><span style={{fontWeight:600,fontSize:13}}>{rl.item}</span>{rl.category&&<span style={{fontSize:11,marginLeft:8,padding:'2px 6px',borderRadius:10,background:'var(--bg3)',color:'var(--fg-muted)'}}>{rl.category}</span>}</div>
+              <button onClick={async()=>{await fetch('/api/ai-ranking-log/'+rl.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiRankingLog(aiRankingLog.filter((x:any)=>x.id!==rl.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
+            </div>
+          ))}
+        </div>
+      )}
       {mainTab==='aidebugsess' && (
         <div style={{padding:16}}>
           <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128027; Debug Sessions</h3>
@@ -19253,4 +19459,13 @@ export default function ForgeApp() {
                       <span style={{ fontSize:11, padding:'3px 10px', borderRadius:12, background: chk.severity==='ok'?'rgba(34,197,94,0.15)':chk.severity==='warn'?'rgba(251,146,60,0.15)':'rgba(59,130,246,0.15)', color: chk.severity==='ok'?'#22c55e':chk.severity==='warn'?'var(--fg-orange)':'#3b82f6', fontWeight:600 }}>{chk.severity.toUpperCase()}</span>
                     </div>
                   ))}
-                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/health',{headers:{Authorization:`Bearer ${tok}`}}); setWsHealth(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', 
+                  <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/health',{headers:{Authorization:`Bearer ${tok}`}}); setWsHealth(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12, marginTop:8 }}>&#8635; Refresh</button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
