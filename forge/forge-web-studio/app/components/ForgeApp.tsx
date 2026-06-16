@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -884,6 +884,68 @@ export default function ForgeApp() {
   const [newAtTitle, setNewAtTitle] = useState('');
   const [newAtPriority, setNewAtPriority] = useState('medium');
   const [newAtDue, setNewAtDue] = useState('');
+
+  const [ideaVotes, setIdeaVotes] = useState<any[]>([]);
+  const [newIvIdea, setNewIvIdea] = useState('');
+  const [newIvCat, setNewIvCat] = useState('general');
+  const [wsBroadcasts, setWsBroadcasts] = useState<any[]>([]);
+  const [newWbMsg, setNewWbMsg] = useState('');
+  const [newWbType, setNewWbType] = useState('info');
+  const [aiDebugLogs, setAiDebugLogs] = useState<any[]>([]);
+  const [debugStats, setDebugStats] = useState<any[]>([]);
+  const [noteLinks, setNoteLinks] = useState<any[]>([]);
+  const [newNlSource, setNewNlSource] = useState('');
+  const [newNlTarget, setNewNlTarget] = useState('');
+  const [userProfileV2, setUserProfileV2] = useState<any>(null);
+  const [upv2Name, setUpv2Name] = useState('');
+  const [upv2Bio, setUpv2Bio] = useState('');
+  const [upv2Emoji, setUpv2Emoji] = useState('👤');
+  const [upv2Tz, setUpv2Tz] = useState('UTC');
+
+  const [aiSuggestionsV2, setAiSuggestionsV2] = useState<any[]>([]);
+  const [newAsContext, setNewAsContext] = useState('');
+  const [newAsSuggestion, setNewAsSuggestion] = useState('');
+  const [newAsType, setNewAsType] = useState('general');
+  const [wsGoals, setWsGoals] = useState<any[]>([]);
+  const [newWgTitle, setNewWgTitle] = useState('');
+  const [newWgDesc, setNewWgDesc] = useState('');
+  const [newWgDate, setNewWgDate] = useState('');
+  const [codeSnippetsV2, setCodeSnippetsV2] = useState<any[]>([]);
+  const [newCsv2Title, setNewCsv2Title] = useState('');
+  const [newCsv2Code, setNewCsv2Code] = useState('');
+  const [newCsv2Lang, setNewCsv2Lang] = useState('javascript');
+  const [newCsv2Tags, setNewCsv2Tags] = useState('');
+  const [feedbackNotes, setFeedbackNotes] = useState<any[]>([]);
+  const [newFnSubject, setNewFnSubject] = useState('');
+  const [newFnBody, setNewFnBody] = useState('');
+  const [newFnSentiment, setNewFnSentiment] = useState('neutral');
+  const [sessionCheckpoints, setSessionCheckpoints] = useState<any[]>([]);
+  const [newScpSession, setNewScpSession] = useState('');
+  const [newScpLabel, setNewScpLabel] = useState('');
+
+  const [threadReactionsV2, setThreadReactionsV2] = useState<any[]>([]);
+  const [trv2ThreadId, setTrv2ThreadId] = useState('');
+  const [trv2Emoji, setTrv2Emoji] = useState('👍');
+  const [wsAlerts, setWsAlerts] = useState<any[]>([]);
+  const [newWaTitle, setNewWaTitle] = useState('');
+  const [newWaMsg, setNewWaMsg] = useState('');
+  const [newWaLevel, setNewWaLevel] = useState('info');
+  const [aiPersonasV3, setAiPersonasV3] = useState<any[]>([]);
+  const [newP3Name, setNewP3Name] = useState('');
+  const [newP3Prompt, setNewP3Prompt] = useState('');
+  const [newP3Model, setNewP3Model] = useState('claude');
+  const [newP3Emoji, setNewP3Emoji] = useState('🤖');
+  const [docVersions, setDocVersions] = useState<any[]>([]);
+  const [dvDocId, setDvDocId] = useState('');
+  const [dvTitle, setDvTitle] = useState('');
+  const [dvContent, setDvContent] = useState('');
+  const [dvSummary, setDvSummary] = useState('');
+  const [taskComments, setTaskComments] = useState<any[]>([]);
+  const [tcTaskId, setTcTaskId] = useState('');
+  const [tcComment, setTcComment] = useState('');
+
+
+
   const [newKlName, setNewKlName] = useState('');
   const [newKlColor, setNewKlColor] = useState('#6366f1');
   const [wsWidgets, setWsWidgets] = useState<any[]>([]);
@@ -4472,7 +4534,22 @@ export default function ForgeApp() {
           { id:'aireminders', icon:'⏰', label:'AI Reminders' },
           { id:'tbookmarks2', icon:'🔖', label:'Thread Marks' },
           { id:'exportpresets', icon:'📤', label:'Export Presets' },
-          { id:'meetingnotes', icon:'📅', label:'Meeting Notes' },
+          { id:'thrxv2', icon:'😊', label:'Thread Reactions' },
+            { id:'wsalertsv2', icon:'🔔', label:'WS Alerts' },
+            { id:'personasv3', icon:'🤖', label:'AI Personas v3' },
+            { id:'docversions', icon:'📄', label:'Doc Versions' },
+            { id:'taskcomments', icon:'💬', label:'Task Comments' },
+            { id:'aisuggv2', icon:'✨', label:'AI Suggestions' },
+            { id:'wsgoals', icon:'🎯', label:'WS Goals' },
+            { id:'codesnipv2', icon:'💻', label:'Code Snippets' },
+            { id:'feedbnotes', icon:'📣', label:'Feedback Notes' },
+            { id:'sesschkpts', icon:'💾', label:'Checkpoints' },
+            { id:'ideavotes', icon:'💡', label:'Idea Votes' },
+            { id:'wsbroad', icon:'📢', label:'WS Broadcasts' },
+            { id:'debuglogs', icon:'🐛', label:'Debug Logs' },
+            { id:'notelinks', icon:'🔗', label:'Note Links' },
+            { id:'profilev2', icon:'👤', label:'Profile v2' },
+            { id:'meetingnotes', icon:'📅', label:'Meeting Notes' },
               { id:'metricsv2', icon:'📊', label:'WS Metrics' },
               { id:'pchains', icon:'🔗', label:'Prompt Chains' },
               { id:'fileanno', icon:'📎', label:'File Annotations' },
@@ -11333,6 +11410,295 @@ export default function ForgeApp() {
 {/* Prompt Library tab */}
 {/* AI Summaries v2 tab */}
 {/* Meeting Notes tab */}
+{mainTab==='aisuggv2' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>✨ AI Suggestions v2</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
+      <input placeholder="Context..." value={newAsContext} onChange={e=>setNewAsContext(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <textarea placeholder="Suggestion..." value={newAsSuggestion} onChange={e=>setNewAsSuggestion(e.target.value)} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
+      <div style={{display:'flex',gap:'8px'}}>
+        <select value={newAsType} onChange={e=>setNewAsType(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+          <option value="general">General</option>
+          <option value="code">Code</option>
+          <option value="writing">Writing</option>
+          <option value="task">Task</option>
+        </select>
+        <button onClick={async()=>{if(!newAsContext||!newAsSuggestion)return;await fetch('/api/ai-suggestions-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({context:newAsContext,suggestion:newAsSuggestion,type:newAsType})});setNewAsContext('');setNewAsSuggestion('');const r=await fetch('/api/ai-suggestions-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiSuggestionsV2(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save</button>
+        <button onClick={async()=>{const r=await fetch('/api/ai-suggestions-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiSuggestionsV2(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+      </div>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {aiSuggestionsV2.map((s:any)=>(
+        <div key={s.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+            <span style={{color:'#6366f1',fontSize:'12px'}}>{s.type}{s.accepted?' ✓':''}</span>
+            <div style={{display:'flex',gap:'6px'}}>
+              {!s.accepted && <button onClick={async()=>{await fetch('/api/ai-suggestions-v2/'+s.id+'/accept',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const r=await fetch('/api/ai-suggestions-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiSuggestionsV2(await r.json());}} style={{background:'#064e3b',border:'none',color:'#6ee7b7',cursor:'pointer',borderRadius:'4px',padding:'2px 8px',fontSize:'12px'}}>Accept</button>}
+              <button onClick={async()=>{await fetch('/api/ai-suggestions-v2/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiSuggestionsV2(aiSuggestionsV2.filter((x:any)=>x.id!==s.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'2px 8px',fontSize:'12px'}}>Del</button>
+            </div>
+          </div>
+          <div style={{color:'#9ca3af',fontSize:'12px',marginBottom:'4px'}}>{s.context}</div>
+          <div style={{color:'#f9fafb'}}>{s.suggestion}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='wsgoals' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🎯 Workspace Goals</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Goal title..." value={newWgTitle} onChange={e=>setNewWgTitle(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <input placeholder="Description" value={newWgDesc} onChange={e=>setNewWgDesc(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <input type="date" value={newWgDate} onChange={e=>setNewWgDate(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!newWgTitle)return;await fetch('/api/workspace-goals',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newWgTitle,description:newWgDesc,target_date:newWgDate})});setNewWgTitle('');setNewWgDesc('');setNewWgDate('');const r=await fetch('/api/workspace-goals',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsGoals(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-goals',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsGoals(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {wsGoals.map((g:any)=>(
+        <div key={g.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+            <div>
+              <div style={{color:'#f9fafb',fontWeight:'bold'}}>{g.title}</div>
+              <div style={{color:'#9ca3af',fontSize:'12px'}}>{g.description} · due {g.target_date||'no date'}</div>
+            </div>
+            <button onClick={async()=>{await fetch('/api/workspace-goals/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsGoals(wsGoals.filter((x:any)=>x.id!==g.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px'}}>Del</button>
+          </div>
+          <div style={{background:'#374151',borderRadius:'4px',height:'8px',overflow:'hidden'}}>
+            <div style={{background:'#6366f1',height:'100%',width:g.progress+'%',transition:'width 0.3s'}} />
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'6px'}}>
+            <input type="range" min="0" max="100" value={g.progress} onChange={async(e)=>{const v=parseInt(e.target.value);await fetch('/api/workspace-goals/'+g.id+'/progress',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({progress:v,status:v>=100?'completed':'active'})});setWsGoals(wsGoals.map((x:any)=>x.id===g.id?{...x,progress:v}:x));}} style={{flex:1}} />
+            <span style={{color:'#9ca3af',fontSize:'12px'}}>{g.progress}%</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='codesnipv2' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>💻 Code Snippets v2</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+        <input placeholder="Title..." value={newCsv2Title} onChange={e=>setNewCsv2Title(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+        <select value={newCsv2Lang} onChange={e=>setNewCsv2Lang(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="python">Python</option>
+          <option value="bash">Bash</option>
+          <option value="sql">SQL</option>
+          <option value="css">CSS</option>
+        </select>
+      </div>
+      <textarea placeholder="Code..." value={newCsv2Code} onChange={e=>setNewCsv2Code(e.target.value)} rows={4} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',fontFamily:'monospace',resize:'vertical'}} />
+      <div style={{display:'flex',gap:'8px'}}>
+        <input placeholder="Tags (comma separated)" value={newCsv2Tags} onChange={e=>setNewCsv2Tags(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+        <button onClick={async()=>{if(!newCsv2Title||!newCsv2Code)return;await fetch('/api/code-snippets-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newCsv2Title,code:newCsv2Code,language:newCsv2Lang,tags:newCsv2Tags})});setNewCsv2Title('');setNewCsv2Code('');setNewCsv2Tags('');const r=await fetch('/api/code-snippets-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCodeSnippetsV2(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save</button>
+        <button onClick={async()=>{const r=await fetch('/api/code-snippets-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCodeSnippetsV2(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+      </div>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {codeSnippetsV2.map((s:any)=>(
+        <div key={s.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
+            <div>
+              <span style={{color:'#f9fafb',fontWeight:'bold'}}>{s.title}</span>
+              <span style={{color:'#6366f1',fontSize:'12px',marginLeft:'8px'}}>{s.language}</span>
+              <span style={{color:'#9ca3af',fontSize:'12px',marginLeft:'8px'}}>{s.runs} runs</span>
+            </div>
+            <div style={{display:'flex',gap:'6px'}}>
+              <button onClick={async()=>{await fetch('/api/code-snippets-v2/'+s.id+'/run',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});navigator.clipboard.writeText(s.code);alert('Copied!');}} style={{background:'#064e3b',border:'none',color:'#6ee7b7',cursor:'pointer',borderRadius:'4px',padding:'4px 8px',fontSize:'12px'}}>Copy</button>
+              <button onClick={async()=>{await fetch('/api/code-snippets-v2/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCodeSnippetsV2(codeSnippetsV2.filter((x:any)=>x.id!==s.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px',fontSize:'12px'}}>Del</button>
+            </div>
+          </div>
+          <pre style={{margin:0,color:'#d1d5db',fontSize:'12px',background:'#111827',padding:'8px',borderRadius:'4px',overflow:'auto',maxHeight:'120px'}}>{s.code}</pre>
+          {s.tags && <div style={{color:'#9ca3af',fontSize:'11px',marginTop:'4px'}}>{s.tags}</div>}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='feedbnotes' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>📣 Feedback Notes</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
+      <input placeholder="Subject..." value={newFnSubject} onChange={e=>setNewFnSubject(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <textarea placeholder="Feedback body..." value={newFnBody} onChange={e=>setNewFnBody(e.target.value)} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
+      <div style={{display:'flex',gap:'8px'}}>
+        <select value={newFnSentiment} onChange={e=>setNewFnSentiment(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+          <option value="positive">Positive</option>
+          <option value="neutral">Neutral</option>
+          <option value="negative">Negative</option>
+        </select>
+        <button onClick={async()=>{if(!newFnSubject||!newFnBody)return;await fetch('/api/feedback-notes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({subject:newFnSubject,body:newFnBody,sentiment:newFnSentiment})});setNewFnSubject('');setNewFnBody('');const r=await fetch('/api/feedback-notes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setFeedbackNotes(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+        <button onClick={async()=>{const r=await fetch('/api/feedback-notes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setFeedbackNotes(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+      </div>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {feedbackNotes.map((fn:any)=>(
+        <div key={fn.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',borderLeft:'4px solid '+(fn.sentiment==='positive'?'#10b981':fn.sentiment==='negative'?'#ef4444':'#6366f1')}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+            <span style={{color:'#f9fafb',fontWeight:'bold'}}>{fn.subject}</span>
+            <button onClick={async()=>{await fetch('/api/feedback-notes/'+fn.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setFeedbackNotes(feedbackNotes.filter((x:any)=>x.id!==fn.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px'}}>Del</button>
+          </div>
+          <div style={{color:'#d1d5db'}}>{fn.body}</div>
+          <div style={{color:'#9ca3af',fontSize:'12px',marginTop:'4px'}}>{fn.sentiment} · {fn.created_at}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='sesschkpts' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>💾 Session Checkpoints</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Session ID..." value={newScpSession} onChange={e=>setNewScpSession(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <input placeholder="Label..." value={newScpLabel} onChange={e=>setNewScpLabel(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!newScpSession||!newScpLabel)return;await fetch('/api/session-checkpoints',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({session_id:newScpSession,label:newScpLabel,state_json:{}})});setNewScpSession('');setNewScpLabel('');const r=await fetch('/api/session-checkpoints',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setSessionCheckpoints(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save</button>
+      <button onClick={async()=>{const r=await fetch('/api/session-checkpoints',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setSessionCheckpoints(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {sessionCheckpoints.map((cp:any)=>(
+        <div key={cp.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{color:'#f9fafb',fontWeight:'bold'}}>{cp.label}</div>
+            <div style={{color:'#9ca3af',fontSize:'12px'}}>Session: {cp.session_id} · {cp.created_at}</div>
+          </div>
+          <button onClick={async()=>{await fetch('/api/session-checkpoints/'+cp.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setSessionCheckpoints(sessionCheckpoints.filter((x:any)=>x.id!==cp.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px'}}>Del</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='ideavotes' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>💡 Idea Votes</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Your idea..." value={newIvIdea} onChange={e=>setNewIvIdea(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <select value={newIvCat} onChange={e=>setNewIvCat(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+        <option value="general">General</option>
+        <option value="feature">Feature</option>
+        <option value="design">Design</option>
+        <option value="bug">Bug</option>
+      </select>
+      <button onClick={async()=>{if(!newIvIdea)return;await fetch('/api/idea-votes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({idea:newIvIdea,category:newIvCat})});setNewIvIdea('');const r=await fetch('/api/idea-votes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setIdeaVotes(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Submit</button>
+      <button onClick={async()=>{const r=await fetch('/api/idea-votes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setIdeaVotes(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {ideaVotes.map((iv:any)=>(
+        <div key={iv.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',display:'flex',alignItems:'center',gap:'12px'}}>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
+            <button onClick={async()=>{await fetch('/api/idea-votes/'+iv.id+'/vote',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({dir:'up'})});const r=await fetch('/api/idea-votes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setIdeaVotes(await r.json());}} style={{background:'#374151',border:'none',color:'#6ee7b7',cursor:'pointer',borderRadius:'4px',padding:'2px 6px'}}>▲</button>
+            <span style={{color:'#f9fafb',fontWeight:'bold'}}>{iv.votes}</span>
+            <button onClick={async()=>{await fetch('/api/idea-votes/'+iv.id+'/vote',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({dir:'down'})});const r=await fetch('/api/idea-votes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setIdeaVotes(await r.json());}} style={{background:'#374151',border:'none',color:'#f87171',cursor:'pointer',borderRadius:'4px',padding:'2px 6px'}}>▼</button>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{color:'#f9fafb'}}>{iv.idea}</div>
+            <div style={{color:'#9ca3af',fontSize:'12px'}}>{iv.category} · {iv.status}</div>
+          </div>
+          <button onClick={async()=>{await fetch('/api/idea-votes/'+iv.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setIdeaVotes(ideaVotes.filter((x:any)=>x.id!==iv.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px'}}>Del</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='wsbroad' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>📢 Workspace Broadcasts</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Broadcast message..." value={newWbMsg} onChange={e=>setNewWbMsg(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <select value={newWbType} onChange={e=>setNewWbType(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
+        <option value="info">Info</option>
+        <option value="warning">Warning</option>
+        <option value="success">Success</option>
+        <option value="error">Error</option>
+      </select>
+      <button onClick={async()=>{if(!newWbMsg)return;await fetch('/api/workspace-broadcasts',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({message:newWbMsg,type:newWbType})});setNewWbMsg('');const r=await fetch('/api/workspace-broadcasts',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsBroadcasts(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Broadcast</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-broadcasts',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsBroadcasts(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {wsBroadcasts.map((wb:any)=>(
+        <div key={wb.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',borderLeft:'4px solid '+(wb.type==='warning'?'#f59e0b':wb.type==='error'?'#ef4444':wb.type==='success'?'#10b981':'#6366f1')}}>
+          <div style={{color:'#f9fafb',marginBottom:'4px'}}>{wb.message}</div>
+          <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+            <span style={{color:'#9ca3af',fontSize:'12px'}}>{wb.type} · {wb.created_at}</span>
+            <button onClick={async()=>{await fetch('/api/workspace-broadcasts/'+wb.id+'/dismiss',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsBroadcasts(wsBroadcasts.filter((x:any)=>x.id!==wb.id));}} style={{background:'#374151',border:'none',color:'#9ca3af',cursor:'pointer',borderRadius:'4px',padding:'2px 8px',fontSize:'12px'}}>Dismiss</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='debuglogs' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🐛 AI Debug Logs</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+      <button onClick={async()=>{const r=await fetch('/api/ai-debug-logs',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiDebugLogs(await r.json());const s=await fetch('/api/ai-debug-logs/stats',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setDebugStats(await s.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load Logs</button>
+      <button onClick={async()=>{if(!confirm('Clear all debug logs?'))return;await fetch('/api/ai-debug-logs',{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiDebugLogs([]);setDebugStats([]);}} style={{padding:'8px 16px',background:'#7f1d1d',color:'#fca5a5',border:'none',borderRadius:'6px',cursor:'pointer'}}>Clear All</button>
+    </div>
+    {debugStats.length>0 && (
+      <div style={{display:'flex',gap:'12px',flexWrap:'wrap',marginBottom:'16px'}}>
+        {debugStats.map((s:any)=>(
+          <div key={s.model} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',minWidth:'140px'}}>
+            <div style={{color:'#6366f1',fontWeight:'bold',marginBottom:'4px'}}>{s.model}</div>
+            <div style={{color:'#9ca3af',fontSize:'12px'}}>{s.calls} calls · {Math.round(s.avg_latency)}ms avg</div>
+            <div style={{color:'#9ca3af',fontSize:'12px'}}>{s.total_tokens} tokens</div>
+          </div>
+        ))}
+      </div>
+    )}
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {aiDebugLogs.map((log:any)=>(
+        <div key={log.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+            <span style={{color:'#6366f1',fontSize:'12px'}}>{log.model}</span>
+            <span style={{color:'#9ca3af',fontSize:'12px'}}>{log.latency_ms}ms · {log.tokens_in+log.tokens_out} tok</span>
+          </div>
+          <div style={{color:'#d1d5db',fontSize:'13px',marginBottom:'4px',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{log.prompt}</div>
+          {log.error && <div style={{color:'#f87171',fontSize:'12px'}}>Error: {log.error}</div>}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='notelinks' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🔗 Note Links</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      <input placeholder="Source ID" value={newNlSource} onChange={e=>setNewNlSource(e.target.value)} style={{width:'100px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <input placeholder="Target ID" value={newNlTarget} onChange={e=>setNewNlTarget(e.target.value)} style={{width:'100px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!newNlSource||!newNlTarget)return;await fetch('/api/note-links',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({source_id:parseInt(newNlSource),target_id:parseInt(newNlTarget),link_type:'related'})});setNewNlSource('');setNewNlTarget('');}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Link</button>
+      <button onClick={async()=>{if(!newNlSource)return;const r=await fetch('/api/note-links/'+newNlSource,{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setNoteLinks(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load Links</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {noteLinks.map((nl:any)=>(
+        <div key={nl.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{color:'#f9fafb'}}>Note {nl.source_id} → {nl.target_id} <span style={{color:'#9ca3af',fontSize:'12px'}}>({nl.link_type})</span></span>
+          <button onClick={async()=>{await fetch('/api/note-links/'+nl.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setNoteLinks(noteLinks.filter((x:any)=>x.id!==nl.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px'}}>Del</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{mainTab==='profilev2' && (
+  <div style={{padding:'24px',maxWidth:'500px'}}>
+    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>👤 Profile v2</h2>
+    <button onClick={async()=>{const r=await fetch('/api/user-profile-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const p=await r.json();setUserProfileV2(p);setUpv2Name(p.display_name||'');setUpv2Bio(p.bio||'');setUpv2Emoji(p.avatar_emoji||'👤');setUpv2Tz(p.timezone||'UTC');}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer',marginBottom:'16px'}}>Load Profile</button>
+    {userProfileV2 && (
+      <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+        <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
+          <span style={{fontSize:'48px'}}>{upv2Emoji}</span>
+          <input placeholder="Avatar emoji" value={upv2Emoji} onChange={e=>setUpv2Emoji(e.target.value)} style={{width:'80px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',fontSize:'20px',textAlign:'center'}} />
+        </div>
+        <input placeholder="Display name" value={upv2Name} onChange={e=>setUpv2Name(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+        <textarea placeholder="Bio..." value={upv2Bio} onChange={e=>setUpv2Bio(e.target.value)} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',resize:'vertical'}} />
+        <input placeholder="Timezone (e.g. UTC, America/New_York)" value={upv2Tz} onChange={e=>setUpv2Tz(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+        <button onClick={async()=>{await fetch('/api/user-profile-v2',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({display_name:upv2Name,bio:upv2Bio,avatar_emoji:upv2Emoji,timezone:upv2Tz})});alert('Profile saved!');}} style={{padding:'10px 20px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer',fontWeight:'bold'}}>Save Profile</button>
+      </div>
+    )}
+  </div>
+)}
 {mainTab==='meetingnotes' && (
   <div style={{padding:'24px'}}>
     <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📅 Meeting Notes</h2>

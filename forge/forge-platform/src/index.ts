@@ -11068,4 +11068,341 @@ app.put('/api/user-profile-v2', authenticateToken, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+
+// ============================================================
+// BATCH 40: ai_suggestions_v2, workspace_goals, code_snippets_v2, feedback_notes, session_checkpoints
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_suggestions_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    context TEXT NOT NULL,
+    suggestion TEXT NOT NULL,
+    type TEXT DEFAULT 'general',
+    accepted INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    target_date TEXT,
+    progress INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS code_snippets_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    code TEXT NOT NULL,
+    language TEXT DEFAULT 'javascript',
+    tags TEXT DEFAULT '',
+    runs INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS feedback_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    subject TEXT NOT NULL,
+    body TEXT NOT NULL,
+    sentiment TEXT DEFAULT 'neutral',
+    source TEXT DEFAULT 'manual',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS session_checkpoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    session_id TEXT NOT NULL,
+    label TEXT NOT NULL,
+    state_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// AI Suggestions v2
+app.post('/api/ai-suggestions-v2', authenticateToken, (req: any, res: any) => {
+  const { context, suggestion, type } = req.body;
+  if (!context || !suggestion) return res.status(400).json({ error: 'context and suggestion required' });
+  const r = db.prepare('INSERT INTO ai_suggestions_v2 (user_id,context,suggestion,type) VALUES (?,?,?,?)').run(req.user.id, context, suggestion, type||'general');
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/ai-suggestions-v2', authenticateToken, (req: any, res: any) => {
+  const { type } = req.query as any;
+  let q = 'SELECT * FROM ai_suggestions_v2 WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (type) { q += ' AND type=?'; p.push(type); }
+  q += ' ORDER BY created_at DESC LIMIT 50';
+  res.json(db.prepare(q).all(...p));
+});
+app.put('/api/ai-suggestions-v2/:id/accept', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE ai_suggestions_v2 SET accepted=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-suggestions-v2/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_suggestions_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Goals
+app.get('/api/workspace-goals', authenticateToken, (req: any, res: any) => {
+  const { status } = req.query as any;
+  let q = 'SELECT * FROM workspace_goals WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (status) { q += ' AND status=?'; p.push(status); }
+  q += ' ORDER BY target_date ASC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/workspace-goals', authenticateToken, (req: any, res: any) => {
+  const { title, description, target_date } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO workspace_goals (user_id,title,description,target_date) VALUES (?,?,?,?)').run(req.user.id, title, description||'', target_date||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-goals/:id/progress', authenticateToken, (req: any, res: any) => {
+  const { progress, status } = req.body;
+  db.prepare('UPDATE workspace_goals SET progress=?,status=? WHERE id=? AND user_id=?').run(Math.min(100, Math.max(0, progress||0)), status||'active', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-goals/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_goals WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Code Snippets v2
+app.get('/api/code-snippets-v2', authenticateToken, (req: any, res: any) => {
+  const { language, tag } = req.query as any;
+  let q = 'SELECT * FROM code_snippets_v2 WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (language) { q += ' AND language=?'; p.push(language); }
+  if (tag) { q += ' AND tags LIKE ?'; p.push('%'+tag+'%'); }
+  q += ' ORDER BY runs DESC, created_at DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/code-snippets-v2', authenticateToken, (req: any, res: any) => {
+  const { title, code, language, tags } = req.body;
+  if (!title || !code) return res.status(400).json({ error: 'title and code required' });
+  const r = db.prepare('INSERT INTO code_snippets_v2 (user_id,title,code,language,tags) VALUES (?,?,?,?,?)').run(req.user.id, title, code, language||'javascript', tags||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/code-snippets-v2/:id', authenticateToken, (req: any, res: any) => {
+  const { title, code, language, tags } = req.body;
+  db.prepare('UPDATE code_snippets_v2 SET title=?,code=?,language=?,tags=? WHERE id=? AND user_id=?').run(title, code, language||'javascript', tags||'', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.post('/api/code-snippets-v2/:id/run', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE code_snippets_v2 SET runs=runs+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/code-snippets-v2/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM code_snippets_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Feedback Notes
+app.get('/api/feedback-notes', authenticateToken, (req: any, res: any) => {
+  const { sentiment } = req.query as any;
+  let q = 'SELECT * FROM feedback_notes WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (sentiment) { q += ' AND sentiment=?'; p.push(sentiment); }
+  q += ' ORDER BY created_at DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/feedback-notes', authenticateToken, (req: any, res: any) => {
+  const { subject, body, sentiment, source } = req.body;
+  if (!subject || !body) return res.status(400).json({ error: 'subject and body required' });
+  const r = db.prepare('INSERT INTO feedback_notes (user_id,subject,body,sentiment,source) VALUES (?,?,?,?,?)').run(req.user.id, subject, body, sentiment||'neutral', source||'manual');
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/feedback-notes/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM feedback_notes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Session Checkpoints
+app.get('/api/session-checkpoints', authenticateToken, (req: any, res: any) => {
+  const { session_id } = req.query as any;
+  let q = 'SELECT id,user_id,session_id,label,created_at FROM session_checkpoints WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (session_id) { q += ' AND session_id=?'; p.push(session_id); }
+  q += ' ORDER BY created_at DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/session-checkpoints', authenticateToken, (req: any, res: any) => {
+  const { session_id, label, state_json } = req.body;
+  if (!session_id || !label) return res.status(400).json({ error: 'session_id and label required' });
+  const r = db.prepare('INSERT INTO session_checkpoints (user_id,session_id,label,state_json) VALUES (?,?,?,?)').run(req.user.id, session_id, label, JSON.stringify(state_json||{}));
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/session-checkpoints/:id/restore', authenticateToken, (req: any, res: any) => {
+  const row = db.prepare('SELECT * FROM session_checkpoints WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
+  if (!row) return res.status(404).json({ error: 'not found' });
+  res.json({ ...row, state_json: JSON.parse(row.state_json||'{}') });
+});
+app.delete('/api/session-checkpoints/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM session_checkpoints WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+
+// ============================================================
+// BATCH 41: thread_reactions_v2, workspace_alerts, ai_personas_v3, doc_versions, task_comments
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS thread_reactions_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    thread_id INTEGER NOT NULL,
+    emoji TEXT NOT NULL,
+    count INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, thread_id, emoji)
+  );
+  CREATE TABLE IF NOT EXISTS workspace_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    level TEXT DEFAULT 'info',
+    read INTEGER DEFAULT 0,
+    action_url TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_personas_v3 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    system_prompt TEXT NOT NULL,
+    model TEXT DEFAULT 'claude',
+    temperature REAL DEFAULT 0.7,
+    avatar_emoji TEXT DEFAULT '🤖',
+    uses INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS doc_versions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    doc_id TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    change_summary TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS task_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    task_id INTEGER NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+// Thread Reactions v2
+app.get('/api/thread-reactions-v2/:thread_id', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM thread_reactions_v2 WHERE user_id=? AND thread_id=?').all(req.user.id, req.params.thread_id));
+});
+app.post('/api/thread-reactions-v2', authenticateToken, (req: any, res: any) => {
+  const { thread_id, emoji } = req.body;
+  if (!thread_id || !emoji) return res.status(400).json({ error: 'thread_id and emoji required' });
+  try {
+    db.prepare('INSERT INTO thread_reactions_v2 (user_id,thread_id,emoji) VALUES (?,?,?) ON CONFLICT(user_id,thread_id,emoji) DO UPDATE SET count=count+1').run(req.user.id, thread_id, emoji);
+    const row = db.prepare('SELECT count FROM thread_reactions_v2 WHERE user_id=? AND thread_id=? AND emoji=?').get(req.user.id, thread_id, emoji) as any;
+    res.json({ count: row?.count });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/thread-reactions-v2/:thread_id/:emoji', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_reactions_v2 WHERE user_id=? AND thread_id=? AND emoji=?').run(req.user.id, req.params.thread_id, req.params.emoji);
+  res.json({ ok: true });
+});
+
+// Workspace Alerts
+app.get('/api/workspace-alerts', authenticateToken, (req: any, res: any) => {
+  const { unread } = req.query as any;
+  let q = 'SELECT * FROM workspace_alerts WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (unread === 'true') { q += ' AND read=0'; }
+  q += ' ORDER BY created_at DESC LIMIT 50';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/workspace-alerts', authenticateToken, (req: any, res: any) => {
+  const { title, message, level, action_url } = req.body;
+  if (!title || !message) return res.status(400).json({ error: 'title and message required' });
+  const r = db.prepare('INSERT INTO workspace_alerts (user_id,title,message,level,action_url) VALUES (?,?,?,?,?)').run(req.user.id, title, message, level||'info', action_url||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-alerts/:id/read', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_alerts SET read=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.put('/api/workspace-alerts/read-all', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_alerts SET read=1 WHERE user_id=?').run(req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-alerts/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_alerts WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// AI Personas v3
+app.get('/api/ai-personas-v3', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_personas_v3 WHERE user_id=? ORDER BY uses DESC').all(req.user.id));
+});
+app.post('/api/ai-personas-v3', authenticateToken, (req: any, res: any) => {
+  const { name, system_prompt, model, temperature, avatar_emoji } = req.body;
+  if (!name || !system_prompt) return res.status(400).json({ error: 'name and system_prompt required' });
+  const r = db.prepare('INSERT INTO ai_personas_v3 (user_id,name,system_prompt,model,temperature,avatar_emoji) VALUES (?,?,?,?,?,?)').run(req.user.id, name, system_prompt, model||'claude', temperature||0.7, avatar_emoji||'🤖');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-personas-v3/:id', authenticateToken, (req: any, res: any) => {
+  const { name, system_prompt, model, temperature, avatar_emoji } = req.body;
+  db.prepare('UPDATE ai_personas_v3 SET name=?,system_prompt=?,model=?,temperature=?,avatar_emoji=? WHERE id=? AND user_id=?').run(name, system_prompt, model||'claude', temperature||0.7, avatar_emoji||'🤖', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.post('/api/ai-personas-v3/:id/use', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE ai_personas_v3 SET uses=uses+1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  const row = db.prepare('SELECT * FROM ai_personas_v3 WHERE id=?').get(req.params.id);
+  res.json(row);
+});
+app.delete('/api/ai-personas-v3/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_personas_v3 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Doc Versions
+app.get('/api/doc-versions/:doc_id', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT id,user_id,doc_id,version,title,change_summary,created_at FROM doc_versions WHERE user_id=? AND doc_id=? ORDER BY version DESC').all(req.user.id, req.params.doc_id));
+});
+app.post('/api/doc-versions', authenticateToken, (req: any, res: any) => {
+  const { doc_id, title, content, change_summary } = req.body;
+  if (!doc_id || !title || !content) return res.status(400).json({ error: 'doc_id, title, content required' });
+  const last = db.prepare('SELECT MAX(version) as v FROM doc_versions WHERE user_id=? AND doc_id=?').get(req.user.id, doc_id) as any;
+  const version = (last?.v || 0) + 1;
+  const r = db.prepare('INSERT INTO doc_versions (user_id,doc_id,version,title,content,change_summary) VALUES (?,?,?,?,?,?)').run(req.user.id, doc_id, version, title, content, change_summary||'');
+  res.json({ id: r.lastInsertRowid, version });
+});
+app.get('/api/doc-versions/:doc_id/:version', authenticateToken, (req: any, res: any) => {
+  const row = db.prepare('SELECT * FROM doc_versions WHERE user_id=? AND doc_id=? AND version=?').get(req.user.id, req.params.doc_id, req.params.version);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  res.json(row);
+});
+
+// Task Comments
+app.get('/api/task-comments/:task_id', authenticateToken, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM task_comments WHERE user_id=? AND task_id=? ORDER BY created_at ASC').all(req.user.id, req.params.task_id));
+});
+app.post('/api/task-comments', authenticateToken, (req: any, res: any) => {
+  const { task_id, comment } = req.body;
+  if (!task_id || !comment) return res.status(400).json({ error: 'task_id and comment required' });
+  const r = db.prepare('INSERT INTO task_comments (user_id,task_id,comment) VALUES (?,?,?)').run(req.user.id, task_id, comment);
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/task-comments/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM task_comments WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
