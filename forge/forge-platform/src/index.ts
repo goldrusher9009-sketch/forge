@@ -13870,4 +13870,149 @@ app.delete('/api/ai-personas-v2/:id', requireAuth, (req:any,res:any) => {
   res.json({ok:true});
 });
 
+
+// -- Batch 61 ----------------------------------------------------------------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_workflow_triggers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, name TEXT NOT NULL, event_type TEXT NOT NULL,
+    condition TEXT, action TEXT NOT NULL,
+    enabled INTEGER DEFAULT 1, fire_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_notices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, title TEXT NOT NULL, body TEXT,
+    level TEXT DEFAULT 'info', pinned INTEGER DEFAULT 0,
+    dismissed INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_summaries_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT NOT NULL, summary TEXT NOT NULL,
+    model TEXT, word_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_time_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, title TEXT NOT NULL, start_time TEXT NOT NULL,
+    end_time TEXT, date TEXT, category TEXT DEFAULT 'focus',
+    completed INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_response_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, name TEXT NOT NULL, template TEXT NOT NULL,
+    category TEXT DEFAULT 'general', variables TEXT,
+    pinned INTEGER DEFAULT 0, use_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// AI Workflow Triggers
+app.get('/api/ai-workflow-triggers', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_workflow_triggers WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-workflow-triggers', requireAuth, (req:any,res:any) => {
+  const {name,event_type,condition,action}=req.body;
+  if(!name||!event_type||!action) return res.status(400).json({error:'name+event_type+action required'});
+  const r=db.prepare('INSERT INTO ai_workflow_triggers (user_id,name,event_type,condition,action) VALUES (?,?,?,?,?)').run(req.user.id,name,event_type,condition,action);
+  res.json(db.prepare('SELECT * FROM ai_workflow_triggers WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/ai-workflow-triggers/:id/toggle', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_workflow_triggers SET enabled=1-enabled WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.put('/api/ai-workflow-triggers/:id/fire', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_workflow_triggers SET fire_count=fire_count+1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-workflow-triggers/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_workflow_triggers WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Workspace Notices
+app.get('/api/workspace-notices', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM workspace_notices WHERE user_id=? AND dismissed=0 ORDER BY pinned DESC,created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-notices', requireAuth, (req:any,res:any) => {
+  const {title,body,level='info'}=req.body;
+  if(!title) return res.status(400).json({error:'title required'});
+  const r=db.prepare('INSERT INTO workspace_notices (user_id,title,body,level) VALUES (?,?,?,?)').run(req.user.id,title,body,level);
+  res.json(db.prepare('SELECT * FROM workspace_notices WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/workspace-notices/:id/dismiss', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE workspace_notices SET dismissed=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.put('/api/workspace-notices/:id/pin', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE workspace_notices SET pinned=1-pinned WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-notices/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM workspace_notices WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Thread Summaries V2
+app.get('/api/thread-summaries-v2', requireAuth, (req:any,res:any) => {
+  const {thread_id}=req.query;
+  if(thread_id) return res.json(db.prepare('SELECT * FROM thread_summaries_v2 WHERE user_id=? AND thread_id=? ORDER BY created_at DESC').all(req.user.id,thread_id));
+  res.json(db.prepare('SELECT * FROM thread_summaries_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/thread-summaries-v2', requireAuth, (req:any,res:any) => {
+  const {thread_id,summary,model}=req.body;
+  if(!thread_id||!summary) return res.status(400).json({error:'thread_id+summary required'});
+  const word_count=summary.split(/\s+/).length;
+  const r=db.prepare('INSERT INTO thread_summaries_v2 (user_id,thread_id,summary,model,word_count) VALUES (?,?,?,?,?)').run(req.user.id,thread_id,summary,model,word_count);
+  res.json(db.prepare('SELECT * FROM thread_summaries_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/thread-summaries-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM thread_summaries_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// User Time Blocks
+app.get('/api/user-time-blocks', requireAuth, (req:any,res:any) => {
+  const {date}=req.query;
+  if(date) return res.json(db.prepare('SELECT * FROM user_time_blocks WHERE user_id=? AND date=? ORDER BY start_time').all(req.user.id,date));
+  res.json(db.prepare('SELECT * FROM user_time_blocks WHERE user_id=? ORDER BY date DESC,start_time DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/user-time-blocks', requireAuth, (req:any,res:any) => {
+  const {title,start_time,end_time,date,category='focus'}=req.body;
+  if(!title||!start_time) return res.status(400).json({error:'title+start_time required'});
+  const r=db.prepare('INSERT INTO user_time_blocks (user_id,title,start_time,end_time,date,category) VALUES (?,?,?,?,?,?)').run(req.user.id,title,start_time,end_time,date,category);
+  res.json(db.prepare('SELECT * FROM user_time_blocks WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/user-time-blocks/:id/complete', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE user_time_blocks SET completed=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/user-time-blocks/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM user_time_blocks WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// AI Response Templates
+app.get('/api/ai-response-templates', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_response_templates WHERE user_id=? ORDER BY pinned DESC,use_count DESC').all(req.user.id));
+});
+app.post('/api/ai-response-templates', requireAuth, (req:any,res:any) => {
+  const {name,template,category='general',variables}=req.body;
+  if(!name||!template) return res.status(400).json({error:'name+template required'});
+  const r=db.prepare('INSERT INTO ai_response_templates (user_id,name,template,category,variables) VALUES (?,?,?,?,?)').run(req.user.id,name,template,category,variables?JSON.stringify(variables):null);
+  res.json(db.prepare('SELECT * FROM ai_response_templates WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/ai-response-templates/:id/use', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_response_templates SET use_count=use_count+1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json(db.prepare('SELECT * FROM ai_response_templates WHERE id=?').get(req.params.id));
+});
+app.put('/api/ai-response-templates/:id/pin', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_response_templates SET pinned=1-pinned WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-response-templates/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_response_templates WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

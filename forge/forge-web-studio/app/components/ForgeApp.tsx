@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1268,6 +1268,29 @@ export default function ForgeApp() {
   const [newPv2Prompt, setNewPv2Prompt] = useState('');
   const [newPv2Avatar, setNewPv2Avatar] = useState('🤖');
   const [newPv2Temp, setNewPv2Temp] = useState(0.7);
+  const [aiWorkflowTriggers, setAiWorkflowTriggers] = useState<any[]>([]);
+  const [newWtName, setNewWtName] = useState('');
+  const [newWtEvent, setNewWtEvent] = useState('message_sent');
+  const [newWtCondition, setNewWtCondition] = useState('');
+  const [newWtAction, setNewWtAction] = useState('');
+  const [wsNotices, setWsNotices] = useState<any[]>([]);
+  const [newWnTitle, setNewWnTitle] = useState('');
+  const [newWnBody, setNewWnBody] = useState('');
+  const [newWnLevel, setNewWnLevel] = useState('info');
+  const [threadSummariesV2, setThreadSummariesV2] = useState<any[]>([]);
+  const [newTs2Thread, setNewTs2Thread] = useState('');
+  const [newTs2Summary, setNewTs2Summary] = useState('');
+  const [newTs2Model, setNewTs2Model] = useState('claude');
+  const [userTimeBlocks, setUserTimeBlocks] = useState<any[]>([]);
+  const [newTbTitle, setNewTbTitle] = useState('');
+  const [newTbStart, setNewTbStart] = useState('09:00');
+  const [newTbEnd, setNewTbEnd] = useState('10:00');
+  const [newTbDate, setNewTbDate] = useState('');
+  const [newTbCat, setNewTbCat] = useState('focus');
+  const [aiRespTemplates, setAiRespTemplates] = useState<any[]>([]);
+  const [newRtName, setNewRtName] = useState('');
+  const [newRtTemplate, setNewRtTemplate] = useState('');
+  const [newRtCat, setNewRtCat] = useState('general');
   const [newWiName, setNewWiName] = useState('');
   const [newWiType, setNewWiType] = useState('webhook');
   const [newWwResType, setNewWwResType] = useState('thread');
@@ -5013,6 +5036,11 @@ export default function ForgeApp() {
             { id:'threadnotesv2', icon:'📝', label:'Thread Notes V2' },
             { id:'userrituals', icon:'🕯️', label:'Rituals' },
             { id:'aipersonasv2', icon:'🎭', label:'Personas V2' },
+            { id:'aiwftriggers', icon:'⚡', label:'WF Triggers' },
+            { id:'wsnotices', icon:'📣', label:'WS Notices' },
+            { id:'threadsumv2', icon:'📋', label:'Thread Sums V2' },
+            { id:'usertimeblocks', icon:'⏰', label:'Time Blocks' },
+            { id:'airesptemplates', icon:'📄', label:'Resp Templates' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -11844,6 +11872,151 @@ export default function ForgeApp() {
       
       
       
+      {mainTab==='aichainsteps' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#9939; AI Chain Steps</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newCsChainId} onChange={e=>setNewCsChainId(e.target.value)} placeholder="Chain ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:110}} />
+            <input type="number" value={newCsStepOrder} onChange={e=>setNewCsStepOrder(+e.target.value)} placeholder="Step #" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:70}} />
+          </div>
+          <textarea value={newCsPrompt} onChange={e=>setNewCsPrompt(e.target.value)} placeholder="Step prompt..." rows={2} className="w-full border rounded px-2 py-1 text-sm font-mono" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <textarea value={newCsStepOut} onChange={e=>setNewCsStepOut(e.target.value)} placeholder="Step output..." rows={2} className="w-full border rounded px-2 py-1 text-sm font-mono" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <div className="flex gap-2">
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newCsChainId)return;await fetch('/api/ai-chain-steps',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({chain_id:newCsChainId,step_order:newCsStepOrder,prompt:newCsPrompt,output:newCsStepOut})});const r=await fetch('/api/ai-chain-steps',{headers:{'Authorization':'Bearer '+tok}});setAiChainSteps(await r.json());setNewCsPrompt('');setNewCsStepOut('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add Step</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/ai-chain-steps',{headers:{'Authorization':'Bearer '+tok}});setAiChainSteps(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {aiChainSteps.map((s:any)=>(
+              <div key={s.id} className="rounded p-3" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs font-semibold" style={{color:'var(--fg-orange)'}}>Chain: {s.chain_id} / Step {s.step_order}</span>
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/ai-chain-steps/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiChainSteps(aiChainSteps.filter((x:any)=>x.id!==s.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+                {s.prompt&&<p className="text-xs" style={{color:'var(--fg-text3)'}}>&#11153; {s.prompt.slice(0,80)}</p>}
+                {s.output&&<p className="text-xs mt-1" style={{color:'var(--fg-text2)'}}>&#10142; {s.output.slice(0,80)}</p>}
+              </div>
+            ))}
+            {aiChainSteps.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No chain steps.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='wstagsv3' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#127991; Workspace Tags V3</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newT3Name} onChange={e=>setNewT3Name(e.target.value)} placeholder="Tag name" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input type="color" value={newT3Color} onChange={e=>setNewT3Color(e.target.value)} className="rounded" style={{height:32,width:40,padding:2,border:'1px solid var(--fg-border)',background:'transparent',cursor:'pointer'}} />
+            <select value={newT3Cat} onChange={e=>setNewT3Cat(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['general','project','priority','status','team','custom'].map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newT3Name)return;await fetch('/api/workspace-tags-v3',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({name:newT3Name,color:newT3Color,category:newT3Cat})});const r=await fetch('/api/workspace-tags-v3',{headers:{'Authorization':'Bearer '+tok}});setWsTagsV3(await r.json());setNewT3Name('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/workspace-tags-v3',{headers:{'Authorization':'Bearer '+tok}});setWsTagsV3(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {wsTagsV3.map((t:any)=>(
+              <div key={t.id} className="flex items-center gap-1 px-3 py-1 rounded-full text-sm" style={{background:t.color+'22',border:'1px solid '+t.color,color:t.color}}>
+                {t.pinned&&<span style={{fontSize:10}}>&#128204;</span>}
+                <span>{t.name}</span>
+                <span style={{fontSize:10,opacity:0.7}}>[{t.category}]</span>
+                <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/workspace-tags-v3/'+t.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setWsTagsV3(wsTagsV3.map((x:any)=>x.id===t.id?{...x,pinned:1-x.pinned}:x));}} style={{background:'transparent',border:'none',cursor:'pointer',color:'inherit',fontSize:10,padding:0}}>&#128204;</button>
+                <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/workspace-tags-v3/'+t.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setWsTagsV3(wsTagsV3.filter((x:any)=>x.id!==t.id));}} style={{background:'transparent',border:'none',cursor:'pointer',color:'inherit',fontSize:10,padding:0}}>&#10005;</button>
+              </div>
+            ))}
+          </div>
+          {wsTagsV3.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No tags yet.</div>}
+        </div>
+      )}
+      {mainTab==='threadnotesv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#128221; Thread Notes V2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newTnThread} onChange={e=>setNewTnThread(e.target.value)} placeholder="Thread ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:120}} />
+          </div>
+          <textarea value={newTnNote} onChange={e=>setNewTnNote(e.target.value)} placeholder="Note about this thread..." rows={3} className="w-full border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <div className="flex gap-2">
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newTnThread||!newTnNote)return;await fetch('/api/thread-notes-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({thread_id:newTnThread,note:newTnNote})});const r=await fetch('/api/thread-notes-v2',{headers:{'Authorization':'Bearer '+tok}});setThreadNotesV2(await r.json());setNewTnNote('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add Note</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/thread-notes-v2',{headers:{'Authorization':'Bearer '+tok}});setThreadNotesV2(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {threadNotesV2.map((n:any)=>(
+              <div key={n.id} className="rounded p-3" style={{background:n.pinned?'rgba(249,115,22,0.08)':'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-start">
+                  <span className="text-xs" style={{color:'var(--fg-text3)'}}>#{n.thread_id}</span>
+                  <div className="flex gap-1">
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/thread-notes-v2/'+n.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setThreadNotesV2(threadNotesV2.map((x:any)=>x.id===n.id?{...x,pinned:1-x.pinned}:x));}} style={{background:'transparent',color:'var(--fg-text3)',border:'none',cursor:'pointer',fontSize:12}}>&#128204;</button>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/thread-notes-v2/'+n.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setThreadNotesV2(threadNotesV2.filter((x:any)=>x.id!==n.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+                <p className="text-sm mt-1" style={{color:'var(--fg-text)'}}>{n.note}</p>
+              </div>
+            ))}
+            {threadNotesV2.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No thread notes.</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='userrituals' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#128335; Daily Rituals</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newRitTitle} onChange={e=>setNewRitTitle(e.target.value)} placeholder="Ritual name" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <select value={newRitFreq} onChange={e=>setNewRitFreq(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
+              {['daily','weekdays','weekly','monthly'].map(f=><option key={f} value={f}>{f}</option>)}
+            </select>
+            <input value={newRitDesc} onChange={e=>setNewRitDesc(e.target.value)} placeholder="Description" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newRitTitle)return;await fetch('/api/user-rituals',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newRitTitle,description:newRitDesc,frequency:newRitFreq})});const r=await fetch('/api/user-rituals',{headers:{'Authorization':'Bearer '+tok}});setUserRituals(await r.json());setNewRitTitle('');setNewRitDesc('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/user-rituals',{headers:{'Authorization':'Bearer '+tok}});setUserRituals(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="space-y-2">
+            {userRituals.map((r:any)=>(
+              <div key={r.id} className="rounded p-3 flex justify-between items-center" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div>
+                  <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{r.title}</span>
+                  <span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>[{r.frequency}]</span>
+                  <span className="ml-2 text-xs" style={{color:'var(--fg-orange)'}}>&#128293;{r.streak}</span>
+                  {r.description&&<p className="text-xs mt-0.5" style={{color:'var(--fg-text3)'}}>{r.description}</p>}
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/user-rituals/'+r.id+'/done',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setUserRituals(userRituals.map((x:any)=>x.id===r.id?{...x,streak:x.streak+1}:x));}} style={{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Done &#9989;</button>
+                  <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/user-rituals/'+r.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setUserRituals(userRituals.filter((x:any)=>x.id!==r.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+            ))}
+            {userRituals.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No rituals. Build some habits!</div>}
+          </div>
+        </div>
+      )}
+      {mainTab==='aipersonasv2' && (
+        <div className="p-4 space-y-4">
+          <h2 className="text-xl font-bold">&#127917; AI Personas V2</h2>
+          <div className="flex gap-2 flex-wrap">
+            <input value={newPv2Avatar} onChange={e=>setNewPv2Avatar(e.target.value)} placeholder="&#129302;" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:55}} />
+            <input value={newPv2Name} onChange={e=>setNewPv2Name(e.target.value)} placeholder="Persona name" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+            <input type="number" step="0.1" min="0" max="2" value={newPv2Temp} onChange={e=>setNewPv2Temp(+e.target.value)} placeholder="Temp" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:70}} />
+          </div>
+          <textarea value={newPv2Prompt} onChange={e=>setNewPv2Prompt(e.target.value)} placeholder="System prompt for this persona..." rows={3} className="w-full border rounded px-2 py-1 text-sm font-mono" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
+          <div className="flex gap-2">
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newPv2Name)return;await fetch('/api/ai-personas-v2',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({name:newPv2Name,system_prompt:newPv2Prompt,avatar:newPv2Avatar,temperature:newPv2Temp})});const r=await fetch('/api/ai-personas-v2',{headers:{'Authorization':'Bearer '+tok}});setAiPersonasV2(await r.json());setNewPv2Name('');setNewPv2Prompt('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Create</button>
+            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch('/api/ai-personas-v2',{headers:{'Authorization':'Bearer '+tok}});setAiPersonasV2(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {aiPersonasV2.map((p:any)=>(
+              <div key={p.id} className="rounded p-3" style={{background:p.pinned?'rgba(249,115,22,0.08)':'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
+                <div className="flex justify-between items-start">
+                  <span style={{fontSize:24}}>{p.avatar}</span>
+                  <div className="flex gap-1">
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/ai-personas-v2/'+p.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+tok}});setAiPersonasV2(aiPersonasV2.map((x:any)=>x.id===p.id?{...x,pinned:1-x.pinned}:x));}} style={{background:'transparent',color:'var(--fg-text3)',border:'none',cursor:'pointer',fontSize:12}}>&#128204;</button>
+                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch('/api/ai-personas-v2/'+p.id,{method:'DELETE',headers:{'Authorization':'Bearer '+tok}});setAiPersonasV2(aiPersonasV2.filter((x:any)=>x.id!==p.id));}} style={{background:'transparent',color:'#fca5a5',border:'none',cursor:'pointer',fontSize:12}}>&#10005;</button>
+                  </div>
+                </div>
+                <p className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{p.name}</p>
+                <p className="text-xs" style={{color:'var(--fg-text3)'}}>temp: {p.temperature}</p>
+                {p.system_prompt&&<p className="text-xs mt-1 truncate" style={{color:'var(--fg-text2)'}}>{p.system_prompt.slice(0,60)}</p>}
+              </div>
+            ))}
+          </div>
+          {aiPersonasV2.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No personas. Create your first!</div>}
+        </div>
+      )}
       {mainTab==='aidebuglogsb59' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">&#128027; AI Debug Logs</h2>

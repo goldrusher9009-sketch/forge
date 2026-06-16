@@ -2,175 +2,174 @@
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
-type MediaType = 'all' | 'images' | 'videos' | 'audio' | 'locked'
+type MediaType = 'post' | 'video' | 'audio' | 'chart' | 'drop'
 
 interface MediaItem {
   id: string
-  type: 'image' | 'video' | 'audio'
+  type: MediaType
   title: string
   emoji: string
   color: string
-  duration?: string
   locked: boolean
   minTokens?: number
   tokenSymbol?: string
   likes: number
+  views: number
   ts: string
-  collection?: string
+  duration?: string
 }
 
 const PROFILE_MEDIA: Record<string, MediaItem[]> = {
   sovereign_v: [
-    { id:'m1', type:'video', title:'BTC Breakout Analysis — LIVE',        emoji:'📊', color:'#a855f7', duration:'24:18', locked:false, likes:2840, ts:'2h ago',  collection:'DeFi Deep Dives' },
-    { id:'m2', type:'image', title:'Portfolio screenshot: +82% YTD',       emoji:'📈', color:'#22c55e', locked:false, likes:1820, ts:'1d ago'  },
-    { id:'m3', type:'video', title:'Gold Tier Exclusive — Altcoin picks',  emoji:'🥇', color:'#f59e0b', duration:'18:42', locked:true, minTokens:50, tokenSymbol:'SVRN', likes:420, ts:'2d ago', collection:'On-chain Alpha' },
-    { id:'m4', type:'image', title:'Wallet address breakdown thread',       emoji:'💼', color:'#818cf8', locked:false, likes:982, ts:'3d ago'  },
-    { id:'m5', type:'audio', title:'Market thoughts — morning brief',       emoji:'🎙', color:'#ec4899', duration:'8:12', locked:false, likes:640, ts:'4d ago' },
-    { id:'m6', type:'video', title:'Diamond Vault: Next 100x gem?',        emoji:'💎', color:'#818cf8', duration:'31:05', locked:true, minTokens:100, tokenSymbol:'SVRN', likes:280, ts:'5d ago', collection:'Diamond Vault' },
-    { id:'m7', type:'image', title:'On-chain data: what whales are doing', emoji:'🐋', color:'#a855f7', locked:false, likes:1240, ts:'6d ago' },
-    { id:'m8', type:'video', title:'Free: Intro to DeFi yield farming',    emoji:'🌾', color:'#22c55e', duration:'14:30', locked:false, likes:3200, ts:'1w ago' },
+    { id:'m1',  type:'chart',  title:'BTC accumulation zone',              emoji:'📊', color:'#a855f7', locked:false, likes:824, views:12400, ts:'2h'  },
+    { id:'m2',  type:'post',   title:'Why I moved 30% to stablecoins',     emoji:'📝', color:'#a855f7', locked:true,  minTokens:25, tokenSymbol:'SVRN', likes:612, views:8800,  ts:'5h'  },
+    { id:'m3',  type:'video',  title:'DeFi 101: Liquidity pools',          emoji:'🎬', color:'#818cf8', locked:false, likes:1200, views:28000, ts:'1d', duration:'12:40' },
+    { id:'m4',  type:'audio',  title:'Weekly alpha audio brief',           emoji:'🎙', color:'#f59e0b', locked:true,  minTokens:10, tokenSymbol:'SVRN', likes:340, views:4200,  ts:'2d', duration:'8:15' },
+    { id:'m5',  type:'chart',  title:'ETH accumulation pattern',           emoji:'📈', color:'#22c55e', locked:false, likes:490, views:7100,  ts:'3d'  },
+    { id:'m6',  type:'drop',   title:'Exclusive signal pack — Jun 2026',   emoji:'💎', color:'#818cf8', locked:true,  minTokens:50, tokenSymbol:'SVRN', likes:880, views:3200,  ts:'4d'  },
+    { id:'m7',  type:'post',   title:'Solana thesis — long form',          emoji:'📝', color:'#a855f7', locked:false, likes:701, views:10900, ts:'5d'  },
+    { id:'m8',  type:'video',  title:'Portfolio rebalancing strategy',     emoji:'🎬', color:'#818cf8', locked:true,  minTokens:25, tokenSymbol:'SVRN', likes:540, views:6800,  ts:'6d', duration:'18:22' },
+    { id:'m9',  type:'chart',  title:'Altcoin season indicator update',    emoji:'📊', color:'#f59e0b', locked:false, likes:388, views:5600,  ts:'1w'  },
+    { id:'m10', type:'audio',  title:'Market structure deep-dive',         emoji:'🎙', color:'#a855f7', locked:false, likes:244, views:3100,  ts:'1w', duration:'22:05' },
+    { id:'m11', type:'post',   title:'Why DeFi TVL matters more than price',emoji:'📝', color:'#22c55e', locked:false, likes:910, views:14200, ts:'2w'  },
+    { id:'m12', type:'drop',   title:'Diamond member research pack — May', emoji:'💎', color:'#818cf8', locked:true,  minTokens:100, tokenSymbol:'SVRN', likes:1240, views:2800, ts:'3w'  },
   ],
   mayafit: [
-    { id:'m1', type:'video', title:'30-Day Shred Day 1 — Full Workout',    emoji:'💪', color:'#22c55e', duration:'42:10', locked:false, likes:8420, ts:'1d ago',  collection:'Workout Library' },
-    { id:'m2', type:'image', title:'Meal prep Sunday — 1800 cal plan',     emoji:'🥗', color:'#f59e0b', locked:false, likes:5200, ts:'2d ago' },
-    { id:'m3', type:'video', title:'Member Transformation — @jade_l 90d',  emoji:'🌟', color:'#ec4899', duration:'12:45', locked:true, minTokens:10, tokenSymbol:'MAYA', likes:1840, ts:'3d ago', collection:'Member Transformations' },
-    { id:'m4', type:'audio', title:'Mindset Monday — consistency is king', emoji:'🧠', color:'#818cf8', duration:'15:00', locked:false, likes:2100, ts:'4d ago' },
+    { id:'n1', type:'video', title:'30-min full body HIIT',         emoji:'🎬', color:'#22c55e', locked:false, likes:2100, views:44000, ts:'1d', duration:'30:00' },
+    { id:'n2', type:'post',  title:'30-day transformation: breakdown',emoji:'📝', color:'#22c55e', locked:true,  minTokens:10, tokenSymbol:'MAYA', likes:412, views:8800, ts:'5h' },
+    { id:'n3', type:'drop',  title:'12-week shred program PDF',     emoji:'💎', color:'#818cf8', locked:true,  minTokens:50, tokenSymbol:'MAYA', likes:680, views:4200, ts:'2d' },
+    { id:'n4', type:'audio', title:'Mindset & recovery podcast',    emoji:'🎙', color:'#f59e0b', locked:false, likes:320, views:5900, ts:'4d', duration:'34:20' },
   ],
 }
 
-const PROFILE_COLORS: Record<string, string> = {
-  sovereign_v: '#a855f7', mayafit: '#22c55e', jaxbeats: '#ec4899',
-}
-
-const MY_TOKENS: Record<string, number> = { SVRN: 50, MAYA: 80, JAX: 0 }
-
-const TYPE_ICONS: Record<string, string> = { video: '▶', image: '🖼', audio: '🎵' }
+const PROFILE_COLORS: Record<string, string> = { sovereign_v:'#a855f7', mayafit:'#22c55e', jaxbeats:'#ec4899' }
+const MY_TOKENS: Record<string, number> = { SVRN:50, MAYA:80, JAX:0 }
+const TYPE_LABEL: Record<MediaType, string> = { post:'Post', video:'Video', audio:'Audio', chart:'Chart', drop:'Drop' }
 
 export default function ProfileMediaPage() {
   const router = useRouter()
   const params = useParams()
-  const handle = typeof params.handle === 'string' ? params.handle : 'sovereign_v'
-  const items  = PROFILE_MEDIA[handle] ?? PROFILE_MEDIA.sovereign_v
-  const accentColor = PROFILE_COLORS[handle] ?? '#a855f7'
+  const handle  = typeof params.handle === 'string' ? params.handle : 'sovereign_v'
+  const items   = PROFILE_MEDIA[handle] ?? PROFILE_MEDIA.sovereign_v
+  const accent  = PROFILE_COLORS[handle] ?? '#a855f7'
 
-  const [filter, setFilter] = useState<MediaType>('all')
-  const [liked,  setLiked ] = useState<Record<string, boolean>>({})
+  const [filter, setFilter] = useState<'all' | MediaType | 'locked' | 'free'>('all')
 
-  const filtered = items.filter(i => {
-    if (filter === 'locked') return i.locked
-    if (filter === 'all')    return true
-    return i.type === filter.slice(0, -1)
-  })
-
-  function canAccess(item: MediaItem): boolean {
+  function canAccess(item: MediaItem) {
     if (!item.locked) return true
-    return MY_TOKENS[item.tokenSymbol ?? ''] >= (item.minTokens ?? 0)
+    if (!item.tokenSymbol) return false
+    return MY_TOKENS[item.tokenSymbol] >= (item.minTokens ?? 0)
   }
 
-  const FILTERS: { key: MediaType; label: string }[] = [
-    { key:'all',    label:'All'    },
-    { key:'videos', label:'Videos' },
-    { key:'images', label:'Images' },
-    { key:'audio',  label:'Audio'  },
-    { key:'locked', label:'🔒 Gated'},
-  ]
+  const visible = items.filter(item => {
+    if (filter === 'free')   return !item.locked
+    if (filter === 'locked') return item.locked
+    if (filter !== 'all')    return item.type === filter
+    return true
+  })
+
+  const totalLikes = items.reduce((s, i) => s + i.likes, 0)
+  const totalViews = items.reduce((s, i) => s + i.views, 0)
+
+  const FILTER_TABS = [
+    { key:'all',   label:'All' },
+    { key:'post',  label:'Posts' },
+    { key:'video', label:'Videos' },
+    { key:'audio', label:'Audio' },
+    { key:'chart', label:'Charts' },
+    { key:'drop',  label:'Drops' },
+    { key:'free',  label:'Free' },
+    { key:'locked',label:'🔒' },
+  ] as const
 
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
       <header className="sticky top-0 z-20 px-4 pt-4 pb-3 border-b border-white/5"
         style={{ backdropFilter: 'blur(20px)', background: 'rgba(4,4,10,0.92)' }}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <div>
+          <div className="flex-1">
             <div className="font-black text-white">Media</div>
             <div className="text-xs text-white/30">@{handle} · {items.length} items</div>
           </div>
         </div>
-      </header>
-
-      <div className="px-4 py-4 space-y-4">
-        {/* Filters */}
-        <div className="flex gap-1.5 overflow-x-auto">
-          {FILTERS.map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {FILTER_TABS.map(f => (
+            <button key={f.key} onClick={() => setFilter(f.key as any)}
               className="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex-shrink-0"
-              style={filter === f.key ? { background: accentColor, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+              style={filter === f.key ? { background: accent, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
               {f.label}
             </button>
           ))}
         </div>
+      </header>
 
-        {/* Grid / List */}
-        <div className="space-y-3">
-          {filtered.map(item => {
+      <div className="px-4 py-4 space-y-4">
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label:'Posts',  value:items.length },
+            { label:'Likes',  value:`${(totalLikes/1000).toFixed(1)}k` },
+            { label:'Views',  value:`${(totalViews/1000).toFixed(0)}k` },
+          ].map(s => (
+            <div key={s.label} className="p-3 rounded-xl border border-white/5 text-center"
+              style={{ background: 'rgba(255,255,255,0.018)' }}>
+              <div className="font-black text-sm text-white/75">{s.value}</div>
+              <div className="text-xs text-white/25">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-2 gap-2">
+          {visible.map(item => {
             const accessible = canAccess(item)
-            const isLiked = liked[item.id]
             return (
-              <div key={item.id} className="rounded-2xl border border-white/4 overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.015)' }}>
-                {/* Thumbnail */}
-                <div className="relative h-20 flex items-center justify-center"
-                  style={{ background: `${item.color}08` }}>
+              <button key={item.id}
+                onClick={() => accessible && router.push(`/feed/${item.id}`)}
+                className="relative rounded-2xl border border-white/4 overflow-hidden text-left"
+                style={{ background: 'rgba(255,255,255,0.018)', opacity: accessible ? 1 : 0.7 }}>
+                {/* Thumb */}
+                <div className="h-28 flex items-center justify-center relative"
+                  style={{ background: `${item.color}0C` }}>
                   <span className="text-4xl">{item.emoji}</span>
-                  {/* Type badge */}
-                  <div className="absolute top-2 left-3 px-2 py-0.5 rounded-full text-xs font-bold"
-                    style={{ background: `${item.color}20`, color: item.color }}>
-                    {TYPE_ICONS[item.type]} {item.type}
-                  </div>
-                  {item.duration && (
-                    <div className="absolute bottom-2 right-3 px-1.5 py-0.5 rounded text-xs font-bold"
-                      style={{ background: 'rgba(0,0,0,0.6)', color: 'rgba(255,255,255,0.8)' }}>
-                      {item.duration}
+                  {/* Lock overlay */}
+                  {item.locked && !accessible && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center"
+                      style={{ background: 'rgba(4,4,10,0.55)' }}>
+                      <span className="text-xl mb-0.5">🔒</span>
+                      <span className="text-xs font-bold text-white/50">{item.minTokens}+ ${item.tokenSymbol}</span>
                     </div>
                   )}
-                  {item.locked && !accessible && (
-                    <div className="absolute inset-0 flex items-center justify-center"
-                      style={{ background: 'rgba(4,4,10,0.7)' }}>
-                      <div className="text-center">
-                        <div className="text-2xl mb-1">🔒</div>
-                        <div className="text-xs text-white/50">{item.minTokens}+ ${item.tokenSymbol}</div>
-                      </div>
+                  {/* Type badge */}
+                  <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full text-xs font-bold"
+                    style={{ background: `${item.color}25`, color: item.color }}>
+                    {TYPE_LABEL[item.type]}
+                  </div>
+                  {item.duration && (
+                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-full text-xs font-bold"
+                      style={{ background: 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,0.7)' }}>
+                      {item.duration}
                     </div>
                   )}
                 </div>
                 {/* Info */}
-                <div className="p-3 flex items-start gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm text-white/80 leading-tight mb-0.5">{item.title}</div>
-                    <div className="flex items-center gap-2 text-xs text-white/25">
-                      {item.collection && <span style={{ color: item.color }}>{item.collection}</span>}
-                      {item.collection && <span>·</span>}
-                      <span>{item.ts}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => setLiked(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
-                      className="flex items-center gap-1 text-xs"
-                      style={{ color: isLiked ? '#f87171' : 'rgba(255,255,255,0.25)' }}>
-                      ♥ {item.likes + (isLiked ? 1 : 0)}
-                    </button>
-                    {accessible ? (
-                      <button className="px-3 py-1.5 rounded-xl text-xs font-black"
-                        style={{ background: accentColor, color: '#04040A' }}>
-                        View
-                      </button>
-                    ) : (
-                      <button onClick={() => router.push(`/tokens/${item.tokenSymbol}/stake`)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold"
-                        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }}>
-                        Unlock
-                      </button>
-                    )}
+                <div className="p-2.5">
+                  <div className="text-xs font-bold text-white/75 leading-tight line-clamp-2">{item.title}</div>
+                  <div className="flex items-center gap-2 mt-1.5 text-xs text-white/25">
+                    <span>♥ {item.likes.toLocaleString()}</span>
+                    <span>· {item.ts}</span>
                   </div>
                 </div>
-              </div>
+              </button>
             )
           })}
         </div>
+        {visible.length === 0 && <div className="text-center py-10 text-white/25">No media</div>}
       </div>
     </div>
   )
