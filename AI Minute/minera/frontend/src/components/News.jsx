@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , memo} from "react";
 import { api } from "../api.js";
-export default function News() {
+function News() {
   const [news, setNews] = useState([]);
   useEffect(()=>{ api.news().then(setNews).catch(()=>{}); },[]);
   return (
@@ -20,3 +20,4 @@ export default function News() {
     </div>
   );
 }
+export default memo(News);

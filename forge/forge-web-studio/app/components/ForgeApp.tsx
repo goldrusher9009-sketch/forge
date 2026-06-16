@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -704,7 +704,7 @@ export default function ForgeApp() {
   const [newChTitle, setNewChTitle] = useState('');
   const [newChTargetT, setNewChTargetT] = useState(10);
   const [newChTargetM, setNewChTargetM] = useState(100);
-  const [glossary, setGlossary] = useState<any[]>([]);
+  const [wglossary, setWglossary] = useState<any[]>([]);
   const [newGlTerm, setNewGlTerm] = useState('');
   const [newGlDef, setNewGlDef] = useState('');
   const [newGlCat, setNewGlCat] = useState('general');
@@ -716,6 +716,22 @@ export default function ForgeApp() {
   const [newScoreDepth, setNewScoreDepth] = useState(3);
   const [newScoreUse, setNewScoreUse] = useState(3);
   const [smartSuggestions, setSmartSuggestions] = useState<string[]>([]);
+  const [ideaInbox, setIdeaInbox] = useState<any[]>([]);
+  const [ideaStats, setIdeaStats] = useState<any>(null);
+  const [newIdeaContent, setNewIdeaContent] = useState('');
+  const [newIdeaPriority, setNewIdeaPriority] = useState(0);
+  const [sessionPlans, setSessionPlans] = useState<any[]>([]);
+  const [newSpTitle, setNewSpTitle] = useState('');
+  const [newSpGoals, setNewSpGoals] = useState('');
+  const [newSpDate, setNewSpDate] = useState('');
+  const [threadDeps, setThreadDeps] = useState<any[]>([]);
+  const [newDepSrc, setNewDepSrc] = useState('');
+  const [newDepTgt, setNewDepTgt] = useState('');
+  const [wsChangelog, setWsChangelog] = useState<any[]>([]);
+  const [newClVersion, setNewClVersion] = useState('');
+  const [newClSummary, setNewClSummary] = useState('');
+  const [coachText, setCoachText] = useState('');
+  const [coachResult, setCoachResult] = useState<any>(null);
   // Batch 25 state
   const [dailyLogs, setDailyLogs] = useState<any[]>([]);
   const [dlContent, setDlContent] = useState('');
@@ -4240,6 +4256,11 @@ export default function ForgeApp() {
             { id:'glossary', icon:'📖', label:'Glossary' },
             { id:'tscores', icon:'⭐', label:'Thread Scores' },
             { id:'suggestions', icon:'💡', label:'Suggestions' },
+            { id:'ideainbox', icon:'📥', label:'Idea Inbox' },
+            { id:'sessionplans', icon:'🗓', label:'Session Plans' },
+            { id:'threaddeps', icon:'🔗', label:'Thread Deps' },
+            { id:'wschangelog', icon:'📝', label:'WS Changelog' },
+            { id:'writingcoach', icon:'✍️', label:'Writing Coach' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },
@@ -11066,6 +11087,198 @@ export default function ForgeApp() {
                   </div>
                   <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/stats-summary',{headers:{Authorization:`Bearer ${tok}`}}); setStatsSummary(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
                 </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Personas Library tab */}
+        {mainTab==='personaslib' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎭 Personas Library</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newPlAvatar} onChange={e=>setNewPlAvatar(e.target.value)} placeholder="🤖" style={{ width:56, padding:'8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:20, textAlign:'center' }} />
+              <input value={newPlName} onChange={e=>setNewPlName(e.target.value)} placeholder="Persona name..." style={{ flex:1, minWidth:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <textarea value={newPlPrompt} onChange={e=>setNewPlPrompt(e.target.value)} placeholder="System prompt for this persona..." rows={3} style={{ flex:2, minWidth:220, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+              <button onClick={async()=>{ if(!newPlName.trim()||!newPlPrompt.trim()) return; await fetch('/api/personas-lib',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newPlName,system_prompt:newPlPrompt,avatar:newPlAvatar})}); setNewPlName(''); setNewPlPrompt(''); setNewPlAvatar('🤖'); const r=await fetch('/api/personas-lib',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasLib(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/personas-lib',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasLib(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Personas</button>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:12 }}>
+              {personasLib.map((p:any)=>(
+                <div key={p.id} style={{ background:'var(--bg-card)', border:`1px solid ${p.is_favorite?'var(--accent)':'var(--border)'}`, borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:24 }}>{p.avatar}</span>
+                      <div>
+                        <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:14 }}>{p.name}</div>
+                        <div style={{ color:'var(--fg-text3)', fontSize:11 }}>Used {p.use_count}x</div>
+                      </div>
+                    </div>
+                    <div style={{ display:'flex', gap:6 }}>
+                      <button onClick={async()=>{ await fetch(`/api/personas-lib/${p.id}/favorite`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/personas-lib',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasLib(await r.json()); }} style={{ fontSize:16, background:'none', border:'none', cursor:'pointer' }}>{p.is_favorite?'⭐':'☆'}</button>
+                      <button onClick={async()=>{ await fetch(`/api/personas-lib/${p.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setPersonasLib(personasLib.filter((x:any)=>x.id!==p.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ color:'var(--fg-text2)', fontSize:12, lineHeight:1.5, maxHeight:60, overflow:'hidden', textOverflow:'ellipsis' }}>{p.system_prompt}</div>
+                </div>
+              ))}
+              {personasLib.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No personas yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Challenges tab */}
+        {mainTab==='challenges' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🏆 Workspace Challenges</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newChTitle} onChange={e=>setNewChTitle(e.target.value)} placeholder="Challenge title..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                <label style={{ color:'var(--fg-text3)', fontSize:12 }}>Threads:</label>
+                <input type="number" value={newChTargetT} onChange={e=>setNewChTargetT(Number(e.target.value))} style={{ width:60, padding:'8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, textAlign:'center' }} />
+                <label style={{ color:'var(--fg-text3)', fontSize:12 }}>Messages:</label>
+                <input type="number" value={newChTargetM} onChange={e=>setNewChTargetM(Number(e.target.value))} style={{ width:70, padding:'8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, textAlign:'center' }} />
+              </div>
+              <button onClick={async()=>{ if(!newChTitle.trim()) return; await fetch('/api/thread-challenges',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newChTitle,target_threads:newChTargetT,target_messages:newChTargetM})}); setNewChTitle(''); const r=await fetch('/api/thread-challenges',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setChallenges(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
+            </div>
+            <button onClick={async()=>{ const r=await fetch('/api/thread-challenges',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setChallenges(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Challenges</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {challenges.map((ch:any)=>(
+                <div key={ch.id} style={{ background:'var(--bg-card)', border:`1px solid ${ch.status==='completed'?'#22c55e':'var(--border)'}`, borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                    <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{ch.status==='completed'?'✅ ':''}{ch.title}</div>
+                    <div style={{ display:'flex', gap:6 }}>
+                      {ch.status==='active' && <button onClick={async()=>{ await fetch(`/api/thread-challenges/${ch.id}/complete`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/thread-challenges',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setChallenges(await r.json()); }} style={{ padding:'4px 10px', background:'#22c55e', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>✓ Done</button>}
+                      <button onClick={async()=>{ await fetch(`/api/thread-challenges/${ch.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setChallenges(challenges.filter((x:any)=>x.id!==ch.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                    {[['Threads',ch.current_threads,ch.target_threads],['Messages',ch.current_messages,ch.target_messages]].map(([label,cur,tgt])=>(
+                      <div key={String(label)} style={{ flex:1, minWidth:120 }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                          <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{label}</span>
+                          <span style={{ color:'var(--fg-text)', fontSize:12, fontWeight:600 }}>{cur}/{tgt}</span>
+                        </div>
+                        <div style={{ height:6, background:'var(--bg-input)', borderRadius:3 }}>
+                          <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${Math.min(100,Math.round(Number(cur)/Number(tgt)*100))}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {challenges.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No challenges yet. Create one above.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Glossary tab */}
+        {mainTab==='glossary' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📖 Workspace Glossary</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              <input value={newGlTerm} onChange={e=>setNewGlTerm(e.target.value)} placeholder="Term..." style={{ flex:1, minWidth:120, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newGlDef} onChange={e=>setNewGlDef(e.target.value)} placeholder="Definition..." style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <select value={newGlCat} onChange={e=>setNewGlCat(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                {['general','tech','ai','business','personal'].map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+              <button onClick={async()=>{ if(!newGlTerm.trim()||!newGlDef.trim()) return; await fetch('/api/workspace-glossary',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({term:newGlTerm,definition:newGlDef,category:newGlCat})}); setNewGlTerm(''); setNewGlDef(''); const r=await fetch('/api/workspace-glossary',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWglossary(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <input value={glossaryQ} onChange={e=>setGlossaryQ(e.target.value)} placeholder="Search glossary..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ const r=await fetch(`/api/workspace-glossary?q=${encodeURIComponent(glossaryQ)}`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWglossary(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Search</button>
+              <button onClick={async()=>{ const r=await fetch('/api/workspace-glossary',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setGlossary(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>All</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {wglossary.map((g:any)=>(
+                <div key={g.id} style={{ display:'flex', alignItems:'flex-start', gap:12, background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px' }}>
+                  <div style={{ flex:1 }}>
+                    <span style={{ color:'var(--accent)', fontWeight:700, fontSize:14 }}>{g.term}</span>
+                    <span style={{ color:'var(--fg-text3)', fontSize:11, marginLeft:8, padding:'1px 6px', background:'var(--bg-input)', borderRadius:4 }}>{g.category}</span>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, marginTop:4 }}>{g.definition}</div>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/workspace-glossary/${g.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWglossary(wglossary.filter((x:any)=>x.id!==g.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11, flexShrink:0 }}>Del</button>
+                </div>
+              ))}
+              {wglossary.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No glossary entries yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Scores tab */}
+        {mainTab==='tscores' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>⭐ Thread Quality Scores</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+              <input value={newScoreThread} onChange={e=>setNewScoreThread(e.target.value)} placeholder="Thread ID..." style={{ width:100, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Clarity:</span>
+                <input type="range" min={0} max={5} value={newScoreClarity} onChange={e=>setNewScoreClarity(Number(e.target.value))} style={{ width:70 }} />
+                <span style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600, minWidth:12 }}>{newScoreClarity}</span>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Depth:</span>
+                <input type="range" min={0} max={5} value={newScoreDepth} onChange={e=>setNewScoreDepth(Number(e.target.value))} style={{ width:70 }} />
+                <span style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600, minWidth:12 }}>{newScoreDepth}</span>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Useful:</span>
+                <input type="range" min={0} max={5} value={newScoreUse} onChange={e=>setNewScoreUse(Number(e.target.value))} style={{ width:70 }} />
+                <span style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600, minWidth:12 }}>{newScoreUse}</span>
+              </div>
+              <button onClick={async()=>{ if(!newScoreThread) return; await fetch('/api/thread-scores',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({thread_id:Number(newScoreThread),clarity:newScoreClarity,depth:newScoreDepth,usefulness:newScoreUse})}); setNewScoreThread(''); const [r,s]=await Promise.all([fetch('/api/thread-scores',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/thread-scores/leaderboard',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); setTscores(await r.json()); setScoreLeader(await s.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Score</button>
+            </div>
+            <button onClick={async()=>{ const [r,s]=await Promise.all([fetch('/api/thread-scores',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/thread-scores/leaderboard',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); setTscores(await r.json()); setScoreLeader(await s.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Scores</button>
+            {scoreLeader.length>0 && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:8 }}>🏆 Top Threads</div>
+                {scoreLeader.slice(0,5).map((s:any,i:number)=>(
+                  <div key={s.thread_id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px', background:'var(--bg-card)', borderRadius:8, marginBottom:4 }}>
+                    <span style={{ color:'var(--fg-text3)', fontSize:13 }}>#{i+1} {s.title}</span>
+                    <span style={{ color:'var(--accent)', fontWeight:700 }}>{s.total_score}/15</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {tscores.map((s:any)=>(
+                <div key={s.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px' }}>
+                  <div>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{s.title}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{s.scored_at?.slice(0,10)}</div>
+                  </div>
+                  <div style={{ display:'flex', gap:12 }}>
+                    {[['Clarity',s.clarity],['Depth',s.depth],['Useful',s.usefulness]].map(([k,v])=>(
+                      <div key={String(k)} style={{ textAlign:'center' }}>
+                        <div style={{ color:'var(--accent)', fontWeight:700, fontSize:16 }}>{v}</div>
+                        <div style={{ color:'var(--fg-text3)', fontSize:10 }}>{k}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {tscores.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:24 }}>No scores yet. Score a thread above.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Smart Suggestions tab */}
+        {mainTab==='suggestions' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>💡 Smart Suggestions</div>
+            <button onClick={async()=>{ const r=await fetch('/api/workspace/smart-suggestions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); setSmartSuggestions(data.suggestions||[]); }} style={{ padding:'10px 20px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:14, marginBottom:24 }}>✨ Generate Suggestions</button>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {smartSuggestions.map((s,i)=>(
+                <div key={i} style={{ display:'flex', gap:12, alignItems:'flex-start', background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:'14px 16px' }}>
+                  <span style={{ fontSize:20, flexShrink:0 }}>💡</span>
+                  <div style={{ color:'var(--fg-text)', fontSize:14, lineHeight:1.5 }}>{s}</div>
+                </div>
+              ))}
+              {smartSuggestions.length===0 && (
+                <div style={{ textAlign:'center', padding:48 }}>
+                  <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
+                  <div style={{ color:'var(--fg-text3)' }}>Click "Generate Suggestions" to analyze your workspace.</div>
+                </div>
               )}
             </div>
           </div>

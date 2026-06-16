@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , memo} from "react";
 import { api } from "../api.js";
 import { Loading } from "./States.jsx";
-export default function Faq() {
+function Faq() {
   const [faq, setFaq] = useState([]);
   const [open, setOpen] = useState(0);
   useEffect(()=>{ api.faq().then(setFaq).catch(()=>{}); },[]);
@@ -19,3 +19,4 @@ export default function Faq() {
     </div>
   );
 }
+export default memo(Faq);

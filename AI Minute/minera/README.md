@@ -361,3 +361,15 @@ Tests: **36/36 passing**. Bundle refreshed (147 files).
 | Edge-case tests — over-withdraw, over-stake, bad inputs → 400/404 not 500 | ✅ |
 
 Tests: **43/43 passing**. Bundle refreshed (148 files).
+
+
+## Settings · print · perf · contracts (latest)
+
+| Item | Status |
+|------|--------|
+| In-app settings export/import (theme/preset to JSON) | ✅ |
+| Print stylesheet — clean black-on-white printable views | ✅ |
+| Performance — React.memo on 6 list-heavy components | ✅ |
+| Contract tests expanded to 10 (cap, mining, double-license, bond award) | ✅ |
+
+Tests: **43 API passing** + 10 contract cases. Bundle refreshed.

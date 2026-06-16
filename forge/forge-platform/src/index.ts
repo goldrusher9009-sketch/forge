@@ -8992,4 +8992,174 @@ app.get('/api/workspace/smart-suggestions', authMiddleware, (req: any, res: any)
   res.json({ suggestions: suggestions.slice(0,5) });
 });
 
+
+// ── Batch 28: Idea Inbox, Session Plans, Thread Dependencies, Workspace Changelog, AI Writing Coach ──
+
+// idea_inbox table
+db.exec(`CREATE TABLE IF NOT EXISTS idea_inbox (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  status TEXT DEFAULT 'new',
+  priority INTEGER DEFAULT 0,
+  tags TEXT DEFAULT '[]',
+  thread_id INTEGER,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// session_plans table
+db.exec(`CREATE TABLE IF NOT EXISTS session_plans (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  goals TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  planned_at TEXT NOT NULL,
+  status TEXT DEFAULT 'planned',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// thread_dependencies table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_dependencies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  source_thread_id INTEGER NOT NULL,
+  target_thread_id INTEGER NOT NULL,
+  relationship TEXT DEFAULT 'depends_on',
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(source_thread_id, target_thread_id)
+)`);
+
+// workspace_changelog table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_changelog (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  version TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  details TEXT DEFAULT '',
+  log_date TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// writing_coach_sessions table
+db.exec(`CREATE TABLE IF NOT EXISTS writing_coach_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  original_text TEXT NOT NULL,
+  feedback TEXT DEFAULT '',
+  improved_text TEXT DEFAULT '',
+  mode TEXT DEFAULT 'general',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+
+// ── Idea Inbox ──
+app.get('/api/idea-inbox', authMiddleware, (req: any, res: any) => {
+  const { status } = req.query;
+  let q = 'SELECT * FROM idea_inbox WHERE user_id=?';
+  const params: any[] = [req.user.id];
+  if (status) { q += ' AND status=?'; params.push(status); }
+  q += ' ORDER BY priority DESC, id DESC';
+  const rows: any[] = db.prepare(q).all(...params);
+  rows.forEach(r => { try { r.tags = JSON.parse(r.tags); } catch { r.tags = []; } });
+  res.json(rows);
+});
+app.post('/api/idea-inbox', authMiddleware, (req: any, res: any) => {
+  const { content, priority, tags, thread_id } = req.body;
+  if (!content?.trim()) return res.status(400).json({ error: 'content required' });
+  const r = db.prepare('INSERT INTO idea_inbox (user_id,content,priority,tags,thread_id) VALUES (?,?,?,?,?)').run(req.user.id, content.trim(), priority||0, JSON.stringify(tags||[]), thread_id||null);
+  res.json({ id: r.lastInsertRowid, content });
+});
+app.put('/api/idea-inbox/:id', authMiddleware, (req: any, res: any) => {
+  const { status, priority } = req.body;
+  db.prepare('UPDATE idea_inbox SET status=COALESCE(?,status),priority=COALESCE(?,priority) WHERE id=? AND user_id=?').run(status||null,priority!=null?priority:null,req.params.id,req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/idea-inbox/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM idea_inbox WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/idea-inbox/stats', authMiddleware, (req: any, res: any) => {
+  const rows: any[] = db.prepare("SELECT status, COUNT(*) as c FROM idea_inbox WHERE user_id=? GROUP BY status").all(req.user.id);
+  const out: Record<string, number> = {};
+  rows.forEach(r => { out[r.status] = r.c; });
+  res.json({ new: out.new||0, in_progress: out.in_progress||0, done: out.done||0, archived: out.archived||0 });
+});
+
+// ── Session Plans ──
+app.get('/api/session-plans', authMiddleware, (req: any, res: any) => {
+  const rows: any[] = db.prepare('SELECT * FROM session_plans WHERE user_id=? ORDER BY planned_at DESC LIMIT 20').all(req.user.id);
+  rows.forEach(r => { try { r.goals = JSON.parse(r.goals); } catch { r.goals = []; } });
+  res.json(rows);
+});
+app.post('/api/session-plans', authMiddleware, (req: any, res: any) => {
+  const { title, goals, notes, planned_at } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare('INSERT INTO session_plans (user_id,title,goals,notes,planned_at) VALUES (?,?,?,?,?)').run(req.user.id, title.trim(), JSON.stringify(goals||[]), notes||'', planned_at||new Date().toISOString().split('T')[0]);
+  res.json({ id: r.lastInsertRowid, title });
+});
+app.put('/api/session-plans/:id/status', authMiddleware, (req: any, res: any) => {
+  const { status } = req.body;
+  db.prepare('UPDATE session_plans SET status=? WHERE id=? AND user_id=?').run(status||'planned', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/session-plans/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM session_plans WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Thread Dependencies ──
+app.get('/api/thread-dependencies', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT td.*, ts.title as source_title, tt.title as target_title FROM thread_dependencies td JOIN threads ts ON ts.id=td.source_thread_id JOIN threads tt ON tt.id=td.target_thread_id WHERE td.user_id=? ORDER BY td.id DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/thread-dependencies', authMiddleware, (req: any, res: any) => {
+  const { source_thread_id, target_thread_id, relationship } = req.body;
+  if (!source_thread_id || !target_thread_id) return res.status(400).json({ error: 'both thread ids required' });
+  try {
+    const r = db.prepare('INSERT INTO thread_dependencies (user_id,source_thread_id,target_thread_id,relationship) VALUES (?,?,?,?)').run(req.user.id, source_thread_id, target_thread_id, relationship||'depends_on');
+    res.json({ id: r.lastInsertRowid });
+  } catch { res.status(409).json({ error: 'dependency already exists' }); }
+});
+app.delete('/api/thread-dependencies/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_dependencies WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Workspace Changelog ──
+app.get('/api/workspace-changelog', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_changelog WHERE user_id=? ORDER BY log_date DESC LIMIT 30').all(req.user.id));
+});
+app.post('/api/workspace-changelog', authMiddleware, (req: any, res: any) => {
+  const { version, summary, details, log_date } = req.body;
+  if (!version?.trim() || !summary?.trim()) return res.status(400).json({ error: 'version and summary required' });
+  const r = db.prepare('INSERT INTO workspace_changelog (user_id,version,summary,details,log_date) VALUES (?,?,?,?,?)').run(req.user.id, version.trim(), summary.trim(), details||'', log_date||new Date().toISOString().split('T')[0]);
+  res.json({ id: r.lastInsertRowid, version, summary });
+});
+app.delete('/api/workspace-changelog/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_changelog WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ── Writing Coach ──
+app.post('/api/writing-coach/analyze', authMiddleware, (req: any, res: any) => {
+  const { text, mode } = req.body;
+  if (!text?.trim()) return res.status(400).json({ error: 'text required' });
+  const wordCount = text.trim().split(/\s+/).length;
+  const sentCount = text.split(/[.!?]+/).filter((s: string) => s.trim()).length;
+  const avgWords = sentCount > 0 ? Math.round(wordCount / sentCount) : 0;
+  const passiveMatches = (text.match(/\b(is|are|was|were|be|been|being)\s+\w+ed\b/gi) || []).length;
+  const fillerWords = ['very','really','just','quite','rather','actually','basically','literally'].filter(w => new RegExp(`\\b${w}\\b`,'gi').test(text));
+  const feedback: string[] = [];
+  if (avgWords > 25) feedback.push(`Long sentences (avg ${avgWords} words) — aim for under 20`);
+  if (passiveMatches > 2) feedback.push(`${passiveMatches} passive constructions — prefer active voice`);
+  if (fillerWords.length > 0) feedback.push(`Filler words found: ${fillerWords.join(', ')} — consider removing`);
+  if (wordCount > 500) feedback.push('Long piece — consider adding subheadings for scannability');
+  if (feedback.length === 0) feedback.push('Writing looks clean!');
+  const r = db.prepare('INSERT INTO writing_coach_sessions (user_id,original_text,feedback,mode) VALUES (?,?,?,?)').run(req.user.id, text.trim(), feedback.join('\n'), mode||'general');
+  res.json({ id: r.lastInsertRowid, word_count: wordCount, sentence_count: sentCount, avg_sentence_length: avgWords, passive_count: passiveMatches, filler_words: fillerWords, feedback });
+});
+app.get('/api/writing-coach/history', authMiddleware, (req: any, res: any) => {
+  res.json(db.prepare('SELECT id,mode,created_at,LENGTH(original_text) as char_count FROM writing_coach_sessions WHERE user_id=? ORDER BY id DESC LIMIT 20').all(req.user.id));
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

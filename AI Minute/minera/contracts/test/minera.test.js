@@ -80,3 +80,43 @@ describe("Minera v2 contracts", function () {
     expect(after - before).to.equal(ethers.parseEther("0.4")); // 40%
   });
 });
+
+describe("Minera contract edge cases", function () {
+  it("token enforces max supply cap", async () => {
+    const [o] = await ethers.getSigners();
+    const token = await (await ethers.getContractFactory("MineraToken")).deploy();
+    const MAX = await token.MAX_SUPPLY();
+    await expect(token.mint(o.address, MAX + 1n)).to.be.revertedWith("Exceeds max supply");
+  });
+
+  it("mining pool checkin then claim mints reward", async () => {
+    const [o, miner] = await ethers.getSigners();
+    const token = await (await ethers.getContractFactory("MineraToken")).deploy();
+    const pool = await (await ethers.getContractFactory("MiningPool")).deploy(await token.getAddress());
+    await token.grantRole(await token.MINTER_ROLE(), await pool.getAddress());
+    await pool.connect(miner).checkIn();
+    await ethers.provider.send("evm_increaseTime", [5]);
+    await ethers.provider.send("evm_mine");
+    await pool.connect(miner).claimRewards();
+    expect(await token.balanceOf(miner.address)).to.be.gt(0n);
+  });
+
+  it("marketplace reverts double license", async () => {
+    const [o, sub, comp, data] = await ethers.getSigners();
+    const market = await (await ethers.getContractFactory("InsightMarketplace")).deploy(o.address);
+    await market.list(1, sub.address, comp.address, data.address);
+    await market.license(0, { value: ethers.parseEther("1") });
+    await expect(market.license(0, { value: ethers.parseEther("1") })).to.be.revertedWith("licensed");
+  });
+
+  it("eureka bond create + award pays winner", async () => {
+    const [o, winner] = await ethers.getSigners();
+    const token = await (await ethers.getContractFactory("MineraToken")).deploy();
+    const bond = await (await ethers.getContractFactory("EurekaBond")).deploy();
+    await token.mint(o.address, ethers.parseEther("1000"));
+    await token.approve(await bond.getAddress(), ethers.parseEther("1000"));
+    await bond.createBond(await token.getAddress(), ethers.parseEther("100"), "ipfs://x", 30);
+    await bond.awardBond(0, winner.address, 1);
+    expect(await token.balanceOf(winner.address)).to.equal(ethers.parseEther("95")); // 100 - 5% fee
+  });
+});

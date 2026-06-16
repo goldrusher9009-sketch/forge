@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , memo} from "react";
 import { api } from "../api.js";
 import { Loading } from "./States.jsx";
-export default function Treasury({ notify }) {
+function Treasury({ notify }) {
   const [d, setD] = useState(null);
   useEffect(()=>{ const l=()=>api.treasury().then(setD).catch(()=>notify&&notify("Backend offline")); l(); const t=setInterval(l,6000); return ()=>clearInterval(t); },[]);
   if(!d) return <Loading label="Loading treasury…"/>;
@@ -38,3 +38,4 @@ export default function Treasury({ notify }) {
     </div>
   );
 }
+export default memo(Treasury);

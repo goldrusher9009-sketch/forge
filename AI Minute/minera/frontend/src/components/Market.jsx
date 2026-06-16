@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , memo} from "react";
 import { api } from "../api.js";
 import { Empty } from "./States.jsx";
 
-export default function Market({ address, onBalance, notify }) {
+function Market({ address, onBalance, notify }) {
   const [items, setItems] = useState([]);
   const load = () => api.market().then(setItems).catch(() => notify("Backend offline"));
   useEffect(() => { load(); }, []);
@@ -42,3 +42,4 @@ export default function Market({ address, onBalance, notify }) {
     </div>
   );
 }
+export default memo(Market);

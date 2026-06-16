@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , memo} from "react";
 import { api } from "../api.js";
 
 const FMT = {
@@ -13,7 +13,7 @@ const FMT = {
 };
 const TYPES = ["all","insight","license","bond","burn","subnet","proposal"];
 
-export default function Activity({ notify }) {
+function Activity({ notify }) {
   const [type, setType] = useState("all");
   const [rows, setRows] = useState([]);
   const load = () => api.activity(type==="all"?null:type).then(setRows).catch(()=>notify&&notify("Backend offline"));
@@ -36,3 +36,4 @@ export default function Activity({ notify }) {
     </div>
   );
 }
+export default memo(Activity);

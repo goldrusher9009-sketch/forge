@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , memo} from "react";
 import { api } from "../api.js";
 import { TOKEN } from "../brand.js";
-export default function Leaderboard({ notify }){
+function Leaderboard({ notify }){
   const [rows,setRows]=useState([]);
   useEffect(()=>{ api.leaderboard().then(setRows).catch(()=>notify&&notify("Backend offline")); },[]);
   return (
@@ -17,3 +17,4 @@ export default function Leaderboard({ notify }){
     </div>
   );
 }
+export default memo(Leaderboard);
