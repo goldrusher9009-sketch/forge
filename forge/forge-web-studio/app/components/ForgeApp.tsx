@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -807,6 +807,24 @@ export default function ForgeApp() {
   const [exportPresets, setExportPresets] = useState<any[]>([]);
   const [newEpName, setNewEpName] = useState('');
   const [newEpFormat, setNewEpFormat] = useState('markdown');
+  const [collabNotes, setCollabNotes] = useState<any[]>([]);
+  const [newCnTitle, setNewCnTitle] = useState('');
+  const [newCnContent, setNewCnContent] = useState('');
+  const [newCnShared, setNewCnShared] = useState(false);
+  const [aiExperiments, setAiExperiments] = useState<any[]>([]);
+  const [newExpName, setNewExpName] = useState('');
+  const [newExpHyp, setNewExpHyp] = useState('');
+  const [newExpPA, setNewExpPA] = useState('');
+  const [newExpPB, setNewExpPB] = useState('');
+  const [wsRules, setWsRules] = useState<any[]>([]);
+  const [newRuleName, setNewRuleName] = useState('');
+  const [newRuleCond, setNewRuleCond] = useState('');
+  const [newRuleAction, setNewRuleAction] = useState('');
+  const [contentDrafts, setContentDrafts] = useState<any[]>([]);
+  const [newDraftTitle, setNewDraftTitle] = useState('');
+  const [newDraftContent, setNewDraftContent] = useState('');
+  const [newDraftType, setNewDraftType] = useState('post');
+  const [achievements, setAchievements] = useState<any[]>([]);
   const [wsWidgets, setWsWidgets] = useState<any[]>([]);
   const [newWwType, setNewWwType] = useState('clock');
   const [newWwTitle, setNewWwTitle] = useState('');
@@ -4393,7 +4411,12 @@ export default function ForgeApp() {
           { id:'aireminders', icon:'⏰', label:'AI Reminders' },
           { id:'tbookmarks2', icon:'🔖', label:'Thread Marks' },
           { id:'exportpresets', icon:'📤', label:'Export Presets' },
-          { id:'wswidgets', icon:'🧩', label:'WS Widgets' },
+          { id:'collabnotes', icon:'📝', label:'Collab Notes' },
+              { id:'aiexp', icon:'🧪', label:'AI Experiments' },
+              { id:'wsrules', icon:'⚙️', label:'WS Rules' },
+              { id:'cdrafts', icon:'✍️', label:'Content Drafts' },
+              { id:'achievements', icon:'🏆', label:'Achievements' },
+              { id:'wswidgets', icon:'🧩', label:'WS Widgets' },
           { id:'personasv2', icon:'🎭', label:'Personas v2' },
           { id:'threadmetrics', icon:'📈', label:'Thread Metrics' },
           { id:'quickactions', icon:'⚡', label:'Quick Actions' },
@@ -11230,7 +11253,145 @@ export default function ForgeApp() {
         )}
 
         {/* Workspace Widgets tab */}
-        {mainTab==='wswidgets' && (
+        {/* Collab Notes tab */}
+{mainTab==='collabnotes' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📝 Collaboration Notes</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Title" value={newCnTitle} onChange={e=>setNewCnTitle(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'140px'}} />
+      <input placeholder="Content..." value={newCnContent} onChange={e=>setNewCnContent(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'200px'}} />
+      <label style={{color:'#9ca3af',display:'flex',alignItems:'center',gap:'4px'}}><input type="checkbox" checked={newCnShared} onChange={e=>setNewCnShared(e.target.checked)} /> Shared</label>
+      <button onClick={async()=>{if(!newCnTitle||!newCnContent)return;await fetch('/api/collab-notes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newCnTitle,content:newCnContent,shared:newCnShared})});setNewCnTitle('');setNewCnContent('');setNewCnShared(false);const r=await fetch('/api/collab-notes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCollabNotes(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/collab-notes',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCollabNotes(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {collabNotes.map((n:any)=>(
+        <div key={n.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'6px'}}>
+            <span style={{fontWeight:600,color:'#f9fafb'}}>{n.title} {n.shared?'🌐':''} <span style={{color:'#6b7280',fontSize:'11px'}}>v{n.version}</span></span>
+            <button onClick={async()=>{await fetch('/api/collab-notes/'+n.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCollabNotes(collabNotes.filter((x:any)=>x.id!==n.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'2px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+          <div style={{color:'#d1d5db',fontSize:'13px'}}>{n.content}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* AI Experiments tab */}
+{mainTab==='aiexp' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🧪 AI Experiments</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px',background:'#1f2937',padding:'12px',borderRadius:'8px',border:'1px solid #374151'}}>
+      <input placeholder="Experiment name" value={newExpName} onChange={e=>setNewExpName(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+      <input placeholder="Hypothesis (optional)" value={newExpHyp} onChange={e=>setNewExpHyp(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+      <textarea placeholder="Prompt A" value={newExpPA} onChange={e=>setNewExpPA(e.target.value)} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #4ade80',background:'#111827',color:'#f9fafb',resize:'vertical'}} />
+      <textarea placeholder="Prompt B" value={newExpPB} onChange={e=>setNewExpPB(e.target.value)} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #f87171',background:'#111827',color:'#f9fafb',resize:'vertical'}} />
+      <button onClick={async()=>{if(!newExpName||!newExpPA||!newExpPB)return;await fetch('/api/ai-experiments',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({name:newExpName,hypothesis:newExpHyp,prompt_a:newExpPA,prompt_b:newExpPB})});setNewExpName('');setNewExpHyp('');setNewExpPA('');setNewExpPB('');const r=await fetch('/api/ai-experiments',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiExperiments(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Create</button>
+    </div>
+    <button onClick={async()=>{const r=await fetch('/api/ai-experiments',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiExperiments(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer',marginBottom:'12px'}}>Load</button>
+    <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+      {aiExperiments.map((exp:any)=>(
+        <div key={exp.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
+            <span style={{fontWeight:600,color:'#f9fafb'}}>{exp.name}</span>
+            <button onClick={async()=>{await fetch('/api/ai-experiments/'+exp.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiExperiments(aiExperiments.filter((x:any)=>x.id!==exp.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'2px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
+            <div style={{background:'#052e16',padding:'8px',borderRadius:'6px',border:'1px solid #4ade80'}}><div style={{color:'#4ade80',fontWeight:600,fontSize:'11px'}}>A</div><div style={{color:'#d1d5db',fontSize:'12px'}}>{exp.prompt_a}</div></div>
+            <div style={{background:'#1a0000',padding:'8px',borderRadius:'6px',border:'1px solid #f87171'}}><div style={{color:'#f87171',fontWeight:600,fontSize:'11px'}}>B</div><div style={{color:'#d1d5db',fontSize:'12px'}}>{exp.prompt_b}</div></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* WS Rules tab */}
+{mainTab==='wsrules' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>⚙️ Workspace Rules</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+      <input placeholder="Rule name" value={newRuleName} onChange={e=>setNewRuleName(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'120px'}} />
+      <input placeholder="Condition" value={newRuleCond} onChange={e=>setNewRuleCond(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'140px'}} />
+      <input placeholder="Action" value={newRuleAction} onChange={e=>setNewRuleAction(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'120px'}} />
+      <button onClick={async()=>{if(!newRuleName||!newRuleCond||!newRuleAction)return;await fetch('/api/workspace-rules',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({name:newRuleName,condition:newRuleCond,action:newRuleAction})});setNewRuleName('');setNewRuleCond('');setNewRuleAction('');const r=await fetch('/api/workspace-rules',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsRules(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
+      <button onClick={async()=>{const r=await fetch('/api/workspace-rules',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsRules(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {wsRules.map((rule:any)=>(
+        <div key={rule.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <span style={{fontWeight:600,color:'#f9fafb'}}>{rule.name}</span>
+            <span style={{color:'#9ca3af',fontSize:'12px',marginLeft:'8px'}}>IF {rule.condition} THEN {rule.action}</span>
+            <span style={{color:'#6b7280',fontSize:'11px',marginLeft:'8px'}}>{rule.trigger_count}x</span>
+          </div>
+          <div style={{display:'flex',gap:'6px'}}>
+            <button onClick={async()=>{await fetch('/api/workspace-rules/'+rule.id+'/toggle',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const res=await fetch('/api/workspace-rules',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsRules(await res.json());}} style={{padding:'4px 10px',background:rule.enabled?'#4ade80':'#6b7280',color:'#111',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px'}}>{rule.enabled?'ON':'OFF'}</button>
+            <button onClick={async()=>{await fetch('/api/workspace-rules/'+rule.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setWsRules(wsRules.filter((x:any)=>x.id!==rule.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer'}}>Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* Content Drafts tab */}
+{mainTab==='cdrafts' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>✍️ Content Drafts</h2>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px',background:'#1f2937',padding:'12px',borderRadius:'8px',border:'1px solid #374151'}}>
+      <input placeholder="Draft title" value={newDraftTitle} onChange={e=>setNewDraftTitle(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
+      <select value={newDraftType} onChange={e=>setNewDraftType(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}}>
+        <option value="post">Post</option>
+        <option value="article">Article</option>
+        <option value="email">Email</option>
+        <option value="tweet">Tweet</option>
+        <option value="script">Script</option>
+      </select>
+      <textarea placeholder="Content..." value={newDraftContent} onChange={e=>setNewDraftContent(e.target.value)} rows={5} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb',resize:'vertical'}} />
+      <button onClick={async()=>{if(!newDraftTitle||!newDraftContent)return;await fetch('/api/content-drafts',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newDraftTitle,content:newDraftContent,type:newDraftType})});setNewDraftTitle('');setNewDraftContent('');const res=await fetch('/api/content-drafts',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setContentDrafts(await res.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save Draft</button>
+    </div>
+    <button onClick={async()=>{const r=await fetch('/api/content-drafts',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setContentDrafts(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer',marginBottom:'12px'}}>Load</button>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {contentDrafts.map((d:any)=>(
+        <div key={d.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px',border:'1px solid #374151'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+            <span style={{fontWeight:600,color:'#f9fafb'}}>{d.title}</span>
+            <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+              <span style={{fontSize:'11px',color:'#6b7280'}}>{d.type} {d.word_count}w</span>
+              <button onClick={async()=>{await fetch('/api/content-drafts/'+d.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setContentDrafts(contentDrafts.filter((x:any)=>x.id!==d.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'2px 8px',cursor:'pointer'}}>Del</button>
+            </div>
+          </div>
+          <div style={{color:'#d1d5db',fontSize:'13px'}}>{d.content.substring(0,200)}{d.content.length>200?'...':''}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* Achievements tab */}
+{mainTab==='achievements' && (
+  <div style={{padding:'24px'}}>
+    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🏆 Achievements</h2>
+    <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+      <button onClick={async()=>{await fetch('/api/achievements/check',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});const r=await fetch('/api/achievements',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAchievements(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Check and Unlock</button>
+      <button onClick={async()=>{const r=await fetch('/api/achievements',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAchievements(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:'12px'}}>
+      {achievements.map((a:any)=>(
+        <div key={a.id} style={{background:'linear-gradient(135deg,#1c1c2e,#2d1b69)',borderRadius:'12px',padding:'16px',border:'1px solid #6366f1',textAlign:'center'}}>
+          <div style={{fontSize:'36px',marginBottom:'8px'}}>{a.icon}</div>
+          <div style={{fontWeight:700,color:'#f9fafb',marginBottom:'4px',fontSize:'13px'}}>{a.achievement}</div>
+          <div style={{color:'#9ca3af',fontSize:'11px'}}>{a.description}</div>
+        </div>
+      ))}
+      {achievements.length===0&&<div style={{color:'#6b7280',gridColumn:'1/-1',textAlign:'center',padding:'40px'}}>No achievements yet.</div>}
+    </div>
+  </div>
+)}
+
+{mainTab==='wswidgets' && (
           <div style={{ padding:24 }}>
             <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🧩 Workspace Widgets</div>
             <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>

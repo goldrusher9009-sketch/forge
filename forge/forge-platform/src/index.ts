@@ -10389,4 +10389,195 @@ app.get('/api/achievements/check', authenticateToken, (req: any, res: any) => {
   res.json({ unlocked });
 });
 
+
+// ============================================================
+// BATCH 36: prompt_library, workspace_connections, ai_glossary, reading_queue_v2, kanban_labels
+// ============================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS prompt_library (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    prompt TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    tags TEXT DEFAULT '[]',
+    use_count INTEGER DEFAULT 0,
+    is_public INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_connections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    endpoint TEXT,
+    api_key_hint TEXT,
+    status TEXT DEFAULT 'active',
+    last_used TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_glossary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    term TEXT NOT NULL,
+    definition TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    examples TEXT DEFAULT '[]',
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, term)
+  );
+  CREATE TABLE IF NOT EXISTS reading_queue_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    title TEXT,
+    summary TEXT,
+    tags TEXT DEFAULT '[]',
+    priority INTEGER DEFAULT 0,
+    read INTEGER DEFAULT 0,
+    read_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS kanban_labels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    color TEXT DEFAULT '#6366f1',
+    board_id INTEGER,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, name)
+  );
+`);
+
+// Prompt Library
+app.get('/api/prompt-library', authenticateToken, (req: any, res: any) => {
+  const { category } = req.query as any;
+  let q = 'SELECT * FROM prompt_library WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (category) { q += ' AND category=?'; p.push(category); }
+  q += ' ORDER BY use_count DESC, created_at DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/prompt-library', authenticateToken, (req: any, res: any) => {
+  const { title, prompt, category, tags } = req.body;
+  if (!title || !prompt) return res.status(400).json({ error: 'title and prompt required' });
+  const r = db.prepare('INSERT INTO prompt_library (user_id,title,prompt,category,tags) VALUES (?,?,?,?,?)').run(req.user.id, title, prompt, category||'general', JSON.stringify(tags||[]));
+  res.json({ id: r.lastInsertRowid });
+});
+app.post('/api/prompt-library/:id/use', authenticateToken, (req: any, res: any) => {
+  const row = db.prepare('SELECT prompt FROM prompt_library WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE prompt_library SET use_count=use_count+1 WHERE id=?').run(req.params.id);
+  res.json({ prompt: row.prompt });
+});
+app.delete('/api/prompt-library/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM prompt_library WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/prompt-library/categories', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT category, COUNT(*) as count FROM prompt_library WHERE user_id=? GROUP BY category').all(req.user.id);
+  res.json(rows);
+});
+
+// Workspace Connections
+app.get('/api/workspace-connections', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT id,name,type,endpoint,api_key_hint,status,last_used,created_at FROM workspace_connections WHERE user_id=? ORDER BY status, name').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/workspace-connections', authenticateToken, (req: any, res: any) => {
+  const { name, type, endpoint, api_key_hint } = req.body;
+  if (!name || !type) return res.status(400).json({ error: 'name and type required' });
+  const r = db.prepare('INSERT INTO workspace_connections (user_id,name,type,endpoint,api_key_hint) VALUES (?,?,?,?,?)').run(req.user.id, name, type, endpoint||'', api_key_hint||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-connections/:id/ping', authenticateToken, (req: any, res: any) => {
+  const now = new Date().toISOString();
+  db.prepare('UPDATE workspace_connections SET last_used=?,status=? WHERE id=? AND user_id=?').run(now, 'active', req.params.id, req.user.id);
+  res.json({ ok: true, pinged_at: now });
+});
+app.delete('/api/workspace-connections/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_connections WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// AI Glossary
+app.get('/api/ai-glossary', authenticateToken, (req: any, res: any) => {
+  const { search } = req.query as any;
+  if (search) {
+    const rows = db.prepare("SELECT * FROM ai_glossary WHERE user_id=? AND (term LIKE ? OR definition LIKE ?) ORDER BY term").all(req.user.id, `%${search}%`, `%${search}%`);
+    return res.json(rows);
+  }
+  res.json(db.prepare('SELECT * FROM ai_glossary WHERE user_id=? ORDER BY term').all(req.user.id));
+});
+app.post('/api/ai-glossary', authenticateToken, (req: any, res: any) => {
+  const { term, definition, category } = req.body;
+  if (!term || !definition) return res.status(400).json({ error: 'term and definition required' });
+  try {
+    const r = db.prepare('INSERT INTO ai_glossary (user_id,term,definition,category) VALUES (?,?,?,?)').run(req.user.id, term, definition, category||'general');
+    res.json({ id: r.lastInsertRowid });
+  } catch {
+    db.prepare('UPDATE ai_glossary SET definition=?,category=? WHERE user_id=? AND term=?').run(definition, category||'general', req.user.id, term);
+    res.json({ updated: true });
+  }
+});
+app.delete('/api/ai-glossary/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_glossary WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Reading Queue v2
+app.get('/api/reading-queue-v2', authenticateToken, (req: any, res: any) => {
+  const { read } = req.query as any;
+  let q = 'SELECT * FROM reading_queue_v2 WHERE user_id=?';
+  const p: any[] = [req.user.id];
+  if (read !== undefined) { q += ' AND read=?'; p.push(read === 'true' ? 1 : 0); }
+  q += ' ORDER BY priority DESC, created_at DESC';
+  res.json(db.prepare(q).all(...p));
+});
+app.post('/api/reading-queue-v2', authenticateToken, (req: any, res: any) => {
+  const { url, title, summary, tags, priority } = req.body;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  const r = db.prepare('INSERT INTO reading_queue_v2 (user_id,url,title,summary,tags,priority) VALUES (?,?,?,?,?,?)').run(req.user.id, url, title||url, summary||'', JSON.stringify(tags||[]), priority||0);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/reading-queue-v2/:id/read', authenticateToken, (req: any, res: any) => {
+  db.prepare('UPDATE reading_queue_v2 SET read=1,read_at=? WHERE id=? AND user_id=?').run(new Date().toISOString(), req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/reading-queue-v2/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM reading_queue_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.get('/api/reading-queue-v2/stats', authenticateToken, (req: any, res: any) => {
+  const total = (db.prepare('SELECT COUNT(*) as n FROM reading_queue_v2 WHERE user_id=?').get(req.user.id) as any)?.n || 0;
+  const done = (db.prepare('SELECT COUNT(*) as n FROM reading_queue_v2 WHERE user_id=? AND read=1').get(req.user.id) as any)?.n || 0;
+  res.json({ total, done, pending: total - done });
+});
+
+// Kanban Labels
+app.get('/api/kanban-labels', authenticateToken, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM kanban_labels WHERE user_id=? ORDER BY name').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/kanban-labels', authenticateToken, (req: any, res: any) => {
+  const { name, color, board_id } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  try {
+    const r = db.prepare('INSERT INTO kanban_labels (user_id,name,color,board_id) VALUES (?,?,?,?)').run(req.user.id, name, color||'#6366f1', board_id||null);
+    res.json({ id: r.lastInsertRowid });
+  } catch {
+    res.status(409).json({ error: 'label exists' });
+  }
+});
+app.put('/api/kanban-labels/:id', authenticateToken, (req: any, res: any) => {
+  const { color } = req.body;
+  db.prepare('UPDATE kanban_labels SET color=? WHERE id=? AND user_id=?').run(color||'#6366f1', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/kanban-labels/:id', authenticateToken, (req: any, res: any) => {
+  db.prepare('DELETE FROM kanban_labels WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
