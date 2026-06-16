@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -749,6 +749,24 @@ export default function ForgeApp() {
   const [newRpPages, setNewRpPages] = useState(0);
   const [debates, setDebates] = useState<any[]>([]);
   const [newDebateTopic, setNewDebateTopic] = useState('');
+  const [aiBookmarks, setAiBookmarks] = useState<any[]>([]);
+  const [newBmUrl, setNewBmUrl] = useState('');
+  const [newBmTitle, setNewBmTitle] = useState('');
+  const [newBmSummary, setNewBmSummary] = useState('');
+  const [bmSearch, setBmSearch] = useState('');
+  const [focusSessions, setFocusSessions] = useState<any[]>([]);
+  const [focusStats, setFocusStats] = useState<any>(null);
+  const [newFocusLabel, setNewFocusLabel] = useState('Deep Work');
+  const [newFocusDur, setNewFocusDur] = useState(25);
+  const [activeFocus, setActiveFocus] = useState<any>(null);
+  const [threadReactions, setThreadReactions] = useState<any[]>([]);
+  const [reactionThreadId, setReactionThreadId] = useState('');
+  const [wsTags, setWsTags] = useState<any[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#6366f1');
+  const [dailyIntentions, setDailyIntentions] = useState<any[]>([]);
+  const [todayIntention, setTodayIntention] = useState('');
+  const [newIntention, setNewIntention] = useState('');
   const [boards, setBoards] = useState<any[]>([]);
   const [activeBoardId, setActiveBoardId] = useState<number|null>(null);
   const [boardItems, setBoardItems] = useState<any[]>([]);
@@ -4306,6 +4324,11 @@ export default function ForgeApp() {
             { id:'sprints', icon:'🏃', label:'Sprints' },
             { id:'contentcal', icon:'📆', label:'Content Cal' },
             { id:'learnpath', icon:'🎓', label:'Learning Paths' },
+          { id:'aibookmarks', icon:'🔖', label:'AI Bookmarks' },
+          { id:'focussess', icon:'🎯', label:'Focus Sessions' },
+          { id:'treactions', icon:'💬', label:'Reactions' },
+          { id:'wstags', icon:'🏷', label:'WS Tags' },
+          { id:'intentions', icon:'🌅', label:'Daily Intentions' },
             { id:'folders', icon:'📂', label:'Folders' },
             { id:'quicknotes', icon:'📝', label:'Quick Notes' },
             { id:'export', icon:'💾', label:'Export Data' },
@@ -11133,6 +11156,175 @@ export default function ForgeApp() {
                   <button onClick={async()=>{ const tok=localStorage.getItem('forge_token'); if(!tok) return; const r=await fetch('/api/workspace/stats-summary',{headers:{Authorization:`Bearer ${tok}`}}); setStatsSummary(await r.json()); }} style={{ padding:'8px 16px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Refresh</button>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* AI Bookmarks tab */}
+        {mainTab==='aibookmarks' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🔖 AI Bookmarks</div>
+            <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+              <input value={newBmUrl} onChange={e=>setNewBmUrl(e.target.value)} placeholder="URL..." style={{ flex:2, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newBmTitle} onChange={e=>setNewBmTitle(e.target.value)} placeholder="Title..." style={{ flex:1, minWidth:120, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input value={newBmSummary} onChange={e=>setNewBmSummary(e.target.value)} placeholder="Summary..." style={{ flex:2, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!newBmUrl.trim()) return; await fetch('/api/ai-bookmarks',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({url:newBmUrl,title:newBmTitle,summary:newBmSummary})}); setNewBmUrl(''); setNewBmTitle(''); setNewBmSummary(''); const r=await fetch('/api/ai-bookmarks',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiBookmarks(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <input value={bmSearch} onChange={e=>setBmSearch(e.target.value)} placeholder="Search bookmarks..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ const url=bmSearch.trim()?`/api/ai-bookmarks/search?q=${encodeURIComponent(bmSearch)}`:'/api/ai-bookmarks'; const r=await fetch(url,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiBookmarks(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Search</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {aiBookmarks.map((bm:any)=>(
+                <div key={bm.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 14px', display:'flex', gap:12, alignItems:'flex-start' }}>
+                  <div style={{ flex:1 }}>
+                    <a href={bm.url} target="_blank" rel="noreferrer" style={{ color:'var(--accent)', fontWeight:600, fontSize:14, textDecoration:'none' }}>{bm.title||bm.url}</a>
+                    {bm.summary && <div style={{ color:'var(--fg-text2)', fontSize:12, marginTop:4 }}>{bm.summary}</div>}
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{bm.created_at?.split('T')[0]}</div>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/ai-bookmarks/${bm.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiBookmarks(aiBookmarks.filter((x:any)=>x.id!==bm.id)); }} style={{ padding:'4px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
+                </div>
+              ))}
+              {aiBookmarks.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No bookmarks yet. Save URLs with AI context.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Focus Sessions tab */}
+        {mainTab==='focussess' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎯 Focus Sessions</div>
+            {focusStats && (
+              <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
+                {[['Total',focusStats.total],['Done',focusStats.completed],['Minutes',focusStats.totalMin]].map(([l,v])=>(
+                  <div key={l as string} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 18px', textAlign:'center' }}>
+                    <div style={{ color:'var(--accent)', fontSize:22, fontWeight:700 }}>{v}</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:12 }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {activeFocus ? (
+              <div style={{ background:'var(--bg-card)', border:'2px solid var(--accent)', borderRadius:12, padding:24, textAlign:'center', marginBottom:20 }}>
+                <div style={{ color:'var(--accent)', fontSize:32, marginBottom:8 }}>⏱</div>
+                <div style={{ color:'var(--fg-text)', fontSize:18, fontWeight:700, marginBottom:4 }}>{activeFocus.label}</div>
+                <div style={{ color:'var(--fg-text2)', marginBottom:16 }}>{activeFocus.duration_min} min session — started {activeFocus.started_at?.split('T')[1]?.slice(0,5)}</div>
+                <button onClick={async()=>{ await fetch(`/api/focus-sessions/${activeFocus.id}/complete`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({})}); setActiveFocus(null); const r=await fetch('/api/focus-sessions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusSessions(await r.json()); const s=await fetch('/api/focus-sessions/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusStats(await s.json()); }} style={{ padding:'10px 28px', background:'#22c55e', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:15, fontWeight:600 }}>Complete Session ✓</button>
+              </div>
+            ) : (
+              <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+                <input value={newFocusLabel} onChange={e=>setNewFocusLabel(e.target.value)} placeholder="Session label..." style={{ flex:1, minWidth:120, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+                <select value={newFocusDur} onChange={e=>setNewFocusDur(Number(e.target.value))} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+                  {[10,15,25,30,45,60,90].map(d=><option key={d} value={d}>{d} min</option>)}
+                </select>
+                <button onClick={async()=>{ const r=await fetch('/api/focus-sessions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({label:newFocusLabel,duration_min:newFocusDur})}); const sess=await r.json(); setActiveFocus({...sess,label:newFocusLabel,duration_min:newFocusDur}); }} style={{ padding:'8px 20px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Start Focus</button>
+                <button onClick={async()=>{ const r=await fetch('/api/focus-sessions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusSessions(await r.json()); const s=await fetch('/api/focus-sessions/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusStats(await s.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+              </div>
+            )}
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {focusSessions.map((s:any)=>(
+                <div key={s.id} style={{ display:'flex', gap:10, alignItems:'center', background:'var(--bg-card)', border:`1px solid ${s.completed?'#22c55e':'var(--border)'}`, borderRadius:8, padding:'8px 12px' }}>
+                  <span style={{ fontSize:18 }}>{s.completed?'✅':'⏳'}</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{s.label} — {s.duration_min}min</div>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{s.started_at?.split('T')[0]}</div>
+                  </div>
+                  <button onClick={async()=>{ await fetch(`/api/focus-sessions/${s.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusSessions(focusSessions.filter((x:any)=>x.id!==s.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Reactions tab */}
+        {mainTab==='treactions' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>💬 Thread Reactions</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center' }}>
+              <input value={reactionThreadId} onChange={e=>setReactionThreadId(e.target.value)} placeholder="Thread ID..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <button onClick={async()=>{ if(!reactionThreadId.trim()) return; const r=await fetch(`/api/thread-reactions/${reactionThreadId}`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadReactions(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            {reactionThreadId && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:10 }}>React to thread #{reactionThreadId}:</div>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {['👍','❤️','🔥','😂','😮','🎉','💡','⭐','🤔','👏'].map(emoji=>(
+                    <button key={emoji} onClick={async()=>{ await fetch('/api/thread-reactions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({thread_id:parseInt(reactionThreadId),emoji})}); const r=await fetch(`/api/thread-reactions/${reactionThreadId}`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadReactions(await r.json()); }} style={{ padding:'6px 12px', fontSize:22, background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }}>{emoji}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+              {threadReactions.map((rx:any,i:number)=>(
+                <div key={i} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'8px 14px', textAlign:'center' }}>
+                  <div style={{ fontSize:28 }}>{rx.emoji}</div>
+                  <div style={{ color:'var(--fg-text)', fontWeight:700 }}>{rx.count}</div>
+                </div>
+              ))}
+              {threadReactions.length===0 && reactionThreadId && <div style={{ color:'var(--fg-text3)', padding:20 }}>No reactions yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Tags tab */}
+        {mainTab==='wstags' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🏷 Workspace Tags</div>
+            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+              <input value={newTagName} onChange={e=>setNewTagName(e.target.value)} placeholder="Tag name..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+              <input type="color" value={newTagColor} onChange={e=>setNewTagColor(e.target.value)} style={{ width:44, height:38, padding:2, background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }} />
+              <button onClick={async()=>{ if(!newTagName.trim()) return; await fetch('/api/workspace-tags',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newTagName,color:newTagColor})}); setNewTagName(''); const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create</button>
+              <button onClick={async()=>{ const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+            </div>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
+              {wsTags.map((tag:any)=>(
+                <div key={tag.id} style={{ display:'flex', gap:6, alignItems:'center', padding:'6px 12px', background:tag.color+'22', border:`1.5px solid ${tag.color}`, borderRadius:20 }}>
+                  <span style={{ color:tag.color, fontWeight:600, fontSize:13 }}>{tag.name}</span>
+                  <span style={{ color:'var(--fg-text3)', fontSize:11 }}>×{tag.usage_count}</span>
+                  <button onClick={async()=>{ await fetch(`/api/workspace-tags/${tag.id}/use`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ background:'none', border:'none', color:tag.color, cursor:'pointer', fontSize:13, padding:'0 2px' }}>+</button>
+                  <button onClick={async()=>{ await fetch(`/api/workspace-tags/${tag.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(wsTags.filter((x:any)=>x.id!==tag.id)); }} style={{ background:'none', border:'none', color:'#ef4444', cursor:'pointer', fontSize:12, padding:'0 2px' }}>✕</button>
+                </div>
+              ))}
+              {wsTags.length===0 && <div style={{ color:'var(--fg-text3)', padding:24 }}>No tags yet. Tags help organize your workspace content.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Daily Intentions tab */}
+        {mainTab==='intentions' && (
+          <div style={{ padding:24 }}>
+            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🌅 Daily Intentions</div>
+            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:20 }}>
+              <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:8 }}>Today's Intention</div>
+              {todayIntention ? (
+                <div>
+                  <div style={{ color:'var(--fg-text2)', fontSize:15, fontStyle:'italic', marginBottom:12 }}>"{todayIntention}"</div>
+                  <div style={{ color:'var(--accent)', fontSize:13 }}>✓ Intention set for today</div>
+                </div>
+              ) : (
+                <div style={{ display:'flex', gap:8 }}>
+                  <input value={newIntention} onChange={e=>setNewIntention(e.target.value)} placeholder="Set your intention for today..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
+                  <button onClick={async()=>{ if(!newIntention.trim()) return; const today=new Date().toISOString().split('T')[0]; await fetch('/api/daily-intentions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({date:today,intention:newIntention})}); setTodayIntention(newIntention); setNewIntention(''); const r=await fetch('/api/daily-intentions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDailyIntentions(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Set</button>
+                  <button onClick={async()=>{ const today=new Date().toISOString().split('T')[0]; const r=await fetch('/api/daily-intentions/today',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const d=await r.json(); if(d) setTodayIntention(d.intention); const all=await fetch('/api/daily-intentions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDailyIntentions(await all.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
+                </div>
+              )}
+            </div>
+            <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:12 }}>Past Intentions</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {dailyIntentions.map((di:any)=>(
+                <div key={di.id} style={{ background:'var(--bg-card)', border:`1px solid ${di.achieved?'#22c55e':'var(--border)'}`, borderRadius:10, padding:'10px 14px' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                    <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{di.date}</span>
+                    <div style={{ display:'flex', gap:6 }}>
+                      {!di.achieved && <button onClick={async()=>{ await fetch(`/api/daily-intentions/${di.id}/reflect`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({achieved:true,reflection:''})}); const r=await fetch('/api/daily-intentions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDailyIntentions(await r.json()); }} style={{ padding:'2px 8px', background:'#22c55e', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Achieved ✓</button>}
+                      <button onClick={async()=>{ await fetch(`/api/daily-intentions/${di.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDailyIntentions(dailyIntentions.filter((x:any)=>x.id!==di.id)); }} style={{ padding:'2px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{ color:'var(--fg-text)', fontSize:14, fontStyle:'italic' }}>"{di.intention}"</div>
+                  {di.achieved && <div style={{ color:'#22c55e', fontSize:12, marginTop:4 }}>✅ Achieved{di.reflection?' — '+di.reflection:''}</div>}
+                </div>
+              ))}
+              {dailyIntentions.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:24 }}>No past intentions found.</div>}
             </div>
           </div>
         )}
