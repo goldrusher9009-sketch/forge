@@ -14147,4 +14147,400 @@ app.delete('/api/ai-prompt-chains-v2/:id', requireAuth, (req:any,res:any) => {
   res.json({ok:true});
 });
 
+
+// -- Batch 63 ----------------------------------------------------------------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_context_windows_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT, model TEXT NOT NULL,
+    input_tokens INTEGER DEFAULT 0, output_tokens INTEGER DEFAULT 0,
+    max_tokens INTEGER DEFAULT 0, utilization_pct REAL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_goals_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, title TEXT NOT NULL, description TEXT,
+    category TEXT DEFAULT 'personal', target_date TEXT,
+    progress INTEGER DEFAULT 0, completed INTEGER DEFAULT 0,
+    pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_highlights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT NOT NULL, message_id TEXT,
+    excerpt TEXT NOT NULL, color TEXT DEFAULT 'yellow',
+    note TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_learning_paths (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, title TEXT NOT NULL, topic TEXT NOT NULL,
+    steps TEXT, current_step INTEGER DEFAULT 0,
+    completed INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_feedback_loops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, model TEXT NOT NULL, prompt_hash TEXT,
+    quality INTEGER DEFAULT 3, speed_ok INTEGER DEFAULT 1,
+    notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// AI Context Windows V2
+app.get('/api/ai-context-windows-v2', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_context_windows_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/ai-context-windows-v2', requireAuth, (req:any,res:any) => {
+  const {thread_id,model,input_tokens=0,output_tokens=0,max_tokens=0}=req.body;
+  if(!model) return res.status(400).json({error:'model required'});
+  const utilization_pct=max_tokens>0?((input_tokens+output_tokens)/max_tokens)*100:0;
+  const r=db.prepare('INSERT INTO ai_context_windows_v2 (user_id,thread_id,model,input_tokens,output_tokens,max_tokens,utilization_pct) VALUES (?,?,?,?,?,?,?)').run(req.user.id,thread_id,model,input_tokens,output_tokens,max_tokens,utilization_pct);
+  res.json(db.prepare('SELECT * FROM ai_context_windows_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/ai-context-windows-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_context_windows_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Workspace Goals V2
+app.get('/api/workspace-goals-v2', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM workspace_goals_v2 WHERE user_id=? ORDER BY pinned DESC,completed ASC,created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-goals-v2', requireAuth, (req:any,res:any) => {
+  const {title,description,category='personal',target_date}=req.body;
+  if(!title) return res.status(400).json({error:'title required'});
+  const r=db.prepare('INSERT INTO workspace_goals_v2 (user_id,title,description,category,target_date) VALUES (?,?,?,?,?)').run(req.user.id,title,description,category,target_date);
+  res.json(db.prepare('SELECT * FROM workspace_goals_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/workspace-goals-v2/:id/progress', requireAuth, (req:any,res:any) => {
+  const {progress}=req.body;
+  const completed=progress>=100?1:0;
+  db.prepare('UPDATE workspace_goals_v2 SET progress=?,completed=? WHERE id=? AND user_id=?').run(progress,completed,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.put('/api/workspace-goals-v2/:id/pin', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE workspace_goals_v2 SET pinned=1-pinned WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-goals-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM workspace_goals_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Thread Highlights
+app.get('/api/thread-highlights', requireAuth, (req:any,res:any) => {
+  const {thread_id}=req.query;
+  if(thread_id) return res.json(db.prepare('SELECT * FROM thread_highlights WHERE user_id=? AND thread_id=? ORDER BY created_at DESC').all(req.user.id,thread_id));
+  res.json(db.prepare('SELECT * FROM thread_highlights WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/thread-highlights', requireAuth, (req:any,res:any) => {
+  const {thread_id,message_id,excerpt,color='yellow',note}=req.body;
+  if(!thread_id||!excerpt) return res.status(400).json({error:'thread_id+excerpt required'});
+  const r=db.prepare('INSERT INTO thread_highlights (user_id,thread_id,message_id,excerpt,color,note) VALUES (?,?,?,?,?,?)').run(req.user.id,thread_id,message_id,excerpt,color,note);
+  res.json(db.prepare('SELECT * FROM thread_highlights WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/thread-highlights/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM thread_highlights WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// User Learning Paths
+app.get('/api/user-learning-paths', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM user_learning_paths WHERE user_id=? ORDER BY completed ASC,created_at DESC').all(req.user.id));
+});
+app.post('/api/user-learning-paths', requireAuth, (req:any,res:any) => {
+  const {title,topic,steps}=req.body;
+  if(!title||!topic) return res.status(400).json({error:'title+topic required'});
+  const r=db.prepare('INSERT INTO user_learning_paths (user_id,title,topic,steps) VALUES (?,?,?,?)').run(req.user.id,title,topic,steps?JSON.stringify(steps):null);
+  res.json(db.prepare('SELECT * FROM user_learning_paths WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/user-learning-paths/:id/advance', requireAuth, (req:any,res:any) => {
+  const path=db.prepare('SELECT * FROM user_learning_paths WHERE id=? AND user_id=?').get(req.params.id,req.user.id) as any;
+  if(!path) return res.status(404).json({error:'not found'});
+  let steps=[]; try{steps=JSON.parse(path.steps||'[]');}catch(e){}
+  const next=path.current_step+1;
+  const completed=next>=steps.length?1:0;
+  db.prepare('UPDATE user_learning_paths SET current_step=?,completed=? WHERE id=?').run(next,completed,req.params.id);
+  res.json({ok:true,current_step:next,completed});
+});
+app.delete('/api/user-learning-paths/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM user_learning_paths WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// AI Feedback Loops
+app.get('/api/ai-feedback-loops', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_feedback_loops WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/ai-feedback-loops', requireAuth, (req:any,res:any) => {
+  const {model,prompt_hash,quality=3,speed_ok=1,notes}=req.body;
+  if(!model) return res.status(400).json({error:'model required'});
+  const r=db.prepare('INSERT INTO ai_feedback_loops (user_id,model,prompt_hash,quality,speed_ok,notes) VALUES (?,?,?,?,?,?)').run(req.user.id,model,prompt_hash,quality,speed_ok,notes);
+  res.json(db.prepare('SELECT * FROM ai_feedback_loops WHERE id=?').get(r.lastInsertRowid));
+});
+app.get('/api/ai-feedback-loops/stats', requireAuth, (req:any,res:any) => {
+  const stats=db.prepare('SELECT model,AVG(quality) as avg_quality,COUNT(*) as count FROM ai_feedback_loops WHERE user_id=? GROUP BY model').all(req.user.id);
+  res.json(stats);
+});
+app.delete('/api/ai-feedback-loops/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_feedback_loops WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+
+// -- Batch 64 ----------------------------------------------------------------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_session_checkpoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT, label TEXT NOT NULL,
+    snapshot TEXT, model TEXT, token_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_reactions_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, target_type TEXT NOT NULL, target_id TEXT NOT NULL,
+    emoji TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, target_type, target_id, emoji)
+  );
+  CREATE TABLE IF NOT EXISTS thread_action_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT NOT NULL, text TEXT NOT NULL,
+    assignee TEXT, due_date TEXT, priority TEXT DEFAULT 'medium',
+    completed INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_mood_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, mood INTEGER NOT NULL, label TEXT,
+    note TEXT, date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_output_versions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, output_key TEXT NOT NULL, version INTEGER DEFAULT 1,
+    content TEXT NOT NULL, model TEXT, diff TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// AI Session Checkpoints
+app.get('/api/ai-session-checkpoints', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_session_checkpoints WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-session-checkpoints', requireAuth, (req:any,res:any) => {
+  const {thread_id,label,snapshot,model,token_count=0}=req.body;
+  if(!label) return res.status(400).json({error:'label required'});
+  const r=db.prepare('INSERT INTO ai_session_checkpoints (user_id,thread_id,label,snapshot,model,token_count) VALUES (?,?,?,?,?,?)').run(req.user.id,thread_id,label,snapshot?JSON.stringify(snapshot):null,model,token_count);
+  res.json(db.prepare('SELECT * FROM ai_session_checkpoints WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/ai-session-checkpoints/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_session_checkpoints WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Workspace Reactions V2
+app.get('/api/workspace-reactions-v2', requireAuth, (req:any,res:any) => {
+  const {target_type,target_id}=req.query;
+  if(target_type&&target_id) return res.json(db.prepare('SELECT * FROM workspace_reactions_v2 WHERE user_id=? AND target_type=? AND target_id=?').all(req.user.id,target_type,target_id));
+  res.json(db.prepare('SELECT * FROM workspace_reactions_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 500').all(req.user.id));
+});
+app.post('/api/workspace-reactions-v2', requireAuth, (req:any,res:any) => {
+  const {target_type,target_id,emoji}=req.body;
+  if(!target_type||!target_id||!emoji) return res.status(400).json({error:'target_type+target_id+emoji required'});
+  db.prepare('INSERT INTO workspace_reactions_v2 (user_id,target_type,target_id,emoji) VALUES (?,?,?,?) ON CONFLICT(user_id,target_type,target_id,emoji) DO NOTHING').run(req.user.id,target_type,target_id,emoji);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-reactions-v2', requireAuth, (req:any,res:any) => {
+  const {target_type,target_id,emoji}=req.body;
+  db.prepare('DELETE FROM workspace_reactions_v2 WHERE user_id=? AND target_type=? AND target_id=? AND emoji=?').run(req.user.id,target_type,target_id,emoji);
+  res.json({ok:true});
+});
+
+// Thread Action Items
+app.get('/api/thread-action-items', requireAuth, (req:any,res:any) => {
+  const {thread_id}=req.query;
+  if(thread_id) return res.json(db.prepare('SELECT * FROM thread_action_items WHERE user_id=? AND thread_id=? ORDER BY priority DESC,created_at').all(req.user.id,thread_id));
+  res.json(db.prepare('SELECT * FROM thread_action_items WHERE user_id=? ORDER BY completed ASC,priority DESC,created_at DESC LIMIT 500').all(req.user.id));
+});
+app.post('/api/thread-action-items', requireAuth, (req:any,res:any) => {
+  const {thread_id,text,assignee,due_date,priority='medium'}=req.body;
+  if(!thread_id||!text) return res.status(400).json({error:'thread_id+text required'});
+  const r=db.prepare('INSERT INTO thread_action_items (user_id,thread_id,text,assignee,due_date,priority) VALUES (?,?,?,?,?,?)').run(req.user.id,thread_id,text,assignee,due_date,priority);
+  res.json(db.prepare('SELECT * FROM thread_action_items WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/thread-action-items/:id/complete', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE thread_action_items SET completed=1-completed WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/thread-action-items/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM thread_action_items WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// User Mood Log
+app.get('/api/user-mood-log', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM user_mood_log WHERE user_id=? ORDER BY created_at DESC LIMIT 365').all(req.user.id));
+});
+app.post('/api/user-mood-log', requireAuth, (req:any,res:any) => {
+  const {mood,label,note,date}=req.body;
+  if(mood===undefined) return res.status(400).json({error:'mood required'});
+  const r=db.prepare('INSERT INTO user_mood_log (user_id,mood,label,note,date) VALUES (?,?,?,?,?)').run(req.user.id,mood,label,note,date||new Date().toISOString().split('T')[0]);
+  res.json(db.prepare('SELECT * FROM user_mood_log WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/user-mood-log/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM user_mood_log WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// AI Output Versions
+app.get('/api/ai-output-versions', requireAuth, (req:any,res:any) => {
+  const {output_key}=req.query;
+  if(output_key) return res.json(db.prepare('SELECT * FROM ai_output_versions WHERE user_id=? AND output_key=? ORDER BY version DESC').all(req.user.id,output_key));
+  res.json(db.prepare('SELECT id,output_key,version,model,created_at FROM ai_output_versions WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/ai-output-versions', requireAuth, (req:any,res:any) => {
+  const {output_key,content,model,diff}=req.body;
+  if(!output_key||!content) return res.status(400).json({error:'output_key+content required'});
+  const last=db.prepare('SELECT MAX(version) as v FROM ai_output_versions WHERE user_id=? AND output_key=?').get(req.user.id,output_key) as any;
+  const version=(last?.v||0)+1;
+  const r=db.prepare('INSERT INTO ai_output_versions (user_id,output_key,version,content,model,diff) VALUES (?,?,?,?,?,?)').run(req.user.id,output_key,version,content,model,diff);
+  res.json(db.prepare('SELECT * FROM ai_output_versions WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/ai-output-versions/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_output_versions WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+
+// -- Batch 65 ----------------------------------------------------------------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_context_injectors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, name TEXT NOT NULL, rule TEXT NOT NULL,
+    trigger_pattern TEXT, priority INTEGER DEFAULT 0,
+    enabled INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_sprints_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, name TEXT NOT NULL, goal TEXT,
+    start_date TEXT, end_date TEXT,
+    status TEXT DEFAULT 'active', velocity INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS thread_subscribers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, thread_id TEXT NOT NULL, notify_type TEXT DEFAULT 'all',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, thread_id)
+  );
+  CREATE TABLE IF NOT EXISTS user_habit_streaks_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, habit TEXT NOT NULL, current_streak INTEGER DEFAULT 0,
+    longest_streak INTEGER DEFAULT 0, last_checkin TEXT,
+    total_checkins INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, habit)
+  );
+  CREATE TABLE IF NOT EXISTS ai_model_presets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, name TEXT NOT NULL, model TEXT NOT NULL,
+    temperature REAL DEFAULT 0.7, max_tokens INTEGER DEFAULT 4096,
+    system_prompt TEXT, pinned INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// AI Context Injectors
+app.get('/api/ai-context-injectors', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_context_injectors WHERE user_id=? ORDER BY priority DESC,created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-context-injectors', requireAuth, (req:any,res:any) => {
+  const {name,rule,trigger_pattern,priority=0}=req.body;
+  if(!name||!rule) return res.status(400).json({error:'name+rule required'});
+  const r=db.prepare('INSERT INTO ai_context_injectors (user_id,name,rule,trigger_pattern,priority) VALUES (?,?,?,?,?)').run(req.user.id,name,rule,trigger_pattern,priority);
+  res.json(db.prepare('SELECT * FROM ai_context_injectors WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/ai-context-injectors/:id/toggle', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_context_injectors SET enabled=1-enabled WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-context-injectors/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_context_injectors WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Workspace Sprints V2
+app.get('/api/workspace-sprints-v2', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM workspace_sprints_v2 WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-sprints-v2', requireAuth, (req:any,res:any) => {
+  const {name,goal,start_date,end_date}=req.body;
+  if(!name) return res.status(400).json({error:'name required'});
+  const r=db.prepare('INSERT INTO workspace_sprints_v2 (user_id,name,goal,start_date,end_date) VALUES (?,?,?,?,?)').run(req.user.id,name,goal,start_date,end_date);
+  res.json(db.prepare('SELECT * FROM workspace_sprints_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/workspace-sprints-v2/:id/complete', requireAuth, (req:any,res:any) => {
+  const {velocity=0}=req.body;
+  db.prepare('UPDATE workspace_sprints_v2 SET status=\'completed\',velocity=? WHERE id=? AND user_id=?').run(velocity,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-sprints-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM workspace_sprints_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// Thread Subscribers
+app.get('/api/thread-subscribers', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM thread_subscribers WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/thread-subscribers', requireAuth, (req:any,res:any) => {
+  const {thread_id,notify_type='all'}=req.body;
+  if(!thread_id) return res.status(400).json({error:'thread_id required'});
+  db.prepare('INSERT INTO thread_subscribers (user_id,thread_id,notify_type) VALUES (?,?,?) ON CONFLICT(user_id,thread_id) DO UPDATE SET notify_type=excluded.notify_type').run(req.user.id,thread_id,notify_type);
+  res.json({ok:true});
+});
+app.delete('/api/thread-subscribers/:thread_id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM thread_subscribers WHERE user_id=? AND thread_id=?').run(req.user.id,req.params.thread_id);
+  res.json({ok:true});
+});
+
+// User Habit Streaks V2
+app.get('/api/user-habit-streaks-v2', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM user_habit_streaks_v2 WHERE user_id=? ORDER BY current_streak DESC').all(req.user.id));
+});
+app.post('/api/user-habit-streaks-v2', requireAuth, (req:any,res:any) => {
+  const {habit}=req.body;
+  if(!habit) return res.status(400).json({error:'habit required'});
+  db.prepare('INSERT INTO user_habit_streaks_v2 (user_id,habit) VALUES (?,?) ON CONFLICT(user_id,habit) DO NOTHING').run(req.user.id,habit);
+  res.json(db.prepare('SELECT * FROM user_habit_streaks_v2 WHERE user_id=? AND habit=?').get(req.user.id,habit));
+});
+app.put('/api/user-habit-streaks-v2/:id/checkin', requireAuth, (req:any,res:any) => {
+  const row=db.prepare('SELECT * FROM user_habit_streaks_v2 WHERE id=? AND user_id=?').get(req.params.id,req.user.id) as any;
+  if(!row) return res.status(404).json({error:'not found'});
+  const today=new Date().toISOString().split('T')[0];
+  if(row.last_checkin===today) return res.json({ok:true,already_checked_in:true});
+  const newStreak=row.current_streak+1;
+  const longest=Math.max(row.longest_streak,newStreak);
+  db.prepare('UPDATE user_habit_streaks_v2 SET current_streak=?,longest_streak=?,last_checkin=?,total_checkins=total_checkins+1 WHERE id=?').run(newStreak,longest,today,req.params.id);
+  res.json({ok:true,current_streak:newStreak,longest_streak:longest});
+});
+app.delete('/api/user-habit-streaks-v2/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM user_habit_streaks_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// AI Model Presets
+app.get('/api/ai-model-presets', requireAuth, (req:any,res:any) => {
+  res.json(db.prepare('SELECT * FROM ai_model_presets WHERE user_id=? ORDER BY pinned DESC,created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-model-presets', requireAuth, (req:any,res:any) => {
+  const {name,model,temperature=0.7,max_tokens=4096,system_prompt}=req.body;
+  if(!name||!model) return res.status(400).json({error:'name+model required'});
+  const r=db.prepare('INSERT INTO ai_model_presets (user_id,name,model,temperature,max_tokens,system_prompt) VALUES (?,?,?,?,?,?)').run(req.user.id,name,model,temperature,max_tokens,system_prompt);
+  res.json(db.prepare('SELECT * FROM ai_model_presets WHERE id=?').get(r.lastInsertRowid));
+});
+app.put('/api/ai-model-presets/:id/pin', requireAuth, (req:any,res:any) => {
+  db.prepare('UPDATE ai_model_presets SET pinned=1-pinned WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-model-presets/:id', requireAuth, (req:any,res:any) => {
+  db.prepare('DELETE FROM ai_model_presets WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });

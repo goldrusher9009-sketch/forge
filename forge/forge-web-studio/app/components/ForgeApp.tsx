@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -996,6 +996,73 @@ export default function ForgeApp() {
   const [newPc2Name, setNewPc2Name] = useState('');
   const [newPc2Desc, setNewPc2Desc] = useState('');
   const [newPc2Steps, setNewPc2Steps] = useState('Step 1,Step 2');
+  const [aiCtxWindowsV2, setAiCtxWindowsV2] = useState<any[]>([]);
+  const [newCw2Model, setNewCw2Model] = useState('claude');
+  const [newCw2Thread, setNewCw2Thread] = useState('');
+  const [newCw2Input, setNewCw2Input] = useState(0);
+  const [newCw2Output, setNewCw2Output] = useState(0);
+  const [newCw2Max, setNewCw2Max] = useState(200000);
+  const [wsGoalsV2, setWsGoalsV2] = useState<any[]>([]);
+  const [newWg2Title, setNewWg2Title] = useState('');
+  const [newWg2Desc, setNewWg2Desc] = useState('');
+  const [newWg2Cat, setNewWg2Cat] = useState('personal');
+  const [newWg2Date, setNewWg2Date] = useState('');
+  const [threadHighlights, setThreadHighlights] = useState<any[]>([]);
+  const [newThThread, setNewThThread] = useState('');
+  const [newThExcerpt, setNewThExcerpt] = useState('');
+  const [newThColor, setNewThColor] = useState('yellow');
+  const [newThNote, setNewThNote] = useState('');
+  const [userLearningPaths, setUserLearningPaths] = useState<any[]>([]);
+  const [newLpTitle, setNewLpTitle] = useState('');
+  const [newLpTopic, setNewLpTopic] = useState('');
+  const [newLpSteps, setNewLpSteps] = useState('Step 1,Step 2,Step 3');
+  const [aiFeedbackLoops, setAiFeedbackLoops] = useState<any[]>([]);
+  const [newFlModel, setNewFlModel] = useState('claude');
+  const [newFlQuality, setNewFlQuality] = useState(3);
+  const [newFlNotes, setNewFlNotes] = useState('');
+  const [aiSessCheckpoints, setAiSessCheckpoints] = useState<any[]>([]);
+  const [newScLabel, setNewScLabel] = useState('');
+  const [newScThread, setNewScThread] = useState('');
+  const [newScModel, setNewScModel] = useState('claude');
+  const [wsReactionsV2, setWsReactionsV2] = useState<any[]>([]);
+  const [newWrType, setNewWrType] = useState('thread');
+  const [newWrTargetId, setNewWrTargetId] = useState('');
+  const [newWrEmoji, setNewWrEmoji] = useState('👍');
+  const [threadActionItems, setThreadActionItems] = useState<any[]>([]);
+  const [newAiThread, setNewAiThread] = useState('');
+  const [newAiText, setNewAiText] = useState('');
+  const [newAiAssignee, setNewAiAssignee] = useState('');
+  const [newAiDue, setNewAiDue] = useState('');
+  const [newAiPriority, setNewAiPriority] = useState('medium');
+  const [userMoodLog, setUserMoodLog] = useState<any[]>([]);
+  const [newMoodVal, setNewMoodVal] = useState(3);
+  const [newMoodLabel, setNewMoodLabel] = useState('');
+  const [newMoodNote, setNewMoodNote] = useState('');
+  const [aiOutputVersions, setAiOutputVersions] = useState<any[]>([]);
+  const [newOvKey, setNewOvKey] = useState('');
+  const [newOvContent, setNewOvContent] = useState('');
+  const [newOvModel, setNewOvModel] = useState('claude');
+  const [aiCtxInjectors, setAiCtxInjectors] = useState<any[]>([]);
+  const [newCiName, setNewCiName] = useState('');
+  const [newCiRule, setNewCiRule] = useState('');
+  const [newCiPattern, setNewCiPattern] = useState('');
+  const [newCiPriority, setNewCiPriority] = useState(0);
+  const [wsSprintsV2, setWsSprintsV2] = useState<any[]>([]);
+  const [newSp2Name, setNewSp2Name] = useState('');
+  const [newSp2Goal, setNewSp2Goal] = useState('');
+  const [newSp2Start, setNewSp2Start] = useState('');
+  const [newSp2End, setNewSp2End] = useState('');
+  const [threadSubscribers, setThreadSubscribers] = useState<any[]>([]);
+  const [newTsThread, setNewTsThread] = useState('');
+  const [newTsNotify, setNewTsNotify] = useState('all');
+  const [habitStreaksV2, setHabitStreaksV2] = useState<any[]>([]);
+  const [newHsV2Habit, setNewHsV2Habit] = useState('');
+  const [aiModelPresets, setAiModelPresets] = useState<any[]>([]);
+  const [newMpName, setNewMpName] = useState('');
+  const [newMpModel, setNewMpModel] = useState('claude-opus-4-8');
+  const [newMpTemp, setNewMpTemp] = useState(0.7);
+  const [newMpMaxTok, setNewMpMaxTok] = useState(4096);
+  const [newMpSysPrompt, setNewMpSysPrompt] = useState('');
   const [threadArchivesV3, setThreadArchivesV3] = useState<any[]>([]);
   const [tav3ThreadId, setTav3ThreadId] = useState('');
   const [tav3Title, setTav3Title] = useState('');
@@ -5066,6 +5133,21 @@ export default function ForgeApp() {
             { id:'threadeventsv2', icon:'📅', label:'Thread Events V2' },
             { id:'userskillratings', icon:'📊', label:'Skill Ratings' },
             { id:'aipromptchainsv2', icon:'🔗', label:'Prompt Chains V2' },
+            { id:'aictxwindowsv2', icon:'🪟', label:'Ctx Windows V2' },
+            { id:'wsgoalsv2', icon:'🥅', label:'Goals V2' },
+            { id:'threadhighlights', icon:'🖍️', label:'Thread Highlights' },
+            { id:'learningpaths', icon:'🛤️', label:'Learning Paths' },
+            { id:'aifeedbackloops', icon:'🔄', label:'Feedback Loops' },
+            { id:'aisesschkpts', icon:'💾', label:'Session Checkpoints' },
+            { id:'wsreactionsv2', icon:'😊', label:'WS Reactions V2' },
+            { id:'threadactionitems', icon:'✅', label:'Action Items' },
+            { id:'usermoodlog', icon:'😶', label:'Mood Log' },
+            { id:'aioutputversions', icon:'📝', label:'Output Versions' },
+            { id:'aictxinjectors', icon:'💉', label:'Ctx Injectors' },
+            { id:'wssprintsv2', icon:'🏃', label:'Sprints V2' },
+            { id:'threadsubscribers', icon:'🔔', label:'Thread Subs' },
+            { id:'habitstreaksv2', icon:'🔥', label:'Habit Streaks V2' },
+            { id:'aimodelpresets', icon:'⚙️', label:'Model Presets' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -12108,6 +12190,296 @@ export default function ForgeApp() {
               </div>
               <div style={{fontSize:11,color:'var(--fg-text2)',marginTop:2,wordBreak:'break-all'}}>{b.url}</div>
               {b.description&&<div style={{fontSize:11,color:'var(--fg-text2)',marginTop:2}}>{b.description}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {mainTab==='aifeedbackloops' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128260; AI Feedback Loops</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Model" value={newFlModel} onChange={e=>setNewFlModel(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <select value={newFlQuality} onChange={e=>setNewFlQuality(Number(e.target.value))} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              {[1,2,3,4,5].map(n=><option key={n} value={n}>Quality {n}/5</option>)}
+            </select>
+            <input placeholder="Notes" value={newFlNotes} onChange={e=>setNewFlNotes(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <button onClick={async()=>{if(!newFlModel)return;await fetch('/api/ai-feedback-loops',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({model:newFlModel,quality:newFlQuality,notes:newFlNotes})});const r=await fetch('/api/ai-feedback-loops',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiFeedbackLoops(await r.json());setNewFlNotes('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+          </div>
+          {aiFeedbackLoops.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-feedback-loops',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiFeedbackLoops(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {aiFeedbackLoops.map((f:any)=>(
+            <div key={f.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontWeight:600}}>{f.model}</span>
+                <span style={{marginLeft:8}}>{'&#11088;'.repeat(f.quality)}</span>
+                {f.notes&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{f.notes}</span>}
+                <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{f.speed_ok?'&#9989; fast':'&#10060; slow'}</span>
+              </div>
+              <button onClick={async()=>{await fetch('/api/ai-feedback-loops/'+f.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiFeedbackLoops((p:any)=>p.filter((x:any)=>x.id!==f.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='learningpaths' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128756; Learning Paths</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Title" value={newLpTitle} onChange={e=>setNewLpTitle(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <input placeholder="Topic" value={newLpTopic} onChange={e=>setNewLpTopic(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newLpTitle||!newLpTopic)return;await fetch('/api/user-learning-paths',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newLpTitle,topic:newLpTopic,steps:newLpSteps.split(',').map((s:string)=>s.trim())})});const r=await fetch('/api/user-learning-paths',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserLearningPaths(await r.json());setNewLpTitle('');setNewLpTopic('');setNewLpSteps('Step 1,Step 2,Step 3');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          <input placeholder="Steps (comma-separated)" value={newLpSteps} onChange={e=>setNewLpSteps(e.target.value)} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',marginBottom:12,boxSizing:'border-box'}}/>
+          {userLearningPaths.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-learning-paths',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserLearningPaths(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {userLearningPaths.map((p:any)=>{
+            let steps:string[]=[]; try{steps=JSON.parse(p.steps||'[]');}catch(e){}
+            return(
+            <div key={p.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',opacity:p.completed?0.6:1}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                <div>
+                  <span style={{fontWeight:600}}>{p.title}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',background:'var(--bg3)',padding:'2px 6px',borderRadius:4,marginLeft:8}}>{p.topic}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{p.current_step}/{steps.length} steps</span>
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  {!p.completed&&<button onClick={async()=>{const res=await fetch('/api/user-learning-paths/'+p.id+'/advance',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const data=await res.json();setUserLearningPaths((prev:any)=>prev.map((x:any)=>x.id===p.id?{...x,current_step:data.current_step,completed:data.completed}:x));}} style={{padding:'2px 6px',background:'#16a34a',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Next Step</button>}
+                  <button onClick={async()=>{await fetch('/api/user-learning-paths/'+p.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserLearningPaths((prev:any)=>prev.filter((x:any)=>x.id!==p.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+              <div style={{background:'var(--bg3)',borderRadius:4,height:6,overflow:'hidden'}}>
+                <div style={{width:(steps.length>0?(p.current_step/steps.length)*100:0)+'%',height:'100%',background:'var(--fg-orange)',borderRadius:4,transition:'width 0.3s'}}/>
+              </div>
+              {steps.length>0&&<div style={{fontSize:11,color:'var(--fg-text2)',marginTop:4}}>Current: {steps[p.current_step]||'Complete &#9989;'}</div>}
+            </div>
+            );
+          })}
+        </div>
+      )}
+      {mainTab==='threadhighlights' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128396; Thread Highlights</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Thread ID" value={newThThread} onChange={e=>setNewThThread(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <select value={newThColor} onChange={e=>setNewThColor(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              {['yellow','green','blue','pink','orange'].map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <input placeholder="Note" value={newThNote} onChange={e=>setNewThNote(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newThThread||!newThExcerpt)return;await fetch('/api/thread-highlights',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newThThread,excerpt:newThExcerpt,color:newThColor,note:newThNote})});const r=await fetch('/api/thread-highlights',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadHighlights(await r.json());setNewThThread('');setNewThExcerpt('');setNewThNote('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          <textarea placeholder="Excerpt to highlight..." value={newThExcerpt} onChange={e=>setNewThExcerpt(e.target.value)} rows={2} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical',marginBottom:12,boxSizing:'border-box'}}/>
+          {threadHighlights.length===0&&<button onClick={async()=>{const r=await fetch('/api/thread-highlights',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadHighlights(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {threadHighlights.map((h:any)=>{
+            const bgMap:any={yellow:'rgba(253,224,71,0.15)',green:'rgba(34,197,94,0.15)',blue:'rgba(59,130,246,0.15)',pink:'rgba(236,72,153,0.15)',orange:'rgba(249,115,22,0.15)'};
+            return(
+            <div key={h.id} style={{background:bgMap[h.color]||bgMap.yellow,borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                <div style={{flex:1}}>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',background:'var(--bg3)',padding:'2px 6px',borderRadius:4}}>#{h.thread_id}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{h.color}</span>
+                  <div style={{fontSize:13,marginTop:4,fontStyle:'italic'}}>&#8220;{h.excerpt}&#8221;</div>
+                  {h.note&&<div style={{fontSize:11,color:'var(--fg-text2)',marginTop:2}}>Note: {h.note}</div>}
+                </div>
+                <button onClick={async()=>{await fetch('/api/thread-highlights/'+h.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadHighlights((p:any)=>p.filter((x:any)=>x.id!==h.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11,marginLeft:8,flexShrink:0}}>Del</button>
+              </div>
+            </div>
+            );
+          })}
+        </div>
+      )}
+      {mainTab==='wsgoalsv2' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#129333; Goals V2</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Title" value={newWg2Title} onChange={e=>setNewWg2Title(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <select value={newWg2Cat} onChange={e=>setNewWg2Cat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              {['personal','work','health','learning','finance'].map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <input type="date" value={newWg2Date} onChange={e=>setNewWg2Date(e.target.value)} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newWg2Title)return;await fetch('/api/workspace-goals-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newWg2Title,description:newWg2Desc,category:newWg2Cat,target_date:newWg2Date})});const r=await fetch('/api/workspace-goals-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsGoalsV2(await r.json());setNewWg2Title('');setNewWg2Desc('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          <input placeholder="Description" value={newWg2Desc} onChange={e=>setNewWg2Desc(e.target.value)} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',marginBottom:12,boxSizing:'border-box'}}/>
+          {wsGoalsV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-goals-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsGoalsV2(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {wsGoalsV2.map((g:any)=>(
+            <div key={g.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',opacity:g.completed?0.6:1}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                <div>
+                  <span style={{fontWeight:600}}>{g.pinned?'&#128204; ':''}{g.title}</span>
+                  <span style={{fontSize:11,color:'var(--fg-text2)',background:'var(--bg3)',padding:'2px 6px',borderRadius:4,marginLeft:8}}>{g.category}</span>
+                  {g.target_date&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>by {g.target_date}</span>}
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  <button onClick={async()=>{await fetch('/api/workspace-goals-v2/'+g.id+'/pin',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch('/api/workspace-goals-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsGoalsV2(await r.json());}} style={{padding:'2px 6px',background:'var(--bg3)',border:'none',borderRadius:4,color:'var(--fg-text2)',cursor:'pointer',fontSize:11}}>Pin</button>
+                  <button onClick={async()=>{const np=Math.min(100,(g.progress||0)+10);await fetch('/api/workspace-goals-v2/'+g.id+'/progress',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({progress:np})});setWsGoalsV2((p:any)=>p.map((x:any)=>x.id===g.id?{...x,progress:np,completed:np>=100?1:0}:x));}} style={{padding:'2px 6px',background:'#16a34a',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>+10%</button>
+                  <button onClick={async()=>{await fetch('/api/workspace-goals-v2/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsGoalsV2((p:any)=>p.filter((x:any)=>x.id!==g.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+              <div style={{background:'var(--bg3)',borderRadius:4,height:6,overflow:'hidden'}}>
+                <div style={{width:(g.progress||0)+'%',height:'100%',background:'var(--fg-orange)',borderRadius:4,transition:'width 0.3s'}}/>
+              </div>
+              <div style={{fontSize:11,color:'var(--fg-text2)',marginTop:2}}>{g.progress||0}%{g.completed?' &#9989; Complete':''}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {mainTab==='aioutputversions' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128221; Output Versions</h3>
+          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <input placeholder="Output key" value={newOvKey} onChange={e=>setNewOvKey(e.target.value)} style={{width:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Model" value={newOvModel} onChange={e=>setNewOvModel(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newOvKey||!newOvContent)return;await fetch('/api/ai-output-versions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({output_key:newOvKey,content:newOvContent,model:newOvModel})});const r=await fetch('/api/ai-output-versions',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiOutputVersions(await r.json());setNewOvKey('');setNewOvContent('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Save Version</button>
+          </div>
+          <textarea placeholder="Content..." value={newOvContent} onChange={e=>setNewOvContent(e.target.value)} rows={3} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical',marginBottom:12,boxSizing:'border-box'}}/>
+          {aiOutputVersions.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-output-versions',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiOutputVersions(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {aiOutputVersions.map((v:any)=>(
+            <div key={v.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontWeight:600}}>{v.output_key}</span>
+                <span style={{fontSize:11,padding:'2px 6px',background:'var(--bg3)',borderRadius:4,marginLeft:8}}>v{v.version}</span>
+                {v.model&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{v.model}</span>}
+                <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{new Date(v.created_at).toLocaleDateString()}</span>
+              </div>
+              <button onClick={async()=>{await fetch('/api/ai-output-versions/'+v.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiOutputVersions((p:any)=>p.filter((x:any)=>x.id!==v.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='usermoodlog' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128566; Mood Log</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',alignItems:'center'}}>
+            <div style={{display:'flex',gap:4}}>
+              {[1,2,3,4,5].map(n=>(
+                <button key={n} onClick={()=>setNewMoodVal(n)} style={{width:36,height:36,fontSize:18,background:newMoodVal===n?'var(--fg-orange)':'var(--bg2)',border:'1px solid var(--border)',borderRadius:8,cursor:'pointer'}}>
+                  {['&#128555;','&#128542;','&#128528;','&#128578;','&#128512;'][n-1]}
+                </button>
+              ))}
+            </div>
+            <input placeholder="Label (optional)" value={newMoodLabel} onChange={e=>setNewMoodLabel(e.target.value)} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Note" value={newMoodNote} onChange={e=>setNewMoodNote(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <button onClick={async()=>{await fetch('/api/user-mood-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({mood:newMoodVal,label:newMoodLabel,note:newMoodNote})});const r=await fetch('/api/user-mood-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserMoodLog(await r.json());setNewMoodLabel('');setNewMoodNote('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+          </div>
+          {userMoodLog.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-mood-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserMoodLog(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {userMoodLog.map((m:any)=>(
+            <div key={m.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontSize:20}}>{['&#128555;','&#128542;','&#128528;','&#128578;','&#128512;'][m.mood-1]||'&#128528;'}</span>
+                {m.label&&<span style={{fontWeight:600,marginLeft:8}}>{m.label}</span>}
+                {m.note&&<span style={{fontSize:12,color:'var(--fg-text2)',marginLeft:8}}>{m.note}</span>}
+                <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{m.date}</span>
+              </div>
+              <button onClick={async()=>{await fetch('/api/user-mood-log/'+m.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUserMoodLog((p:any)=>p.filter((x:any)=>x.id!==m.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='threadactionitems' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#9989; Thread Action Items</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Thread ID" value={newAiThread} onChange={e=>setNewAiThread(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Action text" value={newAiText} onChange={e=>setNewAiText(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:140}}/>
+            <input placeholder="Assignee" value={newAiAssignee} onChange={e=>setNewAiAssignee(e.target.value)} style={{width:100,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="date" value={newAiDue} onChange={e=>setNewAiDue(e.target.value)} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <select value={newAiPriority} onChange={e=>setNewAiPriority(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+              {['low','medium','high'].map(p=><option key={p} value={p}>{p}</option>)}
+            </select>
+            <button onClick={async()=>{if(!newAiThread||!newAiText)return;await fetch('/api/thread-action-items',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newAiThread,text:newAiText,assignee:newAiAssignee,due_date:newAiDue,priority:newAiPriority})});const r=await fetch('/api/thread-action-items',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadActionItems(await r.json());setNewAiThread('');setNewAiText('');setNewAiAssignee('');setNewAiDue('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+          </div>
+          {threadActionItems.length===0&&<button onClick={async()=>{const r=await fetch('/api/thread-action-items',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadActionItems(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {threadActionItems.map((a:any)=>{
+            const pColors:any={low:'#6b7280',medium:'#f59e0b',high:'#dc2626'};
+            return(
+            <div key={a.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',opacity:a.completed?0.6:1,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontSize:14,textDecoration:a.completed?'line-through':'none'}}>{a.text}</span>
+                <span style={{fontSize:11,padding:'2px 6px',borderRadius:4,background:pColors[a.priority],color:'#fff',marginLeft:8}}>{a.priority}</span>
+                <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>#{a.thread_id}</span>
+                {a.assignee&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>@{a.assignee}</span>}
+                {a.due_date&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>due: {a.due_date}</span>}
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <button onClick={async()=>{await fetch('/api/thread-action-items/'+a.id+'/complete',{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadActionItems((p:any)=>p.map((x:any)=>x.id===a.id?{...x,completed:x.completed?0:1}:x));}} style={{padding:'2px 6px',background:'#16a34a',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>{a.completed?'Undo':'Done'}</button>
+                <button onClick={async()=>{await fetch('/api/thread-action-items/'+a.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadActionItems((p:any)=>p.filter((x:any)=>x.id!==a.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+              </div>
+            </div>
+            );
+          })}
+        </div>
+      )}
+      {mainTab==='wsreactionsv2' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128522; Workspace Reactions V2</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Target type" value={newWrType} onChange={e=>setNewWrType(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Target ID" value={newWrTargetId} onChange={e=>setNewWrTargetId(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Emoji" value={newWrEmoji} onChange={e=>setNewWrEmoji(e.target.value)} style={{width:70,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newWrType||!newWrTargetId||!newWrEmoji)return;await fetch('/api/workspace-reactions-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({target_type:newWrType,target_id:newWrTargetId,emoji:newWrEmoji})});const r=await fetch('/api/workspace-reactions-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsReactionsV2(await r.json());setNewWrTargetId('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>React</button>
+          </div>
+          {wsReactionsV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-reactions-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsReactionsV2(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {wsReactionsV2.map((r:any)=>(
+            <div key={r.id} style={{background:'var(--bg2)',borderRadius:8,padding:'8px 12px',marginBottom:8,border:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontSize:20}}>{r.emoji}</span>
+                <span style={{fontSize:12,color:'var(--fg-text2)',marginLeft:8}}>{r.target_type}:{r.target_id}</span>
+              </div>
+              <button onClick={async()=>{await fetch('/api/workspace-reactions-v2',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({target_type:r.target_type,target_id:r.target_id,emoji:r.emoji})});setWsReactionsV2((p:any)=>p.filter((x:any)=>x.id!==r.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='aisesschkpts' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128190; Session Checkpoints</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Label" value={newScLabel} onChange={e=>setNewScLabel(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
+            <input placeholder="Thread ID" value={newScThread} onChange={e=>setNewScThread(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Model" value={newScModel} onChange={e=>setNewScModel(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newScLabel)return;await fetch('/api/ai-session-checkpoints',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({label:newScLabel,thread_id:newScThread,model:newScModel})});const r=await fetch('/api/ai-session-checkpoints',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiSessCheckpoints(await r.json());setNewScLabel('');setNewScThread('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Save</button>
+          </div>
+          {aiSessCheckpoints.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-session-checkpoints',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiSessCheckpoints(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {aiSessCheckpoints.map((c:any)=>(
+            <div key={c.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontWeight:600}}>{c.label}</span>
+                {c.model&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{c.model}</span>}
+                {c.thread_id&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>#{c.thread_id}</span>}
+                {c.token_count>0&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{c.token_count} tokens</span>}
+                <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{new Date(c.created_at).toLocaleString()}</span>
+              </div>
+              <button onClick={async()=>{await fetch('/api/ai-session-checkpoints/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiSessCheckpoints((p:any)=>p.filter((x:any)=>x.id!==c.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mainTab==='aictxwindowsv2' && (
+        <div style={{padding:16}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#129695; Context Windows V2</h3>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input placeholder="Model" value={newCw2Model} onChange={e=>setNewCw2Model(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input placeholder="Thread ID" value={newCw2Thread} onChange={e=>setNewCw2Thread(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="number" placeholder="Input tokens" value={newCw2Input||''} onChange={e=>setNewCw2Input(Number(e.target.value))} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="number" placeholder="Output tokens" value={newCw2Output||''} onChange={e=>setNewCw2Output(Number(e.target.value))} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <input type="number" placeholder="Max tokens" value={newCw2Max||''} onChange={e=>setNewCw2Max(Number(e.target.value))} style={{width:100,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+            <button onClick={async()=>{if(!newCw2Model)return;await fetch('/api/ai-context-windows-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({model:newCw2Model,thread_id:newCw2Thread,input_tokens:newCw2Input,output_tokens:newCw2Output,max_tokens:newCw2Max})});const r=await fetch('/api/ai-context-windows-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCtxWindowsV2(await r.json());setNewCw2Input(0);setNewCw2Output(0);}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+          </div>
+          {aiCtxWindowsV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-context-windows-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCtxWindowsV2(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
+          {aiCtxWindowsV2.map((w:any)=>(
+            <div key={w.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                <div>
+                  <span style={{fontWeight:600}}>{w.model}</span>
+                  {w.thread_id&&<span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>#{w.thread_id}</span>}
+                  <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>in:{w.input_tokens} out:{w.output_tokens}</span>
+                </div>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{fontSize:11,color:w.utilization_pct>80?'#dc2626':'#16a34a'}}>{Math.round(w.utilization_pct||0)}%</span>
+                  <button onClick={async()=>{await fetch('/api/ai-context-windows-v2/'+w.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCtxWindowsV2((p:any)=>p.filter((x:any)=>x.id!==w.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              </div>
+              <div style={{background:'var(--bg3)',borderRadius:4,height:4,overflow:'hidden'}}>
+                <div style={{width:Math.min(100,w.utilization_pct||0)+'%',height:'100%',background:w.utilization_pct>80?'#dc2626':'var(--fg-orange)',borderRadius:4}}/>
+              </div>
             </div>
           ))}
         </div>

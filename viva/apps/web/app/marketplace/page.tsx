@@ -2,219 +2,169 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const CATEGORIES = ['All', 'Digital', 'Merch', 'Courses', 'Access']
+type SortKey = 'price_change' | 'volume' | 'holders' | 'price' | 'mcap'
 
-const LISTINGS = [
-  {
-    id: 'l1', seller: 'sovereign_v', sellerName: 'Sovereign V', symbol: 'SOVV', color: '#a855f7',
-    title: 'Token Economy Blueprint', category: 'Digital', type: 'PDF + Template Pack',
-    price: 49, priceCurrency: 'USDC', tokenGate: null,
-    desc: 'The exact framework I used to build a 6-figure personal token economy. 60-page PDF + Notion template.',
-    sold: 312, rating: 4.9, reviews: 84, img: '📄',
-  },
-  {
-    id: 'l2', seller: 'mayafit', sellerName: 'Maya Chen', symbol: 'MAYA', color: '#22c55e',
-    title: 'Biohack OS — Full Program', category: 'Courses', type: '8-week video course',
-    price: 120, priceCurrency: 'USDC', tokenGate: { tier: 'Bronze', minTokens: 10 },
-    desc: '8-week morning optimization program. Sleep, HRV, cold exposure, nutrition protocol. Diamond holders get lifetime updates.',
-    sold: 189, rating: 4.8, reviews: 61, img: '🧬',
-  },
-  {
-    id: 'l3', seller: 'luna_apex', sellerName: 'Luna Apex', symbol: 'APEX', color: '#f59e0b',
-    title: 'Apex Creator Hoodie', category: 'Merch', type: 'Physical — ships worldwide',
-    price: 65, priceCurrency: 'USDC', tokenGate: { tier: 'Silver', minTokens: 25 },
-    desc: 'Limited run. Heavyweight cotton. APEX embroidered logo. Ships in 2-3 weeks. Silver+ holders get free shipping.',
-    sold: 72, rating: 4.7, reviews: 22, img: '👕',
-  },
-  {
-    id: 'l4', seller: 'zeronode', sellerName: 'ZeroNode', symbol: 'ZERO', color: '#818cf8',
-    title: 'ZK Identity Masterclass', category: 'Courses', type: '4-hour workshop recording',
-    price: 89, priceCurrency: 'USDC', tokenGate: null,
-    desc: 'Deep dive on ZK proofs, anonymous credentials, and building on VIVA\'s identity layer. Includes code walkthroughs.',
-    sold: 145, rating: 5.0, reviews: 39, img: '🔐',
-  },
-  {
-    id: 'l5', seller: 'sovereign_v', sellerName: 'Sovereign V', symbol: 'SOVV', color: '#a855f7',
-    title: 'Sovereign Inner Circle (Q3)', category: 'Access', type: 'Private Telegram + monthly call',
-    price: 0, priceCurrency: 'SOVV', tokenGate: { tier: 'Gold', minTokens: 50 },
-    desc: 'Gold+ holders only. Weekly alpha, deal flow, monthly live Q&A, and first access to new SOVV drops.',
-    sold: 58, rating: 5.0, reviews: 14, img: '👑',
-  },
-  {
-    id: 'l6', seller: 'mayafit', sellerName: 'Maya Chen', symbol: 'MAYA', color: '#22c55e',
-    title: 'MAYA Exclusive Meal Plans', category: 'Digital', type: '12-week nutrition guide PDF',
-    price: 29, priceCurrency: 'USDC', tokenGate: null,
-    desc: 'Evidence-based nutrition templates. Performance, longevity, and aesthetic tracks. Includes macro calculator.',
-    sold: 421, rating: 4.9, reviews: 113, img: '🥗',
-  },
+interface Token {
+  symbol: string
+  creatorName: string
+  handle: string
+  color: string
+  verified: boolean
+  price: number
+  change24h: number
+  volume24h: number
+  holders: number
+  supply: number
+  mcap: number
+  tier: 'Diamond' | 'Gold' | 'Silver' | 'Bronze'
+  myTokens: number
+}
+
+const TOKENS: Token[] = [
+  { symbol:'SVRN', creatorName:'Sovereign V',   handle:'sovereign_v', color:'#a855f7', verified:true,  price:8.75,  change24h:4.2,   volume24h:182400, holders:2840, supply:100000, mcap:875000, tier:'Diamond', myTokens:50  },
+  { symbol:'MAYA', creatorName:'Maya Chen',     handle:'mayafit',     color:'#22c55e', verified:true,  price:5.20,  change24h:-1.8,  volume24h:84200,  holders:1620, supply:80000,  mcap:416000, tier:'Gold',    myTokens:80  },
+  { symbol:'JAX',  creatorName:'Jax Beats',    handle:'jaxbeats',    color:'#ec4899', verified:true,  price:3.80,  change24h:7.1,   volume24h:61800,  holders:980,  supply:60000,  mcap:228000, tier:'Silver',  myTokens:0   },
+  { symbol:'LUNA', creatorName:'Luna Writes',  handle:'luna_w',      color:'#f87171', verified:false, price:1.42,  change24h:12.4,  volume24h:28400,  holders:540,  supply:40000,  mcap:56800,  tier:'Silver',  myTokens:0   },
+  { symbol:'ATL',  creatorName:'Atlas K',      handle:'atlas_k',     color:'#818cf8', verified:true,  price:6.10,  change24h:-0.4,  volume24h:54200,  holders:1240, supply:70000,  mcap:427000, tier:'Gold',    myTokens:20  },
+  { symbol:'KAI',  creatorName:'Kai Raven',    handle:'kai_r',       color:'#22c55e', verified:false, price:0.88,  change24h:22.1,  volume24h:14200,  holders:320,  supply:30000,  mcap:26400,  tier:'Bronze',  myTokens:0   },
+  { symbol:'NOA',  creatorName:'Noa Digital',  handle:'noa_d',       color:'#f59e0b', verified:false, price:2.15,  change24h:3.8,   volume24h:19800,  holders:680,  supply:50000,  mcap:107500, tier:'Bronze',  myTokens:0   },
+  { symbol:'DXTR', creatorName:'Dex Trades',   handle:'dex_n',       color:'#a855f7', verified:false, price:0.32,  change24h:-5.2,  volume24h:8400,   holders:180,  supply:200000, mcap:64000,  tier:'Bronze',  myTokens:0   },
+  { symbol:'JADE', creatorName:'Jade Luxury',  handle:'jade_l',      color:'#ec4899', verified:true,  price:4.60,  change24h:1.9,   volume24h:38200,  holders:890,  supply:45000,  mcap:207000, tier:'Silver',  myTokens:10  },
+  { symbol:'MAXW', creatorName:'Max Wellness', handle:'max_t',       color:'#22c55e', verified:false, price:1.05,  change24h:-2.8,  volume24h:12400,  holders:410,  supply:55000,  mcap:57750,  tier:'Bronze',  myTokens:0   },
 ]
+
+const SORT_LABELS: Record<SortKey, string> = {
+  price_change: '24h %', volume: 'Volume', holders: 'Holders', price: 'Price', mcap: 'Market Cap'
+}
+
+const TIER_COLOR: Record<string, string> = { Diamond:'#818cf8', Gold:'#f59e0b', Silver:'#94a3b8', Bronze:'#b45309' }
 
 export default function MarketplacePage() {
   const router = useRouter()
-  const [cat, setCat] = useState('All')
-  const [buying, setBuying] = useState<string | null>(null)
-  const [purchased, setPurchased] = useState<Set<string>>(new Set())
-  const [loadingBuy, setLoadingBuy] = useState<string | null>(null)
-  const [txMsg, setTxMsg] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
+  const [sort, setSort]     = useState<SortKey>('volume')
+  const [filter, setFilter] = useState<'all' | 'holding' | 'trending'>('all')
+  const [buying, setBuying] = useState<Record<string, boolean>>({})
+  const [bought, setBought] = useState<Record<string, boolean>>({})
 
-  const filtered = LISTINGS.filter(l =>
-    (cat === 'All' || l.category === cat) &&
-    (!search || l.title.toLowerCase().includes(search.toLowerCase()) || l.sellerName.toLowerCase().includes(search.toLowerCase()))
-  )
-
-  async function handleBuy(id: string, title: string) {
-    setLoadingBuy(id)
-    await new Promise(r => setTimeout(r, 1000))
-    setPurchased(prev => new Set([...prev, id]))
-    setLoadingBuy(null)
-    setBuying(null)
-    setTxMsg(`Purchased: ${title}`)
-    setTimeout(() => setTxMsg(null), 4000)
+  async function buy(symbol: string) {
+    setBuying(p => ({ ...p, [symbol]: true }))
+    await new Promise(r => setTimeout(r, 900))
+    setBuying(p => ({ ...p, [symbol]: false }))
+    setBought(p => ({ ...p, [symbol]: true }))
+    setTimeout(() => setBought(p => ({ ...p, [symbol]: false })), 2000)
   }
 
-  const buyingItem = LISTINGS.find(l => l.id === buying)
+  let tokens = [...TOKENS]
+  if (filter === 'holding') tokens = tokens.filter(t => t.myTokens > 0)
+  if (filter === 'trending') tokens = tokens.filter(t => t.change24h > 5)
+
+  tokens.sort((a, b) => {
+    if (sort === 'price_change') return b.change24h - a.change24h
+    if (sort === 'volume')   return b.volume24h - a.volume24h
+    if (sort === 'holders')  return b.holders - a.holders
+    if (sort === 'price')    return b.price - a.price
+    if (sort === 'mcap')     return b.mcap - a.mcap
+    return 0
+  })
+
+  const totalVol = TOKENS.reduce((s, t) => s + t.volume24h, 0)
+  const totalMcap = TOKENS.reduce((s, t) => s + t.mcap, 0)
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
+    <div className="min-h-screen pb-24" style={{ background:'var(--ink)' }}>
       <header className="sticky top-0 z-20 px-4 pt-4 pb-3 border-b border-white/5"
-        style={{ backdropFilter: 'blur(20px)', background: 'rgba(4,4,10,0.92)' }}>
+        style={{ backdropFilter:'blur(20px)', background:'rgba(4,4,10,0.92)' }}>
         <div className="flex items-center gap-3 mb-3">
-          <button onClick={() => router.back()}
-            className="p-1.5 rounded-lg hover:bg-white/5 text-white/50 hover:text-white transition-colors">
+          <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
           <div className="flex-1">
-            <p className="text-xs text-white/30 tracking-widest">CREATOR ECONOMY</p>
-            <h1 className="font-bold text-white" style={{ fontSize: 'clamp(1.1rem,3vw,1.5rem)', letterSpacing: '-0.03em' }}>Marketplace</h1>
+            <div className="font-black text-white">Marketplace</div>
+            <div className="text-xs text-white/30">{TOKENS.length} tokens · ${ (totalMcap/1000000).toFixed(2) }M market cap</div>
           </div>
-          <button className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-            style={{ background: '#a855f718', color: '#a855f7', border: '1px solid #a855f725' }}>
-            + List Item
+          <button onClick={() => router.push('/wallet')}
+            className="text-xs px-3 py-1.5 rounded-xl font-bold"
+            style={{ background:'rgba(168,85,247,0.12)', color:'#a855f7' }}>
+            Wallet
           </button>
         </div>
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Search listings or creators…"
-          className="w-full px-3 py-2 rounded-xl text-sm mb-3"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'white', outline: 'none' }}
-        />
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCat(c)}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 transition-all"
-              style={cat === c
-                ? { background: '#a855f7', color: '#04040A' }
-                : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
-              {c}
+
+        {/* Hero stats */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="p-2.5 rounded-xl border border-white/5" style={{ background:'rgba(255,255,255,0.018)' }}>
+            <div className="text-xs text-white/25">24h Volume</div>
+            <div className="font-black text-sm text-white/75">${(totalVol/1000).toFixed(0)}k</div>
+          </div>
+          <div className="p-2.5 rounded-xl border border-white/5" style={{ background:'rgba(255,255,255,0.018)' }}>
+            <div className="text-xs text-white/25">Total Market Cap</div>
+            <div className="font-black text-sm text-white/75">${(totalMcap/1000000).toFixed(2)}M</div>
+          </div>
+        </div>
+
+        {/* Filter + Sort */}
+        <div className="flex gap-1.5 mb-2 overflow-x-auto">
+          {(['all','holding','trending'] as const).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold capitalize flex-shrink-0"
+              style={filter === f ? { background:'#a855f7', color:'#04040A' } : { background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.4)' }}>
+              {f === 'trending' ? '🔥 Trending' : f === 'holding' ? '💎 Holding' : 'All'}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto">
+          {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+            <button key={k} onClick={() => setSort(k)}
+              className="px-2.5 py-1 rounded-full text-[11px] font-bold flex-shrink-0"
+              style={sort === k ? { background:'rgba(245,158,11,0.15)', color:'#f59e0b', border:'1px solid rgba(245,158,11,0.3)' } : { background:'rgba(255,255,255,0.04)', color:'rgba(255,255,255,0.3)' }}>
+              {SORT_LABELS[k]}
             </button>
           ))}
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-        {txMsg && (
-          <div className="p-3 rounded-xl text-sm text-center font-semibold"
-            style={{ background: '#22c55e18', color: '#22c55e', border: '1px solid #22c55e30' }}>
-            ✓ {txMsg}
-          </div>
-        )}
-
-        {filtered.length === 0 && (
-          <div className="text-center py-16 text-white/25 text-sm">No listings found</div>
-        )}
-
-        {filtered.map(l => {
-          const isBought = purchased.has(l.id)
-          const isFree = l.price === 0
-          return (
-            <div key={l.id} className="p-4 rounded-2xl border border-white/6"
-              style={{ background: 'rgba(255,255,255,0.018)' }}>
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                  style={{ background: `${l.color}14` }}>{l.img}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 pr-2">
-                      <div className="font-bold text-white leading-snug">{l.title}</div>
-                      <button onClick={() => router.push(`/profile/${l.seller}`)}
-                        className="text-xs font-semibold transition-colors" style={{ color: l.color }}>
-                        by {l.sellerName}
-                      </button>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-lg font-black" style={{ color: isFree ? '#818cf8' : 'white' }}>
-                        {isFree ? `${l.tokenGate?.tier}+` : `$${l.price}`}
-                      </div>
-                      <div className="text-xs text-white/30">{isFree ? 'token gate' : l.priceCurrency}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2 mb-2">
-                <span className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: `${l.color}14`, color: l.color }}>{l.category}</span>
-                <span className="text-xs text-white/30">{l.type}</span>
-              </div>
-              <p className="text-xs text-white/45 mb-3 leading-relaxed">{l.desc}</p>
-              {l.tokenGate && (
-                <div className="mb-3 flex items-center gap-2 text-xs"
-                  style={{ color: l.color }}>
-                  <span>⬡</span>
-                  <span>Requires {l.tokenGate.minTokens}+ {l.symbol} ({l.tokenGate.tier} tier)</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between text-xs text-white/25 mb-3">
-                <span>⭐ {l.rating} ({l.reviews} reviews)</span>
-                <span>{l.sold} sold</span>
-              </div>
-              <button
-                onClick={() => isBought ? null : setBuying(l.id)}
-                className="w-full py-2.5 rounded-xl font-bold text-sm transition-all"
-                style={isBought
-                  ? { background: '#22c55e18', color: '#22c55e', border: '1px solid #22c55e30' }
-                  : { background: l.color, color: '#04040A' }}>
-                {isBought ? '✓ Purchased' : isFree ? 'Unlock with Tokens' : `Buy for $${l.price}`}
-              </button>
+      <div className="px-4 py-4 space-y-2">
+        {tokens.map((t, i) => (
+          <div key={t.symbol} className="flex items-center gap-3 p-3 rounded-2xl border border-white/4"
+            style={{ background:'rgba(255,255,255,0.015)' }}>
+            <div className="flex items-center gap-2 w-5 flex-shrink-0">
+              <span className="text-xs text-white/20 font-bold">{i+1}</span>
             </div>
-          )
-        })}
+            <button onClick={() => router.push(`/tokens/${t.symbol}/chart`)}
+              className="flex items-center gap-2.5 flex-1 min-w-0 text-left">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0"
+                style={{ background:`${t.color}15`, color:t.color }}>
+                {t.symbol[0]}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-sm text-white/80">${t.symbol}</span>
+                  {t.verified && <span className="text-[10px]" style={{ color:t.color }}>✓</span>}
+                  <span className="text-[10px] px-1 py-0.5 rounded font-bold"
+                    style={{ background:`${TIER_COLOR[t.tier]}18`, color:TIER_COLOR[t.tier] }}>{t.tier[0]}</span>
+                </div>
+                <div className="text-xs text-white/25 truncate">{t.creatorName}</div>
+              </div>
+            </button>
+            <div className="text-right flex-shrink-0 mr-2">
+              <div className="font-black text-sm text-white/75">${t.price.toFixed(2)}</div>
+              <div className="text-xs font-bold" style={{ color:t.change24h>=0?'#22c55e':'#f87171' }}>
+                {t.change24h>=0?'+':''}{t.change24h}%
+              </div>
+            </div>
+            <button onClick={() => buy(t.symbol)} disabled={buying[t.symbol]}
+              className="px-3 py-1.5 rounded-xl text-xs font-black flex-shrink-0"
+              style={bought[t.symbol]
+                ? { background:'#22c55e', color:'#04040A' }
+                : buying[t.symbol]
+                  ? { background:'rgba(168,85,247,0.1)', color:'rgba(168,85,247,0.4)' }
+                  : { background:`${t.color}15`, color:t.color }}>
+              {bought[t.symbol] ? '✓' : buying[t.symbol] ? '…' : 'Buy'}
+            </button>
+          </div>
+        ))}
       </div>
-
-      {/* Purchase modal */}
-      {buyingItem && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center pb-6 px-4"
-          style={{ background: 'rgba(0,0,0,0.75)' }} onClick={() => setBuying(null)}>
-          <div className="w-full max-w-md p-6 rounded-3xl border border-white/10 space-y-4"
-            style={{ background: '#0d0d1a' }} onClick={e => e.stopPropagation()}>
-            <div className="text-2xl text-center">{buyingItem.img}</div>
-            <div className="text-center">
-              <div className="font-bold text-white text-lg">{buyingItem.title}</div>
-              <div className="text-sm text-white/40">by {buyingItem.sellerName}</div>
-            </div>
-            <div className="p-3 rounded-xl flex items-center justify-between"
-              style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <span className="text-sm text-white/60">Total</span>
-              <span className="font-black text-white">${buyingItem.price} {buyingItem.priceCurrency}</span>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => handleBuy(buyingItem.id, buyingItem.title)}
-                disabled={loadingBuy === buyingItem.id}
-                className="flex-1 py-3 rounded-xl font-bold text-sm disabled:opacity-50"
-                style={{ background: buyingItem.color, color: '#04040A' }}>
-                {loadingBuy === buyingItem.id ? 'Processing…' : 'Confirm Purchase'}
-              </button>
-              <button onClick={() => setBuying(null)}
-                className="flex-1 py-3 rounded-xl font-semibold text-sm"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
