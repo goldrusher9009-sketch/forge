@@ -13280,4 +13280,116 @@ app.delete('/api/ai-usage-budgets/:id', requireAuth, (req: any, res: any) => {
   res.json({ ok: true });
 });
 
+// Batch 56: ai_snippets, workspace_announcements, ai_memory_nodes, thread_labels, user_streaks_v2
+db.prepare(`CREATE TABLE IF NOT EXISTS ai_snippets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, content TEXT, language TEXT DEFAULT 'text', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, body TEXT, audience TEXT DEFAULT 'all', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS ai_memory_nodes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, label TEXT, content TEXT, node_type TEXT DEFAULT 'fact', strength REAL DEFAULT 1.0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS thread_labels_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, label TEXT, color TEXT DEFAULT '#6366f1', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, streak_type TEXT, current_count INTEGER DEFAULT 0, best_count INTEGER DEFAULT 0, last_date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// AI Snippets
+app.get('/api/ai-snippets', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_snippets WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-snippets', requireAuth, (req: any, res: any) => {
+  const { title, content, language } = req.body;
+  const r = db.prepare('INSERT INTO ai_snippets (user_id,title,content,language) VALUES (?,?,?,?)').run(req.user.id, title, content, language||'text');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-snippets/:id/pin', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT pinned FROM ai_snippets WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE ai_snippets SET pinned=? WHERE id=? AND user_id=?').run(row.pinned ? 0 : 1, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-snippets/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_snippets WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Workspace Announcements
+app.get('/api/workspace-announcements', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM workspace_announcements WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/workspace-announcements', requireAuth, (req: any, res: any) => {
+  const { title, body, audience } = req.body;
+  const r = db.prepare('INSERT INTO workspace_announcements (user_id,title,body,audience) VALUES (?,?,?,?)').run(req.user.id, title, body, audience||'all');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/workspace-announcements/:id/pin', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT pinned FROM workspace_announcements WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE workspace_announcements SET pinned=? WHERE id=? AND user_id=?').run(row.pinned ? 0 : 1, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/workspace-announcements/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_announcements WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// AI Memory Nodes
+app.get('/api/ai-memory-nodes', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM ai_memory_nodes WHERE user_id=? ORDER BY strength DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/ai-memory-nodes', requireAuth, (req: any, res: any) => {
+  const { label, content, node_type } = req.body;
+  const r = db.prepare('INSERT INTO ai_memory_nodes (user_id,label,content,node_type) VALUES (?,?,?,?)').run(req.user.id, label, content, node_type||'fact');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/ai-memory-nodes/:id/reinforce', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE ai_memory_nodes SET strength=MIN(strength+0.1,5.0) WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/ai-memory-nodes/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_memory_nodes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Thread Labels V2
+app.get('/api/thread-labels-v2', requireAuth, (req: any, res: any) => {
+  const { thread_id } = req.query;
+  const sql = thread_id
+    ? 'SELECT * FROM thread_labels_v2 WHERE user_id=? AND thread_id=? ORDER BY created_at DESC'
+    : 'SELECT * FROM thread_labels_v2 WHERE user_id=? ORDER BY created_at DESC';
+  const rows = thread_id
+    ? db.prepare(sql).all(req.user.id, thread_id)
+    : db.prepare(sql).all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/thread-labels-v2', requireAuth, (req: any, res: any) => {
+  const { thread_id, label, color } = req.body;
+  const r = db.prepare('INSERT INTO thread_labels_v2 (user_id,thread_id,label,color) VALUES (?,?,?,?)').run(req.user.id, thread_id, label, color||'#6366f1');
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/thread-labels-v2/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM thread_labels_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// User Streaks V2
+app.get('/api/user-streaks-v2', requireAuth, (req: any, res: any) => {
+  res.json(db.prepare('SELECT * FROM user_streaks_v2 WHERE user_id=? ORDER BY current_count DESC').all(req.user.id));
+});
+app.post('/api/user-streaks-v2', requireAuth, (req: any, res: any) => {
+  const { streak_type } = req.body;
+  const r = db.prepare('INSERT INTO user_streaks_v2 (user_id,streak_type,last_date) VALUES (?,?,date("now"))').run(req.user.id, streak_type);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/user-streaks-v2/:id/increment', requireAuth, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT * FROM user_streaks_v2 WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  const newCount = row.current_count + 1;
+  const newBest = Math.max(newCount, row.best_count);
+  db.prepare('UPDATE user_streaks_v2 SET current_count=?,best_count=?,last_date=date("now") WHERE id=? AND user_id=?').run(newCount, newBest, req.params.id, req.user.id);
+  res.json({ current_count: newCount, best_count: newBest });
+});
+app.put('/api/user-streaks-v2/:id/reset', requireAuth, (req: any, res: any) => {
+  db.prepare('UPDATE user_streaks_v2 SET current_count=0,last_date=date("now") WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/user-streaks-v2/:id', requireAuth, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_streaks_v2 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
