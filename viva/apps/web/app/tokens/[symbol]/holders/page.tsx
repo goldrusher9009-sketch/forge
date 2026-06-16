@@ -2,70 +2,60 @@
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
+const TOKENS: Record<string, { name: string; color: string; totalHolders: number; totalSupply: number }> = {
+  SVRN: { name:'Sovereign V', color:'#a855f7', totalHolders:2840, totalSupply:100000 },
+  MAYA: { name:'Maya Chen',   color:'#22c55e', totalHolders:1620, totalSupply:80000  },
+  JAX:  { name:'Jax Beats',  color:'#ec4899', totalHolders:980,  totalSupply:60000  },
+}
+
 interface Holder {
+  rank: number
   handle: string
   name: string
   color: string
-  verified: boolean
   qty: number
-  pct: number
-  staked: number
   tier: 'Diamond' | 'Gold' | 'Silver' | 'Bronze' | null
+  pctSupply: number
   value: number
-  since: string
+  staked: number
 }
 
-const TOKENS: Record<string, { name: string; color: string; price: number; supply: number; change24h: number }> = {
-  SVRN: { name: 'Sovereign V', color: '#a855f7', price: 8.75,  supply: 10000, change24h: 4.2  },
-  MAYA: { name: 'Maya Chen',   color: '#22c55e', price: 5.20,  supply: 8000,  change24h: -1.8 },
-  JAX:  { name: 'Jax Beats',  color: '#ec4899', price: 3.80,  supply: 12000, change24h: 7.1  },
-}
-
-const MOCK_HOLDERS: Record<string, Holder[]> = {
+const TOKEN_HOLDERS: Record<string, Holder[]> = {
   SVRN: [
-    { handle:'atlas_k',   name:'Atlas K',   color:'#818cf8', verified:false, qty:200, pct:7.1,  staked:200, tier:'Diamond', value:1750,  since:'Mar 2026' },
-    { handle:'lily_p',    name:'Lily P.',   color:'#f59e0b', verified:true,  qty:180, pct:6.4,  staked:180, tier:'Diamond', value:1575,  since:'Feb 2026' },
-    { handle:'jade_l',    name:'Jade L.',   color:'#a855f7', verified:false, qty:120, pct:4.3,  staked:100, tier:'Diamond', value:1050,  since:'Apr 2026' },
-    { handle:'luna_w',    name:'Luna W.',   color:'#f87171', verified:false, qty:80,  pct:2.9,  staked:80,  tier:'Gold',    value:700,   since:'Apr 2026' },
-    { handle:'noa_d',     name:'Noa D.',    color:'#f59e0b', verified:false, qty:50,  pct:1.8,  staked:35,  tier:'Gold',    value:437.5, since:'May 2026' },
-    { handle:'kai_r',     name:'Kai R.',    color:'#22c55e', verified:false, qty:40,  pct:1.4,  staked:25,  tier:'Silver',  value:350,   since:'May 2026' },
-    { handle:'marco_v',   name:'Marco V.',  color:'#f87171', verified:false, qty:30,  pct:1.1,  staked:10,  tier:'Bronze',  value:262.5, since:'May 2026' },
-    { handle:'max_t',     name:'Max T.',    color:'#ec4899', verified:false, qty:25,  pct:0.9,  staked:0,   tier:'Bronze',  value:218.75,since:'Jun 2026' },
-    { handle:'sam_q',     name:'Sam Q.',    color:'#22c55e', verified:false, qty:20,  pct:0.7,  staked:0,   tier:'Bronze',  value:175,   since:'Jun 2026' },
-    { handle:'dex_n',     name:'Dex N.',    color:'#818cf8', verified:false, qty:10,  pct:0.4,  staked:0,   tier:null,      value:87.5,  since:'Jun 2026' },
+    { rank:1,  handle:'atlas_k',    name:'Atlas K',   color:'#818cf8', qty:420,  tier:'Diamond', pctSupply:0.42, value:3675, staked:350 },
+    { rank:2,  handle:'lily_p',     name:'Lily P.',   color:'#f59e0b', qty:320,  tier:'Diamond', pctSupply:0.32, value:2800, staked:200 },
+    { rank:3,  handle:'luna_w',     name:'Luna W.',   color:'#f87171', qty:280,  tier:'Diamond', pctSupply:0.28, value:2450, staked:100 },
+    { rank:4,  handle:'jade_l',     name:'Jade L.',   color:'#a855f7', qty:180,  tier:'Diamond', pctSupply:0.18, value:1575, staked:180 },
+    { rank:5,  handle:'noa_d',      name:'Noa D.',    color:'#f59e0b', qty:140,  tier:'Gold',    pctSupply:0.14, value:1225, staked:50  },
+    { rank:6,  handle:'max_t',      name:'Max T.',    color:'#ec4899', qty:80,   tier:'Gold',    pctSupply:0.08, value:700,  staked:30  },
+    { rank:7,  handle:'kai_r',      name:'Kai R.',    color:'#22c55e', qty:50,   tier:'Gold',    pctSupply:0.05, value:438,  staked:50  },
+    { rank:8,  handle:'alex_m',     name:'Alex M.',   color:'#818cf8', qty:42,   tier:'Gold',    pctSupply:0.04, value:368,  staked:0   },
+    { rank:9,  handle:'marco_v',    name:'Marco V.',  color:'#f87171', qty:28,   tier:'Silver',  pctSupply:0.03, value:245,  staked:25  },
+    { rank:10, handle:'dex_n',      name:'Dex N.',    color:'#818cf8', qty:18,   tier:'Silver',  pctSupply:0.02, value:158,  staked:0   },
   ],
 }
 
-const TIER_COLOR: Record<string, string> = { Diamond: '#818cf8', Gold: '#f59e0b', Silver: '#94a3b8', Bronze: '#b45309' }
-const TIER_EMOJI: Record<string, string> = { Diamond: '💎', Gold: '🥇', Silver: '🥈', Bronze: '🥉' }
-
-type HolderFilter = 'all' | 'staking' | 'diamond' | 'gold'
+const TIER_COLOR: Record<string, string> = { Diamond:'#818cf8', Gold:'#f59e0b', Silver:'#94a3b8', Bronze:'#b45309' }
+const TIER_EMOJI: Record<string, string> = { Diamond:'💎', Gold:'🥇', Silver:'🥈', Bronze:'🥉' }
 
 export default function TokenHoldersPage() {
   const router = useRouter()
   const params = useParams()
   const symbol  = typeof params.symbol === 'string' ? params.symbol.toUpperCase() : 'SVRN'
   const token   = TOKENS[symbol] ?? TOKENS.SVRN
-  const allHolders = MOCK_HOLDERS[symbol] ?? MOCK_HOLDERS.SVRN
+  const holders = TOKEN_HOLDERS[symbol] ?? TOKEN_HOLDERS.SVRN
 
-  const [filter, setFilter] = useState<HolderFilter>('all')
+  const [filter, setFilter] = useState<'all' | 'diamond' | 'gold' | 'silver'>('all')
 
-  const holders = allHolders.filter(h => {
-    if (filter === 'staking') return h.staked > 0
-    if (filter === 'diamond') return h.tier === 'Diamond'
-    if (filter === 'gold')    return h.tier === 'Gold' || h.tier === 'Diamond'
-    return true
+  const visible = holders.filter(h => {
+    if (filter === 'all') return true
+    return h.tier?.toLowerCase() === filter
   })
 
-  const totalStaked = allHolders.reduce((s, h) => s + h.staked, 0)
-  const stakingPct  = ((totalStaked / token.supply) * 100).toFixed(1)
-
-  const FILTERS: { key: HolderFilter; label: string }[] = [
-    { key:'all',     label:'All' },
-    { key:'staking', label:'Staking' },
-    { key:'diamond', label:'💎 Diamond' },
-    { key:'gold',    label:'🥇 Gold+' },
-  ]
+  const diamondCt = holders.filter(h => h.tier === 'Diamond').length
+  const goldCt    = holders.filter(h => h.tier === 'Gold').length
+  const silverCt  = holders.filter(h => h.tier === 'Silver').length
+  const topHeldPct = (holders.slice(0,10).reduce((s,h)=>s+h.qty,0) / token.totalSupply) * 100
 
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--ink)' }}>
@@ -79,95 +69,82 @@ export default function TokenHoldersPage() {
           </button>
           <div className="flex-1">
             <div className="font-black text-white">${symbol} Holders</div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white/30">{token.name}</span>
-              <span className="text-xs font-bold" style={{ color: token.change24h >= 0 ? '#22c55e' : '#f87171' }}>
-                {token.change24h >= 0 ? '+' : ''}{token.change24h}%
-              </span>
-            </div>
+            <div className="text-xs text-white/30">{token.name} · {token.totalHolders.toLocaleString()} total</div>
           </div>
-          <button onClick={() => router.push(`/tokens/${symbol}/chart`)}
-            className="px-2 py-1 rounded-lg text-xs font-black"
-            style={{ background: `${token.color}15`, color: token.color }}>
-            ${token.price}
-          </button>
         </div>
       </header>
 
       <div className="px-4 py-4 space-y-4">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {[
-            { label: 'Total Holders', value: allHolders.length, color: token.color  },
-            { label: 'Staking',        value: `${stakingPct}%`,  color: '#f59e0b' },
-            { label: 'Supply',         value: `${(token.supply/1000).toFixed(0)}k`,  color: '#818cf8' },
+            { label:'Holders',  value:token.totalHolders.toLocaleString(), color:token.color },
+            { label:'💎',       value:diamondCt, color:'#818cf8' },
+            { label:'🥇',       value:goldCt,    color:'#f59e0b' },
+            { label:'Top 10%',  value:`${topHeldPct.toFixed(0)}%`, color:'rgba(255,255,255,0.4)' },
           ].map(s => (
-            <div key={s.label} className="p-3 rounded-xl border border-white/5 text-center"
+            <div key={s.label} className="p-2 rounded-xl border border-white/5 text-center"
               style={{ background: 'rgba(255,255,255,0.018)' }}>
-              <div className="font-black text-base" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-xs text-white/25">{s.label}</div>
+              <div className="font-black text-sm" style={{ color: s.color }}>{s.value}</div>
+              <div className="text-xs text-white/20">{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Distribution bar */}
+        {/* Tier distribution bar */}
         <div className="p-4 rounded-2xl border border-white/5" style={{ background: 'rgba(255,255,255,0.018)' }}>
-          <div className="text-xs text-white/30 mb-2">Tier Distribution</div>
-          <div className="flex h-2 rounded-full overflow-hidden gap-px">
-            {(['Diamond','Gold','Silver','Bronze','None'] as const).map(tier => {
-              const c = allHolders.filter(h => (h.tier ?? 'None') === tier).length
-              const pct = (c / allHolders.length) * 100
-              return (
-                <div key={tier} style={{ width: `${pct}%`, background: TIER_COLOR[tier] ?? 'rgba(255,255,255,0.1)' }} />
-              )
-            })}
-          </div>
-          <div className="flex gap-3 mt-2 flex-wrap">
-            {(['Diamond','Gold','Silver','Bronze'] as const).map(tier => (
-              <span key={tier} className="text-xs flex items-center gap-1" style={{ color: TIER_COLOR[tier] }}>
-                {TIER_EMOJI[tier]} {tier}
-              </span>
-            ))}
-          </div>
+          <div className="text-xs text-white/35 font-semibold uppercase tracking-wider mb-3">Tier Distribution</div>
+          {[
+            { tier:'Diamond', count:diamondCt, pct:(diamondCt/holders.length)*100, color:'#818cf8' },
+            { tier:'Gold',    count:goldCt,    pct:(goldCt/holders.length)*100,    color:'#f59e0b' },
+            { tier:'Silver',  count:silverCt,  pct:(silverCt/holders.length)*100,  color:'#94a3b8' },
+          ].map(t => (
+            <div key={t.tier} className="mb-2">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-white/40">{TIER_EMOJI[t.tier]} {t.tier}</span>
+                <span className="text-white/30">{t.count} ({t.pct.toFixed(0)}%)</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <div className="h-full rounded-full" style={{ width: `${t.pct}%`, background: t.color }} />
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Filters */}
+        {/* Filter */}
         <div className="flex gap-1.5">
-          {FILTERS.map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)}
-              className="flex-1 py-1.5 rounded-full text-xs font-bold"
-              style={filter === f.key ? { background: token.color, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
-              {f.label}
+          {(['all','diamond','gold','silver'] as const).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold capitalize"
+              style={filter === f ? { background: token.color, color: '#04040A' } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+              {f === 'all' ? 'All' : `${TIER_EMOJI[f.charAt(0).toUpperCase() + f.slice(1)]} ${f.charAt(0).toUpperCase() + f.slice(1)}`}
             </button>
           ))}
         </div>
 
         {/* Holders list */}
+        <div className="text-xs text-white/30 font-semibold">Top Holders</div>
         <div className="space-y-2">
-          {holders.map((h, i) => (
+          {visible.map(h => (
             <button key={h.handle} onClick={() => router.push(`/profile/${h.handle}`)}
               className="w-full flex items-center gap-3 p-3 rounded-2xl border border-white/4 text-left"
               style={{ background: 'rgba(255,255,255,0.015)' }}>
-              <div className="text-xs w-5 text-center font-bold text-white/20 flex-shrink-0">{i + 1}</div>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0"
+              <div className="w-7 text-center text-xs text-white/25 flex-shrink-0">#{h.rank}</div>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs flex-shrink-0"
                 style={{ background: `${h.color}15`, color: h.color }}>
                 {h.name[0]}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-bold text-sm text-white/80">{h.name}</span>
-                  {h.verified && <span className="text-xs" style={{ color: token.color }}>✓</span>}
-                  {h.tier && <span className="text-xs">{TIER_EMOJI[h.tier]}</span>}
+                  {h.tier && <span className="text-xs" style={{ color: TIER_COLOR[h.tier] }}>{TIER_EMOJI[h.tier]}</span>}
                 </div>
                 <div className="text-xs text-white/25">
-                  {h.qty} tokens · {h.pct}% supply
+                  {h.qty.toLocaleString()} tokens · {h.pctSupply}% supply
                   {h.staked > 0 && <span className="ml-1 text-amber-400/50">· {h.staked} staked</span>}
                 </div>
               </div>
-              <div className="text-right flex-shrink-0">
-                <div className="font-black text-sm text-white/70">${h.value.toFixed(0)}</div>
-                <div className="text-xs text-white/20">{h.since}</div>
-              </div>
+              <div className="font-black text-sm text-right" style={{ color: token.color }}>${h.value.toLocaleString()}</div>
             </button>
           ))}
         </div>
