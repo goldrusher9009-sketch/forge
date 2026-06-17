@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1376,6 +1376,32 @@ export default function ForgeApp() {
   const [wsDirs, setWsDirs] = useState<any[]>([]);
   const [newDirName, setNewDirName] = useState('');
   const [newDirIcon, setNewDirIcon] = useState('📁');
+  const [aiModelLogs, setAiModelLogs] = useState<any[]>([]);
+  const [aiModelStats, setAiModelStats] = useState<any[]>([]);
+  const [wsGoalsV3, setWsGoalsV3] = useState<any[]>([]);
+  const [newGv3Title, setNewGv3Title] = useState('');
+  const [newGv3Date, setNewGv3Date] = useState('');
+  const [threadNotesV3, setThreadNotesV3] = useState<any[]>([]);
+  const [newTnv3Text, setNewTnv3Text] = useState('');
+  const [habitStreaks, setHabitStreaks] = useState<any[]>([]);
+  const [newHsName, setNewHsName] = useState('');
+  const [aiPersonaMsgs, setAiPersonaMsgs] = useState<any[]>([]);
+  const [newPmPersona, setNewPmPersona] = useState('');
+  const [newPmText, setNewPmText] = useState('');
+  const [aiPromptTemps, setAiPromptTemps] = useState<any[]>([]);
+  const [newPtName, setNewPtName] = useState('');
+  const [newPtBody, setNewPtBody] = useState('');
+  const [newPtCat, setNewPtCat] = useState('general');
+  const [wsLabelsV3, setWsLabelsV3] = useState<any[]>([]);
+  const [newLv3Name, setNewLv3Name] = useState('');
+  const [newLv3Color, setNewLv3Color] = useState('#6366f1');
+  const [usrTimeLogs, setUsrTimeLogs] = useState<any[]>([]);
+  const [newTlActivity, setNewTlActivity] = useState('');
+  const [newTlDuration, setNewTlDuration] = useState(0);
+  const [aiSuggCache, setAiSuggCache] = useState<any[]>([]);
+  const [wsPinsV2, setWsPinsV2] = useState<any[]>([]);
+  const [newPv2Title, setNewPv2Title] = useState('');
+  const [newPv2Url, setNewPv2Url] = useState('');
   const [aiReviewQueues, setAiReviewQueues] = useState<any[]>([]);
   const [newRqText, setNewRqText] = useState('');
   const [newRqPriority, setNewRqPriority] = useState(1);
@@ -5486,6 +5512,16 @@ export default function ForgeApp() {
             { id:'growthlog', icon:'📈', label:'Growth Log' },
             { id:'hallucinchk', icon:'🔍', label:'Hallucin Check' },
             { id:'wsdirs', icon:'📂', label:'WS Dirs' },
+            { id:'aimodellogs', icon:'📊', label:'Model Logs' },
+            { id:'wsgoalsv3', icon:'🎯', label:'Goals v3' },
+            { id:'threadnotesv3', icon:'📋', label:'Thread Notes v3' },
+            { id:'habitstreaks', icon:'🔥', label:'Habit Streaks' },
+            { id:'aipersonamsgs', icon:'🤖', label:'Persona Msgs' },
+            { id:'aiprompttemps', icon:'📄', label:'Prompt Templates' },
+            { id:'wslabelsv3', icon:'🏷️', label:'Labels v3' },
+            { id:'usrtimelogs', icon:'⏰', label:'Time Logs' },
+            { id:'aisuggcache', icon:'⚡', label:'Sugg Cache' },
+            { id:'wspinsv2', icon:'📌', label:'Pins v2' },
             { id:'aireviewqueues', icon:'📋', label:'Review Queue' },
             { id:'wskanban', icon:'🗂️', label:'Kanban' },
             { id:'readinglist', icon:'📚', label:'Reading List' },
@@ -19547,7 +19583,248 @@ export default function ForgeApp() {
         )}
 
         {/* Workspace Health tab */}
+        {mainTab === 'aimodellogs' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128202; AI Model Logs</h2>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <button onClick={async()=>{const r=await fetch('/api/ai-model-logs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiModelLogs(await r.json());const s=await fetch('/api/ai-model-logs/stats',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiModelStats(await s.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer'}}>Load Logs</button>
+                {aiModelLogs.length>0&&<button onClick={async()=>{await fetch('/api/ai-model-logs',{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiModelLogs([]);setAiModelStats([]);}} style={{padding:'6px 14px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:6,color:'#ef4444',cursor:'pointer'}}>Clear</button>}
+              </div>
+              {aiModelStats.length>0&&(
+                <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:16}}>
+                  {aiModelStats.map((s:any)=>(
+                    <div key={s.model_name} style={{background:'var(--fg-bg2)',borderRadius:8,padding:'10px 14px',border:'1px solid var(--fg-border)',minWidth:160}}>
+                      <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:13}}>{s.model_name}</div>
+                      <div style={{color:'var(--fg-text3)',fontSize:11}}>{s.calls} calls &bull; {s.total_tokens} tokens &bull; {Math.round(s.avg_latency)}ms avg</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {aiModelLogs.slice(0,50).map((l:any)=>(
+                <div key={l.id} style={{background:'var(--fg-bg2)',borderRadius:8,padding:'8px 14px',border:'1px solid var(--fg-border)',marginBottom:5,display:'flex',gap:12,alignItems:'center',fontSize:12}}>
+                  <span style={{color:'var(--fg-orange)',fontWeight:700,minWidth:80}}>{l.model_name}</span>
+                  <span style={{color:'var(--fg-text2)'}}>{l.prompt_tokens}+{l.completion_tokens}tok</span>
+                  <span style={{color:'var(--fg-text3)'}}>{l.latency_ms}ms</span>
+                  <span style={{color:l.success?'#22c55e':'#ef4444'}}>{l.success?'&#10003;':'&#10007;'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'wsgoalsv3' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127919; Workspace Goals v3</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Goal title..." value={newGv3Title} onChange={e=>setNewGv3Title(e.target.value)} style={{flex:1,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input type="date" value={newGv3Date} onChange={e=>setNewGv3Date(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newGv3Title)return;await fetch('/api/workspace-goals-v3',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({goal_title:newGv3Title,target_date:newGv3Date})});const r=await fetch('/api/workspace-goals-v3',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsGoalsV3(await r.json());setNewGv3Title('');setNewGv3Date('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {wsGoalsV3.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-goals-v3',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsGoalsV3(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {wsGoalsV3.map((g:any)=>(
+                <div key={g.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <div style={{color:'var(--fg-text)',fontWeight:600}}>{g.goal_title}</div>
+                    <div style={{display:'flex',gap:6}}>
+                      {g.status!=='done'&&<button onClick={async()=>{await fetch('/api/workspace-goals-v3/'+g.id,{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({progress:100,status:'done'})});setWsGoalsV3(p=>p.map((x:any)=>x.id===g.id?{...x,progress:100,status:'done'}:x));}} style={{padding:'3px 10px',background:'rgba(34,197,94,0.15)',border:'none',borderRadius:5,color:'#22c55e',cursor:'pointer',fontSize:11}}>Done</button>}
+                      <button onClick={async()=>{await fetch('/api/workspace-goals-v3/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsGoalsV3(p=>p.filter((x:any)=>x.id!==g.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{background:'var(--fg-bg)',borderRadius:4,height:6,overflow:'hidden'}}>
+                    <div style={{width:g.progress+'%',height:'100%',background:'var(--fg-orange)',transition:'width 0.3s'}}/>
+                  </div>
+                  <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:4}}>{g.progress}% &bull; {g.target_date||'No deadline'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'threadnotesv3' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128203; Thread Notes v3</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <textarea placeholder="Note text..." value={newTnv3Text} onChange={e=>setNewTnv3Text(e.target.value)} rows={3} style={{flex:1,minWidth:260,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newTnv3Text)return;await fetch('/api/thread-notes-v3',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({note_text:newTnv3Text})});const r=await fetch('/api/thread-notes-v3',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadNotesV3(await r.json());setNewTnv3Text('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Save</button>
+              </div>
+              {threadNotesV3.length===0&&<button onClick={async()=>{const r=await fetch('/api/thread-notes-v3',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadNotesV3(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {threadNotesV3.map((n:any)=>(
+                <div key={n.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+                  <div style={{color:'var(--fg-text)',fontSize:14,flex:1}}>{n.note_text}</div>
+                  <button onClick={async()=>{await fetch('/api/thread-notes-v3/'+n.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setThreadNotesV3(p=>p.filter((x:any)=>x.id!==n.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'habitstreaks' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128293; Habit Streaks</h2>
+              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                <input placeholder="Habit name..." value={newHsName} onChange={e=>setNewHsName(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newHsName)return;await fetch('/api/user-habit-streaks',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({habit_name:newHsName})});const r=await fetch('/api/user-habit-streaks',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setHabitStreaks(await r.json());setNewHsName('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add Habit</button>
+              </div>
+              {habitStreaks.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-habit-streaks',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setHabitStreaks(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {habitStreaks.map((h:any)=>(
+                <div key={h.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'14px 16px',border:'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:15}}>{h.habit_name}</div>
+                    <div style={{fontSize:12,color:'var(--fg-text3)',marginTop:2}}>Current: {h.current_streak} days &bull; Best: {h.longest_streak} days</div>
+                  </div>
+                  <div style={{display:'flex',gap:6}}>
+                    <button onClick={async()=>{const r=await fetch('/api/user-habit-streaks/'+h.id+'/checkin',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const d=await r.json();if(!d.already)setHabitStreaks(p=>p.map((x:any)=>x.id===h.id?{...x,current_streak:d.current_streak,longest_streak:Math.max(x.longest_streak,d.current_streak)}:x));}} style={{padding:'5px 12px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',fontSize:12}}>&#10003; Check In</button>
+                    <button onClick={async()=>{await fetch('/api/user-habit-streaks/'+h.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setHabitStreaks(p=>p.filter((x:any)=>x.id!==h.id));}} style={{padding:'5px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:6,color:'#ef4444',cursor:'pointer',fontSize:12}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'aipersonamsgs' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#129302; Persona Messages</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Persona name..." value={newPmPersona} onChange={e=>setNewPmPersona(e.target.value)} style={{width:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                <textarea placeholder="Message text..." value={newPmText} onChange={e=>setNewPmText(e.target.value)} rows={3} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newPmPersona||!newPmText)return;await fetch('/api/ai-persona-messages',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({persona_name:newPmPersona,message_text:newPmText})});const r=await fetch('/api/ai-persona-messages',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPersonaMsgs(await r.json());setNewPmText('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Save</button>
+              </div>
+              {aiPersonaMsgs.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-persona-messages',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPersonaMsgs(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {aiPersonaMsgs.map((m:any)=>(
+                <div key={m.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <span style={{color:'var(--fg-orange)',fontWeight:700,fontSize:12}}>@{m.persona_name}</span>
+                    <button onClick={async()=>{await fetch('/api/ai-persona-messages/'+m.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPersonaMsgs(p=>p.filter((x:any)=>x.id!==m.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                  <div style={{color:'var(--fg-text)',fontSize:13}}>{m.message_text}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'aiprompttemps' && (
+
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128196; Prompt Templates</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Template name..." value={newPtName} onChange={e=>setNewPtName(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="Category" value={newPtCat} onChange={e=>setNewPtCat(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                <textarea placeholder="Template body..." value={newPtBody} onChange={e=>setNewPtBody(e.target.value)} rows={3} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newPtName||!newPtBody)return;await fetch('/api/ai-prompt-templates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({tpl_name:newPtName,tpl_body:newPtBody,category:newPtCat})});const r=await fetch('/api/ai-prompt-templates',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPromptTemps(await r.json());setNewPtName('');setNewPtBody('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Save</button>
+              </div>
+              {aiPromptTemps.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-prompt-templates',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPromptTemps(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {aiPromptTemps.map((t:any)=>(
+                <div key={t.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                    <div>
+                      <div style={{color:'var(--fg-text)',fontWeight:700}}>{t.tpl_name}</div>
+                      <div style={{fontSize:11,color:'var(--fg-text3)'}}>{t.category} &bull; used {t.use_count}x</div>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/ai-prompt-templates/'+t.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiPromptTemps(p=>p.filter((x:any)=>x.id!==t.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                  <pre style={{color:'var(--fg-text2)',fontSize:12,marginTop:6,whiteSpace:'pre-wrap',fontFamily:'monospace'}}>{t.tpl_body.slice(0,200)}{t.tpl_body.length>200?'...':''}</pre>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'wslabelsv3' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127991;&#65039; Workspace Labels v3</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Label name..." value={newLv3Name} onChange={e=>setNewLv3Name(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input type="color" value={newLv3Color} onChange={e=>setNewLv3Color(e.target.value)} style={{width:44,height:34,padding:2,background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,cursor:'pointer'}}/>
+                <button onClick={async()=>{if(!newLv3Name)return;await fetch('/api/workspace-labels-v3',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({label_name:newLv3Name,color:newLv3Color})});const r=await fetch('/api/workspace-labels-v3',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsLabelsV3(await r.json());setNewLv3Name('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {wsLabelsV3.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-labels-v3',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsLabelsV3(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+                {wsLabelsV3.map((l:any)=>(
+                  <div key={l.id} style={{display:'flex',alignItems:'center',gap:6,background:'var(--fg-bg2)',borderRadius:20,padding:'5px 12px',border:'2px solid '+l.color}}>
+                    <span style={{width:10,height:10,borderRadius:'50%',background:l.color,display:'inline-block'}}/>
+                    <span style={{color:'var(--fg-text)',fontSize:13}}>{l.label_name}</span>
+                    <button onClick={async()=>{await fetch('/api/workspace-labels-v3/'+l.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsLabelsV3(p=>p.filter((x:any)=>x.id!==l.id));}} style={{background:'none',border:'none',color:'#ef4444',cursor:'pointer',fontSize:12,lineHeight:1}}>&#x2715;</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {mainTab === 'usrtimelogs' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#9200; Time Logs</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Activity..." value={newTlActivity} onChange={e=>setNewTlActivity(e.target.value)} style={{flex:1,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input type="number" placeholder="Minutes" value={newTlDuration||''} onChange={e=>setNewTlDuration(Number(e.target.value))} style={{width:100,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newTlActivity)return;await fetch('/api/user-time-logs',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({activity:newTlActivity,duration_min:newTlDuration})});const r=await fetch('/api/user-time-logs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUsrTimeLogs(await r.json());setNewTlActivity('');setNewTlDuration(0);}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+              </div>
+              {usrTimeLogs.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-time-logs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUsrTimeLogs(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              <div style={{marginBottom:8,color:'var(--fg-text2)',fontSize:13}}>Total: {usrTimeLogs.reduce((s:number,l:any)=>s+l.duration_min,0)} min</div>
+              {usrTimeLogs.map((l:any)=>(
+                <div key={l.id} style={{background:'var(--fg-bg2)',borderRadius:8,padding:'10px 14px',border:'1px solid var(--fg-border)',marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <span style={{color:'var(--fg-text)',fontWeight:600}}>{l.activity}</span>
+                    <span style={{color:'var(--fg-text3)',fontSize:12,marginLeft:8}}>{l.duration_min}m &bull; {l.log_date}</span>
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/user-time-logs/'+l.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setUsrTimeLogs(p=>p.filter((x:any)=>x.id!==l.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'aisuggcache' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#9889; Suggestion Cache</h2>
+              <p style={{color:'var(--fg-text2)',fontSize:13,marginBottom:16}}>Cached AI suggestions — reuse high-hit responses to save tokens.</p>
+              {aiSuggCache.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-suggestion-cache',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiSuggCache(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load Cache</button>}
+              {aiSuggCache.map((c:any)=>(
+                <div key={c.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <span style={{fontSize:11,color:'var(--fg-text3)',fontFamily:'monospace'}}>{c.input_hash}</span>
+                    <span style={{fontSize:11,color:'var(--fg-orange)',fontWeight:700}}>{c.hit_count} hits</span>
+                  </div>
+                  <div style={{color:'var(--fg-text)',fontSize:13}}>{c.suggestion.slice(0,200)}{c.suggestion.length>200?'...':''}</div>
+                  <div style={{display:'flex',justifyContent:'flex-end',marginTop:8}}>
+                    <button onClick={async()=>{await fetch('/api/ai-suggestion-cache/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiSuggCache(p=>p.filter((x:any)=>x.id!==c.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'wspinsv2' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128204; Workspace Pins v2</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Pin title..." value={newPv2Title} onChange={e=>setNewPv2Title(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="URL (optional)" value={newPv2Url} onChange={e=>setNewPv2Url(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newPv2Title)return;await fetch('/api/workspace-pins-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({pin_title:newPv2Title,pin_url:newPv2Url})});const r=await fetch('/api/workspace-pins-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsPinsV2(await r.json());setNewPv2Title('');setNewPv2Url('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Pin</button>
+              </div>
+              {wsPinsV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-pins-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsPinsV2(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
+                {wsPinsV2.map((p:any)=>(
+                  <div key={p.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'10px 14px',border:'1px solid var(--fg-border)',minWidth:160,display:'flex',flexDirection:'column',gap:4}}>
+                    <div style={{color:'var(--fg-text)',fontWeight:600,fontSize:13}}>&#128204; {p.pin_title}</div>
+                    {p.pin_url&&<a href={p.pin_url} target="_blank" rel="noreferrer" style={{fontSize:10,color:'var(--fg-orange)',wordBreak:'break-all'}}>{p.pin_url.slice(0,40)}</a>}
+                    <button onClick={async()=>{await fetch('/api/workspace-pins-v2/'+p.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsPinsV2(prev=>prev.filter((x:any)=>x.id!==p.id));}} style={{padding:'2px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10,alignSelf:'flex-end',marginTop:4}}>Unpin</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         {mainTab === 'aireviewqueues' && (
+
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:740, margin:'0 auto' }}>
               <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128203; AI Review Queue</h2>

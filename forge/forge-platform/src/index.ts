@@ -16752,3 +16752,249 @@ app.delete('/api/workspace-pins-v2/:id', auth, (req:any,res:any)=>{
   res.json({ok:true});
 });
 // ─── End Batch 83 ────────────────────────────────────────────────────────────
+
+// ─── Batch 84 ────────────────────────────────────────────────────────────────
+// ai_model_logs table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_model_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  model_name TEXT NOT NULL, prompt_tokens INTEGER DEFAULT 0,
+  completion_tokens INTEGER DEFAULT 0, latency_ms INTEGER DEFAULT 0,
+  success INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-model-logs', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_model_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 500').all(req.user.id));
+});
+app.post('/api/ai-model-logs', auth, (req:any,res:any)=>{
+  const {model_name,prompt_tokens,completion_tokens,latency_ms,success} = req.body;
+  if(!model_name) return res.status(400).json({error:'model_name required'});
+  const r = db.prepare('INSERT INTO ai_model_logs (user_id,model_name,prompt_tokens,completion_tokens,latency_ms,success) VALUES (?,?,?,?,?,?)').run(req.user.id,model_name,prompt_tokens||0,completion_tokens||0,latency_ms||0,success===false?0:1);
+  res.json({id:r.lastInsertRowid});
+});
+app.get('/api/ai-model-logs/stats', auth, (req:any,res:any)=>{
+  const stats = db.prepare('SELECT model_name, COUNT(*) as calls, SUM(prompt_tokens+completion_tokens) as total_tokens, AVG(latency_ms) as avg_latency FROM ai_model_logs WHERE user_id=? GROUP BY model_name').all(req.user.id);
+  res.json(stats);
+});
+app.delete('/api/ai-model-logs', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_model_logs WHERE user_id=?').run(req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_goals_v3 table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_goals_v3 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  goal_title TEXT NOT NULL, target_date TEXT,
+  progress INTEGER DEFAULT 0, status TEXT DEFAULT 'active',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-goals-v3', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_goals_v3 WHERE user_id=? ORDER BY status ASC, target_date ASC LIMIT 100').all(req.user.id));
+});
+app.post('/api/workspace-goals-v3', auth, (req:any,res:any)=>{
+  const {goal_title,target_date,progress} = req.body;
+  if(!goal_title) return res.status(400).json({error:'goal_title required'});
+  const r = db.prepare('INSERT INTO workspace_goals_v3 (user_id,goal_title,target_date,progress) VALUES (?,?,?,?)').run(req.user.id,goal_title,target_date||'',progress||0);
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/workspace-goals-v3/:id', auth, (req:any,res:any)=>{
+  const {progress,status} = req.body;
+  db.prepare('UPDATE workspace_goals_v3 SET progress=?, status=? WHERE id=? AND user_id=?').run(progress??0,status||'active',req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-goals-v3/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_goals_v3 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// thread_notes_v3 table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_notes_v3 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id INTEGER, note_text TEXT NOT NULL,
+  is_private INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/thread-notes-v3', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM thread_notes_v3 WHERE user_id=? ORDER BY created_at DESC LIMIT 300').all(req.user.id));
+});
+app.post('/api/thread-notes-v3', auth, (req:any,res:any)=>{
+  const {thread_id,note_text,is_private} = req.body;
+  if(!note_text) return res.status(400).json({error:'note_text required'});
+  const r = db.prepare('INSERT INTO thread_notes_v3 (user_id,thread_id,note_text,is_private) VALUES (?,?,?,?)').run(req.user.id,thread_id||0,note_text,is_private===false?0:1);
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/thread-notes-v3/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM thread_notes_v3 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// user_habit_streaks table
+db.exec(`CREATE TABLE IF NOT EXISTS user_habit_streaks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  habit_name TEXT NOT NULL, current_streak INTEGER DEFAULT 0,
+  longest_streak INTEGER DEFAULT 0, last_checked TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-habit-streaks', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM user_habit_streaks WHERE user_id=? ORDER BY current_streak DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/user-habit-streaks', auth, (req:any,res:any)=>{
+  const {habit_name} = req.body;
+  if(!habit_name) return res.status(400).json({error:'habit_name required'});
+  const r = db.prepare('INSERT INTO user_habit_streaks (user_id,habit_name) VALUES (?,?)').run(req.user.id,habit_name);
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/user-habit-streaks/:id/checkin', auth, (req:any,res:any)=>{
+  const today = new Date().toISOString().slice(0,10);
+  const row = db.prepare('SELECT * FROM user_habit_streaks WHERE id=? AND user_id=?').get(req.params.id,req.user.id) as any;
+  if(!row) return res.status(404).json({error:'not found'});
+  if(row.last_checked===today) return res.json({ok:true,already:true});
+  const newStreak = row.current_streak+1;
+  const longest = Math.max(row.longest_streak,newStreak);
+  db.prepare('UPDATE user_habit_streaks SET current_streak=?, longest_streak=?, last_checked=? WHERE id=?').run(newStreak,longest,today,req.params.id);
+  res.json({ok:true,current_streak:newStreak});
+});
+app.delete('/api/user-habit-streaks/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM user_habit_streaks WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// ai_persona_messages table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_persona_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  persona_name TEXT NOT NULL, message_text TEXT NOT NULL,
+  role TEXT DEFAULT 'assistant', tone TEXT DEFAULT 'neutral',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-persona-messages', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_persona_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/ai-persona-messages', auth, (req:any,res:any)=>{
+  const {persona_name,message_text,role,tone} = req.body;
+  if(!persona_name||!message_text) return res.status(400).json({error:'persona_name and message_text required'});
+  const r = db.prepare('INSERT INTO ai_persona_messages (user_id,persona_name,message_text,role,tone) VALUES (?,?,?,?,?)').run(req.user.id,persona_name,message_text,role||'assistant',tone||'neutral');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/ai-persona-messages/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_persona_messages WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+// ─── End Batch 84 ────────────────────────────────────────────────────────────
+
+// ─── Batch 85 ────────────────────────────────────────────────────────────────
+// workspace_integrations_v2 table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_integrations_v2 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  integration_name TEXT NOT NULL, endpoint_url TEXT,
+  api_key_hint TEXT, enabled INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-integrations-v2', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT id,integration_name,endpoint_url,api_key_hint,enabled,created_at FROM workspace_integrations_v2 WHERE user_id=? ORDER BY integration_name ASC LIMIT 100').all(req.user.id));
+});
+app.post('/api/workspace-integrations-v2', auth, (req:any,res:any)=>{
+  const {integration_name,endpoint_url,api_key_hint} = req.body;
+  if(!integration_name) return res.status(400).json({error:'integration_name required'});
+  const r = db.prepare('INSERT INTO workspace_integrations_v2 (user_id,integration_name,endpoint_url,api_key_hint) VALUES (?,?,?,?)').run(req.user.id,integration_name,endpoint_url||'',api_key_hint||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/workspace-integrations-v2/:id/toggle', auth, (req:any,res:any)=>{
+  const row = db.prepare('SELECT enabled FROM workspace_integrations_v2 WHERE id=? AND user_id=?').get(req.params.id,req.user.id) as any;
+  if(!row) return res.status(404).json({error:'not found'});
+  db.prepare('UPDATE workspace_integrations_v2 SET enabled=? WHERE id=?').run(row.enabled?0:1,req.params.id);
+  res.json({ok:true,enabled:!row.enabled});
+});
+app.delete('/api/workspace-integrations-v2/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_integrations_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// ai_cost_alerts table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_cost_alerts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  alert_type TEXT DEFAULT 'threshold', threshold_usd REAL DEFAULT 10.0,
+  triggered INTEGER DEFAULT 0, triggered_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-cost-alerts', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_cost_alerts WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id));
+});
+app.post('/api/ai-cost-alerts', auth, (req:any,res:any)=>{
+  const {alert_type,threshold_usd} = req.body;
+  const r = db.prepare('INSERT INTO ai_cost_alerts (user_id,alert_type,threshold_usd) VALUES (?,?,?)').run(req.user.id,alert_type||'threshold',threshold_usd||10.0);
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/ai-cost-alerts/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_cost_alerts WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// user_sprint_goals table
+db.exec(`CREATE TABLE IF NOT EXISTS user_sprint_goals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  sprint_name TEXT NOT NULL, goal_text TEXT NOT NULL,
+  completed INTEGER DEFAULT 0, sprint_end TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-sprint-goals', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM user_sprint_goals WHERE user_id=? ORDER BY completed ASC, created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/user-sprint-goals', auth, (req:any,res:any)=>{
+  const {sprint_name,goal_text,sprint_end} = req.body;
+  if(!sprint_name||!goal_text) return res.status(400).json({error:'sprint_name and goal_text required'});
+  const r = db.prepare('INSERT INTO user_sprint_goals (user_id,sprint_name,goal_text,sprint_end) VALUES (?,?,?,?)').run(req.user.id,sprint_name,goal_text,sprint_end||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/user-sprint-goals/:id/complete', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE user_sprint_goals SET completed=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/user-sprint-goals/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM user_sprint_goals WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// ai_chain_results table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_chain_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  chain_name TEXT NOT NULL, step_count INTEGER DEFAULT 0,
+  final_output TEXT, status TEXT DEFAULT 'running',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-chain-results', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_chain_results WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/ai-chain-results', auth, (req:any,res:any)=>{
+  const {chain_name,step_count,final_output,status} = req.body;
+  if(!chain_name) return res.status(400).json({error:'chain_name required'});
+  const r = db.prepare('INSERT INTO ai_chain_results (user_id,chain_name,step_count,final_output,status) VALUES (?,?,?,?,?)').run(req.user.id,chain_name,step_count||0,final_output||'',status||'running');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/ai-chain-results/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_chain_results WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_announcements_v2 table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_announcements_v2 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  title TEXT NOT NULL, body TEXT, priority TEXT DEFAULT 'normal',
+  expires_at TEXT, dismissed INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-announcements-v2', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_announcements_v2 WHERE user_id=? AND dismissed=0 ORDER BY priority DESC, created_at DESC LIMIT 50').all(req.user.id));
+});
+app.post('/api/workspace-announcements-v2', auth, (req:any,res:any)=>{
+  const {title,body,priority,expires_at} = req.body;
+  if(!title) return res.status(400).json({error:'title required'});
+  const r = db.prepare('INSERT INTO workspace_announcements_v2 (user_id,title,body,priority,expires_at) VALUES (?,?,?,?,?)').run(req.user.id,title,body||'',priority||'normal',expires_at||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/workspace-announcements-v2/:id/dismiss', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE workspace_announcements_v2 SET dismissed=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-announcements-v2/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_announcements_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+// ─── End Batch 85 ────────────────────────────────────────────────────────────
