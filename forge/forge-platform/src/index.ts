@@ -16039,3 +16039,716 @@ app.delete('/api/ai-question-log/:id', requireAuth, (req: Request, res: Response
 // ─── End Batch 77 ────────────────────────────────────────────────────────────
 
 httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v6.99 running on port ${PORT}`); });
+// ─── Batch 78 ────────────────────────────────────────────────────────────────
+// code_diff_explanations table
+db.exec(`CREATE TABLE IF NOT EXISTS code_diff_explanations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  diff_text TEXT NOT NULL, explanation TEXT, language TEXT,
+  model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/code-diff-explanations', auth, (req:any,res:any)=>{
+  const rows = db.prepare('SELECT * FROM code_diff_explanations WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/code-diff-explanations', auth, (req:any,res:any)=>{
+  const {diff_text,explanation,language,model} = req.body;
+  if(!diff_text) return res.status(400).json({error:'diff_text required'});
+  const r = db.prepare('INSERT INTO code_diff_explanations (user_id,diff_text,explanation,language,model) VALUES (?,?,?,?,?)').run(req.user.id,diff_text,explanation||'',language||'',model||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/code-diff-explanations/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM code_diff_explanations WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// session_replays table
+db.exec(`CREATE TABLE IF NOT EXISTS session_replays (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  session_name TEXT NOT NULL, events_json TEXT DEFAULT '[]',
+  duration_sec INTEGER DEFAULT 0, replay_url TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/session-replays', auth, (req:any,res:any)=>{
+  const rows = db.prepare('SELECT * FROM session_replays WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/session-replays', auth, (req:any,res:any)=>{
+  const {session_name,events_json,duration_sec,replay_url} = req.body;
+  if(!session_name) return res.status(400).json({error:'session_name required'});
+  const r = db.prepare('INSERT INTO session_replays (user_id,session_name,events_json,duration_sec,replay_url) VALUES (?,?,?,?,?)').run(req.user.id,session_name,events_json||'[]',duration_sec||0,replay_url||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/session-replays/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM session_replays WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// smart_renames table
+db.exec(`CREATE TABLE IF NOT EXISTS smart_renames (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  original_name TEXT NOT NULL, suggested_name TEXT, context TEXT,
+  accepted INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/smart-renames', auth, (req:any,res:any)=>{
+  const rows = db.prepare('SELECT * FROM smart_renames WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/smart-renames', auth, (req:any,res:any)=>{
+  const {original_name,suggested_name,context} = req.body;
+  if(!original_name) return res.status(400).json({error:'original_name required'});
+  const r = db.prepare('INSERT INTO smart_renames (user_id,original_name,suggested_name,context) VALUES (?,?,?,?)').run(req.user.id,original_name,suggested_name||'',context||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/smart-renames/:id/accept', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE smart_renames SET accepted=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/smart-renames/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM smart_renames WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// token_breakdowns table
+db.exec(`CREATE TABLE IF NOT EXISTS token_breakdowns (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id TEXT, prompt_tokens INTEGER DEFAULT 0,
+  completion_tokens INTEGER DEFAULT 0, total_tokens INTEGER DEFAULT 0,
+  model TEXT, cost_usd REAL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/token-breakdowns', auth, (req:any,res:any)=>{
+  const rows = db.prepare('SELECT * FROM token_breakdowns WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/token-breakdowns', auth, (req:any,res:any)=>{
+  const {thread_id,prompt_tokens,completion_tokens,total_tokens,model,cost_usd} = req.body;
+  const r = db.prepare('INSERT INTO token_breakdowns (user_id,thread_id,prompt_tokens,completion_tokens,total_tokens,model,cost_usd) VALUES (?,?,?,?,?,?,?)').run(req.user.id,thread_id||'',prompt_tokens||0,completion_tokens||0,total_tokens||0,model||'',cost_usd||0);
+  res.json({id:r.lastInsertRowid});
+});
+app.get('/api/token-breakdowns/summary', auth, (req:any,res:any)=>{
+  const row = db.prepare('SELECT SUM(total_tokens) as total, SUM(cost_usd) as total_cost, COUNT(*) as calls FROM token_breakdowns WHERE user_id=?').get(req.user.id);
+  res.json(row);
+});
+
+// ai_prompt_chains table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_prompt_chains (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  chain_name TEXT NOT NULL, steps_json TEXT DEFAULT '[]',
+  last_run DATETIME, run_count INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-prompt-chains', auth, (req:any,res:any)=>{
+  const rows = db.prepare('SELECT * FROM ai_prompt_chains WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/ai-prompt-chains', auth, (req:any,res:any)=>{
+  const {chain_name,steps_json} = req.body;
+  if(!chain_name) return res.status(400).json({error:'chain_name required'});
+  const r = db.prepare('INSERT INTO ai_prompt_chains (user_id,chain_name,steps_json) VALUES (?,?,?)').run(req.user.id,chain_name,steps_json||'[]');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/ai-prompt-chains/:id/run', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE ai_prompt_chains SET run_count=run_count+1, last_run=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-prompt-chains/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_prompt_chains WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+// ─── End Batch 78 ────────────────────────────────────────────────────────────
+
+// ─── Batch 79 ────────────────────────────────────────────────────────────────
+// ai_output_scores table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_output_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  output_text TEXT NOT NULL, score REAL DEFAULT 0,
+  rubric TEXT, model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-output-scores', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_output_scores WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/ai-output-scores', auth, (req:any,res:any)=>{
+  const {output_text,score,rubric,model} = req.body;
+  if(!output_text) return res.status(400).json({error:'output_text required'});
+  const r = db.prepare('INSERT INTO ai_output_scores (user_id,output_text,score,rubric,model) VALUES (?,?,?,?,?)').run(req.user.id,output_text,score||0,rubric||'',model||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/ai-output-scores/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_output_scores WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_notes_v2 table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_notes_v2 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  title TEXT NOT NULL, body TEXT, pinned INTEGER DEFAULT 0,
+  tags TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-notes-v2', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_notes_v2 WHERE user_id=? ORDER BY pinned DESC, created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/workspace-notes-v2', auth, (req:any,res:any)=>{
+  const {title,body,tags} = req.body;
+  if(!title) return res.status(400).json({error:'title required'});
+  const r = db.prepare('INSERT INTO workspace_notes_v2 (user_id,title,body,tags) VALUES (?,?,?,?)').run(req.user.id,title,body||'',tags||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/workspace-notes-v2/:id/pin', auth, (req:any,res:any)=>{
+  const row:any = db.prepare('SELECT pinned FROM workspace_notes_v2 WHERE id=? AND user_id=?').get(req.params.id,req.user.id);
+  if(!row) return res.status(404).json({error:'not found'});
+  db.prepare('UPDATE workspace_notes_v2 SET pinned=? WHERE id=? AND user_id=?').run(row.pinned?0:1,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-notes-v2/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_notes_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// thread_flags table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_flags (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id TEXT NOT NULL, flag_type TEXT DEFAULT 'review',
+  reason TEXT, resolved INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/thread-flags', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM thread_flags WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/thread-flags', auth, (req:any,res:any)=>{
+  const {thread_id,flag_type,reason} = req.body;
+  if(!thread_id) return res.status(400).json({error:'thread_id required'});
+  const r = db.prepare('INSERT INTO thread_flags (user_id,thread_id,flag_type,reason) VALUES (?,?,?,?)').run(req.user.id,thread_id,flag_type||'review',reason||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/thread-flags/:id/resolve', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE thread_flags SET resolved=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/thread-flags/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM thread_flags WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// user_focus_timers table
+db.exec(`CREATE TABLE IF NOT EXISTS user_focus_timers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  label TEXT NOT NULL, duration_min INTEGER DEFAULT 25,
+  completed INTEGER DEFAULT 0, started_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-focus-timers', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM user_focus_timers WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/user-focus-timers', auth, (req:any,res:any)=>{
+  const {label,duration_min} = req.body;
+  if(!label) return res.status(400).json({error:'label required'});
+  const r = db.prepare('INSERT INTO user_focus_timers (user_id,label,duration_min,started_at) VALUES (?,?,?,CURRENT_TIMESTAMP)').run(req.user.id,label,duration_min||25);
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/user-focus-timers/:id/complete', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE user_focus_timers SET completed=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/user-focus-timers/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM user_focus_timers WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// ai_context_windows table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_context_windows (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  window_name TEXT NOT NULL, content TEXT, token_count INTEGER DEFAULT 0,
+  model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-context-windows', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_context_windows WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/ai-context-windows', auth, (req:any,res:any)=>{
+  const {window_name,content,token_count,model} = req.body;
+  if(!window_name) return res.status(400).json({error:'window_name required'});
+  const r = db.prepare('INSERT INTO ai_context_windows (user_id,window_name,content,token_count,model) VALUES (?,?,?,?,?)').run(req.user.id,window_name,content||'',token_count||0,model||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/ai-context-windows/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_context_windows WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+// ─── End Batch 79 ────────────────────────────────────────────────────────────
+
+// ─── Batch 80 ────────────────────────────────────────────────────────────────
+// ai_style_guides table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_style_guides (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  guide_name TEXT NOT NULL, rules_json TEXT DEFAULT '[]',
+  language TEXT, active INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-style-guides', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_style_guides WHERE user_id=? ORDER BY active DESC, created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/ai-style-guides', auth, (req:any,res:any)=>{
+  const {guide_name,rules_json,language} = req.body;
+  if(!guide_name) return res.status(400).json({error:'guide_name required'});
+  const r = db.prepare('INSERT INTO ai_style_guides (user_id,guide_name,rules_json,language) VALUES (?,?,?,?)').run(req.user.id,guide_name,rules_json||'[]',language||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/ai-style-guides/:id/toggle', auth, (req:any,res:any)=>{
+  const row:any = db.prepare('SELECT active FROM ai_style_guides WHERE id=? AND user_id=?').get(req.params.id,req.user.id);
+  if(!row) return res.status(404).json({error:'not found'});
+  db.prepare('UPDATE ai_style_guides SET active=? WHERE id=? AND user_id=?').run(row.active?0:1,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-style-guides/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_style_guides WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_sprints_v2 table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_sprints_v2 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  sprint_name TEXT NOT NULL, goal TEXT, start_date TEXT, end_date TEXT,
+  status TEXT DEFAULT 'active', velocity INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-sprints-v2', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_sprints_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/workspace-sprints-v2', auth, (req:any,res:any)=>{
+  const {sprint_name,goal,start_date,end_date} = req.body;
+  if(!sprint_name) return res.status(400).json({error:'sprint_name required'});
+  const r = db.prepare('INSERT INTO workspace_sprints_v2 (user_id,sprint_name,goal,start_date,end_date) VALUES (?,?,?,?,?)').run(req.user.id,sprint_name,goal||'',start_date||'',end_date||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/workspace-sprints-v2/:id/complete', auth, (req:any,res:any)=>{
+  db.prepare("UPDATE workspace_sprints_v2 SET status='completed' WHERE id=? AND user_id=?").run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-sprints-v2/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_sprints_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// thread_reactions_v3 table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_reactions_v3 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id TEXT NOT NULL, message_id TEXT, emoji TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/thread-reactions-v3', auth, (req:any,res:any)=>{
+  const {thread_id} = req.query;
+  const q = thread_id
+    ? db.prepare('SELECT * FROM thread_reactions_v3 WHERE user_id=? AND thread_id=? ORDER BY created_at DESC').all(req.user.id,thread_id)
+    : db.prepare('SELECT * FROM thread_reactions_v3 WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id);
+  res.json(q);
+});
+app.post('/api/thread-reactions-v3', auth, (req:any,res:any)=>{
+  const {thread_id,message_id,emoji} = req.body;
+  if(!thread_id||!emoji) return res.status(400).json({error:'thread_id and emoji required'});
+  const r = db.prepare('INSERT INTO thread_reactions_v3 (user_id,thread_id,message_id,emoji) VALUES (?,?,?,?)').run(req.user.id,thread_id,message_id||'',emoji);
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/thread-reactions-v3/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM thread_reactions_v3 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// user_skill_goals table
+db.exec(`CREATE TABLE IF NOT EXISTS user_skill_goals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  skill_name TEXT NOT NULL, target_level INTEGER DEFAULT 5,
+  current_level INTEGER DEFAULT 1, notes TEXT,
+  achieved INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-skill-goals', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM user_skill_goals WHERE user_id=? ORDER BY achieved ASC, created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/user-skill-goals', auth, (req:any,res:any)=>{
+  const {skill_name,target_level,current_level,notes} = req.body;
+  if(!skill_name) return res.status(400).json({error:'skill_name required'});
+  const r = db.prepare('INSERT INTO user_skill_goals (user_id,skill_name,target_level,current_level,notes) VALUES (?,?,?,?,?)').run(req.user.id,skill_name,target_level||5,current_level||1,notes||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/user-skill-goals/:id', auth, (req:any,res:any)=>{
+  const {current_level,achieved} = req.body;
+  db.prepare('UPDATE user_skill_goals SET current_level=COALESCE(?,current_level), achieved=COALESCE(?,achieved) WHERE id=? AND user_id=?').run(current_level??null,achieved??null,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/user-skill-goals/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM user_skill_goals WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// ai_test_prompts table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_test_prompts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  prompt_text TEXT NOT NULL, expected_output TEXT, actual_output TEXT,
+  passed INTEGER DEFAULT 0, model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-test-prompts', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_test_prompts WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/ai-test-prompts', auth, (req:any,res:any)=>{
+  const {prompt_text,expected_output,model} = req.body;
+  if(!prompt_text) return res.status(400).json({error:'prompt_text required'});
+  const r = db.prepare('INSERT INTO ai_test_prompts (user_id,prompt_text,expected_output,model) VALUES (?,?,?,?)').run(req.user.id,prompt_text,expected_output||'',model||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/ai-test-prompts/:id/result', auth, (req:any,res:any)=>{
+  const {actual_output,passed} = req.body;
+  db.prepare('UPDATE ai_test_prompts SET actual_output=?,passed=? WHERE id=? AND user_id=?').run(actual_output||'',passed?1:0,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-test-prompts/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_test_prompts WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+// ─── End Batch 80 ────────────────────────────────────────────────────────────
+
+// ─── Batch 81 ────────────────────────────────────────────────────────────────
+// ai_feedback_loops table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_feedback_loops (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  loop_name TEXT NOT NULL, trigger_event TEXT, action TEXT,
+  enabled INTEGER DEFAULT 1, run_count INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-feedback-loops', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_feedback_loops WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/ai-feedback-loops', auth, (req:any,res:any)=>{
+  const {loop_name,trigger_event,action} = req.body;
+  if(!loop_name) return res.status(400).json({error:'loop_name required'});
+  const r = db.prepare('INSERT INTO ai_feedback_loops (user_id,loop_name,trigger_event,action) VALUES (?,?,?,?)').run(req.user.id,loop_name,trigger_event||'',action||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/ai-feedback-loops/:id/trigger', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE ai_feedback_loops SET run_count=run_count+1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-feedback-loops/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_feedback_loops WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_events_v2 table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_events_v2 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  event_name TEXT NOT NULL, event_date TEXT, location TEXT,
+  description TEXT, attendees_json TEXT DEFAULT '[]',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-events-v2', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_events_v2 WHERE user_id=? ORDER BY event_date ASC LIMIT 100').all(req.user.id));
+});
+app.post('/api/workspace-events-v2', auth, (req:any,res:any)=>{
+  const {event_name,event_date,location,description,attendees_json} = req.body;
+  if(!event_name) return res.status(400).json({error:'event_name required'});
+  const r = db.prepare('INSERT INTO workspace_events_v2 (user_id,event_name,event_date,location,description,attendees_json) VALUES (?,?,?,?,?,?)').run(req.user.id,event_name,event_date||'',location||'',description||'',attendees_json||'[]');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/workspace-events-v2/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_events_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// user_growth_log table
+db.exec(`CREATE TABLE IF NOT EXISTS user_growth_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  metric_name TEXT NOT NULL, value REAL DEFAULT 0, unit TEXT,
+  notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-growth-log', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM user_growth_log WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/user-growth-log', auth, (req:any,res:any)=>{
+  const {metric_name,value,unit,notes} = req.body;
+  if(!metric_name) return res.status(400).json({error:'metric_name required'});
+  const r = db.prepare('INSERT INTO user_growth_log (user_id,metric_name,value,unit,notes) VALUES (?,?,?,?,?)').run(req.user.id,metric_name,value||0,unit||'',notes||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/user-growth-log/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM user_growth_log WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// ai_hallucination_checks table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_hallucination_checks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  claim TEXT NOT NULL, verdict TEXT DEFAULT 'unverified',
+  evidence TEXT, model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-hallucination-checks', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_hallucination_checks WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/ai-hallucination-checks', auth, (req:any,res:any)=>{
+  const {claim,verdict,evidence,model} = req.body;
+  if(!claim) return res.status(400).json({error:'claim required'});
+  const r = db.prepare('INSERT INTO ai_hallucination_checks (user_id,claim,verdict,evidence,model) VALUES (?,?,?,?,?)').run(req.user.id,claim,verdict||'unverified',evidence||'',model||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.put('/api/ai-hallucination-checks/:id/verdict', auth, (req:any,res:any)=>{
+  const {verdict,evidence} = req.body;
+  db.prepare('UPDATE ai_hallucination_checks SET verdict=?,evidence=? WHERE id=? AND user_id=?').run(verdict||'unverified',evidence||'',req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-hallucination-checks/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_hallucination_checks WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_directories table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_directories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  dir_name TEXT NOT NULL, parent_id INTEGER DEFAULT 0,
+  icon TEXT DEFAULT '📁', created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-directories', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_directories WHERE user_id=? ORDER BY parent_id ASC, dir_name ASC LIMIT 200').all(req.user.id));
+});
+app.post('/api/workspace-directories', auth, (req:any,res:any)=>{
+  const {dir_name,parent_id,icon} = req.body;
+  if(!dir_name) return res.status(400).json({error:'dir_name required'});
+  const r = db.prepare('INSERT INTO workspace_directories (user_id,dir_name,parent_id,icon) VALUES (?,?,?,?)').run(req.user.id,dir_name,parent_id||0,icon||'📁');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/workspace-directories/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_directories WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+// ─── End Batch 81 ────────────────────────────────────────────────────────────
+
+// ─── Batch 82 ────────────────────────────────────────────────────────────────
+// ai_review_queues table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_review_queues (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  item_text TEXT NOT NULL, priority INTEGER DEFAULT 1,
+  status TEXT DEFAULT 'pending', reviewed_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-review-queues', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_review_queues WHERE user_id=? ORDER BY priority DESC, created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/ai-review-queues', auth, (req:any,res:any)=>{
+  const {item_text,priority} = req.body;
+  if(!item_text) return res.status(400).json({error:'item_text required'});
+  const r = db.prepare('INSERT INTO ai_review_queues (user_id,item_text,priority) VALUES (?,?,?)').run(req.user.id,item_text,priority||1);
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/ai-review-queues/:id', auth, (req:any,res:any)=>{
+  const {status} = req.body;
+  db.prepare('UPDATE ai_review_queues SET status=?, reviewed_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run(status||'done',req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-review-queues/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_review_queues WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_kanban table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_kanban (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  card_title TEXT NOT NULL, column_name TEXT DEFAULT 'todo',
+  description TEXT, position INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-kanban', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_kanban WHERE user_id=? ORDER BY column_name ASC, position ASC LIMIT 300').all(req.user.id));
+});
+app.post('/api/workspace-kanban', auth, (req:any,res:any)=>{
+  const {card_title,column_name,description,position} = req.body;
+  if(!card_title) return res.status(400).json({error:'card_title required'});
+  const r = db.prepare('INSERT INTO workspace_kanban (user_id,card_title,column_name,description,position) VALUES (?,?,?,?,?)').run(req.user.id,card_title,column_name||'todo',description||'',position||0);
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/workspace-kanban/:id', auth, (req:any,res:any)=>{
+  const {column_name,position} = req.body;
+  db.prepare('UPDATE workspace_kanban SET column_name=?, position=? WHERE id=? AND user_id=?').run(column_name||'todo',position||0,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/workspace-kanban/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_kanban WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// user_reading_list table
+db.exec(`CREATE TABLE IF NOT EXISTS user_reading_list (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  title TEXT NOT NULL, url TEXT, notes TEXT,
+  read_status INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-reading-list', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM user_reading_list WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/user-reading-list', auth, (req:any,res:any)=>{
+  const {title,url,notes} = req.body;
+  if(!title) return res.status(400).json({error:'title required'});
+  const r = db.prepare('INSERT INTO user_reading_list (user_id,title,url,notes) VALUES (?,?,?,?)').run(req.user.id,title,url||'',notes||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/user-reading-list/:id', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE user_reading_list SET read_status=1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/user-reading-list/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM user_reading_list WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// ai_debug_logs table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_debug_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  log_level TEXT DEFAULT 'info', message TEXT NOT NULL,
+  context TEXT, source TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-debug-logs', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_debug_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 500').all(req.user.id));
+});
+app.post('/api/ai-debug-logs', auth, (req:any,res:any)=>{
+  const {log_level,message,context,source} = req.body;
+  if(!message) return res.status(400).json({error:'message required'});
+  const r = db.prepare('INSERT INTO ai_debug_logs (user_id,log_level,message,context,source) VALUES (?,?,?,?,?)').run(req.user.id,log_level||'info',message,context||'',source||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/ai-debug-logs', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_debug_logs WHERE user_id=?').run(req.user.id);
+  res.json({ok:true});
+});
+
+// thread_summaries_v2 table
+db.exec(`CREATE TABLE IF NOT EXISTS thread_summaries_v2 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  thread_id INTEGER, summary_text TEXT NOT NULL,
+  key_points TEXT, model_used TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/thread-summaries-v2', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM thread_summaries_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/thread-summaries-v2', auth, (req:any,res:any)=>{
+  const {thread_id,summary_text,key_points,model_used} = req.body;
+  if(!summary_text) return res.status(400).json({error:'summary_text required'});
+  const r = db.prepare('INSERT INTO thread_summaries_v2 (user_id,thread_id,summary_text,key_points,model_used) VALUES (?,?,?,?,?)').run(req.user.id,thread_id||0,summary_text,key_points||'',model_used||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/thread-summaries-v2/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM thread_summaries_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+// ─── End Batch 82 ────────────────────────────────────────────────────────────
+
+// ─── Batch 83 ────────────────────────────────────────────────────────────────
+// ai_prompt_templates table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_prompt_templates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  tpl_name TEXT NOT NULL, tpl_body TEXT NOT NULL,
+  category TEXT DEFAULT 'general', use_count INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-prompt-templates', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_prompt_templates WHERE user_id=? ORDER BY use_count DESC, created_at DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/ai-prompt-templates', auth, (req:any,res:any)=>{
+  const {tpl_name,tpl_body,category} = req.body;
+  if(!tpl_name||!tpl_body) return res.status(400).json({error:'tpl_name and tpl_body required'});
+  const r = db.prepare('INSERT INTO ai_prompt_templates (user_id,tpl_name,tpl_body,category) VALUES (?,?,?,?)').run(req.user.id,tpl_name,tpl_body,category||'general');
+  res.json({id:r.lastInsertRowid});
+});
+app.patch('/api/ai-prompt-templates/:id/use', auth, (req:any,res:any)=>{
+  db.prepare('UPDATE ai_prompt_templates SET use_count=use_count+1 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/ai-prompt-templates/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_prompt_templates WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_labels_v3 table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_labels_v3 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  label_name TEXT NOT NULL, color TEXT DEFAULT '#6366f1',
+  description TEXT, item_count INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-labels-v3', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_labels_v3 WHERE user_id=? ORDER BY label_name ASC LIMIT 200').all(req.user.id));
+});
+app.post('/api/workspace-labels-v3', auth, (req:any,res:any)=>{
+  const {label_name,color,description} = req.body;
+  if(!label_name) return res.status(400).json({error:'label_name required'});
+  const r = db.prepare('INSERT INTO workspace_labels_v3 (user_id,label_name,color,description) VALUES (?,?,?,?)').run(req.user.id,label_name,color||'#6366f1',description||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/workspace-labels-v3/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_labels_v3 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// user_time_logs table
+db.exec(`CREATE TABLE IF NOT EXISTS user_time_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  activity TEXT NOT NULL, duration_min INTEGER DEFAULT 0,
+  log_date TEXT DEFAULT (date('now')), notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-time-logs', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM user_time_logs WHERE user_id=? ORDER BY log_date DESC, created_at DESC LIMIT 300').all(req.user.id));
+});
+app.post('/api/user-time-logs', auth, (req:any,res:any)=>{
+  const {activity,duration_min,log_date,notes} = req.body;
+  if(!activity) return res.status(400).json({error:'activity required'});
+  const r = db.prepare('INSERT INTO user_time_logs (user_id,activity,duration_min,log_date,notes) VALUES (?,?,?,?,?)').run(req.user.id,activity,duration_min||0,log_date||new Date().toISOString().slice(0,10),notes||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/user-time-logs/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM user_time_logs WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// ai_suggestion_cache table
+db.exec(`CREATE TABLE IF NOT EXISTS ai_suggestion_cache (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  input_hash TEXT NOT NULL, suggestion TEXT NOT NULL,
+  model_used TEXT, hit_count INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-suggestion-cache', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM ai_suggestion_cache WHERE user_id=? ORDER BY hit_count DESC LIMIT 200').all(req.user.id));
+});
+app.post('/api/ai-suggestion-cache', auth, (req:any,res:any)=>{
+  const {input_hash,suggestion,model_used} = req.body;
+  if(!input_hash||!suggestion) return res.status(400).json({error:'input_hash and suggestion required'});
+  const existing = db.prepare('SELECT id FROM ai_suggestion_cache WHERE user_id=? AND input_hash=?').get(req.user.id,input_hash);
+  if(existing) {
+    db.prepare('UPDATE ai_suggestion_cache SET hit_count=hit_count+1 WHERE id=?').run((existing as any).id);
+    return res.json({id:(existing as any).id,cached:true});
+  }
+  const r = db.prepare('INSERT INTO ai_suggestion_cache (user_id,input_hash,suggestion,model_used) VALUES (?,?,?,?)').run(req.user.id,input_hash,suggestion,model_used||'');
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/ai-suggestion-cache/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM ai_suggestion_cache WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+
+// workspace_pins_v2 table
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_pins_v2 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+  pin_title TEXT NOT NULL, pin_url TEXT, pin_type TEXT DEFAULT 'link',
+  position INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-pins-v2', auth, (req:any,res:any)=>{
+  res.json(db.prepare('SELECT * FROM workspace_pins_v2 WHERE user_id=? ORDER BY position ASC, created_at DESC LIMIT 100').all(req.user.id));
+});
+app.post('/api/workspace-pins-v2', auth, (req:any,res:any)=>{
+  const {pin_title,pin_url,pin_type,position} = req.body;
+  if(!pin_title) return res.status(400).json({error:'pin_title required'});
+  const r = db.prepare('INSERT INTO workspace_pins_v2 (user_id,pin_title,pin_url,pin_type,position) VALUES (?,?,?,?,?)').run(req.user.id,pin_title,pin_url||'',pin_type||'link',position||0);
+  res.json({id:r.lastInsertRowid});
+});
+app.delete('/api/workspace-pins-v2/:id', auth, (req:any,res:any)=>{
+  db.prepare('DELETE FROM workspace_pins_v2 WHERE id=? AND user_id=?').run(req.params.id,req.user.id);
+  res.json({ok:true});
+});
+// ─── End Batch 83 ────────────────────────────────────────────────────────────
