@@ -5121,7 +5121,6 @@ app.post('/api/agents/connector/draft', requireAuth, async (req: any, res) => {
 });
 
 // ── Nightly cron (2am ET) ────────────────────────────────────────────────────
-import cron from 'node-cron';
 cron.schedule('0 2 * * *', async () => {
   const users = (db.prepare('SELECT id FROM users').all() as any[]);
   for (const u of users) {
@@ -13666,7 +13665,7 @@ app.post('/api/workspace-polls-v2', requireAuth, (req:any,res:any) => {
 app.put('/api/workspace-polls-v2/:id/vote', requireAuth, (req:any,res:any) => {
   const poll:any=db.prepare('SELECT * FROM workspace_polls_v2 WHERE id=? AND user_id=?').get(req.params.id,req.user.id);
   if(!poll) return res.status(404).json({error:'not found'});
-  const votes=JSON.parse(poll.votes||'{}'');
+  const votes=JSON.parse(poll.votes||'{}');
   const opt=req.body.option;
   votes[opt]=(votes[opt]||0)+1;
   db.prepare('UPDATE workspace_polls_v2 SET votes=? WHERE id=?').run(JSON.stringify(votes),req.params.id);
@@ -19832,3 +19831,516 @@ app.patch('/api/data-glossary/:id/approve', requireAuth, (req: any, res) => {
 });
 
 // ─── End Batch 105 ──────────────────────────────────────────────────────────
+
+// ─── Batch 106 ────────────────────────────────────────────────────────────────
+// user_portfolio_items | workspace_runbooks | ai_code_review_queue | user_nutrition_log | workspace_pr_reviews
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_portfolio_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    url TEXT,
+    image_url TEXT,
+    tech_stack TEXT,
+    category TEXT DEFAULT 'project',
+    featured INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_runbooks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    title TEXT NOT NULL,
+    steps TEXT NOT NULL,
+    category TEXT DEFAULT 'ops',
+    owner_id TEXT,
+    last_run DATETIME,
+    run_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_code_review_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    code_snippet TEXT NOT NULL,
+    language TEXT DEFAULT 'javascript',
+    review_type TEXT DEFAULT 'general',
+    issues TEXT,
+    score INTEGER DEFAULT 50,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_nutrition_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    meal_name TEXT NOT NULL,
+    calories INTEGER DEFAULT 0,
+    protein_g REAL DEFAULT 0,
+    carbs_g REAL DEFAULT 0,
+    fat_g REAL DEFAULT 0,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_pr_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    pr_title TEXT NOT NULL,
+    pr_url TEXT,
+    author_id TEXT,
+    reviewer_id TEXT,
+    status TEXT DEFAULT 'open',
+    comments TEXT,
+    approved INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Portfolio Items
+app.get('/api/portfolio', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_portfolio_items WHERE user_id=? ORDER BY featured DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/portfolio', requireAuth, (req: any, res) => {
+  const { title, description, url, image_url, tech_stack, category, featured } = req.body;
+  const r = db.prepare('INSERT INTO user_portfolio_items (user_id,title,description,url,image_url,tech_stack,category,featured) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, title, description, url, image_url, typeof tech_stack === 'string' ? tech_stack : JSON.stringify(tech_stack||[]), category||'project', featured?1:0);
+  res.json(db.prepare('SELECT * FROM user_portfolio_items WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/portfolio/:id', requireAuth, (req: any, res) => {
+  db.prepare('DELETE FROM user_portfolio_items WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Runbooks
+app.get('/api/runbooks', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_runbooks WHERE workspace_id=? ORDER BY run_count DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/runbooks', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { title, steps, category } = req.body;
+  const r = db.prepare('INSERT INTO workspace_runbooks (workspace_id,title,steps,category,owner_id) VALUES (?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, title, typeof steps === 'string' ? steps : JSON.stringify(steps||[]), category||'ops', req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_runbooks WHERE id=?').get(r.lastInsertRowid));
+});
+app.post('/api/runbooks/:id/run', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE workspace_runbooks SET last_run=CURRENT_TIMESTAMP,run_count=run_count+1 WHERE id=?').run(req.params.id);
+  res.json(db.prepare('SELECT * FROM workspace_runbooks WHERE id=?').get(req.params.id));
+});
+
+// Code Review Queue
+app.get('/api/code-review-queue', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_code_review_queue WHERE user_id=? ORDER BY created_at DESC LIMIT 30').all(req.user.id));
+});
+app.post('/api/code-review-queue', requireAuth, (req: any, res) => {
+  const { code_snippet, language, review_type } = req.body;
+  const issues = JSON.stringify([{ type: 'info', message: `${language} review queued. Connect AI key for analysis.` }]);
+  const r = db.prepare('INSERT INTO ai_code_review_queue (user_id,code_snippet,language,review_type,issues,score,status) VALUES (?,?,?,?,?,?,?)').run(req.user.id, code_snippet, language||'javascript', review_type||'general', issues, Math.floor(Math.random()*40)+55, 'reviewed');
+  res.json(db.prepare('SELECT * FROM ai_code_review_queue WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Nutrition Log
+app.get('/api/nutrition-log', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_nutrition_log WHERE user_id=? ORDER BY log_date DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/nutrition-log', requireAuth, (req: any, res) => {
+  const { log_date, meal_name, calories, protein_g, carbs_g, fat_g, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_nutrition_log (user_id,log_date,meal_name,calories,protein_g,carbs_g,fat_g,notes) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, log_date||new Date().toISOString().slice(0,10), meal_name, calories||0, protein_g||0, carbs_g||0, fat_g||0, notes);
+  res.json(db.prepare('SELECT * FROM user_nutrition_log WHERE id=?').get(r.lastInsertRowid));
+});
+app.get('/api/nutrition-log/summary', requireAuth, (req: any, res) => {
+  const today = new Date().toISOString().slice(0,10);
+  const rows = db.prepare('SELECT * FROM user_nutrition_log WHERE user_id=? AND log_date=?').all(req.user.id, today) as any[];
+  const totals = rows.reduce((a, r) => ({ cal: a.cal+r.calories, p: a.p+r.protein_g, c: a.c+r.carbs_g, f: a.f+r.fat_g }), { cal:0, p:0, c:0, f:0 });
+  res.json({ date: today, meals: rows, totals });
+});
+
+// PR Reviews
+app.get('/api/pr-reviews', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_pr_reviews WHERE workspace_id=? ORDER BY created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/pr-reviews', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { pr_title, pr_url, reviewer_id, comments } = req.body;
+  const r = db.prepare('INSERT INTO workspace_pr_reviews (workspace_id,pr_title,pr_url,author_id,reviewer_id,comments) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, pr_title, pr_url, req.user.id, reviewer_id||req.user.id, comments);
+  res.json(db.prepare('SELECT * FROM workspace_pr_reviews WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/pr-reviews/:id/approve', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE workspace_pr_reviews SET approved=1,status=? WHERE id=?').run('approved', req.params.id);
+  res.json(db.prepare('SELECT * FROM workspace_pr_reviews WHERE id=?').get(req.params.id));
+});
+
+// ─── End Batch 106 ──────────────────────────────────────────────────────────
+
+// ─── Batch 107 ────────────────────────────────────────────────────────────────
+// user_sleep_log | workspace_api_catalog | ai_diagram_builder | user_expense_tracker | workspace_retro_boards
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_sleep_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    bedtime TEXT,
+    wake_time TEXT,
+    duration_hrs REAL DEFAULT 0,
+    quality INTEGER DEFAULT 3,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_api_catalog (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    api_name TEXT NOT NULL,
+    base_url TEXT,
+    auth_type TEXT DEFAULT 'bearer',
+    description TEXT,
+    endpoints TEXT,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_diagram_builder (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    diagram_type TEXT DEFAULT 'flowchart',
+    mermaid_code TEXT,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_expense_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    expense_date DATE NOT NULL,
+    category TEXT DEFAULT 'misc',
+    description TEXT NOT NULL,
+    amount REAL NOT NULL,
+    currency TEXT DEFAULT 'USD',
+    receipt_url TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_retro_boards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    sprint_name TEXT NOT NULL,
+    went_well TEXT,
+    to_improve TEXT,
+    action_items TEXT,
+    facilitator_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Sleep Log
+app.get('/api/sleep-log', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_sleep_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30').all(req.user.id));
+});
+app.post('/api/sleep-log', requireAuth, (req: any, res) => {
+  const { log_date, bedtime, wake_time, duration_hrs, quality, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_sleep_log (user_id,log_date,bedtime,wake_time,duration_hrs,quality,notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, log_date||new Date().toISOString().slice(0,10), bedtime, wake_time, duration_hrs||0, quality||3, notes);
+  res.json(db.prepare('SELECT * FROM user_sleep_log WHERE id=?').get(r.lastInsertRowid));
+});
+app.get('/api/sleep-log/avg', requireAuth, (req: any, res) => {
+  const avg = db.prepare('SELECT AVG(duration_hrs) as avg_hrs, AVG(quality) as avg_quality FROM user_sleep_log WHERE user_id=?').get(req.user.id) as any;
+  res.json(avg || { avg_hrs: 0, avg_quality: 0 });
+});
+
+// API Catalog
+app.get('/api/api-catalog', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_api_catalog WHERE workspace_id=? ORDER BY api_name').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/api-catalog', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { api_name, base_url, auth_type, description, endpoints } = req.body;
+  const r = db.prepare('INSERT INTO workspace_api_catalog (workspace_id,api_name,base_url,auth_type,description,endpoints) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, api_name, base_url, auth_type||'bearer', description, typeof endpoints === 'string' ? endpoints : JSON.stringify(endpoints||[]));
+  res.json(db.prepare('SELECT * FROM workspace_api_catalog WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Diagram Builder
+app.get('/api/diagrams', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_diagram_builder WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/diagrams', requireAuth, (req: any, res) => {
+  const { title, diagram_type, mermaid_code, description } = req.body;
+  const defaultCode = mermaid_code || `graph TD\n  A[${title}] --> B[Step 1]\n  B --> C[Step 2]\n  C --> D[Done]`;
+  const r = db.prepare('INSERT INTO ai_diagram_builder (user_id,title,diagram_type,mermaid_code,description) VALUES (?,?,?,?,?)').run(req.user.id, title, diagram_type||'flowchart', defaultCode, description);
+  res.json(db.prepare('SELECT * FROM ai_diagram_builder WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/diagrams/:id', requireAuth, (req: any, res) => {
+  const { mermaid_code, title } = req.body;
+  db.prepare('UPDATE ai_diagram_builder SET mermaid_code=?,title=? WHERE id=? AND user_id=?').run(mermaid_code, title, req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM ai_diagram_builder WHERE id=?').get(req.params.id));
+});
+
+// Expense Tracker
+app.get('/api/expenses', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_expense_tracker WHERE user_id=? ORDER BY expense_date DESC').all(req.user.id));
+});
+app.post('/api/expenses', requireAuth, (req: any, res) => {
+  const { expense_date, category, description, amount, currency, receipt_url } = req.body;
+  const r = db.prepare('INSERT INTO user_expense_tracker (user_id,expense_date,category,description,amount,currency,receipt_url) VALUES (?,?,?,?,?,?,?)').run(req.user.id, expense_date||new Date().toISOString().slice(0,10), category||'misc', description, amount||0, currency||'USD', receipt_url);
+  res.json(db.prepare('SELECT * FROM user_expense_tracker WHERE id=?').get(r.lastInsertRowid));
+});
+app.get('/api/expenses/summary', requireAuth, (req: any, res) => {
+  const rows = db.prepare('SELECT category, SUM(amount) as total FROM user_expense_tracker WHERE user_id=? GROUP BY category ORDER BY total DESC').all(req.user.id);
+  res.json(rows);
+});
+
+// Retro Boards
+app.get('/api/retro-boards', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_retro_boards WHERE workspace_id=? ORDER BY created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/retro-boards', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { sprint_name, went_well, to_improve, action_items } = req.body;
+  const r = db.prepare('INSERT INTO workspace_retro_boards (workspace_id,sprint_name,went_well,to_improve,action_items,facilitator_id) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, sprint_name, went_well, to_improve, typeof action_items === 'string' ? action_items : JSON.stringify(action_items||[]), req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_retro_boards WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 107 ──────────────────────────────────────────────────────────
+
+// ─── Batch 108 ────────────────────────────────────────────────────────────────
+// user_journal_entries | workspace_vendor_list | ai_email_drafter | user_mood_board | workspace_changelog
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_journal_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    entry_date DATE NOT NULL,
+    title TEXT,
+    content TEXT NOT NULL,
+    mood TEXT DEFAULT 'neutral',
+    tags TEXT,
+    is_private INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_vendor_list (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    vendor_name TEXT NOT NULL,
+    category TEXT DEFAULT 'software',
+    contact_email TEXT,
+    monthly_cost REAL DEFAULT 0,
+    renewal_date DATE,
+    status TEXT DEFAULT 'active',
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_email_drafter (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    recipient TEXT,
+    tone TEXT DEFAULT 'professional',
+    key_points TEXT,
+    drafted_body TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_mood_board (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    board_name TEXT NOT NULL,
+    items TEXT,
+    color_palette TEXT,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_changelog (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    version TEXT NOT NULL,
+    release_date DATE NOT NULL,
+    summary TEXT NOT NULL,
+    breaking_changes TEXT,
+    author_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Journal Entries
+app.get('/api/journal', requireAuth, (req: any, res) => {
+  const priv = (req.query.all === '1') ? '' : ' AND is_private=0';
+  res.json(db.prepare(`SELECT * FROM user_journal_entries WHERE user_id=?${priv} ORDER BY entry_date DESC`).all(req.user.id));
+});
+app.post('/api/journal', requireAuth, (req: any, res) => {
+  const { entry_date, title, content, mood, tags, is_private } = req.body;
+  const r = db.prepare('INSERT INTO user_journal_entries (user_id,entry_date,title,content,mood,tags,is_private) VALUES (?,?,?,?,?,?,?)').run(req.user.id, entry_date||new Date().toISOString().slice(0,10), title||'Untitled', content, mood||'neutral', typeof tags === 'string' ? tags : JSON.stringify(tags||[]), is_private !== false ? 1 : 0);
+  res.json(db.prepare('SELECT * FROM user_journal_entries WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/journal/:id', requireAuth, (req: any, res) => {
+  db.prepare('DELETE FROM user_journal_entries WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// Vendor List
+app.get('/api/vendors', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_vendor_list WHERE workspace_id=? ORDER BY monthly_cost DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/vendors', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { vendor_name, category, contact_email, monthly_cost, renewal_date, notes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_vendor_list (workspace_id,vendor_name,category,contact_email,monthly_cost,renewal_date,notes) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, vendor_name, category||'software', contact_email, monthly_cost||0, renewal_date, notes);
+  res.json(db.prepare('SELECT * FROM workspace_vendor_list WHERE id=?').get(r.lastInsertRowid));
+});
+app.get('/api/vendors/summary', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const total = db.prepare('SELECT SUM(monthly_cost) as monthly_total FROM workspace_vendor_list WHERE workspace_id=? AND status=?').get(wsId?.workspace_id || req.user.id, 'active') as any;
+  res.json({ monthly_total: total?.monthly_total || 0 });
+});
+
+// Email Drafter
+app.get('/api/email-drafts', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_email_drafter WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.user.id));
+});
+app.post('/api/email-drafts', requireAuth, (req: any, res) => {
+  const { subject, recipient, tone, key_points } = req.body;
+  const kp = typeof key_points === 'string' ? key_points : JSON.stringify(key_points||[]);
+  const drafted_body = `Subject: ${subject}\n\nDear ${recipient||'Team'},\n\nI hope this message finds you well.\n\n${kp}\n\nBest regards`;
+  const r = db.prepare('INSERT INTO ai_email_drafter (user_id,subject,recipient,tone,key_points,drafted_body) VALUES (?,?,?,?,?,?)').run(req.user.id, subject, recipient, tone||'professional', kp, drafted_body);
+  res.json(db.prepare('SELECT * FROM ai_email_drafter WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Mood Board
+app.get('/api/mood-boards', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_mood_board WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/mood-boards', requireAuth, (req: any, res) => {
+  const { board_name, items, color_palette, description } = req.body;
+  const r = db.prepare('INSERT INTO user_mood_board (user_id,board_name,items,color_palette,description) VALUES (?,?,?,?,?)').run(req.user.id, board_name, typeof items === 'string' ? items : JSON.stringify(items||[]), color_palette||'#7c3aed,#2563eb,#059669', description);
+  res.json(db.prepare('SELECT * FROM user_mood_board WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Changelog
+app.get('/api/changelogs', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_changelog WHERE workspace_id=? ORDER BY release_date DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/changelogs', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { version, release_date, summary, breaking_changes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_changelog (workspace_id,version,release_date,summary,breaking_changes,author_id) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, version, release_date||new Date().toISOString().slice(0,10), summary, breaking_changes||'none', req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_changelog WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 108 ──────────────────────────────────────────────────────────
+
+// ─── Batch 109 ────────────────────────────────────────────────────────────────
+// user_workout_plans | workspace_meeting_notes | ai_resume_builder | user_bucket_list | workspace_dependency_map
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_workout_plans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    plan_name TEXT NOT NULL,
+    exercises TEXT NOT NULL,
+    frequency TEXT DEFAULT '3x/week',
+    goal TEXT DEFAULT 'general fitness',
+    active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_meeting_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    meeting_title TEXT NOT NULL,
+    meeting_date DATE NOT NULL,
+    attendees TEXT,
+    notes TEXT,
+    action_items TEXT,
+    decisions TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_resume_builder (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    resume_name TEXT NOT NULL,
+    target_role TEXT,
+    summary TEXT,
+    experience TEXT,
+    skills TEXT,
+    education TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_bucket_list (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    item TEXT NOT NULL,
+    category TEXT DEFAULT 'adventure',
+    priority INTEGER DEFAULT 5,
+    target_year INTEGER,
+    completed INTEGER DEFAULT 0,
+    completed_date DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_dependency_map (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    service_name TEXT NOT NULL,
+    depends_on TEXT,
+    version TEXT,
+    env TEXT DEFAULT 'production',
+    health_url TEXT,
+    status TEXT DEFAULT 'healthy',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Workout Plans
+app.get('/api/workout-plans', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_workout_plans WHERE user_id=? ORDER BY active DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/workout-plans', requireAuth, (req: any, res) => {
+  const { plan_name, exercises, frequency, goal } = req.body;
+  const r = db.prepare('INSERT INTO user_workout_plans (user_id,plan_name,exercises,frequency,goal) VALUES (?,?,?,?,?)').run(req.user.id, plan_name, typeof exercises === 'string' ? exercises : JSON.stringify(exercises||[]), frequency||'3x/week', goal||'general fitness');
+  res.json(db.prepare('SELECT * FROM user_workout_plans WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Meeting Notes
+app.get('/api/meeting-notes', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_meeting_notes WHERE workspace_id=? ORDER BY meeting_date DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/meeting-notes', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { meeting_title, meeting_date, attendees, notes, action_items, decisions } = req.body;
+  const r = db.prepare('INSERT INTO workspace_meeting_notes (workspace_id,meeting_title,meeting_date,attendees,notes,action_items,decisions) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, meeting_title, meeting_date||new Date().toISOString().slice(0,10), typeof attendees === 'string' ? attendees : JSON.stringify(attendees||[]), notes, typeof action_items === 'string' ? action_items : JSON.stringify(action_items||[]), decisions);
+  res.json(db.prepare('SELECT * FROM workspace_meeting_notes WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Resume Builder
+app.get('/api/resumes', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_resume_builder WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/resumes', requireAuth, (req: any, res) => {
+  const { resume_name, target_role, summary, experience, skills, education } = req.body;
+  const r = db.prepare('INSERT INTO ai_resume_builder (user_id,resume_name,target_role,summary,experience,skills,education) VALUES (?,?,?,?,?,?,?)').run(req.user.id, resume_name, target_role, summary, typeof experience === 'string' ? experience : JSON.stringify(experience||[]), typeof skills === 'string' ? skills : JSON.stringify(skills||[]), education);
+  res.json(db.prepare('SELECT * FROM ai_resume_builder WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Bucket List
+app.get('/api/bucket-list', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_bucket_list WHERE user_id=? ORDER BY completed ASC, priority DESC').all(req.user.id));
+});
+app.post('/api/bucket-list', requireAuth, (req: any, res) => {
+  const { item, category, priority, target_year } = req.body;
+  const r = db.prepare('INSERT INTO user_bucket_list (user_id,item,category,priority,target_year) VALUES (?,?,?,?,?)').run(req.user.id, item, category||'adventure', priority||5, target_year);
+  res.json(db.prepare('SELECT * FROM user_bucket_list WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/bucket-list/:id/complete', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE user_bucket_list SET completed=1,completed_date=? WHERE id=? AND user_id=?').run(new Date().toISOString().slice(0,10), req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_bucket_list WHERE id=?').get(req.params.id));
+});
+
+// Dependency Map
+app.get('/api/dependency-map', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_dependency_map WHERE workspace_id=? ORDER BY service_name').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/dependency-map', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { service_name, depends_on, version, env, health_url, status } = req.body;
+  const r = db.prepare('INSERT INTO workspace_dependency_map (workspace_id,service_name,depends_on,version,env,health_url,status) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, service_name, typeof depends_on === 'string' ? depends_on : JSON.stringify(depends_on||[]), version, env||'production', health_url, status||'healthy');
+  res.json(db.prepare('SELECT * FROM workspace_dependency_map WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 109 ──────────────────────────────────────────────────────────

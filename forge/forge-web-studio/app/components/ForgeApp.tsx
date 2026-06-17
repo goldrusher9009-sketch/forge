@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -743,6 +743,21 @@ export default function ForgeApp() {
   const [wsMoodTrend, setWsMoodTrend] = useState<any>(null);
   const [newMoodEmoji, setNewMoodEmoji] = useState('😊');
   const [newMoodScore, setNewMoodScore] = useState(3);
+  const [journal, setJournal] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [emailDrafts, setEmailDrafts] = useState<any[]>([]);
+  const [moodBoards, setMoodBoards] = useState<any[]>([]);
+  const [changelogs, setChangelogs] = useState<any[]>([]);
+  const [sleepLog, setSleepLog] = useState<any[]>([]);
+  const [apiCatalog, setApiCatalog] = useState<any[]>([]);
+  const [diagrams, setDiagrams] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [retroBoards, setRetroBoards] = useState<any[]>([]);
+  const [portfolio, setPortfolio] = useState<any[]>([]);
+  const [runbooks, setRunbooks] = useState<any[]>([]);
+  const [codeReviewQ, setCodeReviewQ] = useState<any[]>([]);
+  const [nutritionLog, setNutritionLog] = useState<any[]>([]);
+  const [prReviews, setPrReviews] = useState<any[]>([]);
   const [readingQ, setReadingQ] = useState<any[]>([]);
   const [sprintCap, setSprintCap] = useState<any[]>([]);
   const [toneRewrites, setToneRewrites] = useState<any[]>([]);
@@ -5576,6 +5591,21 @@ export default function ForgeApp() {
             { id:'journal', icon:'📓', label:'Journal' },
             { id:'habits', icon:'🔥', label:'Habits' },
             { id:'changelog', icon:'📜', label:'Changelog' },
+            { id:'journal', icon:'📓', label:'Journal' },
+            { id:'vendors', icon:'🏪', label:'Vendors' },
+            { id:'emaildraft', icon:'📧', label:'Email Drafter' },
+            { id:'moodboard', icon:'🎨', label:'Mood Board' },
+            { id:'changelog', icon:'📝', label:'Changelog' },
+            { id:'sleeplog', icon:'😴', label:'Sleep Log' },
+            { id:'apicatalog', icon:'🌐', label:'API Catalog' },
+            { id:'diagrambuilder', icon:'📊', label:'Diagrams' },
+            { id:'expensetracker', icon:'💰', label:'Expenses' },
+            { id:'retroboards', icon:'🧩', label:'Retro Boards' },
+            { id:'portfolio', icon:'💼', label:'Portfolio' },
+            { id:'runbooks', icon:'📔', label:'Runbooks' },
+            { id:'codereviewq', icon:'🔍', label:'Code Review Q' },
+            { id:'nutritionlog', icon:'🥗', label:'Nutrition Log' },
+            { id:'prreviews', icon:'🧾', label:'PR Reviews' },
             { id:'readingq', icon:'📰', label:'Reading Queue' },
             { id:'sprintcap', icon:'📈', label:'Sprint Capacity' },
             { id:'tonerewrite', icon:'🖊️', label:'Tone Rewriter' },
@@ -12023,6 +12053,218 @@ export default function ForgeApp() {
         )}
 
         {/* Flashcards tab */}
+        {mainTab === 'journal' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128211; Journal</h2>
+            <p className="text-gray-400 mb-4">Private journaling with mood tracking and tags.</p>
+            <button onClick={async()=>{const r=await fetch('/api/journal?all=1',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setJournal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-amber-700 rounded text-white mb-4">Load Entries</button>
+            <div className="space-y-3">{journal.map((j:any)=>(
+              <div key={j.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-bold">{j.title}</span><span className="text-xs text-gray-400">{j.entry_date}</span></div>
+                <div className="text-sm text-gray-300 mt-2 line-clamp-3">{j.content}</div>
+                <div className="text-xs text-amber-400 mt-1">Mood: {j.mood}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'vendors' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127978; Vendors</h2>
+            <p className="text-gray-400 mb-4">Track workspace vendors, SaaS tools, and renewal dates.</p>
+            <button onClick={async()=>{const r=await fetch('/api/vendors',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setVendors(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-cyan-700 rounded text-white mb-4">Load Vendors</button>
+            <div className="space-y-2">{vendors.map((v:any)=>(
+              <div key={v.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{v.vendor_name}</div><div className="text-xs text-gray-400">{v.category}{v.renewal_date?` &mdash; renews ${v.renewal_date}`:''}</div></div>
+                <span className="text-red-400 font-bold">${v.monthly_cost}/mo</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'emaildraft' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128231; Email Drafter</h2>
+            <p className="text-gray-400 mb-4">AI-assisted email drafting with tone and key points.</p>
+            <button onClick={async()=>{const r=await fetch('/api/email-drafts',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setEmailDrafts(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-700 rounded text-white mb-4">Load Drafts</button>
+            <div className="space-y-3">{emailDrafts.map((e:any)=>(
+              <div key={e.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold">{e.subject}</div>
+                <div className="text-xs text-gray-400 mt-1">To: {e.recipient} &mdash; Tone: {e.tone}</div>
+                <pre className="text-xs text-gray-300 mt-2 bg-gray-900 p-2 rounded whitespace-pre-wrap max-h-24 overflow-auto">{e.drafted_body}</pre>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'moodboard' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127912; Mood Board</h2>
+            <p className="text-gray-400 mb-4">Visual mood and inspiration boards with color palettes.</p>
+            <button onClick={async()=>{const r=await fetch('/api/mood-boards',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMoodBoards(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-fuchsia-700 rounded text-white mb-4">Load Boards</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{moodBoards.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold">{m.board_name}</div>
+                <div className="flex gap-1 mt-2">{(m.color_palette||'').split(',').map((c:string,i:number)=>(
+                  <div key={i} className="w-6 h-6 rounded-full" style={{backgroundColor:c.trim()}}></div>
+                ))}</div>
+                <div className="text-sm text-gray-400 mt-2">{m.description}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'changelog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128221; Changelog</h2>
+            <p className="text-gray-400 mb-4">Product and workspace release notes by version.</p>
+            <button onClick={async()=>{const r=await fetch('/api/changelogs',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setChangelogs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Changelog</button>
+            <div className="space-y-4">{changelogs.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-center"><span className="font-bold text-green-400">v{c.version}</span><span className="text-xs text-gray-400">{c.release_date}</span></div>
+                <div className="text-sm text-gray-300 mt-1">{c.summary}</div>
+                {c.breaking_changes && c.breaking_changes !== 'none' && <div className="text-xs text-red-400 mt-1">&#9888; Breaking: {c.breaking_changes}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'sleeplog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128564; Sleep Log</h2>
+            <p className="text-gray-400 mb-4">Track sleep duration and quality to optimize rest.</p>
+            <button onClick={async()=>{const r=await fetch('/api/sleep-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSleepLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-700 rounded text-white mb-4">Load Sleep Log</button>
+            <div className="space-y-2">{sleepLog.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{s.log_date}</div><div className="text-xs text-gray-400">{s.bedtime} &rarr; {s.wake_time}</div></div>
+                <div className="text-right"><div className="text-blue-400 font-bold">{s.duration_hrs}h</div><div className="text-xs text-yellow-400">Quality: {s.quality}/5</div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'apicatalog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127760; API Catalog</h2>
+            <p className="text-gray-400 mb-4">Workspace registry of internal and external APIs.</p>
+            <button onClick={async()=>{const r=await fetch('/api/api-catalog',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setApiCatalog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load APIs</button>
+            <div className="space-y-3">{apiCatalog.map((a:any)=>(
+              <div key={a.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-bold">{a.api_name}</span><span className="text-xs px-2 py-0.5 bg-teal-900 text-teal-300 rounded">{a.auth_type}</span></div>
+                <div className="text-sm text-gray-400 mt-1">{a.description}</div>
+                {a.base_url && <div className="text-xs text-blue-400 mt-1">{a.base_url}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'diagrambuilder' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128202; Diagram Builder</h2>
+            <p className="text-gray-400 mb-4">Build flowcharts and architecture diagrams with Mermaid syntax.</p>
+            <button onClick={async()=>{const r=await fetch('/api/diagrams',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDiagrams(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-violet-600 rounded text-white mb-4">Load Diagrams</button>
+            <div className="space-y-3">{diagrams.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold">{d.title}</div>
+                <div className="text-xs text-violet-400 mt-1">{d.diagram_type}</div>
+                <pre className="text-xs text-gray-300 mt-2 bg-gray-900 p-2 rounded overflow-auto max-h-24">{d.mermaid_code}</pre>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'expensetracker' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128176; Expense Tracker</h2>
+            <p className="text-gray-400 mb-4">Track personal and business expenses by category.</p>
+            <button onClick={async()=>{const r=await fetch('/api/expenses',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setExpenses(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-emerald-600 rounded text-white mb-4">Load Expenses</button>
+            <div className="space-y-2">{expenses.map((e:any)=>(
+              <div key={e.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{e.description}</div><div className="text-xs text-gray-400">{e.category} &mdash; {e.expense_date}</div></div>
+                <span className="text-red-400 font-bold">{e.currency} {e.amount}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'retroboards' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129513; Retro Boards</h2>
+            <p className="text-gray-400 mb-4">Sprint retrospective boards — what went well, what to improve.</p>
+            <button onClick={async()=>{const r=await fetch('/api/retro-boards',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setRetroBoards(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-700 rounded text-white mb-4">Load Retros</button>
+            <div className="space-y-4">{retroBoards.map((r:any)=>(
+              <div key={r.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-lg mb-2">{r.sprint_name}</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><div className="text-xs text-green-400 mb-1">&#9989; Went Well</div><div className="text-sm text-gray-300">{r.went_well}</div></div>
+                  <div><div className="text-xs text-yellow-400 mb-1">&#9889; To Improve</div><div className="text-sm text-gray-300">{r.to_improve}</div></div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'portfolio' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128188; Portfolio</h2>
+            <p className="text-gray-400 mb-4">Showcase projects with tech stack, URLs, and descriptions.</p>
+            <button onClick={async()=>{const r=await fetch('/api/portfolio',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPortfolio(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Portfolio</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{portfolio.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-lg">{p.title}</div>
+                <div className="text-sm text-gray-400 mt-1">{p.description}</div>
+                <div className="text-xs text-purple-400 mt-2">{p.tech_stack}</div>
+                {p.url && <a href={p.url} target="_blank" rel="noreferrer" className="text-xs text-blue-400 mt-1 block">{p.url}</a>}
+                {p.featured ? <span className="text-xs text-yellow-400 mt-1 block">&#11088; Featured</span> : null}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'runbooks' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128212; Runbooks</h2>
+            <p className="text-gray-400 mb-4">Operational runbooks for repeatable procedures and incident response.</p>
+            <button onClick={async()=>{const r=await fetch('/api/runbooks',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setRunbooks(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Runbooks</button>
+            <div className="space-y-3">{runbooks.map((r:any)=>(
+              <div key={r.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start">
+                  <div><div className="font-bold">{r.title}</div><div className="text-sm text-gray-400">{r.category} &mdash; run {r.run_count}x</div></div>
+                  <button onClick={async()=>{await fetch(`/api/runbooks/${r.id}/run`,{method:'POST',headers:{Authorization:`Bearer ${token}`}});}} className="text-xs px-2 py-1 bg-green-700 rounded text-white">Run</button>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'codereviewq' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128269; Code Review Queue</h2>
+            <p className="text-gray-400 mb-4">Submit code snippets for AI-powered review and scoring.</p>
+            <button onClick={async()=>{const r=await fetch('/api/code-review-queue',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setCodeReviewQ(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Reviews</button>
+            <div className="space-y-3">{codeReviewQ.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="text-sm font-semibold text-indigo-400">{c.language} &mdash; {c.review_type}</span><span className="text-sm font-bold text-green-400">{c.score}/100</span></div>
+                <pre className="text-xs text-gray-300 mt-2 bg-gray-900 p-2 rounded overflow-auto max-h-20">{c.code_snippet?.slice(0,150)}</pre>
+                <div className="text-xs text-yellow-400 mt-1">{c.issues}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'nutritionlog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129367; Nutrition Log</h2>
+            <p className="text-gray-400 mb-4">Track daily meals with calorie and macronutrient data.</p>
+            <button onClick={async()=>{const r=await fetch('/api/nutrition-log/summary',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setNutritionLog(d.meals||[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Today&apos;s Log</button>
+            <div className="space-y-2">{nutritionLog.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{m.meal_name}</div><div className="text-xs text-gray-400">P:{m.protein_g}g C:{m.carbs_g}g F:{m.fat_g}g</div></div>
+                <span className="text-yellow-400 font-bold">{m.calories} kcal</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'prreviews' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129534; PR Reviews</h2>
+            <p className="text-gray-400 mb-4">Track pull request reviews across your workspace.</p>
+            <button onClick={async()=>{const r=await fetch('/api/pr-reviews',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPrReviews(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-600 rounded text-white mb-4">Load PRs</button>
+            <div className="space-y-3">{prReviews.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4 flex justify-between items-center">
+                <div><div className="font-bold">{p.pr_title}</div><div className="text-sm text-gray-400">{p.status} &mdash; {p.approved?'Approved':'Pending'}</div>{p.pr_url&&<a href={p.pr_url} target="_blank" rel="noreferrer" className="text-xs text-blue-400">{p.pr_url}</a>}</div>
+                {!p.approved && <button onClick={async()=>{await fetch(`/api/pr-reviews/${p.id}/approve`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`}});}} className="text-xs px-2 py-1 bg-green-700 rounded text-white">Approve</button>}
+              </div>
+            ))}</div>
+          </div>
+        )}
         {mainTab === 'readingq' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128240; Reading Queue</h2>
