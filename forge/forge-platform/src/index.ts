@@ -16998,3 +16998,142 @@ app.delete('/api/workspace-announcements-v2/:id', auth, (req:any,res:any)=>{
   res.json({ok:true});
 });
 // ─── End Batch 85 ────────────────────────────────────────────────────────────
+
+// ─── Batch 86 ───────────────────────────────────────────────────────────────
+
+// B86-1: user_saved_searches
+db.exec(`CREATE TABLE IF NOT EXISTS user_saved_searches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  search_query TEXT NOT NULL,
+  label TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-saved-searches', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM user_saved_searches WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/user-saved-searches', authMiddleware, (req: any, res: any) => {
+  const { search_query, label } = req.body;
+  if (!search_query) return res.status(400).json({ error: 'search_query required' });
+  const r = db.prepare('INSERT INTO user_saved_searches (user_id,search_query,label) VALUES (?,?,?)').run(req.user.id, search_query, label || null);
+  res.json({ id: r.lastInsertRowid, search_query, label });
+});
+app.delete('/api/user-saved-searches/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_saved_searches WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// B86-2: workspace_code_snippets
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_code_snippets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL DEFAULT 1,
+  title TEXT NOT NULL,
+  language TEXT DEFAULT 'text',
+  code TEXT NOT NULL,
+  created_by INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-code-snippets', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM workspace_code_snippets ORDER BY created_at DESC').all();
+  res.json(rows);
+});
+app.post('/api/workspace-code-snippets', authMiddleware, (req: any, res: any) => {
+  const { title, language, code } = req.body;
+  if (!title || !code) return res.status(400).json({ error: 'title+code required' });
+  const r = db.prepare('INSERT INTO workspace_code_snippets (title,language,code,created_by) VALUES (?,?,?,?)').run(title, language || 'text', code, req.user.id);
+  res.json({ id: r.lastInsertRowid, title, language, code });
+});
+app.delete('/api/workspace-code-snippets/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_code_snippets WHERE id=?').run(req.params.id);
+  res.json({ ok: true });
+});
+
+// B86-3: ai_hallucination_reports
+db.exec(`CREATE TABLE IF NOT EXISTS ai_hallucination_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  thread_id INTEGER,
+  message_excerpt TEXT NOT NULL,
+  correction TEXT,
+  severity TEXT DEFAULT 'low',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/ai-hallucination-reports', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM ai_hallucination_reports WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/ai-hallucination-reports', authMiddleware, (req: any, res: any) => {
+  const { thread_id, message_excerpt, correction, severity } = req.body;
+  if (!message_excerpt) return res.status(400).json({ error: 'message_excerpt required' });
+  const r = db.prepare('INSERT INTO ai_hallucination_reports (user_id,thread_id,message_excerpt,correction,severity) VALUES (?,?,?,?,?)').run(req.user.id, thread_id || null, message_excerpt, correction || null, severity || 'low');
+  res.json({ id: r.lastInsertRowid });
+});
+app.delete('/api/ai-hallucination-reports/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM ai_hallucination_reports WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// B86-4: workspace_retro_items
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_retro_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL DEFAULT 1,
+  category TEXT DEFAULT 'went_well',
+  content TEXT NOT NULL,
+  sprint_name TEXT,
+  votes INTEGER DEFAULT 0,
+  created_by INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/workspace-retro-items', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM workspace_retro_items ORDER BY votes DESC, created_at DESC').all();
+  res.json(rows);
+});
+app.post('/api/workspace-retro-items', authMiddleware, (req: any, res: any) => {
+  const { category, content, sprint_name } = req.body;
+  if (!content) return res.status(400).json({ error: 'content required' });
+  const r = db.prepare('INSERT INTO workspace_retro_items (category,content,sprint_name,created_by) VALUES (?,?,?,?)').run(category || 'went_well', content, sprint_name || null, req.user.id);
+  res.json({ id: r.lastInsertRowid, category, content, votes: 0 });
+});
+app.patch('/api/workspace-retro-items/:id/vote', authMiddleware, (req: any, res: any) => {
+  db.prepare('UPDATE workspace_retro_items SET votes=votes+1 WHERE id=?').run(req.params.id);
+  const row: any = db.prepare('SELECT votes FROM workspace_retro_items WHERE id=?').get(req.params.id);
+  res.json({ votes: row?.votes ?? 0 });
+});
+app.delete('/api/workspace-retro-items/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM workspace_retro_items WHERE id=?').run(req.params.id);
+  res.json({ ok: true });
+});
+
+// B86-5: user_context_notes
+db.exec(`CREATE TABLE IF NOT EXISTS user_context_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  auto_inject INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/user-context-notes', authMiddleware, (req: any, res: any) => {
+  const rows = db.prepare('SELECT * FROM user_context_notes WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/user-context-notes', authMiddleware, (req: any, res: any) => {
+  const { title, content, auto_inject } = req.body;
+  if (!title || !content) return res.status(400).json({ error: 'title+content required' });
+  const r = db.prepare('INSERT INTO user_context_notes (user_id,title,content,auto_inject) VALUES (?,?,?,?)').run(req.user.id, title, content, auto_inject ? 1 : 0);
+  res.json({ id: r.lastInsertRowid, title, content, auto_inject: auto_inject ? 1 : 0 });
+});
+app.patch('/api/user-context-notes/:id/toggle-inject', authMiddleware, (req: any, res: any) => {
+  const row: any = db.prepare('SELECT auto_inject FROM user_context_notes WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  const next = row.auto_inject ? 0 : 1;
+  db.prepare('UPDATE user_context_notes SET auto_inject=? WHERE id=?').run(next, req.params.id);
+  res.json({ auto_inject: next });
+});
+app.delete('/api/user-context-notes/:id', authMiddleware, (req: any, res: any) => {
+  db.prepare('DELETE FROM user_context_notes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ─── End Batch 86 ───────────────────────────────────────────────────────────

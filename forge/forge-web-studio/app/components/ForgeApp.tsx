@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -1376,6 +1376,18 @@ export default function ForgeApp() {
   const [wsDirs, setWsDirs] = useState<any[]>([]);
   const [newDirName, setNewDirName] = useState('');
   const [newDirIcon, setNewDirIcon] = useState('📁');
+  const [wsIntV2, setWsIntV2] = useState<any[]>([]);
+  const [newWiName, setNewWiName] = useState('');
+  const [newWiUrl, setNewWiUrl] = useState('');
+  const [aiCostAlerts, setAiCostAlerts] = useState<any[]>([]);
+  const [newCaThreshold, setNewCaThreshold] = useState(10);
+  const [sprintGoals, setSprintGoals] = useState<any[]>([]);
+  const [newSgSprint, setNewSgSprint] = useState('');
+  const [newSgGoal, setNewSgGoal] = useState('');
+  const [aChainResults, setAChainResults] = useState<any[]>([]);
+  const [wsAnnV2, setWsAnnV2] = useState<any[]>([]);
+  const [newAnTitle, setNewAnTitle] = useState('');
+  const [newAnBody, setNewAnBody] = useState('');
   const [aiModelLogs, setAiModelLogs] = useState<any[]>([]);
   const [aiModelStats, setAiModelStats] = useState<any[]>([]);
   const [wsGoalsV3, setWsGoalsV3] = useState<any[]>([]);
@@ -5512,6 +5524,11 @@ export default function ForgeApp() {
             { id:'growthlog', icon:'📈', label:'Growth Log' },
             { id:'hallucinchk', icon:'🔍', label:'Hallucin Check' },
             { id:'wsdirs', icon:'📂', label:'WS Dirs' },
+            { id:'wsintv2', icon:'🔗', label:'Integrations v2' },
+            { id:'aicostalerts', icon:'🚨', label:'Cost Alerts' },
+            { id:'sprintgoals', icon:'🏃', label:'Sprint Goals' },
+            { id:'achainresults', icon:'⛓️', label:'Chain Results' },
+            { id:'wsannv2', icon:'📢', label:'Announcements v2' },
             { id:'aimodellogs', icon:'📊', label:'Model Logs' },
             { id:'wsgoalsv3', icon:'🎯', label:'Goals v3' },
             { id:'threadnotesv3', icon:'📋', label:'Thread Notes v3' },
@@ -19583,7 +19600,124 @@ export default function ForgeApp() {
         )}
 
         {/* Workspace Health tab */}
+        {mainTab === 'wsintv2' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128279; Integrations v2</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Integration name..." value={newWiName} onChange={e=>setNewWiName(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="Endpoint URL" value={newWiUrl} onChange={e=>setNewWiUrl(e.target.value)} style={{flex:1,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newWiName)return;await fetch('/api/workspace-integrations-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({integration_name:newWiName,endpoint_url:newWiUrl})});const r=await fetch('/api/workspace-integrations-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsIntV2(await r.json());setNewWiName('');setNewWiUrl('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {wsIntV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-integrations-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsIntV2(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {wsIntV2.map((i:any)=>(
+                <div key={i.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{color:'var(--fg-text)',fontWeight:600}}>{i.integration_name}</div>
+                    {i.endpoint_url&&<div style={{fontSize:11,color:'var(--fg-text3)',marginTop:2}}>{i.endpoint_url.slice(0,60)}</div>}
+                  </div>
+                  <button onClick={async()=>{const r=await fetch('/api/workspace-integrations-v2/'+i.id+'/toggle',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const d=await r.json();setWsIntV2(p=>p.map((x:any)=>x.id===i.id?{...x,enabled:d.enabled?1:0}:x));}} style={{padding:'3px 10px',background:i.enabled?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:i.enabled?'#22c55e':'#ef4444',cursor:'pointer',fontSize:11,marginRight:4}}>{i.enabled?'On':'Off'}</button>
+                  <button onClick={async()=>{await fetch('/api/workspace-integrations-v2/'+i.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsIntV2(p=>p.filter((x:any)=>x.id!==i.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'aicostalerts' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128680; AI Cost Alerts</h2>
+              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                <input type="number" placeholder="Threshold ($)" value={newCaThreshold} onChange={e=>setNewCaThreshold(Number(e.target.value))} style={{width:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{await fetch('/api/ai-cost-alerts',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({threshold_usd:newCaThreshold})});const r=await fetch('/api/ai-cost-alerts',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCostAlerts(await r.json());}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Set Alert</button>
+                {aiCostAlerts.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-cost-alerts',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCostAlerts(await r.json());}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Load</button>}
+              </div>
+              {aiCostAlerts.map((a:any)=>(
+                <div key={a.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <div style={{color:'var(--fg-text)',fontWeight:600}}>${a.threshold_usd.toFixed(2)} threshold</div>
+                    <div style={{fontSize:11,color:a.triggered?'#ef4444':'#22c55e',marginTop:2}}>{a.triggered?'&#128680; Triggered':'&#10003; Active'}</div>
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/ai-cost-alerts/'+a.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCostAlerts(p=>p.filter((x:any)=>x.id!==a.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'sprintgoals' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127939; Sprint Goals</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Sprint name..." value={newSgSprint} onChange={e=>setNewSgSprint(e.target.value)} style={{width:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="Goal..." value={newSgGoal} onChange={e=>setNewSgGoal(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newSgSprint||!newSgGoal)return;await fetch('/api/user-sprint-goals',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({sprint_name:newSgSprint,goal_text:newSgGoal})});const r=await fetch('/api/user-sprint-goals',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSprintGoals(await r.json());setNewSgGoal('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {sprintGoals.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-sprint-goals',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSprintGoals(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {sprintGoals.map((g:any)=>(
+                <div key={g.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:10,color:'var(--fg-orange)',fontWeight:700,marginBottom:2}}>{g.sprint_name}</div>
+                    <div style={{color:'var(--fg-text)',textDecoration:g.completed?'line-through':'none'}}>{g.goal_text}</div>
+                  </div>
+                  {!g.completed&&<button onClick={async()=>{await fetch('/api/user-sprint-goals/'+g.id+'/complete',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSprintGoals(p=>p.map((x:any)=>x.id===g.id?{...x,completed:1}:x));}} style={{padding:'3px 10px',background:'rgba(34,197,94,0.15)',border:'none',borderRadius:5,color:'#22c55e',cursor:'pointer',fontSize:11,marginRight:4}}>Done</button>}
+                  <button onClick={async()=>{await fetch('/api/user-sprint-goals/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSprintGoals(p=>p.filter((x:any)=>x.id!==g.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'achainresults' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#9939;&#65039; AI Chain Results</h2>
+              <p style={{color:'var(--fg-text2)',fontSize:13,marginBottom:16}}>Results from multi-step AI chain executions.</p>
+              {aChainResults.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-chain-results',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAChainResults(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {aChainResults.map((c:any)=>(
+                <div key={c.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <span style={{color:'var(--fg-text)',fontWeight:700}}>{c.chain_name}</span>
+                    <span style={{fontSize:11,color:c.status==='done'?'#22c55e':c.status==='failed'?'#ef4444':'#f59e0b',fontWeight:600}}>{c.status}</span>
+                  </div>
+                  <div style={{fontSize:12,color:'var(--fg-text3)',marginBottom:6}}>{c.step_count} steps</div>
+                  {c.final_output&&<div style={{color:'var(--fg-text2)',fontSize:12,whiteSpace:'pre-wrap'}}>{c.final_output.slice(0,200)}</div>}
+                  <div style={{display:'flex',justifyContent:'flex-end',marginTop:8}}>
+                    <button onClick={async()=>{await fetch('/api/ai-chain-results/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAChainResults(p=>p.filter((x:any)=>x.id!==c.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'wsannv2' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128226; Announcements v2</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Title..." value={newAnTitle} onChange={e=>setNewAnTitle(e.target.value)} style={{flex:1,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                <textarea placeholder="Body..." value={newAnBody} onChange={e=>setNewAnBody(e.target.value)} rows={2} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newAnTitle)return;await fetch('/api/workspace-announcements-v2',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newAnTitle,body:newAnBody})});const r=await fetch('/api/workspace-announcements-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsAnnV2(await r.json());setNewAnTitle('');setNewAnBody('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Post</button>
+              </div>
+              {wsAnnV2.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-announcements-v2',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsAnnV2(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {wsAnnV2.map((a:any)=>(
+                <div key={a.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'14px 16px',border:'2px solid var(--fg-orange)',marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                    <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:15}}>{a.title}</div>
+                    <div style={{display:'flex',gap:6}}>
+                      <button onClick={async()=>{await fetch('/api/workspace-announcements-v2/'+a.id+'/dismiss',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsAnnV2(p=>p.filter((x:any)=>x.id!==a.id));}} style={{padding:'3px 10px',background:'rgba(99,102,241,0.15)',border:'none',borderRadius:5,color:'#6366f1',cursor:'pointer',fontSize:11}}>Dismiss</button>
+                      <button onClick={async()=>{await fetch('/api/workspace-announcements-v2/'+a.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsAnnV2(p=>p.filter((x:any)=>x.id!==a.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                  {a.body&&<div style={{color:'var(--fg-text2)',fontSize:13,marginTop:6}}>{a.body}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {mainTab === 'aimodellogs' && (
+
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:740, margin:'0 auto' }}>
               <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128202; AI Model Logs</h2>
