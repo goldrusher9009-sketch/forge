@@ -4859,11 +4859,6 @@ const deliverWebhook = async (userId: string, event: string, payload: any) => {
 };
 
 app.get('/api/webhooks', requireAuth, (req: AuthRequest, res) => { res.json({ success:true, data: db.prepare('SELECT id,url,events,enabled,created_at,last_delivery,last_status,delivery_count FROM webhooks WHERE user_id=?').all(req.user!.sub) }); });
-app.post('/api/webhooks', requireAuth, (req: AuthRequest, res) => {
-  const { url, events=['*'], secret } = req.body; if (!url) { res.status(400).json({ error:'url required' }); return; }
-  const id = uuidv4(); db.prepare('INSERT INTO webhooks (id,user_id,url,events,secret) VALUES (?,?,?,?,?)').run(id, req.user!.sub, url, JSON.stringify(events), secret||null);
-  res.json({ success:true, data:{ id,url,events } });
-});
 app.patch('/api/webhooks/:id', requireAuth, (req: AuthRequest, res) => {
   const { url,events,enabled } = req.body; const uid = req.user!.sub; const wid = req.params.id;
   if (url) db.prepare('UPDATE webhooks SET url=? WHERE id=? AND user_id=?').run(url,wid,uid);
@@ -5444,21 +5439,6 @@ app.get('/api/brain/daily-digest', requireAuth, (req: any, res: any) => {
 
 // ── Prompt critique ────────────────────────────────────────────────────────────
 // POST /api/prompts/critique
-app.post('/api/prompts/critique', requireAuth, (req: any, res: any) => {
-  try {
-    const { prompt } = req.body;
-    if (!prompt) return res.json({ score: 0, issues: [] });
-    const text = prompt as string;
-    let score = 100;
-    const issues: string[] = [];
-    if (text.length < 20) { score -= 30; issues.push('Too short — add more context'); }
-    if (!text.includes('?') && !text.toLowerCase().includes('please') && !text.toLowerCase().includes('write') && !text.toLowerCase().includes('explain') && !text.toLowerCase().includes('list') && !text.toLowerCase().includes('create')) { score -= 15; issues.push('Add a clear action verb or question'); }
-    if (text.length > 2000) { score -= 10; issues.push('Very long — consider breaking into steps'); }
-    if (!/[.?!]/.test(text)) { score -= 10; issues.push('Add punctuation for clarity'); }
-    if (text === text.toLowerCase()) { score -= 5; issues.push('Use capitalization for readability'); }
-    res.json({ score: Math.max(0, score), issues });
-  } catch (e: any) { res.status(500).json({ error: e.message }); }
-});
 
 
 // ── Writing coach ──────────────────────────────────────────────────────────────
@@ -7929,22 +7909,6 @@ app.delete('/api/workspace-goals/:id', authMiddleware, async (req: any, res) => 
 });
 
 // GET /api/threads/:id/insights — AI-ready thread insights (key topics, action items, questions)
-app.get('/api/threads/:id/insights', authMiddleware, async (req: any, res) => {
-  try {
-    const userId = req.user.userId;
-    const thread = db.prepare("SELECT * FROM threads WHERE id=? AND user_id=?").get(req.params.id, userId) as any;
-    if (!thread) return res.status(404).json({ error: 'Not found' });
-    const msgs = db.prepare("SELECT content, role FROM messages WHERE thread_id=? ORDER BY created_at").all(req.params.id) as any[];
-    // Extract questions (lines ending in ?)
-    const questions: string[] = [];
-    const actionItems: string[] = [];
-    msgs.forEach((m: any) => {
-      const lines = m.content.split('\n');
-      lines.forEach((line: string) => {
-        const trimmed = line.trim();
-        if (trimmed.endsWith('?') && trimmed.length > 10 && trimmed.length < 200) questions.push(trimmed);
-        if (/^[-*]\s+(?:todo|action|task|follow.?up|next step|will|should|need to|must)/i.test(trimmed)) actionItems.push(trimmed.replace(/^[-*]\s+/,''));
-      });
     });
     // Word frequency for topics
     const wordFreq: Record<string,number> = {};
@@ -11828,28 +11792,9 @@ app.delete('/api/workspace-tags-v2/:id', authenticateToken, (req: any, res: any)
 });
 
 // Insight Cards
-app.get('/api/insight-cards', authenticateToken, (req: any, res: any) => {
-  const { category, pinned } = req.query as any;
-  let q = 'SELECT * FROM insight_cards WHERE user_id=?';
-  const p: any[] = [req.user.id];
-  if (category) { q += ' AND category=?'; p.push(category); }
-  if (pinned === 'true') { q += ' AND pinned=1'; }
-  q += ' ORDER BY pinned DESC, created_at DESC';
-  res.json(db.prepare(q).all(...p));
-});
-app.post('/api/insight-cards', authenticateToken, (req: any, res: any) => {
-  const { title, insight, category, source } = req.body;
-  if (!title || !insight) return res.status(400).json({ error: 'title and insight required' });
-  const r = db.prepare('INSERT INTO insight_cards (user_id,title,insight,category,source) VALUES (?,?,?,?,?)').run(req.user.id, title, insight, category||'general', source||'manual');
-  res.json({ id: r.lastInsertRowid });
-});
 app.put('/api/insight-cards/:id/pin', authenticateToken, (req: any, res: any) => {
   const row = db.prepare('SELECT pinned FROM insight_cards WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
   db.prepare('UPDATE insight_cards SET pinned=? WHERE id=? AND user_id=?').run(row?.pinned ? 0 : 1, req.params.id, req.user.id);
-  res.json({ ok: true });
-});
-app.delete('/api/insight-cards/:id', authenticateToken, (req: any, res: any) => {
-  db.prepare('DELETE FROM insight_cards WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ ok: true });
 });
 
@@ -13082,22 +13027,9 @@ app.delete('/api/ai-task-queue/:id', requireAuth, (req: any, res: any) => {
 });
 
 // /api/workspace-glossary
-app.get('/api/workspace-glossary', requireAuth, (req: any, res: any) => {
-  res.json(db.prepare('SELECT * FROM workspace_glossary WHERE user_id=? ORDER BY term ASC').all(req.user.id));
-});
-app.post('/api/workspace-glossary', requireAuth, (req: any, res: any) => {
-  const { term, definition, category = 'general' } = req.body;
-  if (!term || !definition) return res.status(400).json({ error: 'term and definition required' });
-  const r = db.prepare('INSERT INTO workspace_glossary (user_id,term,definition,category) VALUES (?,?,?,?)').run(req.user.id, term, definition, category);
-  res.json({ id: r.lastInsertRowid, term, definition, category });
-});
 app.put('/api/workspace-glossary/:id', requireAuth, (req: any, res: any) => {
   const { definition } = req.body;
   db.prepare('UPDATE workspace_glossary SET definition=? WHERE id=? AND user_id=?').run(definition || '', req.params.id, req.user.id);
-  res.json({ ok: true });
-});
-app.delete('/api/workspace-glossary/:id', requireAuth, (req: any, res: any) => {
-  db.prepare('DELETE FROM workspace_glossary WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ ok: true });
 });
 
@@ -13464,9 +13396,6 @@ app.delete('/api/thread-mentions/:id', requireAuth, (req: any, res: any) => {
 });
 
 // User Preferences V2
-app.get('/api/user-preferences-v2', requireAuth, (req: any, res: any) => {
-  res.json(db.prepare('SELECT * FROM user_preferences_v2 WHERE user_id=? ORDER BY category, pref_key').all(req.user.id));
-});
 app.post('/api/user-preferences-v2', requireAuth, (req: any, res: any) => {
   const { pref_key, pref_value, category } = req.body;
   db.prepare('INSERT INTO user_preferences_v2 (user_id,pref_key,pref_value,category) VALUES (?,?,?,?) ON CONFLICT(user_id,pref_key) DO UPDATE SET pref_value=excluded.pref_value, category=excluded.category').run(req.user.id, pref_key, pref_value, category||'general');
@@ -17391,20 +17320,6 @@ db.exec(`CREATE TABLE IF NOT EXISTS workspace_changelog (
   author_id INTEGER,
   released_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`);
-app.get('/api/workspace-changelog', authMiddleware, (req: any, res: any) => {
-  const rows = db.prepare('SELECT * FROM workspace_changelog ORDER BY released_at DESC').all();
-  res.json(rows);
-});
-app.post('/api/workspace-changelog', authMiddleware, (req: any, res: any) => {
-  const { version, change_type, summary, details } = req.body;
-  if (!version || !summary) return res.status(400).json({ error: 'version+summary required' });
-  const r = db.prepare('INSERT INTO workspace_changelog (version,change_type,summary,details,author_id) VALUES (?,?,?,?,?)').run(version, change_type || 'feature', summary, details || null, req.user.id);
-  res.json({ id: r.lastInsertRowid, version, summary });
-});
-app.delete('/api/workspace-changelog/:id', authMiddleware, (req: any, res: any) => {
-  db.prepare('DELETE FROM workspace_changelog WHERE id=?').run(req.params.id);
-  res.json({ ok: true });
-});
 
 // B88-5: user_writing_goals
 db.exec(`CREATE TABLE IF NOT EXISTS user_writing_goals (
@@ -18130,38 +18045,10 @@ app.delete('/api/user-learning-paths/:id', requireAuth, (req: any, res: any) => 
 });
 
 // workspace_glossary
-app.get('/api/workspace-glossary', requireAuth, (req: any, res: any) => {
-  const wsId = db.prepare('SELECT workspace_id FROM users WHERE id=?').get(req.user.id) as any;
-  res.json(db.prepare('SELECT * FROM workspace_glossary WHERE workspace_id=? ORDER BY term').all(wsId?.workspace_id || req.user.id));
-});
-app.post('/api/workspace-glossary', requireAuth, (req: any, res: any) => {
-  const { term, definition, category='general' } = req.body;
-  if (!term || !definition) return res.status(400).json({ error: 'term and definition required' });
-  const wsId = db.prepare('SELECT workspace_id FROM users WHERE id=?').get(req.user.id) as any;
-  const r = db.prepare('INSERT INTO workspace_glossary (workspace_id,term,definition,category,added_by) VALUES (?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, term, definition, category, req.user.id);
-  res.json(db.prepare('SELECT * FROM workspace_glossary WHERE id=?').get(r.lastInsertRowid));
-});
-app.delete('/api/workspace-glossary/:id', requireAuth, (req: any, res: any) => {
-  db.prepare('DELETE FROM workspace_glossary WHERE id=?').run(req.params.id);
-  res.json({ ok: true });
-});
 
 // ai_draft_history
-app.get('/api/ai-draft-history', requireAuth, (req: any, res: any) => {
-  res.json(db.prepare('SELECT * FROM ai_draft_history WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id));
-});
-app.post('/api/ai-draft-history', requireAuth, (req: any, res: any) => {
-  const { content, draft_type='message', context='', thread_id=null } = req.body;
-  if (!content) return res.status(400).json({ error: 'content required' });
-  const r = db.prepare('INSERT INTO ai_draft_history (user_id,content,draft_type,context,thread_id) VALUES (?,?,?,?,?)').run(req.user.id, content, draft_type, context, thread_id);
-  res.json(db.prepare('SELECT * FROM ai_draft_history WHERE id=?').get(r.lastInsertRowid));
-});
 app.patch('/api/ai-draft-history/:id/use', requireAuth, (req: any, res: any) => {
   db.prepare('UPDATE ai_draft_history SET used=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
-  res.json({ ok: true });
-});
-app.delete('/api/ai-draft-history/:id', requireAuth, (req: any, res: any) => {
-  db.prepare('DELETE FROM ai_draft_history WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ ok: true });
 });
 
@@ -20332,16 +20219,6 @@ app.patch('/api/bucket-list/:id/complete', requireAuth, (req: any, res) => {
 });
 
 // Dependency Map
-app.get('/api/dependency-map', requireAuth, (req: any, res) => {
-  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
-  res.json(db.prepare('SELECT * FROM workspace_dependency_map WHERE workspace_id=? ORDER BY service_name').all(wsId?.workspace_id || req.user.id));
-});
-app.post('/api/dependency-map', requireAuth, (req: any, res) => {
-  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
-  const { service_name, depends_on, version, env, health_url, status } = req.body;
-  const r = db.prepare('INSERT INTO workspace_dependency_map (workspace_id,service_name,depends_on,version,env,health_url,status) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, service_name, typeof depends_on === 'string' ? depends_on : JSON.stringify(depends_on||[]), version, env||'production', health_url, status||'healthy');
-  res.json(db.prepare('SELECT * FROM workspace_dependency_map WHERE id=?').get(r.lastInsertRowid));
-});
 
 // ─── End Batch 109 ──────────────────────────────────────────────────────────
 
@@ -20403,14 +20280,6 @@ db.exec(`
 `);
 
 // Reading Notes
-app.get('/api/reading-notes', requireAuth, (req: any, res) => {
-  res.json(db.prepare('SELECT * FROM user_reading_notes WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
-});
-app.post('/api/reading-notes', requireAuth, (req: any, res) => {
-  const { source_title, source_type, note, page_ref, highlight, tags } = req.body;
-  const r = db.prepare('INSERT INTO user_reading_notes (user_id,source_title,source_type,note,page_ref,highlight,tags) VALUES (?,?,?,?,?,?,?)').run(req.user.id, source_title, source_type||'book', note, page_ref, highlight, typeof tags==='string'?tags:JSON.stringify(tags||[]));
-  res.json(db.prepare('SELECT * FROM user_reading_notes WHERE id=?').get(r.lastInsertRowid));
-});
 
 // Feature Flags
 app.get('/api/feature-flags', requireAuth, (req: any, res) => {
@@ -20453,18 +20322,6 @@ app.post('/api/gratitude-log', requireAuth, (req: any, res) => {
 });
 
 // SLA Tracker
-app.get('/api/sla-tracker', requireAuth, (req: any, res) => {
-  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
-  res.json(db.prepare('SELECT * FROM workspace_sla_tracker WHERE workspace_id=? ORDER BY actual_uptime_pct ASC').all(wsId?.workspace_id || req.user.id));
-});
-app.post('/api/sla-tracker', requireAuth, (req: any, res) => {
-  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
-  const { service_name, sla_target_pct, actual_uptime_pct, incidents, period } = req.body;
-  const target = sla_target_pct||99.9; const actual = actual_uptime_pct||100;
-  const status = actual >= target ? 'meeting' : 'breached';
-  const r = db.prepare('INSERT INTO workspace_sla_tracker (workspace_id,service_name,sla_target_pct,actual_uptime_pct,incidents,period,status) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, service_name, target, actual, incidents||0, period||'monthly', status);
-  res.json(db.prepare('SELECT * FROM workspace_sla_tracker WHERE id=?').get(r.lastInsertRowid));
-});
 
 // ─── End Batch 110 ──────────────────────────────────────────────────────────
 
@@ -21183,14 +21040,6 @@ db.exec(`
 `);
 
 // Pomodoro Log
-app.get('/api/pomodoro', requireAuth, (req: any, res) => {
-  res.json(db.prepare('SELECT * FROM user_pomodoro_log WHERE user_id=? ORDER BY started_at DESC LIMIT 50').all(req.user.id));
-});
-app.post('/api/pomodoro', requireAuth, (req: any, res) => {
-  const { task_label, duration_min, completed, notes } = req.body;
-  const r = db.prepare('INSERT INTO user_pomodoro_log (user_id,task_label,duration_min,completed,notes) VALUES (?,?,?,?,?)').run(req.user.id, task_label, duration_min||25, completed!==false?1:0, notes);
-  res.json(db.prepare('SELECT * FROM user_pomodoro_log WHERE id=?').get(r.lastInsertRowid));
-});
 
 // Design Tokens
 app.get('/api/design-tokens', requireAuth, (req: any, res) => {
@@ -21688,16 +21537,6 @@ app.post('/api/travel-plans', requireAuth, (req: any, res) => {
 });
 
 // Release Notes
-app.get('/api/release-notes', requireAuth, (req: any, res) => {
-  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
-  res.json(db.prepare('SELECT * FROM workspace_release_notes WHERE workspace_id=? ORDER BY release_date DESC').all(wsId?.workspace_id || req.user.id));
-});
-app.post('/api/release-notes', requireAuth, (req: any, res) => {
-  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
-  const { version, release_date, highlights, bug_fixes, breaking_changes } = req.body;
-  const r = db.prepare('INSERT INTO workspace_release_notes (workspace_id,version,release_date,highlights,bug_fixes,breaking_changes,author_id) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, version, release_date, highlights, bug_fixes, breaking_changes, req.user.id);
-  res.json(db.prepare('SELECT * FROM workspace_release_notes WHERE id=?').get(r.lastInsertRowid));
-});
 
 // FAQ Builder
 app.get('/api/faq', requireAuth, (req: any, res) => {
@@ -22434,19 +22273,6 @@ db.exec(`CREATE TABLE IF NOT EXISTS user_reading_notes (
   tags TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 )`);
-app.get('/api/reading-notes', requireAuth, (req: AuthRequest, res: Response) => {
-  const { book } = req.query;
-  let q = 'SELECT * FROM user_reading_notes WHERE user_id=?';
-  const params: any[] = [req.user!.id];
-  if (book) { q += ' AND book_title LIKE ?'; params.push(`%${book}%`); }
-  q += ' ORDER BY id DESC LIMIT 100';
-  res.json(db.prepare(q).all(...params));
-});
-app.post('/api/reading-notes', requireAuth, (req: AuthRequest, res: Response) => {
-  const { book_title, author, chapter, note_text, page_number, highlight, tags } = req.body;
-  const r = db.prepare('INSERT INTO user_reading_notes (user_id,book_title,author,chapter,note_text,page_number,highlight,tags) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, book_title||'', author||'', chapter||'', note_text||'', page_number||null, highlight||'', tags||'');
-  res.json({ id: r.lastInsertRowid });
-});
 
 // workspace_feature_flags
 db.exec(`CREATE TABLE IF NOT EXISTS workspace_feature_flags (
@@ -22592,20 +22418,6 @@ db.exec(`CREATE TABLE IF NOT EXISTS workspace_sla_tracker (
   last_checked TEXT DEFAULT (datetime('now')),
   created_at TEXT DEFAULT (datetime('now'))
 )`);
-app.get('/api/sla-tracker', requireAuth, (req: AuthRequest, res: Response) => {
-  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
-  if (!ws) return res.json([]);
-  const rows = db.prepare('SELECT * FROM workspace_sla_tracker WHERE workspace_id=? ORDER BY service_name').all(ws.workspace_id);
-  res.json(rows);
-});
-app.post('/api/sla-tracker', requireAuth, (req: AuthRequest, res: Response) => {
-  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
-  if (!ws) return res.status(400).json({ error: 'No workspace' });
-  const { service_name, sla_metric, target_value, current_value, unit, period } = req.body;
-  const status = current_value !== undefined ? (current_value >= target_value ? 'met' : 'breached') : 'unknown';
-  const r = db.prepare('INSERT INTO workspace_sla_tracker (workspace_id,service_name,sla_metric,target_value,current_value,unit,period,status) VALUES (?,?,?,?,?,?,?,?)').run(ws.workspace_id, service_name||'', sla_metric||'', target_value||0, current_value||null, unit||'%', period||'monthly', status);
-  res.json({ id: r.lastInsertRowid, status });
-});
 
 // ── B128 ──────────────────────────────────────────────────────────────────────
 
@@ -22916,19 +22728,6 @@ db.exec(`CREATE TABLE IF NOT EXISTS workspace_changelog (
   breaking_change INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
 )`);
-app.get('/api/workspace-changelog', requireAuth, (req: AuthRequest, res: Response) => {
-  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
-  if (!ws) return res.json([]);
-  const rows = db.prepare('SELECT * FROM workspace_changelog WHERE workspace_id=? ORDER BY release_date DESC, id DESC LIMIT 100').all(ws.workspace_id);
-  res.json(rows);
-});
-app.post('/api/workspace-changelog', requireAuth, (req: AuthRequest, res: Response) => {
-  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
-  if (!ws) return res.status(400).json({ error: 'No workspace' });
-  const { version, release_date, change_type, title, description, author, breaking_change } = req.body;
-  const r = db.prepare('INSERT INTO workspace_changelog (workspace_id,version,release_date,change_type,title,description,author,breaking_change) VALUES (?,?,?,?,?,?,?,?)').run(ws.workspace_id, version||'1.0.0', release_date||new Date().toISOString().slice(0,10), change_type||'feature', title||'', description||'', author||'', breaking_change?1:0);
-  res.json({ id: r.lastInsertRowid });
-});
 
 // ai_meeting_agenda_builder
 db.exec(`CREATE TABLE IF NOT EXISTS ai_meeting_agendas (
@@ -23431,5 +23230,147 @@ app.post('/api/tech-debt', requireAuth, (req: AuthRequest, res: Response) => {
   if (!ws) return res.status(400).json({ error: 'No workspace' });
   const { debt_title, description, area, severity, effort_days, impact, owner, status } = req.body;
   const r = db.prepare('INSERT INTO workspace_technical_debt (workspace_id,debt_title,description,area,severity,effort_days,impact,owner,status) VALUES (?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, debt_title||'', description||'', area||'backend', severity||'medium', effort_days||1, impact||'', owner||'', status||'open');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ── B134 ──────────────────────────────────────────────────────────────────────
+
+// user_daily_intentions
+db.exec(`CREATE TABLE IF NOT EXISTS user_daily_intentions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  intention_date TEXT NOT NULL DEFAULT (date('now')),
+  top_intention TEXT NOT NULL,
+  supporting_tasks TEXT,
+  word_of_the_day TEXT,
+  energy_level INTEGER DEFAULT 5 CHECK(energy_level BETWEEN 1 AND 10),
+  evening_reflection TEXT,
+  completed INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(user_id, intention_date)
+)`);
+app.get('/api/daily-intentions', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_daily_intentions WHERE user_id=? ORDER BY intention_date DESC LIMIT 30').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/daily-intentions', requireAuth, (req: AuthRequest, res: Response) => {
+  const { intention_date, top_intention, supporting_tasks, word_of_the_day, energy_level } = req.body;
+  const r = db.prepare('INSERT INTO user_daily_intentions (user_id,intention_date,top_intention,supporting_tasks,word_of_the_day,energy_level) VALUES (?,?,?,?,?,?) ON CONFLICT(user_id,intention_date) DO UPDATE SET top_intention=excluded.top_intention,supporting_tasks=excluded.supporting_tasks,energy_level=excluded.energy_level').run(req.user!.id, intention_date||new Date().toISOString().slice(0,10), top_intention||'', supporting_tasks||'', word_of_the_day||'', energy_level||5);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_retrospectives
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_retrospectives (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  retro_title TEXT NOT NULL,
+  sprint_or_period TEXT,
+  went_well TEXT,
+  to_improve TEXT,
+  action_items TEXT,
+  participants TEXT,
+  facilitator TEXT,
+  retro_date TEXT DEFAULT (date('now')),
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/retrospectives', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_retrospectives WHERE workspace_id=? ORDER BY retro_date DESC').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/retrospectives', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { retro_title, sprint_or_period, went_well, to_improve, action_items, participants, facilitator, retro_date } = req.body;
+  const r = db.prepare('INSERT INTO workspace_retrospectives (workspace_id,retro_title,sprint_or_period,went_well,to_improve,action_items,participants,facilitator,retro_date) VALUES (?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, retro_title||'', sprint_or_period||'', went_well||'', to_improve||'', action_items||'', participants||'', facilitator||'', retro_date||new Date().toISOString().slice(0,10));
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_swot_analysis
+db.exec(`CREATE TABLE IF NOT EXISTS ai_swot_analysis (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  subject TEXT NOT NULL,
+  subject_type TEXT DEFAULT 'business',
+  strengths TEXT,
+  weaknesses TEXT,
+  opportunities TEXT,
+  threats TEXT,
+  generated_summary TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/swot', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT id,subject,subject_type,created_at FROM ai_swot_analysis WHERE user_id=? ORDER BY id DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/swot', requireAuth, (req: AuthRequest, res: Response) => {
+  const { subject, subject_type, strengths, weaknesses, opportunities, threats } = req.body;
+  const generated_summary = `## SWOT: ${subject||'Subject'}\n\n**Strengths:** ${strengths||'—'}\n\n**Weaknesses:** ${weaknesses||'—'}\n\n**Opportunities:** ${opportunities||'—'}\n\n**Threats:** ${threats||'—'}`;
+  const r = db.prepare('INSERT INTO ai_swot_analysis (user_id,subject,subject_type,strengths,weaknesses,opportunities,threats,generated_summary) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, subject||'', subject_type||'business', strengths||'', weaknesses||'', opportunities||'', threats||'', generated_summary);
+  res.json({ id: r.lastInsertRowid, generated_summary });
+});
+app.get('/api/swot/:id', requireAuth, (req: AuthRequest, res: Response) => {
+  const row = db.prepare('SELECT * FROM ai_swot_analysis WHERE id=? AND user_id=?').get(Number(req.params.id), req.user!.id);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+  res.json(row);
+});
+
+// user_savings_tracker
+db.exec(`CREATE TABLE IF NOT EXISTS user_savings_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  goal_name TEXT NOT NULL,
+  target_amount REAL NOT NULL DEFAULT 0,
+  current_amount REAL NOT NULL DEFAULT 0,
+  monthly_contribution REAL DEFAULT 0,
+  deadline TEXT,
+  category TEXT DEFAULT 'general',
+  icon TEXT DEFAULT '🏦',
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/savings', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare("SELECT *, ROUND((current_amount*100.0/NULLIF(target_amount,0)),1) as pct_complete FROM user_savings_tracker WHERE user_id=? ORDER BY deadline ASC NULLS LAST").all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/savings', requireAuth, (req: AuthRequest, res: Response) => {
+  const { goal_name, target_amount, current_amount, monthly_contribution, deadline, category, icon, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_savings_tracker (user_id,goal_name,target_amount,current_amount,monthly_contribution,deadline,category,icon,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user!.id, goal_name||'', target_amount||0, current_amount||0, monthly_contribution||0, deadline||null, category||'general', icon||'🏦', notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.patch('/api/savings/:id/deposit', requireAuth, (req: AuthRequest, res: Response) => {
+  const { amount } = req.body;
+  db.prepare('UPDATE user_savings_tracker SET current_amount=current_amount+? WHERE id=? AND user_id=?').run(amount||0, Number(req.params.id), req.user!.id);
+  res.json({ ok: true });
+});
+
+// workspace_competitive_analysis
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_competitive_analysis (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  competitor_name TEXT NOT NULL,
+  our_product TEXT DEFAULT 'Our Product',
+  category TEXT DEFAULT 'general',
+  competitor_strengths TEXT,
+  competitor_weaknesses TEXT,
+  our_advantages TEXT,
+  our_gaps TEXT,
+  pricing_comparison TEXT,
+  market_share TEXT,
+  last_updated TEXT DEFAULT (date('now')),
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/competitive-analysis', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_competitive_analysis WHERE workspace_id=? ORDER BY competitor_name').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/competitive-analysis', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { competitor_name, our_product, category, competitor_strengths, competitor_weaknesses, our_advantages, our_gaps, pricing_comparison, market_share } = req.body;
+  const r = db.prepare('INSERT INTO workspace_competitive_analysis (workspace_id,competitor_name,our_product,category,competitor_strengths,competitor_weaknesses,our_advantages,our_gaps,pricing_comparison,market_share) VALUES (?,?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, competitor_name||'', our_product||'Our Product', category||'general', competitor_strengths||'', competitor_weaknesses||'', our_advantages||'', our_gaps||'', pricing_comparison||'', market_share||'');
   res.json({ id: r.lastInsertRowid });
 });

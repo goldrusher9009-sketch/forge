@@ -1,5 +1,12 @@
 # Forge Version History
 
+## v7.21 (2026-06-17)
+- B133: Meditation Log, API Documentation, PRD Builder, Goal Milestones, Tech Debt Tracker
+
+## v7.20 (2026-06-17)
+- B131: Networking Log, Decision Log, Bio Writer, Subscriptions, Customer Personas
+- B132: Habits Tracker v3, Onboarding Docs, Email Sequences, Expenses, Product Roadmap
+
 ## v7.19 (2026-06-17)
 - B126: Focus Sessions, Architecture Diagrams, Value Propositions, Reading Notes, Feature Flags
 - B127: Debt Tracker, Postmortems, Job Descriptions, Investment Watchlist, SLA Tracker
