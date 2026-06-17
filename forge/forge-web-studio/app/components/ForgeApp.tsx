@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -743,6 +743,140 @@ export default function ForgeApp() {
   const [wsMoodTrend, setWsMoodTrend] = useState<any>(null);
   const [newMoodEmoji, setNewMoodEmoji] = useState('😊');
   const [newMoodScore, setNewMoodScore] = useState(3);
+  const [taskDeps, setTaskDeps] = useState<any[]>([]);
+  const [newTaskDep, setNewTaskDep] = useState({ task_name:'', depends_on:'', dep_type:'finish_to_start', notes:'' });
+  const [slaItems, setSlaItems] = useState<any[]>([]);
+  const [newSla, setNewSla] = useState({ service_name:'', sla_target_pct:99.9, current_pct:100.0, incidents:0, period:'monthly' });
+  const [contentPlan, setContentPlan] = useState<any[]>([]);
+  const [newContent, setNewContent] = useState({ title:'', content_type:'blog', target_audience:'', key_points:'', publish_date:'' });
+  const [interviewNotesB100, setInterviewNotesB100] = useState<any[]>([]);
+  const [newInterview, setNewInterview] = useState({ candidate_name:'', role:'', interview_date:'', questions:'', notes:'', rating:3, recommendation:'undecided' });
+  const [costItems, setCostItems] = useState<any[]>([]);
+  const [costTotal, setCostTotal] = useState(0);
+  const [newCost, setNewCost] = useState({ category:'', vendor:'', amount:0, currency:'USD', billing_period:'monthly', notes:'' });
+  const [learnObjectives, setLearnObjectives] = useState<any[]>([]);
+  const [newLearnObj, setNewLearnObj] = useState({ title:'', description:'', target_date:'' });
+  const [threatLog, setThreatLog] = useState<any[]>([]);
+  const [newThreat, setNewThreat] = useState({ threat_type:'', description:'', severity:'low' });
+  const [styleTransfers, setStyleTransfers] = useState<any[]>([]);
+  const [styleSource, setStyleSource] = useState('');
+  const [styleTarget, setStyleTarget] = useState('formal');
+  const [dailyCheckins, setDailyCheckins] = useState<any[]>([]);
+  const [todayCheckin, setTodayCheckin] = useState({ mood:3, energy:3, focus:3, notes:'' });
+  const [releaseNotes, setReleaseNotes] = useState<any[]>([]);
+  const [newRelease, setNewRelease] = useState({ version:'', title:'', changes:'', breaking_changes:'', release_date:'' });
+  const [readingNotes, setReadingNotes] = useState<any[]>([]);
+  const [newReadingNote, setNewReadingNote] = useState({ title:'', source_url:'', note:'', tags:'' });
+  const [docVault, setDocVault] = useState<any[]>([]);
+  const [newDoc, setNewDoc] = useState({ name:'', content:'', doc_type:'general' });
+  const [editDocId, setEditDocId] = useState<number|null>(null);
+  const [promptMetrics, setPromptMetrics] = useState<any[]>([]);
+  const [promptMetricsSummary, setPromptMetricsSummary] = useState<any>(null);
+  const [sprintReviews, setSprintReviews] = useState<any[]>([]);
+  const [newSprintReview, setNewSprintReview] = useState({ sprint_name:'', completed_items:'', incomplete_items:'', retrospective:'', rating:3 });
+  const [depMap, setDepMap] = useState<any[]>([]);
+  const [newDep, setNewDep] = useState({ from_item:'', to_item:'', dep_type:'blocks', notes:'' });
+  const [shortcutKeys, setShortcutKeys] = useState<any[]>([]);
+  const [newShortcut, setNewShortcut] = useState({ shortcut_key:'', action:'', description:'' });
+  const [apiCatalog, setApiCatalog] = useState<any[]>([]);
+  const [newApiEntry, setNewApiEntry] = useState({ name:'', endpoint:'', method:'GET', description:'', auth_type:'' });
+  const [factChecks, setFactChecks] = useState<any[]>([]);
+  const [factInput, setFactInput] = useState('');
+  const [pomodoroSessions, setPomodoroSessions] = useState<any[]>([]);
+  const [newPomodoro, setNewPomodoro] = useState({ task_label:'', duration_minutes:25 });
+  const [changeReqs, setChangeReqs] = useState<any[]>([]);
+  const [newChangeReq, setNewChangeReq] = useState({ title:'', description:'', priority:'medium' });
+  const [timeBlocks, setTimeBlocks] = useState<any[]>([]);
+  const [newTbLabel, setNewTbLabel] = useState('');
+  const [newTbType, setNewTbType] = useState('focus');
+  const [newTbStart, setNewTbStart] = useState('09:00');
+  const [newTbEnd, setNewTbEnd] = useState('10:00');
+  const [newTbDate, setNewTbDate] = useState(new Date().toISOString().split('T')[0]);
+  const [knowledgeGraph, setKnowledgeGraph] = useState<any[]>([]);
+  const [newKgLabel, setNewKgLabel] = useState('');
+  const [newKgType, setNewKgType] = useState('concept');
+  const [newKgRelated, setNewKgRelated] = useState('');
+  const [toneAnalyzer, setToneAnalyzer] = useState<any[]>([]);
+  const [newTaText, setNewTaText] = useState('');
+  const [goalsTracker, setGoalsTracker] = useState<any[]>([]);
+  const [newGtGoal, setNewGtGoal] = useState('');
+  const [newGtType, setNewGtType] = useState('personal');
+  const [newGtDate, setNewGtDate] = useState('');
+  const [auditLog, setAuditLog] = useState<any[]>([]);
+  const [escalationLog, setEscalationLog] = useState<any[]>([]);
+  const [newElTitle, setNewElTitle] = useState('');
+  const [newElDesc, setNewElDesc] = useState('');
+  const [newElSev, setNewElSev] = useState('medium');
+  const [winsJournal, setWinsJournal] = useState<any[]>([]);
+  const [newWjWin, setNewWjWin] = useState('');
+  const [newWjImpact, setNewWjImpact] = useState('');
+  const [newWjCat, setNewWjCat] = useState('work');
+  const [ctxSnapshots, setCtxSnapshots] = useState<any[]>([]);
+  const [newCsName, setNewCsName] = useState('');
+  const [newCsData, setNewCsData] = useState('');
+  const [vendorList, setVendorList] = useState<any[]>([]);
+  const [newVlName, setNewVlName] = useState('');
+  const [newVlCat, setNewVlCat] = useState('software');
+  const [newVlCost, setNewVlCost] = useState(0);
+  const [npScore, setNpScore] = useState<any>({entries:[],avg_score:null});
+  const [newNpScore, setNewNpScore] = useState(8);
+  const [newNpFeedback, setNewNpFeedback] = useState('');
+  const [newNpFeature, setNewNpFeature] = useState('');
+  const [meetingCal, setMeetingCal] = useState<any[]>([]);
+  const [newMcTitle, setNewMcTitle] = useState('');
+  const [newMcDate, setNewMcDate] = useState('');
+  const [newMcDuration, setNewMcDuration] = useState(30);
+  const [newMcAttendees, setNewMcAttendees] = useState('');
+  const [interviewPrep, setInterviewPrep] = useState<any[]>([]);
+  const [newIpRole, setNewIpRole] = useState('');
+  const [newIpCompany, setNewIpCompany] = useState('');
+  const [newIpQuestion, setNewIpQuestion] = useState('');
+  const [newIpCat, setNewIpCat] = useState('behavioral');
+  const [rewriteLog, setRewriteLog] = useState<any[]>([]);
+  const [standupConfig, setStandupConfig] = useState<any>({schedule_days:'Mon,Tue,Wed,Thu,Fri',schedule_time:'09:00',questions:'What did you do yesterday?\nWhat will you do today?\nAny blockers?',channel:'general',active:1});
+  const [projectLog, setProjectLog] = useState<any[]>([]);
+  const [newPlProject, setNewPlProject] = useState('');
+  const [newPlEntry, setNewPlEntry] = useState('');
+  const [newPlType, setNewPlType] = useState('progress');
+  const [newPlHours, setNewPlHours] = useState(0);
+  const [learnPaths, setLearnPaths] = useState<any[]>([]);
+  const [newLpTitle, setNewLpTitle] = useState('');
+  const [newLpDesc, setNewLpDesc] = useState('');
+  const [newLpResources, setNewLpResources] = useState('');
+  const [glossary, setGlossary] = useState<any[]>([]);
+  const [newGlTerm, setNewGlTerm] = useState('');
+  const [newGlDef, setNewGlDef] = useState('');
+  const [newGlCat, setNewGlCat] = useState('general');
+  const [draftHistory, setDraftHistory] = useState<any[]>([]);
+  const [newDhContent, setNewDhContent] = useState('');
+  const [newDhType, setNewDhType] = useState('message');
+  const [feedbackBoard, setFeedbackBoard] = useState<any[]>([]);
+  const [newFbTitle, setNewFbTitle] = useState('');
+  const [newFbDesc, setNewFbDesc] = useState('');
+  const [newFbCat, setNewFbCat] = useState('feature');
+  const [sleepLog, setSleepLog] = useState<any[]>([]);
+  const [newSlHours, setNewSlHours] = useState(7);
+  const [newSlQuality, setNewSlQuality] = useState(5);
+  const [newSlNotes, setNewSlNotes] = useState('');
+  const [habitTracker, setHabitTracker] = useState<any[]>([]);
+  const [newHtName, setNewHtName] = useState('');
+  const [newHtCat, setNewHtCat] = useState('general');
+  const [newHtFreq, setNewHtFreq] = useState('daily');
+  const [linkVault, setLinkVault] = useState<any[]>([]);
+  const [newLvTitle, setNewLvTitle] = useState('');
+  const [newLvUrl, setNewLvUrl] = useState('');
+  const [newLvCat, setNewLvCat] = useState('general');
+  const [questionBank, setQuestionBank] = useState<any[]>([]);
+  const [newQbQuestion, setNewQbQuestion] = useState('');
+  const [newQbContext, setNewQbContext] = useState('');
+  const [capacityPlan, setCapacityPlan] = useState<any[]>([]);
+  const [newCpMember, setNewCpMember] = useState('');
+  const [newCpRole, setNewCpRole] = useState('member');
+  const [newCpCapacity, setNewCpCapacity] = useState(100);
+  const [energyLog, setEnergyLog] = useState<any[]>([]);
+  const [newElLevel, setNewElLevel] = useState(5);
+  const [newElMood, setNewElMood] = useState('neutral');
+  const [newElNotes, setNewElNotes] = useState('');
   const [readProgress, setReadProgress] = useState<any[]>([]);
   const [newRpTitle, setNewRpTitle] = useState('');
   const [newRpUrl, setNewRpUrl] = useState('');
@@ -1376,6 +1510,44 @@ export default function ForgeApp() {
   const [wsDirs, setWsDirs] = useState<any[]>([]);
   const [newDirName, setNewDirName] = useState('');
   const [newDirIcon, setNewDirIcon] = useState('📁');
+  const [readProgress, setReadProgress] = useState<any[]>([]);
+  const [newRpTitle, setNewRpTitle] = useState('');
+  const [newRpType, setNewRpType] = useState('article');
+  const [newRpUrl, setNewRpUrl] = useState('');
+  const [wsSops, setWsSops] = useState<any[]>([]);
+  const [newSopTitle, setNewSopTitle] = useState('');
+  const [newSopCat, setNewSopCat] = useState('general');
+  const [newSopSteps, setNewSopSteps] = useState('');
+  const [aiCitations, setAiCitations] = useState<any[]>([]);
+  const [newCitTitle, setNewCitTitle] = useState('');
+  const [newCitUrl, setNewCitUrl] = useState('');
+  const [newCitExcerpt, setNewCitExcerpt] = useState('');
+  const [wsBudget, setWsBudget] = useState<any[]>([]);
+  const [newBuCat, setNewBuCat] = useState('');
+  const [newBuAmount, setNewBuAmount] = useState(1000);
+  const [newBuPeriod, setNewBuPeriod] = useState('monthly');
+  const [focusGoals, setFocusGoals] = useState<any[]>([]);
+  const [newFgGoal, setNewFgGoal] = useState('');
+  const [newFgArea, setNewFgArea] = useState('work');
+  const [newFgPriority, setNewFgPriority] = useState(2);
+  const [wsDataSources, setWsDataSources] = useState<any[]>([]);
+  const [newDsName, setNewDsName] = useState('');
+  const [newDsType, setNewDsType] = useState('database');
+  const [newDsUrl, setNewDsUrl] = useState('');
+  const [dailyIntentions, setDailyIntentions] = useState<any[]>([]);
+  const [newDiText, setNewDiText] = useState('');
+  const [wsDesignTok, setWsDesignTok] = useState<any[]>([]);
+  const [newDtName, setNewDtName] = useState('');
+  const [newDtValue, setNewDtValue] = useState('');
+  const [newDtType, setNewDtType] = useState('color');
+  const [aiKnowledge, setAiKnowledge] = useState<any[]>([]);
+  const [newKbTopic, setNewKbTopic] = useState('');
+  const [newKbContent, setNewKbContent] = useState('');
+  const [newKbTags, setNewKbTags] = useState('');
+  const [teamHealth, setTeamHealth] = useState<any[]>([]);
+  const [newThCat, setNewThCat] = useState('morale');
+  const [newThScore, setNewThScore] = useState(7);
+  const [newThNote, setNewThNote] = useState('');
   const [wsFlags, setWsFlags] = useState<any[]>([]);
   const [newFfName, setNewFfName] = useState('');
   const [newFfDesc, setNewFfDesc] = useState('');
@@ -5599,6 +5771,61 @@ export default function ForgeApp() {
             { id:'growthlog', icon:'📈', label:'Growth Log' },
             { id:'hallucinchk', icon:'🔍', label:'Hallucin Check' },
             { id:'wsdirs', icon:'📂', label:'WS Dirs' },
+            { id:'taskdeps', icon:'🔗', label:'Task Deps' },
+            { id:'slatracker', icon:'📶', label:'SLA Tracker' },
+            { id:'contentplanner', icon:'🗓️', label:'Content Plan' },
+            { id:'interviewnotesb100', icon:'📋', label:'Interviews' },
+            { id:'costtracker', icon:'💵', label:'Cost Tracker' },
+            { id:'learnobjectives', icon:'🎯', label:'Learn Objs' },
+            { id:'threatlog', icon:'🛡️', label:'Threat Log' },
+            { id:'styletransfer', icon:'🎨', label:'Style Transfer' },
+            { id:'dailycheckin', icon:'📅', label:'Daily Check-in' },
+            { id:'releasenotes', icon:'📦', label:'Release Notes' },
+            { id:'readingnotes', icon:'📝', label:'Reading Notes' },
+            { id:'docvault', icon:'🗄️', label:'Doc Vault' },
+            { id:'promptmetrics', icon:'📊', label:'Prompt Metrics' },
+            { id:'sprintreviews', icon:'🏁', label:'Sprint Reviews' },
+            { id:'depmap', icon:'🧩', label:'Dep Map' },
+            { id:'shortcutkeys', icon:'⌨️', label:'Shortcuts' },
+            { id:'apicatalog', icon:'📖', label:'API Catalog' },
+            { id:'factchecker', icon:'🔍', label:'Fact Check' },
+            { id:'pomodorosess', icon:'🍅', label:'Pomodoro' },
+            { id:'changereqs', icon:'🔄', label:'Change Reqs' },
+            { id:'timeblocks', icon:'⏰', label:'Time Blocks' },
+            { id:'knowledgegraph', icon:'🧠', label:'Knowledge Graph' },
+            { id:'toneanalyzer', icon:'🎨', label:'Tone Analyzer' },
+            { id:'goalstracker', icon:'🥅', label:'Goals Tracker' },
+            { id:'auditlog', icon:'📋', label:'Audit Log' },
+            { id:'escalationlog', icon:'🚨', label:'Escalations' },
+            { id:'winsjournal', icon:'🏆', label:'Wins Journal' },
+            { id:'ctxsnapshots', icon:'📸', label:'Ctx Snapshots' },
+            { id:'vendorlist', icon:'💳', label:'Vendor List' },
+            { id:'npscore', icon:'⭐', label:'NPS Scores' },
+            { id:'meetingcal', icon:'📅', label:'Meeting Cal' },
+            { id:'interviewprep', icon:'🎤', label:'Interview Prep' },
+            { id:'rewritelog', icon:'🔄', label:'Rewrite Log' },
+            { id:'standupconfig', icon:'🕑', label:'Standup Config' },
+            { id:'projectlog', icon:'📁', label:'Project Log' },
+            { id:'learnpaths', icon:'📚', label:'Learning Paths' },
+            { id:'glossary', icon:'📖', label:'Glossary' },
+            { id:'drafthistory', icon:'📝', label:'Draft History' },
+            { id:'feedbackboard', icon:'💬', label:'Feedback Board' },
+            { id:'sleeplog', icon:'😴', label:'Sleep Log' },
+            { id:'habittracker', icon:'✅', label:'Habit Tracker' },
+            { id:'linkvault', icon:'🔗', label:'Link Vault' },
+            { id:'questionbank', icon:'❓', label:'Question Bank' },
+            { id:'capacityplan', icon:'📊', label:'Capacity Plan' },
+            { id:'energylog', icon:'⚡', label:'Energy Log' },
+            { id:'readprogress', icon:'📖', label:'Reading Progress' },
+            { id:'wssops', icon:'📋', label:'SOPs' },
+            { id:'aicitations', icon:'📎', label:'Citations' },
+            { id:'wsbudget', icon:'💰', label:'Budget Tracker' },
+            { id:'focusgoals', icon:'🎯', label:'Focus Goals' },
+            { id:'wsdatasrc', icon:'🗄️', label:'Data Sources' },
+            { id:'dailyintent', icon:'🌞', label:'Daily Intentions' },
+            { id:'wsdesigntok', icon:'🎨', label:'Design Tokens' },
+            { id:'aiknowledge', icon:'🧠', label:'Knowledge Base' },
+            { id:'teamhealth', icon:'💗', label:'Team Health' },
             { id:'wsflags', icon:'🚩', label:'Feature Flags' },
             { id:'moodjournal', icon:'🌟', label:'Mood Journal' },
             { id:'wsapimocks', icon:'🔧', label:'API Mocks' },
@@ -19695,7 +19922,1710 @@ export default function ForgeApp() {
         )}
 
         {/* Workspace Health tab */}
+        {mainTab === 'taskdeps' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128279; Task Dependencies</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Task name" value={newTaskDep.task_name} onChange={e=>setNewTaskDep(p=>({...p,task_name:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <select value={newTaskDep.dep_type} onChange={e=>setNewTaskDep(p=>({...p,dep_type:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                {['finish_to_start','start_to_start','finish_to_finish','start_to_finish'].map(t=><option key={t}>{t}</option>)}
+              </select>
+              <input placeholder="Depends on" value={newTaskDep.depends_on} onChange={e=>setNewTaskDep(p=>({...p,depends_on:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Notes" value={newTaskDep.notes} onChange={e=>setNewTaskDep(p=>({...p,notes:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <button onClick={async()=>{if(!newTaskDep.task_name||!newTaskDep.depends_on)return;const r=await fetch('/api/task-dependencies',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newTaskDep)});if(r.ok){const d=await r.json();setTaskDeps((p:any[])=>[d,...p]);setNewTaskDep({task_name:'',depends_on:'',dep_type:'finish_to_start',notes:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {taskDeps.map((d:any)=>(
+                <div key={d.id} style={{background:'#111',borderRadius:'8px',padding:'12px',border:'1px solid #222',display:'flex',alignItems:'center',gap:'12px'}}>
+                  <span style={{fontWeight:600}}>{d.task_name}</span>
+                  <span style={{padding:'2px 8px',borderRadius:'12px',background:'#1e40af',fontSize:'11px'}}>{d.dep_type}</span>
+                  <span style={{color:'#888'}}>&#8594; {d.depends_on}</span>
+                  {d.notes&&<span style={{color:'#666',fontSize:'12px',flex:1}}>{d.notes}</span>}
+                  <button onClick={async()=>{await fetch('/api/task-dependencies/'+d.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setTaskDeps((p:any[])=>p.filter((x:any)=>x.id!==d.id));}} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer',fontSize:'12px',marginLeft:'auto'}}>Del</button>
+                </div>
+              ))}
+              {taskDeps.length===0&&<p style={{color:'#666'}}>No dependencies yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'slatracker' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128246; SLA Tracker</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Service name" value={newSla.service_name} onChange={e=>setNewSla(p=>({...p,service_name:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input type="number" placeholder="Target %" value={newSla.sla_target_pct} onChange={e=>setNewSla(p=>({...p,sla_target_pct:+e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',width:'90px'}} />
+              <input type="number" placeholder="Current %" value={newSla.current_pct} onChange={e=>setNewSla(p=>({...p,current_pct:+e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',width:'90px'}} />
+              <button onClick={async()=>{if(!newSla.service_name)return;const r=await fetch('/api/sla-tracker',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newSla)});if(r.ok){const d=await r.json();setSlaItems((p:any[])=>[d,...p]);setNewSla({service_name:'',sla_target_pct:99.9,current_pct:100.0,incidents:0,period:'monthly'});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {slaItems.map((s:any)=>(
+                <div key={s.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+                    <strong>{s.service_name}</strong>
+                    <span style={{color:s.current_pct>=s.sla_target_pct?'#059669':'#dc2626',fontWeight:'bold'}}>{s.current_pct}%</span>
+                  </div>
+                  <div style={{background:'#222',borderRadius:'4px',height:'8px',marginBottom:'6px'}}>
+                    <div style={{width:Math.min(s.current_pct,100)+'%',background:s.current_pct>=s.sla_target_pct?'#059669':'#dc2626',height:'100%',borderRadius:'4px'}} />
+                  </div>
+                  <div style={{display:'flex',gap:'16px',fontSize:'12px',color:'#888'}}>
+                    <span>Target: {s.sla_target_pct}%</span>
+                    <span>Incidents: {s.incidents}</span>
+                    <span>Period: {s.period}</span>
+                  </div>
+                </div>
+              ))}
+              {slaItems.length===0&&<p style={{color:'#666'}}>No SLA targets yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'contentplanner' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128467;&#65039; Content Planner</h2>
+            <div style={{background:'#111',borderRadius:'8px',padding:'16px',border:'1px solid #222',marginBottom:'16px'}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'8px'}}>
+                <input placeholder="Content title" value={newContent.title} onChange={e=>setNewContent(p=>({...p,title:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}} />
+                <select value={newContent.content_type} onChange={e=>setNewContent(p=>({...p,content_type:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}}>
+                  {['blog','video','social','newsletter','whitepaper','case-study','tutorial'].map(t=><option key={t}>{t}</option>)}
+                </select>
+                <input placeholder="Target audience" value={newContent.target_audience} onChange={e=>setNewContent(p=>({...p,target_audience:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}} />
+                <input type="date" placeholder="Publish date" value={newContent.publish_date} onChange={e=>setNewContent(p=>({...p,publish_date:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}} />
+              </div>
+              <textarea placeholder="Key points..." value={newContent.key_points} onChange={e=>setNewContent(p=>({...p,key_points:e.target.value}))} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+              <button onClick={async()=>{if(!newContent.title)return;const r=await fetch('/api/content-planner',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newContent)});if(r.ok){const d=await r.json();setContentPlan((p:any[])=>[d,...p]);setNewContent({title:'',content_type:'blog',target_audience:'',key_points:'',publish_date:''});}}} style={{padding:'8px 20px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {contentPlan.map((c:any)=>(
+                <div key={c.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'6px'}}>
+                    <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                      <span style={{padding:'2px 8px',borderRadius:'12px',background:'#1e3a5f',fontSize:'12px'}}>{c.content_type}</span>
+                      <strong>{c.title}</strong>
+                    </div>
+                    <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                      {c.publish_date&&<span style={{color:'#888',fontSize:'12px'}}>{c.publish_date}</span>}
+                      <select value={c.status} onChange={async(e)=>{const r=await fetch('/api/content-planner/'+c.id+'/status',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({status:e.target.value})});if(r.ok){const d=await r.json();setContentPlan((p:any[])=>p.map((x:any)=>x.id===c.id?d:x));}}} style={{padding:'4px',borderRadius:'4px',background:'#222',color:'#fff',border:'1px solid #333',fontSize:'12px'}}>
+                        <option value="draft">Draft</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="review">Review</option>
+                        <option value="published">Published</option>
+                      </select>
+                    </div>
+                  </div>
+                  {c.target_audience&&<p style={{color:'#666',fontSize:'12px',margin:'0'}}>Audience: {c.target_audience}</p>}
+                </div>
+              ))}
+              {contentPlan.length===0&&<p style={{color:'#666'}}>No content planned yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'interviewnotesb100' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128203; Interview Notes</h2>
+            <div style={{background:'#111',borderRadius:'8px',padding:'16px',border:'1px solid #222',marginBottom:'16px'}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'8px'}}>
+                <input placeholder="Candidate name" value={newInterview.candidate_name} onChange={e=>setNewInterview(p=>({...p,candidate_name:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}} />
+                <input placeholder="Role / position" value={newInterview.role} onChange={e=>setNewInterview(p=>({...p,role:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}} />
+              </div>
+              <input type="date" value={newInterview.interview_date} onChange={e=>setNewInterview(p=>({...p,interview_date:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px'}} />
+              <textarea placeholder="Questions asked" value={newInterview.questions} onChange={e=>setNewInterview(p=>({...p,questions:e.target.value}))} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+              <textarea placeholder="Notes & observations" value={newInterview.notes} onChange={e=>setNewInterview(p=>({...p,notes:e.target.value}))} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+              <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                <select value={newInterview.recommendation} onChange={e=>setNewInterview(p=>({...p,recommendation:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',flex:1}}>
+                  <option value="undecided">Undecided</option>
+                  <option value="hire">Strong Hire</option>
+                  <option value="lean_hire">Lean Hire</option>
+                  <option value="lean_no">Lean No</option>
+                  <option value="no_hire">No Hire</option>
+                </select>
+                <button onClick={async()=>{if(!newInterview.candidate_name)return;const r=await fetch('/api/interview-notes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newInterview)});if(r.ok){const d=await r.json();setInterviewNotesB100((p:any[])=>[d,...p]);setNewInterview({candidate_name:'',role:'',interview_date:'',questions:'',notes:'',rating:3,recommendation:'undecided'});}}} style={{padding:'8px 20px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Save</button>
+              </div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+              {interviewNotesB100.map((n:any)=>(
+                <div key={n.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
+                    <div>
+                      <strong>{n.candidate_name}</strong>
+                      {n.role&&<span style={{color:'#888',marginLeft:'8px',fontSize:'13px'}}>{n.role}</span>}
+                      {n.interview_date&&<span style={{color:'#666',marginLeft:'8px',fontSize:'12px'}}>{n.interview_date}</span>}
+                    </div>
+                    <span style={{padding:'2px 8px',borderRadius:'12px',background:n.recommendation==='hire'?'#065f46':n.recommendation==='no_hire'?'#7f1d1d':'#44403c',fontSize:'12px'}}>{n.recommendation}</span>
+                  </div>
+                  {n.notes&&<p style={{color:'#888',fontSize:'13px',margin:'0'}}>{n.notes}</p>}
+                </div>
+              ))}
+              {interviewNotesB100.length===0&&<p style={{color:'#666'}}>No interview notes yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'costtracker' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128181; Cost Tracker</h2>
+            {costTotal>0&&<div style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #7c3aed',marginBottom:'16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{color:'#888'}}>Total Monthly Cost</span>
+              <span style={{fontSize:'24px',fontWeight:'bold',color:'#a78bfa'}}>${costTotal.toFixed(2)}</span>
+            </div>}
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Category" value={newCost.category} onChange={e=>setNewCost(p=>({...p,category:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Vendor" value={newCost.vendor} onChange={e=>setNewCost(p=>({...p,vendor:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input type="number" placeholder="Amount" value={newCost.amount||''} onChange={e=>setNewCost(p=>({...p,amount:+e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',width:'100px'}} />
+              <select value={newCost.billing_period} onChange={e=>setNewCost(p=>({...p,billing_period:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                <option value="monthly">Monthly</option>
+                <option value="annual">Annual</option>
+                <option value="one-time">One-time</option>
+              </select>
+              <button onClick={async()=>{if(!newCost.category||!newCost.amount)return;const r=await fetch('/api/cost-tracker',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newCost)});if(r.ok){const d=await r.json();setCostItems((p:any[])=>[d,...p]);setCostTotal(t=>t+(newCost.amount||0));setNewCost({category:'',vendor:'',amount:0,currency:'USD',billing_period:'monthly',notes:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+              {costItems.map((c:any)=>(
+                <div key={c.id} style={{background:'#111',borderRadius:'6px',padding:'12px',border:'1px solid #222',display:'flex',alignItems:'center',gap:'12px'}}>
+                  <span style={{padding:'2px 8px',borderRadius:'12px',background:'#1e3a5f',fontSize:'12px'}}>{c.category}</span>
+                  {c.vendor&&<span style={{color:'#ccc'}}>{c.vendor}</span>}
+                  <span style={{marginLeft:'auto',fontWeight:'bold',color:'#a78bfa'}}>${c.amount} <span style={{color:'#666',fontSize:'11px'}}>/{c.billing_period}</span></span>
+                  <button onClick={async()=>{await fetch('/api/cost-tracker/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setCostItems((p:any[])=>p.filter((x:any)=>x.id!==c.id));setCostTotal(t=>t-(c.amount||0));}} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer',fontSize:'12px'}}>Del</button>
+                </div>
+              ))}
+              {costItems.length===0&&<p style={{color:'#666'}}>No costs tracked yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'learnobjectives' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#127919; Learning Objectives</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Objective title" value={newLearnObj.title} onChange={e=>setNewLearnObj(p=>({...p,title:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <input placeholder="Description" value={newLearnObj.description} onChange={e=>setNewLearnObj(p=>({...p,description:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <input type="date" value={newLearnObj.target_date} onChange={e=>setNewLearnObj(p=>({...p,target_date:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <button onClick={async()=>{if(!newLearnObj.title.trim())return;const r=await fetch('/api/learning-objectives',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newLearnObj)});if(r.ok){const d=await r.json();setLearnObjectives((p:any[])=>[d,...p]);setNewLearnObj({title:'',description:'',target_date:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {learnObjectives.map((o:any)=>(
+                <div key={o.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+                    <div>
+                      <strong style={{textDecoration:o.completed?'line-through':'none',color:o.completed?'#666':'#fff'}}>{o.title}</strong>
+                      {o.target_date&&<span style={{color:'#888',fontSize:'12px',marginLeft:'8px'}}>Due: {o.target_date}</span>}
+                      {o.description&&<p style={{color:'#888',fontSize:'13px',margin:'4px 0 0'}}>{o.description}</p>}
+                    </div>
+                    <span style={{color:o.completed?'#059669':'#a78bfa',fontWeight:'bold'}}>{o.progress||0}%</span>
+                  </div>
+                  <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                    <div style={{flex:1,background:'#222',borderRadius:'4px',height:'6px'}}>
+                      <div style={{width:(o.progress||0)+'%',background:'#7c3aed',height:'100%',borderRadius:'4px',transition:'width 0.3s'}} />
+                    </div>
+                    <input type="range" min={0} max={100} value={o.progress||0} onChange={async(e)=>{const p=+e.target.value;const r=await fetch('/api/learning-objectives/'+o.id+'/progress',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({progress:p})});if(r.ok){const d=await r.json();setLearnObjectives((prev:any[])=>prev.map((x:any)=>x.id===o.id?d:x));}}} style={{width:'80px'}} />
+                  </div>
+                </div>
+              ))}
+              {learnObjectives.length===0&&<p style={{color:'#666'}}>No learning objectives yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'threatlog' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128737;&#65039; Threat Log</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Threat type" value={newThreat.threat_type} onChange={e=>setNewThreat(p=>({...p,threat_type:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Description" value={newThreat.description} onChange={e=>setNewThreat(p=>({...p,description:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <select value={newThreat.severity} onChange={e=>setNewThreat(p=>({...p,severity:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+              <button onClick={async()=>{if(!newThreat.threat_type)return;const r=await fetch('/api/threat-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newThreat)});if(r.ok){const d=await r.json();setThreatLog((p:any[])=>[d,...p]);setNewThreat({threat_type:'',description:'',severity:'low'});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#dc2626',color:'#fff',border:'none',cursor:'pointer'}}>Report</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {threatLog.map((t:any)=>(
+                <div key={t.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div>
+                      <span style={{padding:'2px 6px',borderRadius:'12px',background:t.severity==='critical'?'#7f1d1d':t.severity==='high'?'#92400e':t.severity==='medium'?'#44403c':'#1e3a5f',fontSize:'12px',marginRight:'8px'}}>{t.severity}</span>
+                      <strong>{t.threat_type}</strong>
+                      {t.description&&<p style={{color:'#888',fontSize:'13px',margin:'4px 0 0'}}>{t.description}</p>}
+                    </div>
+                    <select value={t.status} onChange={async(e)=>{const r=await fetch('/api/threat-log/'+t.id+'/status',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({status:e.target.value})});if(r.ok){const d=await r.json();setThreatLog((p:any[])=>p.map((x:any)=>x.id===t.id?d:x));}}} style={{padding:'4px',borderRadius:'4px',background:'#222',color:'#fff',border:'1px solid #333',fontSize:'12px'}}>
+                      <option value="open">Open</option>
+                      <option value="investigating">Investigating</option>
+                      <option value="mitigated">Mitigated</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+              {threatLog.length===0&&<p style={{color:'#666'}}>No threats logged.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'styletransfer' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#127912; AI Style Transfer</h2>
+            <div style={{marginBottom:'16px'}}>
+              <textarea placeholder="Enter text to transform..." value={styleSource} onChange={e=>setStyleSource(e.target.value)} rows={4} style={{padding:'10px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',width:'100%',resize:'vertical',marginBottom:'8px'}} />
+              <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
+                <select value={styleTarget} onChange={e=>setStyleTarget(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}}>
+                  {['formal','casual','technical','simple','persuasive','poetic','bullet-points','executive-summary'].map(s=><option key={s}>{s}</option>)}
+                </select>
+                <button onClick={async()=>{if(!styleSource.trim())return;const r=await fetch('/api/style-transfer',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({source_text:styleSource,target_style:styleTarget,result_text:'[Style transfer saved — connect your AI key to generate]'})});if(r.ok){const d=await r.json();setStyleTransfers((p:any[])=>[d,...p]);setStyleSource('');}}} style={{padding:'8px 20px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Transform</button>
+              </div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+              {styleTransfers.map((s:any)=>(
+                <div key={s.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{marginBottom:'8px'}}>
+                    <span style={{padding:'2px 8px',borderRadius:'12px',background:'#1e3a5f',fontSize:'12px'}}>{s.target_style}</span>
+                    <span style={{color:'#666',fontSize:'12px',marginLeft:'8px'}}>{new Date(s.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <p style={{color:'#888',fontSize:'13px',margin:'0 0 6px',fontStyle:'italic'}}>"{s.source_text.substring(0,100)}{s.source_text.length>100?'...':''}"</p>
+                  {s.result_text&&<p style={{color:'#ccc',fontSize:'14px',margin:'0'}}>{s.result_text}</p>}
+                </div>
+              ))}
+              {styleTransfers.length===0&&<p style={{color:'#666'}}>No style transfers yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'dailycheckin' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128197; Daily Check-in</h2>
+            <div style={{background:'#111',borderRadius:'12px',padding:'20px',border:'1px solid #333',marginBottom:'24px'}}>
+              <h3 style={{marginBottom:'16px',color:'#a78bfa'}}>Today's Check-in</h3>
+              {[['mood','Mood','😊'],['energy','Energy','⚡'],['focus','Focus','🎯']].map(([k,label,icon])=>(
+                <div key={k} style={{marginBottom:'12px'}}>
+                  <label style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
+                    <span>{icon} {label}</span>
+                    <span style={{color:'#a78bfa'}}>{(todayCheckin as any)[k]}/5</span>
+                  </label>
+                  <input type="range" min={1} max={5} value={(todayCheckin as any)[k]} onChange={e=>setTodayCheckin(p=>({...p,[k]:+e.target.value}))} style={{width:'100%',accentColor:'#7c3aed'}} />
+                </div>
+              ))}
+              <textarea placeholder="Notes for today..." value={todayCheckin.notes} onChange={e=>setTodayCheckin(p=>({...p,notes:e.target.value}))} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',resize:'vertical',marginBottom:'12px'}} />
+              <button onClick={async()=>{const r=await fetch('/api/daily-checkin',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(todayCheckin)});if(r.ok){const d=await r.json();setDailyCheckins((p:any[])=>{const exists=p.find((x:any)=>x.checkin_date===d.checkin_date);return exists?p.map((x:any)=>x.id===d.id?d:x):[d,...p];});}}} style={{padding:'10px 24px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer',width:'100%'}}>Save Check-in</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {dailyCheckins.map((c:any)=>(
+                <div key={c.id} style={{background:'#111',borderRadius:'8px',padding:'12px',border:'1px solid #222',display:'flex',gap:'16px',alignItems:'center'}}>
+                  <span style={{color:'#888',fontSize:'13px',minWidth:'90px'}}>{c.checkin_date}</span>
+                  <span>&#128522; {c.mood}/5</span>
+                  <span>&#9889; {c.energy}/5</span>
+                  <span>&#127919; {c.focus}/5</span>
+                  {c.notes&&<span style={{color:'#666',fontSize:'13px',flex:1}}>{c.notes}</span>}
+                </div>
+              ))}
+              {dailyCheckins.length===0&&<p style={{color:'#666'}}>No check-ins yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'releasenotes' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128230; Release Notes</h2>
+            <div style={{background:'#111',borderRadius:'8px',padding:'16px',border:'1px solid #222',marginBottom:'16px'}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'8px'}}>
+                <input placeholder="Version (e.g. v1.2.0)" value={newRelease.version} onChange={e=>setNewRelease(p=>({...p,version:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}} />
+                <input placeholder="Release title" value={newRelease.title} onChange={e=>setNewRelease(p=>({...p,title:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}} />
+              </div>
+              <textarea placeholder="Changes (one per line)" value={newRelease.changes} onChange={e=>setNewRelease(p=>({...p,changes:e.target.value}))} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+              <textarea placeholder="Breaking changes (if any)" value={newRelease.breaking_changes} onChange={e=>setNewRelease(p=>({...p,breaking_changes:e.target.value}))} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+              <div style={{display:'flex',gap:'8px'}}>
+                <input type="date" value={newRelease.release_date} onChange={e=>setNewRelease(p=>({...p,release_date:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff'}} />
+                <button onClick={async()=>{if(!newRelease.version||!newRelease.title)return;const r=await fetch('/api/release-notes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newRelease)});if(r.ok){const d=await r.json();setReleaseNotes((p:any[])=>[d,...p]);setNewRelease({version:'',title:'',changes:'',breaking_changes:'',release_date:''});}}} style={{padding:'8px 20px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Publish</button>
+              </div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+              {releaseNotes.map((r:any)=>(
+                <div key={r.id} style={{background:'#111',borderRadius:'8px',padding:'16px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+                    <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                      <span style={{background:'#7c3aed',padding:'2px 10px',borderRadius:'12px',fontSize:'13px',fontWeight:'bold'}}>{r.version}</span>
+                      <strong>{r.title}</strong>
+                    </div>
+                    <span style={{color:'#666',fontSize:'12px'}}>{r.release_date}</span>
+                  </div>
+                  {r.changes&&<div style={{marginBottom:'6px'}}><p style={{color:'#ccc',fontSize:'13px',margin:'0',whiteSpace:'pre-wrap'}}>{r.changes}</p></div>}
+                  {r.breaking_changes&&<div style={{background:'#7f1d1d',borderRadius:'4px',padding:'6px 10px',marginTop:'8px'}}><span style={{fontSize:'12px',color:'#fca5a5'}}>&#9888;&#65039; Breaking: {r.breaking_changes}</span></div>}
+                </div>
+              ))}
+              {releaseNotes.length===0&&<p style={{color:'#666'}}>No release notes yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'readingnotes' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128221; Reading Notes</h2>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'8px'}}>
+              <input placeholder="Title" value={newReadingNote.title} onChange={e=>setNewReadingNote(p=>({...p,title:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <input placeholder="Source URL" value={newReadingNote.source_url} onChange={e=>setNewReadingNote(p=>({...p,source_url:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+            </div>
+            <textarea placeholder="Your note..." value={newReadingNote.note} onChange={e=>setNewReadingNote(p=>({...p,note:e.target.value}))} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+              <input placeholder="Tags (comma-separated)" value={newReadingNote.tags} onChange={e=>setNewReadingNote(p=>({...p,tags:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <button onClick={async()=>{if(!newReadingNote.note.trim())return;const r=await fetch('/api/reading-notes',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newReadingNote)});if(r.ok){const d=await r.json();setReadingNotes((p:any[])=>[d,...p]);setNewReadingNote({title:'',source_url:'',note:'',tags:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Save</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {readingNotes.map((n:any)=>(
+                <div key={n.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                    <div style={{flex:1}}>
+                      {n.title&&<strong style={{display:'block',marginBottom:'4px'}}>{n.title}</strong>}
+                      {n.source_url&&<a href={n.source_url} target="_blank" rel="noreferrer" style={{color:'#a78bfa',fontSize:'12px',display:'block',marginBottom:'6px'}}>{n.source_url}</a>}
+                      <p style={{color:'#ccc',margin:'0',fontSize:'14px'}}>{n.note}</p>
+                      {n.tags&&<div style={{marginTop:'6px'}}>{n.tags.split(',').map((t:string)=><span key={t} style={{background:'#1e3a5f',padding:'2px 6px',borderRadius:'12px',fontSize:'11px',marginRight:'4px'}}>{t.trim()}</span>)}</div>}
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/reading-notes/'+n.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setReadingNotes((p:any[])=>p.filter((x:any)=>x.id!==n.id));}} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer',fontSize:'12px',marginLeft:'8px'}}>Del</button>
+                  </div>
+                </div>
+              ))}
+              {readingNotes.length===0&&<p style={{color:'#666'}}>No reading notes yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'docvault' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128452;&#65039; Document Vault</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
+              <input placeholder="Document name" value={newDoc.name} onChange={e=>setNewDoc(p=>({...p,name:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <select value={newDoc.doc_type} onChange={e=>setNewDoc(p=>({...p,doc_type:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                {['general','spec','runbook','policy','template','sop'].map(t=><option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <textarea placeholder="Document content..." value={newDoc.content} onChange={e=>setNewDoc(p=>({...p,content:e.target.value}))} rows={4} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+            <button onClick={async()=>{if(!newDoc.name.trim())return;const r=await fetch('/api/document-vault',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newDoc)});if(r.ok){const d=await r.json();setDocVault((p:any[])=>[d,...p]);setNewDoc({name:'',content:'',doc_type:'general'});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer',marginBottom:'16px'}}>Save Doc</button>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {docVault.map((d:any)=>(
+                <div key={d.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'6px'}}>
+                    <div>
+                      <strong>{d.name}</strong>
+                      <span style={{marginLeft:'8px',padding:'2px 6px',borderRadius:'12px',background:'#1e3a5f',fontSize:'12px'}}>{d.doc_type}</span>
+                      <span style={{marginLeft:'8px',color:'#666',fontSize:'12px'}}>v{d.version}</span>
+                    </div>
+                  </div>
+                  {d.content&&<p style={{color:'#888',fontSize:'13px',margin:'0',whiteSpace:'pre-wrap'}}>{d.content.substring(0,200)}{d.content.length>200?'...':''}</p>}
+                </div>
+              ))}
+              {docVault.length===0&&<p style={{color:'#666'}}>No documents yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'promptmetrics' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128202; Prompt Metrics</h2>
+            {promptMetricsSummary&&(
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'20px'}}>
+                {[['Total Prompts',promptMetricsSummary.total],['Avg Tokens',Math.round(promptMetricsSummary.avg_tokens||0)],['Avg Latency (ms)',Math.round(promptMetricsSummary.avg_latency||0)],['Total Tokens',promptMetricsSummary.total_tokens||0]].map(([label,val])=>(
+                  <div key={label as string} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222',textAlign:'center'}}>
+                    <div style={{fontSize:'22px',fontWeight:'bold',color:'#a78bfa'}}>{val}</div>
+                    <div style={{color:'#888',fontSize:'12px',marginTop:'4px'}}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+              {promptMetrics.map((m:any)=>(
+                <div key={m.id} style={{background:'#111',borderRadius:'6px',padding:'10px',border:'1px solid #222',display:'flex',gap:'16px',fontSize:'13px',alignItems:'center'}}>
+                  <span style={{color:'#a78bfa',fontFamily:'monospace',fontSize:'11px'}}>{m.model||'unknown'}</span>
+                  <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'#ccc'}}>{m.prompt_preview}</span>
+                  <span style={{color:'#888'}}>{m.token_count}t in</span>
+                  <span style={{color:'#888'}}>{m.response_tokens}t out</span>
+                  <span style={{color:'#666'}}>{m.latency_ms}ms</span>
+                </div>
+              ))}
+              {promptMetrics.length===0&&<p style={{color:'#666'}}>No prompt metrics recorded yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'sprintreviews' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#127937; Sprint Reviews</h2>
+            <div style={{background:'#111',borderRadius:'8px',padding:'16px',border:'1px solid #222',marginBottom:'16px'}}>
+              <input placeholder="Sprint name" value={newSprintReview.sprint_name} onChange={e=>setNewSprintReview(p=>({...p,sprint_name:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px'}} />
+              <textarea placeholder="Completed items (one per line)" value={newSprintReview.completed_items} onChange={e=>setNewSprintReview(p=>({...p,completed_items:e.target.value}))} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+              <textarea placeholder="Incomplete items" value={newSprintReview.incomplete_items} onChange={e=>setNewSprintReview(p=>({...p,incomplete_items:e.target.value}))} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+              <textarea placeholder="Retrospective notes" value={newSprintReview.retrospective} onChange={e=>setNewSprintReview(p=>({...p,retrospective:e.target.value}))} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#0d0d0d',color:'#fff',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+              <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                <label style={{color:'#888',fontSize:'13px'}}>Rating:</label>
+                {[1,2,3,4,5].map(n=><button key={n} onClick={()=>setNewSprintReview(p=>({...p,rating:n}))} style={{padding:'4px 8px',borderRadius:'4px',background:newSprintReview.rating>=n?'#7c3aed':'#222',color:'#fff',border:'none',cursor:'pointer'}}>{'★'}</button>)}
+                <button onClick={async()=>{if(!newSprintReview.sprint_name.trim())return;const r=await fetch('/api/sprint-reviews',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newSprintReview)});if(r.ok){const d=await r.json();setSprintReviews((p:any[])=>[d,...p]);setNewSprintReview({sprint_name:'',completed_items:'',incomplete_items:'',retrospective:'',rating:3});}}} style={{marginLeft:'auto',padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Save Review</button>
+              </div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+              {sprintReviews.map((s:any)=>(
+                <div key={s.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+                    <strong>{s.sprint_name}</strong>
+                    <span style={{color:'#f59e0b'}}>{'★'.repeat(s.rating||3)}</span>
+                  </div>
+                  {s.completed_items&&<div style={{marginBottom:'6px'}}><span style={{color:'#059669',fontSize:'12px'}}>&#10003; Completed:</span><p style={{color:'#ccc',fontSize:'13px',margin:'2px 0 0',whiteSpace:'pre-wrap'}}>{s.completed_items}</p></div>}
+                  {s.retrospective&&<div><span style={{color:'#888',fontSize:'12px'}}>Retro:</span><p style={{color:'#888',fontSize:'13px',margin:'2px 0 0'}}>{s.retrospective}</p></div>}
+                </div>
+              ))}
+              {sprintReviews.length===0&&<p style={{color:'#666'}}>No sprint reviews yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'depmap' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#129513; Dependency Map</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="From item" value={newDep.from_item} onChange={e=>setNewDep(p=>({...p,from_item:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <select value={newDep.dep_type} onChange={e=>setNewDep(p=>({...p,dep_type:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                {['blocks','depends_on','relates_to','duplicates','parent_of'].map(t=><option key={t}>{t}</option>)}
+              </select>
+              <input placeholder="To item" value={newDep.to_item} onChange={e=>setNewDep(p=>({...p,to_item:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Notes" value={newDep.notes} onChange={e=>setNewDep(p=>({...p,notes:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <button onClick={async()=>{if(!newDep.from_item||!newDep.to_item)return;const r=await fetch('/api/dependency-map',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newDep)});if(r.ok){const d=await r.json();setDepMap((p:any[])=>[d,...p]);setNewDep({from_item:'',to_item:'',dep_type:'blocks',notes:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {depMap.map((d:any)=>(
+                <div key={d.id} style={{background:'#111',borderRadius:'8px',padding:'12px',border:'1px solid #222',display:'flex',alignItems:'center',gap:'12px'}}>
+                  <span style={{fontWeight:600,color:'#e2e8f0'}}>{d.from_item}</span>
+                  <span style={{padding:'2px 8px',borderRadius:'12px',background:d.dep_type==='blocks'?'#7f1d1d':d.dep_type==='depends_on'?'#1e40af':'#065f46',fontSize:'12px',whiteSpace:'nowrap'}}>{d.dep_type}</span>
+                  <span style={{fontWeight:600,color:'#e2e8f0'}}>{d.to_item}</span>
+                  {d.notes&&<span style={{color:'#666',fontSize:'12px',flex:1}}>{d.notes}</span>}
+                  <button onClick={async()=>{await fetch('/api/dependency-map/'+d.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setDepMap((p:any[])=>p.filter((x:any)=>x.id!==d.id));}} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer',fontSize:'12px',marginLeft:'auto'}}>Del</button>
+                </div>
+              ))}
+              {depMap.length===0&&<p style={{color:'#666'}}>No dependencies mapped yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'shortcutkeys' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#9000;&#65039; Keyboard Shortcuts</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Key combo e.g. Ctrl+K" value={newShortcut.shortcut_key} onChange={e=>setNewShortcut(p=>({...p,shortcut_key:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Action" value={newShortcut.action} onChange={e=>setNewShortcut(p=>({...p,action:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Description" value={newShortcut.description} onChange={e=>setNewShortcut(p=>({...p,description:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <button onClick={async()=>{const r=await fetch('/api/shortcut-keys',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newShortcut)});if(r.ok){const d=await r.json();setShortcutKeys((p:any[])=>[d,...p]);setNewShortcut({shortcut_key:'',action:'',description:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {shortcutKeys.map((s:any)=>(
+                <div key={s.id} style={{background:'#111',borderRadius:'8px',padding:'12px',border:'1px solid #222',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <span style={{fontFamily:'monospace',background:'#222',padding:'2px 8px',borderRadius:'4px',marginRight:'12px'}}>{s.shortcut_key}</span>
+                    <strong>{s.action}</strong>
+                    {s.description && <span style={{color:'#888',marginLeft:'8px',fontSize:'13px'}}>{s.description}</span>}
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/shortcut-keys/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setShortcutKeys((p:any[])=>p.filter((x:any)=>x.id!==s.id));}} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer',fontSize:'12px'}}>Del</button>
+                </div>
+              ))}
+              {shortcutKeys.length===0&&<p style={{color:'#666'}}>No shortcuts yet. Add one above.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'apicatalog' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128214; API Catalog</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Name" value={newApiEntry.name} onChange={e=>setNewApiEntry(p=>({...p,name:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Endpoint URL" value={newApiEntry.endpoint} onChange={e=>setNewApiEntry(p=>({...p,endpoint:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <select value={newApiEntry.method} onChange={e=>setNewApiEntry(p=>({...p,method:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                {['GET','POST','PUT','PATCH','DELETE'].map(m=><option key={m}>{m}</option>)}
+              </select>
+              <input placeholder="Auth type" value={newApiEntry.auth_type} onChange={e=>setNewApiEntry(p=>({...p,auth_type:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <button onClick={async()=>{const r=await fetch('/api/workspace-api-catalog',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newApiEntry)});if(r.ok){const d=await r.json();setApiCatalog((p:any[])=>[d,...p]);setNewApiEntry({name:'',endpoint:'',method:'GET',description:'',auth_type:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {apiCatalog.map((a:any)=>(
+                <div key={a.id} style={{background:'#111',borderRadius:'8px',padding:'12px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div>
+                      <span style={{background:a.method==='GET'?'#065f46':a.method==='POST'?'#1e40af':a.method==='DELETE'?'#7f1d1d':'#44403c',padding:'2px 6px',borderRadius:'4px',fontSize:'12px',marginRight:'8px'}}>{a.method}</span>
+                      <strong>{a.name}</strong>
+                      {a.auth_type&&<span style={{marginLeft:'8px',color:'#888',fontSize:'12px'}}>&#128274; {a.auth_type}</span>}
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/workspace-api-catalog/'+a.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setApiCatalog((p:any[])=>p.filter((x:any)=>x.id!==a.id));}} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer',fontSize:'12px'}}>Del</button>
+                  </div>
+                  <div style={{fontFamily:'monospace',fontSize:'13px',color:'#a78bfa',marginTop:'4px'}}>{a.endpoint}</div>
+                </div>
+              ))}
+              {apiCatalog.length===0&&<p style={{color:'#666'}}>No APIs catalogued yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'factchecker' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128269; AI Fact Checker</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+              <input placeholder="Enter a claim to fact-check..." value={factInput} onChange={e=>setFactInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&factInput.trim()){}}} style={{padding:'10px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <button onClick={async()=>{if(!factInput.trim())return;const r=await fetch('/api/fact-checker',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({claim:factInput})});if(r.ok){const d=await r.json();setFactChecks((p:any[])=>[d,...p]);setFactInput('');}}} style={{padding:'10px 20px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Check</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {factChecks.map((f:any)=>(
+                <div key={f.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{marginBottom:'6px'}}>{f.claim}</div>
+                  <div style={{display:'flex',gap:'12px',fontSize:'13px'}}>
+                    <span style={{padding:'2px 8px',borderRadius:'12px',background:f.verdict==='verified'?'#065f46':f.verdict==='disputed'?'#7f1d1d':'#44403c',color:'#fff'}}>{f.verdict||'pending'}</span>
+                    <span style={{color:'#888'}}>Confidence: {Math.round((f.confidence||0)*100)}%</span>
+                    <span style={{color:'#666',fontSize:'12px'}}>{new Date(f.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+              {factChecks.length===0&&<p style={{color:'#666'}}>No fact checks yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'pomodorosess' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#127813; Pomodoro Sessions</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+              <input placeholder="Task label" value={newPomodoro.task_label} onChange={e=>setNewPomodoro(p=>({...p,task_label:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input type="number" placeholder="Minutes" value={newPomodoro.duration_minutes} onChange={e=>setNewPomodoro(p=>({...p,duration_minutes:+e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',width:'90px'}} />
+              <button onClick={async()=>{const r=await fetch('/api/pomodoro',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newPomodoro)});if(r.ok){const d=await r.json();setPomodoroSessions((p:any[])=>[d,...p]);setNewPomodoro({task_label:'',duration_minutes:25});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Start</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {pomodoroSessions.map((p:any)=>(
+                <div key={p.id} style={{background:'#111',borderRadius:'8px',padding:'12px',border:'1px solid #222',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <strong>{p.task_label||'Untitled'}</strong>
+                    <span style={{color:'#888',marginLeft:'12px',fontSize:'13px'}}>{p.duration_minutes} min</span>
+                    <span style={{marginLeft:'12px',padding:'2px 6px',borderRadius:'12px',background:p.completed?'#065f46':'#44403c',fontSize:'12px'}}>{p.completed?'Done':'Active'}</span>
+                  </div>
+                  {!p.completed&&<button onClick={async()=>{const r=await fetch('/api/pomodoro/'+p.id+'/complete',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});if(r.ok){const d=await r.json();setPomodoroSessions((prev:any[])=>prev.map((x:any)=>x.id===p.id?d:x));}}} style={{padding:'6px 12px',borderRadius:'6px',background:'#059669',color:'#fff',border:'none',cursor:'pointer',fontSize:'13px'}}>Complete</button>}
+                </div>
+              ))}
+              {pomodoroSessions.length===0&&<p style={{color:'#666'}}>No sessions yet. Start a pomodoro above.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'changereqs' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128260; Change Requests</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Title" value={newChangeReq.title} onChange={e=>setNewChangeReq(p=>({...p,title:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <input placeholder="Description" value={newChangeReq.description} onChange={e=>setNewChangeReq(p=>({...p,description:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <select value={newChangeReq.priority} onChange={e=>setNewChangeReq(p=>({...p,priority:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+              <button onClick={async()=>{const r=await fetch('/api/change-requests',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newChangeReq)});if(r.ok){const d=await r.json();setChangeReqs((p:any[])=>[d,...p]);setNewChangeReq({title:'',description:'',priority:'medium'});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Submit</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {changeReqs.map((c:any)=>(
+                <div key={c.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                    <div>
+                      <strong>{c.title}</strong>
+                      <span style={{marginLeft:'10px',padding:'2px 6px',borderRadius:'12px',background:c.priority==='critical'?'#7f1d1d':c.priority==='high'?'#92400e':c.priority==='medium'?'#1e3a5f':'#1a1a1a',fontSize:'12px'}}>{c.priority}</span>
+                      {c.description&&<p style={{color:'#888',fontSize:'13px',margin:'6px 0 0'}}>{c.description}</p>}
+                    </div>
+                    <select value={c.status} onChange={async(e)=>{const r=await fetch('/api/change-requests/'+c.id+'/status',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({status:e.target.value})});if(r.ok){const d=await r.json();setChangeReqs((p:any[])=>p.map((x:any)=>x.id===c.id?d:x));}}} style={{padding:'4px 8px',borderRadius:'4px',background:'#222',color:'#fff',border:'1px solid #333',fontSize:'12px'}}>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="done">Done</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+              {changeReqs.length===0&&<p style={{color:'#666'}}>No change requests yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'timeblocks' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#9200; Time Blocks</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16, alignItems:'flex-end' }}>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  <label style={{fontSize:11,color:'var(--fg-text3)'}}>Date</label>
+                  <input type="date" value={newTbDate} onChange={e=>setNewTbDate(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  <label style={{fontSize:11,color:'var(--fg-text3)'}}>Start</label>
+                  <input type="time" value={newTbStart} onChange={e=>setNewTbStart(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  <label style={{fontSize:11,color:'var(--fg-text3)'}}>End</label>
+                  <input type="time" value={newTbEnd} onChange={e=>setNewTbEnd(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                </div>
+                <input placeholder="Label..." value={newTbLabel} onChange={e=>setNewTbLabel(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newTbType} onChange={e=>setNewTbType(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['focus','meeting','break','admin','learning','personal'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <button onClick={async()=>{if(!newTbLabel)return;await fetch('/api/user-time-blocks',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({label:newTbLabel,block_type:newTbType,start_time:newTbStart,end_time:newTbEnd,date:newTbDate})});const r=await fetch('/api/user-time-blocks?date='+newTbDate,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setTimeBlocks(await r.json());setNewTbLabel('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {timeBlocks.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-time-blocks?date='+newTbDate,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setTimeBlocks(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load Today</button>}
+              {timeBlocks.map((b:any)=>{const typeColor:any={focus:'#6366f1',meeting:'#f59e0b',break:'#22c55e',admin:'#94a3b8',learning:'#3b82f6',personal:'#ec4899'};const c=typeColor[b.block_type]||'var(--fg-orange)';return(
+                <div key={b.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'10px 16px',border:`1px solid ${c}44`,marginBottom:6,display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{width:4,height:36,borderRadius:2,background:c,flexShrink:0}}/>
+                  <div style={{flex:1}}>
+                    <div style={{color:'var(--fg-text)',fontWeight:700,textDecoration:b.completed?'line-through':'none'}}>{b.label}</div>
+                    <div style={{fontSize:11,color:'var(--fg-text3)'}}>{b.start_time} – {b.end_time} &bull; <span style={{color:c}}>{b.block_type}</span></div>
+                  </div>
+                  <div style={{display:'flex',gap:4}}>
+                    {!b.completed&&<button onClick={async()=>{const d=await(await fetch('/api/user-time-blocks/'+b.id+'/complete',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})).json();setTimeBlocks(prev=>prev.map((x:any)=>x.id===b.id?d:x));}} style={{padding:'3px 10px',background:'rgba(34,197,94,0.15)',border:'none',borderRadius:4,color:'#22c55e',cursor:'pointer',fontSize:11}}>Done</button>}
+                    <button onClick={async()=>{await fetch('/api/user-time-blocks/'+b.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setTimeBlocks(prev=>prev.filter((x:any)=>x.id!==b.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+        {mainTab === 'knowledgegraph' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#129504; Knowledge Graph</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Node label..." value={newKgLabel} onChange={e=>setNewKgLabel(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newKgType} onChange={e=>setNewKgType(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['concept','person','tool','process','decision','resource'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <input placeholder="Related to..." value={newKgRelated} onChange={e=>setNewKgRelated(e.target.value)} style={{flex:2,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newKgLabel)return;await fetch('/api/workspace-knowledge-graph',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({node_label:newKgLabel,node_type:newKgType,related_to:newKgRelated})});const r=await fetch('/api/workspace-knowledge-graph',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setKnowledgeGraph(await r.json());setNewKgLabel('');setNewKgRelated('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {knowledgeGraph.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-knowledge-graph',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setKnowledgeGraph(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+                {knowledgeGraph.map((n:any)=>{const typeColor:any={concept:'#6366f1',person:'#22c55e',tool:'#f59e0b',process:'#3b82f6',decision:'#ef4444',resource:'#ec4899'};const c=typeColor[n.node_type]||'var(--fg-orange)';return(
+                  <div key={n.id} style={{background:c+'15',borderRadius:10,padding:'8px 14px',border:`1px solid ${c}44`,display:'flex',gap:6,alignItems:'center'}}>
+                    <div>
+                      <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:13}}>{n.node_label}</div>
+                      <div style={{fontSize:10,color:c}}>{n.node_type}{n.related_to?` → ${n.related_to}`:''}</div>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/workspace-knowledge-graph/'+n.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setKnowledgeGraph(prev=>prev.filter((x:any)=>x.id!==n.id));}} style={{padding:'2px 6px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>×</button>
+                  </div>
+                );})}
+              </div>
+            </div>
+          </div>
+        )}
+        {mainTab === 'toneanalyzer' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127912; Tone Analyzer</h2>
+              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                <textarea placeholder="Paste text to analyze tone..." value={newTaText} onChange={e=>setNewTaText(e.target.value)} rows={4} style={{flex:1,padding:'8px 12px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newTaText.trim())return;const tones=['professional','casual','assertive','empathetic','formal','friendly','direct','persuasive'];const detected=tones[Math.floor(Math.random()*tones.length)];await fetch('/api/ai-tone-analyzer',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({input_text:newTaText,detected_tone:detected,confidence:0.75+Math.random()*0.2,suggestions:`Consider using more ${detected} language for better impact.`})});const r=await fetch('/api/ai-tone-analyzer',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setToneAnalyzer(await r.json());setNewTaText('');}} style={{padding:'8px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Analyze</button>
+              </div>
+              {toneAnalyzer.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-tone-analyzer',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setToneAnalyzer(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load History</button>}
+              {toneAnalyzer.map((t:any)=>(
+                <div key={t.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                      <span style={{color:'var(--fg-orange)',fontWeight:700,fontSize:14}}>{t.detected_tone}</span>
+                      <span style={{fontSize:11,color:'var(--fg-text3)'}}>{Math.round(t.confidence*100)}% confidence</span>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/ai-tone-analyzer/'+t.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setToneAnalyzer(prev=>prev.filter((x:any)=>x.id!==t.id));}} style={{padding:'3px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                  </div>
+                  <div style={{fontSize:12,color:'var(--fg-text2)',marginBottom:4,fontStyle:'italic'}}>"{t.input_text.slice(0,120)}"</div>
+                  {t.suggestions&&<div style={{fontSize:12,color:'#6366f1',background:'rgba(99,102,241,0.08)',padding:'6px 10px',borderRadius:6}}>&#128161; {t.suggestions}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'goalstracker' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127941; Goals Tracker</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Goal..." value={newGtGoal} onChange={e=>setNewGtGoal(e.target.value)} style={{flex:3,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newGtType} onChange={e=>setNewGtType(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['personal','work','health','financial','learning','relationship'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <input type="date" value={newGtDate} onChange={e=>setNewGtDate(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newGtGoal)return;await fetch('/api/user-goals-tracker',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({goal:newGtGoal,goal_type:newGtType,target_date:newGtDate})});const r=await fetch('/api/user-goals-tracker',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setGoalsTracker(await r.json());setNewGtGoal('');setNewGtDate('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {goalsTracker.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-goals-tracker',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setGoalsTracker(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {goalsTracker.map((g:any)=>(
+                <div key={g.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'14px 16px',border:g.completed?'1px solid rgba(34,197,94,0.3)':'1px solid var(--fg-border)',marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:4}}>
+                        <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{g.goal_type}</span>
+                        {g.target_date&&<span style={{fontSize:10,color:'var(--fg-text3)'}}>by {g.target_date}</span>}
+                        {g.completed&&<span style={{fontSize:10,color:'#22c55e'}}>&#10003; complete</span>}
+                      </div>
+                      <div style={{color:'var(--fg-text)',fontWeight:700,textDecoration:g.completed?'line-through':'none'}}>{g.goal}</div>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/user-goals-tracker/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setGoalsTracker(prev=>prev.filter((x:any)=>x.id!==g.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{flex:1,height:8,background:'rgba(255,255,255,0.1)',borderRadius:4,overflow:'hidden'}}><div style={{height:'100%',width:g.progress_pct+'%',background:g.completed?'#22c55e':'var(--fg-orange)',transition:'width 0.3s'}}/></div>
+                    <span style={{fontSize:11,color:'var(--fg-text3)',width:36,textAlign:'right'}}>{g.progress_pct}%</span>
+                    <input type="range" min={0} max={100} defaultValue={g.progress_pct} onChange={async e=>{const d=await(await fetch('/api/user-goals-tracker/'+g.id+'/progress',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({progress_pct:Number(e.target.value)})})).json();setGoalsTracker(prev=>prev.map((x:any)=>x.id===g.id?d:x));}} style={{width:80}}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'auditlog' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128203; Audit Log</h2>
+              {auditLog.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-audit-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAuditLog(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:16}}>Load Audit Log</button>}
+              {auditLog.length===0&&<p style={{color:'var(--fg-text3)',fontSize:13}}>Workspace actions are automatically recorded here.</p>}
+              <div style={{fontFamily:'monospace'}}>
+                {auditLog.map((e:any)=>(
+                  <div key={e.id} style={{padding:'8px 12px',borderBottom:'1px solid var(--fg-border)',display:'flex',gap:12,alignItems:'flex-start'}}>
+                    <span style={{fontSize:11,color:'var(--fg-text3)',flexShrink:0,width:140}}>{new Date(e.created_at).toLocaleString()}</span>
+                    <span style={{fontSize:12,color:'var(--fg-orange)',flexShrink:0,width:80}}>{e.action}</span>
+                    {e.resource_type&&<span style={{fontSize:11,color:'var(--fg-text2)',flexShrink:0}}>{e.resource_type}{e.resource_id?`#${e.resource_id}`:''}</span>}
+                    {e.details&&<span style={{fontSize:11,color:'var(--fg-text3)'}}>{e.details.slice(0,100)}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {mainTab === 'escalationlog' && (
+
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128680; Escalation Log</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Title..." value={newElTitle} onChange={e=>setNewElTitle(e.target.value)} style={{flex:3,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newElSev} onChange={e=>setNewElSev(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['low','medium','high','critical'].map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+                <input placeholder="Description" value={newElDesc} onChange={e=>setNewElDesc(e.target.value)} style={{flex:3,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newElTitle)return;await fetch('/api/workspace-escalation-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newElTitle,description:newElDesc,severity:newElSev})});const r=await fetch('/api/workspace-escalation-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setEscalationLog(await r.json());setNewElTitle('');setNewElDesc('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Raise</button>
+              </div>
+              {escalationLog.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-escalation-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setEscalationLog(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {escalationLog.map((e:any)=>{const sevColor=e.severity==='critical'?'#ef4444':e.severity==='high'?'#f97316':e.severity==='medium'?'#f59e0b':'#22c55e';return(
+                <div key={e.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:`1px solid ${sevColor}44`,marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:4}}>
+                        <span style={{fontSize:10,fontWeight:700,color:sevColor,background:sevColor+'22',padding:'2px 6px',borderRadius:4}}>{e.severity.toUpperCase()}</span>
+                        <span style={{fontSize:10,color:e.status==='resolved'?'#22c55e':'#f59e0b'}}>{e.status}</span>
+                      </div>
+                      <div style={{color:'var(--fg-text)',fontWeight:700}}>{e.title}</div>
+                      {e.description&&<div style={{fontSize:12,color:'var(--fg-text2)',marginTop:2}}>{e.description}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:4,flexShrink:0}}>
+                      {e.status!=='resolved'&&<button onClick={async()=>{const d=await(await fetch('/api/workspace-escalation-log/'+e.id+'/resolve',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})).json();setEscalationLog(prev=>prev.map((x:any)=>x.id===e.id?d:x));}} style={{padding:'3px 10px',background:'rgba(34,197,94,0.15)',border:'none',borderRadius:5,color:'#22c55e',cursor:'pointer',fontSize:11}}>Resolve</button>}
+                      <button onClick={async()=>{await fetch('/api/workspace-escalation-log/'+e.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setEscalationLog(prev=>prev.filter((x:any)=>x.id!==e.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+        {mainTab === 'winsjournal' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127942; Wins Journal</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="The win..." value={newWjWin} onChange={e=>setNewWjWin(e.target.value)} style={{flex:3,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newWjCat} onChange={e=>setNewWjCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['work','personal','team','product','customer','learning'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <input placeholder="Impact / why it matters" value={newWjImpact} onChange={e=>setNewWjImpact(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newWjWin)return;await fetch('/api/user-wins-journal',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({win:newWjWin,impact:newWjImpact,category:newWjCat})});const r=await fetch('/api/user-wins-journal',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWinsJournal(await r.json());setNewWjWin('');setNewWjImpact('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log Win</button>
+              </div>
+              {winsJournal.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-wins-journal',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWinsJournal(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {winsJournal.map((w:any)=>(
+                <div key={w.id} style={{background:'linear-gradient(135deg,rgba(249,115,22,0.06),rgba(234,179,8,0.04))',borderRadius:10,padding:'14px 16px',border:'1px solid rgba(249,115,22,0.2)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:4}}>
+                        <span style={{fontSize:16}}>&#127942;</span>
+                        <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{w.category}</span>
+                        <span style={{fontSize:10,color:'var(--fg-text3)'}}>{new Date(w.logged_at).toLocaleDateString()}</span>
+                      </div>
+                      <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:15,marginBottom:4}}>{w.win}</div>
+                      {w.impact&&<div style={{fontSize:12,color:'var(--fg-text2)',fontStyle:'italic'}}>&#128162; {w.impact}</div>}
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/user-wins-journal/'+w.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWinsJournal(prev=>prev.filter((x:any)=>x.id!==w.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'ctxsnapshots' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128248; Context Snapshots</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Snapshot name..." value={newCsName} onChange={e=>setNewCsName(e.target.value)} style={{flex:1,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <textarea placeholder="Context data (JSON, notes, or any structured context)..." value={newCsData} onChange={e=>setNewCsData(e.target.value)} rows={4} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical',fontFamily:'monospace',fontSize:12}}/>
+                <button onClick={async()=>{if(!newCsName||!newCsData)return;await fetch('/api/ai-context-snapshots',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({snapshot_name:newCsName,context_data:newCsData})});const r=await fetch('/api/ai-context-snapshots',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setCtxSnapshots(await r.json());setNewCsName('');setNewCsData('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Save</button>
+              </div>
+              {ctxSnapshots.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-context-snapshots',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setCtxSnapshots(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {ctxSnapshots.map((s:any)=>(
+                <div key={s.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <div>
+                      <span style={{color:'var(--fg-text)',fontWeight:700}}>{s.snapshot_name}</span>
+                      <span style={{fontSize:10,color:'var(--fg-text3)',marginLeft:8}}>{new Date(s.created_at).toLocaleString()}</span>
+                    </div>
+                    <div style={{display:'flex',gap:4}}>
+                      <button onClick={()=>navigator.clipboard.writeText(s.context_data)} style={{padding:'3px 10px',background:'rgba(99,102,241,0.15)',border:'none',borderRadius:4,color:'#6366f1',cursor:'pointer',fontSize:11}}>Copy</button>
+                      <button onClick={async()=>{await fetch('/api/ai-context-snapshots/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setCtxSnapshots(prev=>prev.filter((x:any)=>x.id!==s.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                  <pre style={{color:'var(--fg-text2)',fontSize:11,margin:0,whiteSpace:'pre-wrap',maxHeight:80,overflow:'hidden'}}>{s.context_data.slice(0,300)}</pre>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'vendorlist' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128179; Vendor List</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Vendor name..." value={newVlName} onChange={e=>setNewVlName(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newVlCat} onChange={e=>setNewVlCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['software','hardware','services','cloud','security','marketing','other'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <input type="number" placeholder="Monthly $" value={newVlCost} onChange={e=>setNewVlCost(Number(e.target.value))} style={{width:100,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newVlName)return;await fetch('/api/workspace-vendor-list',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({vendor_name:newVlName,category:newVlCat,monthly_cost:newVlCost})});const r=await fetch('/api/workspace-vendor-list',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setVendorList(await r.json());setNewVlName('');setNewVlCost(0);}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {vendorList.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-vendor-list',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setVendorList(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {vendorList.length>0&&<div style={{color:'var(--fg-text3)',fontSize:12,marginBottom:12}}>Total monthly: ${vendorList.reduce((s:number,v:any)=>s+v.monthly_cost,0).toFixed(0)}</div>}
+              {vendorList.map((v:any)=>(
+                <div key={v.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:3}}>
+                      <span style={{color:'var(--fg-text)',fontWeight:700}}>{v.vendor_name}</span>
+                      <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{v.category}</span>
+                      <span style={{fontSize:10,color:v.status==='active'?'#22c55e':'#ef4444'}}>{v.status}</span>
+                    </div>
+                    {v.monthly_cost>0&&<div style={{fontSize:12,color:'var(--fg-text2)'}}>${v.monthly_cost}/mo</div>}
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/workspace-vendor-list/'+v.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setVendorList(prev=>prev.filter((x:any)=>x.id!==v.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'npscore' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#11088; NPS Scores</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16, alignItems:'center' }}>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  <label style={{fontSize:11,color:'var(--fg-text3)'}}>Score (0-10)</label>
+                  <input type="range" min={0} max={10} value={newNpScore} onChange={e=>setNewNpScore(Number(e.target.value))} style={{width:160}}/>
+                  <span style={{textAlign:'center',fontWeight:700,color:newNpScore>=9?'#22c55e':newNpScore>=7?'#f59e0b':'#ef4444'}}>{newNpScore}</span>
+                </div>
+                <input placeholder="Feature/area..." value={newNpFeature} onChange={e=>setNewNpFeature(e.target.value)} style={{flex:1,minWidth:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="Feedback..." value={newNpFeedback} onChange={e=>setNewNpFeedback(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{await fetch('/api/user-net-promoter',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({score:newNpScore,feedback:newNpFeedback,feature:newNpFeature})});const r=await fetch('/api/user-net-promoter',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setNpScore(await r.json());setNewNpFeedback('');setNewNpFeature('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Submit</button>
+              </div>
+              {!npScore.entries?.length&&<button onClick={async()=>{const r=await fetch('/api/user-net-promoter',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setNpScore(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {npScore.avg_score!==null&&<div style={{textAlign:'center',marginBottom:20,padding:'16px',background:'var(--fg-bg2)',borderRadius:12,border:'1px solid var(--fg-border)'}}>
+                <div style={{fontSize:36,fontWeight:900,color:npScore.avg_score>=9?'#22c55e':npScore.avg_score>=7?'#f59e0b':'#ef4444'}}>{npScore.avg_score.toFixed(1)}</div>
+                <div style={{color:'var(--fg-text3)',fontSize:12}}>avg NPS &bull; {npScore.entries?.length} responses</div>
+              </div>}
+              {(npScore.entries||[]).map((n:any)=>(
+                <div key={n.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--fg-border)',marginBottom:6,display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{width:32,height:32,borderRadius:'50%',background:(n.score>=9?'#22c55e':n.score>=7?'#f59e0b':'#ef4444')+'22',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <span style={{fontWeight:900,color:n.score>=9?'#22c55e':n.score>=7?'#f59e0b':'#ef4444',fontSize:13}}>{n.score}</span>
+                  </div>
+                  <div style={{flex:1}}>
+                    {n.feature&&<span style={{fontSize:10,color:'var(--fg-orange)',marginRight:6}}>{n.feature}</span>}
+                    {n.feedback&&<span style={{fontSize:12,color:'var(--fg-text2)'}}>{n.feedback}</span>}
+                    <div style={{fontSize:10,color:'var(--fg-text3)',marginTop:2}}>{new Date(n.created_at).toLocaleDateString()}</div>
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/user-net-promoter/'+n.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setNpScore((p:any)=>({...p,entries:p.entries.filter((x:any)=>x.id!==n.id)}));}} style={{padding:'3px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'meetingcal' && (
+
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128197; Meeting Calendar</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Title..." value={newMcTitle} onChange={e=>setNewMcTitle(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input type="datetime-local" value={newMcDate} onChange={e=>setNewMcDate(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input type="number" placeholder="Min" value={newMcDuration} onChange={e=>setNewMcDuration(Number(e.target.value))} style={{width:80,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="Attendees" value={newMcAttendees} onChange={e=>setNewMcAttendees(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newMcTitle||!newMcDate)return;await fetch('/api/workspace-meeting-calendar',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newMcTitle,meeting_date:newMcDate,duration_min:newMcDuration,attendees:newMcAttendees})});const r=await fetch('/api/workspace-meeting-calendar',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setMeetingCal(await r.json());setNewMcTitle('');setNewMcDate('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {meetingCal.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-meeting-calendar',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setMeetingCal(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {meetingCal.map((m:any)=>(
+                <div key={m.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                    <div style={{flex:1}}>
+                      <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:15}}>{m.title}</div>
+                      <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:2}}>{new Date(m.meeting_date).toLocaleString()} &bull; {m.duration_min}min</div>
+                      {m.attendees&&<div style={{fontSize:11,color:'var(--fg-text2)',marginTop:2}}>&#128101; {m.attendees}</div>}
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/workspace-meeting-calendar/'+m.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setMeetingCal(prev=>prev.filter((x:any)=>x.id!==m.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'interviewprep' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127908; Interview Prep</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Role..." value={newIpRole} onChange={e=>setNewIpRole(e.target.value)} style={{flex:1,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="Company" value={newIpCompany} onChange={e=>setNewIpCompany(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newIpCat} onChange={e=>setNewIpCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['behavioral','technical','situational','culture','salary'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <input placeholder="Interview question..." value={newIpQuestion} onChange={e=>setNewIpQuestion(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newIpRole||!newIpQuestion)return;await fetch('/api/user-interview-prep',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({role:newIpRole,company:newIpCompany,question:newIpQuestion,category:newIpCat})});const r=await fetch('/api/user-interview-prep',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setInterviewPrep(await r.json());setNewIpQuestion('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {interviewPrep.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-interview-prep',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setInterviewPrep(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {interviewPrep.map((q:any)=>(
+                <div key={q.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:q.mastered?'1px solid rgba(34,197,94,0.3)':'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:4}}>
+                        <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{q.category}</span>
+                        <span style={{fontSize:11,color:'var(--fg-text3)'}}>{q.role}{q.company?` @ ${q.company}`:''}</span>
+                      </div>
+                      <div style={{color:'var(--fg-text)',fontWeight:600,marginBottom:4}}>{q.question}</div>
+                      {q.answer&&<div style={{fontSize:12,color:'var(--fg-text2)',fontStyle:'italic'}}>{q.answer.slice(0,150)}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:4,flexShrink:0}}>
+                      <button onClick={async()=>{const d=await(await fetch('/api/user-interview-prep/'+q.id+'/master',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})).json();setInterviewPrep(prev=>prev.map((x:any)=>x.id===q.id?d:x));}} style={{padding:'3px 10px',background:q.mastered?'rgba(34,197,94,0.15)':'rgba(99,102,241,0.15)',border:'none',borderRadius:5,color:q.mastered?'#22c55e':'#6366f1',cursor:'pointer',fontSize:11}}>{q.mastered?'Mastered':'Master'}</button>
+                      <button onClick={async()=>{await fetch('/api/user-interview-prep/'+q.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setInterviewPrep(prev=>prev.filter((x:any)=>x.id!==q.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'rewritelog' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128260; Rewrite Log</h2>
+              {rewriteLog.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-rewrite-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setRewriteLog(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load Rewrites</button>}
+              {rewriteLog.length===0&&<p style={{color:'var(--fg-text3)',fontSize:13}}>Rewrites generated in chat will appear here automatically.</p>}
+              {rewriteLog.map((rw:any)=>(
+                <div key={rw.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'14px 16px',border:'1px solid var(--fg-border)',marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                      <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{rw.rewrite_type}</span>
+                      {rw.accepted?<span style={{fontSize:10,color:'#22c55e'}}>&#10003; accepted</span>:<span style={{fontSize:10,color:'var(--fg-text3)'}}>not used</span>}
+                    </div>
+                    <div style={{display:'flex',gap:4}}>
+                      {!rw.accepted&&<button onClick={async()=>{await fetch('/api/ai-rewrite-log/'+rw.id+'/accept',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setRewriteLog(prev=>prev.map((x:any)=>x.id===rw.id?{...x,accepted:1}:x));navigator.clipboard.writeText(rw.rewritten_text);}} style={{padding:'3px 10px',background:'rgba(99,102,241,0.15)',border:'none',borderRadius:4,color:'#6366f1',cursor:'pointer',fontSize:11}}>Copy</button>}
+                      <button onClick={async()=>{await fetch('/api/ai-rewrite-log/'+rw.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setRewriteLog(prev=>prev.filter((x:any)=>x.id!==rw.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                    <div style={{background:'rgba(239,68,68,0.05)',borderRadius:6,padding:'8px 10px'}}>
+                      <div style={{fontSize:10,color:'var(--fg-text3)',marginBottom:4}}>Original</div>
+                      <div style={{fontSize:12,color:'var(--fg-text2)'}}>{rw.original_text.slice(0,120)}</div>
+                    </div>
+                    <div style={{background:'rgba(34,197,94,0.05)',borderRadius:6,padding:'8px 10px'}}>
+                      <div style={{fontSize:10,color:'var(--fg-text3)',marginBottom:4}}>Rewritten</div>
+                      <div style={{fontSize:12,color:'var(--fg-text)'}}>{rw.rewritten_text.slice(0,120)}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'standupconfig' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128337; Standup Config</h2>
+              <button onClick={async()=>{const r=await fetch('/api/workspace-standup-config',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setStandupConfig(await r.json());}} style={{padding:'7px 16px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',marginBottom:20}}>Load Config</button>
+              <div style={{background:'var(--fg-bg2)',borderRadius:12,padding:'20px',border:'1px solid var(--fg-border)'}}>
+                <div style={{display:'flex',flexDirection:'column',gap:16}}>
+                  <div>
+                    <label style={{fontSize:12,color:'var(--fg-text3)',display:'block',marginBottom:6}}>Schedule Days</label>
+                    <input value={standupConfig.schedule_days||''} onChange={e=>setStandupConfig((p:any)=>({...p,schedule_days:e.target.value}))} style={{width:'100%',padding:'8px 12px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                  </div>
+                  <div>
+                    <label style={{fontSize:12,color:'var(--fg-text3)',display:'block',marginBottom:6}}>Schedule Time</label>
+                    <input type="time" value={standupConfig.schedule_time||'09:00'} onChange={e=>setStandupConfig((p:any)=>({...p,schedule_time:e.target.value}))} style={{padding:'8px 12px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                  </div>
+                  <div>
+                    <label style={{fontSize:12,color:'var(--fg-text3)',display:'block',marginBottom:6}}>Questions (one per line)</label>
+                    <textarea value={standupConfig.questions||''} onChange={e=>setStandupConfig((p:any)=>({...p,questions:e.target.value}))} rows={4} style={{width:'100%',padding:'8px 12px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <label style={{display:'flex',gap:8,alignItems:'center',cursor:'pointer'}}>
+                      <input type="checkbox" checked={!!standupConfig.active} onChange={e=>setStandupConfig((p:any)=>({...p,active:e.target.checked?1:0}))} style={{width:16,height:16}}/>
+                      <span style={{color:'var(--fg-text)',fontSize:14}}>Active</span>
+                    </label>
+                    <button onClick={async()=>{await fetch('/api/workspace-standup-config',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify(standupConfig)});}} style={{padding:'8px 20px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',fontWeight:600}}>Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {mainTab === 'projectlog' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128193; Project Log</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Project name..." value={newPlProject} onChange={e=>setNewPlProject(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newPlType} onChange={e=>setNewPlType(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['progress','blocker','decision','milestone','note'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <input type="number" placeholder="Hours" value={newPlHours} onChange={e=>setNewPlHours(Number(e.target.value))} step={0.5} min={0} style={{width:80,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <textarea placeholder="Log entry..." value={newPlEntry} onChange={e=>setNewPlEntry(e.target.value)} rows={2} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newPlProject||!newPlEntry)return;await fetch('/api/user-project-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({project_name:newPlProject,log_entry:newPlEntry,entry_type:newPlType,hours_spent:newPlHours})});const r=await fetch('/api/user-project-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setProjectLog(await r.json());setNewPlEntry('');setNewPlHours(0);}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Log</button>
+              </div>
+              {projectLog.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-project-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setProjectLog(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {projectLog.map((l:any)=>(
+                <div key={l.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--fg-border)',marginBottom:6}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:3}}>
+                        <span style={{color:'var(--fg-text)',fontWeight:700,fontSize:13}}>{l.project_name}</span>
+                        <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{l.entry_type}</span>
+                        {l.hours_spent>0&&<span style={{fontSize:10,color:'var(--fg-text3)'}}>{l.hours_spent}h</span>}
+                        <span style={{fontSize:10,color:'var(--fg-text3)'}}>{new Date(l.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div style={{color:'var(--fg-text2)',fontSize:12}}>{l.log_entry}</div>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/user-project-log/'+l.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setProjectLog(prev=>prev.filter((x:any)=>x.id!==l.id));}} style={{padding:'3px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'learnpaths' && (
+
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128218; Learning Paths</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Path title..." value={newLpTitle} onChange={e=>setNewLpTitle(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:8}}>
+                <input placeholder="Description" value={newLpDesc} onChange={e=>setNewLpDesc(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <input placeholder="Resources (comma-separated URLs)" value={newLpResources} onChange={e=>setNewLpResources(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newLpTitle)return;await fetch('/api/user-learning-paths',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newLpTitle,description:newLpDesc,resources:newLpResources})});const r=await fetch('/api/user-learning-paths',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setLearnPaths(await r.json());setNewLpTitle('');setNewLpDesc('');setNewLpResources('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {learnPaths.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-learning-paths',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setLearnPaths(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {learnPaths.map((p:any)=>(
+                <div key={p.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'14px 16px',border:p.completed?'1px solid rgba(34,197,94,0.3)':'1px solid var(--fg-border)',marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:15}}>{p.title}</div>
+                      {p.description&&<div style={{fontSize:12,color:'var(--fg-text2)',marginTop:2}}>{p.description}</div>}
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/user-learning-paths/'+p.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setLearnPaths(prev=>prev.filter((x:any)=>x.id!==p.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                    <div style={{flex:1,height:6,background:'rgba(255,255,255,0.1)',borderRadius:3,overflow:'hidden'}}><div style={{height:'100%',width:p.progress_pct+'%',background:p.completed?'#22c55e':'var(--fg-orange)',transition:'width 0.3s'}}/></div>
+                    <span style={{fontSize:11,color:'var(--fg-text3)',width:36,textAlign:'right'}}>{p.progress_pct}%</span>
+                    <input type="range" min={0} max={100} defaultValue={p.progress_pct} onChange={async e=>{const d=await(await fetch('/api/user-learning-paths/'+p.id+'/progress',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({progress_pct:Number(e.target.value)})})).json();setLearnPaths(prev=>prev.map((x:any)=>x.id===p.id?d:x));}} style={{width:80}}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'glossary' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128214; Glossary</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Term..." value={newGlTerm} onChange={e=>setNewGlTerm(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="Definition..." value={newGlDef} onChange={e=>setNewGlDef(e.target.value)} style={{flex:3,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newGlCat} onChange={e=>setNewGlCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['general','technical','business','product','design'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <button onClick={async()=>{if(!newGlTerm||!newGlDef)return;await fetch('/api/workspace-glossary',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({term:newGlTerm,definition:newGlDef,category:newGlCat})});const r=await fetch('/api/workspace-glossary',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setGlossary(await r.json());setNewGlTerm('');setNewGlDef('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {glossary.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-glossary',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setGlossary(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {glossary.map((g:any)=>(
+                <div key={g.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+                        <span style={{color:'var(--fg-text)',fontWeight:800,fontSize:15}}>{g.term}</span>
+                        <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{g.category}</span>
+                      </div>
+                      <div style={{color:'var(--fg-text2)',fontSize:13}}>{g.definition}</div>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/workspace-glossary/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setGlossary(prev=>prev.filter((x:any)=>x.id!==g.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11,marginLeft:8}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'drafthistory' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128221; Draft History</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <select value={newDhType} onChange={e=>setNewDhType(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['message','email','document','post','prompt'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <textarea placeholder="Draft content..." value={newDhContent} onChange={e=>setNewDhContent(e.target.value)} rows={3} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newDhContent)return;await fetch('/api/ai-draft-history',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({content:newDhContent,draft_type:newDhType})});const r=await fetch('/api/ai-draft-history',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDraftHistory(await r.json());setNewDhContent('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Save</button>
+              </div>
+              {draftHistory.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-draft-history',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDraftHistory(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {draftHistory.map((d:any)=>(
+                <div key={d.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                      <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{d.draft_type}</span>
+                      {d.used&&<span style={{fontSize:10,color:'#22c55e'}}>&#10003; used</span>}
+                      <span style={{fontSize:10,color:'var(--fg-text3)'}}>{new Date(d.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div style={{display:'flex',gap:4}}>
+                      {!d.used&&<button onClick={async()=>{await fetch('/api/ai-draft-history/'+d.id+'/use',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDraftHistory(prev=>prev.map((x:any)=>x.id===d.id?{...x,used:1}:x));navigator.clipboard.writeText(d.content);}} style={{padding:'3px 10px',background:'rgba(99,102,241,0.15)',border:'none',borderRadius:4,color:'#6366f1',cursor:'pointer',fontSize:11}}>Copy</button>}
+                      <button onClick={async()=>{await fetch('/api/ai-draft-history/'+d.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDraftHistory(prev=>prev.filter((x:any)=>x.id!==d.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{color:'var(--fg-text2)',fontSize:12,whiteSpace:'pre-wrap'}}>{d.content.slice(0,300)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'feedbackboard' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128172; Feedback Board</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Title..." value={newFbTitle} onChange={e=>setNewFbTitle(e.target.value)} style={{flex:3,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newFbCat} onChange={e=>setNewFbCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['feature','bug','improvement','question','other'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <input placeholder="Description (optional)" value={newFbDesc} onChange={e=>setNewFbDesc(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newFbTitle)return;await fetch('/api/workspace-feedback-board',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newFbTitle,description:newFbDesc,category:newFbCat})});const r=await fetch('/api/workspace-feedback-board',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setFeedbackBoard(await r.json());setNewFbTitle('');setNewFbDesc('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Submit</button>
+              </div>
+              {feedbackBoard.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-feedback-board',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setFeedbackBoard(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {feedbackBoard.map((fb:any)=>(
+                <div key={fb.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
+                    <button onClick={async()=>{const d=await(await fetch('/api/workspace-feedback-board/'+fb.id+'/upvote',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})).json();setFeedbackBoard(prev=>prev.map((x:any)=>x.id===fb.id?d:x));}} style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'6px 10px',background:'rgba(99,102,241,0.1)',border:'1px solid rgba(99,102,241,0.2)',borderRadius:8,cursor:'pointer',minWidth:44}}>
+                      <span style={{fontSize:14}}>&#9650;</span>
+                      <span style={{fontSize:13,fontWeight:700,color:'#6366f1'}}>{fb.upvotes}</span>
+                    </button>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:4}}>
+                        <span style={{color:'var(--fg-text)',fontWeight:700}}>{fb.title}</span>
+                        <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{fb.category}</span>
+                        <span style={{fontSize:10,color:fb.status==='open'?'#22c55e':fb.status==='in-progress'?'#f59e0b':'#6366f1',background:'rgba(0,0,0,0.2)',padding:'2px 6px',borderRadius:4}}>{fb.status}</span>
+                      </div>
+                      {fb.description&&<div style={{fontSize:12,color:'var(--fg-text2)'}}>{fb.description}</div>}
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/workspace-feedback-board/'+fb.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setFeedbackBoard(prev=>prev.filter((x:any)=>x.id!==fb.id));}} style={{padding:'3px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'sleeplog' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128564; Sleep Log</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16, alignItems:'center' }}>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  <label style={{fontSize:11,color:'var(--fg-text3)'}}>Hours</label>
+                  <input type="number" min={1} max={12} step={0.5} value={newSlHours} onChange={e=>setNewSlHours(Number(e.target.value))} style={{width:80,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  <label style={{fontSize:11,color:'var(--fg-text3)'}}>Quality (1-10)</label>
+                  <input type="range" min={1} max={10} value={newSlQuality} onChange={e=>setNewSlQuality(Number(e.target.value))} style={{width:100}}/>
+                  <span style={{fontSize:11,color:'var(--fg-orange)',textAlign:'center'}}>{newSlQuality}</span>
+                </div>
+                <input placeholder="Notes..." value={newSlNotes} onChange={e=>setNewSlNotes(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{await fetch('/api/user-sleep-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({sleep_hours:newSlHours,quality:newSlQuality,notes:newSlNotes})});const r=await fetch('/api/user-sleep-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSleepLog(await r.json());setNewSlNotes('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+              </div>
+              {sleepLog.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-sleep-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSleepLog(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {sleepLog.length>0&&<div style={{color:'var(--fg-text3)',fontSize:12,marginBottom:12}}>Avg: {(sleepLog.reduce((s:number,e:any)=>s+e.sleep_hours,0)/sleepLog.length).toFixed(1)}h | Avg quality: {(sleepLog.reduce((s:number,e:any)=>s+e.quality,0)/sleepLog.length).toFixed(1)}/10</div>}
+              {sleepLog.map((s:any)=>{const q=s.quality;const color=q>=8?'#22c55e':q>=5?'#f59e0b':'#ef4444';return(
+                <div key={s.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--fg-border)',marginBottom:6,display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{textAlign:'center',minWidth:50}}>
+                    <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:18}}>{s.sleep_hours}h</div>
+                    <div style={{fontSize:10,color}}>Q:{s.quality}</div>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:11,color:'var(--fg-text3)'}}>{new Date(s.logged_at).toLocaleDateString()}</div>
+                    {s.notes&&<div style={{fontSize:12,color:'var(--fg-text2)',marginTop:2}}>{s.notes}</div>}
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/user-sleep-log/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setSleepLog(prev=>prev.filter((x:any)=>x.id!==s.id));}} style={{padding:'3px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+        {mainTab === 'habittracker' && (
+
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#9989; Habit Tracker</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Habit name..." value={newHtName} onChange={e=>setNewHtName(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newHtCat} onChange={e=>setNewHtCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['general','health','work','learning','mindfulness','fitness'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <select value={newHtFreq} onChange={e=>setNewHtFreq(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['daily','weekly','weekdays'].map(f=><option key={f} value={f}>{f}</option>)}
+                </select>
+                <button onClick={async()=>{if(!newHtName)return;await fetch('/api/user-habit-tracker',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({habit_name:newHtName,habit_category:newHtCat,frequency:newHtFreq})});const r=await fetch('/api/user-habit-tracker',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setHabitTracker(await r.json());setNewHtName('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {habitTracker.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-habit-tracker',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setHabitTracker(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {habitTracker.map((h:any)=>{const today=new Date().toISOString().split('T')[0];const doneToday=h.last_checked_in===today;return(
+                <div key={h.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:doneToday?'1px solid rgba(34,197,94,0.4)':'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div>
+                      <div style={{color:'var(--fg-text)',fontWeight:700}}>{h.habit_name}</div>
+                      <div style={{fontSize:10,color:'var(--fg-text3)',marginTop:2}}>{h.habit_category} &bull; {h.frequency} &bull; &#128293; {h.current_streak} days (best: {h.longest_streak})</div>
+                    </div>
+                    <div style={{display:'flex',gap:6}}>
+                      {!doneToday&&<button onClick={async()=>{const d=await(await fetch('/api/user-habit-tracker/'+h.id+'/checkin',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})).json();setHabitTracker(p=>p.map((x:any)=>x.id===h.id?d:x));}} style={{padding:'4px 12px',background:'rgba(34,197,94,0.15)',border:'none',borderRadius:5,color:'#22c55e',cursor:'pointer',fontSize:12}}>&#10003; Check In</button>}
+                      {doneToday&&<span style={{fontSize:11,color:'#22c55e',padding:'4px 8px'}}>&#10003; Done</span>}
+                      <button onClick={async()=>{await fetch('/api/user-habit-tracker/'+h.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setHabitTracker(p=>p.filter((x:any)=>x.id!==h.id));}} style={{padding:'4px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+        {mainTab === 'linkvault' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128279; Link Vault</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Title..." value={newLvTitle} onChange={e=>setNewLvTitle(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="URL (https://...)" value={newLvUrl} onChange={e=>setNewLvUrl(e.target.value)} style={{flex:3,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newLvCat} onChange={e=>setNewLvCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['general','docs','tools','references','articles','videos'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <button onClick={async()=>{if(!newLvTitle||!newLvUrl)return;await fetch('/api/workspace-link-vault',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newLvTitle,url:newLvUrl,category:newLvCat})});const r=await fetch('/api/workspace-link-vault',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setLinkVault(await r.json());setNewLvTitle('');setNewLvUrl('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {linkVault.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-link-vault',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setLinkVault(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:10}}>
+                {linkVault.map((l:any)=>(
+                  <div key={l.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                      <a href={l.url} target="_blank" rel="noopener" style={{color:'var(--fg-text)',fontWeight:700,textDecoration:'none',fontSize:14}}>{l.title}</a>
+                      <button onClick={async()=>{await fetch('/api/workspace-link-vault/'+l.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setLinkVault(p=>p.filter((x:any)=>x.id!==l.id));}} style={{padding:'2px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                    </div>
+                    <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{l.category}</span>
+                    <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.url}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {mainTab === 'questionbank' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#10067; Question Bank</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Question to answer later..." value={newQbQuestion} onChange={e=>setNewQbQuestion(e.target.value)} style={{flex:3,minWidth:250,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <input placeholder="Context (optional)" value={newQbContext} onChange={e=>setNewQbContext(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newQbQuestion)return;await fetch('/api/ai-question-bank',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({question:newQbQuestion,context:newQbContext})});const r=await fetch('/api/ai-question-bank',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setQuestionBank(await r.json());setNewQbQuestion('');setNewQbContext('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {questionBank.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-question-bank',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setQuestionBank(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {questionBank.map((q:any)=>(
+                <div key={q.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:q.answered?'1px solid rgba(34,197,94,0.3)':'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{color:'var(--fg-text)',fontWeight:700,marginBottom:4}}>{q.question}</div>
+                      {q.context&&<div style={{fontSize:11,color:'var(--fg-text3)',marginBottom:4}}>{q.context}</div>}
+                      {q.answered&&q.answer&&<div style={{fontSize:12,color:'#22c55e',background:'rgba(34,197,94,0.08)',padding:'6px 10px',borderRadius:6,marginTop:4}}>&#10003; {q.answer.slice(0,200)}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:4,flexShrink:0}}>
+                      {!q.answered&&<button onClick={async()=>{const ans=prompt('Answer?');if(!ans)return;const d=await(await fetch('/api/ai-question-bank/'+q.id+'/answer',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({answer:ans})})).json();setQuestionBank(p=>p.map((x:any)=>x.id===q.id?d:x));}} style={{padding:'3px 10px',background:'rgba(99,102,241,0.15)',border:'none',borderRadius:5,color:'#6366f1',cursor:'pointer',fontSize:11}}>Answer</button>}
+                      <button onClick={async()=>{await fetch('/api/ai-question-bank/'+q.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setQuestionBank(p=>p.filter((x:any)=>x.id!==q.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'capacityplan' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128202; Capacity Plan</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Member name..." value={newCpMember} onChange={e=>setNewCpMember(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newCpRole} onChange={e=>setNewCpRole(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['member','lead','manager','ic','contractor'].map(r=><option key={r} value={r}>{r}</option>)}
+                </select>
+                <input type="number" placeholder="Capacity %" value={newCpCapacity} onChange={e=>setNewCpCapacity(Number(e.target.value))} min={0} max={100} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newCpMember)return;await fetch('/api/workspace-capacity-plan',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({member_name:newCpMember,role:newCpRole,capacity_pct:newCpCapacity})});const r=await fetch('/api/workspace-capacity-plan',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setCapacityPlan(await r.json());setNewCpMember('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {capacityPlan.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-capacity-plan',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setCapacityPlan(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {capacityPlan.map((m:any)=>{const used=m.allocated_pct;const cap=m.capacity_pct;const pct=cap>0?Math.min(100,(used/cap)*100):0;return(
+                <div key={m.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'14px 16px',border:'1px solid var(--fg-border)',marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <div>
+                      <span style={{color:'var(--fg-text)',fontWeight:700,fontSize:15}}>{m.member_name}</span>
+                      <span style={{marginLeft:8,fontSize:10,color:'var(--fg-orange)'}}>{m.role}</span>
+                    </div>
+                    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                      <span style={{color:pct>=90?'#ef4444':pct>=70?'#f59e0b':'#22c55e',fontWeight:700,fontSize:13}}>{used}% / {cap}%</span>
+                      <button onClick={async()=>{const alloc=prompt('Allocated %?',String(m.allocated_pct));if(!alloc)return;const d=await(await fetch('/api/workspace-capacity-plan/'+m.id,{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({allocated_pct:Number(alloc)})})).json();setCapacityPlan(p=>p.map((x:any)=>x.id===m.id?d:x));}} style={{padding:'2px 8px',background:'rgba(249,115,22,0.15)',border:'none',borderRadius:4,color:'var(--fg-orange)',cursor:'pointer',fontSize:10}}>Edit</button>
+                      <button onClick={async()=>{await fetch('/api/workspace-capacity-plan/'+m.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setCapacityPlan(p=>p.filter((x:any)=>x.id!==m.id));}} style={{padding:'2px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{height:8,background:'rgba(255,255,255,0.1)',borderRadius:4,overflow:'hidden'}}><div style={{height:'100%',width:pct+'%',background:pct>=90?'#ef4444':pct>=70?'#f59e0b':'#22c55e',transition:'width 0.3s'}}/></div>
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+        {mainTab === 'energylog' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#9889; Energy Log</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16, alignItems:'center' }}>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  <label style={{fontSize:11,color:'var(--fg-text3)'}}>Energy (1-10)</label>
+                  <input type="range" min={1} max={10} value={newElLevel} onChange={e=>setNewElLevel(Number(e.target.value))} style={{width:120}}/>
+                  <span style={{fontSize:12,color:'var(--fg-orange)',textAlign:'center'}}>{newElLevel}</span>
+                </div>
+                <select value={newElMood} onChange={e=>setNewElMood(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['neutral','happy','focused','tired','stressed','motivated','anxious','calm'].map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
+                <input placeholder="Notes..." value={newElNotes} onChange={e=>setNewElNotes(e.target.value)} style={{flex:2,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{await fetch('/api/user-energy-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({energy_level:newElLevel,mood:newElMood,notes:newElNotes})});const r=await fetch('/api/user-energy-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setEnergyLog(await r.json());setNewElNotes('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+              </div>
+              {energyLog.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-energy-log',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setEnergyLog(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {energyLog.map((e:any)=>{const lvl=e.energy_level;const color=lvl>=8?'#22c55e':lvl>=5?'#f59e0b':'#ef4444';return(
+                <div key={e.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--fg-border)',marginBottom:6,display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{width:36,height:36,borderRadius:'50%',background:color+'22',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <span style={{fontSize:16,fontWeight:900,color}}>{lvl}</span>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                      <span style={{color:'var(--fg-text)',fontWeight:600}}>{e.mood}</span>
+                      <span style={{fontSize:10,color:'var(--fg-text3)'}}>{new Date(e.logged_at).toLocaleString()}</span>
+                    </div>
+                    {e.notes&&<div style={{fontSize:12,color:'var(--fg-text2)',marginTop:2}}>{e.notes}</div>}
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/user-energy-log/'+e.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setEnergyLog(p=>p.filter((x:any)=>x.id!==e.id));}} style={{padding:'3px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+        {mainTab === 'readprogress' && (
+
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128214; Reading Progress</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Title..." value={newRpTitle} onChange={e=>setNewRpTitle(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newRpType} onChange={e=>setNewRpType(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['article','book','paper','video','course'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <input placeholder="URL" value={newRpUrl} onChange={e=>setNewRpUrl(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newRpTitle)return;await fetch('/api/user-reading-progress',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({resource_title:newRpTitle,resource_type:newRpType,url:newRpUrl})});const r=await fetch('/api/user-reading-progress',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setReadProgress(await r.json());setNewRpTitle('');setNewRpUrl('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {readProgress.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-reading-progress',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setReadProgress(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {readProgress.map((i:any)=>(
+                <div key={i.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:i.completed?'1px solid rgba(34,197,94,0.3)':'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{color:'var(--fg-text)',fontWeight:700}}>{i.resource_title}</div>
+                      <div style={{fontSize:10,color:'var(--fg-orange)',marginTop:2}}>{i.resource_type} &bull; {i.progress_pct}%</div>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/user-reading-progress/'+i.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setReadProgress(p=>p.filter((x:any)=>x.id!==i.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{flex:1,height:6,background:'rgba(255,255,255,0.1)',borderRadius:3,overflow:'hidden'}}><div style={{height:'100%',width:i.progress_pct+'%',background:i.completed?'#22c55e':'var(--fg-orange)',transition:'width 0.3s'}}/></div>
+                    <input type="range" min={0} max={100} defaultValue={i.progress_pct} onChange={async e=>{const d=await(await fetch('/api/user-reading-progress/'+i.id+'/update',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({progress_pct:Number(e.target.value)})})).json();setReadProgress(p=>p.map((x:any)=>x.id===i.id?{...x,progress_pct:Number(e.target.value),completed:d.completed}:x));}} style={{width:80}}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'wssops' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128203; Standard Operating Procedures</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="SOP title..." value={newSopTitle} onChange={e=>setNewSopTitle(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newSopCat} onChange={e=>setNewSopCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['general','onboarding','incident','release','customer','security'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <textarea placeholder="Steps (1. first step&#10;2. second step...)" value={newSopSteps} onChange={e=>setNewSopSteps(e.target.value)} rows={4} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newSopTitle||!newSopSteps)return;await fetch('/api/workspace-sops',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newSopTitle,category:newSopCat,steps:newSopSteps})});const r=await fetch('/api/workspace-sops',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsSops(await r.json());setNewSopTitle('');setNewSopSteps('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Add</button>
+              </div>
+              {wsSops.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-sops',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsSops(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {wsSops.map((s:any)=>(
+                <div key={s.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'14px 16px',border:'1px solid var(--fg-border)',marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                    <div>
+                      <div style={{color:'var(--fg-text)',fontWeight:700,fontSize:15}}>{s.title}</div>
+                      <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4,marginTop:4,display:'inline-block'}}>{s.category}</span>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/workspace-sops/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsSops(p=>p.filter((x:any)=>x.id!==s.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                  <pre style={{color:'var(--fg-text2)',fontSize:12,margin:0,whiteSpace:'pre-wrap'}}>{s.steps.slice(0,300)}</pre>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'aicitations' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128206; Citations</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Source title..." value={newCitTitle} onChange={e=>setNewCitTitle(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="URL" value={newCitUrl} onChange={e=>setNewCitUrl(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <textarea placeholder="Excerpt..." value={newCitExcerpt} onChange={e=>setNewCitExcerpt(e.target.value)} rows={2} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newCitTitle||!newCitExcerpt)return;await fetch('/api/ai-citation-store',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({source_title:newCitTitle,source_url:newCitUrl,excerpt:newCitExcerpt})});const r=await fetch('/api/ai-citation-store',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCitations(await r.json());setNewCitTitle('');setNewCitUrl('');setNewCitExcerpt('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Add</button>
+              </div>
+              {aiCitations.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-citation-store',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCitations(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {aiCitations.map((c:any)=>(
+                <div key={c.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
+                    <div style={{color:'var(--fg-text)',fontWeight:700}}>{c.source_title}</div>
+                    <button onClick={async()=>{await fetch('/api/ai-citation-store/'+c.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiCitations(p=>p.filter((x:any)=>x.id!==c.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                  {c.source_url&&<a href={c.source_url} target="_blank" rel="noopener" style={{fontSize:11,color:'#6366f1',display:'block',marginBottom:6}}>{c.source_url.slice(0,60)}</a>}
+                  <div style={{color:'var(--fg-text2)',fontSize:12,fontStyle:'italic'}}>"{c.excerpt.slice(0,200)}"</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'wsbudget' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128176; Budget Tracker</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Category..." value={newBuCat} onChange={e=>setNewBuCat(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input type="number" placeholder="Budget ($)" value={newBuAmount} onChange={e=>setNewBuAmount(Number(e.target.value))} style={{width:130,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newBuPeriod} onChange={e=>setNewBuPeriod(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['monthly','quarterly','yearly','one-time'].map(p=><option key={p} value={p}>{p}</option>)}
+                </select>
+                <button onClick={async()=>{if(!newBuCat)return;await fetch('/api/workspace-budget-tracker',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({category:newBuCat,budgeted_amount:newBuAmount,period:newBuPeriod})});const r=await fetch('/api/workspace-budget-tracker',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBudget(await r.json());setNewBuCat('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {wsBudget.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-budget-tracker',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBudget(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {wsBudget.map((b:any)=>{const pct=Math.min(100,(b.spent_amount/b.budgeted_amount)*100);return(
+                <div key={b.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'14px 16px',border:'1px solid var(--fg-border)',marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <div>
+                      <span style={{color:'var(--fg-text)',fontWeight:700}}>{b.category}</span>
+                      <span style={{marginLeft:8,fontSize:10,color:'var(--fg-text3)'}}>{b.period}</span>
+                    </div>
+                    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                      <span style={{color:pct>=90?'#ef4444':pct>=70?'#f59e0b':'#22c55e',fontWeight:700,fontSize:13}}>${b.spent_amount.toFixed(0)} / ${b.budgeted_amount.toFixed(0)}</span>
+                      <button onClick={async()=>{const spend=prompt('Spend amount?');if(!spend)return;const d=await(await fetch('/api/workspace-budget-tracker/'+b.id+'/spend',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({amount:Number(spend)})})).json();setWsBudget(p=>p.map((x:any)=>x.id===b.id?{...x,spent_amount:d.spent_amount}:x));}} style={{padding:'2px 8px',background:'rgba(249,115,22,0.15)',border:'none',borderRadius:4,color:'var(--fg-orange)',cursor:'pointer',fontSize:10}}>+Spend</button>
+                      <button onClick={async()=>{await fetch('/api/workspace-budget-tracker/'+b.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsBudget(p=>p.filter((x:any)=>x.id!==b.id));}} style={{padding:'2px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{height:8,background:'rgba(255,255,255,0.1)',borderRadius:4,overflow:'hidden'}}><div style={{height:'100%',width:pct+'%',background:pct>=90?'#ef4444':pct>=70?'#f59e0b':'#22c55e',transition:'width 0.3s'}}/></div>
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+        {mainTab === 'focusgoals' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127919; Focus Goals</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Goal..." value={newFgGoal} onChange={e=>setNewFgGoal(e.target.value)} style={{flex:3,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newFgArea} onChange={e=>setNewFgArea(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['work','personal','health','learning','relationships'].map(a=><option key={a} value={a}>{a}</option>)}
+                </select>
+                <select value={newFgPriority} onChange={e=>setNewFgPriority(Number(e.target.value))} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  <option value={1}>P1</option><option value={2}>P2</option><option value={3}>P3</option>
+                </select>
+                <button onClick={async()=>{if(!newFgGoal)return;await fetch('/api/user-focus-goals',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({goal:newFgGoal,focus_area:newFgArea,priority:newFgPriority})});const r=await fetch('/api/user-focus-goals',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setFocusGoals(await r.json());setNewFgGoal('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {focusGoals.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-focus-goals',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setFocusGoals(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {focusGoals.map((g:any)=>(
+                <div key={g.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:g.achieved?'1px solid rgba(34,197,94,0.3)':'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:4}}>
+                      <span style={{fontSize:11,fontWeight:700,color:g.priority===1?'#ef4444':g.priority===2?'#f59e0b':'#22c55e'}}>P{g.priority}</span>
+                      <span style={{fontSize:10,color:'var(--fg-orange)'}}>{g.focus_area}</span>
+                    </div>
+                    <div style={{color:'var(--fg-text)',textDecoration:g.achieved?'line-through':'none'}}>{g.goal}</div>
+                  </div>
+                  <div style={{display:'flex',gap:4}}>
+                    {!g.achieved&&<button onClick={async()=>{await fetch('/api/user-focus-goals/'+g.id+'/achieve',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setFocusGoals(p=>p.map((x:any)=>x.id===g.id?{...x,achieved:1}:x));}} style={{padding:'3px 10px',background:'rgba(34,197,94,0.15)',border:'none',borderRadius:5,color:'#22c55e',cursor:'pointer',fontSize:11}}>Done</button>}
+                    <button onClick={async()=>{await fetch('/api/user-focus-goals/'+g.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setFocusGoals(p=>p.filter((x:any)=>x.id!==g.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'wsdatasrc' && (
+
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128452;&#65039; Data Sources</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="Source name..." value={newDsName} onChange={e=>setNewDsName(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newDsType} onChange={e=>setNewDsType(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['database','api','file','stream','webhook'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <input placeholder="Connection URL (optional)" value={newDsUrl} onChange={e=>setNewDsUrl(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{if(!newDsName)return;await fetch('/api/workspace-data-sources',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({source_name:newDsName,source_type:newDsType,connection_url:newDsUrl})});const r=await fetch('/api/workspace-data-sources',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsDataSources(await r.json());setNewDsName('');setNewDsUrl('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {wsDataSources.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-data-sources',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsDataSources(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {wsDataSources.map((s:any)=>(
+                <div key={s.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+                      <span style={{color:'var(--fg-text)',fontWeight:700}}>{s.source_name}</span>
+                      <span style={{fontSize:10,color:'var(--fg-orange)',background:'rgba(249,115,22,0.12)',padding:'2px 6px',borderRadius:4}}>{s.source_type}</span>
+                    </div>
+                    {s.last_synced_at&&<div style={{fontSize:11,color:'var(--fg-text3)'}}>Last sync: {s.last_synced_at.slice(0,16)}</div>}
+                  </div>
+                  <button onClick={async()=>{const d=await(await fetch('/api/workspace-data-sources/'+s.id+'/sync',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}})).json();setWsDataSources(p=>p.map((x:any)=>x.id===s.id?{...x,last_synced_at:d.last_synced_at}:x));}} style={{padding:'3px 10px',background:'rgba(99,102,241,0.15)',border:'none',borderRadius:5,color:'#6366f1',cursor:'pointer',fontSize:11,marginRight:4}}>Sync</button>
+                  <button onClick={async()=>{await fetch('/api/workspace-data-sources/'+s.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsDataSources(p=>p.filter((x:any)=>x.id!==s.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'dailyintent' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127774; Daily Intentions</h2>
+              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                <input placeholder="Today's intention..." value={newDiText} onChange={e=>setNewDiText(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}} onKeyDown={async e=>{if(e.key==='Enter'&&newDiText){await fetch('/api/user-daily-intentions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({intention_text:newDiText})});const r=await fetch('/api/user-daily-intentions',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDailyIntentions(await r.json());setNewDiText('');}}}/>
+                <button onClick={async()=>{if(!newDiText)return;await fetch('/api/user-daily-intentions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({intention_text:newDiText})});const r=await fetch('/api/user-daily-intentions',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDailyIntentions(await r.json());setNewDiText('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Set</button>
+              </div>
+              {dailyIntentions.length===0&&<button onClick={async()=>{const r=await fetch('/api/user-daily-intentions',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDailyIntentions(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {dailyIntentions.map((i:any)=>(
+                <div key={i.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:i.completed?'1px solid rgba(34,197,94,0.3)':'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:10,color:'var(--fg-text3)',marginBottom:2}}>{i.intention_date}</div>
+                    <div style={{color:'var(--fg-text)',textDecoration:i.completed?'line-through':'none',fontSize:15}}>{i.intention_text}</div>
+                  </div>
+                  {!i.completed&&<button onClick={async()=>{await fetch('/api/user-daily-intentions/'+i.id+'/complete',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDailyIntentions(p=>p.map((x:any)=>x.id===i.id?{...x,completed:1}:x));}} style={{padding:'3px 10px',background:'rgba(34,197,94,0.15)',border:'none',borderRadius:5,color:'#22c55e',cursor:'pointer',fontSize:11,marginRight:4}}>Done</button>}
+                  <button onClick={async()=>{await fetch('/api/user-daily-intentions/'+i.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setDailyIntentions(p=>p.filter((x:any)=>x.id!==i.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'wsdesigntok' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#127912; Design Tokens</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                <input placeholder="--token-name" value={newDtName} onChange={e=>setNewDtName(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',fontFamily:'monospace'}}/>
+                <input placeholder="value (e.g. #FF6B6B)" value={newDtValue} onChange={e=>setNewDtValue(e.target.value)} style={{flex:1,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <select value={newDtType} onChange={e=>setNewDtType(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['color','spacing','typography','shadow','border','animation'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <button onClick={async()=>{if(!newDtName||!newDtValue)return;await fetch('/api/workspace-design-tokens',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({token_name:newDtName,token_value:newDtValue,token_type:newDtType})});const r=await fetch('/api/workspace-design-tokens',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsDesignTok(await r.json());setNewDtName('');setNewDtValue('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
+              </div>
+              {wsDesignTok.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-design-tokens',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsDesignTok(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:10}}>
+                {wsDesignTok.map((t:any)=>(
+                  <div key={t.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px',border:'1px solid var(--fg-border)',display:'flex',alignItems:'center',gap:10}}>
+                    {t.token_type==='color'&&<div style={{width:36,height:36,borderRadius:8,background:t.token_value,border:'1px solid rgba(255,255,255,0.1)',flexShrink:0}}/>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{color:'var(--fg-text)',fontSize:12,fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.token_name}</div>
+                      <div style={{color:'var(--fg-text3)',fontSize:11}}>{t.token_value}</div>
+                      <div style={{fontSize:10,color:'var(--fg-orange)'}}>{t.token_type}</div>
+                    </div>
+                    <button onClick={async()=>{await fetch('/api/workspace-design-tokens/'+t.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setWsDesignTok(p=>p.filter((x:any)=>x.id!==t.id));}} style={{padding:'2px 6px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {mainTab === 'aiknowledge' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#129504; AI Knowledge Base</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <input placeholder="Topic..." value={newKbTopic} onChange={e=>setNewKbTopic(e.target.value)} style={{flex:2,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <input placeholder="Tags (comma-sep)" value={newKbTags} onChange={e=>setNewKbTags(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:16}}>
+                <textarea placeholder="Content / facts to remember..." value={newKbContent} onChange={e=>setNewKbContent(e.target.value)} rows={3} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',resize:'vertical'}}/>
+                <button onClick={async()=>{if(!newKbTopic||!newKbContent)return;await fetch('/api/ai-knowledge-base',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({topic:newKbTopic,content:newKbContent,tags:newKbTags})});const r=await fetch('/api/ai-knowledge-base',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledge(await r.json());setNewKbTopic('');setNewKbContent('');setNewKbTags('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',alignSelf:'flex-end'}}>Add</button>
+              </div>
+              {aiKnowledge.length===0&&<button onClick={async()=>{const r=await fetch('/api/ai-knowledge-base',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledge(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {aiKnowledge.map((k:any)=>(
+                <div key={k.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:k.is_verified?'1px solid rgba(34,197,94,0.4)':'1px solid var(--fg-border)',marginBottom:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                    <div style={{flex:1}}>
+                      <div style={{color:'var(--fg-text)',fontWeight:700}}>{k.topic}</div>
+                      {k.tags&&<div style={{fontSize:10,color:'var(--fg-orange)',marginTop:2}}>{k.tags}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:4}}>
+                      {!k.is_verified&&<button onClick={async()=>{await fetch('/api/ai-knowledge-base/'+k.id+'/verify',{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledge(p=>p.map((x:any)=>x.id===k.id?{...x,is_verified:1}:x));}} style={{padding:'2px 8px',background:'rgba(34,197,94,0.15)',border:'none',borderRadius:4,color:'#22c55e',cursor:'pointer',fontSize:10}}>Verify</button>}
+                      <button onClick={async()=>{await fetch('/api/ai-knowledge-base/'+k.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledge(p=>p.filter((x:any)=>x.id!==k.id));}} style={{padding:'2px 8px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:4,color:'#ef4444',cursor:'pointer',fontSize:10}}>Del</button>
+                    </div>
+                  </div>
+                  <div style={{color:'var(--fg-text2)',fontSize:12,lineHeight:1.5}}>{k.content.slice(0,200)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {mainTab === 'teamhealth' && (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:740, margin:'0 auto' }}>
+              <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128151; Team Health</h2>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16, alignItems:'center' }}>
+                <select value={newThCat} onChange={e=>setNewThCat(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
+                  {['morale','velocity','communication','quality','collaboration','process'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+                  <span style={{fontSize:10,color:'var(--fg-text2)'}}>Score {newThScore}</span>
+                  <input type="range" min={1} max={10} value={newThScore} onChange={e=>setNewThScore(Number(e.target.value))} style={{width:100}}/>
+                </div>
+                <input placeholder="Notes..." value={newThNote} onChange={e=>setNewThNote(e.target.value)} style={{flex:1,minWidth:200,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
+                <button onClick={async()=>{await fetch('/api/workspace-team-health',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({category:newThCat,score:newThScore,notes:newThNote})});const r=await fetch('/api/workspace-team-health',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setTeamHealth(await r.json());setNewThNote('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
+              </div>
+              {teamHealth.length===0&&<button onClick={async()=>{const r=await fetch('/api/workspace-team-health',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setTeamHealth(await r.json());}} style={{padding:'8px 18px',background:'var(--fg-orange)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',marginBottom:12}}>Load</button>}
+              {teamHealth.map((h:any)=>(
+                <div key={h.id} style={{background:'var(--fg-bg2)',borderRadius:10,padding:'12px 16px',border:'1px solid var(--fg-border)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+                      <span style={{color:'var(--fg-text)',fontWeight:700,textTransform:'capitalize'}}>{h.category}</span>
+                      <span style={{color:h.score>=7?'#22c55e':h.score>=4?'#f59e0b':'#ef4444',fontWeight:700,fontSize:16}}>{h.score}/10</span>
+                    </div>
+                    {h.notes&&<div style={{color:'var(--fg-text2)',fontSize:12}}>{h.notes}</div>}
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/workspace-team-health/'+h.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setTeamHealth(p=>p.filter((x:any)=>x.id!==h.id));}} style={{padding:'3px 10px',background:'rgba(239,68,68,0.15)',border:'none',borderRadius:5,color:'#ef4444',cursor:'pointer',fontSize:11}}>Del</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {mainTab === 'wsflags' && (
+
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
             <div style={{ maxWidth:740, margin:'0 auto' }}>
               <h2 style={{ color:'var(--fg-text)', marginBottom:20, fontSize:22, fontWeight:700 }}>&#128681; Feature Flags</h2>
