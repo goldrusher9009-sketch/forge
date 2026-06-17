@@ -7908,33 +7908,6 @@ app.delete('/api/workspace-goals/:id', authMiddleware, async (req: any, res) => 
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/threads/:id/insights — AI-ready thread insights (key topics, action items, questions)
-    });
-    // Word frequency for topics
-    const wordFreq: Record<string,number> = {};
-    msgs.forEach((m: any) => {
-      m.content.toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).forEach((w: string) => {
-        if (w.length > 5 && !['about','their','which','would','could','should','there','these','those','where','being','having','after','before'].includes(w)) {
-          wordFreq[w] = (wordFreq[w]||0)+1;
-        }
-      });
-    });
-    const topTopics = Object.entries(wordFreq).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([w])=>w);
-    const contextSize = msgs.reduce((s: number, m: any) => s + m.content.length, 0);
-    res.json({
-      threadId: req.params.id,
-      title: thread.title,
-      messageCount: msgs.length,
-      contextSize,
-      estimatedTokens: Math.round(contextSize / 4),
-      topTopics,
-      questions: questions.slice(0,5),
-      actionItems: actionItems.slice(0,5),
-      lastActivity: msgs[msgs.length-1] ? msgs[msgs.length-1] : null
-    });
-  } catch (e: any) { res.status(500).json({ error: e.message }); }
-});
-
 // POST /api/format-text — text formatting utilities (markdown, clean, extract)
 app.post('/api/format-text', authMiddleware, async (req: any, res) => {
   try {
