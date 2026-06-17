@@ -30469,7 +30469,7 @@ app.patch('/api/feature-toggles/:id/toggle', requireAuth, (req: any, res: any) =
 
 // ─── B178: User Mood Check-ins, Workspace Integration Registry, AI Meeting Facilitator, User Financial Independence, Workspace Knowledge Articles ───
 
-db.exec(`
+try { db.exec(`
   CREATE TABLE IF NOT EXISTS user_mood_checkins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -30540,7 +30540,7 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
-`);
+`); } catch(e: any) { console.error('B178 schema warn:', e.message); }
 
 app.get('/api/mood-checkins', requireAuth, (req: any, res: any) => {
   const userId = req.user.id;
@@ -30637,7 +30637,7 @@ app.post('/api/knowledge-articles', requireAuth, (req: any, res: any) => {
 
 // ─── B179: User Gratitude Practice, Workspace Deployment Environments, AI Copywriting Angles, User Cold Plunge Log, Workspace Feature Adoption ───
 
-db.exec(`
+try { db.exec(`
   CREATE TABLE IF NOT EXISTS user_gratitude_practice (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -30708,7 +30708,7 @@ db.exec(`
     notes TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   );
-`);
+`); } catch(e: any) { console.error('B179 schema warn:', e.message); }
 
 app.get('/api/gratitude-practice', requireAuth, (req: any, res: any) => {
   const userId = req.user.id;
@@ -30795,6 +30795,170 @@ app.post('/api/feature-adoption', requireAuth, (req: any, res: any) => {
   const workspaceId = Number(req.query.workspace_id) || 1;
   const { feature_name, feature_category='general', total_users=0, active_users=0, usage_count=0, satisfaction_score=0, notes } = req.body;
   if (!feature_name) return res.status(400).json({ error: 'feature_name required' });
-  const r = db.prepare(`INSERT INTO workspace_feature_adoption (workspace_id,feature_name,feature_category,total_users,active_users,usage_count,satisfaction_score,notes) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, feature_name, feature_category, total_users, active_users, usage_count, satisfaction_score, notes||null);
+  const r = db.prepare(`INSERT INTO workspace_feature_adoption (workspace_id,feature_name,feature_category,total_users,active_users,usage_count,satisfaction_score,notes) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, fea
+// ─── B180: User Reading Log, Workspace API Keys Vault, AI Headline Scorer, User Habit Chains, Workspace Sprint Board ───
+
+try { db.exec(`
+  CREATE TABLE IF NOT EXISTS user_reading_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    book_title TEXT NOT NULL,
+    author TEXT,
+    genre TEXT DEFAULT 'non-fiction',
+    status TEXT DEFAULT 'reading',
+    pages_total INTEGER DEFAULT 0,
+    pages_read INTEGER DEFAULT 0,
+    progress_pct REAL GENERATED ALWAYS AS (ROUND(CAST(pages_read AS REAL)/NULLIF(pages_total,0)*100,1)) VIRTUAL,
+    rating INTEGER,
+    notes TEXT,
+    started_at TEXT,
+    finished_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_api_keys_vault (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    key_name TEXT NOT NULL,
+    service TEXT NOT NULL,
+    key_preview TEXT,
+    environment TEXT DEFAULT 'production',
+    status TEXT DEFAULT 'active',
+    last_used TEXT,
+    use_count INTEGER DEFAULT 0,
+    expires_at TEXT,
+    added_by TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_headline_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    headline TEXT NOT NULL,
+    score INTEGER,
+    clarity_score INTEGER,
+    curiosity_score INTEGER,
+    urgency_score INTEGER,
+    benefit_score INTEGER,
+    feedback TEXT,
+    improved_headline TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_habit_chains (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    chain_name TEXT NOT NULL,
+    habits TEXT NOT NULL,
+    trigger_habit TEXT,
+    total_links INTEGER DEFAULT 0,
+    current_streak INTEGER DEFAULT 0,
+    longest_streak INTEGER DEFAULT 0,
+    last_completed TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_sprint_board (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    sprint_name TEXT NOT NULL,
+    sprint_number INTEGER DEFAULT 1,
+    start_date TEXT,
+    end_date TEXT,
+    status TEXT DEFAULT 'active',
+    total_points INTEGER DEFAULT 0,
+    completed_points INTEGER DEFAULT 0,
+    velocity_pct REAL GENERATED ALWAYS AS (ROUND(CAST(completed_points AS REAL)/NULLIF(total_points,0)*100,1)) VIRTUAL,
+    team_members TEXT,
+    goal TEXT,
+    retrospective TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`); } catch(e: any) { console.error('B180 schema warn:', e.message); }
+
+app.get('/api/reading-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_reading_log WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  const finished = rows.filter((r: any) => r.status === 'finished').length;
+  const reading = rows.filter((r: any) => r.status === 'reading').length;
+  const avg_rating = rows.filter((r: any) => r.rating).length ? Math.round(rows.filter((r: any) => r.rating).reduce((s: number, r: any) => s + r.rating, 0) / rows.filter((r: any) => r.rating).length * 10) / 10 : 0;
+  res.json({ rows, total: rows.length, finished, reading, avg_rating });
+});
+app.post('/api/reading-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { book_title, author, genre='non-fiction', status='reading', pages_total=0, pages_read=0, rating, notes, started_at, finished_at } = req.body;
+  if (!book_title) return res.status(400).json({ error: 'book_title required' });
+  const r = db.prepare(`INSERT INTO user_reading_log (user_id,book_title,author,genre,status,pages_total,pages_read,rating,notes,started_at,finished_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(userId, book_title, author||null, genre, status, pages_total, pages_read, rating||null, notes||null, started_at||null, finished_at||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/api-keys-vault', requireAuth, (req: any, res: any) => {
+  const workspaceId = Number(req.query.workspace_id) || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_api_keys_vault WHERE workspace_id=? ORDER BY service ASC`).all(workspaceId);
+  const active = rows.filter((r: any) => r.status === 'active').length;
+  const expired = rows.filter((r: any) => r.status === 'expired').length;
+  res.json({ rows, total: rows.length, active, expired });
+});
+app.post('/api/api-keys-vault', requireAuth, (req: any, res: any) => {
+  const workspaceId = Number(req.query.workspace_id) || 1;
+  const { key_name, service, key_preview, environment='production', status='active', expires_at, added_by } = req.body;
+  if (!key_name || !service) return res.status(400).json({ error: 'key_name and service required' });
+  const r = db.prepare(`INSERT INTO workspace_api_keys_vault (workspace_id,key_name,service,key_preview,environment,status,expires_at,added_by) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, key_name, service, key_preview||null, environment, status, expires_at||null, added_by||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/headline-scores', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM ai_headline_scores WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  res.json(rows);
+});
+app.post('/api/headline-scores', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { headline } = req.body;
+  if (!headline) return res.status(400).json({ error: 'headline required' });
+  const key = await getUserKey(userId, 'anthropic');
+  let score=0, clarity_score=0, curiosity_score=0, urgency_score=0, benefit_score=0, feedback='', improved_headline='';
+  if (key) {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const prompt = `Score this headline on a 1-100 scale: "${headline}"\n\nProvide:\nScore: [1-100 overall]\nClarity: [1-25]\nCuriosity: [1-25]\nUrgency: [1-25]\nBenefit: [1-25]\nFeedback: [2-3 sentence analysis]\nImproved: [rewritten version]`;
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 400, messages: [{ role: 'user', content: prompt }] });
+    const text = msg.content[0].type === 'text' ? msg.content[0].text : '';
+    const sc = text.match(/Score:\s*(\d+)/); if (sc) score = parseInt(sc[1]);
+    const cl = text.match(/Clarity:\s*(\d+)/); if (cl) clarity_score = parseInt(cl[1]);
+    const cu = text.match(/Curiosity:\s*(\d+)/); if (cu) curiosity_score = parseInt(cu[1]);
+    const ur = text.match(/Urgency:\s*(\d+)/); if (ur) urgency_score = parseInt(ur[1]);
+    const be = text.match(/Benefit:\s*(\d+)/); if (be) benefit_score = parseInt(be[1]);
+    const fb = text.match(/Feedback:\s*([\s\S]+?)(?=Improved:|$)/); if (fb) feedback = fb[1].trim();
+    const im = text.match(/Improved:\s*([\s\S]+)/); if (im) improved_headline = im[1].trim();
+  }
+  const r = db.prepare(`INSERT INTO ai_headline_scores (user_id,headline,score,clarity_score,curiosity_score,urgency_score,benefit_score,feedback,improved_headline) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, headline, score, clarity_score, curiosity_score, urgency_score, benefit_score, feedback, improved_headline);
+  res.json({ id: r.lastInsertRowid, score, clarity_score, curiosity_score, urgency_score, benefit_score, feedback, improved_headline });
+});
+
+app.get('/api/habit-chains', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_habit_chains WHERE user_id=? ORDER BY current_streak DESC`).all(userId);
+  const total_links = rows.reduce((s: number, r: any) => s + (r.total_links||0), 0);
+  const max_streak = rows.length ? Math.max(...rows.map((r: any) => r.current_streak||0)) : 0;
+  res.json({ rows, total: rows.length, total_links, max_streak });
+});
+app.post('/api/habit-chains', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { chain_name, habits, trigger_habit, notes } = req.body;
+  if (!chain_name || !habits) return res.status(400).json({ error: 'chain_name and habits required' });
+  const r = db.prepare(`INSERT INTO user_habit_chains (user_id,chain_name,habits,trigger_habit,notes) VALUES (?,?,?,?,?)`).run(userId, chain_name, habits, trigger_habit||null, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/sprint-board', requireAuth, (req: any, res: any) => {
+  const workspaceId = Number(req.query.workspace_id) || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_sprint_board WHERE workspace_id=? ORDER BY sprint_number DESC LIMIT 20`).all(workspaceId);
+  const active = rows.filter((r: any) => r.status === 'active').length;
+  const avg_velocity = rows.filter((r: any) => r.velocity_pct).length ? Math.round(rows.filter((r: any) => r.velocity_pct).reduce((s: number, r: any) => s + (r.velocity_pct||0), 0) / rows.filter((r: any) => r.velocity_pct).length) : 0;
+  res.json({ rows, total: rows.length, active, avg_velocity });
+});
+app.post('/api/sprint-board', requireAuth, (req: any, res: any) => {
+  const workspaceId = Number(req.query.workspace_id) || 1;
+  const { sprint_name, sprint_number=1, start_date, end_date, total_points=0, team_members, goal } = req.body;
+  if (!sprint_name) return res.status(400).json({ error: 'sprint_name required' });
+  const r = db.prepare(`INSERT INTO workspace_sprint_board (workspace_id,sprint_name,sprint_number,start_date,end_date,total_points,team_members,goal) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, sprint_name, sprint_number, start_date||null, end_date||null, total_points, team_members||null, goal||null);
   res.json({ id: r.lastInsertRowid });
 });

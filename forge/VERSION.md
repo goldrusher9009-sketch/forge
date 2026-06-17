@@ -1,5 +1,9 @@
 # Forge Version History
 
+## v7.68 (2026-06-17)
+- B180: Reading Log, API Keys Vault, Headline Scorer AI, Habit Chains, Sprint Board
+- Fix: B178/B179 db.exec wrapped in try/catch to prevent startup crash on Railway
+
 ## v7.67 (2026-06-17)
 - B179: Gratitude Practice, Deployment Envs, Copywriting Angles AI, Cold Plunge Log, Feature Adoption
 
