@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -743,6 +743,36 @@ export default function ForgeApp() {
   const [wsMoodTrend, setWsMoodTrend] = useState<any>(null);
   const [newMoodEmoji, setNewMoodEmoji] = useState('😊');
   const [newMoodScore, setNewMoodScore] = useState(3);
+  const [readingQ, setReadingQ] = useState<any[]>([]);
+  const [sprintCap, setSprintCap] = useState<any[]>([]);
+  const [toneRewrites, setToneRewrites] = useState<any[]>([]);
+  const [achieveBadges, setAchieveBadges] = useState<any[]>([]);
+  const [dataGloss, setDataGloss] = useState<any[]>([]);
+  const [decJournal, setDecJournal] = useState<any[]>([]);
+  const [knowWiki, setKnowWiki] = useState<any[]>([]);
+  const [conceptExp, setConceptExp] = useState<any[]>([]);
+  const [reflectLog, setReflectLog] = useState<any[]>([]);
+  const [teamKudos, setTeamKudos] = useState<any[]>([]);
+  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [okrCheckins, setOkrCheckins] = useState<any[]>([]);
+  const [debateItems, setDebateItems] = useState<any[]>([]);
+  const [habitChains, setHabitChains] = useState<any[]>([]);
+  const [eventCal, setEventCal] = useState<any[]>([]);
+  const [bookTracker, setBookTracker] = useState<any[]>([]);
+  const [projectRisks, setProjectRisks] = useState<any[]>([]);
+  const [writingCoachItems, setWritingCoachItems] = useState<any[]>([]);
+  const [mindmapNodes, setMindmapNodes] = useState<any[]>([]);
+  const [surveyResps, setSurveyResps] = useState<any[]>([]);
+  const [codeReviews, setCodeReviews] = useState<any[]>([]);
+  const [newCodeReview, setNewCodeReview] = useState({ title:'', code_snippet:'', language:'javascript', feedback:'' });
+  const [incidentTimeline, setIncidentTimeline] = useState<any[]>([]);
+  const [newIncident, setNewIncident] = useState({ incident_title:'', event_type:'update', description:'', severity:'p2' });
+  const [promptLib, setPromptLib] = useState<any[]>([]);
+  const [newPrompt, setNewPrompt] = useState({ title:'', prompt_text:'', category:'general' });
+  const [langItems, setLangItems] = useState<any[]>([]);
+  const [newLang, setNewLang] = useState({ language:'Spanish', word_or_phrase:'', translation:'', notes:'' });
+  const [vendorContacts, setVendorContacts] = useState<any[]>([]);
+  const [newVendorContact, setNewVendorContact] = useState({ vendor_name:'', contact_name:'', email:'', phone:'', role:'', notes:'' });
   const [taskDeps, setTaskDeps] = useState<any[]>([]);
   const [newTaskDep, setNewTaskDep] = useState({ task_name:'', depends_on:'', dep_type:'finish_to_start', notes:'' });
   const [slaItems, setSlaItems] = useState<any[]>([]);
@@ -5546,6 +5576,16 @@ export default function ForgeApp() {
             { id:'journal', icon:'📓', label:'Journal' },
             { id:'habits', icon:'🔥', label:'Habits' },
             { id:'changelog', icon:'📜', label:'Changelog' },
+            { id:'readingq', icon:'📰', label:'Reading Queue' },
+            { id:'sprintcap', icon:'📈', label:'Sprint Capacity' },
+            { id:'tonerewrite', icon:'🖊️', label:'Tone Rewriter' },
+            { id:'achievebadge', icon:'🏆', label:'Badges' },
+            { id:'datagloss', icon:'📝', label:'Data Glossary' },
+            { id:'decjournal', icon:'📓', label:'Decision Journal' },
+            { id:'knowwiki', icon:'📖', label:'Knowledge Wiki' },
+            { id:'conceptexp', icon:'🧪', label:'Concept Explainer' },
+            { id:'reflectlog', icon:'🌟', label:'Reflection Log' },
+            { id:'teamkudos', icon:'👏', label:'Team Kudos' },
             { id:'flashcards', icon:'🃏', label:'Flashcards' },
             { id:'reading', icon:'📚', label:'Reading' },
             { id:'kanban', icon:'🗃️', label:'Kanban' },
@@ -5771,6 +5811,21 @@ export default function ForgeApp() {
             { id:'growthlog', icon:'📈', label:'Growth Log' },
             { id:'hallucinchk', icon:'🔍', label:'Hallucin Check' },
             { id:'wsdirs', icon:'📂', label:'WS Dirs' },
+            { id:'flashcards', icon:'🃏', label:'Flashcards' },
+            { id:'okrcheckins', icon:'🎯', label:'OKR Check-ins' },
+            { id:'debatecoach', icon:'🎙️', label:'Debate Coach' },
+            { id:'habitchains', icon:'🔗', label:'Habit Chains' },
+            { id:'eventcal', icon:'📅', label:'Event Calendar' },
+            { id:'booktracker', icon:'📚', label:'Book Tracker' },
+            { id:'projectrisks', icon:'⚠️', label:'Project Risks' },
+            { id:'writingcoach', icon:'✏️', label:'Writing Coach' },
+            { id:'mindmapnodes', icon:'🧠', label:'Mind Map' },
+            { id:'surveyresps', icon:'📋', label:'Survey Resps' },
+            { id:'codereviews', icon:'🔎', label:'Code Reviews' },
+            { id:'incidenttl', icon:'🚨', label:'Incident TL' },
+            { id:'promptlib', icon:'📚', label:'Prompt Lib' },
+            { id:'langlearn', icon:'🌍', label:'Language' },
+            { id:'vendorcontacts', icon:'📞', label:'Vendor Contacts' },
             { id:'taskdeps', icon:'🔗', label:'Task Deps' },
             { id:'slatracker', icon:'📶', label:'SLA Tracker' },
             { id:'contentplanner', icon:'🗓️', label:'Content Plan' },
@@ -11968,6 +12023,147 @@ export default function ForgeApp() {
         )}
 
         {/* Flashcards tab */}
+        {mainTab === 'readingq' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128240; Reading Queue</h2>
+            <p className="text-gray-400 mb-4">Queue articles, papers, and links to read later.</p>
+            <button onClick={async()=>{const r=await fetch('/api/reading-queue',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setReadingQ(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Queue</button>
+            <div className="space-y-2">{readingQ.map((r:any)=>(
+              <div key={r.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div><div className="font-semibold">{r.title}</div><div className="text-xs text-gray-400">{r.source} &mdash; ~{r.estimated_mins}min &mdash; {r.status}</div></div>
+                {r.url && <a href={r.url} target="_blank" rel="noreferrer" className="text-blue-400 text-xs ml-2">&#128279;</a>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'sprintcap' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128200; Sprint Capacity</h2>
+            <p className="text-gray-400 mb-4">Track team capacity and hours per sprint.</p>
+            <button onClick={async()=>{const r=await fetch('/api/sprint-capacity',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSprintCap(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Capacity</button>
+            <div className="space-y-2">{sprintCap.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{s.sprint_name} &mdash; {s.member_id}</div>
+                <div className="text-sm text-gray-400">Available: {s.available_hours}h | Committed: {s.committed_hours}h | Actual: {s.actual_hours}h</div>
+                <div className="mt-2 bg-gray-700 rounded-full h-1.5"><div className="bg-purple-500 h-1.5 rounded-full" style={{width:`${Math.min(100,(s.committed_hours/s.available_hours)*100)}%`}}></div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'tonerewrite' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128394;&#65039; Tone Rewriter</h2>
+            <p className="text-gray-400 mb-4">Rewrite text in different tones: professional, casual, assertive, empathetic.</p>
+            <button onClick={async()=>{const r=await fetch('/api/tone-rewriter',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setToneRewrites(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-600 rounded text-white mb-4">Load Rewrites</button>
+            <div className="space-y-2">{toneRewrites.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-3">
+                <div className="text-xs text-pink-400 font-semibold">Target: {t.target_tone} | Score: {t.tone_score}/100</div>
+                <div className="text-xs text-gray-500 mt-1">Original: {t.original_text?.slice(0,80)}...</div>
+                <div className="text-sm text-gray-300 mt-1">{t.rewritten_text?.slice(0,120)}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'achievebadge' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127942; Achievement Badges</h2>
+            <p className="text-gray-400 mb-4">Earn and display badges for milestones and accomplishments.</p>
+            <button onClick={async()=>{const r=await fetch('/api/achievement-badges',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setAchieveBadges(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Badges</button>
+            <div className="flex flex-wrap gap-3">{achieveBadges.map((b:any)=>(
+              <div key={b.id} className="bg-gray-800 rounded-lg p-4 text-center w-32">
+                <div className="text-3xl mb-1">{b.badge_icon}</div>
+                <div className="text-xs font-semibold">{b.badge_name}</div>
+                <div className="text-xs text-gray-500">{b.category}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'datagloss' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128221; Data Glossary</h2>
+            <p className="text-gray-400 mb-4">Shared workspace glossary for consistent data terminology.</p>
+            <button onClick={async()=>{const r=await fetch('/api/data-glossary',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDataGloss(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Glossary</button>
+            <div className="space-y-2">{dataGloss.map((g:any)=>(
+              <div key={g.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold text-green-400">{g.term} {g.approved?'&#10003;':''}</div>
+                <div className="text-sm text-gray-300">{g.definition}</div>
+                {g.context && <div className="text-xs text-gray-500 mt-1">{g.context}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'decjournal' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128211; Decision Journal</h2>
+            <p className="text-gray-400 mb-4">Record decisions with context and track outcomes over time.</p>
+            <button onClick={async()=>{const r=await fetch('/api/decision-journal',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDecJournal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Decisions</button>
+            <div className="space-y-2">{decJournal.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{d.decision}</div>
+                <div className="text-sm text-gray-400">Chose: {d.chosen_option}</div>
+                {d.actual_outcome && <div className="text-xs text-green-400 mt-1">Outcome: {d.actual_outcome} {d.rating ? `(${d.rating}/5)`:''}</div>}
+                <div className="text-xs text-gray-500">{new Date(d.created_at).toLocaleDateString()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'knowwiki' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128214; Knowledge Wiki</h2>
+            <p className="text-gray-400 mb-4">Workspace wiki for shared knowledge, guides, and documentation.</p>
+            <button onClick={async()=>{const r=await fetch('/api/knowledge-wiki',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setKnowWiki(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Wiki</button>
+            <div className="space-y-2">{knowWiki.map((w:any)=>(
+              <div key={w.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{w.title}</div>
+                <div className="text-xs text-gray-400">{w.category} &mdash; {w.views} views</div>
+                <div className="text-sm text-gray-300 mt-1 truncate">{w.content?.slice(0,120)}...</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'conceptexp' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129514; Concept Explainer</h2>
+            <p className="text-gray-400 mb-4">AI explains any concept with analogies at your level.</p>
+            <button onClick={async()=>{const r=await fetch('/api/concept-explainer',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setConceptExp(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Explanations</button>
+            <div className="space-y-2">{conceptExp.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{c.concept}</div>
+                <div className="text-xs text-gray-400">Level: {c.audience_level}</div>
+                <div className="text-sm text-gray-300 mt-1">{c.explanation}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'reflectlog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127775; Reflection Log</h2>
+            <p className="text-gray-400 mb-4">Daily reflections: wins, improvements, and gratitude.</p>
+            <button onClick={async()=>{const r=await fetch('/api/reflection-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setReflectLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Reflections</button>
+            <div className="space-y-2">{reflectLog.map((r:any)=>(
+              <div key={r.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{r.reflection_date} &mdash; Mood: {'⭐'.repeat(r.mood_score||1)}</div>
+                {r.what_went_well && <div className="text-sm text-green-400 mt-1">&#10003; {r.what_went_well}</div>}
+                {r.what_to_improve && <div className="text-sm text-orange-400">&#8593; {r.what_to_improve}</div>}
+                {r.gratitude && <div className="text-sm text-purple-400">&#128149; {r.gratitude}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'teamkudos' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128079; Team Kudos</h2>
+            <p className="text-gray-400 mb-4">Celebrate teammates with public kudos and recognition.</p>
+            <button onClick={async()=>{const r=await fetch('/api/team-kudos',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setTeamKudos(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-600 rounded text-white mb-4">Load Kudos</button>
+            <div className="space-y-2">{teamKudos.map((k:any)=>(
+              <div key={k.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">&#127881; {k.message}</div>
+                <div className="text-xs text-gray-400">{k.giver_id} &rarr; {k.receiver_id} &mdash; {k.category}</div>
+                <div className="text-xs text-gray-500">{new Date(k.created_at).toLocaleDateString()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
         {mainTab === 'flashcards' && (
           <div style={{ padding:24, maxWidth:680 }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
@@ -19922,6 +20118,304 @@ export default function ForgeApp() {
         )}
 
         {/* Workspace Health tab */}
+        {mainTab === 'flashcards' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127183; Flashcards</h2>
+            <p className="text-gray-400 mb-4">Spaced repetition flashcard decks for active recall learning.</p>
+            <button onClick={async()=>{const r=await fetch('/api/flashcards',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setFlashcards(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Flashcards</button>
+            <div className="space-y-2">{flashcards.map((f:any)=>(
+              <div key={f.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{f.deck_name}</div>
+                <div className="text-sm text-blue-300 mt-1">Q: {f.front}</div>
+                <div className="text-sm text-green-300">A: {f.back}</div>
+                <div className="text-xs text-gray-500 mt-1">Reviews: {f.review_count} | Difficulty: {f.difficulty}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'okrcheckins' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127919; OKR Check-ins</h2>
+            <p className="text-gray-400 mb-4">Track objectives and key results with progress check-ins.</p>
+            <button onClick={async()=>{const r=await fetch('/api/okr-checkins',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setOkrCheckins(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load OKRs</button>
+            <div className="space-y-2">{okrCheckins.map((o:any)=>(
+              <div key={o.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{o.objective}</div>
+                <div className="text-sm text-gray-400">{o.key_result}</div>
+                <div className="mt-2 bg-gray-700 rounded-full h-2"><div className="bg-green-500 h-2 rounded-full" style={{width:`${Math.min(100,(o.current_value/o.target_value)*100)}%`}}></div></div>
+                <div className="text-xs text-gray-500 mt-1">{o.current_value}/{o.target_value} — {o.status} — {o.quarter}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'debatecoach' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127897;&#65039; Debate Coach</h2>
+            <p className="text-gray-400 mb-4">Practice argumentation and critical thinking on any topic.</p>
+            <button onClick={async()=>{const r=await fetch('/api/debate-coach',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDebateItems(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Debates</button>
+            <div className="space-y-2">{debateItems.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{d.topic}</div>
+                <div className="text-sm text-gray-400">Position: {d.position} | Strength: {d.strength_score}/100</div>
+                <div className="text-xs text-gray-500 mt-1">{d.argument}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'habitchains' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128279; Habit Chains</h2>
+            <p className="text-gray-400 mb-4">Build atomic habit chains with streak tracking.</p>
+            <button onClick={async()=>{const r=await fetch('/api/habit-chains',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setHabitChains(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Chains</button>
+            <div className="space-y-2">{habitChains.map((h:any)=>(
+              <div key={h.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{h.chain_name}</div><div className="text-xs text-gray-400">Streak: {h.current_streak} | Best: {h.longest_streak}</div></div>
+                <button onClick={async()=>{await fetch(`/api/habit-chains/${h.id}/complete`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:'{}'});const r=await fetch('/api/habit-chains',{headers:{Authorization:`Bearer ${token}`}});setHabitChains(await r.json());}} className="px-3 py-1 bg-green-700 rounded text-sm text-white">&#10003;</button>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'eventcal' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128197; Event Calendar</h2>
+            <p className="text-gray-400 mb-4">Workspace event calendar for meetings, deadlines, and milestones.</p>
+            <button onClick={async()=>{const r=await fetch('/api/event-calendar',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setEventCal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Events</button>
+            <div className="space-y-2">{eventCal.map((e:any)=>(
+              <div key={e.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{e.title}</div>
+                <div className="text-sm text-gray-400">{e.event_type} &mdash; {new Date(e.event_date).toLocaleString()}</div>
+                {e.description && <div className="text-xs text-gray-500 mt-1">{e.description}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'booktracker' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128218; Book Tracker</h2>
+            <p className="text-gray-400 mb-4">Track books you want to read, are reading, or have finished.</p>
+            <button onClick={async()=>{const r=await fetch('/api/book-tracker',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setBookTracker(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Books</button>
+            <div className="space-y-2">{bookTracker.map((b:any)=>(
+              <div key={b.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{b.title}</div><div className="text-sm text-gray-400">{b.author} &mdash; {b.status} {b.progress_pct>0?`(${b.progress_pct}%)`:""}</div></div>
+                {b.rating && <span className="text-yellow-400">{"&#9733;".repeat(b.rating)}</span>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'projectrisks' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#9888;&#65039; Project Risks</h2>
+            <p className="text-gray-400 mb-4">Track risks across projects with probability and impact levels.</p>
+            <button onClick={async()=>{const r=await fetch('/api/project-risks',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setProjectRisks(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-600 rounded text-white mb-4">Load Risks</button>
+            <div className="space-y-2">{projectRisks.map((r:any)=>(
+              <div key={r.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{r.risk_title}</div>
+                <div className="text-sm text-gray-400">{r.project_name} &mdash; P:{r.probability} / I:{r.impact} &mdash; {r.status}</div>
+                {r.mitigation && <div className="text-xs text-gray-500 mt-1">{r.mitigation}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'writingcoach' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#9999;&#65039; Writing Coach</h2>
+            <p className="text-gray-400 mb-4">AI-powered writing feedback for clarity, tone, and style.</p>
+            <button onClick={async()=>{const r=await fetch('/api/writing-coach',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWritingCoachItems(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Sessions</button>
+            <div className="space-y-2">{writingCoachItems.map((w:any)=>(
+              <div key={w.id} className="bg-gray-800 rounded p-3">
+                <div className="text-sm font-semibold text-blue-400">{w.coach_type} &mdash; Score: {w.score}/100</div>
+                <div className="text-xs text-gray-400 mt-1 truncate">{w.input_text?.slice(0,100)}...</div>
+                <div className="text-xs text-gray-500 mt-1">{w.suggestions}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'mindmapnodes' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129504; Mind Map</h2>
+            <p className="text-gray-400 mb-4">Visual mind mapping with connected nodes for brainstorming.</p>
+            <button onClick={async()=>{const r=await fetch('/api/mindmap/default',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMindmapNodes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Map</button>
+            <div className="space-y-2">{mindmapNodes.map((n:any)=>(
+              <div key={n.id} className="bg-gray-800 rounded p-3 flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{backgroundColor:n.color||'#7c3aed'}}></div>
+                <div><div className="font-semibold">{n.node_text}</div><div className="text-xs text-gray-400">Map: {n.map_name}{n.parent_id?` | Parent: #${n.parent_id}`:" | Root"}</div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'surveyresps' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128203; Survey Responses</h2>
+            <p className="text-gray-400 mb-4">Collect and review workspace survey data.</p>
+            <button onClick={async()=>{const r=await fetch('/api/survey-responses',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSurveyResps(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Responses</button>
+            <div className="space-y-2">{surveyResps.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{s.survey_name}</div>
+                <div className="text-xs text-gray-400">Respondent: {s.respondent_id} &mdash; {new Date(s.submitted_at).toLocaleDateString()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'codereviews' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128270; Code Reviews</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'8px',flexWrap:'wrap'}}>
+              <input placeholder="Title / PR name" value={newCodeReview.title} onChange={e=>setNewCodeReview(p=>({...p,title:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <select value={newCodeReview.language} onChange={e=>setNewCodeReview(p=>({...p,language:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                {['javascript','typescript','python','go','rust','java','css','sql','bash'].map(l=><option key={l}>{l}</option>)}
+              </select>
+            </div>
+            <textarea placeholder="Paste code snippet..." value={newCodeReview.code_snippet} onChange={e=>setNewCodeReview(p=>({...p,code_snippet:e.target.value}))} rows={4} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontFamily:'monospace',fontSize:'13px',width:'100%',marginBottom:'8px',resize:'vertical'}} />
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+              <textarea placeholder="Feedback / notes" value={newCodeReview.feedback} onChange={e=>setNewCodeReview(p=>({...p,feedback:e.target.value}))} rows={2} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1,resize:'vertical'}} />
+              <button onClick={async()=>{if(!newCodeReview.title)return;const r=await fetch('/api/code-reviews',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newCodeReview)});if(r.ok){const d=await r.json();setCodeReviews((p:any[])=>[d,...p]);setNewCodeReview({title:'',code_snippet:'',language:'javascript',feedback:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer',alignSelf:'flex-end'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+              {codeReviews.map((r:any)=>(
+                <div key={r.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+                    <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                      <span style={{padding:'2px 8px',borderRadius:'12px',background:'#1e3a5f',fontSize:'12px'}}>{r.language}</span>
+                      <strong>{r.title}</strong>
+                    </div>
+                    <span style={{padding:'2px 8px',borderRadius:'12px',background:r.status==='approved'?'#065f46':r.status==='changes_requested'?'#7f1d1d':'#44403c',fontSize:'12px'}}>{r.status}</span>
+                  </div>
+                  {r.code_snippet&&<pre style={{background:'#0d0d0d',padding:'10px',borderRadius:'6px',overflow:'auto',fontSize:'12px',margin:'0 0 8px',maxHeight:'150px'}}>{r.code_snippet}</pre>}
+                  {r.feedback&&<p style={{color:'#888',fontSize:'13px',margin:'0'}}>{r.feedback}</p>}
+                </div>
+              ))}
+              {codeReviews.length===0&&<p style={{color:'#666'}}>No code reviews yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'incidenttl' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128680; Incident Timeline</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Incident title" value={newIncident.incident_title} onChange={e=>setNewIncident(p=>({...p,incident_title:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <select value={newIncident.event_type} onChange={e=>setNewIncident(p=>({...p,event_type:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                {['detected','acknowledged','investigating','mitigated','resolved','update'].map(t=><option key={t}>{t}</option>)}
+              </select>
+              <select value={newIncident.severity} onChange={e=>setNewIncident(p=>({...p,severity:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                {['p0','p1','p2','p3'].map(s=><option key={s}>{s}</option>)}
+              </select>
+              <input placeholder="Description" value={newIncident.description} onChange={e=>setNewIncident(p=>({...p,description:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:2}} />
+              <button onClick={async()=>{if(!newIncident.incident_title)return;const r=await fetch('/api/incident-timeline',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newIncident)});if(r.ok){const d=await r.json();setIncidentTimeline((p:any[])=>[d,...p]);setNewIncident({incident_title:'',event_type:'update',description:'',severity:'p2'});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#dc2626',color:'#fff',border:'none',cursor:'pointer'}}>Log</button>
+            </div>
+            <div style={{position:'relative',paddingLeft:'24px'}}>
+              <div style={{position:'absolute',left:'8px',top:'0',bottom:'0',width:'2px',background:'#333'}} />
+              {incidentTimeline.map((e:any)=>(
+                <div key={e.id} style={{position:'relative',marginBottom:'16px'}}>
+                  <div style={{position:'absolute',left:'-20px',top:'4px',width:'10px',height:'10px',borderRadius:'50%',background:e.event_type==='resolved'?'#059669':e.event_type==='detected'?'#dc2626':'#7c3aed'}} />
+                  <div style={{background:'#111',borderRadius:'8px',padding:'12px',border:'1px solid #222'}}>
+                    <div style={{display:'flex',gap:'8px',marginBottom:'4px',alignItems:'center'}}>
+                      <span style={{padding:'2px 6px',borderRadius:'12px',background:e.severity==='p0'?'#7f1d1d':e.severity==='p1'?'#92400e':'#44403c',fontSize:'11px'}}>{e.severity}</span>
+                      <span style={{padding:'2px 8px',borderRadius:'12px',background:'#1e3a5f',fontSize:'11px'}}>{e.event_type}</span>
+                      <strong style={{fontSize:'14px'}}>{e.incident_title}</strong>
+                      <span style={{color:'#666',fontSize:'11px',marginLeft:'auto'}}>{new Date(e.event_time).toLocaleString()}</span>
+                    </div>
+                    {e.description&&<p style={{color:'#888',fontSize:'13px',margin:'0'}}>{e.description}</p>}
+                  </div>
+                </div>
+              ))}
+              {incidentTimeline.length===0&&<p style={{color:'#666'}}>No incidents logged.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'promptlib' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128218; Prompt Library</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'8px',flexWrap:'wrap'}}>
+              <input placeholder="Prompt title" value={newPrompt.title} onChange={e=>setNewPrompt(p=>({...p,title:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <select value={newPrompt.category} onChange={e=>setNewPrompt(p=>({...p,category:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
+                {['general','coding','writing','analysis','summarize','brainstorm','debug','explain'].map(c=><option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+              <textarea placeholder="Prompt text..." value={newPrompt.prompt_text} onChange={e=>setNewPrompt(p=>({...p,prompt_text:e.target.value}))} rows={3} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1,resize:'vertical'}} />
+              <button onClick={async()=>{if(!newPrompt.title||!newPrompt.prompt_text)return;const r=await fetch('/api/prompt-library',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newPrompt)});if(r.ok){const d=await r.json();setPromptLib((p:any[])=>[d,...p]);setNewPrompt({title:'',prompt_text:'',category:'general'});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer',alignSelf:'flex-end'}}>Save</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {promptLib.map((p:any)=>(
+                <div key={p.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'6px'}}>
+                    <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                      <button onClick={async()=>{const r=await fetch('/api/prompt-library/'+p.id+'/star',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});if(r.ok){const d=await r.json();setPromptLib((prev:any[])=>prev.map((x:any)=>x.id===p.id?d:x));} }} style={{background:'none',border:'none',cursor:'pointer',fontSize:'16px',padding:0}}>{p.starred?'⭐':'☆'}</button>
+                      <strong>{p.title}</strong>
+                      <span style={{padding:'2px 6px',borderRadius:'12px',background:'#1e3a5f',fontSize:'11px'}}>{p.category}</span>
+                    </div>
+                    <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                      <span style={{color:'#666',fontSize:'12px'}}>used {p.use_count}x</span>
+                      <button onClick={async()=>{await fetch('/api/prompt-library/'+p.id+'/use',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});navigator.clipboard.writeText(p.prompt_text);setPromptLib((prev:any[])=>prev.map((x:any)=>x.id===p.id?{...x,use_count:x.use_count+1}:x));}} style={{padding:'4px 10px',borderRadius:'4px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer',fontSize:'12px'}}>Copy</button>
+                    </div>
+                  </div>
+                  <p style={{color:'#888',fontSize:'13px',margin:'0',whiteSpace:'pre-wrap'}}>{p.prompt_text.substring(0,200)}{p.prompt_text.length>200?'...':''}</p>
+                </div>
+              ))}
+              {promptLib.length===0&&<p style={{color:'#666'}}>No prompts saved yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'langlearn' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#127757; Language Learning</h2>
+            <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+              <input placeholder="Language" value={newLang.language} onChange={e=>setNewLang(p=>({...p,language:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',width:'110px'}} />
+              <input placeholder="Word / phrase" value={newLang.word_or_phrase} onChange={e=>setNewLang(p=>({...p,word_or_phrase:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Translation" value={newLang.translation} onChange={e=>setNewLang(p=>({...p,translation:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <input placeholder="Notes" value={newLang.notes} onChange={e=>setNewLang(p=>({...p,notes:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',flex:1}} />
+              <button onClick={async()=>{if(!newLang.word_or_phrase)return;const r=await fetch('/api/language-learning',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newLang)});if(r.ok){const d=await r.json();setLangItems((p:any[])=>[d,...p]);setNewLang({language:newLang.language,word_or_phrase:'',translation:'',notes:''});}}} style={{padding:'8px 16px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer'}}>Add</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {langItems.map((l:any)=>(
+                <div key={l.id} style={{background:'#111',borderRadius:'8px',padding:'12px',border:'1px solid #222',display:'flex',gap:'16px',alignItems:'center'}}>
+                  <span style={{padding:'2px 6px',borderRadius:'12px',background:'#1e3a5f',fontSize:'11px',minWidth:'60px',textAlign:'center'}}>{l.language}</span>
+                  <div style={{flex:1}}>
+                    <strong>{l.word_or_phrase}</strong>
+                    {l.translation&&<span style={{color:'#a78bfa',marginLeft:'12px'}}>{l.translation}</span>}
+                    {l.notes&&<span style={{color:'#666',fontSize:'12px',marginLeft:'12px'}}>{l.notes}</span>}
+                  </div>
+                  <div style={{display:'flex',gap:'4px'}}>
+                    {[0,1,2,3,4].map(n=><button key={n} onClick={async()=>{const r=await fetch('/api/language-learning/'+l.id+'/mastery',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({mastery_level:n+1})});if(r.ok){const d=await r.json();setLangItems((p:any[])=>p.map((x:any)=>x.id===l.id?d:x));}}} style={{padding:'2px 6px',borderRadius:'4px',background:l.mastery_level>n?'#7c3aed':'#222',border:'none',cursor:'pointer',fontSize:'12px',color:'#fff'}}>{'★'}</button>)}
+                  </div>
+                </div>
+              ))}
+              {langItems.length===0&&<p style={{color:'#666'}}>No words added yet.</p>}
+            </div>
+          </div>
+        )}
+        {mainTab === 'vendorcontacts' && (
+          <div style={{padding:'24px'}}>
+            <h2 style={{marginBottom:'16px'}}>&#128222; Vendor Contacts</h2>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',marginBottom:'8px'}}>
+              <input placeholder="Vendor name" value={newVendorContact.vendor_name} onChange={e=>setNewVendorContact(p=>({...p,vendor_name:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <input placeholder="Contact name" value={newVendorContact.contact_name} onChange={e=>setNewVendorContact(p=>({...p,contact_name:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <input placeholder="Role / title" value={newVendorContact.role} onChange={e=>setNewVendorContact(p=>({...p,role:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <input placeholder="Email" value={newVendorContact.email} onChange={e=>setNewVendorContact(p=>({...p,email:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <input placeholder="Phone" value={newVendorContact.phone} onChange={e=>setNewVendorContact(p=>({...p,phone:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <input placeholder="Notes" value={newVendorContact.notes} onChange={e=>setNewVendorContact(p=>({...p,notes:e.target.value}))} style={{padding:'8px',borderRadius:'6px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+            </div>
+            <button onClick={async()=>{if(!newVendorContact.vendor_name)return;const r=await fetch('/api/vendor-contacts',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify(newVendorContact)});if(r.ok){const d=await r.json();setVendorContacts((p:any[])=>[d,...p]);setNewVendorContact({vendor_name:'',contact_name:'',email:'',phone:'',role:'',notes:''});}}} style={{padding:'8px 20px',borderRadius:'6px',background:'#7c3aed',color:'#fff',border:'none',cursor:'pointer',marginBottom:'16px'}}>Add Contact</button>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {vendorContacts.map((v:any)=>(
+                <div key={v.id} style={{background:'#111',borderRadius:'8px',padding:'14px',border:'1px solid #222',display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                  <div>
+                    <strong>{v.vendor_name}</strong>
+                    {v.contact_name&&<span style={{color:'#ccc',marginLeft:'10px'}}>{v.contact_name}</span>}
+                    {v.role&&<span style={{color:'#888',fontSize:'13px',marginLeft:'8px'}}>({v.role})</span>}
+                    <div style={{display:'flex',gap:'16px',marginTop:'4px',fontSize:'13px'}}>
+                      {v.email&&<a href={'mailto:'+v.email} style={{color:'#a78bfa'}}>{v.email}</a>}
+                      {v.phone&&<span style={{color:'#888'}}>{v.phone}</span>}
+                      {v.notes&&<span style={{color:'#666'}}>{v.notes}</span>}
+                    </div>
+                  </div>
+                  <button onClick={async()=>{await fetch('/api/vendor-contacts/'+v.id,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setVendorContacts((p:any[])=>p.filter((x:any)=>x.id!==v.id));}} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'4px',padding:'4px 8px',cursor:'pointer',fontSize:'12px'}}>Del</button>
+                </div>
+              ))}
+              {vendorContacts.length===0&&<p style={{color:'#666'}}>No vendor contacts yet.</p>}
+            </div>
+          </div>
+        )}
         {mainTab === 'taskdeps' && (
           <div style={{padding:'24px'}}>
             <h2 style={{marginBottom:'16px'}}>&#128279; Task Dependencies</h2>
