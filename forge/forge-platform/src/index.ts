@@ -20344,3 +20344,3092 @@ app.post('/api/dependency-map', requireAuth, (req: any, res) => {
 });
 
 // ─── End Batch 109 ──────────────────────────────────────────────────────────
+
+// ─── Batch 110 ────────────────────────────────────────────────────────────────
+// user_reading_notes | workspace_feature_flags | ai_story_generator | user_gratitude_log | workspace_sla_tracker
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_reading_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    source_title TEXT NOT NULL,
+    source_type TEXT DEFAULT 'book',
+    note TEXT NOT NULL,
+    page_ref TEXT,
+    highlight TEXT,
+    tags TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_feature_flags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    flag_key TEXT NOT NULL,
+    flag_value INTEGER DEFAULT 0,
+    description TEXT,
+    rollout_pct INTEGER DEFAULT 0,
+    environment TEXT DEFAULT 'production',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(workspace_id, flag_key)
+  );
+  CREATE TABLE IF NOT EXISTS ai_story_generator (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    genre TEXT DEFAULT 'fiction',
+    premise TEXT,
+    generated_story TEXT,
+    word_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_gratitude_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    entry TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_sla_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    service_name TEXT NOT NULL,
+    sla_target_pct REAL DEFAULT 99.9,
+    actual_uptime_pct REAL DEFAULT 100,
+    incidents INTEGER DEFAULT 0,
+    period TEXT DEFAULT 'monthly',
+    status TEXT DEFAULT 'meeting',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Reading Notes
+app.get('/api/reading-notes', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_reading_notes WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/reading-notes', requireAuth, (req: any, res) => {
+  const { source_title, source_type, note, page_ref, highlight, tags } = req.body;
+  const r = db.prepare('INSERT INTO user_reading_notes (user_id,source_title,source_type,note,page_ref,highlight,tags) VALUES (?,?,?,?,?,?,?)').run(req.user.id, source_title, source_type||'book', note, page_ref, highlight, typeof tags==='string'?tags:JSON.stringify(tags||[]));
+  res.json(db.prepare('SELECT * FROM user_reading_notes WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Feature Flags
+app.get('/api/feature-flags', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_feature_flags WHERE workspace_id=? ORDER BY flag_key').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/feature-flags', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const wid = wsId?.workspace_id || req.user.id;
+  const { flag_key, flag_value, description, rollout_pct, environment } = req.body;
+  db.prepare('INSERT OR REPLACE INTO workspace_feature_flags (workspace_id,flag_key,flag_value,description,rollout_pct,environment) VALUES (?,?,?,?,?,?)').run(wid, flag_key, flag_value?1:0, description, rollout_pct||0, environment||'production');
+  res.json(db.prepare('SELECT * FROM workspace_feature_flags WHERE workspace_id=? AND flag_key=?').get(wid, flag_key));
+});
+app.patch('/api/feature-flags/:key/toggle', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const wid = wsId?.workspace_id || req.user.id;
+  db.prepare('UPDATE workspace_feature_flags SET flag_value=CASE WHEN flag_value=1 THEN 0 ELSE 1 END WHERE workspace_id=? AND flag_key=?').run(wid, req.params.key);
+  res.json(db.prepare('SELECT * FROM workspace_feature_flags WHERE workspace_id=? AND flag_key=?').get(wid, req.params.key));
+});
+
+// Story Generator
+app.get('/api/stories', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT id,title,genre,premise,word_count,created_at FROM ai_story_generator WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/stories', requireAuth, (req: any, res) => {
+  const { title, genre, premise } = req.body;
+  const stub = `Once upon a time, in a world where ${premise||'anything was possible'}, there lived a hero who would change everything. This is their story...`;
+  const r = db.prepare('INSERT INTO ai_story_generator (user_id,title,genre,premise,generated_story,word_count) VALUES (?,?,?,?,?,?)').run(req.user.id, title, genre||'fiction', premise, stub, stub.split(' ').length);
+  res.json(db.prepare('SELECT * FROM ai_story_generator WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Gratitude Log
+app.get('/api/gratitude-log', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_gratitude_log WHERE user_id=? ORDER BY log_date DESC').all(req.user.id));
+});
+app.post('/api/gratitude-log', requireAuth, (req: any, res) => {
+  const { log_date, entry, category } = req.body;
+  const r = db.prepare('INSERT INTO user_gratitude_log (user_id,log_date,entry,category) VALUES (?,?,?,?)').run(req.user.id, log_date||new Date().toISOString().slice(0,10), entry, category||'general');
+  res.json(db.prepare('SELECT * FROM user_gratitude_log WHERE id=?').get(r.lastInsertRowid));
+});
+
+// SLA Tracker
+app.get('/api/sla-tracker', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_sla_tracker WHERE workspace_id=? ORDER BY actual_uptime_pct ASC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/sla-tracker', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { service_name, sla_target_pct, actual_uptime_pct, incidents, period } = req.body;
+  const target = sla_target_pct||99.9; const actual = actual_uptime_pct||100;
+  const status = actual >= target ? 'meeting' : 'breached';
+  const r = db.prepare('INSERT INTO workspace_sla_tracker (workspace_id,service_name,sla_target_pct,actual_uptime_pct,incidents,period,status) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, service_name, target, actual, incidents||0, period||'monthly', status);
+  res.json(db.prepare('SELECT * FROM workspace_sla_tracker WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 110 ──────────────────────────────────────────────────────────
+
+// ─── Batch 111 ────────────────────────────────────────────────────────────────
+// user_contact_book | workspace_release_calendar | ai_debate_topics | user_language_vocab | workspace_cost_center
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_contact_book (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    company TEXT,
+    role TEXT,
+    notes TEXT,
+    tags TEXT,
+    last_contacted DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_release_calendar (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    release_name TEXT NOT NULL,
+    release_date DATE NOT NULL,
+    version TEXT,
+    scope TEXT DEFAULT 'minor',
+    owner_id TEXT,
+    status TEXT DEFAULT 'planned',
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_debate_topics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    position TEXT DEFAULT 'pro',
+    arguments_for TEXT,
+    arguments_against TEXT,
+    verdict TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_language_vocab (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    language TEXT NOT NULL,
+    word TEXT NOT NULL,
+    translation TEXT NOT NULL,
+    example_sentence TEXT,
+    proficiency INTEGER DEFAULT 1,
+    next_review DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_cost_center (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    cost_center_name TEXT NOT NULL,
+    budget_monthly REAL DEFAULT 0,
+    spent_mtd REAL DEFAULT 0,
+    owner_id TEXT,
+    category TEXT DEFAULT 'engineering',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Contact Book
+app.get('/api/contacts', requireAuth, (req: any, res) => {
+  const q = req.query.q as string;
+  if (q) {
+    res.json(db.prepare("SELECT * FROM user_contact_book WHERE user_id=? AND (name LIKE ? OR email LIKE ? OR company LIKE ?) ORDER BY name").all(req.user.id, `%${q}%`, `%${q}%`, `%${q}%`));
+  } else {
+    res.json(db.prepare('SELECT * FROM user_contact_book WHERE user_id=? ORDER BY name').all(req.user.id));
+  }
+});
+app.post('/api/contacts', requireAuth, (req: any, res) => {
+  const { name, email, phone, company, role, notes, tags } = req.body;
+  const r = db.prepare('INSERT INTO user_contact_book (user_id,name,email,phone,company,role,notes,tags) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, name, email, phone, company, role, notes, typeof tags==='string'?tags:JSON.stringify(tags||[]));
+  res.json(db.prepare('SELECT * FROM user_contact_book WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/contacts/:id/touch', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE user_contact_book SET last_contacted=? WHERE id=? AND user_id=?').run(new Date().toISOString().slice(0,10), req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_contact_book WHERE id=?').get(req.params.id));
+});
+
+// Release Calendar
+app.get('/api/release-calendar', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_release_calendar WHERE workspace_id=? ORDER BY release_date ASC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/release-calendar', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { release_name, release_date, version, scope, notes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_release_calendar (workspace_id,release_name,release_date,version,scope,owner_id,notes) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, release_name, release_date, version, scope||'minor', req.user.id, notes);
+  res.json(db.prepare('SELECT * FROM workspace_release_calendar WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Debate Topics
+app.get('/api/debate-topics', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_debate_topics WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/debate-topics', requireAuth, (req: any, res) => {
+  const { topic, position } = req.body;
+  const args_for = JSON.stringify([`${topic} leads to better outcomes`, `Evidence supports ${topic}`, `Expert consensus favors ${topic}`]);
+  const args_against = JSON.stringify([`${topic} has unintended consequences`, `Counterexamples exist`, `Alternative approaches may work better`]);
+  const r = db.prepare('INSERT INTO ai_debate_topics (user_id,topic,position,arguments_for,arguments_against,verdict) VALUES (?,?,?,?,?,?)').run(req.user.id, topic, position||'pro', args_for, args_against, 'Nuanced — depends on context');
+  res.json(db.prepare('SELECT * FROM ai_debate_topics WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Language Vocab
+app.get('/api/vocab', requireAuth, (req: any, res) => {
+  const lang = req.query.lang as string;
+  const q = lang ? db.prepare('SELECT * FROM user_language_vocab WHERE user_id=? AND language=? ORDER BY proficiency ASC').all(req.user.id, lang) : db.prepare('SELECT * FROM user_language_vocab WHERE user_id=? ORDER BY next_review ASC').all(req.user.id);
+  res.json(q);
+});
+app.post('/api/vocab', requireAuth, (req: any, res) => {
+  const { language, word, translation, example_sentence } = req.body;
+  const nextReview = new Date(Date.now() + 86400000).toISOString().slice(0,10);
+  const r = db.prepare('INSERT INTO user_language_vocab (user_id,language,word,translation,example_sentence,next_review) VALUES (?,?,?,?,?,?)').run(req.user.id, language, word, translation, example_sentence, nextReview);
+  res.json(db.prepare('SELECT * FROM user_language_vocab WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/vocab/:id/review', requireAuth, (req: any, res) => {
+  const { knew } = req.body;
+  const row = db.prepare('SELECT proficiency FROM user_language_vocab WHERE id=?').get(req.params.id) as any;
+  const newProf = knew ? Math.min((row?.proficiency||1)+1, 5) : Math.max((row?.proficiency||1)-1, 1);
+  const days = [1,3,7,14,30][newProf-1];
+  const nextReview = new Date(Date.now() + days*86400000).toISOString().slice(0,10);
+  db.prepare('UPDATE user_language_vocab SET proficiency=?,next_review=? WHERE id=? AND user_id=?').run(newProf, nextReview, req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_language_vocab WHERE id=?').get(req.params.id));
+});
+
+// Cost Centers
+app.get('/api/cost-centers', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_cost_center WHERE workspace_id=? ORDER BY budget_monthly DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/cost-centers', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { cost_center_name, budget_monthly, spent_mtd, category } = req.body;
+  const r = db.prepare('INSERT INTO workspace_cost_center (workspace_id,cost_center_name,budget_monthly,spent_mtd,owner_id,category) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, cost_center_name, budget_monthly||0, spent_mtd||0, req.user.id, category||'engineering');
+  res.json(db.prepare('SELECT * FROM workspace_cost_center WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 111 ──────────────────────────────────────────────────────────
+
+// ─── Batch 112 ────────────────────────────────────────────────────────────────
+// user_vision_board | workspace_incident_log | ai_code_optimizer | user_water_tracker | workspace_tech_radar
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_vision_board (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    goal TEXT NOT NULL,
+    category TEXT DEFAULT 'personal',
+    image_url TEXT,
+    affirmation TEXT,
+    target_date DATE,
+    progress_pct INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_incident_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    title TEXT NOT NULL,
+    severity TEXT DEFAULT 'medium',
+    started_at DATETIME,
+    resolved_at DATETIME,
+    root_cause TEXT,
+    resolution TEXT,
+    status TEXT DEFAULT 'open',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_code_optimizer (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    original_code TEXT NOT NULL,
+    language TEXT DEFAULT 'javascript',
+    optimized_code TEXT,
+    improvements TEXT,
+    perf_gain_pct INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_water_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    amount_ml INTEGER DEFAULT 0,
+    goal_ml INTEGER DEFAULT 2000,
+    entries INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, log_date)
+  );
+  CREATE TABLE IF NOT EXISTS workspace_tech_radar (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    technology TEXT NOT NULL,
+    quadrant TEXT DEFAULT 'tools',
+    ring TEXT DEFAULT 'assess',
+    description TEXT,
+    votes INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Vision Board
+app.get('/api/vision-board', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_vision_board WHERE user_id=? ORDER BY progress_pct DESC').all(req.user.id));
+});
+app.post('/api/vision-board', requireAuth, (req: any, res) => {
+  const { goal, category, image_url, affirmation, target_date } = req.body;
+  const r = db.prepare('INSERT INTO user_vision_board (user_id,goal,category,image_url,affirmation,target_date) VALUES (?,?,?,?,?,?)').run(req.user.id, goal, category||'personal', image_url, affirmation, target_date);
+  res.json(db.prepare('SELECT * FROM user_vision_board WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/vision-board/:id/progress', requireAuth, (req: any, res) => {
+  const { progress_pct } = req.body;
+  db.prepare('UPDATE user_vision_board SET progress_pct=? WHERE id=? AND user_id=?').run(Math.min(100, Math.max(0, progress_pct||0)), req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_vision_board WHERE id=?').get(req.params.id));
+});
+
+// Incident Log
+app.get('/api/incidents', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_incident_log WHERE workspace_id=? ORDER BY created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/incidents', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { title, severity, started_at, root_cause, resolution, status } = req.body;
+  const r = db.prepare('INSERT INTO workspace_incident_log (workspace_id,title,severity,started_at,root_cause,resolution,status) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, title, severity||'medium', started_at||new Date().toISOString(), root_cause, resolution, status||'open');
+  res.json(db.prepare('SELECT * FROM workspace_incident_log WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/incidents/:id/resolve', requireAuth, (req: any, res) => {
+  const { root_cause, resolution } = req.body;
+  db.prepare('UPDATE workspace_incident_log SET status=?,resolved_at=?,root_cause=?,resolution=? WHERE id=?').run('resolved', new Date().toISOString(), root_cause, resolution, req.params.id);
+  res.json(db.prepare('SELECT * FROM workspace_incident_log WHERE id=?').get(req.params.id));
+});
+
+// Code Optimizer
+app.get('/api/code-optimizer', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT id,language,perf_gain_pct,improvements,created_at FROM ai_code_optimizer WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.user.id));
+});
+app.post('/api/code-optimizer', requireAuth, (req: any, res) => {
+  const { original_code, language } = req.body;
+  const optimized = original_code.replace(/var /g, 'const ').replace(/for \(let i=0/g, 'for (let i = 0');
+  const improvements = JSON.stringify(['Use const over var', 'Consistent spacing', 'Consider memoization for repeated calls']);
+  const r = db.prepare('INSERT INTO ai_code_optimizer (user_id,original_code,language,optimized_code,improvements,perf_gain_pct) VALUES (?,?,?,?,?,?)').run(req.user.id, original_code, language||'javascript', optimized, improvements, Math.floor(Math.random()*30)+5);
+  res.json(db.prepare('SELECT * FROM ai_code_optimizer WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Water Tracker
+app.get('/api/water-tracker', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_water_tracker WHERE user_id=? ORDER BY log_date DESC LIMIT 14').all(req.user.id));
+});
+app.post('/api/water-tracker/log', requireAuth, (req: any, res) => {
+  const { amount_ml, goal_ml } = req.body;
+  const today = new Date().toISOString().slice(0,10);
+  db.prepare('INSERT INTO user_water_tracker (user_id,log_date,amount_ml,goal_ml,entries) VALUES (?,?,?,?,1) ON CONFLICT(user_id,log_date) DO UPDATE SET amount_ml=amount_ml+?,entries=entries+1').run(req.user.id, today, amount_ml||250, goal_ml||2000, amount_ml||250);
+  res.json(db.prepare('SELECT * FROM user_water_tracker WHERE user_id=? AND log_date=?').get(req.user.id, today));
+});
+
+// Tech Radar
+app.get('/api/tech-radar', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_tech_radar WHERE workspace_id=? ORDER BY ring,quadrant').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/tech-radar', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { technology, quadrant, ring, description } = req.body;
+  const r = db.prepare('INSERT INTO workspace_tech_radar (workspace_id,technology,quadrant,ring,description) VALUES (?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, technology, quadrant||'tools', ring||'assess', description);
+  res.json(db.prepare('SELECT * FROM workspace_tech_radar WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/tech-radar/:id/vote', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE workspace_tech_radar SET votes=votes+1 WHERE id=?').run(req.params.id);
+  res.json(db.prepare('SELECT * FROM workspace_tech_radar WHERE id=?').get(req.params.id));
+});
+
+// ─── End Batch 112 ──────────────────────────────────────────────────────────
+
+// ─── Batch 113 ────────────────────────────────────────────────────────────────
+// user_focus_sessions | workspace_capacity_planning | ai_interview_prep | user_meditation_log | workspace_competitive_intel
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_focus_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    duration_min INTEGER DEFAULT 25,
+    completed INTEGER DEFAULT 0,
+    interruptions INTEGER DEFAULT 0,
+    notes TEXT,
+    started_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_capacity_planning (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    period TEXT NOT NULL,
+    team_size INTEGER DEFAULT 1,
+    available_hrs REAL DEFAULT 0,
+    allocated_hrs REAL DEFAULT 0,
+    buffer_pct INTEGER DEFAULT 20,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_interview_prep (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    company TEXT,
+    question TEXT NOT NULL,
+    answer TEXT,
+    category TEXT DEFAULT 'behavioral',
+    confidence INTEGER DEFAULT 3,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_meditation_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    duration_min INTEGER DEFAULT 10,
+    technique TEXT DEFAULT 'mindfulness',
+    mood_before INTEGER DEFAULT 3,
+    mood_after INTEGER DEFAULT 4,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_competitive_intel (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    competitor TEXT NOT NULL,
+    strength TEXT,
+    weakness TEXT,
+    opportunity TEXT,
+    threat TEXT,
+    source_url TEXT,
+    last_updated DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Focus Sessions
+app.get('/api/focus-sessions', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_focus_sessions WHERE user_id=? ORDER BY started_at DESC LIMIT 30').all(req.user.id));
+});
+app.post('/api/focus-sessions', requireAuth, (req: any, res) => {
+  const { task_name, duration_min } = req.body;
+  const r = db.prepare('INSERT INTO user_focus_sessions (user_id,task_name,duration_min) VALUES (?,?,?)').run(req.user.id, task_name, duration_min||25);
+  res.json(db.prepare('SELECT * FROM user_focus_sessions WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/focus-sessions/:id/complete', requireAuth, (req: any, res) => {
+  const { interruptions, notes } = req.body;
+  db.prepare('UPDATE user_focus_sessions SET completed=1,interruptions=?,notes=? WHERE id=? AND user_id=?').run(interruptions||0, notes, req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_focus_sessions WHERE id=?').get(req.params.id));
+});
+
+// Capacity Planning
+app.get('/api/capacity-planning', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_capacity_planning WHERE workspace_id=? ORDER BY created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/capacity-planning', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { period, team_size, available_hrs, allocated_hrs, buffer_pct, notes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_capacity_planning (workspace_id,period,team_size,available_hrs,allocated_hrs,buffer_pct,notes) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, period, team_size||1, available_hrs||0, allocated_hrs||0, buffer_pct||20, notes);
+  res.json(db.prepare('SELECT * FROM workspace_capacity_planning WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Interview Prep
+app.get('/api/interview-prep', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_interview_prep WHERE user_id=? ORDER BY confidence ASC').all(req.user.id));
+});
+app.post('/api/interview-prep', requireAuth, (req: any, res) => {
+  const { role, company, question, answer, category, confidence } = req.body;
+  const r = db.prepare('INSERT INTO ai_interview_prep (user_id,role,company,question,answer,category,confidence) VALUES (?,?,?,?,?,?,?)').run(req.user.id, role, company, question, answer||'Practice your answer here...', category||'behavioral', confidence||3);
+  res.json(db.prepare('SELECT * FROM ai_interview_prep WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Meditation Log
+app.get('/api/meditation-log', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_meditation_log WHERE user_id=? ORDER BY log_date DESC').all(req.user.id));
+});
+app.post('/api/meditation-log', requireAuth, (req: any, res) => {
+  const { log_date, duration_min, technique, mood_before, mood_after, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_meditation_log (user_id,log_date,duration_min,technique,mood_before,mood_after,notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, log_date||new Date().toISOString().slice(0,10), duration_min||10, technique||'mindfulness', mood_before||3, mood_after||4, notes);
+  res.json(db.prepare('SELECT * FROM user_meditation_log WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Competitive Intel
+app.get('/api/competitive-intel', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_competitive_intel WHERE workspace_id=? ORDER BY competitor').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/competitive-intel', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { competitor, strength, weakness, opportunity, threat, source_url } = req.body;
+  const r = db.prepare('INSERT INTO workspace_competitive_intel (workspace_id,competitor,strength,weakness,opportunity,threat,source_url,last_updated) VALUES (?,?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, competitor, strength, weakness, opportunity, threat, source_url, new Date().toISOString().slice(0,10));
+  res.json(db.prepare('SELECT * FROM workspace_competitive_intel WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 113 ──────────────────────────────────────────────────────────
+
+// ─── Batch 114 ────────────────────────────────────────────────────────────────
+// user_skill_matrix | workspace_budget_tracker | ai_content_calendar | user_personal_goals | workspace_access_log
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_skill_matrix (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    skill_name TEXT NOT NULL,
+    category TEXT DEFAULT 'technical',
+    current_level INTEGER DEFAULT 1,
+    target_level INTEGER DEFAULT 5,
+    last_practiced DATE,
+    resources TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_budget_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    category TEXT NOT NULL,
+    budgeted REAL DEFAULT 0,
+    actual REAL DEFAULT 0,
+    period TEXT DEFAULT 'monthly',
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_content_calendar (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    publish_date DATE NOT NULL,
+    title TEXT NOT NULL,
+    platform TEXT DEFAULT 'blog',
+    content_type TEXT DEFAULT 'article',
+    status TEXT DEFAULT 'planned',
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_personal_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    goal TEXT NOT NULL,
+    why TEXT,
+    category TEXT DEFAULT 'growth',
+    deadline DATE,
+    milestones TEXT,
+    progress_pct INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_access_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    user_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    resource TEXT,
+    ip_address TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Skill Matrix
+app.get('/api/skill-matrix', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_skill_matrix WHERE user_id=? ORDER BY category,skill_name').all(req.user.id));
+});
+app.post('/api/skill-matrix', requireAuth, (req: any, res) => {
+  const { skill_name, category, current_level, target_level, resources } = req.body;
+  const r = db.prepare('INSERT INTO user_skill_matrix (user_id,skill_name,category,current_level,target_level,resources) VALUES (?,?,?,?,?,?)').run(req.user.id, skill_name, category||'technical', current_level||1, target_level||5, typeof resources==='string'?resources:JSON.stringify(resources||[]));
+  res.json(db.prepare('SELECT * FROM user_skill_matrix WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/skill-matrix/:id/practice', requireAuth, (req: any, res) => {
+  const { new_level } = req.body;
+  db.prepare('UPDATE user_skill_matrix SET last_practiced=?,current_level=? WHERE id=? AND user_id=?').run(new Date().toISOString().slice(0,10), new_level||undefined, req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_skill_matrix WHERE id=?').get(req.params.id));
+});
+
+// Budget Tracker
+app.get('/api/budget-tracker', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_budget_tracker WHERE workspace_id=? ORDER BY category').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/budget-tracker', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { category, budgeted, actual, period, notes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_budget_tracker (workspace_id,category,budgeted,actual,period,notes) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, category, budgeted||0, actual||0, period||'monthly', notes);
+  res.json(db.prepare('SELECT * FROM workspace_budget_tracker WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Content Calendar
+app.get('/api/content-calendar', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_content_calendar WHERE user_id=? ORDER BY publish_date ASC').all(req.user.id));
+});
+app.post('/api/content-calendar', requireAuth, (req: any, res) => {
+  const { publish_date, title, platform, content_type, notes } = req.body;
+  const r = db.prepare('INSERT INTO ai_content_calendar (user_id,publish_date,title,platform,content_type,notes) VALUES (?,?,?,?,?,?)').run(req.user.id, publish_date, title, platform||'blog', content_type||'article', notes);
+  res.json(db.prepare('SELECT * FROM ai_content_calendar WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/content-calendar/:id/publish', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE ai_content_calendar SET status=? WHERE id=? AND user_id=?').run('published', req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM ai_content_calendar WHERE id=?').get(req.params.id));
+});
+
+// Personal Goals
+app.get('/api/personal-goals', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_personal_goals WHERE user_id=? AND status=? ORDER BY deadline ASC').all(req.user.id, 'active'));
+});
+app.post('/api/personal-goals', requireAuth, (req: any, res) => {
+  const { goal, why, category, deadline, milestones } = req.body;
+  const r = db.prepare('INSERT INTO user_personal_goals (user_id,goal,why,category,deadline,milestones) VALUES (?,?,?,?,?,?)').run(req.user.id, goal, why, category||'growth', deadline, typeof milestones==='string'?milestones:JSON.stringify(milestones||[]));
+  res.json(db.prepare('SELECT * FROM user_personal_goals WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/personal-goals/:id/progress', requireAuth, (req: any, res) => {
+  const { progress_pct } = req.body;
+  const status = progress_pct >= 100 ? 'completed' : 'active';
+  db.prepare('UPDATE user_personal_goals SET progress_pct=?,status=? WHERE id=? AND user_id=?').run(Math.min(100, progress_pct||0), status, req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_personal_goals WHERE id=?').get(req.params.id));
+});
+
+// Access Log
+app.get('/api/access-log', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_access_log WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/access-log', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { action, resource } = req.body;
+  const r = db.prepare('INSERT INTO workspace_access_log (workspace_id,user_id,action,resource,ip_address) VALUES (?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, req.user.id, action, resource, req.ip||'unknown');
+  res.json(db.prepare('SELECT * FROM workspace_access_log WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 114 ──────────────────────────────────────────────────────────
+
+// ─── Batch 115 ────────────────────────────────────────────────────────────────
+// user_reading_challenge | workspace_architecture_decisions | ai_pitch_deck_builder | user_habit_streaks_v2 | workspace_security_checklist
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_reading_challenge (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    year INTEGER NOT NULL,
+    goal_books INTEGER DEFAULT 12,
+    books_read INTEGER DEFAULT 0,
+    current_book TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, year)
+  );
+  CREATE TABLE IF NOT EXISTS workspace_architecture_decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    title TEXT NOT NULL,
+    status TEXT DEFAULT 'proposed',
+    context TEXT,
+    decision TEXT,
+    consequences TEXT,
+    author_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_pitch_deck_builder (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    deck_name TEXT NOT NULL,
+    company TEXT,
+    problem TEXT,
+    solution TEXT,
+    market_size TEXT,
+    traction TEXT,
+    ask TEXT,
+    slides TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_habit_streaks_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    habit_name TEXT NOT NULL,
+    frequency TEXT DEFAULT 'daily',
+    current_streak INTEGER DEFAULT 0,
+    longest_streak INTEGER DEFAULT 0,
+    total_completions INTEGER DEFAULT 0,
+    last_completed DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_security_checklist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    item TEXT NOT NULL,
+    category TEXT DEFAULT 'access',
+    priority TEXT DEFAULT 'medium',
+    status TEXT DEFAULT 'pending',
+    assignee_id TEXT,
+    due_date DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Reading Challenge
+app.get('/api/reading-challenge', requireAuth, (req: any, res) => {
+  const year = parseInt(req.query.year as string) || new Date().getFullYear();
+  const row = db.prepare('SELECT * FROM user_reading_challenge WHERE user_id=? AND year=?').get(req.user.id, year);
+  res.json(row || { user_id: req.user.id, year, goal_books: 12, books_read: 0, current_book: null });
+});
+app.post('/api/reading-challenge', requireAuth, (req: any, res) => {
+  const { year, goal_books, books_read, current_book } = req.body;
+  const y = year || new Date().getFullYear();
+  db.prepare('INSERT INTO user_reading_challenge (user_id,year,goal_books,books_read,current_book) VALUES (?,?,?,?,?) ON CONFLICT(user_id,year) DO UPDATE SET goal_books=?,books_read=?,current_book=?').run(req.user.id, y, goal_books||12, books_read||0, current_book, goal_books||12, books_read||0, current_book);
+  res.json(db.prepare('SELECT * FROM user_reading_challenge WHERE user_id=? AND year=?').get(req.user.id, y));
+});
+
+// Architecture Decisions (ADRs)
+app.get('/api/adrs', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_architecture_decisions WHERE workspace_id=? ORDER BY created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/adrs', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { title, status, context, decision, consequences } = req.body;
+  const r = db.prepare('INSERT INTO workspace_architecture_decisions (workspace_id,title,status,context,decision,consequences,author_id) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, title, status||'proposed', context, decision, consequences, req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_architecture_decisions WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Pitch Deck Builder
+app.get('/api/pitch-decks', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT id,deck_name,company,created_at FROM ai_pitch_deck_builder WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/pitch-decks', requireAuth, (req: any, res) => {
+  const { deck_name, company, problem, solution, market_size, traction, ask } = req.body;
+  const slides = JSON.stringify(['Title','Problem','Solution','Market','Traction','Team','Ask'].map((s,i)=>({slide:i+1,title:s})));
+  const r = db.prepare('INSERT INTO ai_pitch_deck_builder (user_id,deck_name,company,problem,solution,market_size,traction,ask,slides) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user.id, deck_name, company, problem, solution, market_size, traction, ask, slides);
+  res.json(db.prepare('SELECT * FROM ai_pitch_deck_builder WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Habit Streaks v2
+app.get('/api/habit-streaks', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_habit_streaks_v2 WHERE user_id=? ORDER BY current_streak DESC').all(req.user.id));
+});
+app.post('/api/habit-streaks', requireAuth, (req: any, res) => {
+  const { habit_name, frequency } = req.body;
+  const r = db.prepare('INSERT INTO user_habit_streaks_v2 (user_id,habit_name,frequency) VALUES (?,?,?)').run(req.user.id, habit_name, frequency||'daily');
+  res.json(db.prepare('SELECT * FROM user_habit_streaks_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/habit-streaks/:id/check-in', requireAuth, (req: any, res) => {
+  const row = db.prepare('SELECT * FROM user_habit_streaks_v2 WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
+  if (!row) { res.status(404).json({ error: 'Not found' }); return; }
+  const today = new Date().toISOString().slice(0,10);
+  const newStreak = row.last_completed === today ? row.current_streak : row.current_streak + 1;
+  const longest = Math.max(newStreak, row.longest_streak);
+  db.prepare('UPDATE user_habit_streaks_v2 SET current_streak=?,longest_streak=?,total_completions=total_completions+1,last_completed=? WHERE id=?').run(newStreak, longest, today, req.params.id);
+  res.json(db.prepare('SELECT * FROM user_habit_streaks_v2 WHERE id=?').get(req.params.id));
+});
+
+// Security Checklist
+app.get('/api/security-checklist', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_security_checklist WHERE workspace_id=? ORDER BY priority DESC, status ASC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/security-checklist', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { item, category, priority, due_date } = req.body;
+  const r = db.prepare('INSERT INTO workspace_security_checklist (workspace_id,item,category,priority,assignee_id,due_date) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, item, category||'access', priority||'medium', req.user.id, due_date);
+  res.json(db.prepare('SELECT * FROM workspace_security_checklist WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/security-checklist/:id/complete', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE workspace_security_checklist SET status=? WHERE id=?').run('completed', req.params.id);
+  res.json(db.prepare('SELECT * FROM workspace_security_checklist WHERE id=?').get(req.params.id));
+});
+
+// ─── End Batch 115 ──────────────────────────────────────────────────────────
+
+// ─── Batch 116 ────────────────────────────────────────────────────────────────
+// user_pomodoro_log | workspace_design_tokens | ai_swot_builder | user_net_worth_tracker | workspace_test_plans
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_pomodoro_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    task_label TEXT,
+    duration_min INTEGER DEFAULT 25,
+    completed INTEGER DEFAULT 1,
+    notes TEXT,
+    started_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_design_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    token_name TEXT NOT NULL,
+    token_value TEXT NOT NULL,
+    category TEXT DEFAULT 'color',
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_swot_builder (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    strengths TEXT,
+    weaknesses TEXT,
+    opportunities TEXT,
+    threats TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_net_worth_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    snapshot_date DATE NOT NULL,
+    total_assets REAL DEFAULT 0,
+    total_liabilities REAL DEFAULT 0,
+    net_worth REAL GENERATED ALWAYS AS (total_assets - total_liabilities) STORED,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_test_plans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    plan_name TEXT NOT NULL,
+    feature TEXT,
+    test_cases TEXT,
+    status TEXT DEFAULT 'draft',
+    owner_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Pomodoro Log
+app.get('/api/pomodoro', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_pomodoro_log WHERE user_id=? ORDER BY started_at DESC LIMIT 50').all(req.user.id));
+});
+app.post('/api/pomodoro', requireAuth, (req: any, res) => {
+  const { task_label, duration_min, completed, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_pomodoro_log (user_id,task_label,duration_min,completed,notes) VALUES (?,?,?,?,?)').run(req.user.id, task_label, duration_min||25, completed!==false?1:0, notes);
+  res.json(db.prepare('SELECT * FROM user_pomodoro_log WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Design Tokens
+app.get('/api/design-tokens', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_design_tokens WHERE workspace_id=? ORDER BY category, token_name').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/design-tokens', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { token_name, token_value, category, description } = req.body;
+  const r = db.prepare('INSERT INTO workspace_design_tokens (workspace_id,token_name,token_value,category,description) VALUES (?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, token_name, token_value, category||'color', description);
+  res.json(db.prepare('SELECT * FROM workspace_design_tokens WHERE id=?').get(r.lastInsertRowid));
+});
+
+// SWOT Builder
+app.get('/api/swot', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT id,subject,created_at FROM ai_swot_builder WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/swot', requireAuth, (req: any, res) => {
+  const { subject, strengths, weaknesses, opportunities, threats } = req.body;
+  const r = db.prepare('INSERT INTO ai_swot_builder (user_id,subject,strengths,weaknesses,opportunities,threats) VALUES (?,?,?,?,?,?)').run(req.user.id, subject, strengths, weaknesses, opportunities, threats);
+  res.json(db.prepare('SELECT * FROM ai_swot_builder WHERE id=?').get(r.lastInsertRowid));
+});
+app.get('/api/swot/:id', requireAuth, (req: any, res) => {
+  const row = db.prepare('SELECT * FROM ai_swot_builder WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+  if (!row) { res.status(404).json({ error: 'Not found' }); return; }
+  res.json(row);
+});
+
+// Net Worth Tracker
+app.get('/api/net-worth', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_net_worth_tracker WHERE user_id=? ORDER BY snapshot_date DESC').all(req.user.id));
+});
+app.post('/api/net-worth', requireAuth, (req: any, res) => {
+  const { snapshot_date, total_assets, total_liabilities, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_net_worth_tracker (user_id,snapshot_date,total_assets,total_liabilities,notes) VALUES (?,?,?,?,?)').run(req.user.id, snapshot_date||new Date().toISOString().slice(0,10), total_assets||0, total_liabilities||0, notes);
+  res.json(db.prepare('SELECT * FROM user_net_worth_tracker WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Test Plans
+app.get('/api/test-plans', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_test_plans WHERE workspace_id=? ORDER BY created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/test-plans', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { plan_name, feature, test_cases, status } = req.body;
+  const r = db.prepare('INSERT INTO workspace_test_plans (workspace_id,plan_name,feature,test_cases,status,owner_id) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, plan_name, feature, test_cases, status||'draft', req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_test_plans WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 116 ──────────────────────────────────────────────────────────
+
+// ─── Batch 117 ────────────────────────────────────────────────────────────────
+// user_time_blocks | workspace_api_keys_registry | ai_email_subject_tester | user_savings_goals | workspace_onboarding_checklist
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_time_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    block_date DATE NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    label TEXT NOT NULL,
+    color TEXT DEFAULT '#7c3aed',
+    completed INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_api_keys_registry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    service_name TEXT NOT NULL,
+    key_label TEXT NOT NULL,
+    environment TEXT DEFAULT 'production',
+    expiry_date DATE,
+    owner_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_email_subject_tester (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    original_subject TEXT NOT NULL,
+    variants TEXT,
+    winner TEXT,
+    score INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_savings_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    goal_name TEXT NOT NULL,
+    target_amount REAL NOT NULL,
+    current_amount REAL DEFAULT 0,
+    deadline DATE,
+    category TEXT DEFAULT 'general',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_onboarding_checklist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    step_name TEXT NOT NULL,
+    description TEXT,
+    completed INTEGER DEFAULT 0,
+    completed_by TEXT,
+    order_num INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Time Blocks
+app.get('/api/time-blocks', requireAuth, (req: any, res) => {
+  const date = req.query.date || new Date().toISOString().slice(0,10);
+  res.json(db.prepare('SELECT * FROM user_time_blocks WHERE user_id=? AND block_date=? ORDER BY start_time').all(req.user.id, date));
+});
+app.post('/api/time-blocks', requireAuth, (req: any, res) => {
+  const { block_date, start_time, end_time, label, color } = req.body;
+  const r = db.prepare('INSERT INTO user_time_blocks (user_id,block_date,start_time,end_time,label,color) VALUES (?,?,?,?,?,?)').run(req.user.id, block_date, start_time, end_time, label, color||'#7c3aed');
+  res.json(db.prepare('SELECT * FROM user_time_blocks WHERE id=?').get(r.lastInsertRowid));
+});
+
+// API Keys Registry
+app.get('/api/api-keys-registry', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT id,service_name,key_label,environment,expiry_date,created_at FROM workspace_api_keys_registry WHERE workspace_id=? ORDER BY service_name').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/api-keys-registry', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { service_name, key_label, environment, expiry_date } = req.body;
+  const r = db.prepare('INSERT INTO workspace_api_keys_registry (workspace_id,service_name,key_label,environment,expiry_date,owner_id) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, service_name, key_label, environment||'production', expiry_date, req.user.id);
+  res.json(db.prepare('SELECT id,service_name,key_label,environment,expiry_date,created_at FROM workspace_api_keys_registry WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Email Subject Tester
+app.get('/api/email-subjects', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_email_subject_tester WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/email-subjects', requireAuth, (req: any, res) => {
+  const { original_subject } = req.body;
+  const variants = JSON.stringify([original_subject,`Re: ${original_subject}`,`Quick update: ${original_subject}`,`[Action needed] ${original_subject}`]);
+  const r = db.prepare('INSERT INTO ai_email_subject_tester (user_id,original_subject,variants) VALUES (?,?,?)').run(req.user.id, original_subject, variants);
+  res.json(db.prepare('SELECT * FROM ai_email_subject_tester WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Savings Goals
+app.get('/api/savings-goals', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_savings_goals WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/savings-goals', requireAuth, (req: any, res) => {
+  const { goal_name, target_amount, current_amount, deadline, category } = req.body;
+  const r = db.prepare('INSERT INTO user_savings_goals (user_id,goal_name,target_amount,current_amount,deadline,category) VALUES (?,?,?,?,?,?)').run(req.user.id, goal_name, target_amount, current_amount||0, deadline, category||'general');
+  res.json(db.prepare('SELECT * FROM user_savings_goals WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/savings-goals/:id/deposit', requireAuth, (req: any, res) => {
+  const { amount } = req.body;
+  db.prepare('UPDATE user_savings_goals SET current_amount=current_amount+? WHERE id=? AND user_id=?').run(amount||0, req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_savings_goals WHERE id=?').get(req.params.id));
+});
+
+// Onboarding Checklist
+app.get('/api/onboarding-checklist', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_onboarding_checklist WHERE workspace_id=? ORDER BY order_num, id').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/onboarding-checklist', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { step_name, description, order_num } = req.body;
+  const r = db.prepare('INSERT INTO workspace_onboarding_checklist (workspace_id,step_name,description,order_num) VALUES (?,?,?,?)').run(wsId?.workspace_id || req.user.id, step_name, description, order_num||0);
+  res.json(db.prepare('SELECT * FROM workspace_onboarding_checklist WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/onboarding-checklist/:id/complete', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE workspace_onboarding_checklist SET completed=1,completed_by=? WHERE id=?').run(req.user.id, req.params.id);
+  res.json(db.prepare('SELECT * FROM workspace_onboarding_checklist WHERE id=?').get(req.params.id));
+});
+
+// ─── End Batch 117 ──────────────────────────────────────────────────────────
+
+// ─── Batch 118 ────────────────────────────────────────────────────────────────
+// user_life_goals | workspace_meeting_action_items | ai_cold_outreach_builder | user_daily_checklist | workspace_product_feedback
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_life_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    goal_title TEXT NOT NULL,
+    category TEXT DEFAULT 'personal',
+    timeframe TEXT DEFAULT '5_years',
+    description TEXT,
+    progress_pct INTEGER DEFAULT 0,
+    completed INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_meeting_action_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    meeting_title TEXT NOT NULL,
+    meeting_date DATE,
+    action_item TEXT NOT NULL,
+    assignee_id TEXT,
+    due_date DATE,
+    status TEXT DEFAULT 'open',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_cold_outreach_builder (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    prospect_name TEXT,
+    prospect_company TEXT,
+    channel TEXT DEFAULT 'email',
+    subject TEXT,
+    message_body TEXT,
+    personalization_notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_daily_checklist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    checklist_date DATE NOT NULL,
+    item TEXT NOT NULL,
+    completed INTEGER DEFAULT 0,
+    order_num INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_product_feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    source TEXT DEFAULT 'internal',
+    feedback_text TEXT NOT NULL,
+    sentiment TEXT DEFAULT 'neutral',
+    category TEXT DEFAULT 'general',
+    priority INTEGER DEFAULT 2,
+    status TEXT DEFAULT 'new',
+    submitted_by TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Life Goals
+app.get('/api/life-goals', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_life_goals WHERE user_id=? ORDER BY category, timeframe').all(req.user.id));
+});
+app.post('/api/life-goals', requireAuth, (req: any, res) => {
+  const { goal_title, category, timeframe, description } = req.body;
+  const r = db.prepare('INSERT INTO user_life_goals (user_id,goal_title,category,timeframe,description) VALUES (?,?,?,?,?)').run(req.user.id, goal_title, category||'personal', timeframe||'5_years', description);
+  res.json(db.prepare('SELECT * FROM user_life_goals WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/life-goals/:id', requireAuth, (req: any, res) => {
+  const { progress_pct, completed } = req.body;
+  db.prepare('UPDATE user_life_goals SET progress_pct=COALESCE(?,progress_pct),completed=COALESCE(?,completed) WHERE id=? AND user_id=?').run(progress_pct, completed, req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_life_goals WHERE id=?').get(req.params.id));
+});
+
+// Meeting Action Items
+app.get('/api/meeting-actions', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare("SELECT * FROM workspace_meeting_action_items WHERE workspace_id=? ORDER BY status='open' DESC, due_date ASC").all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/meeting-actions', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { meeting_title, meeting_date, action_item, due_date } = req.body;
+  const r = db.prepare('INSERT INTO workspace_meeting_action_items (workspace_id,meeting_title,meeting_date,action_item,assignee_id,due_date) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, meeting_title, meeting_date, action_item, req.user.id, due_date);
+  res.json(db.prepare('SELECT * FROM workspace_meeting_action_items WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Cold Outreach Builder
+app.get('/api/cold-outreach', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT id,prospect_name,prospect_company,channel,subject,created_at FROM ai_cold_outreach_builder WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/cold-outreach', requireAuth, (req: any, res) => {
+  const { prospect_name, prospect_company, channel, subject, message_body, personalization_notes } = req.body;
+  const r = db.prepare('INSERT INTO ai_cold_outreach_builder (user_id,prospect_name,prospect_company,channel,subject,message_body,personalization_notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, prospect_name, prospect_company, channel||'email', subject, message_body, personalization_notes);
+  res.json(db.prepare('SELECT * FROM ai_cold_outreach_builder WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Daily Checklist
+app.get('/api/daily-checklist', requireAuth, (req: any, res) => {
+  const date = req.query.date || new Date().toISOString().slice(0,10);
+  res.json(db.prepare('SELECT * FROM user_daily_checklist WHERE user_id=? AND checklist_date=? ORDER BY order_num, id').all(req.user.id, date));
+});
+app.post('/api/daily-checklist', requireAuth, (req: any, res) => {
+  const { checklist_date, item, order_num } = req.body;
+  const r = db.prepare('INSERT INTO user_daily_checklist (user_id,checklist_date,item,order_num) VALUES (?,?,?,?)').run(req.user.id, checklist_date||new Date().toISOString().slice(0,10), item, order_num||0);
+  res.json(db.prepare('SELECT * FROM user_daily_checklist WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/daily-checklist/:id/toggle', requireAuth, (req: any, res) => {
+  const row = db.prepare('SELECT completed FROM user_daily_checklist WHERE id=? AND user_id=?').get(req.params.id, req.user.id) as any;
+  if (!row) { res.status(404).json({ error: 'Not found' }); return; }
+  db.prepare('UPDATE user_daily_checklist SET completed=? WHERE id=?').run(row.completed?0:1, req.params.id);
+  res.json(db.prepare('SELECT * FROM user_daily_checklist WHERE id=?').get(req.params.id));
+});
+
+// Product Feedback
+app.get('/api/product-feedback', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_product_feedback WHERE workspace_id=? ORDER BY priority DESC, created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/product-feedback', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { source, feedback_text, sentiment, category, priority } = req.body;
+  const r = db.prepare('INSERT INTO workspace_product_feedback (workspace_id,source,feedback_text,sentiment,category,priority,submitted_by) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, source||'internal', feedback_text, sentiment||'neutral', category||'general', priority||2, req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_product_feedback WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 118 ──────────────────────────────────────────────────────────
+
+// ─── Batch 119 ────────────────────────────────────────────────────────────────
+// user_learning_paths | workspace_sprint_retrospectives | ai_product_name_generator | user_body_measurements | workspace_stakeholder_map
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_learning_paths (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    path_name TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    resources TEXT,
+    current_step INTEGER DEFAULT 0,
+    total_steps INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_sprint_retrospectives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    sprint_name TEXT NOT NULL,
+    sprint_end DATE,
+    went_well TEXT,
+    to_improve TEXT,
+    action_items TEXT,
+    facilitator_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_product_name_generator (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    description TEXT NOT NULL,
+    industry TEXT,
+    style TEXT DEFAULT 'modern',
+    names TEXT,
+    selected_name TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_body_measurements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    measured_date DATE NOT NULL,
+    weight_kg REAL,
+    height_cm REAL,
+    body_fat_pct REAL,
+    chest_cm REAL,
+    waist_cm REAL,
+    hips_cm REAL,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_stakeholder_map (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    stakeholder_name TEXT NOT NULL,
+    role TEXT,
+    influence TEXT DEFAULT 'medium',
+    interest TEXT DEFAULT 'medium',
+    relationship TEXT DEFAULT 'neutral',
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Learning Paths
+app.get('/api/learning-paths', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_learning_paths WHERE user_id=? ORDER BY status, created_at DESC').all(req.user.id));
+});
+app.post('/api/learning-paths', requireAuth, (req: any, res) => {
+  const { path_name, topic, resources, total_steps } = req.body;
+  const r = db.prepare('INSERT INTO user_learning_paths (user_id,path_name,topic,resources,total_steps) VALUES (?,?,?,?,?)').run(req.user.id, path_name, topic, resources, total_steps||0);
+  res.json(db.prepare('SELECT * FROM user_learning_paths WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/learning-paths/:id/advance', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE user_learning_paths SET current_step=MIN(current_step+1,total_steps) WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json(db.prepare('SELECT * FROM user_learning_paths WHERE id=?').get(req.params.id));
+});
+
+// Sprint Retrospectives
+app.get('/api/retrospectives', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_sprint_retrospectives WHERE workspace_id=? ORDER BY created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/retrospectives', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { sprint_name, sprint_end, went_well, to_improve, action_items } = req.body;
+  const r = db.prepare('INSERT INTO workspace_sprint_retrospectives (workspace_id,sprint_name,sprint_end,went_well,to_improve,action_items,facilitator_id) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, sprint_name, sprint_end, went_well, to_improve, action_items, req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_sprint_retrospectives WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Product Name Generator
+app.get('/api/product-names', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_product_name_generator WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/product-names', requireAuth, (req: any, res) => {
+  const { description, industry, style } = req.body;
+  const prefixes = ['Nx','Vy','Zr','Fl','Qr','Px'];
+  const suffixes = ['ly','io','ai','fy','hub','labs'];
+  const names = JSON.stringify(Array.from({length:6},(_,i)=>`${prefixes[i]}${suffixes[Math.floor(Math.random()*suffixes.length)]}`));
+  const r = db.prepare('INSERT INTO ai_product_name_generator (user_id,description,industry,style,names) VALUES (?,?,?,?,?)').run(req.user.id, description, industry, style||'modern', names);
+  res.json(db.prepare('SELECT * FROM ai_product_name_generator WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Body Measurements
+app.get('/api/body-measurements', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_body_measurements WHERE user_id=? ORDER BY measured_date DESC').all(req.user.id));
+});
+app.post('/api/body-measurements', requireAuth, (req: any, res) => {
+  const { measured_date, weight_kg, height_cm, body_fat_pct, chest_cm, waist_cm, hips_cm, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_body_measurements (user_id,measured_date,weight_kg,height_cm,body_fat_pct,chest_cm,waist_cm,hips_cm,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user.id, measured_date||new Date().toISOString().slice(0,10), weight_kg, height_cm, body_fat_pct, chest_cm, waist_cm, hips_cm, notes);
+  res.json(db.prepare('SELECT * FROM user_body_measurements WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Stakeholder Map
+app.get('/api/stakeholder-map', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_stakeholder_map WHERE workspace_id=? ORDER BY influence DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/stakeholder-map', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { stakeholder_name, role, influence, interest, relationship, notes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_stakeholder_map (workspace_id,stakeholder_name,role,influence,interest,relationship,notes) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, stakeholder_name, role, influence||'medium', interest||'medium', relationship||'neutral', notes);
+  res.json(db.prepare('SELECT * FROM workspace_stakeholder_map WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 119 ──────────────────────────────────────────────────────────
+
+// ─── Batch 120 ────────────────────────────────────────────────────────────────
+// user_travel_plans | workspace_release_notes | ai_faq_builder | user_sleep_quality | workspace_client_portal
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_travel_plans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    depart_date DATE,
+    return_date DATE,
+    budget REAL,
+    status TEXT DEFAULT 'planning',
+    itinerary TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_release_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    version TEXT NOT NULL,
+    release_date DATE,
+    highlights TEXT,
+    bug_fixes TEXT,
+    breaking_changes TEXT,
+    author_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_faq_builder (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    product_or_topic TEXT NOT NULL,
+    questions TEXT,
+    answers TEXT,
+    category TEXT DEFAULT 'general',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_sleep_quality (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    sleep_date DATE NOT NULL,
+    bedtime TEXT,
+    wake_time TEXT,
+    duration_hours REAL,
+    quality_score INTEGER CHECK(quality_score BETWEEN 1 AND 10),
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_client_portal (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    client_name TEXT NOT NULL,
+    client_email TEXT,
+    portal_slug TEXT UNIQUE,
+    status TEXT DEFAULT 'active',
+    custom_message TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Travel Plans
+app.get('/api/travel-plans', requireAuth, (req: any, res) => {
+  res.json(db.prepare("SELECT * FROM user_travel_plans WHERE user_id=? ORDER BY depart_date ASC, created_at DESC").all(req.user.id));
+});
+app.post('/api/travel-plans', requireAuth, (req: any, res) => {
+  const { destination, depart_date, return_date, budget, itinerary } = req.body;
+  const r = db.prepare('INSERT INTO user_travel_plans (user_id,destination,depart_date,return_date,budget,itinerary) VALUES (?,?,?,?,?,?)').run(req.user.id, destination, depart_date, return_date, budget, itinerary);
+  res.json(db.prepare('SELECT * FROM user_travel_plans WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Release Notes
+app.get('/api/release-notes', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_release_notes WHERE workspace_id=? ORDER BY release_date DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/release-notes', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { version, release_date, highlights, bug_fixes, breaking_changes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_release_notes (workspace_id,version,release_date,highlights,bug_fixes,breaking_changes,author_id) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, version, release_date, highlights, bug_fixes, breaking_changes, req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_release_notes WHERE id=?').get(r.lastInsertRowid));
+});
+
+// FAQ Builder
+app.get('/api/faq', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_faq_builder WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/faq', requireAuth, (req: any, res) => {
+  const { product_or_topic, questions, answers, category } = req.body;
+  const r = db.prepare('INSERT INTO ai_faq_builder (user_id,product_or_topic,questions,answers,category) VALUES (?,?,?,?,?)').run(req.user.id, product_or_topic, questions, answers, category||'general');
+  res.json(db.prepare('SELECT * FROM ai_faq_builder WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Sleep Quality
+app.get('/api/sleep-quality', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_sleep_quality WHERE user_id=? ORDER BY sleep_date DESC LIMIT 30').all(req.user.id));
+});
+app.post('/api/sleep-quality', requireAuth, (req: any, res) => {
+  const { sleep_date, bedtime, wake_time, duration_hours, quality_score, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_sleep_quality (user_id,sleep_date,bedtime,wake_time,duration_hours,quality_score,notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, sleep_date||new Date().toISOString().slice(0,10), bedtime, wake_time, duration_hours, quality_score, notes);
+  res.json(db.prepare('SELECT * FROM user_sleep_quality WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Client Portal
+app.get('/api/client-portal', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_client_portal WHERE workspace_id=? ORDER BY created_at DESC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/client-portal', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { client_name, client_email, custom_message } = req.body;
+  const slug = `${client_name.toLowerCase().replace(/\s+/g,'-')}-${Date.now()}`;
+  const r = db.prepare('INSERT INTO workspace_client_portal (workspace_id,client_name,client_email,portal_slug,custom_message) VALUES (?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, client_name, client_email, slug, custom_message);
+  res.json(db.prepare('SELECT * FROM workspace_client_portal WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 120 ──────────────────────────────────────────────────────────
+
+// ─── Batch 121 ────────────────────────────────────────────────────────────────
+// user_affirmations | workspace_data_dictionary | ai_tagline_generator | user_project_log | workspace_access_requests
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_affirmations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    affirmation TEXT NOT NULL,
+    category TEXT DEFAULT 'mindset',
+    favorite INTEGER DEFAULT 0,
+    last_shown DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_data_dictionary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    term TEXT NOT NULL,
+    definition TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    owner_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_tagline_generator (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    brand_name TEXT NOT NULL,
+    description TEXT,
+    tone TEXT DEFAULT 'professional',
+    taglines TEXT,
+    selected_tagline TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_project_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    project_name TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    entry TEXT NOT NULL,
+    hours_spent REAL DEFAULT 0,
+    mood TEXT DEFAULT 'neutral',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_access_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    requester_id TEXT NOT NULL,
+    resource TEXT NOT NULL,
+    reason TEXT,
+    status TEXT DEFAULT 'pending',
+    reviewer_id TEXT,
+    reviewed_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Affirmations
+app.get('/api/affirmations', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_affirmations WHERE user_id=? ORDER BY favorite DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/affirmations', requireAuth, (req: any, res) => {
+  const { affirmation, category } = req.body;
+  const r = db.prepare('INSERT INTO user_affirmations (user_id,affirmation,category) VALUES (?,?,?)').run(req.user.id, affirmation, category||'mindset');
+  res.json(db.prepare('SELECT * FROM user_affirmations WHERE id=?').get(r.lastInsertRowid));
+});
+app.get('/api/affirmations/daily', requireAuth, (req: any, res) => {
+  const row = db.prepare('SELECT * FROM user_affirmations WHERE user_id=? ORDER BY RANDOM() LIMIT 1').get(req.user.id);
+  if (row) { const today = new Date().toISOString().slice(0,10); db.prepare('UPDATE user_affirmations SET last_shown=? WHERE id=?').run(today, (row as any).id); }
+  res.json(row || { affirmation: 'You are capable of amazing things today!' });
+});
+
+// Data Dictionary
+app.get('/api/data-dictionary', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_data_dictionary WHERE workspace_id=? ORDER BY term ASC').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/data-dictionary', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { term, definition, category } = req.body;
+  const r = db.prepare('INSERT INTO workspace_data_dictionary (workspace_id,term,definition,category,owner_id) VALUES (?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, term, definition, category||'general', req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_data_dictionary WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Tagline Generator
+app.get('/api/taglines', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_tagline_generator WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/taglines', requireAuth, (req: any, res) => {
+  const { brand_name, description, tone } = req.body;
+  const taglines = JSON.stringify([
+    `${brand_name}: Built for what's next`,
+    `${brand_name} — Where ideas become reality`,
+    `Think different. Think ${brand_name}`,
+    `${brand_name}: Smarter. Faster. Better.`,
+    `The future runs on ${brand_name}`,
+  ]);
+  const r = db.prepare('INSERT INTO ai_tagline_generator (user_id,brand_name,description,tone,taglines) VALUES (?,?,?,?,?)').run(req.user.id, brand_name, description, tone||'professional', taglines);
+  res.json(db.prepare('SELECT * FROM ai_tagline_generator WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Project Log
+app.get('/api/project-log', requireAuth, (req: any, res) => {
+  const project = req.query.project;
+  const query = project
+    ? 'SELECT * FROM user_project_log WHERE user_id=? AND project_name=? ORDER BY log_date DESC LIMIT 50'
+    : 'SELECT * FROM user_project_log WHERE user_id=? ORDER BY log_date DESC LIMIT 50';
+  const args = project ? [req.user.id, project] : [req.user.id];
+  res.json((db.prepare(query) as any).all(...args));
+});
+app.post('/api/project-log', requireAuth, (req: any, res) => {
+  const { project_name, log_date, entry, hours_spent, mood } = req.body;
+  const r = db.prepare('INSERT INTO user_project_log (user_id,project_name,log_date,entry,hours_spent,mood) VALUES (?,?,?,?,?,?)').run(req.user.id, project_name, log_date||new Date().toISOString().slice(0,10), entry, hours_spent||0, mood||'neutral');
+  res.json(db.prepare('SELECT * FROM user_project_log WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Access Requests
+app.get('/api/access-requests', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_access_requests WHERE workspace_id=? ORDER BY status=? DESC, created_at DESC').all(wsId?.workspace_id || req.user.id, 'pending'));
+});
+app.post('/api/access-requests', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { resource, reason } = req.body;
+  const r = db.prepare('INSERT INTO workspace_access_requests (workspace_id,requester_id,resource,reason) VALUES (?,?,?,?)').run(wsId?.workspace_id || req.user.id, req.user.id, resource, reason);
+  res.json(db.prepare('SELECT * FROM workspace_access_requests WHERE id=?').get(r.lastInsertRowid));
+});
+app.patch('/api/access-requests/:id/review', requireAuth, (req: any, res) => {
+  const { status } = req.body;
+  db.prepare('UPDATE workspace_access_requests SET status=?,reviewer_id=?,reviewed_at=CURRENT_TIMESTAMP WHERE id=?').run(status, req.user.id, req.params.id);
+  res.json(db.prepare('SELECT * FROM workspace_access_requests WHERE id=?').get(req.params.id));
+});
+
+// ─── End Batch 121 ──────────────────────────────────────────────────────────
+
+// ─── Batch 122 ────────────────────────────────────────────────────────────────
+// user_meal_planner | workspace_brand_assets | ai_ab_test_ideas | user_energy_log | workspace_service_catalog
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_meal_planner (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    plan_date DATE NOT NULL,
+    meal_type TEXT DEFAULT 'lunch',
+    meal_name TEXT NOT NULL,
+    calories INTEGER,
+    prep_time_min INTEGER,
+    ingredients TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_brand_assets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    asset_name TEXT NOT NULL,
+    asset_type TEXT DEFAULT 'logo',
+    url TEXT,
+    description TEXT,
+    tags TEXT,
+    uploaded_by TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_ab_test_ideas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    page_or_feature TEXT NOT NULL,
+    hypothesis TEXT,
+    variant_a TEXT,
+    variant_b TEXT,
+    success_metric TEXT,
+    status TEXT DEFAULT 'idea',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_energy_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    log_time TEXT,
+    energy_level INTEGER CHECK(energy_level BETWEEN 1 AND 10),
+    factors TEXT,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_service_catalog (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    service_name TEXT NOT NULL,
+    category TEXT DEFAULT 'internal',
+    owner_team TEXT,
+    description TEXT,
+    documentation_url TEXT,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Meal Planner
+app.get('/api/meal-planner', requireAuth, (req: any, res) => {
+  const week = req.query.week || new Date().toISOString().slice(0,10);
+  res.json(db.prepare("SELECT * FROM user_meal_planner WHERE user_id=? AND plan_date >= ? ORDER BY plan_date, meal_type").all(req.user.id, week));
+});
+app.post('/api/meal-planner', requireAuth, (req: any, res) => {
+  const { plan_date, meal_type, meal_name, calories, prep_time_min, ingredients } = req.body;
+  const r = db.prepare('INSERT INTO user_meal_planner (user_id,plan_date,meal_type,meal_name,calories,prep_time_min,ingredients) VALUES (?,?,?,?,?,?,?)').run(req.user.id, plan_date, meal_type||'lunch', meal_name, calories, prep_time_min, ingredients);
+  res.json(db.prepare('SELECT * FROM user_meal_planner WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Brand Assets
+app.get('/api/brand-assets', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_brand_assets WHERE workspace_id=? ORDER BY asset_type, asset_name').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/brand-assets', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { asset_name, asset_type, url, description, tags } = req.body;
+  const r = db.prepare('INSERT INTO workspace_brand_assets (workspace_id,asset_name,asset_type,url,description,tags,uploaded_by) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, asset_name, asset_type||'logo', url, description, tags, req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_brand_assets WHERE id=?').get(r.lastInsertRowid));
+});
+
+// A/B Test Ideas
+app.get('/api/ab-tests', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_ab_test_ideas WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/ab-tests', requireAuth, (req: any, res) => {
+  const { page_or_feature, hypothesis, variant_a, variant_b, success_metric } = req.body;
+  const r = db.prepare('INSERT INTO ai_ab_test_ideas (user_id,page_or_feature,hypothesis,variant_a,variant_b,success_metric) VALUES (?,?,?,?,?,?)').run(req.user.id, page_or_feature, hypothesis, variant_a, variant_b, success_metric);
+  res.json(db.prepare('SELECT * FROM ai_ab_test_ideas WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Energy Log
+app.get('/api/energy-log', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_energy_log WHERE user_id=? ORDER BY log_date DESC, log_time DESC LIMIT 50').all(req.user.id));
+});
+app.post('/api/energy-log', requireAuth, (req: any, res) => {
+  const { log_date, log_time, energy_level, factors, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_energy_log (user_id,log_date,log_time,energy_level,factors,notes) VALUES (?,?,?,?,?,?)').run(req.user.id, log_date||new Date().toISOString().slice(0,10), log_time||new Date().toTimeString().slice(0,5), energy_level, factors, notes);
+  res.json(db.prepare('SELECT * FROM user_energy_log WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Service Catalog
+app.get('/api/service-catalog', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_service_catalog WHERE workspace_id=? ORDER BY category, service_name').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/service-catalog', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { service_name, category, owner_team, description, documentation_url } = req.body;
+  const r = db.prepare('INSERT INTO workspace_service_catalog (workspace_id,service_name,category,owner_team,description,documentation_url) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, service_name, category||'internal', owner_team, description, documentation_url);
+  res.json(db.prepare('SELECT * FROM workspace_service_catalog WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 122 ──────────────────────────────────────────────────────────
+
+// ─── Batch 123 ────────────────────────────────────────────────────────────────
+// user_quotes_collection | workspace_dependency_tracker | ai_persona_builder | user_screen_time | workspace_knowledge_base
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_quotes_collection (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    quote_text TEXT NOT NULL,
+    author TEXT,
+    source TEXT,
+    category TEXT DEFAULT 'inspiration',
+    favorite INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_dependency_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    package_name TEXT NOT NULL,
+    current_version TEXT,
+    latest_version TEXT,
+    ecosystem TEXT DEFAULT 'npm',
+    risk_level TEXT DEFAULT 'low',
+    last_checked DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_persona_builder (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    persona_name TEXT NOT NULL,
+    age_range TEXT,
+    job_title TEXT,
+    goals TEXT,
+    pain_points TEXT,
+    behaviors TEXT,
+    quote TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_screen_time (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    app_name TEXT NOT NULL,
+    minutes_spent INTEGER DEFAULT 0,
+    category TEXT DEFAULT 'productivity',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_knowledge_base (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    title TEXT NOT NULL,
+    content TEXT,
+    category TEXT DEFAULT 'general',
+    tags TEXT,
+    author_id TEXT,
+    views INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Quotes Collection
+app.get('/api/quotes', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_quotes_collection WHERE user_id=? ORDER BY favorite DESC, created_at DESC').all(req.user.id));
+});
+app.post('/api/quotes', requireAuth, (req: any, res) => {
+  const { quote_text, author, source, category } = req.body;
+  const r = db.prepare('INSERT INTO user_quotes_collection (user_id,quote_text,author,source,category) VALUES (?,?,?,?,?)').run(req.user.id, quote_text, author, source, category||'inspiration');
+  res.json(db.prepare('SELECT * FROM user_quotes_collection WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Dependency Tracker
+app.get('/api/dependencies', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare("SELECT * FROM workspace_dependency_tracker WHERE workspace_id=? ORDER BY risk_level='high' DESC, package_name").all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/dependencies', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { package_name, current_version, latest_version, ecosystem, risk_level } = req.body;
+  const r = db.prepare('INSERT INTO workspace_dependency_tracker (workspace_id,package_name,current_version,latest_version,ecosystem,risk_level,last_checked) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, package_name, current_version, latest_version, ecosystem||'npm', risk_level||'low', new Date().toISOString().slice(0,10));
+  res.json(db.prepare('SELECT * FROM workspace_dependency_tracker WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Persona Builder
+app.get('/api/personas', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_persona_builder WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/personas', requireAuth, (req: any, res) => {
+  const { persona_name, age_range, job_title, goals, pain_points, behaviors, quote } = req.body;
+  const r = db.prepare('INSERT INTO ai_persona_builder (user_id,persona_name,age_range,job_title,goals,pain_points,behaviors,quote) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, persona_name, age_range, job_title, goals, pain_points, behaviors, quote);
+  res.json(db.prepare('SELECT * FROM ai_persona_builder WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Screen Time
+app.get('/api/screen-time', requireAuth, (req: any, res) => {
+  const date = req.query.date || new Date().toISOString().slice(0,10);
+  res.json(db.prepare('SELECT * FROM user_screen_time WHERE user_id=? AND log_date=? ORDER BY minutes_spent DESC').all(req.user.id, date));
+});
+app.post('/api/screen-time', requireAuth, (req: any, res) => {
+  const { log_date, app_name, minutes_spent, category } = req.body;
+  const r = db.prepare('INSERT INTO user_screen_time (user_id,log_date,app_name,minutes_spent,category) VALUES (?,?,?,?,?)').run(req.user.id, log_date||new Date().toISOString().slice(0,10), app_name, minutes_spent||0, category||'productivity');
+  res.json(db.prepare('SELECT * FROM user_screen_time WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Knowledge Base
+app.get('/api/knowledge-base', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const q = req.query.q as string;
+  if (q) {
+    res.json(db.prepare("SELECT * FROM workspace_knowledge_base WHERE workspace_id=? AND (title LIKE ? OR content LIKE ?) ORDER BY views DESC").all(wsId?.workspace_id || req.user.id, `%${q}%`, `%${q}%`));
+  } else {
+    res.json(db.prepare('SELECT id,title,category,tags,views,created_at FROM workspace_knowledge_base WHERE workspace_id=? ORDER BY views DESC').all(wsId?.workspace_id || req.user.id));
+  }
+});
+app.post('/api/knowledge-base', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { title, content, category, tags } = req.body;
+  const r = db.prepare('INSERT INTO workspace_knowledge_base (workspace_id,title,content,category,tags,author_id) VALUES (?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, title, content, category||'general', tags, req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_knowledge_base WHERE id=?').get(r.lastInsertRowid));
+});
+app.get('/api/knowledge-base/:id', requireAuth, (req: any, res) => {
+  db.prepare('UPDATE workspace_knowledge_base SET views=views+1 WHERE id=?').run(req.params.id);
+  res.json(db.prepare('SELECT * FROM workspace_knowledge_base WHERE id=?').get(req.params.id));
+});
+
+// ─── End Batch 123 ──────────────────────────────────────────────────────────
+
+// ─── Batch 124 ────────────────────────────────────────────────────────────────
+// user_pain_points_journal | workspace_compliance_docs | ai_headline_optimizer | user_gratitude_v2 | workspace_meeting_templates
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_pain_points_journal (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    domain TEXT DEFAULT 'work',
+    pain_point TEXT NOT NULL,
+    severity INTEGER DEFAULT 3 CHECK(severity BETWEEN 1 AND 5),
+    potential_solution TEXT,
+    status TEXT DEFAULT 'open',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_compliance_docs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    doc_title TEXT NOT NULL,
+    framework TEXT DEFAULT 'SOC2',
+    status TEXT DEFAULT 'draft',
+    owner_id TEXT,
+    review_date DATE,
+    content TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_headline_optimizer (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    original_headline TEXT NOT NULL,
+    optimized_variants TEXT,
+    target_audience TEXT,
+    goal TEXT DEFAULT 'clicks',
+    selected_variant TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_gratitude_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    entry_date DATE NOT NULL,
+    grateful_for TEXT NOT NULL,
+    why_grateful TEXT,
+    mood_boost INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_meeting_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    template_name TEXT NOT NULL,
+    meeting_type TEXT DEFAULT 'standup',
+    agenda TEXT,
+    default_duration_min INTEGER DEFAULT 30,
+    recurring TEXT DEFAULT 'none',
+    created_by TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Pain Points Journal
+app.get('/api/pain-points', requireAuth, (req: any, res) => {
+  res.json(db.prepare("SELECT * FROM user_pain_points_journal WHERE user_id=? ORDER BY severity DESC, status='open' DESC").all(req.user.id));
+});
+app.post('/api/pain-points', requireAuth, (req: any, res) => {
+  const { domain, pain_point, severity, potential_solution } = req.body;
+  const r = db.prepare('INSERT INTO user_pain_points_journal (user_id,domain,pain_point,severity,potential_solution) VALUES (?,?,?,?,?)').run(req.user.id, domain||'work', pain_point, severity||3, potential_solution);
+  res.json(db.prepare('SELECT * FROM user_pain_points_journal WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Compliance Docs
+app.get('/api/compliance-docs', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT id,doc_title,framework,status,review_date,created_at FROM workspace_compliance_docs WHERE workspace_id=? ORDER BY framework, doc_title').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/compliance-docs', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { doc_title, framework, status, review_date, content } = req.body;
+  const r = db.prepare('INSERT INTO workspace_compliance_docs (workspace_id,doc_title,framework,status,owner_id,review_date,content) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, doc_title, framework||'SOC2', status||'draft', req.user.id, review_date, content);
+  res.json(db.prepare('SELECT id,doc_title,framework,status,review_date,created_at FROM workspace_compliance_docs WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Headline Optimizer
+app.get('/api/headlines', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_headline_optimizer WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/headlines', requireAuth, (req: any, res) => {
+  const { original_headline, target_audience, goal } = req.body;
+  const variants = JSON.stringify([
+    original_headline,
+    `How to ${original_headline.toLowerCase()}`,
+    `${original_headline}: The Ultimate Guide`,
+    `Why ${original_headline} Matters in 2025`,
+    `The Surprising Truth About ${original_headline}`,
+  ]);
+  const r = db.prepare('INSERT INTO ai_headline_optimizer (user_id,original_headline,optimized_variants,target_audience,goal) VALUES (?,?,?,?,?)').run(req.user.id, original_headline, variants, target_audience, goal||'clicks');
+  res.json(db.prepare('SELECT * FROM ai_headline_optimizer WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Gratitude v2
+app.get('/api/gratitude', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_gratitude_v2 WHERE user_id=? ORDER BY entry_date DESC LIMIT 30').all(req.user.id));
+});
+app.post('/api/gratitude', requireAuth, (req: any, res) => {
+  const { entry_date, grateful_for, why_grateful } = req.body;
+  const r = db.prepare('INSERT INTO user_gratitude_v2 (user_id,entry_date,grateful_for,why_grateful) VALUES (?,?,?,?)').run(req.user.id, entry_date||new Date().toISOString().slice(0,10), grateful_for, why_grateful);
+  res.json(db.prepare('SELECT * FROM user_gratitude_v2 WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Meeting Templates
+app.get('/api/meeting-templates', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare('SELECT * FROM workspace_meeting_templates WHERE workspace_id=? ORDER BY meeting_type, template_name').all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/meeting-templates', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { template_name, meeting_type, agenda, default_duration_min, recurring } = req.body;
+  const r = db.prepare('INSERT INTO workspace_meeting_templates (workspace_id,template_name,meeting_type,agenda,default_duration_min,recurring,created_by) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, template_name, meeting_type||'standup', agenda, default_duration_min||30, recurring||'none', req.user.id);
+  res.json(db.prepare('SELECT * FROM workspace_meeting_templates WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 124 ──────────────────────────────────────────────────────────
+
+// ─── Batch 125 ────────────────────────────────────────────────────────────────
+// user_vision_journal | workspace_deployment_runbook | ai_blog_outline | user_symptoms_log | workspace_escalation_matrix
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_vision_journal (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    entry_date DATE NOT NULL,
+    vision_area TEXT DEFAULT 'career',
+    entry_text TEXT NOT NULL,
+    visualized INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_deployment_runbook (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    service_name TEXT NOT NULL,
+    step_number INTEGER NOT NULL,
+    step_title TEXT NOT NULL,
+    command TEXT,
+    notes TEXT,
+    expected_outcome TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS ai_blog_outline (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    target_audience TEXT,
+    word_count INTEGER DEFAULT 1500,
+    sections TEXT,
+    keywords TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_symptoms_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    log_date DATE NOT NULL,
+    symptom TEXT NOT NULL,
+    severity INTEGER DEFAULT 3 CHECK(severity BETWEEN 1 AND 10),
+    body_area TEXT DEFAULT 'general',
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS workspace_escalation_matrix (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT,
+    issue_type TEXT NOT NULL,
+    severity TEXT DEFAULT 'medium',
+    primary_contact TEXT,
+    secondary_contact TEXT,
+    response_time_min INTEGER DEFAULT 60,
+    escalation_path TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Vision Journal
+app.get('/api/vision-journal', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_vision_journal WHERE user_id=? ORDER BY entry_date DESC').all(req.user.id));
+});
+app.post('/api/vision-journal', requireAuth, (req: any, res) => {
+  const { entry_date, vision_area, entry_text } = req.body;
+  const r = db.prepare('INSERT INTO user_vision_journal (user_id,entry_date,vision_area,entry_text) VALUES (?,?,?,?)').run(req.user.id, entry_date||new Date().toISOString().slice(0,10), vision_area||'career', entry_text);
+  res.json(db.prepare('SELECT * FROM user_vision_journal WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Deployment Runbook
+app.get('/api/deployment-runbook', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const service = req.query.service;
+  if (service) {
+    res.json(db.prepare('SELECT * FROM workspace_deployment_runbook WHERE workspace_id=? AND service_name=? ORDER BY step_number').all(wsId?.workspace_id || req.user.id, service));
+  } else {
+    res.json(db.prepare('SELECT DISTINCT service_name FROM workspace_deployment_runbook WHERE workspace_id=?').all(wsId?.workspace_id || req.user.id));
+  }
+});
+app.post('/api/deployment-runbook', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { service_name, step_number, step_title, command, notes, expected_outcome } = req.body;
+  const r = db.prepare('INSERT INTO workspace_deployment_runbook (workspace_id,service_name,step_number,step_title,command,notes,expected_outcome) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, service_name, step_number||1, step_title, command, notes, expected_outcome);
+  res.json(db.prepare('SELECT * FROM workspace_deployment_runbook WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Blog Outline
+app.get('/api/blog-outlines', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM ai_blog_outline WHERE user_id=? ORDER BY created_at DESC').all(req.user.id));
+});
+app.post('/api/blog-outlines', requireAuth, (req: any, res) => {
+  const { topic, target_audience, word_count, keywords } = req.body;
+  const sections = JSON.stringify(['Introduction','Background/Context','Main Point 1','Main Point 2','Main Point 3','Practical Tips','Common Mistakes','Conclusion','Call to Action']);
+  const r = db.prepare('INSERT INTO ai_blog_outline (user_id,topic,target_audience,word_count,sections,keywords) VALUES (?,?,?,?,?,?)').run(req.user.id, topic, target_audience, word_count||1500, sections, keywords);
+  res.json(db.prepare('SELECT * FROM ai_blog_outline WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Symptoms Log
+app.get('/api/symptoms', requireAuth, (req: any, res) => {
+  res.json(db.prepare('SELECT * FROM user_symptoms_log WHERE user_id=? ORDER BY log_date DESC, severity DESC LIMIT 50').all(req.user.id));
+});
+app.post('/api/symptoms', requireAuth, (req: any, res) => {
+  const { log_date, symptom, severity, body_area, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_symptoms_log (user_id,log_date,symptom,severity,body_area,notes) VALUES (?,?,?,?,?,?)').run(req.user.id, log_date||new Date().toISOString().slice(0,10), symptom, severity||3, body_area||'general', notes);
+  res.json(db.prepare('SELECT * FROM user_symptoms_log WHERE id=?').get(r.lastInsertRowid));
+});
+
+// Escalation Matrix
+app.get('/api/escalation-matrix', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  res.json(db.prepare("SELECT * FROM workspace_escalation_matrix WHERE workspace_id=? ORDER BY severity='critical' DESC, severity='high' DESC").all(wsId?.workspace_id || req.user.id));
+});
+app.post('/api/escalation-matrix', requireAuth, (req: any, res) => {
+  const wsId = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user.id) as any;
+  const { issue_type, severity, primary_contact, secondary_contact, response_time_min, escalation_path } = req.body;
+  const r = db.prepare('INSERT INTO workspace_escalation_matrix (workspace_id,issue_type,severity,primary_contact,secondary_contact,response_time_min,escalation_path) VALUES (?,?,?,?,?,?,?)').run(wsId?.workspace_id || req.user.id, issue_type, severity||'medium', primary_contact, secondary_contact, response_time_min||60, escalation_path);
+  res.json(db.prepare('SELECT * FROM workspace_escalation_matrix WHERE id=?').get(r.lastInsertRowid));
+});
+
+// ─── End Batch 125 ──────────────────────────────────────────────────────────
+
+// ── B126 ──────────────────────────────────────────────────────────────────────
+
+// user_focus_sessions
+db.exec(`CREATE TABLE IF NOT EXISTS user_focus_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  session_date TEXT NOT NULL DEFAULT (date('now')),
+  start_time TEXT,
+  end_time TEXT,
+  duration_min INTEGER DEFAULT 0,
+  task_description TEXT,
+  focus_score INTEGER CHECK(focus_score BETWEEN 1 AND 10),
+  interruptions INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/focus-sessions', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_focus_sessions WHERE user_id=? ORDER BY session_date DESC, id DESC LIMIT 50').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/focus-sessions', requireAuth, (req: AuthRequest, res: Response) => {
+  const { session_date, start_time, end_time, duration_min, task_description, focus_score, interruptions } = req.body;
+  const r = db.prepare('INSERT INTO user_focus_sessions (user_id,session_date,start_time,end_time,duration_min,task_description,focus_score,interruptions) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, session_date||new Date().toISOString().slice(0,10), start_time||null, end_time||null, duration_min||0, task_description||'', focus_score||null, interruptions||0);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_architecture_diagram
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_architecture_diagram (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  diagram_name TEXT NOT NULL,
+  diagram_type TEXT DEFAULT 'system',
+  content TEXT,
+  mermaid_source TEXT,
+  last_updated TEXT DEFAULT (datetime('now')),
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/architecture-diagrams', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_architecture_diagram WHERE workspace_id=? ORDER BY last_updated DESC').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/architecture-diagrams', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { diagram_name, diagram_type, content, mermaid_source } = req.body;
+  const r = db.prepare('INSERT INTO workspace_architecture_diagram (workspace_id,diagram_name,diagram_type,content,mermaid_source) VALUES (?,?,?,?,?)').run(ws.workspace_id, diagram_name||'New Diagram', diagram_type||'system', content||'', mermaid_source||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_value_proposition_builder
+db.exec(`CREATE TABLE IF NOT EXISTS ai_value_proposition (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  product_name TEXT NOT NULL,
+  target_customer TEXT,
+  problem_solved TEXT,
+  key_benefit TEXT,
+  differentiator TEXT,
+  value_prop TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/value-props', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_value_proposition WHERE user_id=? ORDER BY id DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/value-props', requireAuth, (req: AuthRequest, res: Response) => {
+  const { product_name, target_customer, problem_solved, key_benefit, differentiator } = req.body;
+  const value_prop = `For ${target_customer||'customers'} who ${problem_solved||'need a solution'}, ${product_name||'our product'} provides ${key_benefit||'value'} unlike ${differentiator||'alternatives'}.`;
+  const r = db.prepare('INSERT INTO ai_value_proposition (user_id,product_name,target_customer,problem_solved,key_benefit,differentiator,value_prop) VALUES (?,?,?,?,?,?,?)').run(req.user!.id, product_name||'Product', target_customer||'', problem_solved||'', key_benefit||'', differentiator||'', value_prop);
+  res.json({ id: r.lastInsertRowid, value_prop });
+});
+
+// user_reading_notes
+db.exec(`CREATE TABLE IF NOT EXISTS user_reading_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  book_title TEXT NOT NULL,
+  author TEXT,
+  chapter TEXT,
+  note_text TEXT NOT NULL,
+  page_number INTEGER,
+  highlight TEXT,
+  tags TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/reading-notes', requireAuth, (req: AuthRequest, res: Response) => {
+  const { book } = req.query;
+  let q = 'SELECT * FROM user_reading_notes WHERE user_id=?';
+  const params: any[] = [req.user!.id];
+  if (book) { q += ' AND book_title LIKE ?'; params.push(`%${book}%`); }
+  q += ' ORDER BY id DESC LIMIT 100';
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/reading-notes', requireAuth, (req: AuthRequest, res: Response) => {
+  const { book_title, author, chapter, note_text, page_number, highlight, tags } = req.body;
+  const r = db.prepare('INSERT INTO user_reading_notes (user_id,book_title,author,chapter,note_text,page_number,highlight,tags) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, book_title||'', author||'', chapter||'', note_text||'', page_number||null, highlight||'', tags||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_feature_flags
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_feature_flags (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  flag_key TEXT NOT NULL,
+  flag_name TEXT NOT NULL,
+  description TEXT,
+  enabled INTEGER DEFAULT 0,
+  rollout_percentage INTEGER DEFAULT 0 CHECK(rollout_percentage BETWEEN 0 AND 100),
+  environment TEXT DEFAULT 'production',
+  updated_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(workspace_id, flag_key)
+)`);
+app.get('/api/feature-flags', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_feature_flags WHERE workspace_id=? ORDER BY flag_name').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/feature-flags', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { flag_key, flag_name, description, enabled, rollout_percentage, environment } = req.body;
+  const r = db.prepare('INSERT INTO workspace_feature_flags (workspace_id,flag_key,flag_name,description,enabled,rollout_percentage,environment) VALUES (?,?,?,?,?,?,?) ON CONFLICT(workspace_id,flag_key) DO UPDATE SET enabled=excluded.enabled,rollout_percentage=excluded.rollout_percentage,updated_at=datetime(\'now\')').run(ws.workspace_id, flag_key||'', flag_name||'', description||'', enabled?1:0, rollout_percentage||0, environment||'production');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ── B127 ──────────────────────────────────────────────────────────────────────
+
+// user_debt_tracker
+db.exec(`CREATE TABLE IF NOT EXISTS user_debt_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  debt_name TEXT NOT NULL,
+  creditor TEXT,
+  balance REAL DEFAULT 0,
+  interest_rate REAL DEFAULT 0,
+  minimum_payment REAL DEFAULT 0,
+  due_date TEXT,
+  debt_type TEXT DEFAULT 'credit_card',
+  paid_off INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/debt-tracker', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_debt_tracker WHERE user_id=? ORDER BY balance DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/debt-tracker', requireAuth, (req: AuthRequest, res: Response) => {
+  const { debt_name, creditor, balance, interest_rate, minimum_payment, due_date, debt_type } = req.body;
+  const r = db.prepare('INSERT INTO user_debt_tracker (user_id,debt_name,creditor,balance,interest_rate,minimum_payment,due_date,debt_type) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, debt_name||'', creditor||'', balance||0, interest_rate||0, minimum_payment||0, due_date||null, debt_type||'credit_card');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_postmortems
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_postmortems (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  incident_title TEXT NOT NULL,
+  incident_date TEXT,
+  severity TEXT DEFAULT 'medium',
+  duration_min INTEGER DEFAULT 0,
+  root_cause TEXT,
+  timeline TEXT,
+  action_items TEXT,
+  status TEXT DEFAULT 'draft',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/postmortems', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_postmortems WHERE workspace_id=? ORDER BY incident_date DESC').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/postmortems', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { incident_title, incident_date, severity, duration_min, root_cause, timeline, action_items, status } = req.body;
+  const r = db.prepare('INSERT INTO workspace_postmortems (workspace_id,incident_title,incident_date,severity,duration_min,root_cause,timeline,action_items,status) VALUES (?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, incident_title||'', incident_date||new Date().toISOString().slice(0,10), severity||'medium', duration_min||0, root_cause||'', timeline||'', action_items||'', status||'draft');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_job_description_builder
+db.exec(`CREATE TABLE IF NOT EXISTS ai_job_descriptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  role_title TEXT NOT NULL,
+  department TEXT,
+  seniority TEXT DEFAULT 'mid',
+  responsibilities TEXT,
+  requirements TEXT,
+  nice_to_have TEXT,
+  salary_range TEXT,
+  generated_jd TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/job-descriptions', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_job_descriptions WHERE user_id=? ORDER BY id DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/job-descriptions', requireAuth, (req: AuthRequest, res: Response) => {
+  const { role_title, department, seniority, responsibilities, requirements, nice_to_have, salary_range } = req.body;
+  const generated_jd = `# ${role_title} (${seniority||'Mid-level'})\n\n**Department:** ${department||'Engineering'}\n\n## Responsibilities\n${responsibilities||'- Define key responsibilities'}\n\n## Requirements\n${requirements||'- Define requirements'}\n\n## Nice to Have\n${nice_to_have||'- Additional skills'}\n\n**Compensation:** ${salary_range||'Competitive'}`;
+  const r = db.prepare('INSERT INTO ai_job_descriptions (user_id,role_title,department,seniority,responsibilities,requirements,nice_to_have,salary_range,generated_jd) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user!.id, role_title||'', department||'', seniority||'mid', responsibilities||'', requirements||'', nice_to_have||'', salary_range||'', generated_jd);
+  res.json({ id: r.lastInsertRowid, generated_jd });
+});
+
+// user_investment_watchlist
+db.exec(`CREATE TABLE IF NOT EXISTS user_investment_watchlist (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  ticker TEXT NOT NULL,
+  asset_name TEXT,
+  asset_type TEXT DEFAULT 'stock',
+  target_price REAL,
+  notes TEXT,
+  alert_above REAL,
+  alert_below REAL,
+  added_date TEXT DEFAULT (date('now')),
+  UNIQUE(user_id, ticker)
+)`);
+app.get('/api/watchlist', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_investment_watchlist WHERE user_id=? ORDER BY ticker').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/watchlist', requireAuth, (req: AuthRequest, res: Response) => {
+  const { ticker, asset_name, asset_type, target_price, notes, alert_above, alert_below } = req.body;
+  const r = db.prepare('INSERT INTO user_investment_watchlist (user_id,ticker,asset_name,asset_type,target_price,notes,alert_above,alert_below) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id,ticker) DO UPDATE SET target_price=excluded.target_price,notes=excluded.notes').run(req.user!.id, (ticker||'').toUpperCase(), asset_name||'', asset_type||'stock', target_price||null, notes||'', alert_above||null, alert_below||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_sla_tracker
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_sla_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  service_name TEXT NOT NULL,
+  sla_metric TEXT NOT NULL,
+  target_value REAL NOT NULL,
+  current_value REAL,
+  unit TEXT DEFAULT '%',
+  period TEXT DEFAULT 'monthly',
+  status TEXT DEFAULT 'met',
+  last_checked TEXT DEFAULT (datetime('now')),
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/sla-tracker', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_sla_tracker WHERE workspace_id=? ORDER BY service_name').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/sla-tracker', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { service_name, sla_metric, target_value, current_value, unit, period } = req.body;
+  const status = current_value !== undefined ? (current_value >= target_value ? 'met' : 'breached') : 'unknown';
+  const r = db.prepare('INSERT INTO workspace_sla_tracker (workspace_id,service_name,sla_metric,target_value,current_value,unit,period,status) VALUES (?,?,?,?,?,?,?,?)').run(ws.workspace_id, service_name||'', sla_metric||'', target_value||0, current_value||null, unit||'%', period||'monthly', status);
+  res.json({ id: r.lastInsertRowid, status });
+});
+
+// ── B128 ──────────────────────────────────────────────────────────────────────
+
+// user_mood_journal
+db.exec(`CREATE TABLE IF NOT EXISTS user_mood_journal (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  log_date TEXT NOT NULL DEFAULT (date('now')),
+  mood_score INTEGER NOT NULL CHECK(mood_score BETWEEN 1 AND 10),
+  emotions TEXT,
+  triggers TEXT,
+  notes TEXT,
+  weather TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/mood-journal', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_mood_journal WHERE user_id=? ORDER BY log_date DESC LIMIT 60').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/mood-journal', requireAuth, (req: AuthRequest, res: Response) => {
+  const { log_date, mood_score, emotions, triggers, notes, weather } = req.body;
+  const r = db.prepare('INSERT INTO user_mood_journal (user_id,log_date,mood_score,emotions,triggers,notes,weather) VALUES (?,?,?,?,?,?,?)').run(req.user!.id, log_date||new Date().toISOString().slice(0,10), mood_score||5, emotions||'', triggers||'', notes||'', weather||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_vendor_contracts
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_vendor_contracts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  vendor_name TEXT NOT NULL,
+  contract_type TEXT DEFAULT 'saas',
+  annual_value REAL DEFAULT 0,
+  start_date TEXT,
+  renewal_date TEXT,
+  auto_renews INTEGER DEFAULT 0,
+  notice_days INTEGER DEFAULT 30,
+  owner TEXT,
+  status TEXT DEFAULT 'active',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/vendor-contracts', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_vendor_contracts WHERE workspace_id=? ORDER BY renewal_date ASC').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/vendor-contracts', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { vendor_name, contract_type, annual_value, start_date, renewal_date, auto_renews, notice_days, owner, status } = req.body;
+  const r = db.prepare('INSERT INTO workspace_vendor_contracts (workspace_id,vendor_name,contract_type,annual_value,start_date,renewal_date,auto_renews,notice_days,owner,status) VALUES (?,?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, vendor_name||'', contract_type||'saas', annual_value||0, start_date||null, renewal_date||null, auto_renews?1:0, notice_days||30, owner||'', status||'active');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_press_release_builder
+db.exec(`CREATE TABLE IF NOT EXISTS ai_press_releases (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  headline TEXT NOT NULL,
+  subheadline TEXT,
+  company_name TEXT,
+  announcement TEXT,
+  quote_person TEXT,
+  quote_text TEXT,
+  boilerplate TEXT,
+  generated_release TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/press-releases', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_press_releases WHERE user_id=? ORDER BY id DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/press-releases', requireAuth, (req: AuthRequest, res: Response) => {
+  const { headline, subheadline, company_name, announcement, quote_person, quote_text, boilerplate } = req.body;
+  const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  const generated_release = `FOR IMMEDIATE RELEASE\n\n${headline||'Headline'}\n${subheadline ? subheadline+'\n' : ''}\n${company_name||'Company'} — ${today}\n\n${announcement||'Announcement details here.'}\n\n"${quote_text||'Quote here.'}"\n— ${quote_person||'Spokesperson'}, ${company_name||'Company'}\n\n###\n\n${boilerplate||'About the company.'}`;
+  const r = db.prepare('INSERT INTO ai_press_releases (user_id,headline,subheadline,company_name,announcement,quote_person,quote_text,boilerplate,generated_release) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user!.id, headline||'', subheadline||'', company_name||'', announcement||'', quote_person||'', quote_text||'', boilerplate||'', generated_release);
+  res.json({ id: r.lastInsertRowid, generated_release });
+});
+
+// user_workout_log
+db.exec(`CREATE TABLE IF NOT EXISTS user_workout_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  workout_date TEXT NOT NULL DEFAULT (date('now')),
+  workout_type TEXT DEFAULT 'strength',
+  exercises TEXT,
+  duration_min INTEGER DEFAULT 0,
+  calories_burned INTEGER DEFAULT 0,
+  notes TEXT,
+  rating INTEGER CHECK(rating BETWEEN 1 AND 5),
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/workout-log', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_workout_log WHERE user_id=? ORDER BY workout_date DESC LIMIT 50').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/workout-log', requireAuth, (req: AuthRequest, res: Response) => {
+  const { workout_date, workout_type, exercises, duration_min, calories_burned, notes, rating } = req.body;
+  const r = db.prepare('INSERT INTO user_workout_log (user_id,workout_date,workout_type,exercises,duration_min,calories_burned,notes,rating) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, workout_date||new Date().toISOString().slice(0,10), workout_type||'strength', exercises||'', duration_min||0, calories_burned||0, notes||'', rating||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_interview_questions
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_interview_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  role TEXT NOT NULL,
+  question TEXT NOT NULL,
+  question_type TEXT DEFAULT 'behavioral',
+  difficulty TEXT DEFAULT 'medium',
+  ideal_answer TEXT,
+  tags TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/interview-questions', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const { role } = req.query;
+  let q = 'SELECT * FROM workspace_interview_questions WHERE workspace_id=?';
+  const params: any[] = [ws.workspace_id];
+  if (role) { q += ' AND role LIKE ?'; params.push(`%${role}%`); }
+  q += ' ORDER BY role, difficulty';
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/interview-questions', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { role, question, question_type, difficulty, ideal_answer, tags } = req.body;
+  const r = db.prepare('INSERT INTO workspace_interview_questions (workspace_id,role,question,question_type,difficulty,ideal_answer,tags) VALUES (?,?,?,?,?,?,?)').run(ws.workspace_id, role||'', question||'', question_type||'behavioral', difficulty||'medium', ideal_answer||'', tags||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ── B129 ──────────────────────────────────────────────────────────────────────
+
+// user_book_tracker
+db.exec(`CREATE TABLE IF NOT EXISTS user_book_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  title TEXT NOT NULL,
+  author TEXT,
+  genre TEXT,
+  status TEXT DEFAULT 'want_to_read',
+  rating INTEGER CHECK(rating BETWEEN 1 AND 5),
+  started_date TEXT,
+  finished_date TEXT,
+  total_pages INTEGER DEFAULT 0,
+  pages_read INTEGER DEFAULT 0,
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/books', requireAuth, (req: AuthRequest, res: Response) => {
+  const { status } = req.query;
+  let q = 'SELECT * FROM user_book_tracker WHERE user_id=?';
+  const params: any[] = [req.user!.id];
+  if (status) { q += ' AND status=?'; params.push(status); }
+  q += ' ORDER BY created_at DESC';
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/books', requireAuth, (req: AuthRequest, res: Response) => {
+  const { title, author, genre, status, rating, started_date, finished_date, total_pages, pages_read, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_book_tracker (user_id,title,author,genre,status,rating,started_date,finished_date,total_pages,pages_read,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(req.user!.id, title||'', author||'', genre||'', status||'want_to_read', rating||null, started_date||null, finished_date||null, total_pages||0, pages_read||0, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_budget_tracker
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_budget_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  budget_period TEXT DEFAULT 'monthly',
+  allocated REAL DEFAULT 0,
+  spent REAL DEFAULT 0,
+  period_start TEXT,
+  period_end TEXT,
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/workspace-budget', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT *, ROUND((spent/CASE WHEN allocated=0 THEN 1 ELSE allocated END)*100,1) as pct_used FROM workspace_budget_tracker WHERE workspace_id=? ORDER BY category').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/workspace-budget', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { category, budget_period, allocated, spent, period_start, period_end, notes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_budget_tracker (workspace_id,category,budget_period,allocated,spent,period_start,period_end,notes) VALUES (?,?,?,?,?,?,?,?)').run(ws.workspace_id, category||'', budget_period||'monthly', allocated||0, spent||0, period_start||null, period_end||null, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_content_repurposer
+db.exec(`CREATE TABLE IF NOT EXISTS ai_content_repurpose (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  original_content TEXT NOT NULL,
+  source_format TEXT DEFAULT 'blog',
+  target_format TEXT DEFAULT 'twitter_thread',
+  repurposed_content TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/content-repurpose', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT id,source_format,target_format,created_at,substr(original_content,1,100) as preview FROM ai_content_repurpose WHERE user_id=? ORDER BY id DESC LIMIT 20').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/content-repurpose', requireAuth, (req: AuthRequest, res: Response) => {
+  const { original_content, source_format, target_format } = req.body;
+  const fmt = target_format||'twitter_thread';
+  let repurposed_content = '';
+  if (fmt === 'twitter_thread') {
+    const sentences = (original_content||'').split(/[.!?]+/).filter((s: string) => s.trim().length > 20).slice(0, 5);
+    repurposed_content = sentences.map((s: string, i: number) => `${i+1}/ ${s.trim()}`).join('\n\n');
+  } else if (fmt === 'linkedin') {
+    repurposed_content = `Key insight:\n\n${(original_content||'').slice(0,300)}\n\n#insights #learning #growth`;
+  } else {
+    repurposed_content = `Summary: ${(original_content||'').slice(0,200)}`;
+  }
+  const r = db.prepare('INSERT INTO ai_content_repurpose (user_id,original_content,source_format,target_format,repurposed_content) VALUES (?,?,?,?,?)').run(req.user!.id, original_content||'', source_format||'blog', fmt, repurposed_content);
+  res.json({ id: r.lastInsertRowid, repurposed_content });
+});
+
+// user_water_intake
+db.exec(`CREATE TABLE IF NOT EXISTS user_water_intake (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  log_date TEXT NOT NULL DEFAULT (date('now')),
+  amount_ml INTEGER NOT NULL DEFAULT 250,
+  beverage_type TEXT DEFAULT 'water',
+  logged_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/water-intake', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare("SELECT log_date, beverage_type, SUM(amount_ml) as total_ml, COUNT(*) as entries FROM user_water_intake WHERE user_id=? GROUP BY log_date, beverage_type ORDER BY log_date DESC LIMIT 30").all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/water-intake', requireAuth, (req: AuthRequest, res: Response) => {
+  const { log_date, amount_ml, beverage_type } = req.body;
+  const r = db.prepare('INSERT INTO user_water_intake (user_id,log_date,amount_ml,beverage_type) VALUES (?,?,?,?)').run(req.user!.id, log_date||new Date().toISOString().slice(0,10), amount_ml||250, beverage_type||'water');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_engineering_metrics
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_engineering_metrics (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  metric_name TEXT NOT NULL,
+  metric_value REAL NOT NULL,
+  metric_unit TEXT DEFAULT 'count',
+  recorded_date TEXT DEFAULT (date('now')),
+  team TEXT,
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/eng-metrics', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_engineering_metrics WHERE workspace_id=? ORDER BY recorded_date DESC, metric_name LIMIT 100').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/eng-metrics', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { metric_name, metric_value, metric_unit, recorded_date, team, notes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_engineering_metrics (workspace_id,metric_name,metric_value,metric_unit,recorded_date,team,notes) VALUES (?,?,?,?,?,?,?)').run(ws.workspace_id, metric_name||'', metric_value||0, metric_unit||'count', recorded_date||new Date().toISOString().slice(0,10), team||'', notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ── B130 ──────────────────────────────────────────────────────────────────────
+
+// user_language_learning
+db.exec(`CREATE TABLE IF NOT EXISTS user_language_learning (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  language TEXT NOT NULL,
+  word_or_phrase TEXT NOT NULL,
+  translation TEXT,
+  example_sentence TEXT,
+  notes TEXT,
+  mastered INTEGER DEFAULT 0,
+  review_count INTEGER DEFAULT 0,
+  last_reviewed TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/language-learning', requireAuth, (req: AuthRequest, res: Response) => {
+  const { language } = req.query;
+  let q = 'SELECT * FROM user_language_learning WHERE user_id=?';
+  const params: any[] = [req.user!.id];
+  if (language) { q += ' AND language=?'; params.push(language); }
+  q += ' ORDER BY mastered ASC, review_count ASC LIMIT 100';
+  res.json(db.prepare(q).all(...params));
+});
+app.post('/api/language-learning', requireAuth, (req: AuthRequest, res: Response) => {
+  const { language, word_or_phrase, translation, example_sentence, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_language_learning (user_id,language,word_or_phrase,translation,example_sentence,notes) VALUES (?,?,?,?,?,?)').run(req.user!.id, language||'', word_or_phrase||'', translation||'', example_sentence||'', notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_changelog
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_changelog (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  version TEXT NOT NULL,
+  release_date TEXT DEFAULT (date('now')),
+  change_type TEXT DEFAULT 'feature',
+  title TEXT NOT NULL,
+  description TEXT,
+  author TEXT,
+  breaking_change INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/workspace-changelog', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_changelog WHERE workspace_id=? ORDER BY release_date DESC, id DESC LIMIT 100').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/workspace-changelog', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { version, release_date, change_type, title, description, author, breaking_change } = req.body;
+  const r = db.prepare('INSERT INTO workspace_changelog (workspace_id,version,release_date,change_type,title,description,author,breaking_change) VALUES (?,?,?,?,?,?,?,?)').run(ws.workspace_id, version||'1.0.0', release_date||new Date().toISOString().slice(0,10), change_type||'feature', title||'', description||'', author||'', breaking_change?1:0);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_meeting_agenda_builder
+db.exec(`CREATE TABLE IF NOT EXISTS ai_meeting_agendas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  meeting_title TEXT NOT NULL,
+  meeting_type TEXT DEFAULT 'standup',
+  attendees TEXT,
+  duration_min INTEGER DEFAULT 30,
+  agenda_items TEXT,
+  goals TEXT,
+  pre_read TEXT,
+  generated_agenda TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/meeting-agendas', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_meeting_agendas WHERE user_id=? ORDER BY id DESC LIMIT 30').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/meeting-agendas', requireAuth, (req: AuthRequest, res: Response) => {
+  const { meeting_title, meeting_type, attendees, duration_min, agenda_items, goals, pre_read } = req.body;
+  const items = Array.isArray(agenda_items) ? agenda_items : (agenda_items||'').split('\n').filter((s: string) => s.trim());
+  const generated_agenda = `# ${meeting_title||'Meeting Agenda'}\n**Type:** ${meeting_type||'standup'} | **Duration:** ${duration_min||30}min | **Attendees:** ${attendees||'TBD'}\n\n## Goals\n${goals||'- Define meeting goals'}\n\n## Agenda\n${items.map((item: string, i: number) => `${i+1}. ${item}`).join('\n')}\n\n${pre_read ? `## Pre-read\n${pre_read}` : ''}`;
+  const r = db.prepare('INSERT INTO ai_meeting_agendas (user_id,meeting_title,meeting_type,attendees,duration_min,agenda_items,goals,pre_read,generated_agenda) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user!.id, meeting_title||'', meeting_type||'standup', attendees||'', duration_min||30, JSON.stringify(items), goals||'', pre_read||'', generated_agenda);
+  res.json({ id: r.lastInsertRowid, generated_agenda });
+});
+
+// user_journal_prompts
+db.exec(`CREATE TABLE IF NOT EXISTS user_journal_prompts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  prompt_text TEXT NOT NULL,
+  category TEXT DEFAULT 'reflection',
+  response TEXT,
+  responded_at TEXT,
+  favorite INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/journal-prompts', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_journal_prompts WHERE user_id=? ORDER BY favorite DESC, created_at DESC LIMIT 50').all(req.user!.id);
+  res.json(rows);
+});
+app.get('/api/journal-prompts/random', requireAuth, (req: AuthRequest, res: Response) => {
+  const row = db.prepare("SELECT * FROM user_journal_prompts WHERE user_id=? AND response IS NULL ORDER BY RANDOM() LIMIT 1").get(req.user!.id);
+  if (!row) return res.json({ prompt_text: 'What did you learn today that surprised you?' });
+  res.json(row);
+});
+app.post('/api/journal-prompts', requireAuth, (req: AuthRequest, res: Response) => {
+  const { prompt_text, category, response, favorite } = req.body;
+  const r = db.prepare('INSERT INTO user_journal_prompts (user_id,prompt_text,category,response,responded_at,favorite) VALUES (?,?,?,?,?,?)').run(req.user!.id, prompt_text||'', category||'reflection', response||null, response ? new Date().toISOString() : null, favorite?1:0);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_capacity_planner
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_capacity_planner (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  team_member TEXT NOT NULL,
+  sprint_or_period TEXT NOT NULL,
+  available_days REAL DEFAULT 5,
+  planned_points INTEGER DEFAULT 0,
+  actual_points INTEGER DEFAULT 0,
+  pto_days REAL DEFAULT 0,
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/capacity-planner', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_capacity_planner WHERE workspace_id=? ORDER BY sprint_or_period DESC, team_member').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/capacity-planner', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { team_member, sprint_or_period, available_days, planned_points, actual_points, pto_days, notes } = req.body;
+  const r = db.prepare('INSERT INTO workspace_capacity_planner (workspace_id,team_member,sprint_or_period,available_days,planned_points,actual_points,pto_days,notes) VALUES (?,?,?,?,?,?,?,?)').run(ws.workspace_id, team_member||'', sprint_or_period||'', available_days||5, planned_points||0, actual_points||0, pto_days||0, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ── B131 ──────────────────────────────────────────────────────────────────────
+
+// user_networking_log
+db.exec(`CREATE TABLE IF NOT EXISTS user_networking_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  contact_name TEXT NOT NULL,
+  company TEXT,
+  role TEXT,
+  met_at TEXT,
+  last_contact TEXT,
+  notes TEXT,
+  follow_up_date TEXT,
+  relationship_strength INTEGER DEFAULT 1 CHECK(relationship_strength BETWEEN 1 AND 5),
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/networking', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM user_networking_log WHERE user_id=? ORDER BY last_contact DESC NULLS LAST, id DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/networking', requireAuth, (req: AuthRequest, res: Response) => {
+  const { contact_name, company, role, met_at, last_contact, notes, follow_up_date, relationship_strength } = req.body;
+  const r = db.prepare('INSERT INTO user_networking_log (user_id,contact_name,company,role,met_at,last_contact,notes,follow_up_date,relationship_strength) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user!.id, contact_name||'', company||'', role||'', met_at||'', last_contact||null, notes||'', follow_up_date||null, relationship_strength||1);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_decision_log
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_decision_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  decision_title TEXT NOT NULL,
+  decision_date TEXT DEFAULT (date('now')),
+  context TEXT,
+  options_considered TEXT,
+  decision_made TEXT NOT NULL,
+  rationale TEXT,
+  decision_maker TEXT,
+  reversible INTEGER DEFAULT 1,
+  outcome TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/decisions', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_decision_log WHERE workspace_id=? ORDER BY decision_date DESC').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/decisions', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { decision_title, decision_date, context, options_considered, decision_made, rationale, decision_maker, reversible, outcome } = req.body;
+  const r = db.prepare('INSERT INTO workspace_decision_log (workspace_id,decision_title,decision_date,context,options_considered,decision_made,rationale,decision_maker,reversible,outcome) VALUES (?,?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, decision_title||'', decision_date||new Date().toISOString().slice(0,10), context||'', options_considered||'', decision_made||'', rationale||'', decision_maker||'', reversible!==false?1:0, outcome||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_bio_writer
+db.exec(`CREATE TABLE IF NOT EXISTS ai_bio_writer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  full_name TEXT NOT NULL,
+  current_role TEXT,
+  company TEXT,
+  years_experience INTEGER DEFAULT 0,
+  key_achievements TEXT,
+  tone TEXT DEFAULT 'professional',
+  word_count INTEGER DEFAULT 150,
+  generated_bio TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/bios', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT * FROM ai_bio_writer WHERE user_id=? ORDER BY id DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/bios', requireAuth, (req: AuthRequest, res: Response) => {
+  const { full_name, current_role, company, years_experience, key_achievements, tone, word_count } = req.body;
+  const generated_bio = `${full_name||'Name'} is a ${current_role||'professional'} at ${company||'their company'} with ${years_experience||0}+ years of experience. ${key_achievements ? key_achievements+'.' : ''} Known for delivering results with a ${tone||'professional'} approach, ${(full_name||'they').split(' ')[0]} is passionate about building great products and teams.`;
+  const r = db.prepare('INSERT INTO ai_bio_writer (user_id,full_name,current_role,company,years_experience,key_achievements,tone,word_count,generated_bio) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user!.id, full_name||'', current_role||'', company||'', years_experience||0, key_achievements||'', tone||'professional', word_count||150, generated_bio);
+  res.json({ id: r.lastInsertRowid, generated_bio });
+});
+
+// user_subscription_tracker
+db.exec(`CREATE TABLE IF NOT EXISTS user_subscription_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  service_name TEXT NOT NULL,
+  category TEXT DEFAULT 'entertainment',
+  monthly_cost REAL DEFAULT 0,
+  billing_cycle TEXT DEFAULT 'monthly',
+  renewal_date TEXT,
+  status TEXT DEFAULT 'active',
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/subscriptions', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare("SELECT *, SUM(monthly_cost) OVER() as total_monthly FROM user_subscription_tracker WHERE user_id=? ORDER BY monthly_cost DESC").all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/subscriptions', requireAuth, (req: AuthRequest, res: Response) => {
+  const { service_name, category, monthly_cost, billing_cycle, renewal_date, status, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_subscription_tracker (user_id,service_name,category,monthly_cost,billing_cycle,renewal_date,status,notes) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, service_name||'', category||'entertainment', monthly_cost||0, billing_cycle||'monthly', renewal_date||null, status||'active', notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_customer_personas
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_customer_personas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  persona_name TEXT NOT NULL,
+  segment TEXT,
+  company_size TEXT,
+  industry TEXT,
+  primary_goal TEXT,
+  main_challenge TEXT,
+  buying_trigger TEXT,
+  budget_range TEXT,
+  decision_timeline TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/customer-personas', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_customer_personas WHERE workspace_id=? ORDER BY persona_name').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/customer-personas', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { persona_name, segment, company_size, industry, primary_goal, main_challenge, buying_trigger, budget_range, decision_timeline } = req.body;
+  const r = db.prepare('INSERT INTO workspace_customer_personas (workspace_id,persona_name,segment,company_size,industry,primary_goal,main_challenge,buying_trigger,budget_range,decision_timeline) VALUES (?,?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, persona_name||'', segment||'', company_size||'', industry||'', primary_goal||'', main_challenge||'', buying_trigger||'', budget_range||'', decision_timeline||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ── B132 ──────────────────────────────────────────────────────────────────────
+
+// user_habit_tracker_v3
+db.exec(`CREATE TABLE IF NOT EXISTS user_habit_tracker_v3 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  habit_name TEXT NOT NULL,
+  frequency TEXT DEFAULT 'daily',
+  target_count INTEGER DEFAULT 1,
+  current_streak INTEGER DEFAULT 0,
+  best_streak INTEGER DEFAULT 0,
+  color TEXT DEFAULT '#6366f1',
+  active INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS user_habit_completions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  habit_id INTEGER NOT NULL REFERENCES user_habit_tracker_v3(id),
+  completed_date TEXT NOT NULL DEFAULT (date('now')),
+  notes TEXT,
+  UNIQUE(habit_id, completed_date)
+)`);
+app.get('/api/habits-v3', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT h.*, (SELECT COUNT(*) FROM user_habit_completions WHERE habit_id=h.id AND completed_date>=date("now","-30 days")) as completions_30d FROM user_habit_tracker_v3 h WHERE h.user_id=? AND h.active=1 ORDER BY h.habit_name').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/habits-v3', requireAuth, (req: AuthRequest, res: Response) => {
+  const { habit_name, frequency, target_count, color } = req.body;
+  const r = db.prepare('INSERT INTO user_habit_tracker_v3 (user_id,habit_name,frequency,target_count,color) VALUES (?,?,?,?,?)').run(req.user!.id, habit_name||'', frequency||'daily', target_count||1, color||'#6366f1');
+  res.json({ id: r.lastInsertRowid });
+});
+app.post('/api/habits-v3/:id/check', requireAuth, (req: AuthRequest, res: Response) => {
+  const { notes, completed_date } = req.body;
+  const date = completed_date || new Date().toISOString().slice(0,10);
+  try {
+    db.prepare('INSERT INTO user_habit_completions (habit_id,completed_date,notes) VALUES (?,?,?)').run(Number(req.params.id), date, notes||'');
+    db.prepare('UPDATE user_habit_tracker_v3 SET current_streak=current_streak+1, best_streak=MAX(best_streak,current_streak+1) WHERE id=? AND user_id=?').run(Number(req.params.id), req.user!.id);
+    res.json({ checked: true });
+  } catch { res.json({ checked: false, already: true }); }
+});
+
+// workspace_onboarding_docs
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_onboarding_docs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  doc_title TEXT NOT NULL,
+  doc_type TEXT DEFAULT 'guide',
+  audience TEXT DEFAULT 'new_hire',
+  content TEXT,
+  estimated_read_min INTEGER DEFAULT 5,
+  required INTEGER DEFAULT 1,
+  order_index INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/onboarding-docs', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_onboarding_docs WHERE workspace_id=? ORDER BY order_index, id').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/onboarding-docs', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { doc_title, doc_type, audience, content, estimated_read_min, required, order_index } = req.body;
+  const r = db.prepare('INSERT INTO workspace_onboarding_docs (workspace_id,doc_title,doc_type,audience,content,estimated_read_min,required,order_index) VALUES (?,?,?,?,?,?,?,?)').run(ws.workspace_id, doc_title||'', doc_type||'guide', audience||'new_hire', content||'', estimated_read_min||5, required!==false?1:0, order_index||0);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_cold_email_sequence
+db.exec(`CREATE TABLE IF NOT EXISTS ai_cold_email_sequences (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  sequence_name TEXT NOT NULL,
+  target_persona TEXT,
+  num_emails INTEGER DEFAULT 3,
+  emails TEXT,
+  goal TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/email-sequences', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT id,sequence_name,target_persona,num_emails,goal,created_at FROM ai_cold_email_sequences WHERE user_id=? ORDER BY id DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/email-sequences', requireAuth, (req: AuthRequest, res: Response) => {
+  const { sequence_name, target_persona, num_emails, goal } = req.body;
+  const n = Math.min(num_emails||3, 5);
+  const delays = [0, 3, 7, 14, 21];
+  const subjects = ['Quick question about {company}', 'Following up — {goal}', 'One more thought on {topic}', 'Last try — {benefit}', 'Resources for {persona}'];
+  const emails = Array.from({length: n}, (_, i) => ({
+    email_number: i+1,
+    send_day: delays[i],
+    subject: subjects[i].replace('{company}','your company').replace('{goal}',goal||'your goals').replace('{topic}','this').replace('{benefit}','value').replace('{persona}',target_persona||'you'),
+    body: `Hi {{first_name}},\n\nEmail ${i+1} of ${n} — focused on ${goal||'helping you succeed'}.\n\n[Personalized content for ${target_persona||'your persona'} here]\n\nBest,\n{{sender}}`
+  }));
+  const r = db.prepare('INSERT INTO ai_cold_email_sequences (user_id,sequence_name,target_persona,num_emails,emails,goal) VALUES (?,?,?,?,?,?)').run(req.user!.id, sequence_name||'', target_persona||'', n, JSON.stringify(emails), goal||'');
+  res.json({ id: r.lastInsertRowid, emails });
+});
+
+// user_expense_categories
+db.exec(`CREATE TABLE IF NOT EXISTS user_expense_categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  category TEXT NOT NULL,
+  monthly_budget REAL DEFAULT 0,
+  icon TEXT DEFAULT '\U0001f4b0',
+  color TEXT DEFAULT '#6366f1',
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(user_id, category)
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS user_expenses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  category TEXT NOT NULL,
+  amount REAL NOT NULL,
+  description TEXT,
+  expense_date TEXT DEFAULT (date('now')),
+  payment_method TEXT DEFAULT 'card',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/expenses', requireAuth, (req: AuthRequest, res: Response) => {
+  const { month } = req.query;
+  const m = month || new Date().toISOString().slice(0,7);
+  const rows = db.prepare("SELECT category, SUM(amount) as total, COUNT(*) as count FROM user_expenses WHERE user_id=? AND strftime('%Y-%m',expense_date)=? GROUP BY category ORDER BY total DESC").all(req.user!.id, m);
+  res.json(rows);
+});
+app.post('/api/expenses', requireAuth, (req: AuthRequest, res: Response) => {
+  const { category, amount, description, expense_date, payment_method } = req.body;
+  const r = db.prepare('INSERT INTO user_expenses (user_id,category,amount,description,expense_date,payment_method) VALUES (?,?,?,?,?,?)').run(req.user!.id, category||'Other', amount||0, description||'', expense_date||new Date().toISOString().slice(0,10), payment_method||'card');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_product_roadmap
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_product_roadmap (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  feature_name TEXT NOT NULL,
+  description TEXT,
+  quarter TEXT,
+  status TEXT DEFAULT 'planned',
+  priority TEXT DEFAULT 'medium',
+  team TEXT,
+  effort_points INTEGER DEFAULT 0,
+  impact_score INTEGER DEFAULT 5 CHECK(impact_score BETWEEN 1 AND 10),
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/product-roadmap', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_product_roadmap WHERE workspace_id=? ORDER BY quarter, priority DESC, impact_score DESC').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/product-roadmap', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { feature_name, description, quarter, status, priority, team, effort_points, impact_score } = req.body;
+  const r = db.prepare('INSERT INTO workspace_product_roadmap (workspace_id,feature_name,description,quarter,status,priority,team,effort_points,impact_score) VALUES (?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, feature_name||'', description||'', quarter||'', status||'planned', priority||'medium', team||'', effort_points||0, impact_score||5);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ── B133 ──────────────────────────────────────────────────────────────────────
+
+// user_meditation_timer
+db.exec(`CREATE TABLE IF NOT EXISTS user_meditation_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  session_date TEXT NOT NULL DEFAULT (date('now')),
+  duration_min INTEGER NOT NULL DEFAULT 10,
+  technique TEXT DEFAULT 'mindfulness',
+  mood_before INTEGER CHECK(mood_before BETWEEN 1 AND 10),
+  mood_after INTEGER CHECK(mood_after BETWEEN 1 AND 10),
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/meditation-log', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare("SELECT *, (mood_after - mood_before) as mood_delta FROM user_meditation_log WHERE user_id=? ORDER BY session_date DESC LIMIT 60").all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/meditation-log', requireAuth, (req: AuthRequest, res: Response) => {
+  const { session_date, duration_min, technique, mood_before, mood_after, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_meditation_log (user_id,session_date,duration_min,technique,mood_before,mood_after,notes) VALUES (?,?,?,?,?,?,?)').run(req.user!.id, session_date||new Date().toISOString().slice(0,10), duration_min||10, technique||'mindfulness', mood_before||null, mood_after||null, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// workspace_api_documentation
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_api_documentation (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  endpoint TEXT NOT NULL,
+  method TEXT DEFAULT 'GET',
+  description TEXT,
+  request_schema TEXT,
+  response_schema TEXT,
+  example_request TEXT,
+  example_response TEXT,
+  auth_required INTEGER DEFAULT 1,
+  deprecated INTEGER DEFAULT 0,
+  version TEXT DEFAULT 'v1',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/api-docs', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare('SELECT * FROM workspace_api_documentation WHERE workspace_id=? ORDER BY version, endpoint').all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/api-docs', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { endpoint, method, description, request_schema, response_schema, example_request, example_response, auth_required, deprecated, version } = req.body;
+  const r = db.prepare('INSERT INTO workspace_api_documentation (workspace_id,endpoint,method,description,request_schema,response_schema,example_request,example_response,auth_required,deprecated,version) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, endpoint||'', (method||'GET').toUpperCase(), description||'', request_schema||'', response_schema||'', example_request||'', example_response||'', auth_required!==false?1:0, deprecated?1:0, version||'v1');
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ai_product_requirements
+db.exec(`CREATE TABLE IF NOT EXISTS ai_product_requirements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  feature_name TEXT NOT NULL,
+  user_story TEXT,
+  acceptance_criteria TEXT,
+  out_of_scope TEXT,
+  dependencies TEXT,
+  success_metrics TEXT,
+  generated_prd TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/prd', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare('SELECT id,feature_name,user_story,created_at FROM ai_product_requirements WHERE user_id=? ORDER BY id DESC').all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/prd', requireAuth, (req: AuthRequest, res: Response) => {
+  const { feature_name, user_story, acceptance_criteria, out_of_scope, dependencies, success_metrics } = req.body;
+  const generated_prd = `# PRD: ${feature_name||'Feature'}\n\n## User Story\n${user_story||'As a user, I want to...'}\n\n## Acceptance Criteria\n${acceptance_criteria||'- Define criteria'}\n\n## Out of Scope\n${out_of_scope||'- Define exclusions'}\n\n## Dependencies\n${dependencies||'None identified'}\n\n## Success Metrics\n${success_metrics||'- Define KPIs'}`;
+  const r = db.prepare('INSERT INTO ai_product_requirements (user_id,feature_name,user_story,acceptance_criteria,out_of_scope,dependencies,success_metrics,generated_prd) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, feature_name||'', user_story||'', acceptance_criteria||'', out_of_scope||'', dependencies||'', success_metrics||'', generated_prd);
+  res.json({ id: r.lastInsertRowid, generated_prd });
+});
+
+// user_goal_milestones
+db.exec(`CREATE TABLE IF NOT EXISTS user_goal_milestones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  goal_name TEXT NOT NULL,
+  target_date TEXT,
+  category TEXT DEFAULT 'personal',
+  milestones TEXT,
+  progress_pct INTEGER DEFAULT 0 CHECK(progress_pct BETWEEN 0 AND 100),
+  status TEXT DEFAULT 'active',
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/goal-milestones', requireAuth, (req: AuthRequest, res: Response) => {
+  const rows = db.prepare("SELECT * FROM user_goal_milestones WHERE user_id=? AND status!='archived' ORDER BY target_date ASC NULLS LAST").all(req.user!.id);
+  res.json(rows);
+});
+app.post('/api/goal-milestones', requireAuth, (req: AuthRequest, res: Response) => {
+  const { goal_name, target_date, category, milestones, progress_pct, status, notes } = req.body;
+  const r = db.prepare('INSERT INTO user_goal_milestones (user_id,goal_name,target_date,category,milestones,progress_pct,status,notes) VALUES (?,?,?,?,?,?,?,?)').run(req.user!.id, goal_name||'', target_date||null, category||'personal', typeof milestones === 'object' ? JSON.stringify(milestones) : milestones||'[]', progress_pct||0, status||'active', notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.patch('/api/goal-milestones/:id/progress', requireAuth, (req: AuthRequest, res: Response) => {
+  const { progress_pct } = req.body;
+  db.prepare('UPDATE user_goal_milestones SET progress_pct=? WHERE id=? AND user_id=?').run(Math.min(100, Math.max(0, progress_pct||0)), Number(req.params.id), req.user!.id);
+  res.json({ ok: true });
+});
+
+// workspace_technical_debt
+db.exec(`CREATE TABLE IF NOT EXISTS workspace_technical_debt (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  debt_title TEXT NOT NULL,
+  description TEXT,
+  area TEXT DEFAULT 'backend',
+  severity TEXT DEFAULT 'medium',
+  effort_days REAL DEFAULT 1,
+  impact TEXT,
+  owner TEXT,
+  status TEXT DEFAULT 'open',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.get('/api/tech-debt', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.json([]);
+  const rows = db.prepare("SELECT * FROM workspace_technical_debt WHERE workspace_id=? AND status!='resolved' ORDER BY severity DESC, effort_days ASC").all(ws.workspace_id);
+  res.json(rows);
+});
+app.post('/api/tech-debt', requireAuth, (req: AuthRequest, res: Response) => {
+  const ws = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1').get(req.user!.id) as any;
+  if (!ws) return res.status(400).json({ error: 'No workspace' });
+  const { debt_title, description, area, severity, effort_days, impact, owner, status } = req.body;
+  const r = db.prepare('INSERT INTO workspace_technical_debt (workspace_id,debt_title,description,area,severity,effort_days,impact,owner,status) VALUES (?,?,?,?,?,?,?,?,?)').run(ws.workspace_id, debt_title||'', description||'', area||'backend', severity||'medium', effort_days||1, impact||'', owner||'', status||'open');
+  res.json({ id: r.lastInsertRowid });
+});

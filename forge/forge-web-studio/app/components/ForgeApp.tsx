@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -743,6 +743,131 @@ export default function ForgeApp() {
   const [wsMoodTrend, setWsMoodTrend] = useState<any>(null);
   const [newMoodEmoji, setNewMoodEmoji] = useState('😊');
   const [newMoodScore, setNewMoodScore] = useState(3);
+  const [meditationLog, setMeditationLog] = useState<any[]>([]);
+  const [apiDocs, setApiDocs] = useState<any[]>([]);
+  const [prds, setPrds] = useState<any[]>([]);
+  const [goalMilestones, setGoalMilestones] = useState<any[]>([]);
+  const [techDebt, setTechDebt] = useState<any[]>([]);
+  const [habitsV3, setHabitsV3] = useState<any[]>([]);
+  const [onboardingDocs, setOnboardingDocs] = useState<any[]>([]);
+  const [emailSequences, setEmailSequences] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [prodRoadmap, setProdRoadmap] = useState<any[]>([]);
+  const [networkingLog, setNetworkingLog] = useState<any[]>([]);
+  const [decisions, setDecisions] = useState<any[]>([]);
+  const [bios, setBios] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [custPersonas, setCustPersonas] = useState<any[]>([]);
+  const [langLearning, setLangLearning] = useState<any[]>([]);
+  const [wsChangelog, setWsChangelog] = useState<any[]>([]);
+  const [meetingAgendas, setMeetingAgendas] = useState<any[]>([]);
+  const [journalPrompts, setJournalPrompts] = useState<any[]>([]);
+  const [capacityPlan, setCapacityPlan] = useState<any[]>([]);
+  const [books, setBooks] = useState<any[]>([]);
+  const [wsBudget, setWsBudget] = useState<any[]>([]);
+  const [contentRepurpose, setContentRepurpose] = useState<any[]>([]);
+  const [waterIntake, setWaterIntake] = useState<any[]>([]);
+  const [engMetrics, setEngMetrics] = useState<any[]>([]);
+  const [moodJournal, setMoodJournal] = useState<any[]>([]);
+  const [vendorContracts, setVendorContracts] = useState<any[]>([]);
+  const [pressReleases, setPressReleases] = useState<any[]>([]);
+  const [workoutLog, setWorkoutLog] = useState<any[]>([]);
+  const [interviewQs, setInterviewQs] = useState<any[]>([]);
+  const [debtItems, setDebtItems] = useState<any[]>([]);
+  const [postmortems, setPostmortems] = useState<any[]>([]);
+  const [jobDescs, setJobDescs] = useState<any[]>([]);
+  const [watchlist, setWatchlist] = useState<any[]>([]);
+  const [slaTracker, setSlaTracker] = useState<any[]>([]);
+  const [focusSessions, setFocusSessions] = useState<any[]>([]);
+  const [archDiagrams, setArchDiagrams] = useState<any[]>([]);
+  const [valueProps, setValueProps] = useState<any[]>([]);
+  const [readingNotes, setReadingNotes] = useState<any[]>([]);
+  const [featureFlags, setFeatureFlags] = useState<any[]>([]);
+  const [visionJournal, setVisionJournal] = useState<any[]>([]);
+  const [deployRunbook, setDeployRunbook] = useState<any[]>([]);
+  const [blogOutlines, setBlogOutlines] = useState<any[]>([]);
+  const [symptomsLog, setSymptomsLog] = useState<any[]>([]);
+  const [escalationMatrix, setEscalationMatrix] = useState<any[]>([]);
+  const [painPoints, setPainPoints] = useState<any[]>([]);
+  const [complianceDocs, setComplianceDocs] = useState<any[]>([]);
+  const [headlines, setHeadlines] = useState<any[]>([]);
+  const [gratitudeV2, setGratitudeV2] = useState<any[]>([]);
+  const [meetingTmpls, setMeetingTmpls] = useState<any[]>([]);
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [dependencies, setDependencies] = useState<any[]>([]);
+  const [personas, setPersonas] = useState<any[]>([]);
+  const [screenTime, setScreenTime] = useState<any[]>([]);
+  const [knowledgeBase, setKnowledgeBase] = useState<any[]>([]);
+  const [mealPlan, setMealPlan] = useState<any[]>([]);
+  const [brandAssets, setBrandAssets] = useState<any[]>([]);
+  const [abTests, setAbTests] = useState<any[]>([]);
+  const [energyLog, setEnergyLog] = useState<any[]>([]);
+  const [serviceCatalog, setServiceCatalog] = useState<any[]>([]);
+  const [affirmations, setAffirmations] = useState<any[]>([]);
+  const [dataDict, setDataDict] = useState<any[]>([]);
+  const [taglines, setTaglines] = useState<any[]>([]);
+  const [projLog, setProjLog] = useState<any[]>([]);
+  const [accessReqs, setAccessReqs] = useState<any[]>([]);
+  const [travelPlans, setTravelPlans] = useState<any[]>([]);
+  const [releaseNotes, setReleaseNotes] = useState<any[]>([]);
+  const [faqItems, setFaqItems] = useState<any[]>([]);
+  const [sleepQual, setSleepQual] = useState<any[]>([]);
+  const [clientPortals, setClientPortals] = useState<any[]>([]);
+  const [learningPaths, setLearningPaths] = useState<any[]>([]);
+  const [retros, setRetros] = useState<any[]>([]);
+  const [prodNames, setProdNames] = useState<any[]>([]);
+  const [bodyMeasurements, setBodyMeasurements] = useState<any[]>([]);
+  const [stakeholders, setStakeholders] = useState<any[]>([]);
+  const [lifeGoals, setLifeGoals] = useState<any[]>([]);
+  const [meetingActions, setMeetingActions] = useState<any[]>([]);
+  const [coldOutreach, setColdOutreach] = useState<any[]>([]);
+  const [dailyChk, setDailyChk] = useState<any[]>([]);
+  const [prodFeedback, setProdFeedback] = useState<any[]>([]);
+  const [timeBlocks, setTimeBlocks] = useState<any[]>([]);
+  const [apiKeysReg, setApiKeysReg] = useState<any[]>([]);
+  const [emailSubjects, setEmailSubjects] = useState<any[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
+  const [onboardChk, setOnboardChk] = useState<any[]>([]);
+  const [pomodoroLog, setPomodoroLog] = useState<any[]>([]);
+  const [designTokens, setDesignTokens] = useState<any[]>([]);
+  const [swotList, setSwotList] = useState<any[]>([]);
+  const [netWorth, setNetWorth] = useState<any[]>([]);
+  const [testPlans, setTestPlans] = useState<any[]>([]);
+  const [readingChallenge, setReadingChallenge] = useState<any>(null);
+  const [adrs, setAdrs] = useState<any[]>([]);
+  const [pitchDecks, setPitchDecks] = useState<any[]>([]);
+  const [habitStreaks, setHabitStreaks] = useState<any[]>([]);
+  const [secChecklist, setSecChecklist] = useState<any[]>([]);
+  const [skillMatrix, setSkillMatrix] = useState<any[]>([]);
+  const [budgetTracker, setBudgetTracker] = useState<any[]>([]);
+  const [contentCal, setContentCal] = useState<any[]>([]);
+  const [personalGoals, setPersonalGoals] = useState<any[]>([]);
+  const [accessLog, setAccessLog] = useState<any[]>([]);
+  const [focusSessions, setFocusSessions] = useState<any[]>([]);
+  const [capacityPlans, setCapacityPlans] = useState<any[]>([]);
+  const [interviewPrep, setInterviewPrep] = useState<any[]>([]);
+  const [meditationLog, setMeditationLog] = useState<any[]>([]);
+  const [compIntel, setCompIntel] = useState<any[]>([]);
+  const [visionBoard, setVisionBoard] = useState<any[]>([]);
+  const [incidents, setIncidents] = useState<any[]>([]);
+  const [codeOpt, setCodeOpt] = useState<any[]>([]);
+  const [waterLog, setWaterLog] = useState<any[]>([]);
+  const [techRadar, setTechRadar] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [releaseCal, setReleaseCal] = useState<any[]>([]);
+  const [debateTopics, setDebateTopics] = useState<any[]>([]);
+  const [vocab, setVocab] = useState<any[]>([]);
+  const [costCenters, setCostCenters] = useState<any[]>([]);
+  const [readingNotes, setReadingNotes] = useState<any[]>([]);
+  const [featureFlags, setFeatureFlags] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [gratitudeLog, setGratitudeLog] = useState<any[]>([]);
+  const [slaTracker, setSlaTracker] = useState<any[]>([]);
+  const [workoutPlans, setWorkoutPlans] = useState<any[]>([]);
+  const [meetingNotes, setMeetingNotes] = useState<any[]>([]);
+  const [resumes, setResumes] = useState<any[]>([]);
+  const [bucketList, setBucketList] = useState<any[]>([]);
+  const [depMap, setDepMap] = useState<any[]>([]);
   const [journal, setJournal] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [emailDrafts, setEmailDrafts] = useState<any[]>([]);
@@ -5588,6 +5713,131 @@ export default function ForgeApp() {
             { id:'goals', icon:'🎯', label:'Goals' },
             { id:'captures', icon:'⚡', label:'Capture' },
             { id:'graph', icon:'🕸️', label:'Graph' },
+            { id:'meditationlog', icon:'🧘', label:'Meditation Log' },
+            { id:'apidocs', icon:'📖', label:'API Docs' },
+            { id:'prd', icon:'📋', label:'PRD Builder' },
+            { id:'goalmilestones', icon:'🎯', label:'Goal Milestones' },
+            { id:'techdebt', icon:'🔧', label:'Tech Debt' },
+            { id:'habitsv3', icon:'🔁', label:'Habits Tracker' },
+            { id:'onboardingdocs', icon:'🎓', label:'Onboarding Docs' },
+            { id:'emailseq', icon:'📧', label:'Email Sequences' },
+            { id:'expenses', icon:'💰', label:'Expenses' },
+            { id:'prodroadmap', icon:'🗺', label:'Product Roadmap' },
+            { id:'networking', icon:'🤝', label:'Networking Log' },
+            { id:'decisions', icon:'⚖', label:'Decision Log' },
+            { id:'biowriter', icon:'👤', label:'Bio Writer' },
+            { id:'subscriptions', icon:'💸', label:'Subscriptions' },
+            { id:'custpersonas', icon:'👥', label:'Customer Personas' },
+            { id:'langlearnin', icon:'🌎', label:'Language Learning' },
+            { id:'wschangelog', icon:'📋', label:'Changelog' },
+            { id:'meetingagenda', icon:'📆', label:'Meeting Agendas' },
+            { id:'journalprompts', icon:'📝', label:'Journal Prompts' },
+            { id:'capacityplan', icon:'📈', label:'Capacity Planner' },
+            { id:'booktracker', icon:'📕', label:'Book Tracker' },
+            { id:'wsbudget', icon:'💵', label:'Team Budget' },
+            { id:'contentrepurpose', icon:'🔄', label:'Content Repurposer' },
+            { id:'waterintake', icon:'💧', label:'Water Intake' },
+            { id:'engmetrics', icon:'🔧', label:'Eng Metrics' },
+            { id:'moodjournal', icon:'😊', label:'Mood Journal' },
+            { id:'vendorcontracts', icon:'📄', label:'Vendor Contracts' },
+            { id:'pressrelease', icon:'📰', label:'Press Releases' },
+            { id:'workoutlog', icon:'🏋', label:'Workout Log' },
+            { id:'interviewqs', icon:'💬', label:'Interview Questions' },
+            { id:'debttracker', icon:'💳', label:'Debt Tracker' },
+            { id:'postmortems', icon:'📝', label:'Postmortems' },
+            { id:'jobdesc', icon:'💼', label:'Job Descriptions' },
+            { id:'watchlist', icon:'📈', label:'Watchlist' },
+            { id:'slatracker', icon:'📊', label:'SLA Tracker' },
+            { id:'focussessions', icon:'🎯', label:'Focus Sessions' },
+            { id:'archdiagrams', icon:'🗺', label:'Architecture Diagrams' },
+            { id:'valueprops', icon:'💰', label:'Value Propositions' },
+            { id:'readingnotes', icon:'📓', label:'Reading Notes' },
+            { id:'featureflags', icon:'🚩', label:'Feature Flags' },
+            { id:'visionjournal', icon:'🔮', label:'Vision Journal' },
+            { id:'deployrunbook', icon:'🚀', label:'Deploy Runbook' },
+            { id:'blogoutline', icon:'📝', label:'Blog Outline' },
+            { id:'symptomslog', icon:'🩺', label:'Symptoms Log' },
+            { id:'escalation', icon:'🚨', label:'Escalation Matrix' },
+            { id:'painpoints', icon:'🤒', label:'Pain Points' },
+            { id:'compliancedocs', icon:'📜', label:'Compliance Docs' },
+            { id:'headlines', icon:'📰', label:'Headline Optimizer' },
+            { id:'gratitudev2', icon:'💛', label:'Gratitude Journal' },
+            { id:'meetingtmpls', icon:'📅', label:'Meeting Templates' },
+            { id:'quotescoll', icon:'💬', label:'Quotes Collection' },
+            { id:'deptracker', icon:'📦', label:'Dependency Tracker' },
+            { id:'personas', icon:'🧑', label:'Persona Builder' },
+            { id:'screentime', icon:'📱', label:'Screen Time' },
+            { id:'knowledgebase', icon:'📚', label:'Knowledge Base' },
+            { id:'mealplanner', icon:'🍽', label:'Meal Planner' },
+            { id:'brandassets', icon:'🎨', label:'Brand Assets' },
+            { id:'abtests', icon:'🧪', label:'A/B Test Ideas' },
+            { id:'energylog', icon:'⚡', label:'Energy Log' },
+            { id:'servicecatalog', icon:'🗂', label:'Service Catalog' },
+            { id:'affirmations', icon:'✨', label:'Affirmations' },
+            { id:'datadict', icon:'📖', label:'Data Dictionary' },
+            { id:'taglines', icon:'💥', label:'Tagline Generator' },
+            { id:'projlog', icon:'📋', label:'Project Log' },
+            { id:'accessreqs', icon:'🔒', label:'Access Requests' },
+            { id:'travelplans', icon:'🌍', label:'Travel Plans' },
+            { id:'releasenotes', icon:'📝', label:'Release Notes' },
+            { id:'faqbuilder', icon:'💬', label:'FAQ Builder' },
+            { id:'sleepqual', icon:'😴', label:'Sleep Quality' },
+            { id:'clientportal', icon:'💼', label:'Client Portal' },
+            { id:'learningpaths', icon:'🧭', label:'Learning Paths' },
+            { id:'retros', icon:'🔄', label:'Retrospectives' },
+            { id:'prodnames', icon:'💡', label:'Product Names' },
+            { id:'bodymeasu', icon:'📏', label:'Body Measurements' },
+            { id:'stakeholders', icon:'👥', label:'Stakeholder Map' },
+            { id:'lifegoals', icon:'🌟', label:'Life Goals' },
+            { id:'meetingactions', icon:'📋', label:'Meeting Actions' },
+            { id:'coldoutreach', icon:'📨', label:'Cold Outreach' },
+            { id:'dailychk', icon:'✅', label:'Daily Checklist' },
+            { id:'prodfeedback', icon:'💬', label:'Product Feedback' },
+            { id:'timeblocks', icon:'🕓', label:'Time Blocks' },
+            { id:'apikeysreg', icon:'🔑', label:'API Keys Registry' },
+            { id:'emailsubj', icon:'📧', label:'Email Subject Tester' },
+            { id:'savingsgoals', icon:'💳', label:'Savings Goals' },
+            { id:'onboardchk', icon:'✅', label:'Onboarding Checklist' },
+            { id:'pomodoro', icon:'🍅', label:'Pomodoro Log' },
+            { id:'designtokens', icon:'🎨', label:'Design Tokens' },
+            { id:'swotbuilder', icon:'📊', label:'SWOT Builder' },
+            { id:'networth', icon:'💰', label:'Net Worth' },
+            { id:'testplans', icon:'🧪', label:'Test Plans' },
+            { id:'readingchallenge', icon:'📚', label:'Reading Challenge' },
+            { id:'adrs', icon:'🏛', label:'Architecture Decisions' },
+            { id:'pitchdeck', icon:'📊', label:'Pitch Deck Builder' },
+            { id:'habitstreaks', icon:'🔥', label:'Habit Streaks' },
+            { id:'secchecklist', icon:'🔐', label:'Security Checklist' },
+            { id:'skillmatrix', icon:'🧠', label:'Skill Matrix' },
+            { id:'budgettrack', icon:'💵', label:'Budget Tracker' },
+            { id:'contentcal', icon:'📰', label:'Content Cal' },
+            { id:'personalgoals', icon:'🏆', label:'Personal Goals' },
+            { id:'accesslog', icon:'🔒', label:'Access Log' },
+            { id:'focussess', icon:'🎯', label:'Focus Sessions' },
+            { id:'capacityplan', icon:'📊', label:'Capacity Plan' },
+            { id:'interviewprep', icon:'👔', label:'Interview Prep' },
+            { id:'meditationlog', icon:'🧘', label:'Meditation' },
+            { id:'compintel', icon:'🔍', label:'Comp Intel' },
+            { id:'visionboard', icon:'🌟', label:'Vision Board' },
+            { id:'incidentlog', icon:'🚨', label:'Incidents' },
+            { id:'codeopt', icon:'🔧', label:'Code Optimizer' },
+            { id:'watertracker', icon:'💧', label:'Water Tracker' },
+            { id:'techradar', icon:'🛰️', label:'Tech Radar' },
+            { id:'contactbook', icon:'📗', label:'Contacts' },
+            { id:'releasecal', icon:'📅', label:'Release Cal' },
+            { id:'debatetopics', icon:'🎙️', label:'Debate Topics' },
+            { id:'langvocab', icon:'🗣️', label:'Vocab' },
+            { id:'costcenter', icon:'💳', label:'Cost Centers' },
+            { id:'readingnotes', icon:'📖', label:'Reading Notes' },
+            { id:'featureflags', icon:'🚩', label:'Feature Flags' },
+            { id:'storygen', icon:'💬', label:'Story Gen' },
+            { id:'gratitudelog', icon:'🙏', label:'Gratitude Log' },
+            { id:'slatracker', icon:'📈', label:'SLA Tracker' },
+            { id:'workoutplans', icon:'🏋️', label:'Workout Plans' },
+            { id:'meetingnotes', icon:'📋', label:'Meeting Notes' },
+            { id:'resumebuilder', icon:'📄', label:'Resume Builder' },
+            { id:'bucketlist', icon:'🨣', label:'Bucket List' },
+            { id:'depmap', icon:'🗺️', label:'Dep Map' },
             { id:'journal', icon:'📓', label:'Journal' },
             { id:'habits', icon:'🔥', label:'Habits' },
             { id:'changelog', icon:'📜', label:'Changelog' },
@@ -11947,6 +12197,2141 @@ export default function ForgeApp() {
         )}
 
         {/* Journal tab */}
+        {mainTab === 'meditationlog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129688; Meditation Log</h2>
+            <p className="text-gray-400 mb-4">Track meditation sessions, techniques, and mood improvements.</p>
+            <button onClick={async()=>{const r=await fetch('/api/meditation-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMeditationLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Sessions</button>
+            {meditationLog.length>0 && <div className="bg-purple-900/30 rounded p-3 mb-4 text-sm"><span className="text-purple-300 font-bold">Total: {meditationLog.reduce((a:number,s:any)=>a+(s.duration_min||0),0)} min meditated</span></div>}
+            <div className="space-y-3">{meditationLog.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{s.technique}</div>
+                  <div className="flex gap-2 text-xs flex-shrink-0 ml-2">
+                    <span className="bg-purple-800 px-2 py-0.5 rounded">{s.duration_min}min</span>
+                    <span className="text-gray-400">{s.session_date}</span>
+                  </div>
+                </div>
+                {(s.mood_before||s.mood_after) && (
+                  <div className="flex gap-4 text-xs">
+                    {s.mood_before && <span className="text-red-400">Before: {s.mood_before}/10</span>}
+                    {s.mood_after && <span className="text-green-400">After: {s.mood_after}/10</span>}
+                    {s.mood_delta>0 && <span className="text-yellow-400">+{s.mood_delta} mood</span>}
+                  </div>
+                )}
+                {s.notes && <div className="text-xs text-gray-400 mt-1">{s.notes}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'apidocs' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128214; API Documentation</h2>
+            <p className="text-gray-400 mb-4">Workspace API endpoint registry with schemas and examples.</p>
+            <button onClick={async()=>{const r=await fetch('/api/api-docs',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setApiDocs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Endpoints</button>
+            <div className="space-y-3">{apiDocs.map((e:any)=>(
+              <div key={e.id} className="bg-gray-800 rounded p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${e.method==='GET'?'bg-green-700':e.method==='POST'?'bg-blue-700':e.method==='PUT'||e.method==='PATCH'?'bg-yellow-700':'bg-red-700'}`}>{e.method}</span>
+                  <span className="font-mono text-sm text-blue-300">{e.endpoint}</span>
+                  <span className="text-xs text-gray-500 ml-auto">{e.version}</span>
+                </div>
+                {e.description && <div className="text-sm text-gray-300 mb-2">{e.description}</div>}
+                <div className="flex gap-2 text-xs">
+                  {e.auth_required===1 && <span className="bg-orange-800 px-1.5 py-0.5 rounded">auth required</span>}
+                  {e.deprecated===1 && <span className="bg-red-800 px-1.5 py-0.5 rounded">deprecated</span>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'prd' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128203; PRD Builder</h2>
+            <p className="text-gray-400 mb-4">Generate structured Product Requirements Documents from feature ideas.</p>
+            <button onClick={async()=>{const r=await fetch('/api/prd',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPrds(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load PRDs</button>
+            <div className="space-y-4">{prds.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-bold text-indigo-300">{p.feature_name}</div>
+                  <div className="text-xs text-gray-500 flex-shrink-0 ml-2">{p.created_at?.slice(0,10)}</div>
+                </div>
+                {p.user_story && <div className="text-sm text-gray-300 mb-2 italic">{p.user_story.slice(0,120)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'goalmilestones' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127919; Goal Milestones</h2>
+            <p className="text-gray-400 mb-4">Track long-term goals with milestones and progress percentages.</p>
+            <button onClick={async()=>{const r=await fetch('/api/goal-milestones',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setGoalMilestones(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Goals</button>
+            <div className="space-y-4">{goalMilestones.map((g:any)=>(
+              <div key={g.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{g.goal_name}</div>
+                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs">
+                    <span className="bg-gray-700 px-1.5 py-0.5 rounded">{g.category}</span>
+                    {g.target_date && <span className="text-gray-400">{g.target_date}</span>}
+                  </div>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div className="bg-green-500 h-2 rounded-full" style={{width:`${g.progress_pct||0}%`}}></div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>{g.status}</span>
+                  <span>{g.progress_pct||0}%</span>
+                </div>
+                {g.notes && <div className="text-xs text-gray-500 mt-1">{g.notes.slice(0,80)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'techdebt' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128295; Tech Debt Tracker</h2>
+            <p className="text-gray-400 mb-4">Catalog and prioritize technical debt by severity and effort.</p>
+            <button onClick={async()=>{const r=await fetch('/api/tech-debt',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setTechDebt(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Tech Debt</button>
+            <div className="space-y-3">{techDebt.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{d.debt_title}</div>
+                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs">
+                    <span className={`px-1.5 py-0.5 rounded ${d.severity==='critical'?'bg-red-700':d.severity==='high'?'bg-orange-700':d.severity==='medium'?'bg-yellow-700':'bg-gray-600'}`}>{d.severity}</span>
+                    <span className="bg-gray-600 px-1.5 py-0.5 rounded">{d.effort_days}d</span>
+                  </div>
+                </div>
+                <div className="flex gap-3 text-xs text-gray-400 mb-1">
+                  <span>{d.area}</span>
+                  {d.owner && <span>Owner: {d.owner}</span>}
+                </div>
+                {d.impact && <div className="text-xs text-red-300">{d.impact.slice(0,100)}</div>}
+                {d.description && <div className="text-xs text-gray-500 mt-1">{d.description.slice(0,80)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'habitsv3' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128257; Habits Tracker</h2>
+            <p className="text-gray-400 mb-4">Build streaks and track daily habit completions.</p>
+            <button onClick={async()=>{const r=await fetch('/api/habits-v3',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setHabitsV3(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Habits</button>
+            <div className="space-y-3">{habitsV3.map((h:any)=>(
+              <div key={h.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="font-semibold">{h.habit_name}</div>
+                  <div className="flex gap-3 text-xs">
+                    <div className="text-center"><div className="font-bold text-orange-400">{h.current_streak}</div><div className="text-gray-500">streak</div></div>
+                    <div className="text-center"><div className="font-bold text-yellow-400">{h.best_streak}</div><div className="text-gray-500">best</div></div>
+                    <div className="text-center"><div className="font-bold text-blue-400">{h.completions_30d}</div><div className="text-gray-500">30d</div></div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400">{h.frequency}</span>
+                  <button onClick={async()=>{await fetch(`/api/habits-v3/${h.id}/check`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:'{}'});setHabitsV3(prev=>prev.map(x=>x.id===h.id?{...x,current_streak:x.current_streak+1}:x));}} className="text-xs bg-green-700 hover:bg-green-600 px-3 py-1 rounded">&#10003; Check In</button>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'onboardingdocs' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127891; Onboarding Docs</h2>
+            <p className="text-gray-400 mb-4">Structured onboarding guides for new hires and team members.</p>
+            <button onClick={async()=>{const r=await fetch('/api/onboarding-docs',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setOnboardingDocs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Docs</button>
+            <div className="space-y-2">{onboardingDocs.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{d.doc_title}</div>
+                  <div className="text-xs text-gray-400">{d.doc_type} · {d.audience} · {d.estimated_read_min}min read</div>
+                  {d.content && <div className="text-xs text-gray-500 mt-1">{d.content.slice(0,80)}</div>}
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
+                  {d.required===1 && <span className="text-xs bg-red-800 px-1.5 py-0.5 rounded">required</span>}
+                  <span className="text-xs text-gray-500">#{d.order_index}</span>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'emailseq' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128231; Email Sequences</h2>
+            <p className="text-gray-400 mb-4">Multi-step cold email sequences generated for your target persona.</p>
+            <button onClick={async()=>{const r=await fetch('/api/email-sequences',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setEmailSequences(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Sequences</button>
+            <div className="space-y-4">{emailSequences.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold mb-1">{s.sequence_name}</div>
+                <div className="text-xs text-gray-400 mb-2">{s.target_persona} · {s.num_emails} emails · Goal: {s.goal}</div>
+                <div className="text-xs text-gray-500">{s.created_at?.slice(0,10)}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'expenses' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128176; Expenses</h2>
+            <p className="text-gray-400 mb-4">Monthly spending breakdown by category.</p>
+            <button onClick={async()=>{const r=await fetch('/api/expenses',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setExpenses(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load This Month</button>
+            {expenses.length>0 && <div className="bg-green-900/30 rounded p-3 mb-4 text-sm"><span className="text-green-300 font-bold">Total: ${expenses.reduce((a:number,e:any)=>a+e.total,0).toFixed(2)}</span></div>}
+            <div className="space-y-2">{expenses.map((e:any,i:number)=>(
+              <div key={i} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{e.category}</div>
+                  <div className="text-xs text-gray-400">{e.count} transactions</div>
+                </div>
+                <div className="font-bold text-white">${(e.total||0).toFixed(2)}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'prodroadmap' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128506; Product Roadmap</h2>
+            <p className="text-gray-400 mb-4">Feature backlog organized by quarter, priority, and impact.</p>
+            <button onClick={async()=>{const r=await fetch('/api/product-roadmap',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setProdRoadmap(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-700 rounded text-white mb-4">Load Roadmap</button>
+            <div className="space-y-3">{prodRoadmap.map((f:any)=>(
+              <div key={f.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{f.feature_name}</div>
+                  <div className="flex gap-2 flex-shrink-0 ml-2">
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${f.status==='in_progress'?'bg-blue-700':f.status==='done'?'bg-green-700':f.status==='blocked'?'bg-red-800':'bg-gray-600'}`}>{f.status}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${f.priority==='high'?'bg-orange-700':f.priority==='critical'?'bg-red-700':'bg-gray-600'}`}>{f.priority}</span>
+                  </div>
+                </div>
+                <div className="flex gap-3 text-xs text-gray-400">
+                  <span>{f.quarter}</span>
+                  {f.team && <span>{f.team}</span>}
+                  <span>{f.effort_points}pt</span>
+                  <span className="text-blue-400">Impact: {f.impact_score}/10</span>
+                </div>
+                {f.description && <div className="text-xs text-gray-500 mt-1">{f.description.slice(0,100)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'networking' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129309; Networking Log</h2>
+            <p className="text-gray-400 mb-4">Track professional contacts and relationship strength.</p>
+            <button onClick={async()=>{const r=await fetch('/api/networking',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setNetworkingLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Contacts</button>
+            <div className="space-y-2">{networkingLog.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{c.contact_name}</div>
+                  <div className="text-xs text-gray-400">{c.role}{c.company?` @ ${c.company}`:''}</div>
+                  {c.met_at && <div className="text-xs text-gray-500">Met: {c.met_at}</div>}
+                  {c.follow_up_date && <div className="text-xs text-yellow-400">Follow up: {c.follow_up_date}</div>}
+                </div>
+                <div className="text-yellow-400 flex-shrink-0 ml-2">{'★'.repeat(c.relationship_strength||1)}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'decisions' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#9878; Decision Log</h2>
+            <p className="text-gray-400 mb-4">Document important decisions with context, rationale, and outcomes.</p>
+            <button onClick={async()=>{const r=await fetch('/api/decisions',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDecisions(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Decisions</button>
+            <div className="space-y-4">{decisions.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{d.decision_title}</div>
+                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs">
+                    {d.reversible===0 && <span className="bg-red-800 px-1.5 py-0.5 rounded">irreversible</span>}
+                    <span className="text-gray-500">{d.decision_date}</span>
+                  </div>
+                </div>
+                {d.decision_made && <div className="text-sm text-green-300 mb-1">&#10003; {d.decision_made}</div>}
+                {d.rationale && <div className="text-xs text-gray-400">{d.rationale.slice(0,120)}</div>}
+                {d.decision_maker && <div className="text-xs text-gray-500 mt-1">By: {d.decision_maker}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'biowriter' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128100; Bio Writer</h2>
+            <p className="text-gray-400 mb-4">Generate professional bios for LinkedIn, Twitter, and speaker profiles.</p>
+            <button onClick={async()=>{const r=await fetch('/api/bios',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setBios(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Bios</button>
+            <div className="space-y-4">{bios.map((b:any)=>(
+              <div key={b.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-bold text-teal-300">{b.full_name}</div>
+                  <span className="text-xs bg-gray-700 px-2 py-0.5 rounded flex-shrink-0 ml-2">{b.tone}</span>
+                </div>
+                <div className="text-xs text-gray-400 mb-2">{b.current_role}{b.company?` @ ${b.company}`:''} · {b.years_experience}yrs</div>
+                {b.generated_bio && <div className="text-sm text-gray-300 italic">{b.generated_bio}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'subscriptions' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128184; Subscriptions</h2>
+            <p className="text-gray-400 mb-4">Track all subscriptions to find unused services and cut costs.</p>
+            <button onClick={async()=>{const r=await fetch('/api/subscriptions',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSubscriptions(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Subscriptions</button>
+            {subscriptions.length>0 && <div className="bg-orange-900/30 rounded p-3 mb-4 text-sm"><span className="text-orange-300 font-bold">Total: ${subscriptions.reduce((a:number,s:any)=>a+(s.status==='active'?s.monthly_cost:0),0).toFixed(2)}/mo</span></div>}
+            <div className="space-y-2">{subscriptions.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{s.service_name}</div>
+                  <div className="text-xs text-gray-400">{s.category} · {s.billing_cycle}</div>
+                  {s.renewal_date && <div className="text-xs text-gray-500">Next: {s.renewal_date}</div>}
+                </div>
+                <div className="text-right">
+                  <div className={`font-bold ${s.status==='active'?'text-white':'text-gray-500'}`}>${s.monthly_cost}/mo</div>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${s.status==='active'?'bg-green-700':'bg-gray-600'}`}>{s.status}</span>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'custpersonas' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128101; Customer Personas</h2>
+            <p className="text-gray-400 mb-4">ICP profiles to guide sales and marketing messaging.</p>
+            <button onClick={async()=>{const r=await fetch('/api/customer-personas',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setCustPersonas(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-600 rounded text-white mb-4">Load Personas</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{custPersonas.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-pink-300 text-lg mb-1">{p.persona_name}</div>
+                <div className="text-xs text-gray-400 mb-3">{p.segment}{p.industry?` · ${p.industry}`:''}{p.company_size?` · ${p.company_size}`:''}</div>
+                <div className="space-y-1 text-xs">
+                  {p.primary_goal && <div><span className="text-green-400">Goal:</span> {p.primary_goal}</div>}
+                  {p.main_challenge && <div><span className="text-red-400">Pain:</span> {p.main_challenge}</div>}
+                  {p.buying_trigger && <div><span className="text-yellow-400">Trigger:</span> {p.buying_trigger}</div>}
+                  {p.budget_range && <div><span className="text-blue-400">Budget:</span> {p.budget_range}</div>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'langlearnin' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127758; Language Learning</h2>
+            <p className="text-gray-400 mb-4">Build your vocabulary with words, translations, and examples.</p>
+            <button onClick={async()=>{const r=await fetch('/api/language-learning',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setLangLearning(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Vocabulary</button>
+            <div className="space-y-2">{langLearning.map((w:any)=>(
+              <div key={w.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{w.word_or_phrase}</div>
+                  <div className="text-sm text-green-300">{w.translation}</div>
+                  {w.example_sentence && <div className="text-xs text-gray-400 italic mt-1">{w.example_sentence}</div>}
+                </div>
+                <div className="flex-shrink-0 ml-2 text-right">
+                  <div className="text-xs text-gray-500">{w.language}</div>
+                  {w.mastered===1 && <div className="text-green-400 text-xs">&#10003; mastered</div>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'wschangelog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128203; Changelog</h2>
+            <p className="text-gray-400 mb-4">Track product changes, releases, and breaking changes.</p>
+            <button onClick={async()=>{const r=await fetch('/api/workspace-changelog',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWsChangelog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Changelog</button>
+            <div className="space-y-3">{wsChangelog.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-mono text-xs bg-gray-700 px-2 py-0.5 rounded">{c.version}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${c.change_type==='feature'?'bg-blue-800':c.change_type==='fix'?'bg-green-800':c.change_type==='breaking'?'bg-red-800':'bg-gray-600'}`}>{c.change_type}</span>
+                  {c.breaking_change===1 && <span className="text-red-400 text-xs font-bold">BREAKING</span>}
+                  <span className="text-xs text-gray-500 ml-auto">{c.release_date}</span>
+                </div>
+                <div className="font-semibold text-sm">{c.title}</div>
+                {c.description && <div className="text-xs text-gray-400 mt-1">{c.description.slice(0,120)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'meetingagenda' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128198; Meeting Agendas</h2>
+            <p className="text-gray-400 mb-4">Generate structured meeting agendas with goals and time slots.</p>
+            <button onClick={async()=>{const r=await fetch('/api/meeting-agendas',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMeetingAgendas(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Agendas</button>
+            <div className="space-y-4">{meetingAgendas.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-bold">{m.meeting_title}</div>
+                  <div className="text-xs text-gray-400 flex-shrink-0 ml-2">{m.duration_min}min</div>
+                </div>
+                <div className="text-xs text-indigo-400 mb-2">{m.meeting_type}{m.attendees?` · ${m.attendees}`:''}</div>
+                {m.generated_agenda && <pre className="text-xs text-gray-300 whitespace-pre-wrap bg-gray-900 rounded p-2 max-h-32 overflow-auto">{m.generated_agenda.slice(0,350)}</pre>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'journalprompts' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128221; Journal Prompts</h2>
+            <p className="text-gray-400 mb-4">Daily reflection prompts to spark deeper thinking and self-awareness.</p>
+            <button onClick={async()=>{const r=await fetch('/api/journal-prompts',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setJournalPrompts(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Prompts</button>
+            <div className="space-y-3">{journalPrompts.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold text-yellow-300">{p.prompt_text}</div>
+                  {p.favorite===1 && <span className="text-yellow-400 flex-shrink-0 ml-2">★</span>}
+                </div>
+                <div className="text-xs text-gray-500 mb-2">{p.category}</div>
+                {p.response && <div className="text-sm text-gray-300 italic border-l-2 border-yellow-700 pl-3">{p.response.slice(0,150)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'capacityplan' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128200; Capacity Planner</h2>
+            <p className="text-gray-400 mb-4">Plan team capacity per sprint with PTO and story point tracking.</p>
+            <button onClick={async()=>{const r=await fetch('/api/capacity-planner',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setCapacityPlan(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Plan</button>
+            <div className="space-y-2">{capacityPlan.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{c.team_member}</div>
+                  <div className="text-xs text-gray-400">{c.sprint_or_period}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                  <div className="bg-gray-700 rounded p-2"><div className="text-white font-bold">{c.available_days}d</div><div className="text-gray-400">Available</div></div>
+                  <div className="bg-gray-700 rounded p-2"><div className="text-blue-400 font-bold">{c.planned_points}pt</div><div className="text-gray-400">Planned</div></div>
+                  <div className="bg-gray-700 rounded p-2"><div className="text-green-400 font-bold">{c.actual_points}pt</div><div className="text-gray-400">Actual</div></div>
+                </div>
+                {c.pto_days>0 && <div className="text-xs text-yellow-400 mt-1">PTO: {c.pto_days}d</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'booktracker' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128213; Book Tracker</h2>
+            <p className="text-gray-400 mb-4">Track your reading list, progress, and reviews.</p>
+            <button onClick={async()=>{const r=await fetch('/api/books',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setBooks(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-amber-600 rounded text-white mb-4">Load Books</button>
+            <div className="space-y-3">{books.map((b:any)=>(
+              <div key={b.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-semibold">{b.title}</div>
+                  <div className="flex gap-2 flex-shrink-0 ml-2">
+                    {b.rating && <span className="text-yellow-400 text-sm">{'★'.repeat(b.rating)}</span>}
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${b.status==='reading'?'bg-blue-700':b.status==='finished'?'bg-green-700':'bg-gray-600'}`}>{b.status}</span>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-400">{b.author}{b.genre?` · ${b.genre}`:''}</div>
+                {b.total_pages>0 && <div className="mt-2"><div className="bg-gray-700 rounded-full h-1.5"><div className="bg-blue-500 h-1.5 rounded-full" style={{width:`${Math.min(100,Math.round((b.pages_read/b.total_pages)*100))}%`}}></div></div><div className="text-xs text-gray-500 mt-1">{b.pages_read}/{b.total_pages} pages</div></div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'wsbudget' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128181; Team Budget</h2>
+            <p className="text-gray-400 mb-4">Track workspace budget allocation and spending by category.</p>
+            <button onClick={async()=>{const r=await fetch('/api/workspace-budget',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWsBudget(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-700 rounded text-white mb-4">Load Budget</button>
+            <div className="space-y-3">{wsBudget.map((b:any)=>(
+              <div key={b.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="font-semibold">{b.category}</div>
+                  <div className="text-xs text-gray-400">${(b.spent||0).toLocaleString()} / ${(b.allocated||0).toLocaleString()}</div>
+                </div>
+                <div className="bg-gray-700 rounded-full h-2"><div className={`h-2 rounded-full ${(b.pct_used||0)>100?'bg-red-500':(b.pct_used||0)>80?'bg-yellow-500':'bg-green-500'}`} style={{width:`${Math.min(100,b.pct_used||0)}%`}}></div></div>
+                <div className="text-xs text-gray-500 mt-1">{b.pct_used}% used · {b.budget_period}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'contentrepurpose' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128260; Content Repurposer</h2>
+            <p className="text-gray-400 mb-4">Convert blog posts to Twitter threads, LinkedIn posts, and more.</p>
+            <button onClick={async()=>{const r=await fetch('/api/content-repurpose',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setContentRepurpose(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load History</button>
+            <div className="space-y-3">{contentRepurpose.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3">
+                <div className="flex gap-2 text-xs mb-2">
+                  <span className="bg-gray-700 px-2 py-0.5 rounded">{c.source_format}</span>
+                  <span className="text-gray-400">→</span>
+                  <span className="bg-purple-900 px-2 py-0.5 rounded">{c.target_format}</span>
+                </div>
+                <div className="text-xs text-gray-400">{c.preview}…</div>
+                <div className="text-xs text-gray-600 mt-1">{c.created_at?.slice(0,10)}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'waterintake' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128167; Water Intake</h2>
+            <p className="text-gray-400 mb-4">Track daily hydration to meet your 2L+ goal.</p>
+            <button onClick={async()=>{const r=await fetch('/api/water-intake',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWaterIntake(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-500 rounded text-white mb-4">Load Log</button>
+            <div className="space-y-2">{waterIntake.map((w:any,i:number)=>(
+              <div key={i} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold text-sm">{w.log_date}</div>
+                  <div className="text-xs text-gray-400">{w.beverage_type} · {w.entries} entries</div>
+                </div>
+                <div className="text-right">
+                  <div className={`font-bold text-lg ${w.total_ml>=2000?'text-blue-400':w.total_ml>=1000?'text-yellow-400':'text-red-400'}`}>{w.total_ml}ml</div>
+                  <div className="text-xs text-gray-500">{Math.round(w.total_ml/250)} glasses</div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'engmetrics' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128295; Eng Metrics</h2>
+            <p className="text-gray-400 mb-4">Track DORA metrics, deployment frequency, lead time, and more.</p>
+            <button onClick={async()=>{const r=await fetch('/api/eng-metrics',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setEngMetrics(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Metrics</button>
+            <div className="space-y-2">{engMetrics.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold text-sm">{m.metric_name}</div>
+                  <div className="text-xs text-gray-400">{m.recorded_date}{m.team?` · ${m.team}`:''}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-white">{m.metric_value} <span className="text-xs text-gray-400">{m.metric_unit}</span></div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'moodjournal' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128522; Mood Journal</h2>
+            <p className="text-gray-400 mb-4">Track daily mood, emotions, and triggers to improve wellbeing.</p>
+            <button onClick={async()=>{const r=await fetch('/api/mood-journal',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMoodJournal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-500 rounded text-white mb-4">Load Journal</button>
+            <div className="space-y-2">{moodJournal.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="text-sm font-semibold">{m.log_date}</div>
+                  {m.emotions && <div className="text-xs text-gray-400">{m.emotions}</div>}
+                  {m.triggers && <div className="text-xs text-gray-500">Trigger: {m.triggers}</div>}
+                </div>
+                <div className={`text-3xl font-bold ${m.mood_score>=8?'text-green-400':m.mood_score>=5?'text-yellow-400':'text-red-400'}`}>{m.mood_score}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'vendorcontracts' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128196; Vendor Contracts</h2>
+            <p className="text-gray-400 mb-4">Track SaaS subscriptions and vendor contracts with renewal alerts.</p>
+            <button onClick={async()=>{const r=await fetch('/api/vendor-contracts',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setVendorContracts(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Contracts</button>
+            <div className="space-y-2">{vendorContracts.map((v:any)=>(
+              <div key={v.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{v.vendor_name}</div>
+                  <div className="text-xs text-gray-400">{v.contract_type}{v.owner?` · ${v.owner}`:''}</div>
+                  {v.renewal_date && <div className="text-xs text-yellow-400">Renews: {v.renewal_date}{v.auto_renews?' (auto)':''}</div>}
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-white">${(v.annual_value||0).toLocaleString()}/yr</div>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${v.status==='active'?'bg-green-700':'bg-gray-600'}`}>{v.status}</span>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'pressrelease' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128240; Press Releases</h2>
+            <p className="text-gray-400 mb-4">AI-generated press releases for product launches and announcements.</p>
+            <button onClick={async()=>{const r=await fetch('/api/press-releases',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPressReleases(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Releases</button>
+            <div className="space-y-4">{pressReleases.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-lg mb-1">{p.headline}</div>
+                {p.subheadline && <div className="text-sm text-gray-400 mb-2 italic">{p.subheadline}</div>}
+                <div className="text-xs text-gray-500 mb-2">{p.company_name}</div>
+                {p.generated_release && <pre className="text-xs text-gray-300 whitespace-pre-wrap bg-gray-900 rounded p-2 overflow-auto max-h-40">{p.generated_release.slice(0,400)}</pre>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'workoutlog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127947; Workout Log</h2>
+            <p className="text-gray-400 mb-4">Track workouts, duration, calories, and performance trends.</p>
+            <button onClick={async()=>{const r=await fetch('/api/workout-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWorkoutLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Workouts</button>
+            <div className="space-y-2">{workoutLog.map((w:any)=>(
+              <div key={w.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{w.workout_type}</div>
+                  <div className="text-xs text-gray-400">{w.workout_date} &mdash; {w.duration_min}min</div>
+                  {w.exercises && <div className="text-xs text-gray-500 mt-1">{w.exercises.slice(0,80)}</div>}
+                </div>
+                <div className="text-right text-xs">
+                  {w.calories_burned>0 && <div className="text-orange-400">{w.calories_burned} cal</div>}
+                  {w.rating && <div className="text-yellow-400">{'★'.repeat(w.rating)}</div>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'interviewqs' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128172; Interview Questions</h2>
+            <p className="text-gray-400 mb-4">Curated interview questions by role, type, and difficulty.</p>
+            <button onClick={async()=>{const r=await fetch('/api/interview-questions',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setInterviewQs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Questions</button>
+            <div className="space-y-3">{interviewQs.map((q:any)=>(
+              <div key={q.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold text-sm flex-1">{q.question}</div>
+                  <div className="flex gap-1 flex-shrink-0 ml-2">
+                    <span className="text-xs bg-indigo-900 px-1.5 py-0.5 rounded">{q.question_type}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${q.difficulty==='hard'?'bg-red-800':q.difficulty==='medium'?'bg-yellow-800':'bg-green-800'}`}>{q.difficulty}</span>
+                  </div>
+                </div>
+                <div className="text-xs text-indigo-400 mb-1">{q.role}</div>
+                {q.ideal_answer && <div className="text-xs text-gray-400 mt-1"><span className="text-green-400">Ideal: </span>{q.ideal_answer.slice(0,120)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'debttracker' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128179; Debt Tracker</h2>
+            <p className="text-gray-400 mb-4">Track loans and credit cards to plan your debt payoff strategy.</p>
+            <button onClick={async()=>{const r=await fetch('/api/debt-tracker',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDebtItems(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Debts</button>
+            <div className="space-y-2">{debtItems.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{d.debt_name}</div>
+                  <div className="text-xs text-gray-400">{d.creditor} &mdash; {d.debt_type} &mdash; {d.interest_rate}% APR</div>
+                  {d.due_date && <div className="text-xs text-gray-500">Due: {d.due_date}</div>}
+                </div>
+                <div className="text-right">
+                  <div className={`font-bold ${d.paid_off?'text-green-400':'text-red-400'}`}>${(d.balance||0).toLocaleString()}</div>
+                  <div className="text-xs text-gray-400">Min: ${d.minimum_payment}/mo</div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'postmortems' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128221; Postmortems</h2>
+            <p className="text-gray-400 mb-4">Blameless incident postmortems to improve system reliability.</p>
+            <button onClick={async()=>{const r=await fetch('/api/postmortems',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPostmortems(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-700 rounded text-white mb-4">Load Postmortems</button>
+            <div className="space-y-4">{postmortems.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{p.incident_title}</div>
+                  <div className="flex gap-2 items-center flex-shrink-0 ml-2">
+                    <span className={`text-xs px-2 py-0.5 rounded ${p.severity==='critical'?'bg-red-700':p.severity==='high'?'bg-orange-700':'bg-yellow-700'}`}>{p.severity}</span>
+                    <span className="text-xs text-gray-500">{p.duration_min}min</span>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-400 mb-2">{p.incident_date}</div>
+                {p.root_cause && <div className="text-sm text-gray-300"><span className="text-red-400">Root cause:</span> {p.root_cause.slice(0,100)}</div>}
+                <div className="text-xs text-gray-500 mt-1">Status: {p.status}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'jobdesc' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128188; Job Descriptions</h2>
+            <p className="text-gray-400 mb-4">AI-generated job descriptions with responsibilities and requirements.</p>
+            <button onClick={async()=>{const r=await fetch('/api/job-descriptions',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setJobDescs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load JDs</button>
+            <div className="space-y-4">{jobDescs.map((j:any)=>(
+              <div key={j.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-bold text-blue-300">{j.role_title}</div>
+                  <div className="flex gap-2 text-xs flex-shrink-0 ml-2">
+                    <span className="text-gray-400">{j.department}</span>
+                    <span className="bg-blue-900 px-1.5 py-0.5 rounded">{j.seniority}</span>
+                  </div>
+                </div>
+                {j.salary_range && <div className="text-xs text-green-400 mb-2">{j.salary_range}</div>}
+                {j.generated_jd && <pre className="text-xs text-gray-300 whitespace-pre-wrap">{j.generated_jd.slice(0,300)}</pre>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'watchlist' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128200; Investment Watchlist</h2>
+            <p className="text-gray-400 mb-4">Track tickers and set price alerts for your investment watchlist.</p>
+            <button onClick={async()=>{const r=await fetch('/api/watchlist',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWatchlist(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Watchlist</button>
+            <div className="space-y-2">{watchlist.map((w:any)=>(
+              <div key={w.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-bold font-mono text-green-400">{w.ticker}</div>
+                  <div className="text-sm text-gray-300">{w.asset_name}</div>
+                  <div className="text-xs text-gray-500">{w.asset_type}</div>
+                </div>
+                <div className="text-right text-xs">
+                  {w.target_price && <div className="text-white">Target: ${w.target_price}</div>}
+                  {w.alert_above && <div className="text-red-400">&#9650; ${w.alert_above}</div>}
+                  {w.alert_below && <div className="text-green-400">&#9660; ${w.alert_below}</div>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'slatracker' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128202; SLA Tracker</h2>
+            <p className="text-gray-400 mb-4">Monitor service level agreements and track compliance by service.</p>
+            <button onClick={async()=>{const r=await fetch('/api/sla-tracker',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSlaTracker(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load SLAs</button>
+            <div className="space-y-2">{slaTracker.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{s.service_name}</div>
+                  <div className="text-xs text-gray-400">{s.sla_metric} &mdash; {s.period}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-lg">{s.current_value??'—'}{s.unit}</div>
+                  <div className="text-xs text-gray-400">Target: {s.target_value}{s.unit}</div>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${s.status==='met'?'bg-green-700':s.status==='breached'?'bg-red-700':'bg-gray-600'}`}>{s.status}</span>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'focussessions' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127919; Focus Sessions</h2>
+            <p className="text-gray-400 mb-4">Track deep work sessions and measure focus quality over time.</p>
+            <button onClick={async()=>{const r=await fetch('/api/focus-sessions',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setFocusSessions(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Sessions</button>
+            <div className="space-y-2">{focusSessions.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold text-sm">{s.task_description||'Focus Session'}</div>
+                  <div className="text-xs text-gray-400">{s.session_date}{s.start_time?` · ${s.start_time}`:''} &mdash; {s.duration_min}min</div>
+                  {s.interruptions>0 && <div className="text-xs text-yellow-500">{s.interruptions} interruptions</div>}
+                </div>
+                {s.focus_score && <div className={`text-2xl font-bold ${s.focus_score>=8?'text-green-400':s.focus_score>=5?'text-yellow-400':'text-red-400'}`}>{s.focus_score}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'archdiagrams' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128506; Architecture Diagrams</h2>
+            <p className="text-gray-400 mb-4">Store and organize system architecture diagrams and Mermaid charts.</p>
+            <button onClick={async()=>{const r=await fetch('/api/architecture-diagrams',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setArchDiagrams(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Diagrams</button>
+            <div className="space-y-3">{archDiagrams.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{d.diagram_name}</div>
+                  <span className="text-xs text-indigo-400 bg-indigo-900 px-2 py-0.5 rounded">{d.diagram_type}</span>
+                </div>
+                {d.content && <div className="text-sm text-gray-400 mb-2">{d.content.slice(0,120)}</div>}
+                {d.mermaid_source && <pre className="text-xs text-green-400 bg-gray-900 rounded p-2 overflow-x-auto">{d.mermaid_source.slice(0,200)}</pre>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'valueprops' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128176; Value Propositions</h2>
+            <p className="text-gray-400 mb-4">AI-generated value propositions for your products and features.</p>
+            <button onClick={async()=>{const r=await fetch('/api/value-props',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setValueProps(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Value Props</button>
+            <div className="space-y-4">{valueProps.map((v:any)=>(
+              <div key={v.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-green-400 mb-2">{v.product_name}</div>
+                <div className="text-gray-200 text-sm mb-3 italic">"{v.value_prop}"</div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                  {v.target_customer && <div>For: <span className="text-white">{v.target_customer}</span></div>}
+                  {v.differentiator && <div>Unlike: <span className="text-white">{v.differentiator}</span></div>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'readingnotes' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128211; Reading Notes</h2>
+            <p className="text-gray-400 mb-4">Capture highlights and insights from books and articles.</p>
+            <button onClick={async()=>{const r=await fetch('/api/reading-notes',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setReadingNotes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-amber-600 rounded text-white mb-4">Load Notes</button>
+            <div className="space-y-3">{readingNotes.map((n:any)=>(
+              <div key={n.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-semibold text-amber-300">{n.book_title}</div>
+                  {n.author && <div className="text-xs text-gray-400 flex-shrink-0 ml-2">{n.author}</div>}
+                </div>
+                {n.highlight && <div className="text-sm text-yellow-200 bg-yellow-900/30 rounded px-2 py-1 mb-2 italic">"{n.highlight}"</div>}
+                <div className="text-sm text-gray-300">{n.note_text.slice(0,150)}</div>
+                {n.tags && <div className="text-xs text-gray-500 mt-1">{n.tags}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'featureflags' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128169; Feature Flags</h2>
+            <p className="text-gray-400 mb-4">Manage feature rollouts with environment-specific flags and percentage rollouts.</p>
+            <button onClick={async()=>{const r=await fetch('/api/feature-flags',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setFeatureFlags(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Flags</button>
+            <div className="space-y-2">{featureFlags.map((f:any)=>(
+              <div key={f.id} className="bg-gray-800 rounded p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${f.enabled?'bg-green-400':'bg-gray-500'}`}></div>
+                  <div>
+                    <div className="font-semibold text-sm">{f.flag_name}</div>
+                    <div className="font-mono text-xs text-gray-500">{f.flag_key}</div>
+                  </div>
+                </div>
+                <div className="text-right text-xs text-gray-400">
+                  <div>{f.environment}</div>
+                  <div>{f.rollout_percentage}% rollout</div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'visionjournal' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128302; Vision Journal</h2>
+            <p className="text-gray-400 mb-4">Write and visualize your future across key life areas.</p>
+            <button onClick={async()=>{const r=await fetch('/api/vision-journal',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setVisionJournal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Journal</button>
+            <div className="space-y-3">{visionJournal.map((v:any)=>(
+              <div key={v.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-purple-400">{v.vision_area}</span>
+                  <span className="text-xs text-gray-500">{v.entry_date}</span>
+                </div>
+                <div className="text-gray-300 text-sm">{v.entry_text.slice(0,200)}{v.entry_text.length>200?'…':''}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'deployrunbook' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128640; Deployment Runbook</h2>
+            <p className="text-gray-400 mb-4">Step-by-step deployment procedures for workspace services.</p>
+            <button onClick={async()=>{const r=await fetch('/api/deployment-runbook',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDeployRunbook(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Services</button>
+            <div className="space-y-2">{deployRunbook.map((s:any,i:number)=>(
+              <div key={i} className="bg-gray-800 rounded p-3 flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">{s.service_name?s.service_name[0].toUpperCase():s.step_number}</div>
+                <div className="font-mono text-sm">{s.service_name || s.step_title}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'blogoutline' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128221; Blog Outline Generator</h2>
+            <p className="text-gray-400 mb-4">Generate structured blog outlines with sections and keywords.</p>
+            <button onClick={async()=>{const r=await fetch('/api/blog-outlines',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setBlogOutlines(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Outlines</button>
+            <div className="space-y-4">{blogOutlines.map((b:any)=>(
+              <div key={b.id} className="bg-gray-800 rounded p-4">
+                <div className="font-semibold mb-1">{b.topic}</div>
+                <div className="text-xs text-gray-400 mb-2">{b.target_audience && `Audience: ${b.target_audience} · `}{b.word_count} words</div>
+                <div className="space-y-1">{(()=>{try{const secs=JSON.parse(b.sections||'[]');return secs.map((s:string,i:number)=>(<div key={i} className="text-xs text-gray-300 pl-3 border-l border-blue-700">{i+1}. {s}</div>));}catch{return null;}})()}</div>
+                {b.keywords && <div className="text-xs text-blue-400 mt-2">Keywords: {b.keywords}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'symptomslog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129658; Symptoms Log</h2>
+            <p className="text-gray-400 mb-4">Track physical symptoms to identify patterns over time.</p>
+            <button onClick={async()=>{const r=await fetch('/api/symptoms',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSymptomsLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-600 rounded text-white mb-4">Load Log</button>
+            <div className="space-y-2">{symptomsLog.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{s.symptom}</div>
+                  <div className="text-xs text-gray-400">{s.log_date} &mdash; {s.body_area}</div>
+                  {s.notes && <div className="text-xs text-gray-500 mt-1">{s.notes}</div>}
+                </div>
+                <div className={`text-2xl font-bold ${s.severity>=7?'text-red-400':s.severity>=4?'text-yellow-400':'text-green-400'}`}>{s.severity}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'escalation' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128680; Escalation Matrix</h2>
+            <p className="text-gray-400 mb-4">Define who to contact and when for different types of incidents.</p>
+            <button onClick={async()=>{const r=await fetch('/api/escalation-matrix',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setEscalationMatrix(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Matrix</button>
+            <div className="space-y-3">{escalationMatrix.map((e:any)=>(
+              <div key={e.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{e.issue_type}</div>
+                  <span className={`text-xs px-2 py-0.5 rounded ${e.severity==='critical'?'bg-red-700':e.severity==='high'?'bg-orange-700':e.severity==='medium'?'bg-yellow-700':'bg-gray-600'}`}>{e.severity}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                  {e.primary_contact && <div>Primary: <span className="text-white">{e.primary_contact}</span></div>}
+                  {e.secondary_contact && <div>Secondary: <span className="text-white">{e.secondary_contact}</span></div>}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">Response: {e.response_time_min}min</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'painpoints' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129298; Pain Points Journal</h2>
+            <p className="text-gray-400 mb-4">Log frustrations and challenges to uncover patterns and solutions.</p>
+            <button onClick={async()=>{const r=await fetch('/api/pain-points',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPainPoints(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-600 rounded text-white mb-4">Load Pain Points</button>
+            <div className="space-y-2">{painPoints.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-semibold">{p.pain_point}</div>
+                  <div className="flex gap-2 items-center flex-shrink-0 ml-2">
+                    <span className="text-xs text-gray-400">{p.domain}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${p.severity>=4?'bg-red-700':p.severity>=3?'bg-yellow-700':'bg-gray-600'}`}>S{p.severity}</span>
+                  </div>
+                </div>
+                {p.potential_solution && <div className="text-xs text-green-400 mt-1">&#10003; {p.potential_solution}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'compliancedocs' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128220; Compliance Docs</h2>
+            <p className="text-gray-400 mb-4">Manage compliance documentation for SOC2, GDPR, ISO, and more.</p>
+            <button onClick={async()=>{const r=await fetch('/api/compliance-docs',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setComplianceDocs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-700 rounded text-white mb-4">Load Docs</button>
+            <div className="space-y-2">{complianceDocs.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{d.doc_title}</div>
+                  <div className="text-xs text-gray-400">{d.framework}{d.review_date?` &mdash; review: ${d.review_date}`:''}</div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${d.status==='approved'?'bg-green-700':d.status==='review'?'bg-yellow-700':'bg-gray-600'}`}>{d.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'headlines' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128240; Headline Optimizer</h2>
+            <p className="text-gray-400 mb-4">Generate click-worthy headline variants for content and ads.</p>
+            <button onClick={async()=>{const r=await fetch('/api/headlines',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setHeadlines(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Headlines</button>
+            <div className="space-y-4">{headlines.map((h:any)=>(
+              <div key={h.id} className="bg-gray-800 rounded p-4">
+                <div className="text-sm text-gray-400 mb-2">Original: <span className="text-white">{h.original_headline}</span></div>
+                <div className="space-y-1">{(()=>{try{const vars=JSON.parse(h.optimized_variants||'[]');return vars.map((v:string,i:number)=>(<div key={i} className={`text-sm pl-3 border-l-2 ${i===0?'border-gray-600 text-gray-400':'border-orange-700 text-gray-200'}`}>{v}</div>));}catch{return null;}})()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'gratitudev2' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128155; Gratitude Journal</h2>
+            <p className="text-gray-400 mb-4">Daily gratitude practice to boost wellbeing and positivity.</p>
+            <button onClick={async()=>{const r=await fetch('/api/gratitude',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setGratitudeV2(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-500 rounded text-white mb-4">Load Journal</button>
+            <div className="space-y-3">{gratitudeV2.map((g:any)=>(
+              <div key={g.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-semibold text-yellow-300">{g.grateful_for}</div>
+                  <span className="text-xs text-gray-500">{g.entry_date}</span>
+                </div>
+                {g.why_grateful && <div className="text-sm text-gray-400 italic">{g.why_grateful}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'meetingtmpls' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128197; Meeting Templates</h2>
+            <p className="text-gray-400 mb-4">Reusable meeting agendas to run efficient, consistent meetings.</p>
+            <button onClick={async()=>{const r=await fetch('/api/meeting-templates',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMeetingTmpls(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Templates</button>
+            <div className="space-y-3">{meetingTmpls.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-semibold">{t.template_name}</div>
+                  <div className="text-xs text-gray-400">{t.default_duration_min}min &mdash; {t.recurring}</div>
+                </div>
+                <div className="text-xs text-indigo-400 mb-1">{t.meeting_type}</div>
+                {t.agenda && <div className="text-xs text-gray-400 whitespace-pre-wrap">{t.agenda.slice(0,150)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'quotescoll' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128172; Quotes Collection</h2>
+            <p className="text-gray-400 mb-4">Save inspiring quotes from books, people, and ideas.</p>
+            <button onClick={async()=>{const r=await fetch('/api/quotes',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setQuotes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Quotes</button>
+            <div className="space-y-3">{quotes.map((q:any)=>(
+              <div key={q.id} className="bg-gray-800 rounded p-4">
+                <div className="text-gray-200 italic mb-2">"{q.quote_text}"</div>
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-yellow-400">{q.author && `— ${q.author}`}{q.source && `, ${q.source}`}</div>
+                  <div className="flex gap-2">
+                    <span className="text-xs text-gray-500">{q.category}</span>
+                    {q.favorite===1 && <span className="text-yellow-400 text-sm">★</span>}
+                  </div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'deptracker' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128230; Dependency Tracker</h2>
+            <p className="text-gray-400 mb-4">Monitor package versions and outdated dependencies.</p>
+            <button onClick={async()=>{const r=await fetch('/api/dependencies',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDependencies(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Dependencies</button>
+            <div className="space-y-2">{dependencies.map((d:any)=>(
+              <div key={d.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-mono font-semibold">{d.package_name}</div>
+                  <div className="text-xs text-gray-400">{d.ecosystem} &mdash; {d.current_version}{d.latest_version && d.latest_version !== d.current_version ? <span className="text-yellow-400"> → {d.latest_version}</span> : ''}</div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded ${d.risk_level==='high'?'bg-red-700':d.risk_level==='medium'?'bg-yellow-700':'bg-gray-600'}`}>{d.risk_level}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'personas' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129489; Persona Builder</h2>
+            <p className="text-gray-400 mb-4">Build detailed user personas to guide product decisions.</p>
+            <button onClick={async()=>{const r=await fetch('/api/personas',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPersonas(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Personas</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{personas.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-lg text-indigo-300 mb-1">{p.persona_name}</div>
+                {p.job_title && <div className="text-sm text-gray-400">{p.job_title}{p.age_range?` &middot; ${p.age_range}`:''}</div>}
+                {p.goals && <div className="text-xs text-green-400 mt-2">&#9650; {p.goals.slice(0,80)}</div>}
+                {p.pain_points && <div className="text-xs text-red-400 mt-1">&#9660; {p.pain_points.slice(0,80)}</div>}
+                {p.quote && <div className="text-xs text-gray-300 italic mt-2">"{p.quote}"</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'screentime' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128241; Screen Time</h2>
+            <p className="text-gray-400 mb-4">Log and analyze daily app and screen usage.</p>
+            <button onClick={async()=>{const r=await fetch('/api/screen-time',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setScreenTime(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Today</button>
+            <div className="space-y-2">{screenTime.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{s.app_name}</div>
+                  <div className="text-xs text-gray-400">{s.category}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-blue-400">{s.minutes_spent}m</div>
+                  <div className="text-xs text-gray-500">{Math.floor(s.minutes_spent/60)}h {s.minutes_spent%60}m</div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'knowledgebase' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128218; Knowledge Base</h2>
+            <p className="text-gray-400 mb-4">Searchable workspace documentation and guides.</p>
+            <button onClick={async()=>{const r=await fetch('/api/knowledge-base',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setKnowledgeBase(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Articles</button>
+            <div className="space-y-2">{knowledgeBase.map((a:any)=>(
+              <div key={a.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{a.title}</div>
+                  <div className="text-xs text-gray-400">{a.category}{a.tags?` &middot; ${a.tags}`:''}</div>
+                </div>
+                <div className="text-xs text-gray-500 flex-shrink-0 ml-2">{a.views} views</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'mealplanner' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127997; Meal Planner</h2>
+            <p className="text-gray-400 mb-4">Plan your weekly meals and track nutrition.</p>
+            <button onClick={async()=>{const r=await fetch('/api/meal-planner',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMealPlan(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Plan</button>
+            <div className="space-y-2">{mealPlan.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{m.meal_name}</div>
+                  <div className="text-xs text-gray-400">{m.plan_date} &mdash; {m.meal_type}</div>
+                  {m.ingredients && <div className="text-xs text-gray-500 mt-1">{m.ingredients.slice(0,80)}</div>}
+                </div>
+                <div className="text-right text-xs text-gray-400">
+                  {m.calories && <div>{m.calories} cal</div>}
+                  {m.prep_time_min && <div>{m.prep_time_min}min prep</div>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'brandassets' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127912; Brand Assets</h2>
+            <p className="text-gray-400 mb-4">Centralized library for logos, colors, fonts, and brand files.</p>
+            <button onClick={async()=>{const r=await fetch('/api/brand-assets',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setBrandAssets(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-600 rounded text-white mb-4">Load Assets</button>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">{brandAssets.map((a:any)=>(
+              <div key={a.id} className="bg-gray-800 rounded p-3">
+                <div className="text-xs text-pink-400 uppercase mb-1">{a.asset_type}</div>
+                <div className="font-semibold text-sm">{a.asset_name}</div>
+                {a.description && <div className="text-xs text-gray-400 mt-1">{a.description}</div>}
+                {a.url && <a href={a.url} target="_blank" rel="noreferrer" className="text-xs text-blue-400 mt-1 block truncate">{a.url}</a>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'abtests' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129514; A/B Test Ideas</h2>
+            <p className="text-gray-400 mb-4">Document A/B test hypotheses for product and growth experiments.</p>
+            <button onClick={async()=>{const r=await fetch('/api/ab-tests',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setAbTests(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Tests</button>
+            <div className="space-y-3">{abTests.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{t.page_or_feature}</div>
+                  <span className={`text-xs px-2 py-0.5 rounded ${t.status==='running'?'bg-green-700':t.status==='completed'?'bg-gray-600':'bg-yellow-700'}`}>{t.status}</span>
+                </div>
+                {t.hypothesis && <div className="text-sm text-gray-300 mb-2 italic">{t.hypothesis}</div>}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {t.variant_a && <div className="bg-gray-700 rounded p-2"><span className="text-blue-400">A:</span> {t.variant_a}</div>}
+                  {t.variant_b && <div className="bg-gray-700 rounded p-2"><span className="text-orange-400">B:</span> {t.variant_b}</div>}
+                </div>
+                {t.success_metric && <div className="text-xs text-gray-400 mt-2">Metric: {t.success_metric}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'energylog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#9889; Energy Log</h2>
+            <p className="text-gray-400 mb-4">Track your energy levels throughout the day to find peak performance times.</p>
+            <button onClick={async()=>{const r=await fetch('/api/energy-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setEnergyLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-500 rounded text-white mb-4">Load Log</button>
+            <div className="space-y-2">{energyLog.map((e:any)=>(
+              <div key={e.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="text-sm font-semibold">{e.log_date} {e.log_time && `@ ${e.log_time}`}</div>
+                  {e.factors && <div className="text-xs text-gray-400">{e.factors}</div>}
+                </div>
+                <div className="text-right">
+                  <div className={`text-2xl font-bold ${e.energy_level>=8?'text-green-400':e.energy_level>=5?'text-yellow-400':'text-red-400'}`}>{e.energy_level}</div>
+                  <div className="text-xs text-gray-500">/10</div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'servicecatalog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128450; Service Catalog</h2>
+            <p className="text-gray-400 mb-4">Directory of internal and external services used by your workspace.</p>
+            <button onClick={async()=>{const r=await fetch('/api/service-catalog',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setServiceCatalog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Catalog</button>
+            <div className="space-y-2">{serviceCatalog.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{s.service_name}</div>
+                  <div className="text-xs text-gray-400">{s.category}{s.owner_team?` &mdash; ${s.owner_team}`:''}</div>
+                  {s.description && <div className="text-xs text-gray-500 mt-1">{s.description.slice(0,80)}</div>}
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${s.status==='active'?'bg-green-700':'bg-gray-600'}`}>{s.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'affirmations' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#10024; Affirmations</h2>
+            <p className="text-gray-400 mb-4">Daily positive affirmations to build a growth mindset.</p>
+            <button onClick={async()=>{const r=await fetch('/api/affirmations',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setAffirmations(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-500 rounded text-white mb-4">Load Affirmations</button>
+            <div className="space-y-2">{affirmations.map((a:any)=>(
+              <div key={a.id} className="bg-gray-800 rounded p-4 flex items-start gap-3">
+                <span className="text-yellow-400 text-lg flex-shrink-0">{a.favorite?'★':'☆'}</span>
+                <div>
+                  <div className="text-gray-200 italic">"{a.affirmation}"</div>
+                  <div className="text-xs text-gray-500 mt-1">{a.category}</div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'datadict' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128214; Data Dictionary</h2>
+            <p className="text-gray-400 mb-4">Shared glossary of terms and definitions for your workspace.</p>
+            <button onClick={async()=>{const r=await fetch('/api/data-dictionary',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDataDict(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Dictionary</button>
+            <div className="space-y-2">{dataDict.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold text-blue-300">{t.term}</div>
+                <div className="text-sm text-gray-300 mt-1">{t.definition}</div>
+                <div className="text-xs text-gray-500 mt-1">{t.category}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'taglines' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128165; Tagline Generator</h2>
+            <p className="text-gray-400 mb-4">Generate catchy taglines for your brand or product.</p>
+            <button onClick={async()=>{const r=await fetch('/api/taglines',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setTaglines(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-600 rounded text-white mb-4">Load Taglines</button>
+            <div className="space-y-4">{taglines.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-pink-300 mb-2">{t.brand_name}</div>
+                <div className="space-y-1">{(()=>{try{const tags=JSON.parse(t.taglines||'[]');return tags.map((tag:string,i:number)=>(<div key={i} className="text-sm text-gray-300 pl-3 border-l-2 border-pink-700">{tag}</div>));}catch{return null;}})()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'projlog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128203; Project Log</h2>
+            <p className="text-gray-400 mb-4">Daily developer journal — log work, hours, and mood per project.</p>
+            <button onClick={async()=>{const r=await fetch('/api/project-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setProjLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Log</button>
+            <div className="space-y-2">{projLog.map((e:any)=>(
+              <div key={e.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-semibold text-sm">{e.project_name}</div>
+                  <div className="flex gap-2 text-xs text-gray-400">
+                    <span>{e.log_date}</span>
+                    {e.hours_spent>0 && <span>{e.hours_spent}h</span>}
+                  </div>
+                </div>
+                <div className="text-sm text-gray-300">{e.entry.slice(0,120)}</div>
+                <div className="text-xs text-gray-500 mt-1">Mood: {e.mood}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'accessreqs' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128274; Access Requests</h2>
+            <p className="text-gray-400 mb-4">Review and approve workspace resource access requests.</p>
+            <button onClick={async()=>{const r=await fetch('/api/access-requests',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setAccessReqs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Requests</button>
+            <div className="space-y-2">{accessReqs.map((req:any)=>(
+              <div key={req.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{req.resource}</div>
+                  {req.reason && <div className="text-xs text-gray-400 mt-1">{req.reason}</div>}
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${req.status==='approved'?'bg-green-700':req.status==='denied'?'bg-red-800':'bg-yellow-700'}`}>{req.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'travelplans' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127757; Travel Plans</h2>
+            <p className="text-gray-400 mb-4">Plan and track your upcoming trips and adventures.</p>
+            <button onClick={async()=>{const r=await fetch('/api/travel-plans',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setTravelPlans(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-cyan-600 rounded text-white mb-4">Load Plans</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{travelPlans.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-semibold text-lg">{t.destination}</div>
+                  <span className={`text-xs px-2 py-0.5 rounded ${t.status==='booked'?'bg-green-700':t.status==='completed'?'bg-gray-600':'bg-yellow-700'}`}>{t.status}</span>
+                </div>
+                {t.depart_date && <div className="text-xs text-gray-400">{t.depart_date}{t.return_date?` &rarr; ${t.return_date}`:''}</div>}
+                {t.budget && <div className="text-xs text-green-400 mt-1">Budget: ${Number(t.budget).toLocaleString()}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'releasenotes' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128221; Release Notes</h2>
+            <p className="text-gray-400 mb-4">Document and share workspace software release notes.</p>
+            <button onClick={async()=>{const r=await fetch('/api/release-notes',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setReleaseNotes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Releases</button>
+            <div className="space-y-3">{releaseNotes.map((n:any)=>(
+              <div key={n.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-mono font-bold text-indigo-400">v{n.version}</span>
+                  {n.release_date && <span className="text-xs text-gray-400">{n.release_date}</span>}
+                </div>
+                {n.highlights && <div className="text-sm text-gray-300 mb-1">&#9733; {n.highlights.slice(0,100)}</div>}
+                {n.bug_fixes && <div className="text-xs text-green-400">&#10003; {n.bug_fixes.slice(0,80)}</div>}
+                {n.breaking_changes && <div className="text-xs text-red-400 mt-1">&#9888; {n.breaking_changes.slice(0,80)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'faqbuilder' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128172; FAQ Builder</h2>
+            <p className="text-gray-400 mb-4">Build FAQ sections for your products and documentation.</p>
+            <button onClick={async()=>{const r=await fetch('/api/faq',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setFaqItems(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load FAQs</button>
+            <div className="space-y-3">{faqItems.map((f:any)=>(
+              <div key={f.id} className="bg-gray-800 rounded p-4">
+                <div className="font-semibold mb-1">{f.product_or_topic}</div>
+                <div className="text-xs text-gray-400">{f.category}</div>
+                {f.questions && <div className="text-sm text-gray-300 mt-2 whitespace-pre-wrap">{f.questions.slice(0,200)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'sleepqual' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128564; Sleep Quality</h2>
+            <p className="text-gray-400 mb-4">Track sleep duration and quality to optimize rest.</p>
+            <button onClick={async()=>{const r=await fetch('/api/sleep-quality',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSleepQual(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Log</button>
+            <div className="space-y-2">{sleepQual.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold text-sm">{s.sleep_date}</div>
+                  <div className="text-xs text-gray-400">{s.bedtime && s.wake_time ? `${s.bedtime} → ${s.wake_time}` : ''}{s.duration_hours?` (${s.duration_hours}h)`:''}</div>
+                </div>
+                {s.quality_score && (
+                  <div className="text-right">
+                    <div className={`text-2xl font-bold ${s.quality_score>=8?'text-green-400':s.quality_score>=5?'text-yellow-400':'text-red-400'}`}>{s.quality_score}</div>
+                    <div className="text-xs text-gray-500">/10</div>
+                  </div>
+                )}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'clientportal' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128188; Client Portal</h2>
+            <p className="text-gray-400 mb-4">Manage dedicated portals for your workspace clients.</p>
+            <button onClick={async()=>{const r=await fetch('/api/client-portal',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setClientPortals(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Portals</button>
+            <div className="space-y-2">{clientPortals.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{c.client_name}</div>
+                  {c.client_email && <div className="text-xs text-gray-400">{c.client_email}</div>}
+                  <div className="text-xs text-gray-500 font-mono">{c.portal_slug}</div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded ${c.status==='active'?'bg-green-700':'bg-gray-600'}`}>{c.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'learningpaths' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129517; Learning Paths</h2>
+            <p className="text-gray-400 mb-4">Structured learning journeys for any skill or topic.</p>
+            <button onClick={async()=>{const r=await fetch('/api/learning-paths',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setLearningPaths(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Paths</button>
+            <div className="space-y-3">{learningPaths.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{p.path_name}</div>
+                  <span className={`text-xs px-2 py-0.5 rounded ${p.status==='active'?'bg-blue-700':'bg-gray-600'}`}>{p.status}</span>
+                </div>
+                <div className="text-sm text-gray-400 mb-2">{p.topic}</div>
+                {p.total_steps>0 && (<>
+                  <div className="w-full bg-gray-700 rounded-full h-2 mb-1">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{width:`${Math.round((p.current_step/p.total_steps)*100)}%`}}></div>
+                  </div>
+                  <div className="text-xs text-gray-500">Step {p.current_step} of {p.total_steps}</div>
+                </>)}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'retros' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128260; Sprint Retrospectives</h2>
+            <p className="text-gray-400 mb-4">Document what went well, what to improve, and action items.</p>
+            <button onClick={async()=>{const r=await fetch('/api/retrospectives',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setRetros(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Retros</button>
+            <div className="space-y-3">{retros.map((r:any)=>(
+              <div key={r.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{r.sprint_name}</div>
+                  {r.sprint_end && <span className="text-xs text-gray-400">{r.sprint_end}</span>}
+                </div>
+                {r.went_well && <div className="text-xs text-green-400 mb-1">&#10003; {r.went_well.slice(0,80)}</div>}
+                {r.to_improve && <div className="text-xs text-yellow-400">&#9650; {r.to_improve.slice(0,80)}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'prodnames' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128161; Product Name Generator</h2>
+            <p className="text-gray-400 mb-4">Generate creative product name ideas for your startup.</p>
+            <button onClick={async()=>{const r=await fetch('/api/product-names',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setProdNames(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Generations</button>
+            <div className="space-y-3">{prodNames.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="text-sm text-gray-400 mb-2">"{p.description}"</div>
+                <div className="flex flex-wrap gap-2">{(()=>{try{const names=JSON.parse(p.names||'[]');return names.map((n:string,i:number)=>(<span key={i} className="text-sm bg-purple-900 text-purple-200 px-3 py-1 rounded-full">{n}</span>));}catch{return null;}})()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'bodymeasu' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128207; Body Measurements</h2>
+            <p className="text-gray-400 mb-4">Log body measurements to track fitness progress over time.</p>
+            <button onClick={async()=>{const r=await fetch('/api/body-measurements',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setBodyMeasurements(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Measurements</button>
+            <div className="space-y-2">{bodyMeasurements.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold text-sm mb-1">{m.measured_date}</div>
+                <div className="grid grid-cols-3 gap-2 text-xs text-gray-400">
+                  {m.weight_kg && <span>Weight: {m.weight_kg}kg</span>}
+                  {m.body_fat_pct && <span>BF%: {m.body_fat_pct}%</span>}
+                  {m.waist_cm && <span>Waist: {m.waist_cm}cm</span>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'stakeholders' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128101; Stakeholder Map</h2>
+            <p className="text-gray-400 mb-4">Map key stakeholders by influence and interest.</p>
+            <button onClick={async()=>{const r=await fetch('/api/stakeholder-map',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setStakeholders(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Map</button>
+            <div className="space-y-2">{stakeholders.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold">{s.stakeholder_name}</div>
+                  {s.role && <div className="text-xs text-gray-400">{s.role}</div>}
+                </div>
+                <div className="text-right text-xs">
+                  <div className="text-gray-400">Influence: <span className={s.influence==='high'?'text-red-400':s.influence==='low'?'text-gray-500':'text-yellow-400'}>{s.influence}</span></div>
+                  <div className="text-gray-400">Interest: <span className={s.interest==='high'?'text-blue-400':s.interest==='low'?'text-gray-500':'text-yellow-400'}>{s.interest}</span></div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'lifegoals' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127775; Life Goals</h2>
+            <p className="text-gray-400 mb-4">Define and track your long-term life goals.</p>
+            <button onClick={async()=>{const r=await fetch('/api/life-goals',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setLifeGoals(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Goals</button>
+            <div className="space-y-3">{lifeGoals.map((g:any)=>(
+              <div key={g.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{g.goal_title}</div>
+                  <span className="text-xs text-gray-400">{g.timeframe} &mdash; {g.category}</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div className="bg-yellow-500 h-2 rounded-full" style={{width:`${g.progress_pct||0}%`}}></div>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">{g.progress_pct||0}% complete</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'meetingactions' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128203; Meeting Action Items</h2>
+            <p className="text-gray-400 mb-4">Track follow-up actions from workspace meetings.</p>
+            <button onClick={async()=>{const r=await fetch('/api/meeting-actions',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMeetingActions(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Actions</button>
+            <div className="space-y-2">{meetingActions.map((a:any)=>(
+              <div key={a.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
+                <div>
+                  <div className="font-semibold text-sm">{a.action_item}</div>
+                  <div className="text-xs text-gray-400">{a.meeting_title}{a.due_date?` &mdash; due ${a.due_date}`:''}</div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${a.status==='done'?'bg-green-700':'bg-orange-700'}`}>{a.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'coldoutreach' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128232; Cold Outreach Builder</h2>
+            <p className="text-gray-400 mb-4">Craft personalized cold outreach messages.</p>
+            <button onClick={async()=>{const r=await fetch('/api/cold-outreach',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setColdOutreach(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-cyan-600 rounded text-white mb-4">Load Messages</button>
+            <div className="space-y-2">{coldOutreach.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-start">
+                  <div className="font-semibold">{m.prospect_name||'Prospect'}{m.prospect_company?` @ ${m.prospect_company}`:''}</div>
+                  <span className="text-xs text-gray-400">{m.channel}</span>
+                </div>
+                {m.subject && <div className="text-sm text-gray-300 mt-1">Subject: {m.subject}</div>}
+                <div className="text-xs text-gray-500 mt-1">{new Date(m.created_at).toLocaleDateString()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'dailychk' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#9989; Daily Checklist</h2>
+            <p className="text-gray-400 mb-4">Your personalized daily routine checklist.</p>
+            <button onClick={async()=>{const r=await fetch('/api/daily-checklist',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDailyChk(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Today</button>
+            <div className="space-y-2">{dailyChk.map((item:any)=>(
+              <div key={item.id} className="bg-gray-800 rounded p-3 flex items-center gap-3 cursor-pointer" onClick={async()=>{await fetch(`/api/daily-checklist/${item.id}/toggle`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`}});setDailyChk(prev=>prev.map(i=>i.id===item.id?{...i,completed:i.completed?0:1}:i));}}>
+                <div className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center ${item.completed?'bg-teal-500 border-teal-500':'border-gray-500'}`}>
+                  {item.completed && <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>}
+                </div>
+                <span className={item.completed?'line-through text-gray-500':''}>{item.item}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'prodfeedback' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128172; Product Feedback</h2>
+            <p className="text-gray-400 mb-4">Collect and triage product feedback from your team.</p>
+            <button onClick={async()=>{const r=await fetch('/api/product-feedback',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setProdFeedback(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Feedback</button>
+            <div className="space-y-2">{prodFeedback.map((f:any)=>(
+              <div key={f.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-start">
+                  <div className="text-sm">{f.feedback_text}</div>
+                  <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ml-2 ${f.sentiment==='positive'?'bg-green-700':f.sentiment==='negative'?'bg-red-700':'bg-gray-600'}`}>{f.sentiment}</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">{f.source} &mdash; {f.category} &mdash; P{f.priority}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'timeblocks' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128339; Time Blocks</h2>
+            <p className="text-gray-400 mb-4">Schedule your day in focused time blocks.</p>
+            <button onClick={async()=>{const r=await fetch('/api/time-blocks',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setTimeBlocks(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-violet-600 rounded text-white mb-4">Load Today</button>
+            <div className="space-y-2">{timeBlocks.map((b:any)=>(
+              <div key={b.id} className="rounded p-3 flex items-center gap-3" style={{borderLeft:`4px solid ${b.color||'#7c3aed'}`}}>
+                <div className="flex-1 bg-gray-800 rounded p-2">
+                  <div className="font-semibold">{b.label}</div>
+                  <div className="text-xs text-gray-400">{b.start_time} &ndash; {b.end_time}</div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded ${b.completed?'bg-green-700':'bg-gray-600'}`}>{b.completed?'Done':'Planned'}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'apikeysreg' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128273; API Keys Registry</h2>
+            <p className="text-gray-400 mb-4">Track workspace API keys and their expiry dates.</p>
+            <button onClick={async()=>{const r=await fetch('/api/api-keys-registry',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setApiKeysReg(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Registry</button>
+            <div className="space-y-2">{apiKeysReg.map((k:any)=>(
+              <div key={k.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{k.service_name}</div>
+                  <div className="text-xs text-gray-400">{k.key_label} &mdash; {k.environment}</div>
+                </div>
+                {k.expiry_date && <div className="text-xs text-yellow-400">Expires: {k.expiry_date}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'emailsubj' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128231; Email Subject Tester</h2>
+            <p className="text-gray-400 mb-4">Generate subject line variants and find the best performer.</p>
+            <button onClick={async()=>{const r=await fetch('/api/email-subjects',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setEmailSubjects(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Tests</button>
+            <div className="space-y-3">{emailSubjects.map((e:any)=>(
+              <div key={e.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold text-sm mb-1">Original: {e.original_subject}</div>
+                <div className="space-y-1">{(()=>{try{const v=JSON.parse(e.variants||'[]');return v.map((variant:string,i:number)=>(<div key={i} className="text-xs text-gray-400 pl-3 border-l border-gray-600">{variant}</div>));}catch{return null;}})()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'savingsgoals' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128179; Savings Goals</h2>
+            <p className="text-gray-400 mb-4">Set financial savings goals and track contributions.</p>
+            <button onClick={async()=>{const r=await fetch('/api/savings-goals',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSavingsGoals(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Goals</button>
+            <div className="space-y-3">{savingsGoals.map((g:any)=>(
+              <div key={g.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-semibold">{g.goal_name}</div>
+                  <span className="text-xs text-gray-400">{g.category}</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div className="bg-green-500 h-2 rounded-full" style={{width:`${Math.min(100,Math.round((g.current_amount/g.target_amount)*100))}%`}}></div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>${Number(g.current_amount).toLocaleString()} saved</span>
+                  <span>Goal: ${Number(g.target_amount).toLocaleString()}</span>
+                </div>
+                {g.deadline && <div className="text-xs text-yellow-400 mt-1">By: {g.deadline}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'onboardchk' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#9989; Onboarding Checklist</h2>
+            <p className="text-gray-400 mb-4">Guide new workspace members through setup steps.</p>
+            <button onClick={async()=>{const r=await fetch('/api/onboarding-checklist',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setOnboardChk(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Checklist</button>
+            <div className="space-y-2">{onboardChk.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex-shrink-0 ${s.completed?'bg-green-500':'bg-gray-600'}`}></div>
+                <div>
+                  <div className="font-semibold">{s.step_name}</div>
+                  {s.description && <div className="text-xs text-gray-400">{s.description}</div>}
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'pomodoro' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127813; Pomodoro Log</h2>
+            <p className="text-gray-400 mb-4">Track your focused work sessions with pomodoro technique.</p>
+            <button onClick={async()=>{const r=await fetch('/api/pomodoro',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPomodoroLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-600 rounded text-white mb-4">Load Sessions</button>
+            <div className="space-y-2">{pomodoroLog.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{p.task_label||'Focus session'}</div>
+                  <div className="text-xs text-gray-400">{p.duration_min} min &mdash; {new Date(p.started_at).toLocaleDateString()}</div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded ${p.completed?'bg-green-700':'bg-gray-600'}`}>{p.completed?'Done':'Interrupted'}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'designtokens' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127912; Design Tokens</h2>
+            <p className="text-gray-400 mb-4">Manage your design system tokens — colors, spacing, typography.</p>
+            <button onClick={async()=>{const r=await fetch('/api/design-tokens',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDesignTokens(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-600 rounded text-white mb-4">Load Tokens</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">{designTokens.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-3 flex items-center gap-3">
+                {t.category==='color'&&<div className="w-6 h-6 rounded flex-shrink-0 border border-gray-600" style={{backgroundColor:t.token_value}}></div>}
+                <div>
+                  <div className="font-mono text-sm">{t.token_name}</div>
+                  <div className="text-xs text-gray-400">{t.token_value} &mdash; {t.category}</div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'swotbuilder' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128202; SWOT Builder</h2>
+            <p className="text-gray-400 mb-4">Build SWOT analyses for products, competitors, or decisions.</p>
+            <button onClick={async()=>{const r=await fetch('/api/swot',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSwotList(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Analyses</button>
+            <div className="space-y-2">{swotList.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3">
+                <div className="font-semibold">{s.subject}</div>
+                <div className="text-xs text-gray-500">{new Date(s.created_at).toLocaleDateString()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'networth' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128176; Net Worth Tracker</h2>
+            <p className="text-gray-400 mb-4">Track your financial snapshots over time.</p>
+            <button onClick={async()=>{const r=await fetch('/api/net-worth',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setNetWorth(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load Snapshots</button>
+            <div className="space-y-2">{netWorth.map((n:any)=>(
+              <div key={n.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="text-sm text-gray-400">{n.snapshot_date}</div>
+                  <div className="text-xs text-gray-500">Assets: ${Number(n.total_assets).toLocaleString()} &mdash; Liabilities: ${Number(n.total_liabilities).toLocaleString()}</div>
+                </div>
+                <div className={`text-xl font-bold ${n.net_worth>=0?'text-green-400':'text-red-400'}`}>${Number(n.net_worth).toLocaleString()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'testplans' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129514; Test Plans</h2>
+            <p className="text-gray-400 mb-4">Create and track test plans for workspace features.</p>
+            <button onClick={async()=>{const r=await fetch('/api/test-plans',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setTestPlans(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Plans</button>
+            <div className="space-y-2">{testPlans.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{t.plan_name}</div>
+                  {t.feature && <div className="text-xs text-gray-400">Feature: {t.feature}</div>}
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded ${t.status==='active'?'bg-green-700':t.status==='completed'?'bg-gray-600':'bg-yellow-700'}`}>{t.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'readingchallenge' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128218; Reading Challenge</h2>
+            <p className="text-gray-400 mb-4">Set your annual reading goal and track progress.</p>
+            <button onClick={async()=>{const r=await fetch('/api/reading-challenge',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setReadingChallenge(d);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Challenge</button>
+            {readingChallenge && (
+              <div className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-semibold text-lg">{readingChallenge.year} Goal</span>
+                  <span className="text-2xl font-bold text-blue-400">{readingChallenge.books_read}/{readingChallenge.goal_books}</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-3 mb-3">
+                  <div className="bg-blue-500 h-3 rounded-full" style={{width:`${Math.min(100,Math.round((readingChallenge.books_read/readingChallenge.goal_books)*100))}%`}}></div>
+                </div>
+                {readingChallenge.current_book && <div className="text-sm text-gray-400">Currently reading: <span className="text-white">{readingChallenge.current_book}</span></div>}
+              </div>
+            )}
+          </div>
+        )}
+        {mainTab === 'adrs' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127963; Architecture Decisions</h2>
+            <p className="text-gray-400 mb-4">Log Architecture Decision Records (ADRs) for your team.</p>
+            <button onClick={async()=>{const r=await fetch('/api/adrs',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setAdrs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load ADRs</button>
+            <div className="space-y-2">{adrs.map((a:any)=>(
+              <div key={a.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-start">
+                  <div className="font-semibold">{a.title}</div>
+                  <span className={`text-xs px-2 py-0.5 rounded ${a.status==='accepted'?'bg-green-700':a.status==='rejected'?'bg-red-700':'bg-yellow-700'}`}>{a.status}</span>
+                </div>
+                {a.context && <div className="text-xs text-gray-400 mt-1">Context: {a.context}</div>}
+                {a.decision && <div className="text-xs text-gray-300 mt-1">Decision: {a.decision}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'pitchdeck' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128202; Pitch Deck Builder</h2>
+            <p className="text-gray-400 mb-4">Build structured pitch decks for your startup or project.</p>
+            <button onClick={async()=>{const r=await fetch('/api/pitch-decks',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPitchDecks(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Decks</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{pitchDecks.map((p:any)=>(
+              <div key={p.id} className="bg-gray-800 rounded p-4">
+                <div className="font-semibold text-lg">{p.deck_name}</div>
+                {p.company && <div className="text-sm text-purple-400">{p.company}</div>}
+                <div className="text-xs text-gray-500 mt-1">{new Date(p.created_at).toLocaleDateString()}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'habitstreaks' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128293; Habit Streaks</h2>
+            <p className="text-gray-400 mb-4">Build consistency with streak-based habit tracking.</p>
+            <button onClick={async()=>{const r=await fetch('/api/habit-streaks',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setHabitStreaks(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Habits</button>
+            <div className="space-y-2">{habitStreaks.map((h:any)=>(
+              <div key={h.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{h.habit_name}</div>
+                  <div className="text-xs text-gray-400">{h.frequency} &mdash; Total: {h.total_completions}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-orange-400">{h.current_streak}</div>
+                  <div className="text-xs text-gray-500">best: {h.longest_streak}</div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'secchecklist' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128272; Security Checklist</h2>
+            <p className="text-gray-400 mb-4">Track security tasks and compliance items for your workspace.</p>
+            <button onClick={async()=>{const r=await fetch('/api/security-checklist',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSecChecklist(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Checklist</button>
+            <div className="space-y-2">{secChecklist.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div>
+                  <div className="font-semibold">{s.item}</div>
+                  <div className="text-xs text-gray-400">{s.category} &mdash; {s.priority} priority</div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded ${s.status==='completed'?'bg-green-700':'bg-gray-600'}`}>{s.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'skillmatrix' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129504; Skill Matrix</h2>
+            <p className="text-gray-400 mb-4">Track skills with current vs target levels across categories.</p>
+            <button onClick={async()=>{const r=await fetch('/api/skill-matrix',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSkillMatrix(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-700 rounded text-white mb-4">Load Skills</button>
+            <div className="space-y-2">{skillMatrix.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-center">
+                  <div><div className="font-semibold">{s.skill_name}</div><div className="text-xs text-gray-400">{s.category}</div></div>
+                  <div className="text-right text-xs"><span className="text-yellow-400">{s.current_level}</span><span className="text-gray-500"> / {s.target_level}</span></div>
+                </div>
+                <div className="mt-1 h-1.5 bg-gray-700 rounded"><div className="h-1.5 rounded bg-purple-500" style={{width:`${(s.current_level/s.target_level)*100}%`}}></div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'budgettrack' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128181; Budget Tracker</h2>
+            <p className="text-gray-400 mb-4">Track budgeted vs actual spend by category and period.</p>
+            <button onClick={async()=>{const r=await fetch('/api/budget-tracker',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setBudgetTracker(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-emerald-700 rounded text-white mb-4">Load Budget</button>
+            <div className="space-y-2">{budgetTracker.map((b:any)=>(
+              <div key={b.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-semibold">{b.category}</span>
+                  <span className="text-sm"><span className={b.actual>b.budgeted?'text-red-400':'text-green-400'}>${b.actual}</span><span className="text-gray-500"> / ${b.budgeted}</span></span>
+                </div>
+                <div className="h-1.5 bg-gray-700 rounded"><div className={`h-1.5 rounded ${b.actual>b.budgeted?'bg-red-500':'bg-emerald-500'}`} style={{width:`${Math.min(b.budgeted>0?b.actual/b.budgeted*100:0,100)}%`}}></div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'contentcal' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128240; Content Calendar</h2>
+            <p className="text-gray-400 mb-4">Plan and track content publishing across platforms.</p>
+            <button onClick={async()=>{const r=await fetch('/api/content-calendar',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setContentCal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-cyan-700 rounded text-white mb-4">Load Calendar</button>
+            <div className="space-y-2">{contentCal.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{c.title}</div><div className="text-xs text-gray-400">{c.publish_date} &mdash; {c.platform} &mdash; {c.content_type}</div></div>
+                <span className={`text-xs px-2 py-0.5 rounded ${c.status==='published'?'bg-green-900 text-green-300':'bg-yellow-900 text-yellow-300'}`}>{c.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'personalgoals' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127942; Personal Goals</h2>
+            <p className="text-gray-400 mb-4">Set meaningful goals with milestones, deadlines, and why.</p>
+            <button onClick={async()=>{const r=await fetch('/api/personal-goals',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setPersonalGoals(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-700 rounded text-white mb-4">Load Goals</button>
+            <div className="space-y-3">{personalGoals.map((g:any)=>(
+              <div key={g.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-bold">{g.goal}</span><span className="text-xs text-yellow-400">{g.category}</span></div>
+                {g.why && <div className="text-xs text-gray-400 mt-1 italic">Why: {g.why}</div>}
+                {g.deadline && <div className="text-xs text-gray-400">Deadline: {g.deadline}</div>}
+                <div className="mt-2 h-1.5 bg-gray-700 rounded"><div className="h-1.5 rounded bg-yellow-500" style={{width:`${g.progress_pct}%`}}></div></div>
+                <div className="text-xs text-gray-400 mt-0.5">{g.progress_pct}%</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'accesslog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128274; Access Log</h2>
+            <p className="text-gray-400 mb-4">Audit trail of user actions across workspace resources.</p>
+            <button onClick={async()=>{const r=await fetch('/api/access-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setAccessLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Log</button>
+            <div className="space-y-1">{accessLog.map((a:any)=>(
+              <div key={a.id} className="bg-gray-800 rounded p-2 flex justify-between items-center text-sm">
+                <div><span className="text-blue-400">{a.action}</span>{a.resource && <span className="text-gray-400"> &rarr; {a.resource}</span>}</div>
+                <span className="text-xs text-gray-500">{new Date(a.created_at).toLocaleTimeString()}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'focussess' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127919; Focus Sessions</h2>
+            <p className="text-gray-400 mb-4">Pomodoro-style deep work sessions with task tracking.</p>
+            <button onClick={async()=>{const r=await fetch('/api/focus-sessions',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setFocusSessions(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-600 rounded text-white mb-4">Load Sessions</button>
+            <div className="space-y-2">{focusSessions.map((f:any)=>(
+              <div key={f.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{f.task_name}</div><div className="text-xs text-gray-400">{f.duration_min}min &mdash; {f.interruptions} interruptions</div></div>
+                <span className={`text-xs px-2 py-0.5 rounded ${f.completed?'bg-green-900 text-green-300':'bg-yellow-900 text-yellow-300'}`}>{f.completed?'Done':'Active'}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'capacityplan' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128202; Capacity Planning</h2>
+            <p className="text-gray-400 mb-4">Plan team capacity vs allocation per sprint or period.</p>
+            <button onClick={async()=>{const r=await fetch('/api/capacity-planning',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setCapacityPlans(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-700 rounded text-white mb-4">Load Plans</button>
+            <div className="space-y-3">{capacityPlans.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-bold">{c.period}</span><span className="text-xs text-gray-400">{c.team_size} people &mdash; {c.buffer_pct}% buffer</span></div>
+                <div className="text-sm text-gray-300 mt-1">{c.allocated_hrs}h allocated / {c.available_hrs}h available</div>
+                <div className="mt-2 h-1.5 bg-gray-700 rounded"><div className="h-1.5 rounded bg-blue-500" style={{width:`${Math.min(c.available_hrs>0?c.allocated_hrs/c.available_hrs*100:0,100)}%`}}></div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'interviewprep' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128084; Interview Prep</h2>
+            <p className="text-gray-400 mb-4">Practice interview questions organized by role and category.</p>
+            <button onClick={async()=>{const r=await fetch('/api/interview-prep',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setInterviewPrep(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Questions</button>
+            <div className="space-y-3">{interviewPrep.map((q:any)=>(
+              <div key={q.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-semibold">{q.question}</span><span className="text-xs text-gray-400">Confidence: {q.confidence}/5</span></div>
+                <div className="text-xs text-purple-400 mt-1">{q.role}{q.company?` @ ${q.company}`:''} &mdash; {q.category}</div>
+                {q.answer && <div className="text-sm text-gray-300 mt-2 bg-gray-900 p-2 rounded">{q.answer}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'meditationlog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129496; Meditation Log</h2>
+            <p className="text-gray-400 mb-4">Track meditation sessions with mood before/after comparison.</p>
+            <button onClick={async()=>{const r=await fetch('/api/meditation-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMeditationLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Log</button>
+            <div className="space-y-2">{meditationLog.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{m.log_date} &mdash; {m.technique}</div><div className="text-xs text-gray-400">{m.duration_min}min</div></div>
+                <div className="text-right"><div className="text-xs text-gray-400">Mood</div><div className="text-sm">{m.mood_before} &#8594; <span className="text-green-400">{m.mood_after}</span></div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'compintel' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128269; Competitive Intel</h2>
+            <p className="text-gray-400 mb-4">SWOT analysis and competitive intelligence per competitor.</p>
+            <button onClick={async()=>{const r=await fetch('/api/competitive-intel',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setCompIntel(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-700 rounded text-white mb-4">Load Intel</button>
+            <div className="space-y-4">{compIntel.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-lg mb-2">{c.competitor}</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div><span className="text-green-400">&#43; Strength:</span> <span className="text-gray-300">{c.strength}</span></div>
+                  <div><span className="text-red-400">&#8722; Weakness:</span> <span className="text-gray-300">{c.weakness}</span></div>
+                  <div><span className="text-blue-400">&#8594; Opportunity:</span> <span className="text-gray-300">{c.opportunity}</span></div>
+                  <div><span className="text-yellow-400">&#9888; Threat:</span> <span className="text-gray-300">{c.threat}</span></div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'visionboard' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127775; Vision Board</h2>
+            <p className="text-gray-400 mb-4">Visualize and track your life goals with progress.</p>
+            <button onClick={async()=>{const r=await fetch('/api/vision-board',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setVisionBoard(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Board</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{visionBoard.map((v:any)=>(
+              <div key={v.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold">{v.goal}</div>
+                <div className="text-xs text-yellow-400 mt-1">{v.category}{v.target_date?` &mdash; by ${v.target_date}`:''}</div>
+                <div className="mt-2 h-2 bg-gray-700 rounded"><div className="h-2 rounded bg-yellow-500" style={{width:`${v.progress_pct}%`}}></div></div>
+                <div className="text-xs text-gray-400 mt-1">{v.progress_pct}% complete</div>
+                {v.affirmation && <div className="text-xs text-gray-500 italic mt-1">{v.affirmation}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'incidentlog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128680; Incident Log</h2>
+            <p className="text-gray-400 mb-4">Track production incidents with severity, root cause, and resolution.</p>
+            <button onClick={async()=>{const r=await fetch('/api/incidents',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setIncidents(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Incidents</button>
+            <div className="space-y-3">{incidents.map((inc:any)=>(
+              <div key={inc.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between items-start">
+                  <div><div className="font-bold">{inc.title}</div><div className="text-xs text-gray-400">{inc.severity} &mdash; {inc.status}</div></div>
+                  <span className={`text-xs px-2 py-0.5 rounded ${inc.status==='resolved'?'bg-green-900 text-green-300':'bg-red-900 text-red-300'}`}>{inc.status}</span>
+                </div>
+                {inc.root_cause && <div className="text-xs text-gray-400 mt-2">Root cause: {inc.root_cause}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'codeopt' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128295; Code Optimizer</h2>
+            <p className="text-gray-400 mb-4">Submit code for AI-driven optimization suggestions.</p>
+            <button onClick={async()=>{const r=await fetch('/api/code-optimizer',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setCodeOpt(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-violet-700 rounded text-white mb-4">Load Sessions</button>
+            <div className="space-y-3">{codeOpt.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="text-sm font-semibold">{c.language}</span><span className="text-green-400 font-bold">+{c.perf_gain_pct}% perf</span></div>
+                <div className="text-xs text-gray-400 mt-1">{c.improvements}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'watertracker' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128167; Water Tracker</h2>
+            <p className="text-gray-400 mb-4">Track daily water intake toward your hydration goal.</p>
+            <div className="flex gap-3 mb-4">
+              <button onClick={async()=>{const r=await fetch('/api/water-tracker',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWaterLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white">Load Log</button>
+              <button onClick={async()=>{await fetch('/api/water-tracker/log',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({amount_ml:250})});const r=await fetch('/api/water-tracker',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWaterLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-cyan-600 rounded text-white">+ 250ml</button>
+            </div>
+            <div className="space-y-2">{waterLog.map((w:any)=>(
+              <div key={w.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between"><span className="font-semibold">{w.log_date}</span><span className="text-blue-400 font-bold">{w.amount_ml}ml / {w.goal_ml}ml</span></div>
+                <div className="mt-1 h-2 bg-gray-700 rounded"><div className="h-2 rounded bg-blue-500" style={{width:`${Math.min(w.amount_ml/w.goal_ml*100,100)}%`}}></div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'techradar' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128752;&#65039; Tech Radar</h2>
+            <p className="text-gray-400 mb-4">Track technology adoption across adopt, trial, assess, and hold rings.</p>
+            <button onClick={async()=>{const r=await fetch('/api/tech-radar',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setTechRadar(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-700 rounded text-white mb-4">Load Radar</button>
+            <div className="space-y-2">{techRadar.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{t.technology}</div><div className="text-xs text-gray-400">{t.quadrant} &mdash; {t.ring}</div></div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">{t.votes} votes</span>
+                  <button onClick={async()=>{await fetch(`/api/tech-radar/${t.id}/vote`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`}});}} className="text-xs px-2 py-1 bg-indigo-700 rounded">+1</button>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'contactbook' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128215; Contacts</h2>
+            <p className="text-gray-400 mb-4">Personal CRM — manage contacts with notes and follow-up tracking.</p>
+            <button onClick={async()=>{const r=await fetch('/api/contacts',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setContacts(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Contacts</button>
+            <div className="space-y-2">{contacts.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{c.name}</div><div className="text-xs text-gray-400">{c.role}{c.company?` @ ${c.company}`:''}</div>{c.email&&<div className="text-xs text-blue-400">{c.email}</div>}</div>
+                <button onClick={async()=>{await fetch(`/api/contacts/${c.id}/touch`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`}});}} className="text-xs px-2 py-1 bg-gray-600 rounded">Touched</button>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'releasecal' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128197; Release Calendar</h2>
+            <p className="text-gray-400 mb-4">Upcoming releases with versions, scope, and owners.</p>
+            <button onClick={async()=>{const r=await fetch('/api/release-calendar',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setReleaseCal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-700 rounded text-white mb-4">Load Releases</button>
+            <div className="space-y-2">{releaseCal.map((r:any)=>(
+              <div key={r.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{r.release_name}</div><div className="text-xs text-gray-400">{r.release_date} &mdash; {r.scope}{r.version?` v${r.version}`:''}</div></div>
+                <span className={`text-xs px-2 py-0.5 rounded ${r.status==='released'?'bg-green-900 text-green-300':'bg-yellow-900 text-yellow-300'}`}>{r.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'debatetopics' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127897;&#65039; Debate Topics</h2>
+            <p className="text-gray-400 mb-4">Explore both sides of any topic with AI-generated arguments.</p>
+            <button onClick={async()=>{const r=await fetch('/api/debate-topics',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDebateTopics(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-700 rounded text-white mb-4">Load Topics</button>
+            <div className="space-y-4">{debateTopics.map((t:any)=>(
+              <div key={t.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold text-lg">{t.topic}</div>
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div><div className="text-xs text-green-400 mb-1">For</div><div className="text-xs text-gray-300">{t.arguments_for}</div></div>
+                  <div><div className="text-xs text-red-400 mb-1">Against</div><div className="text-xs text-gray-300">{t.arguments_against}</div></div>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'langvocab' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128483;&#65039; Vocabulary</h2>
+            <p className="text-gray-400 mb-4">Spaced repetition vocabulary for language learning.</p>
+            <button onClick={async()=>{const r=await fetch('/api/vocab',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setVocab(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-cyan-700 rounded text-white mb-4">Load Vocab</button>
+            <div className="space-y-2">{vocab.map((v:any)=>(
+              <div key={v.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{v.word} <span className="text-gray-400 font-normal">&rarr; {v.translation}</span></div><div className="text-xs text-gray-400">{v.language}{v.example_sentence?` &mdash; "${v.example_sentence}"`:''}</div></div>
+                <div className="flex gap-1">
+                  <button onClick={async()=>{await fetch(`/api/vocab/${v.id}/review`,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({knew:false})});}} className="text-xs px-2 py-1 bg-red-700 rounded">&#10007;</button>
+                  <button onClick={async()=>{await fetch(`/api/vocab/${v.id}/review`,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({knew:true})});}} className="text-xs px-2 py-1 bg-green-700 rounded">&#10003;</button>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'costcenter' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128179; Cost Centers</h2>
+            <p className="text-gray-400 mb-4">Track budget vs spend per cost center or department.</p>
+            <button onClick={async()=>{const r=await fetch('/api/cost-centers',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setCostCenters(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-emerald-700 rounded text-white mb-4">Load Centers</button>
+            <div className="space-y-2">{costCenters.map((c:any)=>(
+              <div key={c.id} className="bg-gray-800 rounded p-3">
+                <div className="flex justify-between items-center">
+                  <div><div className="font-semibold">{c.cost_center_name}</div><div className="text-xs text-gray-400">{c.category}</div></div>
+                  <div className="text-right"><div className="text-sm font-bold">${c.spent_mtd} / ${c.budget_monthly}</div><div className="text-xs text-gray-400">{c.budget_monthly>0?Math.round(c.spent_mtd/c.budget_monthly*100):0}% used</div></div>
+                </div>
+                <div className="mt-2 h-1.5 bg-gray-700 rounded"><div className="h-1.5 rounded bg-emerald-500" style={{width:`${Math.min(c.budget_monthly>0?c.spent_mtd/c.budget_monthly*100:0,100)}%`}}></div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'readingnotes' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128214; Reading Notes</h2>
+            <p className="text-gray-400 mb-4">Capture highlights and notes from books, articles, and papers.</p>
+            <button onClick={async()=>{const r=await fetch('/api/reading-notes',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setReadingNotes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-700 rounded text-white mb-4">Load Notes</button>
+            <div className="space-y-3">{readingNotes.map((n:any)=>(
+              <div key={n.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-bold">{n.source_title}</span><span className="text-xs text-gray-400">{n.source_type}</span></div>
+                <div className="text-sm text-gray-300 mt-2">{n.note}</div>
+                {n.highlight && <div className="text-xs text-yellow-400 mt-1 italic">&ldquo;{n.highlight}&rdquo;</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'featureflags' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128169; Feature Flags</h2>
+            <p className="text-gray-400 mb-4">Toggle features per environment with rollout percentage control.</p>
+            <button onClick={async()=>{const r=await fetch('/api/feature-flags',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setFeatureFlags(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Flags</button>
+            <div className="space-y-2">{featureFlags.map((f:any)=>(
+              <div key={f.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-mono text-sm font-bold">{f.flag_key}</div><div className="text-xs text-gray-400">{f.environment} &mdash; {f.rollout_pct}% rollout</div></div>
+                <button onClick={async()=>{await fetch(`/api/feature-flags/${f.flag_key}/toggle`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`}});const r=await fetch('/api/feature-flags',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setFeatureFlags(Array.isArray(d)?d:[]);}} className={`px-3 py-1 rounded text-sm font-bold ${f.flag_value?'bg-green-700 text-white':'bg-gray-600 text-gray-300'}`}>{f.flag_value?'ON':'OFF'}</button>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'storygen' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128172; Story Generator</h2>
+            <p className="text-gray-400 mb-4">AI-generated story starters and creative writing prompts.</p>
+            <button onClick={async()=>{const r=await fetch('/api/stories',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setStories(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-700 rounded text-white mb-4">Load Stories</button>
+            <div className="space-y-3">{stories.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-bold">{s.title}</span><span className="text-xs text-purple-400">{s.genre}</span></div>
+                <div className="text-sm text-gray-400 mt-1 italic">{s.premise}</div>
+                <div className="text-xs text-gray-500 mt-1">{s.word_count} words</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'gratitudelog' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128591; Gratitude Log</h2>
+            <p className="text-gray-400 mb-4">Daily gratitude practice to build positive mindset.</p>
+            <button onClick={async()=>{const r=await fetch('/api/gratitude-log',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setGratitudeLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-pink-600 rounded text-white mb-4">Load Log</button>
+            <div className="space-y-2">{gratitudeLog.map((g:any)=>(
+              <div key={g.id} className="bg-gray-800 rounded p-3">
+                <div className="text-sm font-semibold text-pink-300">{g.log_date} &mdash; {g.category}</div>
+                <div className="text-sm text-gray-300 mt-1">{g.entry}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'slatracker' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128200; SLA Tracker</h2>
+            <p className="text-gray-400 mb-4">Monitor service level agreements and uptime targets.</p>
+            <button onClick={async()=>{const r=await fetch('/api/sla-tracker',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSlaTracker(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-700 rounded text-white mb-4">Load SLAs</button>
+            <div className="space-y-2">{slaTracker.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{s.service_name}</div><div className="text-xs text-gray-400">{s.period} &mdash; target {s.sla_target_pct}%</div></div>
+                <div className="text-right"><div className={`font-bold ${s.actual_uptime_pct>=s.sla_target_pct?'text-green-400':'text-red-400'}`}>{s.actual_uptime_pct}%</div><div className={`text-xs ${s.status==='meeting'?'text-green-400':'text-red-400'}`}>{s.status}</div></div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'workoutplans' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#127947;&#65039; Workout Plans</h2>
+            <p className="text-gray-400 mb-4">Create and track personalized workout plans.</p>
+            <button onClick={async()=>{const r=await fetch('/api/workout-plans',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setWorkoutPlans(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Plans</button>
+            <div className="space-y-3">{workoutPlans.map((w:any)=>(
+              <div key={w.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-bold">{w.plan_name}</span><span className="text-xs text-green-400">{w.frequency}</span></div>
+                <div className="text-sm text-gray-400 mt-1">Goal: {w.goal}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'meetingnotes' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128203; Meeting Notes</h2>
+            <p className="text-gray-400 mb-4">Capture meeting notes, decisions, and action items.</p>
+            <button onClick={async()=>{const r=await fetch('/api/meeting-notes',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setMeetingNotes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Notes</button>
+            <div className="space-y-3">{meetingNotes.map((m:any)=>(
+              <div key={m.id} className="bg-gray-800 rounded p-4">
+                <div className="flex justify-between"><span className="font-bold">{m.meeting_title}</span><span className="text-xs text-gray-400">{m.meeting_date}</span></div>
+                <div className="text-sm text-gray-300 mt-2">{m.notes}</div>
+                {m.action_items && <div className="text-xs text-yellow-400 mt-1">Actions: {m.action_items}</div>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'resumebuilder' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128196; Resume Builder</h2>
+            <p className="text-gray-400 mb-4">Build tailored resumes for different roles.</p>
+            <button onClick={async()=>{const r=await fetch('/api/resumes',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setResumes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Resumes</button>
+            <div className="space-y-3">{resumes.map((r:any)=>(
+              <div key={r.id} className="bg-gray-800 rounded p-4">
+                <div className="font-bold">{r.resume_name}</div>
+                <div className="text-sm text-purple-400">Target: {r.target_role}</div>
+                <div className="text-sm text-gray-400 mt-1">{r.summary}</div>
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'bucketlist' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#129315; Bucket List</h2>
+            <p className="text-gray-400 mb-4">Track life goals and experiences to accomplish.</p>
+            <button onClick={async()=>{const r=await fetch('/api/bucket-list',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setBucketList(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-rose-600 rounded text-white mb-4">Load List</button>
+            <div className="space-y-2">{bucketList.map((b:any)=>(
+              <div key={b.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className={`font-semibold ${b.completed?'line-through text-gray-500':''}`}>{b.item}</div><div className="text-xs text-gray-400">{b.category}{b.target_year?` &mdash; by ${b.target_year}`:''}</div></div>
+                {!b.completed && <button onClick={async()=>{await fetch(`/api/bucket-list/${b.id}/complete`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`}});}} className="text-xs px-2 py-1 bg-green-700 rounded text-white">Done</button>}
+                {b.completed && <span className="text-green-400 text-lg">&#10003;</span>}
+              </div>
+            ))}</div>
+          </div>
+        )}
+        {mainTab === 'depmap' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">&#128506;&#65039; Dependency Map</h2>
+            <p className="text-gray-400 mb-4">Track service dependencies and health across environments.</p>
+            <button onClick={async()=>{const r=await fetch('/api/dependency-map',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setDepMap(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Services</button>
+            <div className="space-y-2">{depMap.map((s:any)=>(
+              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
+                <div><div className="font-semibold">{s.service_name}</div><div className="text-xs text-gray-400">{s.env}{s.version?` v${s.version}`:''}</div></div>
+                <span className={`text-xs px-2 py-0.5 rounded ${s.status==='healthy'?'bg-green-900 text-green-300':'bg-red-900 text-red-300'}`}>{s.status}</span>
+              </div>
+            ))}</div>
+          </div>
+        )}
         {mainTab === 'journal' && (
           <div style={{ padding:24, maxWidth:700 }}>
             <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:'0 0 16px' }}>📓 AI Journal</h2>
