@@ -1,5 +1,8 @@
 # Forge Version History
 
+## v7.78 (2026-06-17)
+- B188: Image Generation, Notification Bell, Goal Streaks, AI Writing Coach, Work Sessions
+
 ## v7.77 (2026-06-17)
 - Fix: authMiddleware alias undefined → ReferenceError crash on startup (was crashing all routes)
 

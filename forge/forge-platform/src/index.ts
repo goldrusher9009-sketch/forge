@@ -31995,5 +31995,192 @@ app.post('/api/localization-keys', requireAuth, (req: any, res: any) => {
   const { key_name, namespace, en_value, es_value, fr_value, de_value, pt_value, context } = req.body;
   if (!key_name || !en_value) return res.status(400).json({ error: 'key_name and en_value required' });
   const r = db.prepare(`INSERT INTO workspace_localization_keys (workspace_id,key_name,namespace,en_value,es_value,fr_value,de_value,pt_value,context) VALUES (?,?,?,?,?,?,?,?,?)`).run(workspaceId, key_name, namespace||'common', en_value, es_value||null, fr_value||null, de_value||null, pt_value||null, context||null);
+  res.j
+// ── B188: Image Generation, Notification Bell, Goal Streaks, AI Writing Coach, Work Sessions ──
+try { db.exec(`
+CREATE TABLE IF NOT EXISTS user_image_generations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  prompt TEXT NOT NULL,
+  revised_prompt TEXT,
+  image_url TEXT,
+  model TEXT DEFAULT 'dall-e-3',
+  size TEXT DEFAULT '1024x1024',
+  quality TEXT DEFAULT 'standard',
+  thread_id INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS user_notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT,
+  link TEXT,
+  read INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS user_goal_streaks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  goal_name TEXT NOT NULL,
+  target_days INTEGER DEFAULT 30,
+  current_streak INTEGER DEFAULT 0,
+  longest_streak INTEGER DEFAULT 0,
+  last_checkin DATE,
+  start_date DATE,
+  status TEXT DEFAULT 'active',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS ai_writing_coach (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  input_text TEXT NOT NULL,
+  feedback TEXT,
+  improved_version TEXT,
+  tone TEXT,
+  style TEXT,
+  score INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS user_work_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  session_name TEXT,
+  start_time DATETIME,
+  end_time DATETIME,
+  duration_minutes INTEGER,
+  focus_score INTEGER,
+  tags TEXT,
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+`); } catch(e: any) { console.error('B188 schema warn:', e.message); }
+
+app.post('/api/image-generate', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { prompt, size, quality, thread_id } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'prompt required' });
+  let image_url: string | null = null;
+  let revised_prompt: string | null = null;
+  try {
+    const key = await getUserKey(userId, 'openai');
+    if (key) {
+      const { OpenAI } = require('openai');
+      const openai = new OpenAI({ apiKey: key });
+      const resp = await openai.images.generate({ model: 'dall-e-3', prompt, size: size||'1024x1024', quality: quality||'standard', n: 1 });
+      image_url = resp.data[0]?.url || null;
+      revised_prompt = resp.data[0]?.revised_prompt || null;
+    }
+  } catch(e: any) { image_url = null; }
+  const r = db.prepare(`INSERT INTO user_image_generations (user_id,prompt,revised_prompt,image_url,size,quality,thread_id) VALUES (?,?,?,?,?,?,?)`).run(userId, prompt, revised_prompt, image_url, size||'1024x1024', quality||'standard', thread_id||null);
+  res.json({ id: r.lastInsertRowid, image_url, revised_prompt, prompt });
+});
+app.get('/api/image-generate', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_image_generations WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.delete('/api/image-generate/:id', requireAuth, (req: any, res: any) => {
+  db.prepare(`DELETE FROM user_image_generations WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+
+app.get('/api/notifications', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  const unread = (rows as any[]).filter((r: any) => !r.read).length;
+  res.json({ rows, unread, total: rows.length });
+});
+app.post('/api/notifications', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { type, title, body, link } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare(`INSERT INTO user_notifications (user_id,type,title,body,link) VALUES (?,?,?,?,?)`).run(userId, type||'info', title, body||null, link||null);
   res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/notifications/:id/read', requireAuth, (req: any, res: any) => {
+  db.prepare(`UPDATE user_notifications SET read=1 WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+app.put('/api/notifications/read-all', requireAuth, (req: any, res: any) => {
+  db.prepare(`UPDATE user_notifications SET read=1 WHERE user_id=?`).run(req.user.id);
+  res.json({ success: true });
+});
+app.delete('/api/notifications/:id', requireAuth, (req: any, res: any) => {
+  db.prepare(`DELETE FROM user_notifications WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+
+app.get('/api/goal-streaks', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_goal_streaks WHERE user_id=? ORDER BY current_streak DESC`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/goal-streaks', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { goal_name, target_days } = req.body;
+  if (!goal_name) return res.status(400).json({ error: 'goal_name required' });
+  const r = db.prepare(`INSERT INTO user_goal_streaks (user_id,goal_name,target_days,start_date) VALUES (?,?,?,date('now'))`).run(userId, goal_name, target_days||30);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/goal-streaks/:id/checkin', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const row = db.prepare(`SELECT * FROM user_goal_streaks WHERE id=? AND user_id=?`).get(req.params.id, userId) as any;
+  if (!row) return res.status(404).json({ error: 'not found' });
+  const today = new Date().toISOString().split('T')[0];
+  if (row.last_checkin === today) return res.json({ message: 'already checked in today', streak: row.current_streak });
+  const newStreak = row.current_streak + 1;
+  const longest = Math.max(newStreak, row.longest_streak||0);
+  db.prepare(`UPDATE user_goal_streaks SET current_streak=?,longest_streak=?,last_checkin=? WHERE id=?`).run(newStreak, longest, today, req.params.id);
+  res.json({ streak: newStreak, longest, checked_in: true });
+});
+app.delete('/api/goal-streaks/:id', requireAuth, (req: any, res: any) => {
+  db.prepare(`DELETE FROM user_goal_streaks WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+
+app.post('/api/writing-coach', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { input_text, tone, style } = req.body;
+  if (!input_text) return res.status(400).json({ error: 'input_text required' });
+  let feedback = null, improved_version = null, score = null;
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    if (key) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: key });
+      const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 800, messages: [{ role: 'user', content: `You are a writing coach. Analyze this text and provide feedback. Tone: ${tone||'professional'}. Style: ${style||'clear'}.\n\nText: "${input_text}"\n\nReturn JSON: {"feedback":"...","improved_version":"...","score":85}` }] });
+      const parsed = JSON.parse((msg.content[0] as any).text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+      feedback = parsed.feedback||null; improved_version = parsed.improved_version||null; score = parsed.score||null;
+    }
+  } catch(e: any) { feedback = 'AI unavailable'; }
+  const r = db.prepare(`INSERT INTO ai_writing_coach (user_id,input_text,feedback,improved_version,tone,style,score) VALUES (?,?,?,?,?,?,?)`).run(userId, input_text, feedback, improved_version, tone||'professional', style||'clear', score);
+  res.json({ id: r.lastInsertRowid, feedback, improved_version, score });
+});
+app.get('/api/writing-coach', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare(`SELECT * FROM ai_writing_coach WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
+  res.json({ rows, total: rows.length });
+});
+
+app.get('/api/work-sessions', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_work_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  const total_mins = (rows as any[]).reduce((s: number, r: any) => s + (r.duration_minutes||0), 0);
+  res.json({ rows, total: rows.length, total_hours: Math.round(total_mins/60*10)/10 });
+});
+app.post('/api/work-sessions', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { session_name, start_time, end_time, duration_minutes, focus_score, tags, notes } = req.body;
+  const r = db.prepare(`INSERT INTO user_work_sessions (user_id,session_name,start_time,end_time,duration_minutes,focus_score,tags,notes) VALUES (?,?,?,?,?,?,?,?)`).run(userId, session_name||'Work Session', start_time||new Date().toISOString(), end_time||null, duration_minutes||null, focus_score||null, tags||null, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/work-sessions/:id/end', requireAuth, (req: any, res: any) => {
+  const { focus_score, notes } = req.body;
+  const row = db.prepare(`SELECT * FROM user_work_sessions WHERE id=? AND user_id=?`).get(req.params.id, req.user.id) as any;
+  if (!row) return res.status(404).json({ error: 'not found' });
+  const end = new Date().toISOString();
+  const mins = row.start_time ? Math.round((new Date(end).getTime() - new Date(row.start_time).getTime()) / 60000) : null;
+  db.prepare(`UPDATE user_work_sessions SET end_time=?,duration_minutes=?,focus_score=?,notes=? WHERE id=?`).run(end, mins, focus_score||null, notes||row.notes, req.params.id);
+  res.json({ success: true, duration_minutes: mins });
 });
