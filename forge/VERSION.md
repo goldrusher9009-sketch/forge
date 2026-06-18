@@ -1,5 +1,11 @@
 # Forge Version History
 
+## v7.75 (2026-06-17)
+- B186: Gratitude Challenges, Release Blockers, Brand Story AI, Recovery Log, Permission Matrix
+
+## v7.74 (2026-06-17)
+- Fix: Railway healthcheckTimeout 60→300s (was killing process before DB setup completed)
+
 ## v7.73 (2026-06-17)
 - B185: Vision Mapping, API Analytics, Competitive Positioning AI, Meal Prep Log, Onboarding Flows
 

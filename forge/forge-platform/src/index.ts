@@ -31706,3 +31706,145 @@ app.post('/api/onboarding-flows', requireAuth, (req: any, res: any) => {
   const r = db.prepare(`INSERT INTO workspace_onboarding_flows (workspace_id,flow_name,target_role,steps,total_steps) VALUES (?,?,?,?,?)`).run(workspaceId, flow_name, target_role||'all', steps, total_steps||0);
   res.json({ id: r.lastInsertRowid });
 });
+
+// ─── B186: User Gratitude Challenges, Workspace Release Blockers, AI Brand Story, User Recovery Log, Workspace Permission Matrix ───
+try { db.exec(`
+  CREATE TABLE IF NOT EXISTS user_gratitude_challenges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    challenge_name TEXT NOT NULL,
+    duration_days INTEGER DEFAULT 30,
+    current_day INTEGER DEFAULT 1,
+    entries TEXT,
+    streak INTEGER DEFAULT 0,
+    completed INTEGER DEFAULT 0,
+    started_at TEXT DEFAULT (datetime('now')),
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_release_blockers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    release_version TEXT NOT NULL,
+    blocker_title TEXT NOT NULL,
+    blocker_type TEXT DEFAULT 'bug',
+    severity TEXT DEFAULT 'medium',
+    assigned_to TEXT,
+    resolved INTEGER DEFAULT 0,
+    resolved_at TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_brand_stories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    brand_name TEXT NOT NULL,
+    origin_story TEXT,
+    mission TEXT,
+    values TEXT,
+    target_audience TEXT,
+    brand_voice TEXT,
+    generated_story TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_recovery_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    recovery_date TEXT NOT NULL,
+    recovery_type TEXT DEFAULT 'rest',
+    hrv_score INTEGER,
+    sleep_quality INTEGER DEFAULT 5,
+    soreness_level INTEGER DEFAULT 3,
+    readiness_score INTEGER GENERATED ALWAYS AS (ROUND((COALESCE(hrv_score,50)/100.0*40) + ((10-soreness_level)/10.0*30) + (sleep_quality/10.0*30))) VIRTUAL,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_permission_matrix (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    resource_name TEXT NOT NULL,
+    resource_type TEXT DEFAULT 'feature',
+    role_admin INTEGER DEFAULT 1,
+    role_manager INTEGER DEFAULT 1,
+    role_member INTEGER DEFAULT 0,
+    role_viewer INTEGER DEFAULT 0,
+    custom_roles TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`); } catch(e: any) { console.error('B186 schema warn:', e.message); }
+
+app.get('/api/gratitude-challenges', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_gratitude_challenges WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  const active = (rows as any[]).filter((r:any)=>!r.completed).length;
+  res.json({ rows, total: rows.length, active });
+});
+app.post('/api/gratitude-challenges', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { challenge_name, duration_days } = req.body;
+  if (!challenge_name) return res.status(400).json({ error: 'challenge_name required' });
+  const r = db.prepare(`INSERT INTO user_gratitude_challenges (user_id,challenge_name,duration_days) VALUES (?,?,?)`).run(userId, challenge_name, duration_days||30);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/release-blockers', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_release_blockers WHERE workspace_id=? ORDER BY created_at DESC LIMIT 50`).all(workspaceId);
+  const open = (rows as any[]).filter((r:any)=>!r.resolved).length;
+  res.json({ rows, total: rows.length, open });
+});
+app.post('/api/release-blockers', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { release_version, blocker_title, blocker_type, severity, assigned_to, notes } = req.body;
+  if (!release_version || !blocker_title) return res.status(400).json({ error: 'release_version and blocker_title required' });
+  const r = db.prepare(`INSERT INTO workspace_release_blockers (workspace_id,release_version,blocker_title,blocker_type,severity,assigned_to,notes) VALUES (?,?,?,?,?,?,?)`).run(workspaceId, release_version, blocker_title, blocker_type||'bug', severity||'medium', assigned_to||null, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/brand-story', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM ai_brand_stories WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/brand-story', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { brand_name, origin_story, mission, values, target_audience, brand_voice } = req.body;
+  if (!brand_name) return res.status(400).json({ error: 'brand_name required' });
+  let generated_story = null;
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    if (key) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: key });
+      const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 600, messages: [{ role: 'user', content: `Write a compelling brand story for "${brand_name}". Origin: ${origin_story||'not specified'}. Mission: ${mission||'not specified'}. Values: ${values||'not specified'}. Audience: ${target_audience||'general'}. Voice: ${brand_voice||'authentic'}. Write 150-200 words that emotionally connects with the audience.` }] });
+      generated_story = (msg.content[0] as any).text;
+    }
+  } catch(e: any) { generated_story = 'AI unavailable'; }
+  const r = db.prepare(`INSERT INTO ai_brand_stories (user_id,brand_name,origin_story,mission,values,target_audience,brand_voice,generated_story) VALUES (?,?,?,?,?,?,?,?)`).run(userId, brand_name, origin_story||null, mission||null, values||null, target_audience||null, brand_voice||null, generated_story);
+  res.json({ id: r.lastInsertRowid, generated_story });
+});
+
+app.get('/api/recovery-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_recovery_log WHERE user_id=? ORDER BY recovery_date DESC LIMIT 30`).all(userId);
+  const avg_readiness = rows.length ? Math.round((rows as any[]).reduce((s:number,r:any)=>s+(r.readiness_score||50),0)/rows.length) : 0;
+  res.json({ rows, total: rows.length, avg_readiness });
+});
+app.post('/api/recovery-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { recovery_date, recovery_type, hrv_score, sleep_quality, soreness_level, notes } = req.body;
+  const r = db.prepare(`INSERT INTO user_recovery_log (user_id,recovery_date,recovery_type,hrv_score,sleep_quality,soreness_level,notes) VALUES (?,?,?,?,?,?,?)`).run(userId, recovery_date||new Date().toISOString().slice(0,10), recovery_type||'rest', hrv_score||null, sleep_quality||5, soreness_level||3, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/permission-matrix', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_permission_matrix WHERE workspace_id=? ORDER BY resource_name ASC LIMIT 100`).all(workspaceId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/permission-matrix', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { resource_name, resource_type, role_admin, role_manager, role_member, role_viewer } = req.body;
+  if (!resource_name) return res.status(400).json({ error: 'resource_name required' });
+  const r = db.prepare(`INSERT INTO workspace_permission_matrix (workspace_id,resource_name,resource_type,role_admin,role_manager,role_member,role_viewer) VALUES (?,?,?,?,?,?,?)`).run(workspaceId, resource_name, resource_type||'feature', role_admin===false?0:1, role_manager===false?0:1, role_member?1:0, role_viewer?1:0);
+  res.json({ id: r.lastInsertRowid });
+});
