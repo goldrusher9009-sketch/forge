@@ -123,6 +123,7 @@ function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void 
   try { req.user = verifyToken(h.slice(7)); next(); }
   catch { res.status(401).json({ success: false, error: 'INVALID_TOKEN', message: 'Token invalid or expired' }); }
 }
+const authMiddleware = requireAuth;
 
 function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): void {
   if (req.user?.role !== 'admin') { res.status(403).json({ success: false, error: 'FORBIDDEN' }); return; }
@@ -31846,5 +31847,153 @@ app.post('/api/permission-matrix', requireAuth, (req: any, res: any) => {
   const { resource_name, resource_type, role_admin, role_manager, role_member, role_viewer } = req.body;
   if (!resource_name) return res.status(400).json({ error: 'resource_name required' });
   const r = db.prepare(`INSERT INTO workspace_permission_matrix (workspace_id,resource_name,resource_type,role_admin,role_manager,role_member,role_viewer) VALUES (?,?,?,?,?,?,?)`).run(workspaceId, resource_name, resource_type||'feature', role_admin===false?0:1, role_manager===false?0:1, role_member?1:0, role_viewer?1:0);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ─── B187: User Podcast Notes, Workspace API Versioning, AI Elevator Pitch, User Fasting v2, Workspace Localization Keys ───
+try { db.exec(`
+  CREATE TABLE IF NOT EXISTS user_podcast_notes_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    podcast_name TEXT NOT NULL,
+    episode_title TEXT,
+    host_name TEXT,
+    listen_date TEXT DEFAULT (date('now')),
+    key_takeaways TEXT,
+    action_items TEXT,
+    rating INTEGER DEFAULT 5,
+    category TEXT DEFAULT 'general',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_api_versioning (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    api_name TEXT NOT NULL,
+    version TEXT NOT NULL,
+    status TEXT DEFAULT 'active',
+    release_date TEXT,
+    sunset_date TEXT,
+    breaking_changes TEXT,
+    migration_guide TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_elevator_pitches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    product_name TEXT NOT NULL,
+    target_audience TEXT,
+    problem_solved TEXT,
+    key_benefit TEXT,
+    pitch_30s TEXT,
+    pitch_60s TEXT,
+    pitch_2min TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_fasting_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    fast_type TEXT DEFAULT '16:8',
+    start_time TEXT NOT NULL,
+    end_time TEXT,
+    target_hours INTEGER DEFAULT 16,
+    actual_hours REAL GENERATED ALWAYS AS (ROUND(CAST((JULIANDAY(COALESCE(end_time, datetime('now'))) - JULIANDAY(start_time)) * 24 AS REAL), 1)) VIRTUAL,
+    completed INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_localization_keys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    key_name TEXT NOT NULL,
+    namespace TEXT DEFAULT 'common',
+    en_value TEXT NOT NULL,
+    es_value TEXT,
+    fr_value TEXT,
+    de_value TEXT,
+    pt_value TEXT,
+    context TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`); } catch(e: any) { console.error('B187 schema warn:', e.message); }
+
+app.get('/api/podcast-notes-v2', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_podcast_notes_v2 WHERE user_id=? ORDER BY listen_date DESC LIMIT 50`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/podcast-notes-v2', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { podcast_name, episode_title, host_name, listen_date, key_takeaways, action_items, rating, category } = req.body;
+  if (!podcast_name) return res.status(400).json({ error: 'podcast_name required' });
+  const r = db.prepare(`INSERT INTO user_podcast_notes_v2 (user_id,podcast_name,episode_title,host_name,listen_date,key_takeaways,action_items,rating,category) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, podcast_name, episode_title||null, host_name||null, listen_date||new Date().toISOString().slice(0,10), key_takeaways||null, action_items||null, rating||5, category||'general');
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/api-versioning', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_api_versioning WHERE workspace_id=? ORDER BY release_date DESC LIMIT 50`).all(workspaceId);
+  const active = (rows as any[]).filter((r:any)=>r.status==='active').length;
+  res.json({ rows, total: rows.length, active });
+});
+app.post('/api/api-versioning', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { api_name, version, status, release_date, sunset_date, breaking_changes, migration_guide } = req.body;
+  if (!api_name || !version) return res.status(400).json({ error: 'api_name and version required' });
+  const r = db.prepare(`INSERT INTO workspace_api_versioning (workspace_id,api_name,version,status,release_date,sunset_date,breaking_changes,migration_guide) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, api_name, version, status||'active', release_date||null, sunset_date||null, breaking_changes||null, migration_guide||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/elevator-pitch', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM ai_elevator_pitches WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/elevator-pitch', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { product_name, target_audience, problem_solved, key_benefit } = req.body;
+  if (!product_name) return res.status(400).json({ error: 'product_name required' });
+  let pitch_30s=null, pitch_60s=null, pitch_2min=null;
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    if (key) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: key });
+      const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 600, messages: [{ role: 'user', content: `Create elevator pitches for "${product_name}". Audience: ${target_audience||'investors'}. Problem: ${problem_solved||'not specified'}. Benefit: ${key_benefit||'not specified'}. Return JSON: {"pitch_30s":"...","pitch_60s":"...","pitch_2min":"..."}` }] });
+      const parsed = JSON.parse((msg.content[0] as any).text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+      pitch_30s=parsed.pitch_30s||null; pitch_60s=parsed.pitch_60s||null; pitch_2min=parsed.pitch_2min||null;
+    }
+  } catch(e: any) { pitch_30s = 'AI unavailable'; }
+  const r = db.prepare(`INSERT INTO ai_elevator_pitches (user_id,product_name,target_audience,problem_solved,key_benefit,pitch_30s,pitch_60s,pitch_2min) VALUES (?,?,?,?,?,?,?,?)`).run(userId, product_name, target_audience||null, problem_solved||null, key_benefit||null, pitch_30s, pitch_60s, pitch_2min);
+  res.json({ id: r.lastInsertRowid, pitch_30s, pitch_60s, pitch_2min });
+});
+
+app.get('/api/fasting-v2', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_fasting_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  const completed = (rows as any[]).filter((r:any)=>r.completed).length;
+  const avg_hours = completed ? Math.round((rows as any[]).filter((r:any)=>r.completed).reduce((s:number,r:any)=>s+(r.actual_hours||0),0)/completed*10)/10 : 0;
+  res.json({ rows, total: rows.length, completed, avg_hours });
+});
+app.post('/api/fasting-v2', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { fast_type, start_time, end_time, target_hours, completed, notes } = req.body;
+  const r = db.prepare(`INSERT INTO user_fasting_v2 (user_id,fast_type,start_time,end_time,target_hours,completed,notes) VALUES (?,?,?,?,?,?,?)`).run(userId, fast_type||'16:8', start_time||new Date().toISOString(), end_time||null, target_hours||16, completed?1:0, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/localization-keys', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { namespace } = req.query;
+  let q = `SELECT * FROM workspace_localization_keys WHERE workspace_id=?`;
+  const params: any[] = [workspaceId];
+  if (namespace) { q += ` AND namespace=?`; params.push(namespace); }
+  const rows = db.prepare(q + ` ORDER BY namespace, key_name LIMIT 200`).all(...params);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/localization-keys', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { key_name, namespace, en_value, es_value, fr_value, de_value, pt_value, context } = req.body;
+  if (!key_name || !en_value) return res.status(400).json({ error: 'key_name and en_value required' });
+  const r = db.prepare(`INSERT INTO workspace_localization_keys (workspace_id,key_name,namespace,en_value,es_value,fr_value,de_value,pt_value,context) VALUES (?,?,?,?,?,?,?,?,?)`).run(workspaceId, key_name, namespace||'common', en_value, es_value||null, fr_value||null, de_value||null, pt_value||null, context||null);
   res.json({ id: r.lastInsertRowid });
 });

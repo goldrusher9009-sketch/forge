@@ -1,5 +1,11 @@
 # Forge Version History
 
+## v7.77 (2026-06-17)
+- Fix: authMiddleware alias undefined → ReferenceError crash on startup (was crashing all routes)
+
+## v7.76 (2026-06-17)
+- B187: Podcast Notes v2, API Versioning, Elevator Pitch AI, Fasting Tracker v2, Localization Keys
+
 ## v7.75 (2026-06-17)
 - B186: Gratitude Challenges, Release Blockers, Brand Story AI, Recovery Log, Permission Matrix
 
