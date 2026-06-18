@@ -30962,3 +30962,747 @@ app.post('/api/sprint-board', requireAuth, (req: any, res: any) => {
   const r = db.prepare(`INSERT INTO workspace_sprint_board (workspace_id,sprint_name,sprint_number,start_date,end_date,total_points,team_members,goal) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, sprint_name, sprint_number, start_date||null, end_date||null, total_points, team_members||null, goal||null);
   res.json({ id: r.lastInsertRowid });
 });
+
+// ─── B181: User Book Summaries, Workspace OKR Templates, AI Tagline Refiner, User Fasting Windows, Workspace Incident Severity ───
+try { db.exec(`
+  CREATE TABLE IF NOT EXISTS user_book_summaries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    book_title TEXT NOT NULL,
+    author TEXT,
+    key_lessons TEXT,
+    quotes TEXT,
+    action_items TEXT,
+    rating INTEGER,
+    summary TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_okr_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    template_name TEXT NOT NULL,
+    objective TEXT NOT NULL,
+    key_results TEXT NOT NULL,
+    cadence TEXT DEFAULT 'quarterly',
+    category TEXT DEFAULT 'growth',
+    times_used INTEGER DEFAULT 0,
+    created_by TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_tagline_refinements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    original_tagline TEXT NOT NULL,
+    audience TEXT,
+    tone TEXT DEFAULT 'professional',
+    refined_options TEXT,
+    selected_tagline TEXT,
+    feedback TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_fasting_windows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    protocol TEXT DEFAULT '16:8',
+    fast_start TEXT NOT NULL,
+    fast_end TEXT,
+    target_hours REAL DEFAULT 16,
+    actual_hours REAL GENERATED ALWAYS AS (ROUND((JULIANDAY(COALESCE(fast_end, datetime('now'))) - JULIANDAY(fast_start)) * 24, 1)) VIRTUAL,
+    broke_fast_with TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_incident_severity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    incident_name TEXT NOT NULL,
+    severity INTEGER DEFAULT 3,
+    status TEXT DEFAULT 'open',
+    affected_systems TEXT,
+    root_cause TEXT,
+    resolution TEXT,
+    detected_at TEXT,
+    resolved_at TEXT,
+    mttr_hours REAL GENERATED ALWAYS AS (ROUND((JULIANDAY(COALESCE(resolved_at, datetime('now'))) - JULIANDAY(COALESCE(detected_at, datetime('now')))) * 24, 1)) VIRTUAL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`); } catch(e: any) { console.error('B181 schema warn:', e.message); }
+
+app.get('/api/book-summaries', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_book_summaries WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/book-summaries', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { book_title, author, key_lessons, quotes, action_items, rating, summary } = req.body;
+  if (!book_title) return res.status(400).json({ error: 'book_title required' });
+  const r = db.prepare(`INSERT INTO user_book_summaries (user_id,book_title,author,key_lessons,quotes,action_items,rating,summary) VALUES (?,?,?,?,?,?,?,?)`).run(userId, book_title, author||null, key_lessons||null, quotes||null, action_items||null, rating||null, summary||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/okr-templates', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_okr_templates WHERE workspace_id=? ORDER BY times_used DESC LIMIT 50`).all(workspaceId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/okr-templates', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { template_name, objective, key_results, cadence, category, created_by } = req.body;
+  if (!template_name || !objective || !key_results) return res.status(400).json({ error: 'template_name, objective, key_results required' });
+  const r = db.prepare(`INSERT INTO workspace_okr_templates (workspace_id,template_name,objective,key_results,cadence,category,created_by) VALUES (?,?,?,?,?,?,?)`).run(workspaceId, template_name, objective, key_results, cadence||'quarterly', category||'growth', created_by||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/tagline-refiner', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM ai_tagline_refinements WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/tagline-refiner', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { original_tagline, audience, tone } = req.body;
+  if (!original_tagline) return res.status(400).json({ error: 'original_tagline required' });
+  let refined_options = null, feedback = null;
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    if (key) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: key });
+      const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 400, messages: [{ role: 'user', content: `Refine this tagline for a ${audience||'general'} audience with ${tone||'professional'} tone. Original: "${original_tagline}". Provide 3 refined options as JSON array of strings, and one line of feedback. Format: {"options":["...","...","..."],"feedback":"..."}` }] });
+      const parsed = JSON.parse((msg.content[0] as any).text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+      refined_options = JSON.stringify(parsed.options || []);
+      feedback = parsed.feedback || null;
+    }
+  } catch(e: any) { feedback = 'AI unavailable'; }
+  const r = db.prepare(`INSERT INTO ai_tagline_refinements (user_id,original_tagline,audience,tone,refined_options,feedback) VALUES (?,?,?,?,?,?)`).run(userId, original_tagline, audience||null, tone||'professional', refined_options, feedback);
+  res.json({ id: r.lastInsertRowid, refined_options: refined_options ? JSON.parse(refined_options) : [], feedback });
+});
+
+app.get('/api/fasting-windows', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_fasting_windows WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  const total = (rows as any[]).length;
+  const completed = (rows as any[]).filter((r: any) => r.fast_end).length;
+  res.json({ rows, total, completed });
+});
+app.post('/api/fasting-windows', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { protocol, fast_start, fast_end, target_hours, broke_fast_with, notes } = req.body;
+  if (!fast_start) return res.status(400).json({ error: 'fast_start required' });
+  const r = db.prepare(`INSERT INTO user_fasting_windows (user_id,protocol,fast_start,fast_end,target_hours,broke_fast_with,notes) VALUES (?,?,?,?,?,?,?)`).run(userId, protocol||'16:8', fast_start, fast_end||null, target_hours||16, broke_fast_with||null, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/incident-severity', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_incident_severity WHERE workspace_id=? ORDER BY created_at DESC LIMIT 50`).all(workspaceId);
+  const open = (rows as any[]).filter((r: any) => r.status === 'open').length;
+  res.json({ rows, total: rows.length, open });
+});
+app.post('/api/incident-severity', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { incident_name, severity, affected_systems, root_cause, detected_at } = req.body;
+  if (!incident_name) return res.status(400).json({ error: 'incident_name required' });
+  const r = db.prepare(`INSERT INTO workspace_incident_severity (workspace_id,incident_name,severity,affected_systems,root_cause,detected_at) VALUES (?,?,?,?,?,?)`).run(workspaceId, incident_name, severity||3, affected_systems||null, root_cause||null, detected_at||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ─── B182: User Networking Events, Workspace Cost Tracker, AI Email Subject Lines, User Body Scan Log, Workspace Tech Decisions ───
+try { db.exec(`
+  CREATE TABLE IF NOT EXISTS user_networking_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    event_name TEXT NOT NULL,
+    event_type TEXT DEFAULT 'conference',
+    location TEXT,
+    event_date TEXT,
+    contacts_made INTEGER DEFAULT 0,
+    follow_ups_sent INTEGER DEFAULT 0,
+    follow_up_rate REAL GENERATED ALWAYS AS (ROUND(CAST(follow_ups_sent AS REAL)/NULLIF(contacts_made,0)*100,1)) VIRTUAL,
+    notes TEXT, outcome TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_cost_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    cost_name TEXT NOT NULL,
+    category TEXT DEFAULT 'software',
+    vendor TEXT,
+    amount REAL NOT NULL,
+    currency TEXT DEFAULT 'USD',
+    billing_cycle TEXT DEFAULT 'monthly',
+    annual_cost REAL GENERATED ALWAYS AS (CASE WHEN billing_cycle='monthly' THEN ROUND(amount*12,2) WHEN billing_cycle='weekly' THEN ROUND(amount*52,2) ELSE amount END) VIRTUAL,
+    status TEXT DEFAULT 'active',
+    renewal_date TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_email_subjects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    email_context TEXT NOT NULL,
+    audience TEXT,
+    goal TEXT DEFAULT 'open',
+    subject_options TEXT,
+    selected_subject TEXT,
+    open_rate_prediction TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_body_scan_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    scan_date TEXT DEFAULT (date('now')),
+    tension_areas TEXT,
+    pain_level INTEGER DEFAULT 0,
+    relaxation_score INTEGER DEFAULT 5,
+    duration_mins INTEGER DEFAULT 10,
+    technique TEXT DEFAULT 'progressive-muscle',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_tech_decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    decision_title TEXT NOT NULL,
+    context TEXT,
+    options_considered TEXT,
+    chosen_option TEXT,
+    rationale TEXT,
+    decision_date TEXT DEFAULT (date('now')),
+    decided_by TEXT,
+    review_date TEXT,
+    status TEXT DEFAULT 'active',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`); } catch(e: any) { console.error('B182 schema warn:', e.message); }
+
+app.get('/api/networking-events', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_networking_events WHERE user_id=? ORDER BY event_date DESC LIMIT 50`).all(userId);
+  const total_contacts = (rows as any[]).reduce((s:number,r:any)=>s+(r.contacts_made||0),0);
+  res.json({ rows, total: rows.length, total_contacts });
+});
+app.post('/api/networking-events', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { event_name, event_type, location, event_date, contacts_made, follow_ups_sent, notes, outcome } = req.body;
+  if (!event_name) return res.status(400).json({ error: 'event_name required' });
+  const r = db.prepare(`INSERT INTO user_networking_events (user_id,event_name,event_type,location,event_date,contacts_made,follow_ups_sent,notes,outcome) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, event_name, event_type||'conference', location||null, event_date||null, contacts_made||0, follow_ups_sent||0, notes||null, outcome||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/cost-tracker', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_cost_tracker WHERE workspace_id=? ORDER BY annual_cost DESC LIMIT 100`).all(workspaceId);
+  const total_monthly = (rows as any[]).filter((r:any)=>r.status==='active').reduce((s:number,r:any)=>s+(r.amount||0),0);
+  res.json({ rows, total: rows.length, total_monthly: Math.round(total_monthly*100)/100 });
+});
+app.post('/api/cost-tracker', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { cost_name, category, vendor, amount, currency, billing_cycle, renewal_date, notes } = req.body;
+  if (!cost_name || !amount) return res.status(400).json({ error: 'cost_name and amount required' });
+  const r = db.prepare(`INSERT INTO workspace_cost_tracker (workspace_id,cost_name,category,vendor,amount,currency,billing_cycle,renewal_date,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(workspaceId, cost_name, category||'software', vendor||null, amount, currency||'USD', billing_cycle||'monthly', renewal_date||null, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/email-subjects', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM ai_email_subjects WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/email-subjects', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { email_context, audience, goal } = req.body;
+  if (!email_context) return res.status(400).json({ error: 'email_context required' });
+  let subject_options = null, open_rate_prediction = null;
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    if (key) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: key });
+      const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 400, messages: [{ role: 'user', content: `Generate 5 email subject lines for this context: "${email_context}". Audience: ${audience||'general'}. Goal: ${goal||'open'}. Return JSON: {"subjects":["...","...","...","...","..."],"prediction":"High/Medium/Low open rate likely because..."}` }] });
+      const parsed = JSON.parse((msg.content[0] as any).text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+      subject_options = JSON.stringify(parsed.subjects || []);
+      open_rate_prediction = parsed.prediction || null;
+    }
+  } catch(e: any) { open_rate_prediction = 'AI unavailable'; }
+  const r = db.prepare(`INSERT INTO ai_email_subjects (user_id,email_context,audience,goal,subject_options,open_rate_prediction) VALUES (?,?,?,?,?,?)`).run(userId, email_context, audience||null, goal||'open', subject_options, open_rate_prediction);
+  res.json({ id: r.lastInsertRowid, subject_options: subject_options ? JSON.parse(subject_options) : [], open_rate_prediction });
+});
+
+app.get('/api/body-scan-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_body_scan_log WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  const avg_relaxation = rows.length ? Math.round((rows as any[]).reduce((s:number,r:any)=>s+(r.relaxation_score||5),0)/rows.length*10)/10 : 0;
+  res.json({ rows, total: rows.length, avg_relaxation });
+});
+app.post('/api/body-scan-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { scan_date, tension_areas, pain_level, relaxation_score, duration_mins, technique, notes } = req.body;
+  const r = db.prepare(`INSERT INTO user_body_scan_log (user_id,scan_date,tension_areas,pain_level,relaxation_score,duration_mins,technique,notes) VALUES (?,?,?,?,?,?,?,?)`).run(userId, scan_date||null, tension_areas||null, pain_level||0, relaxation_score||5, duration_mins||10, technique||'progressive-muscle', notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/tech-decisions', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_tech_decisions WHERE workspace_id=? ORDER BY decision_date DESC LIMIT 50`).all(workspaceId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/tech-decisions', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { decision_title, context, options_considered, chosen_option, rationale, decided_by, review_date } = req.body;
+  if (!decision_title) return res.status(400).json({ error: 'decision_title required' });
+  const r = db.prepare(`INSERT INTO workspace_tech_decisions (workspace_id,decision_title,context,options_considered,chosen_option,rationale,decided_by,review_date) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, decision_title, context||null, options_considered||null, chosen_option||null, rationale||null, decided_by||null, review_date||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ─── B183: User Affirmation Sets, Workspace Vendor Contracts, AI Tone Analyzer, User Cold Exposure Log, Workspace Feature Votes ───
+try { db.exec(`
+  CREATE TABLE IF NOT EXISTS user_affirmation_sets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    set_name TEXT NOT NULL,
+    affirmations TEXT NOT NULL,
+    category TEXT DEFAULT 'mindset',
+    times_practiced INTEGER DEFAULT 0,
+    last_practiced TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_vendor_contracts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    vendor_name TEXT NOT NULL,
+    contract_type TEXT DEFAULT 'service',
+    start_date TEXT,
+    end_date TEXT,
+    value REAL,
+    auto_renews INTEGER DEFAULT 0,
+    days_until_expiry INTEGER GENERATED ALWAYS AS (CAST(JULIANDAY(end_date) - JULIANDAY('now') AS INTEGER)) VIRTUAL,
+    status TEXT DEFAULT 'active',
+    contact_name TEXT, contact_email TEXT, notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_tone_analyses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    input_text TEXT NOT NULL,
+    detected_tone TEXT,
+    confidence INTEGER,
+    sentiment TEXT,
+    formality_score INTEGER,
+    emotion_breakdown TEXT,
+    suggestions TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_cold_exposure_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    exposure_type TEXT DEFAULT 'cold-shower',
+    water_temp_c REAL,
+    duration_secs INTEGER DEFAULT 60,
+    intensity_score INTEGER DEFAULT 5,
+    mood_before INTEGER DEFAULT 5,
+    mood_after INTEGER DEFAULT 7,
+    mood_delta INTEGER GENERATED ALWAYS AS (mood_after - mood_before) VIRTUAL,
+    notes TEXT,
+    logged_at TEXT DEFAULT (datetime('now')),
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_feature_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    feature_title TEXT NOT NULL,
+    description TEXT,
+    category TEXT DEFAULT 'product',
+    upvotes INTEGER DEFAULT 0,
+    downvotes INTEGER DEFAULT 0,
+    score INTEGER GENERATED ALWAYS AS (upvotes - downvotes) VIRTUAL,
+    status TEXT DEFAULT 'proposed',
+    submitted_by TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`); } catch(e: any) { console.error('B183 schema warn:', e.message); }
+
+app.get('/api/affirmation-sets', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_affirmation_sets WHERE user_id=? ORDER BY times_practiced DESC LIMIT 50`).all(userId);
+  const active = (rows as any[]).filter((r:any)=>r.is_active).length;
+  res.json({ rows, total: rows.length, active });
+});
+app.post('/api/affirmation-sets', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { set_name, affirmations, category } = req.body;
+  if (!set_name || !affirmations) return res.status(400).json({ error: 'set_name and affirmations required' });
+  const r = db.prepare(`INSERT INTO user_affirmation_sets (user_id,set_name,affirmations,category) VALUES (?,?,?,?)`).run(userId, set_name, affirmations, category||'mindset');
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/vendor-contracts', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_vendor_contracts WHERE workspace_id=? ORDER BY days_until_expiry ASC LIMIT 50`).all(workspaceId);
+  const expiring_soon = (rows as any[]).filter((r:any)=>r.days_until_expiry>=0&&r.days_until_expiry<=30).length;
+  res.json({ rows, total: rows.length, expiring_soon });
+});
+app.post('/api/vendor-contracts', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { vendor_name, contract_type, start_date, end_date, value, auto_renews, contact_name, contact_email, notes } = req.body;
+  if (!vendor_name) return res.status(400).json({ error: 'vendor_name required' });
+  const r = db.prepare(`INSERT INTO workspace_vendor_contracts (workspace_id,vendor_name,contract_type,start_date,end_date,value,auto_renews,contact_name,contact_email,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(workspaceId, vendor_name, contract_type||'service', start_date||null, end_date||null, value||null, auto_renews?1:0, contact_name||null, contact_email||null, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/tone-analyzer', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM ai_tone_analyses WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/tone-analyzer', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { input_text } = req.body;
+  if (!input_text) return res.status(400).json({ error: 'input_text required' });
+  let detected_tone=null, confidence=null, sentiment=null, formality_score=null, emotion_breakdown=null, suggestions=null;
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    if (key) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: key });
+      const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 400, messages: [{ role: 'user', content: `Analyze the tone of this text: "${input_text.substring(0,500)}". Return JSON: {"tone":"formal/casual/aggressive/friendly/neutral","confidence":85,"sentiment":"positive/negative/neutral","formality":7,"emotions":{"joy":20,"anger":5,"fear":0,"surprise":10},"suggestions":"..."}` }] });
+      const parsed = JSON.parse((msg.content[0] as any).text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+      detected_tone = parsed.tone||null; confidence = parsed.confidence||null; sentiment = parsed.sentiment||null;
+      formality_score = parsed.formality||null; emotion_breakdown = JSON.stringify(parsed.emotions||{}); suggestions = parsed.suggestions||null;
+    }
+  } catch(e: any) { suggestions = 'AI unavailable'; }
+  const r = db.prepare(`INSERT INTO ai_tone_analyses (user_id,input_text,detected_tone,confidence,sentiment,formality_score,emotion_breakdown,suggestions) VALUES (?,?,?,?,?,?,?,?)`).run(userId, input_text, detected_tone, confidence, sentiment, formality_score, emotion_breakdown, suggestions);
+  res.json({ id: r.lastInsertRowid, detected_tone, confidence, sentiment, formality_score, emotion_breakdown: emotion_breakdown ? JSON.parse(emotion_breakdown) : {}, suggestions });
+});
+
+app.get('/api/cold-exposure-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_cold_exposure_log WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  const avg_mood_delta = rows.length ? Math.round((rows as any[]).reduce((s:number,r:any)=>s+(r.mood_delta||0),0)/rows.length*10)/10 : 0;
+  res.json({ rows, total: rows.length, avg_mood_delta });
+});
+app.post('/api/cold-exposure-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { exposure_type, water_temp_c, duration_secs, intensity_score, mood_before, mood_after, notes } = req.body;
+  const r = db.prepare(`INSERT INTO user_cold_exposure_log (user_id,exposure_type,water_temp_c,duration_secs,intensity_score,mood_before,mood_after,notes) VALUES (?,?,?,?,?,?,?,?)`).run(userId, exposure_type||'cold-shower', water_temp_c||null, duration_secs||60, intensity_score||5, mood_before||5, mood_after||7, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/feature-votes', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_feature_votes WHERE workspace_id=? ORDER BY score DESC LIMIT 50`).all(workspaceId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/feature-votes', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { feature_title, description, category, submitted_by } = req.body;
+  if (!feature_title) return res.status(400).json({ error: 'feature_title required' });
+  const r = db.prepare(`INSERT INTO workspace_feature_votes (workspace_id,feature_title,description,category,submitted_by) VALUES (?,?,?,?,?)`).run(workspaceId, feature_title, description||null, category||'product', submitted_by||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ─── B184: User Learning Resources, Workspace Campaign Tracker, AI Reframe Coach, User Sauna Log, Workspace Data Pipelines ───
+try { db.exec(`
+  CREATE TABLE IF NOT EXISTS user_learning_resources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    resource_type TEXT DEFAULT 'article',
+    url TEXT, author TEXT, topic TEXT,
+    status TEXT DEFAULT 'saved',
+    quality_score INTEGER,
+    time_to_read_mins INTEGER DEFAULT 5,
+    key_takeaways TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_campaign_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    campaign_name TEXT NOT NULL,
+    channel TEXT DEFAULT 'email',
+    status TEXT DEFAULT 'draft',
+    start_date TEXT, end_date TEXT,
+    budget REAL DEFAULT 0,
+    spent REAL DEFAULT 0,
+    budget_utilization REAL GENERATED ALWAYS AS (ROUND(CAST(spent AS REAL)/NULLIF(budget,0)*100,1)) VIRTUAL,
+    leads INTEGER DEFAULT 0,
+    conversions INTEGER DEFAULT 0,
+    conversion_rate REAL GENERATED ALWAYS AS (ROUND(CAST(conversions AS REAL)/NULLIF(leads,0)*100,1)) VIRTUAL,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_reframe_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    negative_thought TEXT NOT NULL,
+    context TEXT,
+    reframed_thought TEXT,
+    evidence_for TEXT,
+    evidence_against TEXT,
+    action_step TEXT,
+    mood_before INTEGER DEFAULT 5,
+    mood_after INTEGER,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_sauna_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    session_date TEXT DEFAULT (date('now')),
+    sauna_type TEXT DEFAULT 'traditional',
+    temp_celsius REAL DEFAULT 80,
+    duration_mins INTEGER DEFAULT 15,
+    rounds INTEGER DEFAULT 1,
+    heart_rate_peak INTEGER,
+    mood_before INTEGER DEFAULT 5,
+    mood_after INTEGER DEFAULT 8,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_data_pipelines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    pipeline_name TEXT NOT NULL,
+    source TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    schedule TEXT DEFAULT 'daily',
+    status TEXT DEFAULT 'active',
+    last_run TEXT,
+    records_processed INTEGER DEFAULT 0,
+    error_count INTEGER DEFAULT 0,
+    success_rate REAL GENERATED ALWAYS AS (ROUND(CASE WHEN records_processed > 0 THEN (1.0 - CAST(error_count AS REAL)/records_processed)*100 ELSE 0 END, 1)) VIRTUAL,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`); } catch(e: any) { console.error('B184 schema warn:', e.message); }
+
+app.get('/api/learning-resources', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_learning_resources WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  const saved = (rows as any[]).filter((r:any)=>r.status==='saved').length;
+  const completed = (rows as any[]).filter((r:any)=>r.status==='completed').length;
+  res.json({ rows, total: rows.length, saved, completed });
+});
+app.post('/api/learning-resources', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { title, resource_type, url, author, topic, status, quality_score, time_to_read_mins, key_takeaways } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare(`INSERT INTO user_learning_resources (user_id,title,resource_type,url,author,topic,status,quality_score,time_to_read_mins,key_takeaways) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, title, resource_type||'article', url||null, author||null, topic||null, status||'saved', quality_score||null, time_to_read_mins||5, key_takeaways||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/campaign-tracker', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_campaign_tracker WHERE workspace_id=? ORDER BY created_at DESC LIMIT 50`).all(workspaceId);
+  const active = (rows as any[]).filter((r:any)=>r.status==='active').length;
+  const total_budget = (rows as any[]).reduce((s:number,r:any)=>s+(r.budget||0),0);
+  res.json({ rows, total: rows.length, active, total_budget: Math.round(total_budget*100)/100 });
+});
+app.post('/api/campaign-tracker', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { campaign_name, channel, start_date, end_date, budget, notes } = req.body;
+  if (!campaign_name) return res.status(400).json({ error: 'campaign_name required' });
+  const r = db.prepare(`INSERT INTO workspace_campaign_tracker (workspace_id,campaign_name,channel,start_date,end_date,budget,notes) VALUES (?,?,?,?,?,?,?)`).run(workspaceId, campaign_name, channel||'email', start_date||null, end_date||null, budget||0, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/reframe-coach', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM ai_reframe_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/reframe-coach', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { negative_thought, context, mood_before } = req.body;
+  if (!negative_thought) return res.status(400).json({ error: 'negative_thought required' });
+  let reframed_thought=null, evidence_for=null, evidence_against=null, action_step=null;
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    if (key) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: key });
+      const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 500, messages: [{ role: 'user', content: `Help me reframe this thought using CBT: "${negative_thought}". Context: ${context||'none'}. Return JSON: {"reframe":"...","evidence_for":"...","evidence_against":"...","action":"..."}` }] });
+      const parsed = JSON.parse((msg.content[0] as any).text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+      reframed_thought = parsed.reframe||null; evidence_for = parsed.evidence_for||null;
+      evidence_against = parsed.evidence_against||null; action_step = parsed.action||null;
+    }
+  } catch(e: any) { reframed_thought = 'AI unavailable'; }
+  const r = db.prepare(`INSERT INTO ai_reframe_sessions (user_id,negative_thought,context,reframed_thought,evidence_for,evidence_against,action_step,mood_before) VALUES (?,?,?,?,?,?,?,?)`).run(userId, negative_thought, context||null, reframed_thought, evidence_for, evidence_against, action_step, mood_before||5);
+  res.json({ id: r.lastInsertRowid, reframed_thought, evidence_for, evidence_against, action_step });
+});
+
+app.get('/api/sauna-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_sauna_log WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  const total_time = (rows as any[]).reduce((s:number,r:any)=>s+(r.duration_mins||0),0);
+  res.json({ rows, total: rows.length, total_time_mins: total_time });
+});
+app.post('/api/sauna-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { session_date, sauna_type, temp_celsius, duration_mins, rounds, heart_rate_peak, mood_before, mood_after, notes } = req.body;
+  const r = db.prepare(`INSERT INTO user_sauna_log (user_id,session_date,sauna_type,temp_celsius,duration_mins,rounds,heart_rate_peak,mood_before,mood_after,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, session_date||null, sauna_type||'traditional', temp_celsius||80, duration_mins||15, rounds||1, heart_rate_peak||null, mood_before||5, mood_after||8, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/data-pipelines', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_data_pipelines WHERE workspace_id=? ORDER BY created_at DESC LIMIT 50`).all(workspaceId);
+  const active = (rows as any[]).filter((r:any)=>r.status==='active').length;
+  res.json({ rows, total: rows.length, active });
+});
+app.post('/api/data-pipelines', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { pipeline_name, source, destination, schedule, notes } = req.body;
+  if (!pipeline_name || !source || !destination) return res.status(400).json({ error: 'pipeline_name, source, destination required' });
+  const r = db.prepare(`INSERT INTO workspace_data_pipelines (workspace_id,pipeline_name,source,destination,schedule,notes) VALUES (?,?,?,?,?,?)`).run(workspaceId, pipeline_name, source, destination, schedule||'daily', notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+// ─── B185: User Vision Mapping, Workspace API Analytics, AI Competitive Positioning, User Meal Prep Log, Workspace Onboarding Flows ───
+try { db.exec(`
+  CREATE TABLE IF NOT EXISTS user_vision_mapping (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    life_area TEXT NOT NULL,
+    current_state TEXT,
+    desired_state TEXT,
+    gap_description TEXT,
+    milestones TEXT,
+    timeline_months INTEGER DEFAULT 12,
+    priority INTEGER DEFAULT 3,
+    progress_pct INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_api_analytics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    endpoint TEXT NOT NULL,
+    method TEXT DEFAULT 'GET',
+    total_calls INTEGER DEFAULT 0,
+    avg_response_ms REAL DEFAULT 0,
+    error_count INTEGER DEFAULT 0,
+    error_rate REAL GENERATED ALWAYS AS (ROUND(CAST(error_count AS REAL)/NULLIF(total_calls,0)*100,1)) VIRTUAL,
+    p95_ms REAL DEFAULT 0,
+    last_called TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS ai_competitive_positioning (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    product_name TEXT NOT NULL,
+    competitor TEXT NOT NULL,
+    our_strengths TEXT,
+    their_strengths TEXT,
+    positioning_angle TEXT,
+    key_differentiators TEXT,
+    battle_card TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS user_meal_prep_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    prep_date TEXT DEFAULT (date('now')),
+    meals_prepped INTEGER DEFAULT 1,
+    recipes TEXT,
+    total_servings INTEGER DEFAULT 0,
+    calories_per_serving INTEGER,
+    protein_per_serving INTEGER,
+    prep_time_mins INTEGER DEFAULT 60,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS workspace_onboarding_flows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    flow_name TEXT NOT NULL,
+    target_role TEXT DEFAULT 'all',
+    steps TEXT NOT NULL,
+    total_steps INTEGER DEFAULT 0,
+    avg_completion_pct REAL DEFAULT 0,
+    active_users INTEGER DEFAULT 0,
+    completed_users INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`); } catch(e: any) { console.error('B185 schema warn:', e.message); }
+
+app.get('/api/vision-mapping', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_vision_mapping WHERE user_id=? ORDER BY priority ASC LIMIT 50`).all(userId);
+  const avg_progress = rows.length ? Math.round((rows as any[]).reduce((s:number,r:any)=>s+(r.progress_pct||0),0)/rows.length) : 0;
+  res.json({ rows, total: rows.length, avg_progress });
+});
+app.post('/api/vision-mapping', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { life_area, current_state, desired_state, gap_description, milestones, timeline_months, priority } = req.body;
+  if (!life_area) return res.status(400).json({ error: 'life_area required' });
+  const r = db.prepare(`INSERT INTO user_vision_mapping (user_id,life_area,current_state,desired_state,gap_description,milestones,timeline_months,priority) VALUES (?,?,?,?,?,?,?,?)`).run(userId, life_area, current_state||null, desired_state||null, gap_description||null, milestones||null, timeline_months||12, priority||3);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/api-analytics', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_api_analytics WHERE workspace_id=? ORDER BY total_calls DESC LIMIT 50`).all(workspaceId);
+  const total_calls = (rows as any[]).reduce((s:number,r:any)=>s+(r.total_calls||0),0);
+  res.json({ rows, total: rows.length, total_calls });
+});
+app.post('/api/api-analytics', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { endpoint, method, total_calls, avg_response_ms, error_count, p95_ms } = req.body;
+  if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
+  const r = db.prepare(`INSERT INTO workspace_api_analytics (workspace_id,endpoint,method,total_calls,avg_response_ms,error_count,p95_ms,last_called) VALUES (?,?,?,?,?,?,?,datetime('now'))`).run(workspaceId, endpoint, method||'GET', total_calls||0, avg_response_ms||0, error_count||0, p95_ms||0);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/competitive-positioning', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM ai_competitive_positioning WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(userId);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/competitive-positioning', requireAuth, async (req: any, res: any) => {
+  const userId = req.user.id;
+  const { product_name, competitor } = req.body;
+  if (!product_name || !competitor) return res.status(400).json({ error: 'product_name and competitor required' });
+  let our_strengths=null, their_strengths=null, positioning_angle=null, key_differentiators=null, battle_card=null;
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    if (key) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: key });
+      const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 600, messages: [{ role: 'user', content: `Create a competitive positioning analysis for "${product_name}" vs "${competitor}". Return JSON: {"our_strengths":"...","their_strengths":"...","angle":"...","differentiators":"...","battle_card":"One sentence battle card"}` }] });
+      const parsed = JSON.parse((msg.content[0] as any).text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+      our_strengths=parsed.our_strengths||null; their_strengths=parsed.their_strengths||null;
+      positioning_angle=parsed.angle||null; key_differentiators=parsed.differentiators||null; battle_card=parsed.battle_card||null;
+    }
+  } catch(e: any) { positioning_angle = 'AI unavailable'; }
+  const r = db.prepare(`INSERT INTO ai_competitive_positioning (user_id,product_name,competitor,our_strengths,their_strengths,positioning_angle,key_differentiators,battle_card) VALUES (?,?,?,?,?,?,?,?)`).run(userId, product_name, competitor, our_strengths, their_strengths, positioning_angle, key_differentiators, battle_card);
+  res.json({ id: r.lastInsertRowid, our_strengths, their_strengths, positioning_angle, key_differentiators, battle_card });
+});
+
+app.get('/api/meal-prep-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const rows = db.prepare(`SELECT * FROM user_meal_prep_log WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(userId);
+  const total_servings = (rows as any[]).reduce((s:number,r:any)=>s+(r.total_servings||0),0);
+  res.json({ rows, total: rows.length, total_servings });
+});
+app.post('/api/meal-prep-log', requireAuth, (req: any, res: any) => {
+  const userId = req.user.id;
+  const { prep_date, meals_prepped, recipes, total_servings, calories_per_serving, protein_per_serving, prep_time_mins, notes } = req.body;
+  const r = db.prepare(`INSERT INTO user_meal_prep_log (user_id,prep_date,meals_prepped,recipes,total_servings,calories_per_serving,protein_per_serving,prep_time_mins,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, prep_date||null, meals_prepped||1, recipes||null, total_servings||0, calories_per_serving||null, protein_per_serving||null, prep_time_mins||60, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+
+app.get('/api/onboarding-flows', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const rows = db.prepare(`SELECT * FROM workspace_onboarding_flows WHERE workspace_id=? ORDER BY created_at DESC LIMIT 30`).all(workspaceId);
+  const active = (rows as any[]).filter((r:any)=>r.status==='active').length;
+  res.json({ rows, total: rows.length, active });
+});
+app.post('/api/onboarding-flows', requireAuth, (req: any, res: any) => {
+  const workspaceId = (req as any).user?.workspace_id || 1;
+  const { flow_name, target_role, steps, total_steps } = req.body;
+  if (!flow_name || !steps) return res.status(400).json({ error: 'flow_name and steps required' });
+  const r = db.prepare(`INSERT INTO workspace_onboarding_flows (workspace_id,flow_name,target_role,steps,total_steps) VALUES (?,?,?,?,?)`).run(workspaceId, flow_name, target_role||'all', steps, total_steps||0);
+  res.json({ id: r.lastInsertRowid });
+});

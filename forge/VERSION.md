@@ -1,5 +1,20 @@
 # Forge Version History
 
+## v7.73 (2026-06-17)
+- B185: Vision Mapping, API Analytics, Competitive Positioning AI, Meal Prep Log, Onboarding Flows
+
+## v7.72 (2026-06-17)
+- B184: Learning Resources, Campaign Tracker, Reframe Coach AI, Sauna Log, Data Pipelines
+
+## v7.71 (2026-06-17)
+- B183: Affirmation Sets, Vendor Contracts, Tone Analyzer AI, Cold Exposure Log, Feature Votes
+
+## v7.70 (2026-06-17)
+- B182: Networking Events, Cost Tracker, Email Subject AI, Body Scan Log, Tech Decisions
+
+## v7.69 (2026-06-17)
+- B181: Book Summaries, OKR Templates, Tagline Refiner AI, Fasting Windows, Incident Severity
+
 ## v7.68 (2026-06-17)
 - B180: Reading Log, API Keys Vault, Headline Scorer AI, Habit Chains, Sprint Board
 - Fix: B178/B179 db.exec wrapped in try/catch to prevent startup crash on Railway

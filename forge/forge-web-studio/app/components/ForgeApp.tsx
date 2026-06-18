@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -743,6 +743,31 @@ export default function ForgeApp() {
   const [wsMoodTrend, setWsMoodTrend] = useState<any>(null);
   const [newMoodEmoji, setNewMoodEmoji] = useState('😊');
   const [newMoodScore, setNewMoodScore] = useState(3);
+  const [visionMapping, setVisionMapping] = useState<any>({rows:[],total:0,avg_progress:0});
+  const [apiAnalytics, setApiAnalytics] = useState<any>({rows:[],total:0,total_calls:0});
+  const [competitivePositioning, setCompetitivePositioning] = useState<any[]>([]);
+  const [mealPrepLog, setMealPrepLog] = useState<any>({rows:[],total:0,total_servings:0});
+  const [onboardingFlows, setOnboardingFlows] = useState<any>({rows:[],total:0,active:0});
+  const [learningResources, setLearningResources] = useState<any>({rows:[],total:0,saved:0,completed:0});
+  const [campaignTracker, setCampaignTracker] = useState<any>({rows:[],total:0,active:0,total_budget:0});
+  const [reframeCoach, setReframeCoach] = useState<any[]>([]);
+  const [saunaLog, setSaunaLog] = useState<any>({rows:[],total:0,total_time_mins:0});
+  const [dataPipelines, setDataPipelines] = useState<any>({rows:[],total:0,active:0});
+  const [affirmationSets, setAffirmationSets] = useState<any>({rows:[],total:0,active:0});
+  const [vendorContracts, setVendorContracts] = useState<any>({rows:[],total:0,expiring_soon:0});
+  const [toneAnalyzer, setToneAnalyzer] = useState<any[]>([]);
+  const [coldExposure, setColdExposure] = useState<any>({rows:[],total:0,avg_mood_delta:0});
+  const [featureVotes, setFeatureVotes] = useState<any>({rows:[],total:0});
+  const [networkingEvents, setNetworkingEvents] = useState<any>({rows:[],total:0,total_contacts:0});
+  const [costTracker, setCostTracker] = useState<any>({rows:[],total:0,total_monthly:0});
+  const [emailSubjects, setEmailSubjects] = useState<any[]>([]);
+  const [bodyScanLog, setBodyScanLog] = useState<any>({rows:[],total:0,avg_relaxation:0});
+  const [techDecisions, setTechDecisions] = useState<any>({rows:[],total:0});
+  const [bookSummaries, setBookSummaries] = useState<any>({rows:[],total:0});
+  const [okrTemplates, setOkrTemplates] = useState<any>({rows:[],total:0});
+  const [taglineRefiner, setTaglineRefiner] = useState<any[]>([]);
+  const [fastingWindows, setFastingWindows] = useState<any>({rows:[],total:0,completed:0});
+  const [incidentSeverity, setIncidentSeverity] = useState<any>({rows:[],total:0,open:0});
   const [readingLog, setReadingLog] = useState<any>({rows:[],total:0,finished:0,reading:0,avg_rating:0});
   const [apiKeys, setApiKeys] = useState<any>({rows:[],total:0,active:0,expired:0});
   const [headlineScorer, setHeadlineScorer] = useState<any[]>([]);
@@ -5953,7 +5978,32 @@ export default function ForgeApp() {
             { id:'goals', icon:'🎯', label:'Goals' },
             { id:'captures', icon:'⚡', label:'Capture' },
             { id:'graph', icon:'🕸️', label:'Graph' },
-            { id:'readinglog', icon:'📚', label:'Reading Log' },
+            { id:'visionmapping', icon:'🗺️', label:'Vision Mapping' },
+          { id:'apianalytics', icon:'📊', label:'API Analytics' },
+          { id:'competitivepositioning', icon:'⚔️', label:'Competitive Position AI' },
+          { id:'mealpreplog', icon:'🥗', label:'Meal Prep Log' },
+          { id:'onboardingflows', icon:'🚀', label:'Onboarding Flows' },
+          { id:'learningresources', icon:'📰', label:'Learning Resources' },
+          { id:'campaigntracker', icon:'📣', label:'Campaign Tracker' },
+          { id:'reframecoach', icon:'🧠', label:'Reframe Coach AI' },
+          { id:'saunalog', icon:'🔥', label:'Sauna Log' },
+          { id:'datapipelines', icon:'🔄', label:'Data Pipelines' },
+          { id:'affirmationsets', icon:'💫', label:'Affirmation Sets' },
+          { id:'vendorcontracts', icon:'📄', label:'Vendor Contracts' },
+          { id:'toneanalyzer', icon:'🎭', label:'Tone Analyzer AI' },
+          { id:'coldexposure', icon:'🧊', label:'Cold Exposure Log' },
+          { id:'featurevotes', icon:'🗳️', label:'Feature Votes' },
+          { id:'networkingevents', icon:'🤝', label:'Networking Events' },
+          { id:'costtracker', icon:'💰', label:'Cost Tracker' },
+          { id:'emailsubjects', icon:'📧', label:'Email Subject AI' },
+          { id:'bodyscanlog', icon:'🧘', label:'Body Scan Log' },
+          { id:'techdecisions', icon:'⚙️', label:'Tech Decisions' },
+          { id:'booksummaries', icon:'📖', label:'Book Summaries' },
+          { id:'okrtemplates', icon:'🎯', label:'OKR Templates' },
+          { id:'taglinerefiner', icon:'✨', label:'Tagline Refiner AI' },
+          { id:'fastingwindows', icon:'⏱️', label:'Fasting Windows' },
+          { id:'incidentseverity', icon:'🚨', label:'Incident Severity' },
+          { id:'readinglog', icon:'📚', label:'Reading Log' },
     { id:'apikeys', icon:'🔑', label:'API Keys Vault' },
     { id:'headlinescorer', icon:'📰', label:'Headline Scorer' },
     { id:'habitchains', icon:'🔗', label:'Habit Chains' },
@@ -12677,7 +12727,279 @@ export default function ForgeApp() {
         )}
 
         {/* Journal tab */}
-        {mainTab === 'readinglog' && (
+        {mainTab === 'visionmapping' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🗺️ Vision Mapping</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-purple-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-purple-600">{visionMapping.total}</div><div className="text-sm text-gray-600">Life Areas</div></div>
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{visionMapping.avg_progress}%</div><div className="text-sm text-gray-600">Avg Progress</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/vision-mapping',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setVisionMapping(j);}} className="mb-4 px-4 py-2 bg-purple-600 text-white rounded-lg">Load Vision Map</button>
+          <div className="space-y-2">{(visionMapping.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.life_area}</div><div className="text-sm text-gray-500">Progress: {r.progress_pct}% • Timeline: {r.timeline_months}mo • P{r.priority}</div><div className="w-full bg-gray-100 rounded-full h-2 mt-2"><div className="bg-purple-500 rounded-full h-2" style={{width:`${r.progress_pct}%`}}></div></div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'apianalytics' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">📊 API Analytics</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-blue-600">{apiAnalytics.total_calls.toLocaleString()}</div><div className="text-sm text-gray-600">Total Calls</div></div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-gray-600">{apiAnalytics.total}</div><div className="text-sm text-gray-600">Endpoints</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/api-analytics',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setApiAnalytics(j);}} className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg">Load Analytics</button>
+          <div className="space-y-2">{(apiAnalytics.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border font-mono text-sm"><span className="bg-blue-100 text-blue-800 px-1 rounded">{r.method}</span> <span className="font-medium">{r.endpoint}</span><div className="text-xs text-gray-400 mt-1">{r.total_calls} calls • {r.avg_response_ms}ms avg • {r.error_rate}% errors</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'competitivepositioning' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">⚔️ Competitive Positioning AI</h2>
+          <div className="bg-white rounded-lg p-4 border mb-4">
+            <input id="cp-prod" className="w-full border rounded p-2 mb-2" placeholder="Your product name" />
+            <input id="cp-comp" className="w-full border rounded p-2 mb-2" placeholder="Competitor name" />
+            <button onClick={async()=>{const p=(document.getElementById('cp-prod') as any)?.value;const c=(document.getElementById('cp-comp') as any)?.value;if(!p||!c)return;const d=await fetch('/api/competitive-positioning',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({product_name:p,competitor:c})});const j=await d.json();setCompetitivePositioning(prev=>[j,...prev]);}} className="px-4 py-2 bg-red-600 text-white rounded-lg">Generate Battle Card</button>
+          </div>
+          <div className="space-y-3">{competitivePositioning.map((r:any,i:number)=><div key={i} className="bg-red-50 rounded-lg p-3 border"><div className="font-bold text-red-800 mb-2">🏆 Battle Card: {r.battle_card}</div><div className="grid grid-cols-2 gap-2 text-xs"><div><strong>Our Strengths:</strong><p>{r.our_strengths}</p></div><div><strong>Their Strengths:</strong><p>{r.their_strengths}</p></div></div><div className="text-xs mt-2"><strong>Angle:</strong> {r.positioning_angle}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'mealpreplog' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🥗 Meal Prep Log</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{mealPrepLog.total}</div><div className="text-sm text-gray-600">Prep Sessions</div></div>
+            <div className="bg-blue-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-blue-600">{mealPrepLog.total_servings}</div><div className="text-sm text-gray-600">Total Servings</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/meal-prep-log',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setMealPrepLog(j);}} className="mb-4 px-4 py-2 bg-green-600 text-white rounded-lg">Load Prep Log</button>
+          <div className="space-y-2">{(mealPrepLog.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.prep_date} • {r.meals_prepped} meals</div><div className="text-sm text-gray-500">{r.total_servings} servings • {r.prep_time_mins}min prep</div><div className="text-xs text-gray-400">{r.recipes?.substring(0,80)}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'onboardingflows' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🚀 Onboarding Flows</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-indigo-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-indigo-600">{onboardingFlows.active}</div><div className="text-sm text-gray-600">Active Flows</div></div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-gray-600">{onboardingFlows.total}</div><div className="text-sm text-gray-600">Total Flows</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/onboarding-flows',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setOnboardingFlows(j);}} className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg">Load Flows</button>
+          <div className="space-y-2">{(onboardingFlows.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.flow_name}</div><div className="text-sm text-gray-500">{r.target_role} • {r.total_steps} steps • {r.avg_completion_pct}% completion</div><div className="text-xs text-gray-400">{r.active_users} active • {r.completed_users} completed</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'learningresources' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">📰 Learning Resources</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-blue-600">{learningResources.total}</div><div className="text-sm text-gray-600">Resources</div></div>
+            <div className="bg-yellow-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-yellow-600">{learningResources.saved}</div><div className="text-sm text-gray-600">Saved</div></div>
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{learningResources.completed}</div><div className="text-sm text-gray-600">Completed</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/learning-resources',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setLearningResources(j);}} className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg">Load Resources</button>
+          <div className="space-y-2">{(learningResources.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.title}</div><div className="text-sm text-gray-500">{r.resource_type} • {r.topic} • {r.time_to_read_mins}min • ⭐{r.quality_score||'–'}</div><div className="text-xs text-gray-400 mt-1">{r.key_takeaways?.substring(0,80)}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'campaigntracker' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">📣 Campaign Tracker</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-purple-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-purple-600">{campaignTracker.active}</div><div className="text-sm text-gray-600">Active</div></div>
+            <div className="bg-blue-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-blue-600">${campaignTracker.total_budget}</div><div className="text-sm text-gray-600">Total Budget</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/campaign-tracker',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setCampaignTracker(j);}} className="mb-4 px-4 py-2 bg-purple-600 text-white rounded-lg">Load Campaigns</button>
+          <div className="space-y-2">{(campaignTracker.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.campaign_name}</div><div className="text-sm text-gray-500">{r.channel} • {r.status} • Budget: ${r.budget} ({r.budget_utilization}% used)</div><div className="text-xs text-gray-400">Conv rate: {r.conversion_rate}%</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'reframecoach' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🧠 Reframe Coach AI</h2>
+          <div className="bg-white rounded-lg p-4 border mb-4">
+            <textarea id="rf-thought" className="w-full border rounded p-2 mb-2 h-20" placeholder="What negative thought is holding you back?"></textarea>
+            <input id="rf-ctx" className="w-full border rounded p-2 mb-2" placeholder="Context (optional)" />
+            <button onClick={async()=>{const t=(document.getElementById('rf-thought') as any)?.value;const ctx=(document.getElementById('rf-ctx') as any)?.value;if(!t)return;const d=await fetch('/api/reframe-coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({negative_thought:t,context:ctx})});const j=await d.json();setReframeCoach(prev=>[j,...prev]);}} className="px-4 py-2 bg-teal-600 text-white rounded-lg">Reframe It</button>
+          </div>
+          <div className="space-y-3">{reframeCoach.map((r:any,i:number)=><div key={i} className="bg-teal-50 rounded-lg p-3 border"><div className="font-medium text-teal-800 mb-2">Reframe: {r.reframed_thought}</div><div className="text-xs text-gray-600"><strong>Evidence for:</strong> {r.evidence_for}</div><div className="text-xs text-gray-600 mt-1"><strong>Evidence against:</strong> {r.evidence_against}</div><div className="text-xs text-teal-700 mt-1 font-medium">Action: {r.action_step}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'saunalog' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🔥 Sauna Log</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-red-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-red-600">{saunaLog.total}</div><div className="text-sm text-gray-600">Sessions</div></div>
+            <div className="bg-orange-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-orange-600">{saunaLog.total_time_mins}</div><div className="text-sm text-gray-600">Total Mins</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/sauna-log',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setSaunaLog(j);}} className="mb-4 px-4 py-2 bg-red-600 text-white rounded-lg">Load Sessions</button>
+          <div className="space-y-2">{(saunaLog.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.session_date} • {r.sauna_type}</div><div className="text-sm text-gray-500">{r.temp_celsius}°C • {r.duration_mins}min • {r.rounds} rounds</div><div className="text-xs text-gray-400">Mood: {r.mood_before}→{r.mood_after}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'datapipelines' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🔄 Data Pipelines</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{dataPipelines.active}</div><div className="text-sm text-gray-600">Active</div></div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-gray-600">{dataPipelines.total}</div><div className="text-sm text-gray-600">Total</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/data-pipelines',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setDataPipelines(j);}} className="mb-4 px-4 py-2 bg-green-600 text-white rounded-lg">Load Pipelines</button>
+          <div className="space-y-2">{(dataPipelines.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.pipeline_name}</div><div className="text-sm text-gray-500">{r.source} → {r.destination} • {r.schedule}</div><div className="text-xs text-gray-400">Success: {r.success_rate}% • {r.records_processed} records</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'affirmationsets' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">💫 Affirmation Sets</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-yellow-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-yellow-600">{affirmationSets.total}</div><div className="text-sm text-gray-600">Sets</div></div>
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{affirmationSets.active}</div><div className="text-sm text-gray-600">Active</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/affirmation-sets',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setAffirmationSets(j);}} className="mb-4 px-4 py-2 bg-yellow-500 text-white rounded-lg">Load Sets</button>
+          <div className="space-y-2">{(affirmationSets.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.set_name}</div><div className="text-sm text-gray-500">{r.category} • Practiced {r.times_practiced}x</div><div className="text-xs text-gray-400 mt-1">{r.affirmations?.substring(0,100)}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'vendorcontracts' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">📄 Vendor Contracts</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-blue-600">{vendorContracts.total}</div><div className="text-sm text-gray-600">Contracts</div></div>
+            <div className="bg-orange-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-orange-600">{vendorContracts.expiring_soon}</div><div className="text-sm text-gray-600">Expiring Soon</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/vendor-contracts',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setVendorContracts(j);}} className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg">Load Contracts</button>
+          <div className="space-y-2">{(vendorContracts.rows||[]).map((r:any)=><div key={r.id} className={`rounded-lg p-3 border ${r.days_until_expiry<=30?'bg-orange-50':'bg-white'}`}><div className="font-medium">{r.vendor_name}</div><div className="text-sm text-gray-500">{r.contract_type} • ${r.value} • Expires: {r.end_date}</div><div className="text-xs text-gray-400">{r.days_until_expiry} days left • {r.auto_renews?'Auto-renews':''}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'toneanalyzer' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🎭 Tone Analyzer AI</h2>
+          <div className="bg-white rounded-lg p-4 border mb-4">
+            <textarea id="ta-txt" className="w-full border rounded p-2 mb-2 h-24" placeholder="Paste text to analyze tone..."></textarea>
+            <button onClick={async()=>{const t=(document.getElementById('ta-txt') as any)?.value;if(!t)return;const d=await fetch('/api/tone-analyzer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({input_text:t})});const j=await d.json();setToneAnalyzer(prev=>[j,...prev]);}} className="px-4 py-2 bg-pink-600 text-white rounded-lg">Analyze Tone</button>
+          </div>
+          <div className="space-y-3">{toneAnalyzer.map((r:any,i:number)=><div key={i} className="bg-pink-50 rounded-lg p-3 border"><div className="flex gap-3 flex-wrap"><span className="bg-pink-200 text-pink-800 px-2 py-1 rounded text-sm font-medium">{r.detected_tone}</span><span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-sm">{r.sentiment}</span><span className="text-sm text-gray-500">Formality: {r.formality_score}/10</span></div><div className="text-xs text-gray-500 mt-2">{r.suggestions}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'coldexposure' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🧊 Cold Exposure Log</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-blue-600">{coldExposure.total}</div><div className="text-sm text-gray-600">Sessions</div></div>
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">+{coldExposure.avg_mood_delta}</div><div className="text-sm text-gray-600">Avg Mood Lift</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/cold-exposure-log',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setColdExposure(j);}} className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg">Load Log</button>
+          <div className="space-y-2">{(coldExposure.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.exposure_type} • {r.duration_secs}s</div><div className="text-sm text-gray-500">{r.water_temp_c}°C • Mood: {r.mood_before}→{r.mood_after} (+{r.mood_delta})</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'featurevotes' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🗳️ Feature Votes</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-purple-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-purple-600">{featureVotes.total}</div><div className="text-sm text-gray-600">Features</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/feature-votes',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setFeatureVotes(j);}} className="mb-4 px-4 py-2 bg-purple-600 text-white rounded-lg">Load Votes</button>
+          <div className="space-y-2">{(featureVotes.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border flex justify-between items-center"><div><div className="font-medium">{r.feature_title}</div><div className="text-xs text-gray-400">{r.category} • {r.status}</div></div><div className="text-center"><div className="text-lg font-bold text-purple-600">{r.score}</div><div className="text-xs text-gray-400">score</div></div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'networkingevents' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🤝 Networking Events</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-blue-600">{networkingEvents.total}</div><div className="text-sm text-gray-600">Events</div></div>
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{networkingEvents.total_contacts}</div><div className="text-sm text-gray-600">Contacts Made</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/networking-events',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setNetworkingEvents(j);}} className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg">Load Events</button>
+          <div className="space-y-2">{(networkingEvents.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.event_name}</div><div className="text-sm text-gray-500">{r.event_type} • {r.contacts_made} contacts • {r.follow_up_rate}% follow-up</div><div className="text-xs text-gray-400">{r.location}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'costtracker' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">💰 Cost Tracker</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-red-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-red-600">${costTracker.total_monthly}/mo</div><div className="text-sm text-gray-600">Monthly Spend</div></div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-gray-600">{costTracker.total}</div><div className="text-sm text-gray-600">Cost Items</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/cost-tracker',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setCostTracker(j);}} className="mb-4 px-4 py-2 bg-red-600 text-white rounded-lg">Load Costs</button>
+          <div className="space-y-2">{(costTracker.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.cost_name}</div><div className="text-sm text-gray-500">{r.vendor} • ${r.amount}/{r.billing_cycle} • ${r.annual_cost}/yr</div><div className="text-xs text-gray-400">{r.category} • {r.status}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'emailsubjects' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">📧 Email Subject AI</h2>
+          <div className="bg-white rounded-lg p-4 border mb-4">
+            <textarea id="es-ctx" className="w-full border rounded p-2 mb-2 h-20" placeholder="Describe your email (topic, offer, news...)"></textarea>
+            <input id="es-aud" className="w-full border rounded p-2 mb-2" placeholder="Audience (e.g. SaaS founders)" />
+            <button onClick={async()=>{const ctx=(document.getElementById('es-ctx') as any)?.value;const aud=(document.getElementById('es-aud') as any)?.value;if(!ctx)return;const d=await fetch('/api/email-subjects',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({email_context:ctx,audience:aud,goal:'open'})});const j=await d.json();setEmailSubjects(prev=>[j,...prev]);}} className="px-4 py-2 bg-indigo-600 text-white rounded-lg">Generate Subjects</button>
+          </div>
+          <div className="space-y-3">{emailSubjects.map((r:any,i:number)=><div key={i} className="bg-indigo-50 rounded-lg p-3 border"><ul className="list-decimal ml-4 text-sm font-medium">{(r.subject_options||[]).map((s:string,j:number)=><li key={j} className="mb-1">{s}</li>)}</ul><div className="text-xs text-gray-500 mt-2">{r.open_rate_prediction}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'bodyscanlog' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🧘 Body Scan Log</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-purple-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-purple-600">{bodyScanLog.total}</div><div className="text-sm text-gray-600">Sessions</div></div>
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{bodyScanLog.avg_relaxation}/10</div><div className="text-sm text-gray-600">Avg Relaxation</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/body-scan-log',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setBodyScanLog(j);}} className="mb-4 px-4 py-2 bg-purple-600 text-white rounded-lg">Load Log</button>
+          <div className="space-y-2">{(bodyScanLog.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.scan_date} • {r.technique}</div><div className="text-sm text-gray-500">{r.duration_mins}min • Pain: {r.pain_level}/10 • Relaxation: {r.relaxation_score}/10</div><div className="text-xs text-gray-400">{r.tension_areas}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'techdecisions' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">⚙️ Tech Decisions</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-gray-600">{techDecisions.total}</div><div className="text-sm text-gray-600">Decisions Logged</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/tech-decisions',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setTechDecisions(j);}} className="mb-4 px-4 py-2 bg-gray-700 text-white rounded-lg">Load Decisions</button>
+          <div className="space-y-2">{(techDecisions.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.decision_title}</div><div className="text-sm text-gray-500">Chose: {r.chosen_option} • {r.decided_by} • {r.decision_date}</div><div className="text-xs text-gray-400 mt-1">{r.rationale?.substring(0,100)}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'booksummaries' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">📖 Book Summaries</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-blue-600">{bookSummaries.total}</div><div className="text-sm text-gray-600">Summaries</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/book-summaries',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setBookSummaries(j);}} className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg">Load Book Summaries</button>
+          <div className="space-y-2">{(bookSummaries.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.book_title}</div><div className="text-sm text-gray-500">{r.author} • Rating: {r.rating||'–'}/5</div><div className="text-xs text-gray-400 mt-1">{r.key_lessons?.substring(0,100)}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'okrtemplates' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🎯 OKR Templates</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{okrTemplates.total}</div><div className="text-sm text-gray-600">Templates</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/okr-templates',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setOkrTemplates(j);}} className="mb-4 px-4 py-2 bg-green-600 text-white rounded-lg">Load OKR Templates</button>
+          <div className="space-y-2">{(okrTemplates.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.template_name}</div><div className="text-sm text-gray-600">{r.objective}</div><div className="text-xs text-gray-400 mt-1">{r.cadence} • Used {r.times_used}x</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'taglinerefiner' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">✨ Tagline Refiner AI</h2>
+          <div className="bg-white rounded-lg p-4 border mb-4">
+            <input id="tl-orig" className="w-full border rounded p-2 mb-2" placeholder="Your original tagline..." />
+            <input id="tl-aud" className="w-full border rounded p-2 mb-2" placeholder="Target audience (e.g. startup founders)" />
+            <select id="tl-tone" className="w-full border rounded p-2 mb-2"><option value="professional">Professional</option><option value="playful">Playful</option><option value="bold">Bold</option></select>
+            <button onClick={async()=>{const orig=(document.getElementById('tl-orig') as any)?.value;const aud=(document.getElementById('tl-aud') as any)?.value;const tone=(document.getElementById('tl-tone') as any)?.value;if(!orig)return;const d=await fetch('/api/tagline-refiner',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({original_tagline:orig,audience:aud,tone})});const j=await d.json();setTaglineRefiner(prev=>[j,...prev]);}} className="px-4 py-2 bg-purple-600 text-white rounded-lg">Refine with AI</button>
+          </div>
+          <div className="space-y-3">{taglineRefiner.map((r:any,i:number)=><div key={i} className="bg-purple-50 rounded-lg p-3 border"><div className="font-medium text-purple-700">Options:</div><ul className="list-disc ml-4 text-sm">{(r.refined_options||[]).map((o:string,j:number)=><li key={j}>{o}</li>)}</ul><div className="text-xs text-gray-500 mt-1">{r.feedback}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'fastingwindows' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">⏱️ Fasting Windows</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-orange-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-orange-600">{fastingWindows.total}</div><div className="text-sm text-gray-600">Total Sessions</div></div>
+            <div className="bg-green-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-green-600">{fastingWindows.completed}</div><div className="text-sm text-gray-600">Completed</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/fasting-windows',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setFastingWindows(j);}} className="mb-4 px-4 py-2 bg-orange-600 text-white rounded-lg">Load Fasting Log</button>
+          <div className="space-y-2">{(fastingWindows.rows||[]).map((r:any)=><div key={r.id} className="bg-white rounded-lg p-3 border"><div className="font-medium">{r.protocol} • {r.actual_hours}h actual</div><div className="text-sm text-gray-500">Started: {r.fast_start}</div><div className="text-xs text-gray-400">{r.broke_fast_with ? `Broke fast with: ${r.broke_fast_with}` : r.fast_end ? 'Completed' : 'In progress'}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'incidentseverity' && (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">🚨 Incident Severity</h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-red-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-red-600">{incidentSeverity.open}</div><div className="text-sm text-gray-600">Open</div></div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center"><div className="text-2xl font-bold text-gray-600">{incidentSeverity.total}</div><div className="text-sm text-gray-600">Total</div></div>
+          </div>
+          <button onClick={async()=>{const d=await fetch('/api/incident-severity',{headers:{Authorization:`Bearer ${token}`}});const j=await d.json();setIncidentSeverity(j);}} className="mb-4 px-4 py-2 bg-red-600 text-white rounded-lg">Load Incidents</button>
+          <div className="space-y-2">{(incidentSeverity.rows||[]).map((r:any)=><div key={r.id} className={`rounded-lg p-3 border ${r.severity<=1?'bg-red-50':r.severity<=2?'bg-orange-50':'bg-yellow-50'}`}><div className="font-medium">{r.incident_name}</div><div className="text-sm text-gray-500">SEV{r.severity} • {r.status} • MTTR: {r.mttr_hours}h</div><div className="text-xs text-gray-400">{r.affected_systems}</div></div>)}</div>
+        </div>
+      )}
+      {mainTab === 'readinglog' && (
         <div className="p-4 space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold">Reading Log</h2>
