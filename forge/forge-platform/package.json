@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "nodemon --exec 'ts-node --transpile-only src/index.ts'",
-    "build": "echo 'no build — start runs ts-node on source'",
-    "start": "ts-node --transpile-only src/index.ts",
+    "build": "esbuild src/index.ts --bundle=false --platform=node --target=node18 --outfile=dist/index.js",
+    "start": "node dist/index.js",
     "test": "jest --testPathPattern='__tests__/(auth|route-manifest)' --forceExit --no-coverage",
     "test:routes": "jest --testPathPattern=route-manifest --forceExit --no-coverage",
     "lint": "eslint src --ext .ts",
@@ -45,6 +45,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@types/node": "^25.9.3"
+    "@types/node": "^25.9.3",
+    "esbuild": "^0.19.0"
   }
 }
