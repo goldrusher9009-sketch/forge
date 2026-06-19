@@ -1,5 +1,14 @@
 # Forge Version History
 
+## v7.81 (2026-06-18)
+- Fix: truncated .run() at L30801 (feature-adoption POST handler cut off — TS1005 parse crash)
+
+## v7.80 (2026-06-18)
+- Fix: truncated res.j at L32000 (localization-keys POST handler incomplete — crashed route registration)
+
+## v7.79 (2026-06-18)
+- Fix: authenticateToken + auth aliases undefined → ReferenceError crash (same root cause as authMiddleware)
+
 ## v7.78 (2026-06-17)
 - B188: Image Generation, Notification Bell, Goal Streaks, AI Writing Coach, Work Sessions
 

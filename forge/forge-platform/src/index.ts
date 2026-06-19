@@ -124,6 +124,8 @@ function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void 
   catch { res.status(401).json({ success: false, error: 'INVALID_TOKEN', message: 'Token invalid or expired' }); }
 }
 const authMiddleware = requireAuth;
+const authenticateToken = requireAuth;
+const auth = requireAuth;
 
 function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): void {
   if (req.user?.role !== 'admin') { res.status(403).json({ success: false, error: 'FORBIDDEN' }); return; }
@@ -30796,7 +30798,9 @@ app.post('/api/feature-adoption', requireAuth, (req: any, res: any) => {
   const workspaceId = Number(req.query.workspace_id) || 1;
   const { feature_name, feature_category='general', total_users=0, active_users=0, usage_count=0, satisfaction_score=0, notes } = req.body;
   if (!feature_name) return res.status(400).json({ error: 'feature_name required' });
-  const r = db.prepare(`INSERT INTO workspace_feature_adoption (workspace_id,feature_name,feature_category,total_users,active_users,usage_count,satisfaction_score,notes) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, fea
+  const r = db.prepare(`INSERT INTO workspace_feature_adoption (workspace_id,feature_name,feature_category,total_users,active_users,usage_count,satisfaction_score,notes) VALUES (?,?,?,?,?,?,?,?)`).run(workspaceId, feature_name, feature_category, total_users, active_users, usage_count, satisfaction_score, notes||null);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
 // ─── B180: User Reading Log, Workspace API Keys Vault, AI Headline Scorer, User Habit Chains, Workspace Sprint Board ───
 
 try { db.exec(`
@@ -31995,7 +31999,8 @@ app.post('/api/localization-keys', requireAuth, (req: any, res: any) => {
   const { key_name, namespace, en_value, es_value, fr_value, de_value, pt_value, context } = req.body;
   if (!key_name || !en_value) return res.status(400).json({ error: 'key_name and en_value required' });
   const r = db.prepare(`INSERT INTO workspace_localization_keys (workspace_id,key_name,namespace,en_value,es_value,fr_value,de_value,pt_value,context) VALUES (?,?,?,?,?,?,?,?,?)`).run(workspaceId, key_name, namespace||'common', en_value, es_value||null, fr_value||null, de_value||null, pt_value||null, context||null);
-  res.j
+  res.json({ success: true, id: r.lastInsertRowid });
+});
 // ── B188: Image Generation, Notification Bell, Goal Streaks, AI Writing Coach, Work Sessions ──
 try { db.exec(`
 CREATE TABLE IF NOT EXISTS user_image_generations (
