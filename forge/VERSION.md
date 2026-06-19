@@ -1,5 +1,10 @@
 # Forge Version History
 
+## v7.82 (2026-06-19)
+- Fix: misplaced 404 catch-all at L5278 now removed — unlocks ALL routes past L5308 (bookmarks, notifications, reactions, activity, brief, referral, captures, journal, analytics, and 200+ more)
+- Fix: messages table schema missing tokens_in/tokens_out — analytics routes no longer crash
+- B189: ForgeRouter v2 (super-agent harness), Vibe Coding Mode, SEO Analyzer, Web Harvester, URL Inspector, Live Site Tester
+
 ## v7.81 (2026-06-18)
 - Fix: truncated .run() at L30801 (feature-adoption POST handler cut off — TS1005 parse crash)
 

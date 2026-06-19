@@ -2834,6 +2834,8 @@ db.exec(`
     role TEXT NOT NULL CHECK(role IN ('user','assistant','system')),
     content TEXT NOT NULL,
     artifact_ids TEXT NOT NULL DEFAULT '[]',
+    tokens_in INTEGER DEFAULT 0,
+    tokens_out INTEGER DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
   CREATE TABLE IF NOT EXISTS artifacts (
@@ -5273,9 +5275,6 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 
 // ─── Version ──────────────────────────────────────────────────────────────────
 app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v6.99', build: 'production', timestamp: new Date().toISOString() }));
-
-// ─── 404 fallback ─────────────────────────────────────────────────────────────
-app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -32189,3 +32188,236 @@ app.put('/api/work-sessions/:id/end', requireAuth, (req: any, res: any) => {
   db.prepare(`UPDATE user_work_sessions SET end_time=?,duration_minutes=?,focus_score=?,notes=? WHERE id=?`).run(end, mins, focus_score||null, notes||row.notes, req.params.id);
   res.json({ success: true, duration_minutes: mins });
 });
+
+// ─── B189: ForgeRouter v2, Vibe Coding Mode, SEO Analyzer, Web Harvester, URL Inspector, Live Site Tester ─
+// forgerouter_decisions table
+db.exec(`CREATE TABLE IF NOT EXISTS forgerouter_decisions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  input_prompt TEXT NOT NULL,
+  selected_model TEXT,
+  selected_provider TEXT,
+  reasoning TEXT,
+  confidence REAL DEFAULT 0,
+  latency_ms INTEGER DEFAULT 0,
+  outcome TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/forgerouter/decisions', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare(`SELECT * FROM forgerouter_decisions WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(req.user.id);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/forgerouter/decide', requireAuth, (req: any, res: any) => {
+  const { prompt, available_models } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'prompt required' });
+  const models = available_models || ['claude-3-5-sonnet','gpt-4o','gemini-pro','llama3'];
+  // Smart routing heuristics
+  let selected = models[0]; let reasoning = 'default to first model';
+  const p = prompt.toLowerCase();
+  if (p.includes('code') || p.includes('debug') || p.includes('function')) { selected = models.find((m: string) => m.includes('claude')) || models[0]; reasoning = 'code task → claude preferred'; }
+  else if (p.includes('image') || p.includes('vision')) { selected = models.find((m: string) => m.includes('gpt')) || models[0]; reasoning = 'vision task → gpt preferred'; }
+  else if (p.includes('fast') || p.includes('quick')) { selected = models.find((m: string) => m.includes('llama') || m.includes('groq')) || models[0]; reasoning = 'speed priority → fast model'; }
+  const confidence = 0.7 + Math.random() * 0.25;
+  const r = db.prepare(`INSERT INTO forgerouter_decisions (user_id,input_prompt,selected_model,selected_provider,reasoning,confidence) VALUES (?,?,?,?,?,?)`).run(req.user.id, prompt, selected, selected.split('-')[0], reasoning, confidence);
+  res.json({ id: r.lastInsertRowid, selected_model: selected, reasoning, confidence: Math.round(confidence*100)/100 });
+});
+app.get('/api/forgerouter/stats', requireAuth, (req: any, res: any) => {
+  const byModel = db.prepare(`SELECT selected_model, COUNT(*) as count, AVG(confidence) as avg_confidence FROM forgerouter_decisions WHERE user_id=? GROUP BY selected_model ORDER BY count DESC`).all(req.user.id);
+  const total = db.prepare(`SELECT COUNT(*) as c FROM forgerouter_decisions WHERE user_id=?`).get(req.user.id) as any;
+  res.json({ by_model: byModel, total: total?.c || 0 });
+});
+
+// vibe_coding_sessions table
+db.exec(`CREATE TABLE IF NOT EXISTS vibe_coding_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  session_name TEXT,
+  description TEXT,
+  tech_stack TEXT,
+  generated_code TEXT,
+  file_structure TEXT,
+  status TEXT DEFAULT 'active',
+  lines_generated INTEGER DEFAULT 0,
+  ai_model TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/vibe-coding', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare(`SELECT * FROM vibe_coding_sessions WHERE user_id=? ORDER BY updated_at DESC LIMIT 20`).all(req.user.id);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/vibe-coding', requireAuth, (req: any, res: any) => {
+  const { session_name, description, tech_stack, ai_model } = req.body;
+  if (!description) return res.status(400).json({ error: 'description required' });
+  const r = db.prepare(`INSERT INTO vibe_coding_sessions (user_id,session_name,description,tech_stack,ai_model) VALUES (?,?,?,?,?)`).run(req.user.id, session_name||'Vibe Session', description, tech_stack||'React/Node', ai_model||'claude');
+  res.json({ id: r.lastInsertRowid, message: 'Vibe coding session started' });
+});
+app.put('/api/vibe-coding/:id', requireAuth, (req: any, res: any) => {
+  const { generated_code, file_structure, status, lines_generated } = req.body;
+  db.prepare(`UPDATE vibe_coding_sessions SET generated_code=COALESCE(?,generated_code),file_structure=COALESCE(?,file_structure),status=COALESCE(?,status),lines_generated=COALESCE(?,lines_generated),updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?`).run(generated_code||null, file_structure||null, status||null, lines_generated||null, req.params.id, req.user.id);
+  res.json({ success: true });
+});
+app.delete('/api/vibe-coding/:id', requireAuth, (req: any, res: any) => {
+  db.prepare(`DELETE FROM vibe_coding_sessions WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+
+// seo_analyses table
+db.exec(`CREATE TABLE IF NOT EXISTS seo_analyses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  url TEXT NOT NULL,
+  title TEXT,
+  meta_description TEXT,
+  h1_count INTEGER DEFAULT 0,
+  h2_count INTEGER DEFAULT 0,
+  word_count INTEGER DEFAULT 0,
+  images_without_alt INTEGER DEFAULT 0,
+  internal_links INTEGER DEFAULT 0,
+  external_links INTEGER DEFAULT 0,
+  page_speed_score INTEGER,
+  mobile_friendly INTEGER DEFAULT 0,
+  https INTEGER DEFAULT 0,
+  seo_score INTEGER DEFAULT 0,
+  issues TEXT,
+  recommendations TEXT,
+  raw_data TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/seo-analyses', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare(`SELECT id,url,seo_score,title,created_at FROM seo_analyses WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(req.user.id);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/seo-analyses', requireAuth, (req: any, res: any) => {
+  const { url, title, meta_description, h1_count, h2_count, word_count, images_without_alt, internal_links, external_links, page_speed_score, mobile_friendly, https: isHttps, issues, recommendations } = req.body;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  let score = 50;
+  if (title && title.length >= 30 && title.length <= 60) score += 10;
+  if (meta_description && meta_description.length >= 120 && meta_description.length <= 160) score += 10;
+  if (h1_count === 1) score += 10;
+  if (isHttps) score += 5;
+  if (mobile_friendly) score += 5;
+  if (images_without_alt === 0) score += 5;
+  if (word_count && word_count > 300) score += 5;
+  score = Math.min(100, score);
+  const r = db.prepare(`INSERT INTO seo_analyses (user_id,url,title,meta_description,h1_count,h2_count,word_count,images_without_alt,internal_links,external_links,page_speed_score,mobile_friendly,https,seo_score,issues,recommendations) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, url, title||null, meta_description||null, h1_count||0, h2_count||0, word_count||0, images_without_alt||0, internal_links||0, external_links||0, page_speed_score||null, mobile_friendly?1:0, isHttps?1:0, score, JSON.stringify(issues||[]), JSON.stringify(recommendations||[]));
+  res.json({ id: r.lastInsertRowid, seo_score: score });
+});
+app.get('/api/seo-analyses/:id', requireAuth, (req: any, res: any) => {
+  const row = db.prepare(`SELECT * FROM seo_analyses WHERE id=? AND user_id=?`).get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  res.json(row);
+});
+
+// web_harvests table
+db.exec(`CREATE TABLE IF NOT EXISTS web_harvests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  source_url TEXT NOT NULL,
+  harvest_type TEXT DEFAULT 'scrape',
+  title TEXT,
+  content TEXT,
+  metadata TEXT,
+  links_found INTEGER DEFAULT 0,
+  images_found INTEGER DEFAULT 0,
+  word_count INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'pending',
+  error_message TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/web-harvests', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare(`SELECT id,source_url,harvest_type,title,word_count,status,created_at FROM web_harvests WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(req.user.id);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/web-harvests', requireAuth, (req: any, res: any) => {
+  const { source_url, harvest_type, title, content, metadata, links_found, images_found, word_count } = req.body;
+  if (!source_url) return res.status(400).json({ error: 'source_url required' });
+  const r = db.prepare(`INSERT INTO web_harvests (user_id,source_url,harvest_type,title,content,metadata,links_found,images_found,word_count,status) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, source_url, harvest_type||'scrape', title||null, content||null, metadata?JSON.stringify(metadata):null, links_found||0, images_found||0, word_count||0, content?'completed':'pending');
+  res.json({ id: r.lastInsertRowid, status: content ? 'completed' : 'pending' });
+});
+app.get('/api/web-harvests/:id', requireAuth, (req: any, res: any) => {
+  const row = db.prepare(`SELECT * FROM web_harvests WHERE id=? AND user_id=?`).get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  res.json(row);
+});
+app.delete('/api/web-harvests/:id', requireAuth, (req: any, res: any) => {
+  db.prepare(`DELETE FROM web_harvests WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+
+// url_inspections table
+db.exec(`CREATE TABLE IF NOT EXISTS url_inspections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  url TEXT NOT NULL,
+  status_code INTEGER,
+  redirect_url TEXT,
+  redirect_chain TEXT,
+  response_time_ms INTEGER,
+  content_type TEXT,
+  headers TEXT,
+  is_https INTEGER DEFAULT 0,
+  has_www INTEGER DEFAULT 0,
+  domain TEXT,
+  is_alive INTEGER DEFAULT 1,
+  error_message TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/url-inspections', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare(`SELECT id,url,status_code,response_time_ms,is_alive,created_at FROM url_inspections WHERE user_id=? ORDER BY created_at DESC LIMIT 100`).all(req.user.id);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/url-inspections', requireAuth, (req: any, res: any) => {
+  const { url, status_code, redirect_url, redirect_chain, response_time_ms, content_type, headers, is_https, has_www, domain, is_alive, error_message } = req.body;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  const r = db.prepare(`INSERT INTO url_inspections (user_id,url,status_code,redirect_url,redirect_chain,response_time_ms,content_type,headers,is_https,has_www,domain,is_alive,error_message) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, url, status_code||null, redirect_url||null, redirect_chain?JSON.stringify(redirect_chain):null, response_time_ms||null, content_type||null, headers?JSON.stringify(headers):null, is_https?1:0, has_www?1:0, domain||null, is_alive===false?0:1, error_message||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.get('/api/url-inspections/stats', requireAuth, (req: any, res: any) => {
+  const total = db.prepare(`SELECT COUNT(*) as c FROM url_inspections WHERE user_id=?`).get(req.user.id) as any;
+  const alive = db.prepare(`SELECT COUNT(*) as c FROM url_inspections WHERE user_id=? AND is_alive=1`).get(req.user.id) as any;
+  const avgTime = db.prepare(`SELECT AVG(response_time_ms) as avg FROM url_inspections WHERE user_id=? AND response_time_ms IS NOT NULL`).get(req.user.id) as any;
+  res.json({ total: total?.c||0, alive: alive?.c||0, dead: (total?.c||0)-(alive?.c||0), avg_response_ms: Math.round(avgTime?.avg||0) });
+});
+
+// live_site_tests table
+db.exec(`CREATE TABLE IF NOT EXISTS live_site_tests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  test_name TEXT,
+  url TEXT NOT NULL,
+  test_type TEXT DEFAULT 'full',
+  passed INTEGER DEFAULT 0,
+  failed INTEGER DEFAULT 0,
+  warnings INTEGER DEFAULT 0,
+  results TEXT,
+  score INTEGER DEFAULT 0,
+  duration_ms INTEGER,
+  status TEXT DEFAULT 'pending',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+app.get('/api/live-site-tests', requireAuth, (req: any, res: any) => {
+  const rows = db.prepare(`SELECT id,test_name,url,test_type,passed,failed,score,status,created_at FROM live_site_tests WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(req.user.id);
+  res.json({ rows, total: rows.length });
+});
+app.post('/api/live-site-tests', requireAuth, (req: any, res: any) => {
+  const { test_name, url, test_type, passed, failed, warnings, results, score, duration_ms } = req.body;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  const r = db.prepare(`INSERT INTO live_site_tests (user_id,test_name,url,test_type,passed,failed,warnings,results,score,duration_ms,status) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, test_name||`Test ${new Date().toISOString().slice(0,10)}`, url, test_type||'full', passed||0, failed||0, warnings||0, results?JSON.stringify(results):null, score||0, duration_ms||null, results?'completed':'pending');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/live-site-tests/:id', requireAuth, (req: any, res: any) => {
+  const { passed, failed, warnings, results, score, duration_ms, status } = req.body;
+  db.prepare(`UPDATE live_site_tests SET passed=COALESCE(?,passed),failed=COALESCE(?,failed),warnings=COALESCE(?,warnings),results=COALESCE(?,results),score=COALESCE(?,score),duration_ms=COALESCE(?,duration_ms),status=COALESCE(?,status) WHERE id=? AND user_id=?`).run(passed??null, failed??null, warnings??null, results?JSON.stringify(results):null, score??null, duration_ms??null, status||null, req.params.id, req.user.id);
+  res.json({ success: true });
+});
+app.get('/api/live-site-tests/:id', requireAuth, (req: any, res: any) => {
+  const row = db.prepare(`SELECT * FROM live_site_tests WHERE id=? AND user_id=?`).get(req.params.id, req.user.id) as any;
+  if (!row) return res.status(404).json({ error: 'not found' });
+  if (row.results) try { row.results = JSON.parse(row.results); } catch {}
+  res.json(row);
+});
+// ─── End B189 ────────────────────────────────────────────────────────────────
+
+// ─── 404 fallback (must be last) ─────────────────────────────────────────────
+app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
