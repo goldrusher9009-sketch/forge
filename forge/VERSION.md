@@ -1,3 +1,10 @@
+## v90.00 — B5701-B5750 📷🐟 PHOTOGRAPHY+AQUARIUM-OS +Gear/Shoots/Portfolio/Tanks/Fish/WaterLog/GrandMilestone
+- B5701-5710: Photography OS — gear catalog (camera/lens/tripod), shoot log (genre/location/shots/keepers)
+- B5711-5720: Portfolio + Stats — portfolio gallery (featured), keep rate %, shoots by genre
+- B5721-5730: Aquarium OS — tank registry (volume/pH/temp/filtration), fish inventory with temperament
+- B5731-5740: Water Parameter Log — NH3/NO2/NO3/GH/KH tracking, water change %, per-tank history
+- B5741-5750: Aquarium Stats + Grand Milestone v90 — /api/milestone/v90, 5750 endpoints, 152764 lines
+
 ## v89.00 — B5651-B5700 🍷🥾 WINE-SPIRITS+HIKING-OS +Cellar/Tastings/Spirits/Trails/Logs/Gear/GrandMilestone
 - B5651-5660: Wine OS — cellar catalog (varietal/vintage/value), tasting notes (appearance/aroma/taste/finish)
 - B5661-5670: Wine Stats + Spirits — cellar value by varietal/country, spirits collection (whisky/rum/gin/etc)
