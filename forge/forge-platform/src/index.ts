@@ -139354,5 +139354,418 @@ app.get('/api/forge/creative-manifest', (req: any, res: any) => {
 
 
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B2801-B2850: Podcast OS + Animation OS + Dance OS + Martial Arts OS
+//              Yoga OS v2 + Cycling OS + Hiking OS + Surfing OS
+//              Cooking Classes OS + Grand Milestone v32
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B2801-B2805: Podcast OS
+app.get('/api/podcast/shows', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS podcast_shows (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, host TEXT, category TEXT DEFAULT 'technology', status TEXT DEFAULT 'subscribed', episodes_total INTEGER DEFAULT 0, episodes_listened INTEGER DEFAULT 0, rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM podcast_shows WHERE user_id=? ORDER BY rating DESC, title ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/podcast/shows', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, host, category, episodes_total, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS podcast_shows (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, host TEXT, category TEXT DEFAULT 'technology', status TEXT DEFAULT 'subscribed', episodes_total INTEGER DEFAULT 0, episodes_listened INTEGER DEFAULT 0, rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO podcast_shows (user_id,title,host,category,episodes_total,rating,notes) VALUES (?,?,?,?,?,?,?)').run(u,title||'',host||'',category||'technology',episodes_total||0,rating||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/podcast/episodes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS podcast_episodes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, show_id INTEGER, title TEXT, date_listened TEXT, duration_min INTEGER DEFAULT 0, rating INTEGER DEFAULT 0, key_takeaways TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT e.*, s.title as show_title FROM podcast_episodes e LEFT JOIN podcast_shows s ON e.show_id=s.id WHERE e.user_id=? ORDER BY e.date_listened DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/podcast/episodes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { show_id, title, date_listened, duration_min, rating, key_takeaways, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS podcast_episodes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, show_id INTEGER, title TEXT, date_listened TEXT, duration_min INTEGER DEFAULT 0, rating INTEGER DEFAULT 0, key_takeaways TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO podcast_episodes (user_id,show_id,title,date_listened,duration_min,rating,key_takeaways,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,show_id||0,title||'',date_listened||'',duration_min||0,rating||0,key_takeaways||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/podcast-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const e = safe(()=>db.prepare('SELECT COUNT(*) as c, SUM(duration_min) as m FROM podcast_episodes WHERE user_id=?').get(u) as any);
+  res.json({ success:true, podcast_os:{ episodes_logged:e?.c||0, total_hours:Math.round((e?.m||0)/60) }});
+});
+
+// B2806-B2810: Animation OS
+app.get('/api/animation/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS animation_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, style TEXT DEFAULT '2d', software TEXT, fps INTEGER DEFAULT 24, frames_total INTEGER DEFAULT 0, frames_done INTEGER DEFAULT 0, status TEXT DEFAULT 'in-progress', duration_sec INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM animation_projects WHERE user_id=? ORDER BY status ASC, created_at DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/animation/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, style, software, fps, frames_total, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS animation_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, style TEXT DEFAULT '2d', software TEXT, fps INTEGER DEFAULT 24, frames_total INTEGER DEFAULT 0, frames_done INTEGER DEFAULT 0, status TEXT DEFAULT 'in-progress', duration_sec INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO animation_projects (user_id,title,style,software,fps,frames_total,notes) VALUES (?,?,?,?,?,?,?)').run(u,title||'',style||'2d',software||'',fps||24,frames_total||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/animation/references', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS animation_references (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, type TEXT DEFAULT 'film', style TEXT, technique TEXT, notes TEXT, url TEXT, rating INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM animation_references WHERE user_id=? ORDER BY rating DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/animation/references', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, type, style, technique, notes, url, rating } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS animation_references (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, type TEXT DEFAULT 'film', style TEXT, technique TEXT, notes TEXT, url TEXT, rating INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO animation_references (user_id,title,type,style,technique,notes,url,rating) VALUES (?,?,?,?,?,?,?,?)').run(u,title||'',type||'film',style||'',technique||'',notes||'',url||'',rating||3);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/animation-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare("SELECT COUNT(*) as c FROM animation_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, animation_os:{ projects_completed:p?.c||0 }});
+});
+
+// B2811-B2815: Dance OS
+app.get('/api/dance/styles', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS dance_styles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, style TEXT, level TEXT DEFAULT 'beginner', years_training REAL DEFAULT 0, instructor TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM dance_styles WHERE user_id=? ORDER BY level DESC, style ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/dance/styles', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { style, level, years_training, instructor, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS dance_styles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, style TEXT, level TEXT DEFAULT 'beginner', years_training REAL DEFAULT 0, instructor TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO dance_styles (user_id,style,level,years_training,instructor,notes) VALUES (?,?,?,?,?,?)').run(u,style||'',level||'beginner',years_training||0,instructor||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/dance/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS dance_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, style TEXT, date TEXT, duration_min INTEGER DEFAULT 60, type TEXT DEFAULT 'class', energy INTEGER DEFAULT 3, focus TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM dance_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const monthly_min = db.prepare("SELECT SUM(duration_min) as m FROM dance_sessions WHERE user_id=? AND date>=date('now','-30 days')").get(u) as any;
+    res.json({ success:true, data:rows, monthly_min:monthly_min?.m||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/dance/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { style, date, duration_min, type, energy, focus, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS dance_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, style TEXT, date TEXT, duration_min INTEGER DEFAULT 60, type TEXT DEFAULT 'class', energy INTEGER DEFAULT 3, focus TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO dance_sessions (user_id,style,date,duration_min,type,energy,focus,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,style||'',date||'',duration_min||60,type||'class',energy||3,focus||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/dance-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c, SUM(duration_min) as m FROM dance_sessions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, dance_os:{ sessions:s?.c||0, total_hours:Math.round((s?.m||0)/60) }});
+});
+
+// B2816-B2820: Martial Arts OS
+app.get('/api/martial-arts/training', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS martial_arts_training (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, art TEXT DEFAULT 'bjj', duration_min INTEGER DEFAULT 60, type TEXT DEFAULT 'drilling', intensity INTEGER DEFAULT 3, techniques TEXT, sparring_rounds INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM martial_arts_training WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const week_sessions = db.prepare("SELECT COUNT(*) as c FROM martial_arts_training WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any;
+    res.json({ success:true, data:rows, sessions_this_week:week_sessions?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/martial-arts/training', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, art, duration_min, type, intensity, techniques, sparring_rounds, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS martial_arts_training (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, art TEXT DEFAULT 'bjj', duration_min INTEGER DEFAULT 60, type TEXT DEFAULT 'drilling', intensity INTEGER DEFAULT 3, techniques TEXT, sparring_rounds INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO martial_arts_training (user_id,date,art,duration_min,type,intensity,techniques,sparring_rounds,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,date||'',art||'bjj',duration_min||60,type||'drilling',intensity||3,techniques||'',sparring_rounds||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/martial-arts/belts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS martial_arts_belts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, art TEXT, rank TEXT, date_achieved TEXT, instructor TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM martial_arts_belts WHERE user_id=? ORDER BY date_achieved DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/martial-arts/belts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { art, rank, date_achieved, instructor, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS martial_arts_belts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, art TEXT, rank TEXT, date_achieved TEXT, instructor TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO martial_arts_belts (user_id,art,rank,date_achieved,instructor,notes) VALUES (?,?,?,?,?,?)').run(u,art||'',rank||'',date_achieved||'',instructor||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/martial-arts-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const t = safe(()=>db.prepare('SELECT COUNT(*) as c FROM martial_arts_training WHERE user_id=?').get(u) as any);
+  res.json({ success:true, martial_arts_os:{ training_sessions:t?.c||0 }});
+});
+
+// B2821-B2825: Yoga OS v2
+app.get('/api/yoga-v2/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS yoga_v2_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, style TEXT DEFAULT 'hatha', duration_min INTEGER DEFAULT 60, instructor TEXT, setting TEXT DEFAULT 'home', energy_before INTEGER DEFAULT 3, energy_after INTEGER DEFAULT 3, poses_practiced TEXT, intentions TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM yoga_v2_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const streak = db.prepare("SELECT COUNT(*) as c FROM yoga_v2_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any;
+    res.json({ success:true, data:rows, sessions_7d:streak?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/yoga-v2/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, style, duration_min, instructor, setting, energy_before, energy_after, poses_practiced, intentions, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS yoga_v2_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, style TEXT DEFAULT 'hatha', duration_min INTEGER DEFAULT 60, instructor TEXT, setting TEXT DEFAULT 'home', energy_before INTEGER DEFAULT 3, energy_after INTEGER DEFAULT 3, poses_practiced TEXT, intentions TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO yoga_v2_sessions (user_id,date,style,duration_min,instructor,setting,energy_before,energy_after,poses_practiced,intentions,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,date||'',style||'hatha',duration_min||60,instructor||'',setting||'home',energy_before||3,energy_after||3,poses_practiced||'',intentions||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/yoga-v2/poses', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS yoga_v2_poses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sanskrit TEXT, category TEXT DEFAULT 'standing', difficulty INTEGER DEFAULT 2, mastery INTEGER DEFAULT 1, last_practiced TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM yoga_v2_poses WHERE user_id=? ORDER BY mastery DESC, name ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/yoga-v2/poses', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, sanskrit, category, difficulty, mastery, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS yoga_v2_poses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sanskrit TEXT, category TEXT DEFAULT 'standing', difficulty INTEGER DEFAULT 2, mastery INTEGER DEFAULT 1, last_practiced TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO yoga_v2_poses (user_id,name,sanskrit,category,difficulty,mastery,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',sanskrit||'',category||'standing',difficulty||2,mastery||1,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/yoga-v2-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c, SUM(duration_min) as m FROM yoga_v2_sessions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, yoga_v2_os:{ sessions:s?.c||0, total_hours:Math.round((s?.m||0)/60) }});
+});
+
+// B2826-B2830: Cycling OS
+app.get('/api/cycling/rides', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cycling_rides (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, distance_km REAL DEFAULT 0, duration_min INTEGER DEFAULT 0, elevation_m INTEGER DEFAULT 0, avg_speed_kmh REAL DEFAULT 0, type TEXT DEFAULT 'road', bike TEXT, calories INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM cycling_rides WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const stats = db.prepare("SELECT SUM(distance_km) as d, COUNT(*) as c FROM cycling_rides WHERE user_id=? AND date>=date('now','-30 days')").get(u) as any;
+    res.json({ success:true, data:rows, distance_30d:stats?.d||0, rides_30d:stats?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/cycling/rides', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, distance_km, duration_min, elevation_m, avg_speed_kmh, type, bike, calories, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cycling_rides (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, distance_km REAL DEFAULT 0, duration_min INTEGER DEFAULT 0, elevation_m INTEGER DEFAULT 0, avg_speed_kmh REAL DEFAULT 0, type TEXT DEFAULT 'road', bike TEXT, calories INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO cycling_rides (user_id,date,distance_km,duration_min,elevation_m,avg_speed_kmh,type,bike,calories,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,date||'',distance_km||0,duration_min||0,elevation_m||0,avg_speed_kmh||0,type||'road',bike||'',calories||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/cycling/bikes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cycling_bikes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'road', brand TEXT, model TEXT, total_km REAL DEFAULT 0, purchase_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM cycling_bikes WHERE user_id=? ORDER BY total_km DESC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/cycling/bikes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, brand, model, purchase_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cycling_bikes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'road', brand TEXT, model TEXT, total_km REAL DEFAULT 0, purchase_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO cycling_bikes (user_id,name,type,brand,model,purchase_date,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',type||'road',brand||'',model||'',purchase_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/cycling-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const r = safe(()=>db.prepare('SELECT COUNT(*) as c, SUM(distance_km) as d FROM cycling_rides WHERE user_id=?').get(u) as any);
+  res.json({ success:true, cycling_os:{ rides:r?.c||0, total_km:Math.round(r?.d||0) }});
+});
+
+// B2831-B2835: Hiking OS
+app.get('/api/hiking/trails', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS hiking_trails (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, location TEXT, distance_km REAL DEFAULT 0, elevation_gain_m INTEGER DEFAULT 0, difficulty TEXT DEFAULT 'moderate', status TEXT DEFAULT 'want-to-hike', date_hiked TEXT, rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM hiking_trails WHERE user_id=? ORDER BY CASE status WHEN 'want-to-hike' THEN 0 ELSE 1 END, rating DESC LIMIT 30").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/hiking/trails', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, location, distance_km, elevation_gain_m, difficulty, date_hiked, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS hiking_trails (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, location TEXT, distance_km REAL DEFAULT 0, elevation_gain_m INTEGER DEFAULT 0, difficulty TEXT DEFAULT 'moderate', status TEXT DEFAULT 'want-to-hike', date_hiked TEXT, rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const st = date_hiked ? 'completed' : 'want-to-hike';
+    const r = db.prepare('INSERT INTO hiking_trails (user_id,name,location,distance_km,elevation_gain_m,difficulty,status,date_hiked,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',location||'',distance_km||0,elevation_gain_m||0,difficulty||'moderate',st,date_hiked||'',rating||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/hiking/gear', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS hiking_gear (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'footwear', weight_g INTEGER DEFAULT 0, cost REAL DEFAULT 0, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM hiking_gear WHERE user_id=? ORDER BY category ASC, name ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/hiking/gear', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, weight_g, cost, condition, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS hiking_gear (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'footwear', weight_g INTEGER DEFAULT 0, cost REAL DEFAULT 0, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO hiking_gear (user_id,name,category,weight_g,cost,condition,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',category||'footwear',weight_g||0,cost||0,condition||'good',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/hiking-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const t = safe(()=>db.prepare("SELECT COUNT(*) as c FROM hiking_trails WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, hiking_os:{ trails_completed:t?.c||0 }});
+});
+
+// B2836-B2840: Surfing OS
+app.get('/api/surfing/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS surfing_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, duration_min INTEGER DEFAULT 90, wave_height_ft REAL DEFAULT 2, conditions TEXT DEFAULT 'fair', board TEXT, waves_caught INTEGER DEFAULT 0, best_wave TEXT, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM surfing_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/surfing/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, location, duration_min, wave_height_ft, conditions, board, waves_caught, best_wave, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS surfing_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, duration_min INTEGER DEFAULT 90, wave_height_ft REAL DEFAULT 2, conditions TEXT DEFAULT 'fair', board TEXT, waves_caught INTEGER DEFAULT 0, best_wave TEXT, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO surfing_sessions (user_id,date,location,duration_min,wave_height_ft,conditions,board,waves_caught,best_wave,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,date||'',location||'',duration_min||90,wave_height_ft||2,conditions||'fair',board||'',waves_caught||0,best_wave||'',rating||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/surfing/boards', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS surfing_boards (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'shortboard', length_ft REAL DEFAULT 6, volume_l REAL DEFAULT 0, shaper TEXT, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM surfing_boards WHERE user_id=? ORDER BY type ASC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/surfing/boards', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, length_ft, volume_l, shaper, condition, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS surfing_boards (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'shortboard', length_ft REAL DEFAULT 6, volume_l REAL DEFAULT 0, shaper TEXT, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO surfing_boards (user_id,name,type,length_ft,volume_l,shaper,condition,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'shortboard',length_ft||6,volume_l||0,shaper||'',condition||'good',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/surfing-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c, SUM(waves_caught) as w FROM surfing_sessions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, surfing_os:{ sessions:s?.c||0, waves_caught:s?.w||0 }});
+});
+
+// B2841-B2845: Cooking Classes OS
+app.get('/api/cooking-classes/classes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cooking_classes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, instructor TEXT, cuisine TEXT DEFAULT 'french', date TEXT, duration_min INTEGER DEFAULT 120, location TEXT, cost REAL DEFAULT 0, rating INTEGER DEFAULT 0, skills_learned TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM cooking_classes WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/cooking-classes/classes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, instructor, cuisine, date, duration_min, location, cost, rating, skills_learned, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cooking_classes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, instructor TEXT, cuisine TEXT DEFAULT 'french', date TEXT, duration_min INTEGER DEFAULT 120, location TEXT, cost REAL DEFAULT 0, rating INTEGER DEFAULT 0, skills_learned TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO cooking_classes (user_id,title,instructor,cuisine,date,duration_min,location,cost,rating,skills_learned,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,title||'',instructor||'',cuisine||'french',date||'',duration_min||120,location||'',cost||0,rating||0,skills_learned||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/cooking-classes/techniques', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cooking_techniques (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'knife-skills', mastery INTEGER DEFAULT 1, date_learned TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM cooking_techniques WHERE user_id=? ORDER BY mastery DESC, name ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/cooking-classes/techniques', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, mastery, date_learned, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cooking_techniques (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'knife-skills', mastery INTEGER DEFAULT 1, date_learned TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO cooking_techniques (user_id,name,category,mastery,date_learned,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',category||'knife-skills',mastery||1,date_learned||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/cooking-classes-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as c FROM cooking_classes WHERE user_id=?').get(u) as any);
+  res.json({ success:true, cooking_classes_os:{ classes_taken:c?.c||0 }});
+});
+
+// B2846-B2850: Grand Milestone v32
+app.get('/api/milestone/v32', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const rides = safe(()=>db.prepare('SELECT SUM(distance_km) as d FROM cycling_rides WHERE user_id=?').get(u) as any);
+  const trails = safe(()=>db.prepare("SELECT COUNT(*) as c FROM hiking_trails WHERE user_id=? AND status='completed'").get(u) as any);
+  const waves = safe(()=>db.prepare('SELECT SUM(waves_caught) as w FROM surfing_sessions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v32.00', total_endpoints:2850, milestone:'B2850 — Active Life & Movement OS Complete', active_life:{ km_cycled:Math.round(rides?.d||0), trails_hiked:trails?.c||0, waves_surfed:waves?.w||0 }});
+});
+app.get('/api/forge/active-life-health', (_req: any, res: any) => {
+  res.json({ success:true, active_life_health:{ os_modules:128, total_endpoints:2850, version:'v32.00' }});
+});
+app.get('/api/forge/movement-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const dance = safe(()=>db.prepare('SELECT COUNT(*) as c FROM dance_sessions WHERE user_id=?').get(u) as any);
+  const yoga = safe(()=>db.prepare('SELECT COUNT(*) as c FROM yoga_v2_sessions WHERE user_id=?').get(u) as any);
+  const martial = safe(()=>db.prepare('SELECT COUNT(*) as c FROM martial_arts_training WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v32.00', movement:{ dance_sessions:dance?.c||0, yoga_sessions:yoga?.c||0, martial_arts_sessions:martial?.c||0 }, total_endpoints:2850 });
+});
+
+
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
