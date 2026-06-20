@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v132.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v133.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5335,7 +5335,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v132.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v133.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -6814,7 +6814,7 @@ app.get('/api/habits', authMiddleware, async (req: any, res) => {
     )`).run();
     const habits = db.prepare('SELECT * FROM habits WHERE user_id=? ORDER BY created_at').all(userId) as any[];
     const today = new Date().toISOString().slice(0, 10);
-    const logs = db.prepare('SELECT habit_id, date FROM habit_logs WHERE user_id=? AND date >= date(?, "-7 days")').all(userId, today) as any[];
+    const logs = db.prepare("SELECT habit_id, date FROM habit_logs WHERE user_id=? AND date >= date('now', '-7 days')").all(userId) as any[];
     const logSet = new Set(logs.map((l: any) => `${l.habit_id}:${l.date}`));
     res.json(habits.map((h: any) => ({ ...h, doneToday: logSet.has(`${h.id}:${today}`), recentLogs: logs.filter((l: any) => l.habit_id === h.id).map((l: any) => l.date) })));
   } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -147272,7 +147272,7 @@ app.get('/api/reading/books', (req: any, res: any) => {
   const u = (req as any).user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, genre TEXT DEFAULT 'fiction', isbn TEXT, pages INTEGER DEFAULT 0, status TEXT DEFAULT 'want_to_read', start_date TEXT, finish_date TEXT, current_page INTEGER DEFAULT 0, rating REAL DEFAULT 0, review TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare('SELECT * FROM books WHERE user_id=? ORDER BY CASE status WHEN "reading" THEN 1 WHEN "want_to_read" THEN 2 ELSE 3 END, finish_date DESC LIMIT 50').all(u);
+    const rows = db.prepare("SELECT * FROM books WHERE user_id=? ORDER BY CASE status WHEN 'reading' THEN 1 WHEN 'want_to_read' THEN 2 ELSE 3 END, finish_date DESC LIMIT 50").all(u);
     const stats = db.prepare("SELECT status, COUNT(*) as c FROM books WHERE user_id=? GROUP BY status").all(u);
     const avg_rating = db.prepare("SELECT AVG(rating) as a FROM books WHERE user_id=? AND status='finished' AND rating>0").get(u) as any;
     res.json({ success:true, data:rows, stats, avg_rating:avg_rating?.a||0 });
@@ -167509,6 +167509,30 @@ try { db.prepare(`ALTER TABLE invoices ADD COLUMN client_id INTEGER DEFAULT NULL
 try { db.prepare(`ALTER TABLE invoices ADD COLUMN project_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
 // ─── end v132 migrations ──────────────────────────────────────────────────────
 
+// ─── v133 Schema Migrations: fix garden_plants, freelance, travel, sports ─────
+// garden_plants early schema has plant_name/category/is_active — later handlers need name/type/location/status
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN type TEXT DEFAULT 'vegetable'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN status TEXT DEFAULT 'growing'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN watering_freq_days INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN sunlight TEXT DEFAULT 'full'`).run(); } catch(e) {}
+try { db.prepare(`UPDATE garden_plants SET name=COALESCE(NULLIF(name,''),plant_name,'') WHERE name='' AND plant_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE garden_plants SET type=COALESCE(NULLIF(type,''),category,'vegetable') WHERE type='' AND category IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE garden_plants SET status=CASE WHEN is_active=0 THEN 'dead' ELSE 'growing' END WHERE status='' AND is_active IS NOT NULL`).run(); } catch(e) {}
+// freelance_projects missing end_date column
+try { db.prepare(`ALTER TABLE freelance_projects ADD COLUMN end_date TEXT DEFAULT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freelance_projects SET end_date=deadline WHERE end_date IS NULL AND deadline IS NOT NULL`).run(); } catch(e) {}
+// travel_trips — ensure status column exists (some early schema may lack it)
+try { db.prepare(`ALTER TABLE travel_trips ADD COLUMN status TEXT DEFAULT 'planned'`).run(); } catch(e) {}
+// sports_games — ensure schema is complete
+try { db.prepare(`CREATE TABLE IF NOT EXISTS sports_games (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, home_team TEXT, away_team TEXT, sport TEXT, game_date TEXT, home_score INTEGER, away_score INTEGER, venue TEXT, notes TEXT, attended INTEGER DEFAULT 0, created_at TEXT)`).run(); } catch(e) {}
+// books table for /api/reading/books uses single-quote status values — table already exists but ensure correct schema
+try { db.prepare(`CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, genre TEXT DEFAULT 'fiction', isbn TEXT, pages INTEGER DEFAULT 0, status TEXT DEFAULT 'want_to_read', start_date TEXT, finish_date TEXT, current_page INTEGER DEFAULT 0, rating REAL DEFAULT 0, review TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+// photography photos table — ensure schema
+try { db.prepare(`CREATE TABLE IF NOT EXISTS photos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, album_id INTEGER, filename TEXT, title TEXT, description TEXT, camera TEXT, lens TEXT, aperture TEXT, shutter_speed TEXT, iso INTEGER, focal_length TEXT, location TEXT, tags TEXT, rating INTEGER, taken_at TEXT, created_at TEXT)`).run(); } catch(e) {}
+// ─── end v133 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
@@ -167692,23 +167716,4 @@ app.put('/api/microservices/:id/health', auth, (req: any, res: any) => { try { c
 app.delete('/api/microservices/:id', auth, (req: any, res: any) => { try { db.prepare('DELETE FROM microservices WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 
 // B2748 — Customer Journey Mapper
-try { db.prepare(`CREATE TABLE IF NOT EXISTS customer_journeys (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, journey_name TEXT, persona TEXT DEFAULT '', stages TEXT DEFAULT '[]', touchpoints TEXT DEFAULT '[]', pain_points TEXT DEFAULT '[]', emotions TEXT DEFAULT '[]', opportunities TEXT DEFAULT '[]', channels TEXT DEFAULT '[]', status TEXT DEFAULT 'draft', version INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) { console.error('DB init error:', e); }
-app.get('/api/customer-journeys', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT id, journey_name, persona, status, version, created_at, updated_at FROM customer_journeys WHERE user_id = ? ORDER BY updated_at DESC').all(req.user.id); res.json({ success: true, journeys: rows }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.get('/api/customer-journeys/:id', auth, (req: any, res: any) => { try { const row = db.prepare('SELECT * FROM customer_journeys WHERE id=? AND user_id=?').get(req.params.id, req.user.id); if (!row) return res.status(404).json({ success: false }); res.json({ success: true, journey: row }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.post('/api/customer-journeys', auth, (req: any, res: any) => { try { const { journey_name, persona, stages, touchpoints, pain_points, emotions, opportunities, channels } = req.body; const r = db.prepare('INSERT INTO customer_journeys (user_id, journey_name, persona, stages, touchpoints, pain_points, emotions, opportunities, channels) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user.id, journey_name, persona||'', JSON.stringify(stages||[]), JSON.stringify(touchpoints||[]), JSON.stringify(pain_points||[]), JSON.stringify(emotions||[]), JSON.stringify(opportunities||[]), JSON.stringify(channels||[])); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.put('/api/customer-journeys/:id', auth, (req: any, res: any) => { try { const { stages, touchpoints, pain_points, emotions, opportunities, status } = req.body; db.prepare('UPDATE customer_journeys SET stages=?, touchpoints=?, pain_points=?, emotions=?, opportunities=?, status=?, version=version+1, updated_at=? WHERE id=? AND user_id=?').run(JSON.stringify(stages||[]), JSON.stringify(touchpoints||[]), JSON.stringify(pain_points||[]), JSON.stringify(emotions||[]), JSON.stringify(opportunities||[]), status||'draft', new Date().toISOString(), req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.delete('/api/customer-journeys/:id', auth, (req: any, res: any) => { try { db.prepare('DELETE FROM customer_journeys WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-
-// B2749 — Observability Dashboard Builder
-try { db.prepare(`CREATE TABLE IF NOT EXISTS observability_panels (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, dashboard_name TEXT, panel_title TEXT, panel_type TEXT DEFAULT 'metric', query TEXT DEFAULT '', data_source TEXT DEFAULT '', refresh_seconds INTEGER DEFAULT 60, thresholds TEXT DEFAULT '{}', unit TEXT DEFAULT '', last_value REAL DEFAULT 0, last_updated TEXT DEFAULT (datetime('now')), position INTEGER DEFAULT 0, notes TEXT DEFAULT '')`).run(); } catch(e) { console.error('DB init error:', e); }
-app.get('/api/observability-panels', auth, (req: any, res: any) => { try { const { dashboard_name } = req.query as any; let q = 'SELECT * FROM observability_panels WHERE user_id = ?'; const p: any[] = [req.user.id]; if (dashboard_name) { q += ' AND dashboard_name = ?'; p.push(dashboard_name); } q += ' ORDER BY position ASC'; const rows = db.prepare(q).all(...p); const dashboards = [...new Set(rows.map((r: any) => r.dashboard_name))]; res.json({ success: true, panels: rows, dashboards }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.post('/api/observability-panels', auth, (req: any, res: any) => { try { const { dashboard_name, panel_title, panel_type, query, data_source, refresh_seconds, thresholds, unit, position, notes } = req.body; const r = db.prepare('INSERT INTO observability_panels (user_id, dashboard_name, panel_title, panel_type, query, data_source, refresh_seconds, thresholds, unit, position, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(req.user.id, dashboard_name, panel_title, panel_type||'metric', query||'', data_source||'', refresh_seconds||60, JSON.stringify(thresholds||{}), unit||'', position||0, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.put('/api/observability-panels/:id/update-value', auth, (req: any, res: any) => { try { const { value } = req.body; db.prepare('UPDATE observability_panels SET last_value=?, last_updated=? WHERE id=? AND user_id=?').run(value||0, new Date().toISOString(), req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.delete('/api/observability-panels/:id', auth, (req: any, res: any) => { try { db.prepare('DELETE FROM observability_panels WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-
-// B2750 — Compliance Checklist Engine
-try { db.prepare(`CREATE TABLE IF NOT EXISTS compliance_checklists (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, checklist_name TEXT, framework TEXT DEFAULT 'SOC2', category TEXT DEFAULT 'security', requirement TEXT DEFAULT '', description TEXT DEFAULT '', status TEXT DEFAULT 'not_started', evidence_url TEXT DEFAULT '', assigned_to TEXT DEFAULT '', due_date TEXT, completed_at TEXT, priority TEXT DEFAULT 'medium', notes TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) { console.error('DB init error:', e); }
-app.get('/api/compliance-checklists', auth, (req: any, res: any) => { try { const { framework, status } = req.query as any; let q = 'SELECT * FROM compliance_checklists WHERE user_id = ?'; const p: any[] = [req.user.id]; if (framework) { q += ' AND framework = ?'; p.push(framework); } if (status) { q += ' AND status = ?'; p.push(status); } q += ' ORDER BY priority ASC, category ASC'; const rows = db.prepare(q).all(...p); const completed = rows.filter((r: any) => r.status==='completed').length; res.json({ success: true, items: rows, completion_pct: rows.length>0?Math.round((completed/rows.length)*100):0, completed, total: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.post('/api/compliance-checklists', auth, (req: any, res: any) => { try { const { checklist_name, framework, category, requirement, description, assigned_to, due_date, priority, notes } = req.body; const r = db.prepare('INSERT INTO compliance_checklists (user_id, checklist_name, framework, category, requirement, description, assigned_to, due_date, priority, notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, checklist_name, framework||'SOC2', category||'security', requirement, description||'', assigned_to||'', due_date||'', priority||'medium', notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.put('/api/compliance-checklists/:id/complete', auth, (req: any, res: any) => { try { const { evidence_url } = req.body; db.prepare("UPDATE compliance_checklists SET status='completed', evidence_url=?, completed_at=? WHERE id=? AND user_id=?").run(evidence_url||'', new Date().toISOString(), req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.delete('/api/compliance-checklists/:id', auth, (req: any, res: any) => { try { db.prepare('DELETE FROM compliance_checklists WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
+try { db.prepare(`CREATE TABLE IF NOT EXISTS customer_journeys (id INTEGER PRIMARY KEY AUTOINCR

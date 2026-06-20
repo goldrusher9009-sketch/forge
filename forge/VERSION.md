@@ -1,3 +1,11 @@
+## v133.00 — Fix habits, garden, reading, travel, freelance, astronomy routes
+- habits: fixed date() SQLite query (was using param substitution incompatible with Railway SQLite)
+- reading/books: fixed double-quote identifier bug in ORDER BY CASE WHEN clause
+- garden_plants: ALTER TABLE adds name/type/location/status/watering_freq_days/sunlight columns, backfilled from old plant_name/category/is_active
+- freelance_projects: ALTER TABLE adds end_date column, backfilled from deadline
+- travel_trips: ALTER TABLE ensures status column exists
+- sports_games, photos: ensure tables created with full schema
+
 ## v132.00 — Fix 6 more broken routes: token_usage, print_jobs, bonsai, book_clubs, affirmations, invoices
 - Created token_usage table (was missing entirely — fixes /api/usage + /api/billing/status)
 - print_jobs: ALTER TABLE adds filament_used_g, print_date, print_success, print_time_hours
