@@ -1,3 +1,10 @@
+## v140.00 — Fix vehicle_maintenance, aquarium_tanks, subscriptions, job_applications, print_jobs
+- vehicle_maintenance: adds type/date/mileage_at_service/shop/technician aliases
+- aquarium_tanks: adds volume_liters/temperature_c/ph/fish_count
+- subscriptions: adds amount/payment_method/trial_end (backfilled from cost/active)
+- job_applications: adds job_type/job_url/remote/contacts aliases
+- print_jobs: adds file_name/filament_used_g/print_time_min/started_at aliases
+
 ## v139.00 — Fix music_practice, garden_plants, garden_log, mushroom_grows schema gaps
 - music_practice: adds date/duration_min/quality/pieces/focus (backfilled from practice_date/duration_minutes/quality_rating)
 - garden_plants: adds name/harvest_date/species/location/water_frequency_days/last_watered/next_water (backfilled from plant_name/expected_harvest_date)
