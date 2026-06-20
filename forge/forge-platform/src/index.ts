@@ -167870,6 +167870,30 @@ try { db.prepare(`ALTER TABLE budgets ADD COLUMN category TEXT DEFAULT 'other'`)
 try { db.prepare(`ALTER TABLE budgets ADD COLUMN period TEXT DEFAULT 'monthly'`).run(); } catch(e) {}
 // ─── end v143 migrations ──────────────────────────────────────────────────────
 
+// ─── v144 Schema Migrations ────────────────────────────────────────────────────
+// nutrition_logs: early (94816) is daily aggregate (log_date/water_ml/meals/diet_type)
+// later (139844) is per-meal (date/meal/food), latest (149341) uses food_name instead of food
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN food TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN food_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN meal TEXT DEFAULT 'lunch'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN serving_size TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE nutrition_logs SET date=COALESCE(NULLIF(date,''),log_date,'') WHERE date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE nutrition_logs SET food=COALESCE(NULLIF(food,''),food_name,'') WHERE food='' AND food_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE nutrition_logs SET food_name=COALESCE(NULLIF(food_name,''),food,'') WHERE food_name='' AND food IS NOT NULL`).run(); } catch(e) {}
+// mood_logs: seems consistent, but add rating alias for older handlers
+try { db.prepare(`ALTER TABLE mood_logs ADD COLUMN rating INTEGER DEFAULT 5`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mood_logs ADD COLUMN score INTEGER DEFAULT 5`).run(); } catch(e) {}
+try { db.prepare(`UPDATE mood_logs SET rating=COALESCE(NULLIF(rating,5),mood,5) WHERE rating=5 AND mood IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE mood_logs SET score=COALESCE(NULLIF(score,5),mood,5) WHERE score=5 AND mood IS NOT NULL`).run(); } catch(e) {}
+// goals: ensure standard cols exist across different goal tables
+try { db.prepare(`CREATE TABLE IF NOT EXISTS goals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, description TEXT, category TEXT DEFAULT 'personal', target_date TEXT, status TEXT DEFAULT 'active', progress INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+// expenses: ensure category/amount/date exist
+try { db.prepare(`CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount REAL DEFAULT 0, category TEXT DEFAULT 'other', description TEXT, date TEXT, payment_method TEXT DEFAULT 'cash', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+// transactions: standard financial transaction table
+try { db.prepare(`CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount REAL DEFAULT 0, type TEXT DEFAULT 'expense', category TEXT, description TEXT, date TEXT, account TEXT DEFAULT 'checking', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+// ─── end v144 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

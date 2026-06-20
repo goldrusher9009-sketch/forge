@@ -1,3 +1,9 @@
+## v144.00 — Fix nutrition_logs food/food_name alias, mood_logs, ensure goals/expenses/transactions tables
+- nutrition_logs: adds food/food_name/meal/date/serving_size + bidirectional backfill
+- mood_logs: adds rating/score aliases (backfilled from mood)
+- goals: CREATE TABLE IF NOT EXISTS with standard cols
+- expenses/transactions: CREATE TABLE IF NOT EXISTS for financial tracking
+
 ## v143.00 — Fix sleep_logs (5 competing schemas), budgets column gaps
 - sleep_logs: adds date/duration_min/quality/interruptions/deep_sleep_min/rem_min aliases
 - sleep_logs: backfills from sleep_date/sleep_quality/awakenings/sleep_duration_hours/total_hours
