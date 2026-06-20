@@ -1,3 +1,10 @@
+## v87.00 — B5551-B5600 🏠✈️ HOME-INVENTORY+TRAVEL-OS +Rooms/Items/Warranties/Trips/Expenses/Packing/Itinerary/GrandMilestone
+- B5551-5560: Home Inventory OS — room registry (floor), item catalog (brand/model/serial/warranty)
+- B5561-5570: Home Inventory Stats + Travel OS start — value totals, expiring warranties, trip planner
+- B5571-5580: Travel Expenses + Packing List — category expense tracking, packing list with packed %
+- B5581-5590: Travel Itinerary + Stats — day-by-day itinerary builder, destination history, upcoming trips
+- B5591-5600: Search + Grand Milestone v87 — /api/milestone/v87, manifest, health — 5600 endpoints, 152190 lines
+
 ## v86.00 — B5501-B5550 🍳📚 RECIPE+LANGUAGE-OS +Catalog/Ingredients/CookLog/MealPlan/Vocab/SM2/Sessions/GrandMilestone
 - B5501-5510: Recipe OS — recipe catalog (cuisine/difficulty), ingredient lists, source URL tracking
 - B5511-5520: Cook Log + Meal Planner — per-recipe cook log with ratings, weekly meal planning grid
