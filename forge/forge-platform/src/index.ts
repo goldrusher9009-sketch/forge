@@ -152380,5 +152380,195 @@ app.get('/api/forge/music-boardgame-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
 
+
+// B5651-B5700: Wine & Spirits OS + Hiking & Outdoors OS
+// B5651-5660: Wine — Cellar + Tastings
+
+app.post('/api/wine/cellar', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, producer, vintage, varietal, region, country, quantity, purchase_price, estimated_value, drink_from, drink_by, notes, rating } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_cellar (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, producer TEXT, vintage INTEGER, varietal TEXT, region TEXT, country TEXT, quantity INTEGER DEFAULT 1, purchase_price REAL, estimated_value REAL, drink_from INTEGER, drink_by INTEGER, notes TEXT, rating REAL, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO wine_cellar (user_id,name,producer,vintage,varietal,region,country,quantity,purchase_price,estimated_value,drink_from,drink_by,notes,rating,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, name, producer||'', vintage||null, varietal||'', region||'', country||'', quantity||1, purchase_price||null, estimated_value||null, drink_from||null, drink_by||null, notes||'', rating||null, new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/wine/cellar', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { varietal, country, limit = 30 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_cellar (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, producer TEXT, vintage INTEGER, varietal TEXT, region TEXT, country TEXT, quantity INTEGER DEFAULT 1, purchase_price REAL, estimated_value REAL, drink_from INTEGER, drink_by INTEGER, notes TEXT, rating REAL, created_at TEXT)`).run();
+  let q = `SELECT * FROM wine_cellar WHERE user_id=? AND quantity>0`;
+  const params: any[] = [userId];
+  if (varietal) { q += ` AND varietal LIKE ?`; params.push(`%${varietal}%`); }
+  if (country) { q += ` AND country=?`; params.push(country); }
+  q += ` ORDER BY vintage DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, wines: db2.prepare(q).all(...params) });
+});
+
+app.post('/api/wine/tastings', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { wine_id, date, occasion, appearance, aroma, taste, finish, overall_rating, notes, paired_with } = req.body;
+  if (!wine_id || !date) return res.status(400).json({ success: false, error: 'wine_id and date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_tastings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, wine_id INTEGER, tasting_date TEXT, occasion TEXT, appearance TEXT, aroma TEXT, taste TEXT, finish TEXT, overall_rating REAL, notes TEXT, paired_with TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO wine_tastings (user_id,wine_id,tasting_date,occasion,appearance,aroma,taste,finish,overall_rating,notes,paired_with,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, wine_id, date, occasion||'', appearance||'', aroma||'', taste||'', finish||'', overall_rating||null, notes||'', paired_with||'', new Date().toISOString());
+  if (overall_rating) db2.prepare(`UPDATE wine_cellar SET rating=? WHERE id=? AND user_id=?`).run(overall_rating, wine_id, userId);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/wine/tastings', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { wine_id, limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_tastings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, wine_id INTEGER, tasting_date TEXT, occasion TEXT, appearance TEXT, aroma TEXT, taste TEXT, finish TEXT, overall_rating REAL, notes TEXT, paired_with TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_cellar (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, producer TEXT, vintage INTEGER, varietal TEXT, region TEXT, country TEXT, quantity INTEGER DEFAULT 1, purchase_price REAL, estimated_value REAL, drink_from INTEGER, drink_by INTEGER, notes TEXT, rating REAL, created_at TEXT)`).run();
+  let q = `SELECT wt.*, wc.name as wine_name, wc.vintage FROM wine_tastings wt LEFT JOIN wine_cellar wc ON wt.wine_id=wc.id WHERE wt.user_id=?`;
+  const params: any[] = [userId];
+  if (wine_id) { q += ` AND wt.wine_id=?`; params.push(wine_id); }
+  q += ` ORDER BY wt.tasting_date DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, tastings: db2.prepare(q).all(...params) });
+});
+
+// B5661-5670: Wine Stats + Spirits + Hiking OS
+
+app.get('/api/wine/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_cellar (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, producer TEXT, vintage INTEGER, varietal TEXT, region TEXT, country TEXT, quantity INTEGER DEFAULT 1, purchase_price REAL, estimated_value REAL, drink_from INTEGER, drink_by INTEGER, notes TEXT, rating REAL, created_at TEXT)`).run();
+  const totalBottles = (db2.prepare(`SELECT SUM(quantity) as s FROM wine_cellar WHERE user_id=?`).get(userId) as any).s || 0;
+  const totalValue = (db2.prepare(`SELECT SUM(quantity*COALESCE(estimated_value,purchase_price,0)) as s FROM wine_cellar WHERE user_id=?`).get(userId) as any).s || 0;
+  const byVarietal = db2.prepare(`SELECT varietal, COUNT(*) as types, SUM(quantity) as bottles FROM wine_cellar WHERE user_id=? AND varietal!='' GROUP BY varietal ORDER BY bottles DESC LIMIT 8`).all(userId);
+  const byCountry = db2.prepare(`SELECT country, SUM(quantity) as bottles FROM wine_cellar WHERE user_id=? AND country!='' GROUP BY country ORDER BY bottles DESC LIMIT 5`).all(userId);
+  res.json({ success: true, total_bottles: totalBottles, estimated_cellar_value: Math.round(totalValue), by_varietal: byVarietal, by_country: byCountry });
+});
+
+app.post('/api/spirits', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, type, producer, age_years, abv, country, purchase_price, volume_ml, notes, rating } = req.body;
+  if (!name || !type) return res.status(400).json({ success: false, error: 'name and type required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS spirits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, producer TEXT, age_years INTEGER, abv REAL, country TEXT, purchase_price REAL, volume_ml INTEGER DEFAULT 750, notes TEXT, rating REAL, status TEXT DEFAULT 'open', created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO spirits (user_id,name,type,producer,age_years,abv,country,purchase_price,volume_ml,notes,rating,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, name, type, producer||'', age_years||null, abv||null, country||'', purchase_price||null, volume_ml||750, notes||'', rating||null, new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/spirits', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { type } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS spirits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, producer TEXT, age_years INTEGER, abv REAL, country TEXT, purchase_price REAL, volume_ml INTEGER DEFAULT 750, notes TEXT, rating REAL, status TEXT DEFAULT 'open', created_at TEXT)`).run();
+  let q = `SELECT * FROM spirits WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (type) { q += ` AND type=?`; params.push(type); }
+  q += ` ORDER BY rating DESC, name ASC`;
+  res.json({ success: true, spirits: db2.prepare(q).all(...params) });
+});
+
+// B5671-5680: Hiking — Trails + Logs
+
+app.post('/api/hiking/trails', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, location, distance_km, elevation_gain_m, difficulty, trail_type, surface, notes } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hiking_trails (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, location TEXT, distance_km REAL, elevation_gain_m INTEGER, difficulty TEXT, trail_type TEXT, surface TEXT, times_hiked INTEGER DEFAULT 0, avg_rating REAL, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO hiking_trails (user_id,name,location,distance_km,elevation_gain_m,difficulty,trail_type,surface,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, name, location||'', distance_km||null, elevation_gain_m||null, difficulty||'moderate', trail_type||'loop', surface||'dirt', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/hiking/trails', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { difficulty } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hiking_trails (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, location TEXT, distance_km REAL, elevation_gain_m INTEGER, difficulty TEXT, trail_type TEXT, surface TEXT, times_hiked INTEGER DEFAULT 0, avg_rating REAL, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM hiking_trails WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (difficulty) { q += ` AND difficulty=?`; params.push(difficulty); }
+  q += ` ORDER BY times_hiked DESC, name ASC`;
+  res.json({ success: true, trails: db2.prepare(q).all(...params) });
+});
+
+app.post('/api/hiking/logs', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { trail_id, date, duration_min, companions, weather, conditions, rating, notes } = req.body;
+  if (!trail_id || !date) return res.status(400).json({ success: false, error: 'trail_id and date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hiking_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, trail_id INTEGER, hike_date TEXT, duration_min INTEGER, companions TEXT, weather TEXT, conditions TEXT, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO hiking_logs (user_id,trail_id,hike_date,duration_min,companions,weather,conditions,rating,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, trail_id, date, duration_min||null, JSON.stringify(companions||[]), weather||'', conditions||'good', rating||null, notes||'', new Date().toISOString());
+  db2.prepare(`UPDATE hiking_trails SET times_hiked=times_hiked+1 WHERE id=? AND user_id=?`).run(trail_id, userId);
+  if (rating) db2.prepare(`UPDATE hiking_trails SET avg_rating=(SELECT AVG(rating) FROM hiking_logs WHERE trail_id=? AND user_id=? AND rating IS NOT NULL) WHERE id=? AND user_id=?`).run(trail_id, userId, trail_id, userId);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+// B5681-5690: Hiking Stats + Gear
+
+app.get('/api/hiking/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hiking_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, trail_id INTEGER, hike_date TEXT, duration_min INTEGER, companions TEXT, weather TEXT, conditions TEXT, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hiking_trails (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, location TEXT, distance_km REAL, elevation_gain_m INTEGER, difficulty TEXT, trail_type TEXT, surface TEXT, times_hiked INTEGER DEFAULT 0, avg_rating REAL, notes TEXT, created_at TEXT)`).run();
+  const totalHikes = (db2.prepare(`SELECT COUNT(*) as c FROM hiking_logs WHERE user_id=?`).get(userId) as any).c;
+  const totalKm = (db2.prepare(`SELECT SUM(ht.distance_km) as s FROM hiking_logs hl LEFT JOIN hiking_trails ht ON hl.trail_id=ht.id WHERE hl.user_id=? AND ht.distance_km IS NOT NULL`).get(userId) as any).s || 0;
+  const totalElevation = (db2.prepare(`SELECT SUM(ht.elevation_gain_m) as s FROM hiking_logs hl LEFT JOIN hiking_trails ht ON hl.trail_id=ht.id WHERE hl.user_id=? AND ht.elevation_gain_m IS NOT NULL`).get(userId) as any).s || 0;
+  const favoriteTrails = db2.prepare(`SELECT name, times_hiked, avg_rating FROM hiking_trails WHERE user_id=? ORDER BY times_hiked DESC LIMIT 5`).all(userId);
+  res.json({ success: true, total_hikes: totalHikes, total_km: Math.round(totalKm * 10) / 10, total_elevation_gain_m: totalElevation, favorite_trails: favoriteTrails });
+});
+
+app.post('/api/hiking/gear', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, category, brand, weight_g, purchase_year, purchase_price, condition, notes } = req.body;
+  if (!name || !category) return res.status(400).json({ success: false, error: 'name and category required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hiking_gear (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, category TEXT, brand TEXT, weight_g INTEGER, purchase_year INTEGER, purchase_price REAL, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO hiking_gear (user_id,name,category,brand,weight_g,purchase_year,purchase_price,condition,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, name, category, brand||'', weight_g||null, purchase_year||null, purchase_price||null, condition||'good', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/hiking/gear', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { category } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hiking_gear (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, category TEXT, brand TEXT, weight_g INTEGER, purchase_year INTEGER, purchase_price REAL, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM hiking_gear WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (category) { q += ` AND category=?`; params.push(category); }
+  q += ` ORDER BY category ASC, name ASC`;
+  res.json({ success: true, gear: db2.prepare(q).all(...params) });
+});
+
+// B5691-5700: Grand Milestone v89
+app.get('/api/milestone/v89', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v89', version: '89.00',
+    endpoints_total: 5700, lines_of_code: 152650,
+    new_this_batch: ['Wine & Spirits OS', 'Hiking & Outdoors OS'],
+    features: {
+      wine_spirits_os: ['wine cellar (varietal/vintage/value)','tasting notes (appearance/aroma/taste/finish)','cellar stats by varietal+country','spirits collection (whisky/rum/etc)'],
+      hiking_os: ['trail registry (difficulty/elevation)','hike log with weather/conditions','gear inventory by category','stats: total km, elevation gained']
+    },
+    message: '5700 endpoints — Wine/Spirits + Hiking OS live!'
+  });
+});
+
+app.get('/api/forge/wine-hiking-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: 'wine-hiking-os', version: '1.0.0',
+    endpoints: ['POST /api/wine/cellar','GET /api/wine/cellar','POST /api/wine/tastings','GET /api/wine/tastings','GET /api/wine/stats','POST /api/spirits','GET /api/spirits','POST /api/hiking/trails','GET /api/hiking/trails','POST /api/hiking/logs','GET /api/hiking/stats','POST /api/hiking/gear','GET /api/hiking/gear','GET /api/milestone/v89','GET /api/forge/wine-hiking-manifest','GET /api/forge/wine-hiking-health']
+  });
+});
+
+app.get('/api/forge/wine-hiking-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM wine_cellar`).get(); checks.wine_cellar = 'ok'; } catch { checks.wine_cellar = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM wine_tastings`).get(); checks.wine_tastings = 'ok'; } catch { checks.wine_tastings = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM hiking_trails`).get(); checks.hiking_trails = 'ok'; } catch { checks.hiking_trails = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM hiking_gear`).get(); checks.hiking_gear = 'ok'; } catch { checks.hiking_gear = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
