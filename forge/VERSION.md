@@ -1,3 +1,15 @@
+## v39.00 — B3151-B3200 🎲 HOBBY-COLLECTIBLES-OS +ModelTrainsOS/LegoOS/TTRPGOS/WargamingOS/MiniPaintingOS/BoardGamesV2/TradingCardsOS/PuzzleOS/CollectiblesOS/GrandMilestone
+- B3151-3155: Model Trains OS — locomotive registry (scale/DCC/decoder/era), layout registry (track_ft/switches/theme)
+- B3156-3160: Lego OS — set collection (pieces/minifigs/sealed/value), wishlist with priority
+- B3161-3165: Tabletop RPG OS — campaign tracker (system/role/sessions), character registry (race/class/level)
+- B3166-3170: Wargaming OS — army registry (faction/points/painted%), battle log (result/VP_scored/VP_conceded)
+- B3171-3175: Miniature Painting OS — mini tracker (status/hours/scheme), paint inventory by brand/type
+- B3176-3180: Board Games v2 OS — collection (BGG_id/weight/playtime), play log (winner/duration)
+- B3181-3185: Trading Card OS — card collection (game/set/rarity/condition/value), deck registry (format/archetype/win_rate)
+- B3186-3190: Puzzle OS — completion log (pieces/time_hours/rating), wishlist
+- B3191-3195: Collectibles OS — item registry (category/edition/value/paid), wishlist with priority
+- B3196-3200: 🏆 Grand Milestone v39 — /api/milestone/v39, hobby-manifest, hobby-health — 3200 endpoints, 142653 lines
+
 ## v38.00 — B3101-B3150 🤖 TECH-HOBBY-SCIENCE-OS +3DPrintingOS/ElectronicsOS/RoboticsOS/RCOS/DronesOS/HamRadioOS/AstronomyV2/MeteorologyOS/GeologyOS/GrandMilestone
 - B3101-3105: 3D Printing OS — print log (material/infill/time/filament_g), filament inventory (weight/remaining_pct)
 - B3106-3110: Electronics Hobby OS — projects (MCU/voltage/cost), component inventory (value/location)

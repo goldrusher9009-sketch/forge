@@ -142234,5 +142234,420 @@ app.get('/api/forge/science-os-health', (_req: any, res: any) => {
 
 
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B3151-B3200: Model Trains OS + Lego OS + Tabletop RPG OS + Wargaming OS
+//              Miniature Painting OS + Board Games v2 OS + Card Trading OS
+//              Puzzle OS + Collectibles OS + Grand Milestone v39
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B3151-B3155: Model Trains OS
+app.get('/api/model-trains/locomotives', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS model_trains_locos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, road TEXT, number TEXT, scale TEXT DEFAULT 'HO', era TEXT DEFAULT 'steam', manufacturer TEXT, decoder TEXT DEFAULT 'none', dcc INTEGER DEFAULT 0, condition TEXT DEFAULT 'excellent', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM model_trains_locos WHERE user_id=? ORDER BY road ASC, number ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/model-trains/locomotives', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, road, number, scale, era, manufacturer, decoder, dcc, condition, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS model_trains_locos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, road TEXT, number TEXT, scale TEXT DEFAULT 'HO', era TEXT DEFAULT 'steam', manufacturer TEXT, decoder TEXT DEFAULT 'none', dcc INTEGER DEFAULT 0, condition TEXT DEFAULT 'excellent', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO model_trains_locos (user_id,name,road,number,scale,era,manufacturer,decoder,dcc,condition,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',road||'',number||'',scale||'HO',era||'steam',manufacturer||'',decoder||'none',dcc?1:0,condition||'excellent',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/model-trains/layouts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS model_trains_layouts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, scale TEXT DEFAULT 'HO', size_ft TEXT, theme TEXT DEFAULT 'mountain', track_ft REAL DEFAULT 0, switches INTEGER DEFAULT 0, status TEXT DEFAULT 'building', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM model_trains_layouts WHERE user_id=? ORDER BY status ASC, name ASC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/model-trains/layouts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, scale, size_ft, theme, track_ft, switches, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS model_trains_layouts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, scale TEXT DEFAULT 'HO', size_ft TEXT, theme TEXT DEFAULT 'mountain', track_ft REAL DEFAULT 0, switches INTEGER DEFAULT 0, status TEXT DEFAULT 'building', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO model_trains_layouts (user_id,name,scale,size_ft,theme,track_ft,switches,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',scale||'HO',size_ft||'',theme||'mountain',track_ft||0,switches||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/model-trains-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const l = safe(()=>db.prepare('SELECT COUNT(*) as c FROM model_trains_locos WHERE user_id=?').get(u) as any);
+  res.json({ success:true, model_trains_os:{ locomotives:l?.c||0 }});
+});
+
+// B3156-B3160: Lego OS
+app.get('/api/lego/sets', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS lego_sets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, set_number TEXT, name TEXT, theme TEXT, year INTEGER DEFAULT 2020, pieces INTEGER DEFAULT 0, minifigs INTEGER DEFAULT 0, status TEXT DEFAULT 'built', sealed INTEGER DEFAULT 0, value_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM lego_sets WHERE user_id=? ORDER BY theme ASC, year DESC LIMIT 100').all(u);
+    const stats = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(pieces),0) as p FROM lego_sets WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_sets:stats?.c||0, total_pieces:stats?.p||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/lego/sets', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { set_number, name, theme, year, pieces, minifigs, status, sealed, value_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS lego_sets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, set_number TEXT, name TEXT, theme TEXT, year INTEGER DEFAULT 2020, pieces INTEGER DEFAULT 0, minifigs INTEGER DEFAULT 0, status TEXT DEFAULT 'built', sealed INTEGER DEFAULT 0, value_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO lego_sets (user_id,set_number,name,theme,year,pieces,minifigs,status,sealed,value_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,set_number||'',name||'',theme||'',year||2020,pieces||0,minifigs||0,status||'built',sealed?1:0,value_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/lego/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS lego_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, set_number TEXT, name TEXT, theme TEXT, pieces INTEGER DEFAULT 0, price_usd REAL DEFAULT 0, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM lego_wishlist WHERE user_id=? ORDER BY priority DESC, price_usd ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/lego/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { set_number, name, theme, pieces, price_usd, priority, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS lego_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, set_number TEXT, name TEXT, theme TEXT, pieces INTEGER DEFAULT 0, price_usd REAL DEFAULT 0, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO lego_wishlist (user_id,set_number,name,theme,pieces,price_usd,priority,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,set_number||'',name||'',theme||'',pieces||0,price_usd||0,priority||2,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/lego-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(pieces),0) as p FROM lego_sets WHERE user_id=?').get(u) as any);
+  res.json({ success:true, lego_os:{ sets:s?.c||0, total_pieces:s?.p||0 }});
+});
+
+// B3161-B3165: Tabletop RPG OS
+app.get('/api/ttrpg/campaigns', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ttrpg_campaigns (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, system TEXT DEFAULT 'D&D 5e', role TEXT DEFAULT 'player', setting TEXT, sessions_played INTEGER DEFAULT 0, status TEXT DEFAULT 'active', date_started TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM ttrpg_campaigns WHERE user_id=? ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END, date_started DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/ttrpg/campaigns', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, system, role, setting, date_started, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ttrpg_campaigns (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, system TEXT DEFAULT 'D&D 5e', role TEXT DEFAULT 'player', setting TEXT, sessions_played INTEGER DEFAULT 0, status TEXT DEFAULT 'active', date_started TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO ttrpg_campaigns (user_id,name,system,role,setting,date_started,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',system||'D&D 5e',role||'player',setting||'',date_started||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/ttrpg/characters', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ttrpg_characters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, race TEXT, class TEXT, level INTEGER DEFAULT 1, system TEXT DEFAULT 'D&D 5e', campaign TEXT, status TEXT DEFAULT 'active', backstory TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM ttrpg_characters WHERE user_id=? ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END, level DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/ttrpg/characters', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, race, class: charClass, level, system, campaign, backstory, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ttrpg_characters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, race TEXT, class TEXT, level INTEGER DEFAULT 1, system TEXT DEFAULT 'D&D 5e', campaign TEXT, status TEXT DEFAULT 'active', backstory TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO ttrpg_characters (user_id,name,race,class,level,system,campaign,backstory,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',race||'',charClass||'',level||1,system||'D&D 5e',campaign||'',backstory||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/ttrpg-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as c FROM ttrpg_campaigns WHERE user_id=?').get(u) as any);
+  res.json({ success:true, ttrpg_os:{ campaigns:c?.c||0 }});
+});
+
+// B3166-B3170: Wargaming OS
+app.get('/api/wargaming/armies', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS wargaming_armies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, game TEXT DEFAULT 'Warhammer 40k', faction TEXT, points INTEGER DEFAULT 0, models_owned INTEGER DEFAULT 0, models_painted INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM wargaming_armies WHERE user_id=? ORDER BY points DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/wargaming/armies', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, game, faction, points, models_owned, models_painted, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS wargaming_armies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, game TEXT DEFAULT 'Warhammer 40k', faction TEXT, points INTEGER DEFAULT 0, models_owned INTEGER DEFAULT 0, models_painted INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO wargaming_armies (user_id,name,game,faction,points,models_owned,models_painted,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',game||'Warhammer 40k',faction||'',points||0,models_owned||0,models_painted||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/wargaming/battles', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS wargaming_battles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, game TEXT, my_army TEXT, opponent_army TEXT, points INTEGER DEFAULT 1000, result TEXT DEFAULT 'win', vp_scored INTEGER DEFAULT 0, vp_conceded INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM wargaming_battles WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const record = db.prepare("SELECT SUM(CASE WHEN result='win' THEN 1 ELSE 0 END) as w, SUM(CASE WHEN result='loss' THEN 1 ELSE 0 END) as l FROM wargaming_battles WHERE user_id=?").get(u) as any;
+    res.json({ success:true, data:rows, wins:record?.w||0, losses:record?.l||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/wargaming/battles', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, game, my_army, opponent_army, points, result, vp_scored, vp_conceded, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS wargaming_battles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, game TEXT, my_army TEXT, opponent_army TEXT, points INTEGER DEFAULT 1000, result TEXT DEFAULT 'win', vp_scored INTEGER DEFAULT 0, vp_conceded INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO wargaming_battles (user_id,date,game,my_army,opponent_army,points,result,vp_scored,vp_conceded,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,date||'',game||'',my_army||'',opponent_army||'',points||1000,result||'win',vp_scored||0,vp_conceded||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/wargaming-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const b = safe(()=>db.prepare("SELECT COUNT(*) as t, SUM(CASE WHEN result='win' THEN 1 ELSE 0 END) as w FROM wargaming_battles WHERE user_id=?").get(u) as any);
+  res.json({ success:true, wargaming_os:{ battles:b?.t||0, wins:b?.w||0 }});
+});
+
+// B3171-B3175: Miniature Painting OS
+app.get('/api/mini-painting/minis', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS mini_painting_minis (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, game TEXT, faction TEXT, scale TEXT DEFAULT '28mm', status TEXT DEFAULT 'primed', hours_spent REAL DEFAULT 0, scheme TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM mini_painting_minis WHERE user_id=? ORDER BY CASE status WHEN 'painting' THEN 0 WHEN 'primed' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END, created_at DESC LIMIT 50").all(u);
+    const stats = db.prepare("SELECT COUNT(*) as t, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as c FROM mini_painting_minis WHERE user_id=?").get(u) as any;
+    res.json({ success:true, data:rows, total:stats?.t||0, painted:stats?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/mini-painting/minis', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, game, faction, scale, status, hours_spent, scheme, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS mini_painting_minis (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, game TEXT, faction TEXT, scale TEXT DEFAULT '28mm', status TEXT DEFAULT 'primed', hours_spent REAL DEFAULT 0, scheme TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO mini_painting_minis (user_id,name,game,faction,scale,status,hours_spent,scheme,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',game||'',faction||'',scale||'28mm',status||'primed',hours_spent||0,scheme||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/mini-painting/paints', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS mini_painting_paints (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, brand TEXT DEFAULT 'Citadel', type TEXT DEFAULT 'base', color TEXT, dried_out INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM mini_painting_paints WHERE user_id=? AND dried_out=0 ORDER BY type ASC, color ASC LIMIT 100").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/mini-painting/paints', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, brand, type, color, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS mini_painting_paints (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, brand TEXT DEFAULT 'Citadel', type TEXT DEFAULT 'base', color TEXT, dried_out INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO mini_painting_paints (user_id,name,brand,type,color,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',brand||'Citadel',type||'base',color||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/mini-painting-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const m = safe(()=>db.prepare("SELECT COUNT(*) as t, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as c FROM mini_painting_minis WHERE user_id=?").get(u) as any);
+  res.json({ success:true, mini_painting_os:{ minis:m?.t||0, painted:m?.c||0 }});
+});
+
+// B3176-B3180: Board Games v2 OS
+app.get('/api/board-games/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS board_games_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, bgg_id TEXT, players_min INTEGER DEFAULT 2, players_max INTEGER DEFAULT 4, playtime_min INTEGER DEFAULT 60, weight REAL DEFAULT 2.5, year INTEGER DEFAULT 2020, times_played INTEGER DEFAULT 0, rating REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM board_games_v2 WHERE user_id=? ORDER BY times_played DESC, rating DESC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/board-games/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, bgg_id, players_min, players_max, playtime_min, weight, year, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS board_games_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, bgg_id TEXT, players_min INTEGER DEFAULT 2, players_max INTEGER DEFAULT 4, playtime_min INTEGER DEFAULT 60, weight REAL DEFAULT 2.5, year INTEGER DEFAULT 2020, times_played INTEGER DEFAULT 0, rating REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO board_games_v2 (user_id,name,bgg_id,players_min,players_max,playtime_min,weight,year,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',bgg_id||'',players_min||2,players_max||4,playtime_min||60,weight||2.5,year||2020,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/board-games/plays', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS board_game_plays_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, game TEXT, date TEXT, players INTEGER DEFAULT 2, duration_min INTEGER DEFAULT 60, winner TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM board_game_plays_v2 WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/board-games/plays', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { game, date, players, duration_min, winner, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS board_game_plays_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, game TEXT, date TEXT, players INTEGER DEFAULT 2, duration_min INTEGER DEFAULT 60, winner TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO board_game_plays_v2 (user_id,game,date,players,duration_min,winner,notes) VALUES (?,?,?,?,?,?,?)').run(u,game||'',date||'',players||2,duration_min||60,winner||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/board-games-v2-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const g = safe(()=>db.prepare('SELECT COUNT(*) as c FROM board_games_v2 WHERE user_id=?').get(u) as any);
+  const p = safe(()=>db.prepare('SELECT COUNT(*) as c FROM board_game_plays_v2 WHERE user_id=?').get(u) as any);
+  res.json({ success:true, board_games_v2_os:{ games_owned:g?.c||0, plays:p?.c||0 }});
+});
+
+// B3181-B3185: Trading Card OS
+app.get('/api/trading-cards/cards', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS trading_cards (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, game TEXT DEFAULT 'MTG', set_name TEXT, number TEXT, rarity TEXT DEFAULT 'common', condition TEXT DEFAULT 'NM', quantity INTEGER DEFAULT 1, value_usd REAL DEFAULT 0, foil INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM trading_cards WHERE user_id=? ORDER BY value_usd DESC, name ASC LIMIT 100').all(u);
+    const total = db.prepare('SELECT COALESCE(SUM(value_usd * quantity),0) as v FROM trading_cards WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, collection_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/trading-cards/cards', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, game, set_name, number, rarity, condition, quantity, value_usd, foil, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS trading_cards (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, game TEXT DEFAULT 'MTG', set_name TEXT, number TEXT, rarity TEXT DEFAULT 'common', condition TEXT DEFAULT 'NM', quantity INTEGER DEFAULT 1, value_usd REAL DEFAULT 0, foil INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO trading_cards (user_id,name,game,set_name,number,rarity,condition,quantity,value_usd,foil,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',game||'MTG',set_name||'',number||'',rarity||'common',condition||'NM',quantity||1,value_usd||0,foil?1:0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/trading-cards/decks', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS trading_card_decks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, game TEXT DEFAULT 'MTG', format TEXT DEFAULT 'Standard', archetype TEXT, win_rate REAL DEFAULT 0, games_played INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM trading_card_decks WHERE user_id=? ORDER BY win_rate DESC, games_played DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/trading-cards/decks', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, game, format, archetype, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS trading_card_decks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, game TEXT DEFAULT 'MTG', format TEXT DEFAULT 'Standard', archetype TEXT, win_rate REAL DEFAULT 0, games_played INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO trading_card_decks (user_id,name,game,format,archetype,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',game||'MTG',format||'Standard',archetype||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/trading-cards-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd*quantity),0) as v FROM trading_cards WHERE user_id=?').get(u) as any);
+  res.json({ success:true, trading_cards_os:{ unique_cards:c?.c||0, collection_value:c?.v||0 }});
+});
+
+// B3186-B3190: Puzzle OS
+app.get('/api/puzzles/log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS puzzles_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, brand TEXT, pieces INTEGER DEFAULT 1000, difficulty INTEGER DEFAULT 3, date_started TEXT, date_completed TEXT, time_hours REAL DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM puzzles_log WHERE user_id=? ORDER BY date_completed DESC LIMIT 30').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(pieces),0) as p FROM puzzles_log WHERE user_id=? AND date_completed IS NOT NULL AND date_completed != ""').get(u) as any;
+    res.json({ success:true, data:rows, completed:total?.c||0, pieces_assembled:total?.p||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/puzzles/log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, brand, pieces, difficulty, date_started, date_completed, time_hours, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS puzzles_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, brand TEXT, pieces INTEGER DEFAULT 1000, difficulty INTEGER DEFAULT 3, date_started TEXT, date_completed TEXT, time_hours REAL DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO puzzles_log (user_id,name,brand,pieces,difficulty,date_started,date_completed,time_hours,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',brand||'',pieces||1000,difficulty||3,date_started||'',date_completed||'',time_hours||0,rating||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/puzzles/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS puzzles_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, brand TEXT, pieces INTEGER DEFAULT 1000, price_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM puzzles_wishlist WHERE user_id=? ORDER BY pieces DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/puzzles/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, brand, pieces, price_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS puzzles_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, brand TEXT, pieces INTEGER DEFAULT 1000, price_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO puzzles_wishlist (user_id,name,brand,pieces,price_usd,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',brand||'',pieces||1000,price_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/puzzle-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare("SELECT COUNT(*) as c, COALESCE(SUM(pieces),0) as t FROM puzzles_log WHERE user_id=? AND date_completed!=''").get(u) as any);
+  res.json({ success:true, puzzle_os:{ completed:p?.c||0, pieces_assembled:p?.t||0 }});
+});
+
+// B3191-B3195: Collectibles OS
+app.get('/api/collectibles/items', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collectibles_items (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'figurine', brand TEXT, series TEXT, year INTEGER DEFAULT 2020, edition TEXT DEFAULT 'standard', condition TEXT DEFAULT 'mint', value_usd REAL DEFAULT 0, paid_usd REAL DEFAULT 0, acquired_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM collectibles_items WHERE user_id=? ORDER BY value_usd DESC, category ASC LIMIT 100').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM collectibles_items WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_items:total?.c||0, total_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/collectibles/items', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, brand, series, year, edition, condition, value_usd, paid_usd, acquired_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collectibles_items (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'figurine', brand TEXT, series TEXT, year INTEGER DEFAULT 2020, edition TEXT DEFAULT 'standard', condition TEXT DEFAULT 'mint', value_usd REAL DEFAULT 0, paid_usd REAL DEFAULT 0, acquired_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO collectibles_items (user_id,name,category,brand,series,year,edition,condition,value_usd,paid_usd,acquired_date,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',category||'figurine',brand||'',series||'',year||2020,edition||'standard',condition||'mint',value_usd||0,paid_usd||0,acquired_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/collectibles/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collectibles_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT, brand TEXT, series TEXT, estimated_usd REAL DEFAULT 0, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM collectibles_wishlist WHERE user_id=? ORDER BY priority DESC, estimated_usd ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/collectibles/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, brand, series, estimated_usd, priority, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collectibles_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT, brand TEXT, series TEXT, estimated_usd REAL DEFAULT 0, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO collectibles_wishlist (user_id,name,category,brand,series,estimated_usd,priority,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',category||'',brand||'',series||'',estimated_usd||0,priority||2,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/collectibles-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as n, COALESCE(SUM(value_usd),0) as v FROM collectibles_items WHERE user_id=?').get(u) as any);
+  res.json({ success:true, collectibles_os:{ items:c?.n||0, total_value:c?.v||0 }});
+});
+
+// B3196-B3200: Grand Milestone v39
+app.get('/api/milestone/v39', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const lego = safe(()=>db.prepare('SELECT COUNT(*) as c FROM lego_sets WHERE user_id=?').get(u) as any);
+  const minis = safe(()=>db.prepare("SELECT COUNT(*) as c FROM mini_painting_minis WHERE user_id=? AND status='completed'").get(u) as any);
+  const cards = safe(()=>db.prepare('SELECT COALESCE(SUM(value_usd*quantity),0) as v FROM trading_cards WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v39.00', total_endpoints:3200, milestone:'B3200 — Hobby & Collectibles OS Complete', data:{ lego_sets:lego?.c||0, minis_painted:minis?.c||0, cards_value:cards?.v||0 }});
+});
+app.get('/api/forge/hobby-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const ttrpg = safe(()=>db.prepare('SELECT COUNT(*) as c FROM ttrpg_campaigns WHERE user_id=?').get(u) as any);
+  const puzzles = safe(()=>db.prepare('SELECT COUNT(*) as c FROM puzzles_log WHERE user_id=?').get(u) as any);
+  const trains = safe(()=>db.prepare('SELECT COUNT(*) as c FROM model_trains_locos WHERE user_id=?').get(u) as any);
+  res.json({ success:true, hobby:{ ttrpg_campaigns:ttrpg?.c||0, puzzles_done:puzzles?.c||0, locomotives:trains?.c||0 }, total_endpoints:3200 });
+});
+app.get('/api/forge/hobby-health', (_req: any, res: any) => {
+  res.json({ success:true, hobby_health:{ os_modules:182, total_endpoints:3200, version:'v39.00' }});
+
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
