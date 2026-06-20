@@ -141004,5 +141004,416 @@ app.get('/api/forge/connoisseur-manifest', (req: any, res: any) => {
 
 
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B3001-B3050: Drawing OS + Sculpture OS + Calligraphy OS + Origami OS
+//              Magic OS + Stand-Up Comedy OS + Improv OS + Debate OS
+//              Escape Room OS + Grand Milestone v36
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B3001-B3005: Drawing OS
+app.get('/api/drawing/works', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS drawing_works (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, medium TEXT DEFAULT 'pencil', subject TEXT, style TEXT DEFAULT 'realism', date TEXT, time_hours REAL DEFAULT 0, status TEXT DEFAULT 'completed', rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM drawing_works WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/drawing/works', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, medium, subject, style, date, time_hours, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS drawing_works (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, medium TEXT DEFAULT 'pencil', subject TEXT, style TEXT DEFAULT 'realism', date TEXT, time_hours REAL DEFAULT 0, status TEXT DEFAULT 'completed', rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO drawing_works (user_id,title,medium,subject,style,date,time_hours,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,title||'',medium||'pencil',subject||'',style||'realism',date||'',time_hours||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/drawing/practice', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS drawing_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, focus TEXT DEFAULT 'gesture', duration_min INTEGER DEFAULT 30, exercises INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM drawing_practice WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const week = db.prepare("SELECT SUM(duration_min) as m FROM drawing_practice WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any;
+    res.json({ success:true, data:rows, minutes_this_week:week?.m||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/drawing/practice', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, focus, duration_min, exercises, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS drawing_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, focus TEXT DEFAULT 'gesture', duration_min INTEGER DEFAULT 30, exercises INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO drawing_practice (user_id,date,focus,duration_min,exercises,notes) VALUES (?,?,?,?,?,?)').run(u,date||'',focus||'gesture',duration_min||30,exercises||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/drawing-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const w = safe(()=>db.prepare('SELECT COUNT(*) as c FROM drawing_works WHERE user_id=?').get(u) as any);
+  res.json({ success:true, drawing_os:{ works_created:w?.c||0 }});
+});
+
+// B3006-B3010: Sculpture OS
+app.get('/api/sculpture/works', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sculpture_works (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, material TEXT DEFAULT 'clay', technique TEXT DEFAULT 'hand-building', dimensions TEXT, weight_kg REAL DEFAULT 0, date_started TEXT, date_completed TEXT, status TEXT DEFAULT 'in-progress', rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM sculpture_works WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 ELSE 1 END, date_completed DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/sculpture/works', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, material, technique, dimensions, weight_kg, date_started, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sculpture_works (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, material TEXT DEFAULT 'clay', technique TEXT DEFAULT 'hand-building', dimensions TEXT, weight_kg REAL DEFAULT 0, date_started TEXT, date_completed TEXT, status TEXT DEFAULT 'in-progress', rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO sculpture_works (user_id,title,material,technique,dimensions,weight_kg,date_started,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,title||'',material||'clay',technique||'hand-building',dimensions||'',weight_kg||0,date_started||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/sculpture/firings', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sculpture_firings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, kiln TEXT DEFAULT 'electric', cone TEXT DEFAULT '6', pieces INTEGER DEFAULT 1, outcome TEXT DEFAULT 'success', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM sculpture_firings WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/sculpture/firings', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, kiln, cone, pieces, outcome, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sculpture_firings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, kiln TEXT DEFAULT 'electric', cone TEXT DEFAULT '6', pieces INTEGER DEFAULT 1, outcome TEXT DEFAULT 'success', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO sculpture_firings (user_id,date,kiln,cone,pieces,outcome,notes) VALUES (?,?,?,?,?,?,?)').run(u,date||'',kiln||'electric',cone||'6',pieces||1,outcome||'success',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/sculpture-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const w = safe(()=>db.prepare("SELECT COUNT(*) as c FROM sculpture_works WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, sculpture_os:{ works_completed:w?.c||0 }});
+});
+
+// B3011-B3015: Calligraphy OS
+app.get('/api/calligraphy/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS calligraphy_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, script TEXT DEFAULT 'italic', tool TEXT DEFAULT 'nib', duration_min INTEGER DEFAULT 45, focus TEXT, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM calligraphy_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/calligraphy/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, script, tool, duration_min, focus, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS calligraphy_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, script TEXT DEFAULT 'italic', tool TEXT DEFAULT 'nib', duration_min INTEGER DEFAULT 45, focus TEXT, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO calligraphy_sessions (user_id,date,script,tool,duration_min,focus,rating,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,date||'',script||'italic',tool||'nib',duration_min||45,focus||'',rating||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/calligraphy/scripts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS calligraphy_scripts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, style TEXT DEFAULT 'western', level TEXT DEFAULT 'beginner', years_studying REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM calligraphy_scripts WHERE user_id=? ORDER BY level DESC, name ASC LIMIT 15').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/calligraphy/scripts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, style, level, years_studying, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS calligraphy_scripts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, style TEXT DEFAULT 'western', level TEXT DEFAULT 'beginner', years_studying REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO calligraphy_scripts (user_id,name,style,level,years_studying,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',style||'western',level||'beginner',years_studying||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/calligraphy-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c FROM calligraphy_sessions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, calligraphy_os:{ sessions:s?.c||0 }});
+});
+
+// B3016-B3020: Origami OS
+app.get('/api/origami/models', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS origami_models (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, designer TEXT, category TEXT DEFAULT 'modular', difficulty INTEGER DEFAULT 3, paper_size TEXT, folds INTEGER DEFAULT 0, mastery INTEGER DEFAULT 1, date_learned TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM origami_models WHERE user_id=? ORDER BY mastery DESC, difficulty DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/origami/models', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, designer, category, difficulty, paper_size, folds, date_learned, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS origami_models (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, designer TEXT, category TEXT DEFAULT 'modular', difficulty INTEGER DEFAULT 3, paper_size TEXT, folds INTEGER DEFAULT 0, mastery INTEGER DEFAULT 1, date_learned TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO origami_models (user_id,name,designer,category,difficulty,paper_size,folds,date_learned,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',designer||'',category||'modular',difficulty||3,paper_size||'',folds||0,date_learned||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/origami/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS origami_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, model TEXT, duration_min INTEGER DEFAULT 30, attempts INTEGER DEFAULT 1, success INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM origami_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/origami/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, model, duration_min, attempts, success, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS origami_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, model TEXT, duration_min INTEGER DEFAULT 30, attempts INTEGER DEFAULT 1, success INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO origami_sessions (user_id,date,model,duration_min,attempts,success,notes) VALUES (?,?,?,?,?,?,?)').run(u,date||'',model||'',duration_min||30,attempts||1,success?1:0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/origami-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const m = safe(()=>db.prepare('SELECT COUNT(*) as c FROM origami_models WHERE user_id=?').get(u) as any);
+  res.json({ success:true, origami_os:{ models_learned:m?.c||0 }});
+});
+
+// B3021-B3025: Magic OS
+app.get('/api/magic/tricks', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS magic_tricks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'card', difficulty INTEGER DEFAULT 3, mastery INTEGER DEFAULT 1, learned_date TEXT, performance_count INTEGER DEFAULT 0, creator TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM magic_tricks WHERE user_id=? ORDER BY mastery DESC, performance_count DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/magic/tricks', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, difficulty, learned_date, creator, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS magic_tricks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'card', difficulty INTEGER DEFAULT 3, mastery INTEGER DEFAULT 1, learned_date TEXT, performance_count INTEGER DEFAULT 0, creator TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO magic_tricks (user_id,name,category,difficulty,learned_date,creator,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',category||'card',difficulty||3,learned_date||'',creator||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/magic/performances', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS magic_performances (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, audience_size INTEGER DEFAULT 5, tricks_performed TEXT, duration_min INTEGER DEFAULT 10, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM magic_performances WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/magic/performances', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, venue, audience_size, tricks_performed, duration_min, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS magic_performances (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, audience_size INTEGER DEFAULT 5, tricks_performed TEXT, duration_min INTEGER DEFAULT 10, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO magic_performances (user_id,date,venue,audience_size,tricks_performed,duration_min,rating,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,date||'',venue||'',audience_size||5,tricks_performed||'',duration_min||10,rating||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/magic-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare('SELECT COUNT(*) as c FROM magic_performances WHERE user_id=?').get(u) as any);
+  res.json({ success:true, magic_os:{ performances:p?.c||0 }});
+});
+
+// B3026-B3030: Stand-Up Comedy OS
+app.get('/api/standup/sets', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS standup_sets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, duration_min INTEGER DEFAULT 5, audience_size INTEGER DEFAULT 20, laughs_rating INTEGER DEFAULT 3, new_material INTEGER DEFAULT 0, opener TEXT, closer TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM standup_sets WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/standup/sets', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, venue, duration_min, audience_size, laughs_rating, new_material, opener, closer, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS standup_sets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, duration_min INTEGER DEFAULT 5, audience_size INTEGER DEFAULT 20, laughs_rating INTEGER DEFAULT 3, new_material INTEGER DEFAULT 0, opener TEXT, closer TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO standup_sets (user_id,date,venue,duration_min,audience_size,laughs_rating,new_material,opener,closer,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,date||'',venue||'',duration_min||5,audience_size||20,laughs_rating||3,new_material||0,opener||'',closer||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/standup/jokes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS standup_jokes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, setup TEXT, punchline TEXT, category TEXT DEFAULT 'observational', status TEXT DEFAULT 'draft', laugh_rating INTEGER DEFAULT 0, times_performed INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM standup_jokes WHERE user_id=? ORDER BY laugh_rating DESC, times_performed DESC LIMIT 30").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/standup/jokes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { setup, punchline, category, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS standup_jokes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, setup TEXT, punchline TEXT, category TEXT DEFAULT 'observational', status TEXT DEFAULT 'draft', laugh_rating INTEGER DEFAULT 0, times_performed INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO standup_jokes (user_id,setup,punchline,category,notes) VALUES (?,?,?,?,?)').run(u,setup||'',punchline||'',category||'observational',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/standup-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c FROM standup_sets WHERE user_id=?').get(u) as any);
+  res.json({ success:true, standup_os:{ sets_performed:s?.c||0 }});
+});
+
+// B3031-B3035: Improv OS
+app.get('/api/improv/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS improv_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'class', duration_min INTEGER DEFAULT 90, group_size INTEGER DEFAULT 8, games_played TEXT, energy INTEGER DEFAULT 3, breakthroughs TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM improv_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/improv/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, type, duration_min, group_size, games_played, energy, breakthroughs, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS improv_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'class', duration_min INTEGER DEFAULT 90, group_size INTEGER DEFAULT 8, games_played TEXT, energy INTEGER DEFAULT 3, breakthroughs TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO improv_sessions (user_id,date,type,duration_min,group_size,games_played,energy,breakthroughs,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,date||'',type||'class',duration_min||90,group_size||8,games_played||'',energy||3,breakthroughs||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/improv/shows', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS improv_shows (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, format TEXT DEFAULT 'shortform', duration_min INTEGER DEFAULT 45, audience INTEGER DEFAULT 30, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM improv_shows WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/improv/shows', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, venue, format, duration_min, audience, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS improv_shows (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, format TEXT DEFAULT 'shortform', duration_min INTEGER DEFAULT 45, audience INTEGER DEFAULT 30, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO improv_shows (user_id,date,venue,format,duration_min,audience,rating,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,date||'',venue||'',format||'shortform',duration_min||45,audience||30,rating||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/improv-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c FROM improv_shows WHERE user_id=?').get(u) as any);
+  res.json({ success:true, improv_os:{ shows:s?.c||0 }});
+});
+
+// B3036-B3040: Debate OS
+app.get('/api/debate/topics', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS debate_topics (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, category TEXT DEFAULT 'policy', status TEXT DEFAULT 'researching', position TEXT DEFAULT 'pro', key_args TEXT, evidence TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM debate_topics WHERE user_id=? ORDER BY status ASC, created_at DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/debate/topics', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { topic, category, position, key_args, evidence, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS debate_topics (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, category TEXT DEFAULT 'policy', status TEXT DEFAULT 'researching', position TEXT DEFAULT 'pro', key_args TEXT, evidence TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO debate_topics (user_id,topic,category,position,key_args,evidence,notes) VALUES (?,?,?,?,?,?,?)').run(u,topic||'',category||'policy',position||'pro',key_args||'',evidence||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/debate/rounds', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS debate_rounds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, date TEXT, format TEXT DEFAULT 'oxford', opponent TEXT, side TEXT DEFAULT 'pro', result TEXT DEFAULT 'win', speaker_points REAL DEFAULT 28, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM debate_rounds WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    const wins = db.prepare("SELECT COUNT(*) as c FROM debate_rounds WHERE user_id=? AND result='win'").get(u) as any;
+    res.json({ success:true, data:rows, total_wins:wins?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/debate/rounds', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { topic, date, format, opponent, side, result, speaker_points, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS debate_rounds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, date TEXT, format TEXT DEFAULT 'oxford', opponent TEXT, side TEXT DEFAULT 'pro', result TEXT DEFAULT 'win', speaker_points REAL DEFAULT 28, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO debate_rounds (user_id,topic,date,format,opponent,side,result,speaker_points,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,topic||'',date||'',format||'oxford',opponent||'',side||'pro',result||'win',speaker_points||28,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/debate-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const r = safe(()=>db.prepare("SELECT COUNT(*) as t, SUM(CASE WHEN result='win' THEN 1 ELSE 0 END) as w FROM debate_rounds WHERE user_id=?").get(u) as any);
+  res.json({ success:true, debate_os:{ rounds:r?.t||0, wins:r?.w||0 }});
+});
+
+// B3041-B3045: Escape Room OS
+app.get('/api/escape-room/rooms', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS escape_rooms (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, venue TEXT, theme TEXT, difficulty INTEGER DEFAULT 3, team_size INTEGER DEFAULT 4, date TEXT, escaped INTEGER DEFAULT 0, time_used_min INTEGER DEFAULT 0, time_limit_min INTEGER DEFAULT 60, hints_used INTEGER DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM escape_rooms WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const stats = db.prepare('SELECT COUNT(*) as t, SUM(escaped) as e FROM escape_rooms WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total:stats?.t||0, escaped:stats?.e||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/escape-room/rooms', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, venue, theme, difficulty, team_size, date, escaped, time_used_min, time_limit_min, hints_used, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS escape_rooms (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, venue TEXT, theme TEXT, difficulty INTEGER DEFAULT 3, team_size INTEGER DEFAULT 4, date TEXT, escaped INTEGER DEFAULT 0, time_used_min INTEGER DEFAULT 0, time_limit_min INTEGER DEFAULT 60, hints_used INTEGER DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO escape_rooms (user_id,name,venue,theme,difficulty,team_size,date,escaped,time_used_min,time_limit_min,hints_used,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',venue||'',theme||'',difficulty||3,team_size||4,date||'',escaped?1:0,time_used_min||0,time_limit_min||60,hints_used||0,rating||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/escape-room/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS escape_room_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, venue TEXT, theme TEXT, difficulty INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM escape_room_wishlist WHERE user_id=? ORDER BY difficulty DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/escape-room/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, venue, theme, difficulty, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS escape_room_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, venue TEXT, theme TEXT, difficulty INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO escape_room_wishlist (user_id,name,venue,theme,difficulty,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',venue||'',theme||'',difficulty||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/escape-room-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as t, SUM(escaped) as e FROM escape_rooms WHERE user_id=?').get(u) as any);
+  res.json({ success:true, escape_room_os:{ rooms_attempted:s?.t||0, rooms_escaped:s?.e||0 }});
+});
+
+// B3046-B3050: Grand Milestone v36
+app.get('/api/milestone/v36', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const draw = safe(()=>db.prepare('SELECT COUNT(*) as c FROM drawing_works WHERE user_id=?').get(u) as any);
+  const magic = safe(()=>db.prepare('SELECT COUNT(*) as c FROM magic_performances WHERE user_id=?').get(u) as any);
+  const escape = safe(()=>db.prepare('SELECT SUM(escaped) as e FROM escape_rooms WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v36.00', total_endpoints:3050, milestone:'B3050 — Creative Craft & Performance OS Complete', creative:{ drawings:draw?.c||0, magic_shows:magic?.c||0, rooms_escaped:escape?.e||0 }});
+});
+app.get('/api/forge/performance-arts-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const standup = safe(()=>db.prepare('SELECT COUNT(*) as c FROM standup_sets WHERE user_id=?').get(u) as any);
+  const improv = safe(()=>db.prepare('SELECT COUNT(*) as c FROM improv_shows WHERE user_id=?').get(u) as any);
+  const debate = safe(()=>db.prepare("SELECT COUNT(*) as c FROM debate_rounds WHERE user_id=? AND result='win'").get(u) as any);
+  res.json({ success:true, version:'v36.00', performance:{ standup_sets:standup?.c||0, improv_shows:improv?.c||0, debate_wins:debate?.c||0 }, total_endpoints:3050 });
+});
+app.get('/api/forge/craft-health', (_req: any, res: any) => {
+  res.json({ success:true, craft_health:{ os_modules:152, total_endpoints:3050, version:'v36.00' }});
+});
+
+
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));

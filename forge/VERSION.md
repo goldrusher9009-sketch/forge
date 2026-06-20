@@ -1,3 +1,15 @@
+## v36.00 — B3001-B3050 🎨 CREATIVE-CRAFT-PERFORMANCE-OS +DrawingOS/SculptureOS/CalligraphyOS/OrigamiOS/MagicOS/StandUpOS/ImprovOS/DebateOS/EscapeRoomOS/GrandMilestone
+- B3001-3005: Drawing OS — works (medium/subject/style/time), practice sessions (gesture/still-life/portrait focus)
+- B3006-3010: Sculpture OS — works (material/technique/dimensions), kiln firings (cone/outcome)
+- B3011-3015: Calligraphy OS — sessions (script/tool/duration), scripts (western/eastern/level)
+- B3016-3020: Origami OS — models (designer/difficulty/folds), folding sessions (attempts/success)
+- B3021-3025: Magic OS — tricks (category/mastery/performance_count), performances (venue/audience/rating)
+- B3026-3030: Stand-Up Comedy OS — sets (venue/duration/laughs_rating/new_material), joke library (setup/punchline/laugh_rating)
+- B3031-3035: Improv OS — sessions (games_played/energy/breakthroughs), shows (format/audience/rating)
+- B3036-3040: Debate OS — topic research (key_args/evidence), rounds (format/result/speaker_points)
+- B3041-3045: Escape Room OS — rooms (escaped/time_used/hints), wishlist tracker
+- B3046-3050: 🏆 Grand Milestone v36 — /api/milestone/v36, performance-arts-manifest, craft-health — 3050 endpoints, 141419 lines
+
 ## v35.00 — B2951-B3000 🎯 B3000-CONNOISSEUR-CREATURE-OS +PetCareOSv2/AquariumOS/ReptileOS/BirdOS/HomebrewingOS/WineOS/CoffeeOSv2/TeaOS/WhiskeyOS/GrandMilestone
 - B2951-2955: Pet Care OS v2 — pets (microchip/insurance/vet/weight), health logs (type/cost/next_due)
 - B2956-2960: Aquarium OS — tanks (volume/type/filtration/CO2), water tests (ph/ammonia/nitrite/nitrate/temp)
