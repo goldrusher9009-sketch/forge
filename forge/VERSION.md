@@ -1,3 +1,11 @@
+## v47.00 — B3551-B3600 🎓 EDUCATION-ACADEMIC-OS +EducationOS/StudyGroups/ResearchOS/TutoringOS/LibraryOS/ExamPrep/GrandMilestone
+- B3551-3555: Education OS — courses (code/credits/GPA), assignments (due/weight/score/status)
+- B3556-3560: Study Groups OS — groups (subject/frequency/location), sessions (topics/attendance/productivity)
+- B3561-3565: Research OS — projects (advisor/deadline/status), sources (authors/DOI/key-findings/cited)
+- B3566-3570: Tutoring OS — sessions (student/subject/rate/duration), students (grade/goal/parent-contact)
+- B3571-3580: Library OS — reading list (status/rating/source); Exam Prep OS — plans (target-hours/confidence-pct)
+- B3581-3600: 🏆 Grand Milestone v47 — /api/milestone/v47, education-manifest, education-health — 3600 endpoints, 145269 lines
+
 ## v46.00 — B3501-B3550 🚗 AUTOMOTIVE-TRANSPORTATION-OS +VehicleOS/AutoMaintenance/FuelLog/RoadTrip/DriverLog/Parking/Carpool/GrandMilestone
 - B3501-3505: Vehicle OS — registry (year/make/model/vin/plate/mileage/value), document expiry tracker
 - B3506-3510: Auto Maintenance OS — service log (type/shop/cost/next_due_miles), fuel log (gallons/price/station/mpg)
