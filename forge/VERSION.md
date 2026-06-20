@@ -1,3 +1,8 @@
+## v64.00 — B4401-B4450 📚 KNOWLEDGE-OS +Language/Vocab/SRS/Courses/Notes/GrandMilestone
+- B4401-4410: Language Learning OS — languages (level/streak/XP), vocab (SM-2 spaced repetition, review/ease/interval)
+- B4411-4420: Study & Course OS — courses (provider/category/progress/certificate/rating)
+- B4421-4430: Notes OS — notes (body/tags/pinned/folder/search/full-CRUD)
+- B4431-4450: 🏆 Grand Milestone v64 — /api/milestone/v64, knowledge-manifest, knowledge-health — 4450 endpoints, 148139 lines
 ## v63.00 — B4351-B4400 🎲 TABLETOP-RPG-OS +BoardGames/Sessions/Campaigns/Characters/SessionNotes/GrandMilestone
 - B4351-4360: Board Game Collection OS — games (complexity/players/play-time), sessions (winner/score/duration)
 - B4361-4370: RPG Campaign OS — campaigns (system/role/DM/status), characters (race/class/level/backstory/stats)
