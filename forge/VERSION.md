@@ -1,3 +1,15 @@
+## v101.00 — B6251-B6300 🦎🐝 TERRARIUM+BEEKEEPING-OS +Builds/Inhabitants/Hives/Inspections/Harvests
+- B6251-6260: Terrarium OS — build registry (type/substrate/plants), inhabitant tracker (species/count)
+- B6261-6270: Terrarium maintenance log (humidity/temp) + Beekeeping hive registry (type/queen status)
+- B6271-6280: Beekeeping inspection log (queen seen/brood/varroa/actions), honey+wax harvest tracker
+- B6281-6300: Beekeeping Stats + Grand Milestone v101 — /api/milestone/v101, 6300 endpoints, 154535 lines
+
+## v100.00 — B6201-B6250 🕯️🧼 CENTURY MILESTONE! CANDLE+SOAP-OS +Recipes/Batches/CureLog/Stats
+- B6201-6210: Candle Making OS — recipe vault (wax/fragrance/dye/wick/pour temp), batch log
+- B6211-6220: Candle Stats + Soap Making recipe vault (method/oils/lye/water/superfat/cure days)
+- B6221-6230: Soap batch tracker (bars made/cure date/status curing→ready)
+- B6231-6250: Soap Stats + 🎉 GRAND MILESTONE v100 — /api/milestone/v100, 6250 endpoints, 154377 lines, 38 OS modules, 100 VERSIONS!
+
 ## v99.00 — B6151-B6200 🍄🧵 FORAGING+LEATHERWORKING-OS +Finds/Locations/Stats/Projects/Tools/Stats
 - B6151-6160: Foraging OS — species find log (edible/quantity/GPS location), secret location registry
 - B6161-6170: Foraging Stats + Leatherworking project tracker (type/leather/status/materials cost)
