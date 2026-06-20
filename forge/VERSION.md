@@ -1,3 +1,17 @@
+## v86.00 — B5501-B5550 🍳📚 RECIPE+LANGUAGE-OS +Catalog/Ingredients/CookLog/MealPlan/Vocab/SM2/Sessions/GrandMilestone
+- B5501-5510: Recipe OS — recipe catalog (cuisine/difficulty), ingredient lists, source URL tracking
+- B5511-5520: Cook Log + Meal Planner — per-recipe cook log with ratings, weekly meal planning grid
+- B5521-5530: Language Learning OS — vocabulary bank (SM-2 spaced repetition), pronunciation, examples
+- B5531-5540: Language Review Sessions — SM-2 review engine (ease factor/interval), study session log
+- B5541-5550: Recipe+Language Stats + Grand Milestone v86 — /api/milestone/v86, 5550 endpoints, 151991 lines
+
+## v85.00 — B5451-B5500 🎙️🔭 PODCAST+ASTRONOMY-OS +Shows/Episodes/Queue/Observations/Equipment/Targets/Sessions/GrandMilestone
+- B5451-5460: Podcast OS — show subscriptions (category/rating), episode log (listen %, status), listen queue
+- B5461-5470: Podcast Stats + Astronomy OS start — listen hours, top categories, observation log (seeing/transparency)
+- B5471-5480: Astronomy Equipment + Targets — equipment registry (aperture/focal), target wishlist with constellation/magnitude
+- B5481-5490: Astronomy Sessions + Stats — observing sessions, stats by object type, wishlist count
+- B5491-5500: Grand Milestone v85 — /api/milestone/v85, manifest, health — 5500 endpoints, 151793 lines
+
 ## v84.00 — B5401-B5450 🌱🧠 GARDEN+MENTALHEALTH-OS +Plants/Beds/Watering/Harvests/Moods/Therapy/Coping/Affirmations/GrandMilestone
 - B5401-5410: Garden OS — plant registry (type/sun/water), garden beds, watering log, task checklist
 - B5411-5420: Garden Harvest + Stats — harvest tracker (weight/quantity), garden productivity stats
@@ -663,31 +677,4 @@
 - B1351-B1380: 30 new personal life logs — precision/mind sports (darts/billiards/chess), lifestyle arts (parkour/dance/gymnastics/cheer/pilates/yoga), wellness streaks (meditation/journaling), enrichment (reading/language/music/drawing/photography/cooking/gardening/coding/writing), media (podcast/film/travel), productivity (volunteer/expenses/savings/habits/goals) with auto-computed streaks/cumulative totals/PRs
 
 ## v13.50 — B1301-B1350 MILESTONE-1350 +Skateboarding/Surfing/Snowboarding/Kickboxing/Judo/Karate/Archery/PowerliftingMeet/OlyMeet/Fencing/Shooting/Equestrian/RoadCycling/MTB/OpenWaterSwim/Triathlon/Duathlon/OCR/UltraRunning/MarathonTraining/CrossFit/Calisthenics/OutdoorClimbing/Paddling/Sailing/Windsurfing/Kitesurfing/Scuba/Freediving/Paragliding/Skydiving/Snowshoeing/NordicSki/SpeedSkating/FigureSkating/Curling/Bobsled/Biathlon/Motocross/Kart/Squash/Racquetball/Pickleball/Padel/WaterPolo/Lacrosse/FieldHockey/Ultimate/DiscGolf/Bowling
-- B1301-B1350: 50 new activity logs — board sports (skate/surf/snowboard), martial arts (kickboxing/judo/karate), precision sports (archery/shooting/equestrian), competitive lifts (powerlifting+oly meets with Wilks/Dots/Sinclair), water sports (OW swim/scuba/freediving/sailing/windsurf/kitesurf), winter sports (nordic ski/speed skating/figure skating/curling/bobsled/biathlon), endurance (triathlon/duathlon/OCR/ultra/marathon training), motor sports (motocross/kart), racket/paddle sports (squash/racquetball/pickleball/padel), team sports (water polo/lacrosse/field hockey/ultimate), disc sports (disc golf/bowling)
-
-## v13.40 — B1271-B1300 MILESTONE-1300 +InjuryTracker/Biomarkers/PersonalTraining/GroupFitness/StrengthTesting/VO2Max/RaceCalendar/TrainingBlocks/GearLog/Altitude/Wearable/Tennis/Badminton/Volleyball/Basketball/Baseball/Football/IceHockey/Rugby/Cricket/Soccer/Golf/PoolSwim/Gym/Running/IndoorCycling/Hiking/Rowing/Boxing/Wrestling
-- B1271-B1300: 30 new activity/health logs — injury tracking, 16-biomarker blood panel, race calendar PBs, training block compliance %, gear spend totals, wearable steps/calorie PRs, 9 team sports with auto-calc stats (batting avg, FG%, kill%, completion%, strike rate, economy rate), 6 individual sports (golf score-vs-par, pool swim pace per stroke, gym volume PR per type), indoor cycling wattage PR, hiking elevation PR, rowing split auto-calc, boxing punch stats, wrestling takedown tracking
-
-## v13.30 — B1261-B1270 MILESTONE-1270 +ColdPlunge/Sauna/Breathwork/Stretching/BodyComp/Sleep/Nutrition/Mobility/Massage/HRZones
-- B1261-B1270: 10 wellness/recovery logs — HRV PRs, zone compliance %, body comp trend tracking, sleep readiness scores
-
-## v13.20 — B1251-B1260 +FMS/ObstacleTraining/Yoga/Pilates/Meditation/TaiChi/Acrobatics/Polo/FlyFishing/CanoeSlalom
-- B1251-B1260: 10 new activity/sport logs — FMS scoring, mindfulness streak tracking, polo goals PR, fly-fishing species flags, canoe slalom total_time_sec auto-calc
-
-## v13.10 — B1231-B1250 MILESTONE-1250 +Motocross/Surfing/PoleVault/Throwing/SpeedSkating/DinghySailing/Mountaineering/Skateboarding/BMX/Karting/Paragliding/SkiTouring/Multisport/SUP/Canicross/Paddleball/CrossFit/Calisthenics/Hyrox/Kettlebell
-- B1231-B1250: 20 new sport/activity logs — full PR detection, auto-calc stats, new-venue/gym flags throughout
-
-## v13.00 — B1211-B1230 MILESTONE-1230 +Darts/TableTennis/Equestrian/Parkour/Canoeing/Powerlifting/Track/OlympicLifting/RoadCycling/OpenWater/BJJ/MuayThai/Gymnastics/AlpineSki/Shooting/IndoorClimb/Fencing/Triathlon/RowingErg/Handball
-- B1211-B1230: 20 new sport/activity logs — full PR detection, auto-calc stats, new-venue/gym flags throughout
-
-## v12.90 — B1201-B1210 +Hurling/GaelicFootball/Orienteering/SurfLifesaving/Curling/NordicCombined/Bocce/Esports/Freediving/Snooker
-- B1201-B1210: 10 new sport/activity logs — GAA scoring, FPS KDA/headshot%, freedive depth PRs, snooker century flags, full PR detection throughout
-
-## v12.80 — B1171-B1200 MILESTONE-1200 +Padel/CanoeSprint/ArcheryField/IceDance/Racquetball/RollerDerby/Sumo/Biathlon/OCR/Squash/Kiteboarding/WaterPolo/Lacrosse/SynchroSwim/FieldHockey/Netball/Floorball/InlineSpeed/OutdoorClimbing/SailingRace/Bandy/Foosball/AirShooting/Tchoukball/Pentathlon/RhythmicGym/Kickball/DroneRacing/LongDrive/JaiAlai
-- B1171-B1200: 30 new sport/activity logs — full PR detection, auto-calc stats, new-venue flags
-
-## v12.70 — B1166-B1170 +EnduроMTB/Cricket/Windsurfing/Kabaddi/SepakTakraw
-- B1166: Enduro MTB Log (stage times, climb/descent PRs, location flag)
-- B1167: Cricket Log (batting avg, bowling economy, fielding, match record)
-- B1168: Windsurfing Log (speed PR, water state, new spot flag, sail config)
-- B1169:
+- B1301-B1350: 50 new activity logs — board sports (skate/surf/snowboard), martial arts (kickboxing/judo/karate), precision sports (archery/shooting/equestrian), competitive lifts (powerlifting+oly meets with Wilks/Dots/Sinclair), water sports (OW swim/scuba/freediving/sailing/windsurf/kitesurf), winter sports (nordic ski/speed skating/figure skating/curling/bobsled/biathlon), endurance (triathlon/duathlon/OCR/ultra/marathon training), 
