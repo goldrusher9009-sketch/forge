@@ -143066,5 +143066,415 @@ app.get('/api/forge/collector-health', (_req: any, res: any) => {
 
 });
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B3251-B3300: DIY Home OS + Gardening v2 OS + Homesteading OS + Beekeeping OS
+//              Aquaponics OS + Composting OS + Solar/Energy OS + Rain Harvest OS
+//              Emergency Prep OS + Grand Milestone v41
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B3251-B3255: DIY Home OS
+app.get('/api/diy-home/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS diy_home_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, room TEXT DEFAULT 'kitchen', type TEXT DEFAULT 'repair', status TEXT DEFAULT 'planned', budget_usd REAL DEFAULT 0, spent_usd REAL DEFAULT 0, date_started TEXT, date_completed TEXT, difficulty INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM diy_home_projects WHERE user_id=? ORDER BY CASE status WHEN 'in_progress' THEN 0 WHEN 'planned' THEN 1 ELSE 2 END, date_started DESC LIMIT 50").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/diy-home/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, room, type, status, budget_usd, spent_usd, date_started, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS diy_home_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, room TEXT DEFAULT 'kitchen', type TEXT DEFAULT 'repair', status TEXT DEFAULT 'planned', budget_usd REAL DEFAULT 0, spent_usd REAL DEFAULT 0, date_started TEXT, date_completed TEXT, difficulty INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO diy_home_projects (user_id,name,room,type,status,budget_usd,spent_usd,date_started,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',room||'kitchen',type||'repair',status||'planned',budget_usd||0,spent_usd||0,date_started||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/diy-home/materials', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS diy_home_materials (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'lumber', quantity REAL DEFAULT 0, unit TEXT DEFAULT 'piece', location TEXT, project TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM diy_home_materials WHERE user_id=? ORDER BY category ASC, name ASC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/diy-home/materials', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, quantity, unit, location, project, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS diy_home_materials (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'lumber', quantity REAL DEFAULT 0, unit TEXT DEFAULT 'piece', location TEXT, project TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO diy_home_materials (user_id,name,category,quantity,unit,location,project,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',category||'lumber',quantity||0,unit||'piece',location||'',project||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/diy-home-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare("SELECT COUNT(*) as t, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as c FROM diy_home_projects WHERE user_id=?").get(u) as any);
+  res.json({ success:true, diy_home_os:{ projects:p?.t||0, completed:p?.c||0 }});
+});
+
+// B3256-B3260: Gardening v2 OS
+app.get('/api/gardening/beds', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS gardening_beds_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'raised', size_sqft REAL DEFAULT 0, soil_type TEXT DEFAULT 'loam', sun TEXT DEFAULT 'full', irrigation TEXT DEFAULT 'manual', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM gardening_beds_v2 WHERE user_id=? ORDER BY name ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/gardening/beds', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, size_sqft, soil_type, sun, irrigation, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS gardening_beds_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'raised', size_sqft REAL DEFAULT 0, soil_type TEXT DEFAULT 'loam', sun TEXT DEFAULT 'full', irrigation TEXT DEFAULT 'manual', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO gardening_beds_v2 (user_id,name,type,size_sqft,soil_type,sun,irrigation,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'raised',size_sqft||0,soil_type||'loam',sun||'full',irrigation||'manual',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/gardening/harvests', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS gardening_harvests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, plant TEXT, bed TEXT, date TEXT, quantity REAL DEFAULT 0, unit TEXT DEFAULT 'lbs', quality INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM gardening_harvests WHERE user_id=? ORDER BY date DESC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/gardening/harvests', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { plant, bed, date, quantity, unit, quality, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS gardening_harvests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, plant TEXT, bed TEXT, date TEXT, quantity REAL DEFAULT 0, unit TEXT DEFAULT 'lbs', quality INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO gardening_harvests (user_id,plant,bed,date,quantity,unit,quality,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,plant||'',bed||'',date||'',quantity||0,unit||'lbs',quality||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/gardening-v2-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const h = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(quantity),0) as q FROM gardening_harvests WHERE user_id=?').get(u) as any);
+  res.json({ success:true, gardening_v2_os:{ harvests:h?.c||0, total_lbs:h?.q||0 }});
+});
+
+// B3261-B3265: Homesteading OS
+app.get('/api/homestead/animals', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS homestead_animals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, species TEXT DEFAULT 'chicken', breed TEXT, dob TEXT, sex TEXT DEFAULT 'female', purpose TEXT DEFAULT 'eggs', health TEXT DEFAULT 'healthy', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM homestead_animals WHERE user_id=? ORDER BY species ASC, name ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/homestead/animals', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, species, breed, dob, sex, purpose, health, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS homestead_animals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, species TEXT DEFAULT 'chicken', breed TEXT, dob TEXT, sex TEXT DEFAULT 'female', purpose TEXT DEFAULT 'eggs', health TEXT DEFAULT 'healthy', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO homestead_animals (user_id,name,species,breed,dob,sex,purpose,health,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',species||'chicken',breed||'',dob||'',sex||'female',purpose||'eggs',health||'healthy',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/homestead/produce', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS homestead_produce (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT DEFAULT 'eggs', date TEXT, quantity REAL DEFAULT 0, unit TEXT DEFAULT 'count', preserved INTEGER DEFAULT 0, preserve_method TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM homestead_produce WHERE user_id=? ORDER BY date DESC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/homestead/produce', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { type, date, quantity, unit, preserved, preserve_method, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS homestead_produce (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT DEFAULT 'eggs', date TEXT, quantity REAL DEFAULT 0, unit TEXT DEFAULT 'count', preserved INTEGER DEFAULT 0, preserve_method TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO homestead_produce (user_id,type,date,quantity,unit,preserved,preserve_method,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,type||'eggs',date||'',quantity||0,unit||'count',preserved?1:0,preserve_method||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/homestead-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const a = safe(()=>db.prepare('SELECT COUNT(*) as c FROM homestead_animals WHERE user_id=?').get(u) as any);
+  res.json({ success:true, homestead_os:{ animals:a?.c||0 }});
+});
+
+// B3266-B3270: Beekeeping OS
+app.get('/api/beekeeping/hives', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS beekeeping_hives (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'langstroth', location TEXT, installed_date TEXT, queen_breed TEXT DEFAULT 'italian', status TEXT DEFAULT 'active', supers INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM beekeeping_hives WHERE user_id=? ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END, name ASC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/beekeeping/hives', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, location, installed_date, queen_breed, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS beekeeping_hives (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'langstroth', location TEXT, installed_date TEXT, queen_breed TEXT DEFAULT 'italian', status TEXT DEFAULT 'active', supers INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO beekeeping_hives (user_id,name,type,location,installed_date,queen_breed,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',type||'langstroth',location||'',installed_date||'',queen_breed||'italian',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/beekeeping/inspections', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS beekeeping_inspections (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, hive TEXT, date TEXT, queen_seen INTEGER DEFAULT 0, eggs INTEGER DEFAULT 0, brood TEXT DEFAULT 'good', honey_frames INTEGER DEFAULT 0, temperament TEXT DEFAULT 'calm', varroa_count INTEGER DEFAULT 0, actions TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM beekeeping_inspections WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/beekeeping/inspections', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { hive, date, queen_seen, eggs, brood, honey_frames, temperament, varroa_count, actions, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS beekeeping_inspections (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, hive TEXT, date TEXT, queen_seen INTEGER DEFAULT 0, eggs INTEGER DEFAULT 0, brood TEXT DEFAULT 'good', honey_frames INTEGER DEFAULT 0, temperament TEXT DEFAULT 'calm', varroa_count INTEGER DEFAULT 0, actions TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO beekeeping_inspections (user_id,hive,date,queen_seen,eggs,brood,honey_frames,temperament,varroa_count,actions,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,hive||'',date||'',queen_seen?1:0,eggs?1:0,brood||'good',honey_frames||0,temperament||'calm',varroa_count||0,actions||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/beekeeping-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const h = safe(()=>db.prepare("SELECT COUNT(*) as c FROM beekeeping_hives WHERE user_id=? AND status='active'").get(u) as any);
+  res.json({ success:true, beekeeping_os:{ active_hives:h?.c||0 }});
+});
+
+// B3271-B3275: Aquaponics OS
+app.get('/api/aquaponics/systems', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS aquaponics_systems (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'media_bed', fish_tank_gallons REAL DEFAULT 50, grow_bed_sqft REAL DEFAULT 10, fish_species TEXT DEFAULT 'tilapia', fish_count INTEGER DEFAULT 10, status TEXT DEFAULT 'running', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM aquaponics_systems WHERE user_id=? ORDER BY status ASC, name ASC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/aquaponics/systems', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, fish_tank_gallons, grow_bed_sqft, fish_species, fish_count, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS aquaponics_systems (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'media_bed', fish_tank_gallons REAL DEFAULT 50, grow_bed_sqft REAL DEFAULT 10, fish_species TEXT DEFAULT 'tilapia', fish_count INTEGER DEFAULT 10, status TEXT DEFAULT 'running', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO aquaponics_systems (user_id,name,type,fish_tank_gallons,grow_bed_sqft,fish_species,fish_count,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'media_bed',fish_tank_gallons||50,grow_bed_sqft||10,fish_species||'tilapia',fish_count||10,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/aquaponics/readings', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS aquaponics_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, system TEXT, date TEXT, ph REAL DEFAULT 7.0, ammonia REAL DEFAULT 0, nitrite REAL DEFAULT 0, nitrate REAL DEFAULT 20, temp_f REAL DEFAULT 72, do_ppm REAL DEFAULT 6, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM aquaponics_readings WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/aquaponics/readings', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { system, date, ph, ammonia, nitrite, nitrate, temp_f, do_ppm, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS aquaponics_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, system TEXT, date TEXT, ph REAL DEFAULT 7.0, ammonia REAL DEFAULT 0, nitrite REAL DEFAULT 0, nitrate REAL DEFAULT 20, temp_f REAL DEFAULT 72, do_ppm REAL DEFAULT 6, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO aquaponics_readings (user_id,system,date,ph,ammonia,nitrite,nitrate,temp_f,do_ppm,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,system||'',date||'',ph||7.0,ammonia||0,nitrite||0,nitrate||20,temp_f||72,do_ppm||6,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/aquaponics-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c FROM aquaponics_systems WHERE user_id=?').get(u) as any);
+  res.json({ success:true, aquaponics_os:{ systems:s?.c||0 }});
+});
+
+// B3276-B3280: Composting OS
+app.get('/api/composting/bins', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS composting_bins (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'hot', volume_gallons REAL DEFAULT 50, location TEXT, date_started TEXT, status TEXT DEFAULT 'active', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM composting_bins WHERE user_id=? ORDER BY status ASC, date_started DESC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/composting/bins', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, volume_gallons, location, date_started, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS composting_bins (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'hot', volume_gallons REAL DEFAULT 50, location TEXT, date_started TEXT, status TEXT DEFAULT 'active', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO composting_bins (user_id,name,type,volume_gallons,location,date_started,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',type||'hot',volume_gallons||50,location||'',date_started||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/composting/inputs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS composting_inputs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, bin TEXT, date TEXT, material TEXT, type TEXT DEFAULT 'brown', weight_lbs REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM composting_inputs WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/composting/inputs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { bin, date, material, type, weight_lbs, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS composting_inputs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, bin TEXT, date TEXT, material TEXT, type TEXT DEFAULT 'brown', weight_lbs REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO composting_inputs (user_id,bin,date,material,type,weight_lbs,notes) VALUES (?,?,?,?,?,?,?)').run(u,bin||'',date||'',material||'',type||'brown',weight_lbs||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/composting-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const b = safe(()=>db.prepare('SELECT COUNT(*) as c FROM composting_bins WHERE user_id=?').get(u) as any);
+  res.json({ success:true, composting_os:{ bins:b?.c||0 }});
+});
+
+// B3281-B3285: Solar/Energy OS
+app.get('/api/solar/systems', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS solar_systems (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, panels INTEGER DEFAULT 10, panel_watts INTEGER DEFAULT 400, inverter_kw REAL DEFAULT 5, battery_kwh REAL DEFAULT 0, install_date TEXT, installer TEXT, cost_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM solar_systems WHERE user_id=? LIMIT 5').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/solar/systems', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, panels, panel_watts, inverter_kw, battery_kwh, install_date, installer, cost_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS solar_systems (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, panels INTEGER DEFAULT 10, panel_watts INTEGER DEFAULT 400, inverter_kw REAL DEFAULT 5, battery_kwh REAL DEFAULT 0, install_date TEXT, installer TEXT, cost_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO solar_systems (user_id,name,panels,panel_watts,inverter_kw,battery_kwh,install_date,installer,cost_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',panels||10,panel_watts||400,inverter_kw||5,battery_kwh||0,install_date||'',installer||'',cost_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/solar/readings', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS solar_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, kwh_generated REAL DEFAULT 0, kwh_consumed REAL DEFAULT 0, kwh_exported REAL DEFAULT 0, kwh_imported REAL DEFAULT 0, battery_pct REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM solar_readings WHERE user_id=? ORDER BY date DESC LIMIT 90').all(u);
+    const total = db.prepare('SELECT COALESCE(SUM(kwh_generated),0) as g FROM solar_readings WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_kwh_generated:total?.g||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/solar/readings', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, kwh_generated, kwh_consumed, kwh_exported, kwh_imported, battery_pct, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS solar_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, kwh_generated REAL DEFAULT 0, kwh_consumed REAL DEFAULT 0, kwh_exported REAL DEFAULT 0, kwh_imported REAL DEFAULT 0, battery_pct REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO solar_readings (user_id,date,kwh_generated,kwh_consumed,kwh_exported,kwh_imported,battery_pct,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,date||'',kwh_generated||0,kwh_consumed||0,kwh_exported||0,kwh_imported||0,battery_pct||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/solar-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const r = safe(()=>db.prepare('SELECT COALESCE(SUM(kwh_generated),0) as g FROM solar_readings WHERE user_id=?').get(u) as any);
+  res.json({ success:true, solar_os:{ total_kwh_generated:r?.g||0 }});
+});
+
+// B3286-B3290: Rain Harvest OS
+app.get('/api/rain-harvest/tanks', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rain_harvest_tanks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, capacity_gallons REAL DEFAULT 500, current_gallons REAL DEFAULT 0, location TEXT, filter_type TEXT DEFAULT 'first_flush', installed_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM rain_harvest_tanks WHERE user_id=? ORDER BY capacity_gallons DESC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/rain-harvest/tanks', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, capacity_gallons, current_gallons, location, filter_type, installed_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rain_harvest_tanks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, capacity_gallons REAL DEFAULT 500, current_gallons REAL DEFAULT 0, location TEXT, filter_type TEXT DEFAULT 'first_flush', installed_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rain_harvest_tanks (user_id,name,capacity_gallons,current_gallons,location,filter_type,installed_date,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',capacity_gallons||500,current_gallons||0,location||'',filter_type||'first_flush',installed_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/rain-harvest/log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rain_harvest_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tank TEXT, date TEXT, rainfall_in REAL DEFAULT 0, gallons_collected REAL DEFAULT 0, gallons_used REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM rain_harvest_log WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/rain-harvest/log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { tank, date, rainfall_in, gallons_collected, gallons_used, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rain_harvest_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tank TEXT, date TEXT, rainfall_in REAL DEFAULT 0, gallons_collected REAL DEFAULT 0, gallons_used REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rain_harvest_log (user_id,tank,date,rainfall_in,gallons_collected,gallons_used,notes) VALUES (?,?,?,?,?,?,?)').run(u,tank||'',date||'',rainfall_in||0,gallons_collected||0,gallons_used||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/rain-harvest-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const l = safe(()=>db.prepare('SELECT COALESCE(SUM(gallons_collected),0) as g FROM rain_harvest_log WHERE user_id=?').get(u) as any);
+  res.json({ success:true, rain_harvest_os:{ gallons_collected:l?.g||0 }});
+});
+
+// B3291-B3295: Emergency Preparedness OS
+app.get('/api/emergency-prep/supplies', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS emergency_prep_supplies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'food', quantity REAL DEFAULT 0, unit TEXT DEFAULT 'count', expiry_date TEXT, location TEXT DEFAULT 'pantry', days_supply REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM emergency_prep_supplies WHERE user_id=? ORDER BY expiry_date ASC, category ASC LIMIT 100').all(u);
+    const total_days = db.prepare('SELECT COALESCE(MIN(days_supply),0) as d FROM emergency_prep_supplies WHERE user_id=? AND days_supply>0').get(u) as any;
+    res.json({ success:true, data:rows, min_days_supply:total_days?.d||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/emergency-prep/supplies', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, quantity, unit, expiry_date, location, days_supply, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS emergency_prep_supplies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'food', quantity REAL DEFAULT 0, unit TEXT DEFAULT 'count', expiry_date TEXT, location TEXT DEFAULT 'pantry', days_supply REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO emergency_prep_supplies (user_id,name,category,quantity,unit,expiry_date,location,days_supply,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',category||'food',quantity||0,unit||'count',expiry_date||'',location||'pantry',days_supply||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/emergency-prep/plans', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS emergency_prep_plans (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'evacuation', scenario TEXT, steps TEXT, contacts TEXT, last_reviewed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM emergency_prep_plans WHERE user_id=? ORDER BY type ASC, name ASC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/emergency-prep/plans', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, scenario, steps, contacts, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS emergency_prep_plans (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'evacuation', scenario TEXT, steps TEXT, contacts TEXT, last_reviewed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO emergency_prep_plans (user_id,name,type,scenario,steps,contacts,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',type||'evacuation',scenario||'',steps||'',contacts||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/emergency-prep-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(MIN(days_supply),0) as d FROM emergency_prep_supplies WHERE user_id=? AND days_supply>0').get(u) as any);
+  res.json({ success:true, emergency_prep_os:{ supply_items:s?.c||0, min_days_supply:s?.d||0 }});
+});
+
+// B3296-B3300: Grand Milestone v41
+app.get('/api/milestone/v41', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const solar = safe(()=>db.prepare('SELECT COALESCE(SUM(kwh_generated),0) as g FROM solar_readings WHERE user_id=?').get(u) as any);
+  const hives = safe(()=>db.prepare("SELECT COUNT(*) as c FROM beekeeping_hives WHERE user_id=? AND status='active'").get(u) as any);
+  const diy = safe(()=>db.prepare("SELECT COUNT(*) as c FROM diy_home_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, version:'v41.00', total_endpoints:3300, milestone:'B3300 — Homestead-Sustainability OS Complete', data:{ kwh_solar:solar?.g||0, active_hives:hives?.c||0, diy_completed:diy?.c||0 }});
+});
+app.get('/api/forge/homestead-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const animals = safe(()=>db.prepare('SELECT COUNT(*) as c FROM homestead_animals WHERE user_id=?').get(u) as any);
+  const compost = safe(()=>db.prepare('SELECT COUNT(*) as c FROM composting_bins WHERE user_id=?').get(u) as any);
+  const rain = safe(()=>db.prepare('SELECT COALESCE(SUM(gallons_collected),0) as g FROM rain_harvest_log WHERE user_id=?').get(u) as any);
+  res.json({ success:true, homestead:{ animals:animals?.c||0, compost_bins:compost?.c||0, rain_gallons:rain?.g||0 }, total_endpoints:3300 });
+});
+app.get('/api/forge/homestead-health', (_req: any, res: any) => {
+  res.json({ success:true, homestead_health:{ os_modules:202, total_endpoints:3300, version:'v41.00' }});
+
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
