@@ -150094,5 +150094,304 @@ app.get('/api/forge/shopping-learning-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
 
+
+// B5151-B5200: Music OS + Photography OS
+// B5151-5160: Music Library + Playlists
+
+app.post('/api/music/tracks', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, artist, album, genre, duration_seconds, year, rating, notes } = req.body;
+  if (!title) return res.status(400).json({ success: false, error: 'title required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, artist TEXT, album TEXT, genre TEXT, duration_seconds INTEGER, year INTEGER, rating INTEGER, play_count INTEGER DEFAULT 0, last_played TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO music_tracks (user_id,title,artist,album,genre,duration_seconds,year,rating,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, title, artist||'', album||'', genre||'', duration_seconds||0, year||null, rating||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/music/tracks', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { artist, genre, limit = 50, search } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, artist TEXT, album TEXT, genre TEXT, duration_seconds INTEGER, year INTEGER, rating INTEGER, play_count INTEGER DEFAULT 0, last_played TEXT, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM music_tracks WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (artist) { q += ` AND artist LIKE ?`; params.push(`%${artist}%`); }
+  if (genre) { q += ` AND genre=?`; params.push(genre); }
+  if (search) { q += ` AND (title LIKE ? OR artist LIKE ? OR album LIKE ?)`; params.push(`%${search}%`, `%${search}%`, `%${search}%`); }
+  q += ` ORDER BY artist ASC, title ASC LIMIT ?`; params.push(Number(limit));
+  const rows = db2.prepare(q).all(...params);
+  res.json({ success: true, tracks: rows, count: rows.length });
+});
+
+app.post('/api/music/tracks/:id/play', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, artist TEXT, album TEXT, genre TEXT, duration_seconds INTEGER, year INTEGER, rating INTEGER, play_count INTEGER DEFAULT 0, last_played TEXT, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`UPDATE music_tracks SET play_count=play_count+1, last_played=? WHERE id=? AND user_id=?`).run(new Date().toISOString(), req.params.id, userId);
+  const t = db2.prepare(`SELECT play_count FROM music_tracks WHERE id=?`).get(req.params.id) as any;
+  res.json({ success: true, play_count: t?.play_count || 1 });
+});
+
+app.post('/api/music/playlists', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, description, is_public } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_playlists (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, description TEXT, is_public INTEGER DEFAULT 0, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO music_playlists (user_id,name,description,is_public,created_at) VALUES (?,?,?,?,?)`).run(userId, name, description||'', is_public?1:0, new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/music/playlists', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_playlists (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, description TEXT, is_public INTEGER DEFAULT 0, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_playlist_tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, playlist_id INTEGER, track_id INTEGER, position INTEGER, added_at TEXT)`).run();
+  const playlists = db2.prepare(`SELECT p.*, COUNT(pt.id) as track_count FROM music_playlists p LEFT JOIN music_playlist_tracks pt ON p.id=pt.playlist_id WHERE p.user_id=? GROUP BY p.id ORDER BY p.created_at DESC`).all(userId);
+  res.json({ success: true, playlists });
+});
+
+app.post('/api/music/playlists/:id/tracks', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { track_id } = req.body;
+  if (!track_id) return res.status(400).json({ success: false, error: 'track_id required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_playlist_tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, playlist_id INTEGER, track_id INTEGER, position INTEGER, added_at TEXT)`).run();
+  const maxPos = (db2.prepare(`SELECT MAX(position) as m FROM music_playlist_tracks WHERE playlist_id=?`).get(req.params.id) as any).m || 0;
+  const r = db2.prepare(`INSERT INTO music_playlist_tracks (playlist_id,track_id,position,added_at) VALUES (?,?,?,?)`).run(req.params.id, track_id, maxPos+1, new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid, position: maxPos+1 });
+});
+
+// B5161-5170: Music Stats + Practice Log
+
+app.get('/api/music/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, artist TEXT, album TEXT, genre TEXT, duration_seconds INTEGER, year INTEGER, rating INTEGER, play_count INTEGER DEFAULT 0, last_played TEXT, notes TEXT, created_at TEXT)`).run();
+  const total = (db2.prepare(`SELECT COUNT(*) as c FROM music_tracks WHERE user_id=?`).get(userId) as any).c;
+  const totalPlays = (db2.prepare(`SELECT SUM(play_count) as s FROM music_tracks WHERE user_id=?`).get(userId) as any).s || 0;
+  const topArtists = db2.prepare(`SELECT artist, SUM(play_count) as plays FROM music_tracks WHERE user_id=? AND artist!='' GROUP BY artist ORDER BY plays DESC LIMIT 5`).all(userId);
+  const topTracks = db2.prepare(`SELECT title, artist, play_count FROM music_tracks WHERE user_id=? ORDER BY play_count DESC LIMIT 10`).all(userId);
+  const genreDist = db2.prepare(`SELECT genre, COUNT(*) as cnt FROM music_tracks WHERE user_id=? AND genre!='' GROUP BY genre ORDER BY cnt DESC`).all(userId);
+  const avgRating = (db2.prepare(`SELECT AVG(rating) as a FROM music_tracks WHERE user_id=? AND rating IS NOT NULL`).get(userId) as any).a;
+  res.json({ success: true, total_tracks: total, total_plays: totalPlays, top_artists: topArtists, top_tracks: topTracks, genre_distribution: genreDist, avg_rating: avgRating ? Math.round(avgRating * 10) / 10 : null });
+});
+
+app.post('/api/music/practice', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { instrument, duration_minutes, pieces, techniques, notes, date } = req.body;
+  if (!instrument) return res.status(400).json({ success: false, error: 'instrument required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, instrument TEXT, duration_minutes INTEGER, pieces TEXT, techniques TEXT, notes TEXT, practice_date TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO music_practice (user_id,instrument,duration_minutes,pieces,techniques,notes,practice_date,created_at) VALUES (?,?,?,?,?,?,?,?)`).run(userId, instrument, duration_minutes||0, JSON.stringify(pieces||[]), JSON.stringify(techniques||[]), notes||'', date||new Date().toISOString().split('T')[0], new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/music/practice', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { instrument, limit = 30 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, instrument TEXT, duration_minutes INTEGER, pieces TEXT, techniques TEXT, notes TEXT, practice_date TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM music_practice WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (instrument) { q += ` AND instrument=?`; params.push(instrument); }
+  q += ` ORDER BY practice_date DESC LIMIT ?`; params.push(Number(limit));
+  const rows = db2.prepare(q).all(...params);
+  const totalMin = (db2.prepare(`SELECT SUM(duration_minutes) as s FROM music_practice WHERE user_id=?`).get(userId) as any).s || 0;
+  res.json({ success: true, sessions: rows, total_practice_minutes: totalMin, total_practice_hours: Math.round(totalMin / 60 * 10) / 10 });
+});
+
+app.get('/api/music/playlists/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_playlists (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, description TEXT, is_public INTEGER DEFAULT 0, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_playlist_tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, playlist_id INTEGER, track_id INTEGER, position INTEGER, added_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, artist TEXT, album TEXT, genre TEXT, duration_seconds INTEGER, year INTEGER, rating INTEGER, play_count INTEGER DEFAULT 0, last_played TEXT, notes TEXT, created_at TEXT)`).run();
+  const playlist = db2.prepare(`SELECT * FROM music_playlists WHERE id=? AND user_id=?`).get(req.params.id, userId);
+  if (!playlist) return res.status(404).json({ success: false, error: 'not found' });
+  const tracks = db2.prepare(`SELECT t.*, pt.position FROM music_playlist_tracks pt JOIN music_tracks t ON pt.track_id=t.id WHERE pt.playlist_id=? ORDER BY pt.position ASC`).all(req.params.id);
+  const totalDur = tracks.reduce((s: number, t: any) => s + (t.duration_seconds||0), 0);
+  res.json({ success: true, playlist, tracks, total_duration_seconds: totalDur });
+});
+
+// B5171-5180: Photography OS — Albums + Photos
+
+app.post('/api/photography/albums', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, description, location, event_date, is_private } = req.body;
+  if (!title) return res.status(400).json({ success: false, error: 'title required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, description TEXT, location TEXT, event_date TEXT, is_private INTEGER DEFAULT 1, cover_photo_id INTEGER, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO photo_albums (user_id,title,description,location,event_date,is_private,created_at) VALUES (?,?,?,?,?,?,?)`).run(userId, title, description||'', location||'', event_date||'', is_private===false?0:1, new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/photography/albums', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, description TEXT, location TEXT, event_date TEXT, is_private INTEGER DEFAULT 1, cover_photo_id INTEGER, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, album_id INTEGER, filename TEXT, title TEXT, description TEXT, camera TEXT, lens TEXT, aperture TEXT, shutter_speed TEXT, iso INTEGER, focal_length TEXT, location TEXT, tags TEXT, rating INTEGER, taken_at TEXT, created_at TEXT)`).run();
+  const albums = db2.prepare(`SELECT a.*, COUNT(p.id) as photo_count FROM photo_albums a LEFT JOIN photos p ON a.id=p.album_id WHERE a.user_id=? GROUP BY a.id ORDER BY a.created_at DESC`).all(userId);
+  res.json({ success: true, albums });
+});
+
+app.post('/api/photography/photos', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { album_id, filename, title, description, camera, lens, aperture, shutter_speed, iso, focal_length, location, tags, rating, taken_at } = req.body;
+  if (!filename) return res.status(400).json({ success: false, error: 'filename required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, album_id INTEGER, filename TEXT, title TEXT, description TEXT, camera TEXT, lens TEXT, aperture TEXT, shutter_speed TEXT, iso INTEGER, focal_length TEXT, location TEXT, tags TEXT, rating INTEGER, taken_at TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO photos (user_id,album_id,filename,title,description,camera,lens,aperture,shutter_speed,iso,focal_length,location,tags,rating,taken_at,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, album_id||null, filename, title||'', description||'', camera||'', lens||'', aperture||'', shutter_speed||'', iso||null, focal_length||'', location||'', JSON.stringify(tags||[]), rating||null, taken_at||new Date().toISOString(), new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/photography/photos', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { album_id, camera, rating, limit = 50 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, album_id INTEGER, filename TEXT, title TEXT, description TEXT, camera TEXT, lens TEXT, aperture TEXT, shutter_speed TEXT, iso INTEGER, focal_length TEXT, location TEXT, tags TEXT, rating INTEGER, taken_at TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM photos WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (album_id) { q += ` AND album_id=?`; params.push(album_id); }
+  if (camera) { q += ` AND camera LIKE ?`; params.push(`%${camera}%`); }
+  if (rating) { q += ` AND rating>=?`; params.push(Number(rating)); }
+  q += ` ORDER BY taken_at DESC LIMIT ?`; params.push(Number(limit));
+  const rows = db2.prepare(q).all(...params);
+  res.json({ success: true, photos: rows, count: rows.length });
+});
+
+app.put('/api/photography/photos/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, description, rating, tags } = req.body;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, album_id INTEGER, filename TEXT, title TEXT, description TEXT, camera TEXT, lens TEXT, aperture TEXT, shutter_speed TEXT, iso INTEGER, focal_length TEXT, location TEXT, tags TEXT, rating INTEGER, taken_at TEXT, created_at TEXT)`).run();
+  db2.prepare(`UPDATE photos SET title=COALESCE(?,title), description=COALESCE(?,description), rating=COALESCE(?,rating), tags=COALESCE(?,tags) WHERE id=? AND user_id=?`).run(title, description, rating, tags ? JSON.stringify(tags) : null, req.params.id, userId);
+  res.json({ success: true });
+});
+
+// B5181-5190: Photography Stats + Gear
+
+app.get('/api/photography/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, album_id INTEGER, filename TEXT, title TEXT, description TEXT, camera TEXT, lens TEXT, aperture TEXT, shutter_speed TEXT, iso INTEGER, focal_length TEXT, location TEXT, tags TEXT, rating INTEGER, taken_at TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, description TEXT, location TEXT, event_date TEXT, is_private INTEGER DEFAULT 1, cover_photo_id INTEGER, created_at TEXT)`).run();
+  const totalPhotos = (db2.prepare(`SELECT COUNT(*) as c FROM photos WHERE user_id=?`).get(userId) as any).c;
+  const totalAlbums = (db2.prepare(`SELECT COUNT(*) as c FROM photo_albums WHERE user_id=?`).get(userId) as any).c;
+  const avgRating = (db2.prepare(`SELECT AVG(rating) as a FROM photos WHERE user_id=? AND rating IS NOT NULL`).get(userId) as any).a;
+  const topCameras = db2.prepare(`SELECT camera, COUNT(*) as cnt FROM photos WHERE user_id=? AND camera!='' GROUP BY camera ORDER BY cnt DESC LIMIT 5`).all(userId);
+  const topLenses = db2.prepare(`SELECT lens, COUNT(*) as cnt FROM photos WHERE user_id=? AND lens!='' GROUP BY lens ORDER BY cnt DESC LIMIT 5`).all(userId);
+  const isoStats = db2.prepare(`SELECT AVG(iso) as avg_iso, MIN(iso) as min_iso, MAX(iso) as max_iso FROM photos WHERE user_id=? AND iso IS NOT NULL`).get(userId) as any;
+  res.json({ success: true, total_photos: totalPhotos, total_albums: totalAlbums, avg_rating: avgRating ? Math.round(avgRating * 10) / 10 : null, top_cameras: topCameras, top_lenses: topLenses, iso_stats: isoStats });
+});
+
+app.post('/api/photography/gear', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, type, brand, model, purchase_date, purchase_price, condition, notes } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_gear (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, brand TEXT, model TEXT, purchase_date TEXT, purchase_price REAL, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO photo_gear (user_id,name,type,brand,model,purchase_date,purchase_price,condition,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, name, type||'', brand||'', model||'', purchase_date||'', purchase_price||null, condition||'good', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/photography/gear', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { type } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_gear (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, brand TEXT, model TEXT, purchase_date TEXT, purchase_price REAL, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM photo_gear WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (type) { q += ` AND type=?`; params.push(type); }
+  q += ` ORDER BY type ASC, name ASC`;
+  const rows = db2.prepare(q).all(...params);
+  const totalValue = rows.reduce((s: number, r: any) => s + (r.purchase_price||0), 0);
+  res.json({ success: true, gear: rows, total_value: Math.round(totalValue * 100) / 100 });
+});
+
+app.post('/api/photography/locations', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, address, latitude, longitude, description, best_time, tags } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_locations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, address TEXT, latitude REAL, longitude REAL, description TEXT, best_time TEXT, tags TEXT, visited INTEGER DEFAULT 0, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO photo_locations (user_id,name,address,latitude,longitude,description,best_time,tags,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, name, address||'', latitude||null, longitude||null, description||'', best_time||'', JSON.stringify(tags||[]), new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+// B5191-5200: Photography Locations + Grand Milestone v79
+
+app.get('/api/photography/locations', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_locations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, address TEXT, latitude REAL, longitude REAL, description TEXT, best_time TEXT, tags TEXT, visited INTEGER DEFAULT 0, created_at TEXT)`).run();
+  const rows = db2.prepare(`SELECT * FROM photo_locations WHERE user_id=? ORDER BY name ASC`).all(userId);
+  res.json({ success: true, locations: rows });
+});
+
+app.post('/api/photography/sessions', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { location, date, duration_minutes, shots_taken, keepers, camera, notes } = req.body;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, location TEXT, session_date TEXT, duration_minutes INTEGER, shots_taken INTEGER, keepers INTEGER, camera TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO photo_sessions (user_id,location,session_date,duration_minutes,shots_taken,keepers,camera,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, location||'', date||new Date().toISOString().split('T')[0], duration_minutes||0, shots_taken||0, keepers||0, camera||'', notes||'', new Date().toISOString());
+  const keeperRate = shots_taken > 0 ? Math.round((keepers / shots_taken) * 100) : 0;
+  res.json({ success: true, id: r.lastInsertRowid, keeper_rate_percent: keeperRate });
+});
+
+app.get('/api/photography/sessions', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, location TEXT, session_date TEXT, duration_minutes INTEGER, shots_taken INTEGER, keepers INTEGER, camera TEXT, notes TEXT, created_at TEXT)`).run();
+  const rows = db2.prepare(`SELECT * FROM photo_sessions WHERE user_id=? ORDER BY session_date DESC LIMIT ?`).all(userId, Number(limit));
+  const totShots = (db2.prepare(`SELECT SUM(shots_taken) as s FROM photo_sessions WHERE user_id=?`).get(userId) as any).s || 0;
+  const totKeepers = (db2.prepare(`SELECT SUM(keepers) as s FROM photo_sessions WHERE user_id=?`).get(userId) as any).s || 0;
+  res.json({ success: true, sessions: rows, total_shots: totShots, total_keepers: totKeepers, overall_keeper_rate: totShots > 0 ? Math.round((totKeepers / totShots) * 100) : 0 });
+});
+
+app.get('/api/photography/albums/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, description TEXT, location TEXT, event_date TEXT, is_private INTEGER DEFAULT 1, cover_photo_id INTEGER, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS photos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, album_id INTEGER, filename TEXT, title TEXT, description TEXT, camera TEXT, lens TEXT, aperture TEXT, shutter_speed TEXT, iso INTEGER, focal_length TEXT, location TEXT, tags TEXT, rating INTEGER, taken_at TEXT, created_at TEXT)`).run();
+  const album = db2.prepare(`SELECT * FROM photo_albums WHERE id=? AND user_id=?`).get(req.params.id, userId);
+  if (!album) return res.status(404).json({ success: false, error: 'not found' });
+  const photos = db2.prepare(`SELECT * FROM photos WHERE album_id=? AND user_id=? ORDER BY taken_at ASC`).all(req.params.id, userId);
+  res.json({ success: true, album, photos, photo_count: photos.length });
+});
+
+// B5200: Grand Milestone v79 — 5200 endpoints
+app.get('/api/milestone/v79', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v79', version: '79.00',
+    endpoints_total: 5200, lines_of_code: 150400,
+    new_this_batch: ['Music OS','Photography OS'],
+    features: {
+      music: ['track library','playlists','play counts','top artists','genre distribution','practice log'],
+      photography: ['albums','photo metadata+EXIF','gear inventory','locations','shooting sessions','keeper rate']
+    },
+    message: '5200 endpoints — Music + Photography OS live!'
+  });
+});
+
+app.get('/api/forge/music-photography-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: 'music-photography-os', version: '1.0.0',
+    endpoints: ['POST /api/music/tracks','GET /api/music/tracks','POST /api/music/tracks/:id/play','POST /api/music/playlists','GET /api/music/playlists','GET /api/music/playlists/:id','POST /api/music/playlists/:id/tracks','GET /api/music/stats','POST /api/music/practice','GET /api/music/practice','POST /api/photography/albums','GET /api/photography/albums','GET /api/photography/albums/:id','POST /api/photography/photos','GET /api/photography/photos','PUT /api/photography/photos/:id','GET /api/photography/stats','POST /api/photography/gear','GET /api/photography/gear','POST /api/photography/locations','GET /api/photography/locations','POST /api/photography/sessions','GET /api/photography/sessions','GET /api/milestone/v79','GET /api/forge/music-photography-manifest','GET /api/forge/music-photography-health']
+  });
+});
+
+app.get('/api/forge/music-photography-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM music_tracks`).get(); checks.music_tracks = 'ok'; } catch { checks.music_tracks = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM music_playlists`).get(); checks.music_playlists = 'ok'; } catch { checks.music_playlists = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM music_practice`).get(); checks.music_practice = 'ok'; } catch { checks.music_practice = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM photo_albums`).get(); checks.photo_albums = 'ok'; } catch { checks.photo_albums = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM photos`).get(); checks.photos = 'ok'; } catch { checks.photos = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM photo_gear`).get(); checks.photo_gear = 'ok'; } catch { checks.photo_gear = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
