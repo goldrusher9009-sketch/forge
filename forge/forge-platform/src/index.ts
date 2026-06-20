@@ -167630,6 +167630,31 @@ try { db.prepare(`UPDATE chess_games SET my_rating_after=my_rating_before+rating
 try { db.prepare(`CREATE TABLE IF NOT EXISTS chess_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, lichess_username TEXT DEFAULT '', chess_com_username TEXT DEFAULT '', rapid_rating INTEGER DEFAULT 1200, blitz_rating INTEGER DEFAULT 1000, bullet_rating INTEGER DEFAULT 900, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
 // ─── end v136 migrations ──────────────────────────────────────────────────────
 
+// ─── v137 Schema Migrations ────────────────────────────────────────────────────
+// wine_cellar: early schema has wine_name/bottle_count/purchase_price_usd/rating_pts
+// later /api/wine/cellar handler queries name/quantity/purchase_price/rating
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN quantity INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN purchase_price REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN rating REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN type TEXT DEFAULT 'red'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN winery TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN drink_from INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN drink_by INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN tasting_notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN pairing TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN purchase_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN estimated_value REAL DEFAULT 0`).run(); } catch(e) {}
+// backfill alias cols from original cols
+try { db.prepare(`UPDATE wine_cellar SET name=COALESCE(NULLIF(name,''),wine_name,'') WHERE name='' AND wine_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_cellar SET quantity=COALESCE(NULLIF(quantity,1),bottle_count,1) WHERE quantity=1 AND bottle_count IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_cellar SET purchase_price=COALESCE(NULLIF(purchase_price,0),purchase_price_usd,0) WHERE purchase_price=0 AND purchase_price_usd IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_cellar SET rating=COALESCE(NULLIF(rating,0),rating_pts,0) WHERE rating=0 AND rating_pts IS NOT NULL`).run(); } catch(e) {}
+// wine_tastings: align column names for later handler
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN food_pairing TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+// ─── end v137 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

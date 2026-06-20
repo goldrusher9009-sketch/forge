@@ -1,3 +1,8 @@
+## v137.00 — Fix wine_cellar column aliases (wine_name→name, bottle_count→quantity, etc)
+- wine_cellar: adds name, quantity, purchase_price, rating, type, winery, tasting_notes, pairing cols
+- wine_cellar: backfills alias cols from original wine_name/bottle_count/purchase_price_usd/rating_pts
+- wine_tastings: adds food_pairing, date columns
+
 ## v136.00 — Fix crypto_holdings, chess_games, chess_profiles schema mismatches
 - crypto_holdings: adds current_price, chain columns
 - chess_games: adds my_rating_after (backfilled), result_reason, eco_code, accuracy_pct, blunders, mistakes, inaccuracies, tournament, otb, analysis_done
