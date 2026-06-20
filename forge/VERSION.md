@@ -1,3 +1,9 @@
+## v99.00 — B6151-B6200 🍄🧵 FORAGING+LEATHERWORKING-OS +Finds/Locations/Stats/Projects/Tools/Stats
+- B6151-6160: Foraging OS — species find log (edible/quantity/GPS location), secret location registry
+- B6161-6170: Foraging Stats + Leatherworking project tracker (type/leather/status/materials cost)
+- B6171-6180: Leatherworking tool registry (category/brand/condition)
+- B6181-6200: Leather Stats + Grand Milestone v99 — /api/milestone/v99, 6200 endpoints, 154230 lines
+
 ## v98.00 — B6101-B6150 🏹🌿 ARCHERY+AQUAPONICS-OS +Equipment/Sessions/Stats/Systems/WaterLog/Harvests
 - B6101-6110: Archery OS — bow/arrow equipment registry, practice session log (distance/score/arrows)
 - B6111-6120: Archery Stats + Aquaponics System registry (fish species/plants/tank volume)
