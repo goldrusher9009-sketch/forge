@@ -167765,6 +167765,84 @@ try { db.prepare(`UPDATE print_jobs SET filament_used_g=COALESCE(NULLIF(filament
 try { db.prepare(`UPDATE print_jobs SET print_time_min=COALESCE(NULLIF(print_time_min,0),ROUND(print_time_hours*60),0) WHERE print_time_min=0 AND print_time_hours IS NOT NULL`).run(); } catch(e) {}
 // ─── end v140 migrations ──────────────────────────────────────────────────────
 
+// ─── v141 Schema Migrations ────────────────────────────────────────────────────
+// freelance_clients: early (38302/131809) has client_name/project/rate
+// later (147159) uses name/company/hourly_rate/currency/timezone/total_billed/total_paid
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN client_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN project TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN rate REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN hourly_rate REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN company TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN email TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN phone TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN country TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN timezone TEXT DEFAULT 'UTC'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN currency TEXT DEFAULT 'USD'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN total_billed REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN total_paid REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freelance_clients SET client_name=COALESCE(NULLIF(client_name,''),name,'') WHERE client_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freelance_clients SET hourly_rate=COALESCE(NULLIF(hourly_rate,0),rate,0) WHERE hourly_rate=0 AND rate IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freelance_clients SET rate=COALESCE(NULLIF(rate,0),hourly_rate,0) WHERE rate=0 AND hourly_rate IS NOT NULL`).run(); } catch(e) {}
+// vehicles: early (40416) has current_mileage/vehicle_type/assigned_driver, later uses mileage/active/nickname
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN mileage INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN nickname TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN active INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN insurance_policy_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN trim TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN plate TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN state TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN current_value REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE vehicles SET mileage=COALESCE(NULLIF(mileage,0),current_mileage,0) WHERE mileage=0 AND current_mileage IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE vehicles SET plate=COALESCE(NULLIF(plate,''),license_plate,'') WHERE plate='' AND license_plate IS NOT NULL`).run(); } catch(e) {}
+// leather_projects: early (52333) has project_name/material_cost/quality_rating, late (141576) uses name/cost_materials/oz/type
+try { db.prepare(`ALTER TABLE leather_projects ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE leather_projects ADD COLUMN type TEXT DEFAULT 'wallet'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE leather_projects ADD COLUMN cost_materials REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE leather_projects ADD COLUMN oz INTEGER DEFAULT 4`).run(); } catch(e) {}
+try { db.prepare(`UPDATE leather_projects SET name=COALESCE(NULLIF(name,''),project_name,'') WHERE name='' AND project_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE leather_projects SET type=COALESCE(NULLIF(type,'wallet'),project_type,'wallet') WHERE type='wallet' AND project_type IS NOT NULL AND project_type!=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE leather_projects SET cost_materials=COALESCE(NULLIF(cost_materials,0),material_cost,0) WHERE cost_materials=0 AND material_cost IS NOT NULL`).run(); } catch(e) {}
+// reading_goals: early (39364) has different cols from late (149759) books_target vs books_goal
+try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN books_target INTEGER DEFAULT 12`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN pages_target INTEGER DEFAULT 3000`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN books_goal INTEGER DEFAULT 12`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN pages_goal INTEGER DEFAULT 3000`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN books_finished INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN pages_read INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE reading_goals SET books_target=COALESCE(NULLIF(books_target,12),books_goal,12) WHERE books_target=12 AND books_goal IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE reading_goals SET books_goal=COALESCE(NULLIF(books_goal,12),books_target,12) WHERE books_goal=12 AND books_target IS NOT NULL`).run(); } catch(e) {}
+// ─── end v141 migrations ──────────────────────────────────────────────────────
+
+// ─── v142 Schema Migrations ────────────────────────────────────────────────────
+// podcast_episodes: early (39598) has title/description/plays/published_at
+// late handler (133435) uses episode_title/guest/topics/publish_date/downloads
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN episode_title TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN topics TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN publish_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN downloads INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET episode_title=COALESCE(NULLIF(episode_title,''),title,'') WHERE episode_title='' AND title IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET publish_date=COALESCE(NULLIF(publish_date,''),published_at,'') WHERE publish_date='' AND published_at IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET downloads=COALESCE(NULLIF(downloads,0),plays,0) WHERE downloads=0 AND plays IS NOT NULL`).run(); } catch(e) {}
+// language_vocab: early (52252) vs late schemas — ensure word/translation/language cols exist
+try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN word TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN translation TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN language TEXT DEFAULT 'spanish'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN mastery_level INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN next_review TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN example_sentence TEXT DEFAULT ''`).run(); } catch(e) {}
+// language_sessions: early (44344) has language/duration_min, late uses date/minutes_practiced
+try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN minutes_practiced INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE language_sessions SET date=COALESCE(NULLIF(date,''),session_date,created_at,'') WHERE date='' AND (session_date IS NOT NULL OR created_at IS NOT NULL)`).run(); } catch(e) {}
+// workout_exercises / workouts: check for col mismatch
+try { db.prepare(`ALTER TABLE workouts ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE workouts ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE workouts ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE workouts SET date=COALESCE(NULLIF(date,''),workout_date,created_at,'') WHERE date='' AND (workout_date IS NOT NULL OR created_at IS NOT NULL)`).run(); } catch(e) {}
+// ─── end v142 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

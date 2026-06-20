@@ -1,3 +1,15 @@
+## v142.00 — Fix podcast_episodes, language_vocab/sessions, workouts schema gaps
+- podcast_episodes: adds episode_title/guest/topics/publish_date/downloads aliases
+- language_vocab: adds word/translation/language/mastery_level/next_review cols
+- language_sessions: adds date/minutes_practiced/duration_min aliases
+- workouts: adds date/duration_min/calories aliases (backfilled from workout_date)
+
+## v141.00 — Fix freelance_clients, vehicles, leather_projects, reading_goals schema gaps
+- freelance_clients: adds client_name/project/rate aliases + name/company/hourly_rate/currency cols
+- vehicles: adds mileage/nickname/active/plate aliases (backfilled from current_mileage/license_plate)
+- leather_projects: adds name/type/cost_materials/oz aliases (backfilled from project_name/material_cost)
+- reading_goals: adds books_target/pages_target ↔ books_goal/pages_goal bidirectional aliases
+
 ## v140.00 — Fix vehicle_maintenance, aquarium_tanks, subscriptions, job_applications, print_jobs
 - vehicle_maintenance: adds type/date/mileage_at_service/shop/technician aliases
 - aquarium_tanks: adds volume_liters/temperature_c/ph/fish_count
