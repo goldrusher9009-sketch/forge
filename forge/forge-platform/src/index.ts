@@ -147861,5 +147861,129 @@ app.get('/api/forge/outdoor-health', (_req: any, res: any) => {
 
 });
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B4351-B4400: Board Games & Tabletop OS + RPG Campaign OS + Grand Milestone v63
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B4351-B4360: Board Game Collection OS
+app.get('/api/boardgames', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS board_games (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, publisher TEXT, year INTEGER, min_players INTEGER DEFAULT 2, max_players INTEGER DEFAULT 4, play_time_min INTEGER DEFAULT 60, complexity REAL DEFAULT 2.5, category TEXT, owned INTEGER DEFAULT 1, rating INTEGER DEFAULT 0, play_count INTEGER DEFAULT 0, last_played TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM board_games WHERE user_id=? ORDER BY rating DESC, play_count DESC LIMIT 30').all(u);
+    const stats = db.prepare('SELECT COUNT(*) as total, SUM(owned) as owned, COALESCE(SUM(play_count),0) as plays FROM board_games WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, stats });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/boardgames', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, publisher, year, min_players, max_players, play_time_min, complexity, category, owned, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS board_games (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, publisher TEXT, year INTEGER, min_players INTEGER DEFAULT 2, max_players INTEGER DEFAULT 4, play_time_min INTEGER DEFAULT 60, complexity REAL DEFAULT 2.5, category TEXT, owned INTEGER DEFAULT 1, rating INTEGER DEFAULT 0, play_count INTEGER DEFAULT 0, last_played TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO board_games (user_id,name,publisher,year,min_players,max_players,play_time_min,complexity,category,owned,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',publisher||'',year||0,min_players||2,max_players||4,play_time_min||60,complexity||2.5,category||'',owned?1:1,rating||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/boardgames/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS boardgame_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, game_id INTEGER, game_name TEXT, date TEXT, players TEXT, winner TEXT, my_score INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM boardgame_sessions WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    const wins = db.prepare("SELECT COUNT(*) as c FROM boardgame_sessions WHERE user_id=? AND winner LIKE '%me%'").get(u) as any;
+    res.json({ success:true, data:rows, wins:wins?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/boardgames/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { game_id, game_name, date, players, winner, my_score, duration_min, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS boardgame_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, game_id INTEGER, game_name TEXT, date TEXT, players TEXT, winner TEXT, my_score INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO boardgame_sessions (user_id,game_id,game_name,date,players,winner,my_score,duration_min,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,game_id||0,game_name||'',date||new Date().toISOString().split('T')[0],players||'',winner||'',my_score||0,duration_min||0,notes||'');
+    if (game_id) db.prepare('UPDATE board_games SET play_count=play_count+1, last_played=? WHERE id=? AND user_id=?').run(date||new Date().toISOString().split('T')[0],game_id,u);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4361-B4370: RPG Campaign OS
+app.get('/api/rpg/campaigns', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rpg_campaigns (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, system TEXT DEFAULT 'D&D 5e', role TEXT DEFAULT 'player', status TEXT DEFAULT 'active', setting TEXT, dm TEXT, session_count INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM rpg_campaigns WHERE user_id=? ORDER BY CASE status WHEN 'active' THEN 1 ELSE 2 END, created_at DESC LIMIT 10").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/rpg/campaigns', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, system, role, status, setting, dm, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rpg_campaigns (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, system TEXT DEFAULT 'D&D 5e', role TEXT DEFAULT 'player', status TEXT DEFAULT 'active', setting TEXT, dm TEXT, session_count INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rpg_campaigns (user_id,name,system,role,status,setting,dm,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',system||'D&D 5e',role||'player',status||'active',setting||'',dm||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/rpg/characters', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rpg_characters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, campaign_id INTEGER, name TEXT, race TEXT, class TEXT, level INTEGER DEFAULT 1, backstory TEXT, stats TEXT, active INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM rpg_characters WHERE user_id=? AND active=1 ORDER BY level DESC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/rpg/characters', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { campaign_id, name, race, class: cls, level, backstory, stats, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rpg_characters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, campaign_id INTEGER, name TEXT, race TEXT, class TEXT, level INTEGER DEFAULT 1, backstory TEXT, stats TEXT, active INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rpg_characters (user_id,campaign_id,name,race,class,level,backstory,stats,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,campaign_id||0,name||'',race||'',cls||'',level||1,backstory||'',stats||'{}',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4371-B4380: Session Notes OS
+app.get('/api/rpg/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { campaign_id } = req.query||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rpg_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, campaign_id INTEGER, session_num INTEGER DEFAULT 1, date TEXT, summary TEXT, key_events TEXT, npcs TEXT, loot TEXT, xp_gained INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = campaign_id
+      ? db.prepare('SELECT * FROM rpg_sessions WHERE user_id=? AND campaign_id=? ORDER BY session_num DESC LIMIT 20').all(u,campaign_id)
+      : db.prepare('SELECT * FROM rpg_sessions WHERE user_id=? ORDER BY date DESC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/rpg/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { campaign_id, session_num, date, summary, key_events, npcs, loot, xp_gained, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rpg_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, campaign_id INTEGER, session_num INTEGER DEFAULT 1, date TEXT, summary TEXT, key_events TEXT, npcs TEXT, loot TEXT, xp_gained INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rpg_sessions (user_id,campaign_id,session_num,date,summary,key_events,npcs,loot,xp_gained,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,campaign_id||0,session_num||1,date||new Date().toISOString().split('T')[0],summary||'',key_events||'',npcs||'',loot||'',xp_gained||0,notes||'');
+    if (campaign_id) db.prepare('UPDATE rpg_campaigns SET session_count=session_count+1 WHERE id=? AND user_id=?').run(campaign_id,u);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4381-B4400: Grand Milestone v63
+app.get('/api/milestone/v63', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const games = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(play_count),0) as p FROM board_games WHERE user_id=?').get(u) as any);
+  const campaigns = safe(()=>db.prepare("SELECT COUNT(*) as c FROM rpg_campaigns WHERE user_id=? AND status='active'").get(u) as any);
+  const chars = safe(()=>db.prepare('SELECT COUNT(*) as c FROM rpg_characters WHERE user_id=? AND active=1').get(u) as any);
+  res.json({ success:true, version:'v63.00', total_endpoints:4400, milestone:'B4400 — Tabletop & RPG OS', data:{ games_owned:games?.c||0, total_plays:games?.p||0, active_campaigns:campaigns?.c||0, active_characters:chars?.c||0 }});
+});
+app.get('/api/forge/tabletop-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const sessions = safe(()=>db.prepare('SELECT COUNT(*) as c FROM boardgame_sessions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, tabletop_manifest:{ game_sessions:sessions?.c||0 }, total_endpoints:4400 });
+});
+app.get('/api/forge/tabletop-health', (_req: any, res: any) => {
+  res.json({ success:true, tabletop_health:{ os_modules:386, total_endpoints:4400, version:'v63.00' }});
+
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));

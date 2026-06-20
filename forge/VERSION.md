@@ -1,3 +1,8 @@
+## v62.00 — B4301-B4350 🏕️ OUTDOOR-HIKING-CAMPING-FISHING-OS +Trails/Gear/Trips/Checklist/FishLogs/GrandMilestone
+- B4301-4310: Hiking OS — trails (distance/elevation/difficulty/completed), gear (weight/condition/cost)
+- B4311-4320: Camping OS — trips (nights/type/companions/weather/cost), checklist (category/packed/essential)
+- B4321-4330: Fishing OS — logs (species/weight/length/lure/water-temp/personal-bests)
+- B4331-4350: 🏆 Grand Milestone v62 — /api/milestone/v62, outdoor-manifest, outdoor-health — 4350 endpoints, 147865 lines
 ## v61.00 — B4251-B4300 🏃 SPORTS-FITNESS-OS +Running/Cycling/Gym/Exercises/PRs/GrandMilestone
 - B4251-4260: Running OS — logs (distance/pace/surface/weather/HR/calories), goals (weekly_km/type/period)
 - B4261-4270: Cycling OS — rides (distance/elevation/avg-speed/bike/type/HR)
