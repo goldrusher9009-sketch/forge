@@ -128407,5 +128407,808 @@ app.get('/api/forge/complete/os/v3', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── B2051: Goal Review Log ───────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS goal_review_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    review_date TEXT DEFAULT (date('now')),
+    period TEXT DEFAULT 'weekly',
+    goals_set INTEGER DEFAULT 0,
+    goals_achieved INTEGER DEFAULT 0,
+    goals_partial INTEGER DEFAULT 0,
+    goals_missed INTEGER DEFAULT 0,
+    biggest_win TEXT,
+    biggest_challenge TEXT,
+    key_lesson TEXT,
+    next_period_focus TEXT,
+    energy_rating INTEGER DEFAULT 7,
+    momentum_score INTEGER DEFAULT 7,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/goal/reviews', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { period } = req.query as any;
+    let q = `SELECT * FROM goal_review_log WHERE user_id=?`;
+    const p: any[] = [uid];
+    if (period) { q += ` AND period=?`; p.push(period); }
+    q += ` ORDER BY review_date DESC LIMIT 20`;
+    const entries = db.prepare(q).all(...p) as any[];
+    entries.forEach((e:any)=>{ e.completion_rate = e.goals_set>0?parseFloat((e.goals_achieved/e.goals_set*100).toFixed(1)):0; });
+    const avg_completion = entries.length>0?parseFloat((entries.reduce((a:number,e:any)=>a+e.completion_rate,0)/entries.length).toFixed(1)):0;
+    res.json({ success: true, reviews: entries, avg_completion_rate: avg_completion });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/goal/reviews', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { review_date, period='weekly', goals_set=0, goals_achieved=0, goals_partial=0, goals_missed=0, biggest_win, biggest_challenge, key_lesson, next_period_focus, energy_rating=7, momentum_score=7, notes } = req.body;
+    const today = review_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO goal_review_log (user_id,review_date,period,goals_set,goals_achieved,goals_partial,goals_missed,biggest_win,biggest_challenge,key_lesson,next_period_focus,energy_rating,momentum_score,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,period,goals_set,goals_achieved,goals_partial,goals_missed,biggest_win,biggest_challenge,key_lesson,next_period_focus,energy_rating,momentum_score,notes);
+    const completion_rate = goals_set>0?parseFloat((goals_achieved/goals_set*100).toFixed(1)):0;
+    res.json({ success: true, id: r.lastInsertRowid, completion_rate });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2052: Stress Audit Log ──────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS stress_audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    stressor TEXT NOT NULL,
+    category TEXT DEFAULT 'work',
+    intensity INTEGER DEFAULT 6,
+    duration_days INTEGER DEFAULT 1,
+    controllable INTEGER DEFAULT 1,
+    response TEXT DEFAULT 'problem_solving',
+    physical_symptoms TEXT,
+    coping_strategy TEXT,
+    effectiveness INTEGER DEFAULT 5,
+    resolved INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/stress/audit', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM stress_audit_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count, AVG(intensity) as avg_intensity, AVG(effectiveness) as avg_coping FROM stress_audit_log WHERE user_id=? GROUP BY category ORDER BY avg_intensity DESC`).all(uid) as any[];
+    by_category.forEach(c=>{ c.avg_intensity=parseFloat(c.avg_intensity.toFixed(1)); c.avg_coping=parseFloat(c.avg_coping.toFixed(1)); });
+    const unresolved = (entries as any[]).filter((e:any)=>!e.resolved);
+    const controllable_pct = entries.length>0?parseFloat(((entries as any[]).filter((e:any)=>e.controllable).length/entries.length*100).toFixed(1)):0;
+    res.json({ success: true, entries, by_category, unresolved_count: unresolved.length, controllable_pct });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/stress/audit', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, stressor, category='work', intensity=6, duration_days=1, controllable=1, response='problem_solving', physical_symptoms, coping_strategy, effectiveness=5, resolved=0, notes } = req.body;
+    if (!stressor) return res.status(400).json({ success: false, error: 'stressor required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO stress_audit_log (user_id,log_date,stressor,category,intensity,duration_days,controllable,response,physical_symptoms,coping_strategy,effectiveness,resolved,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,stressor,category,intensity,duration_days,controllable,response,physical_symptoms,coping_strategy,effectiveness,resolved,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2053: Relationship Milestone Log ───────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS relationship_milestone_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    milestone_date TEXT DEFAULT (date('now')),
+    person TEXT NOT NULL,
+    relationship_type TEXT DEFAULT 'romantic',
+    milestone TEXT NOT NULL,
+    category TEXT DEFAULT 'growth',
+    emotional_significance INTEGER DEFAULT 8,
+    shared_experience TEXT,
+    lesson TEXT,
+    celebration TEXT,
+    photo_url TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/relationship/milestones', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { person } = req.query as any;
+    let q = `SELECT * FROM relationship_milestone_log WHERE user_id=?`;
+    const p: any[] = [uid];
+    if (person) { q += ` AND person LIKE ?`; p.push(`%${person}%`); }
+    q += ` ORDER BY milestone_date DESC`;
+    const entries = db.prepare(q).all(...p);
+    const by_person = db.prepare(`SELECT person, COUNT(*) as count, AVG(emotional_significance) as avg_sig FROM relationship_milestone_log WHERE user_id=? GROUP BY person ORDER BY count DESC`).all(uid) as any[];
+    by_person.forEach(p=>p.avg_sig=parseFloat(p.avg_sig.toFixed(1)));
+    res.json({ success: true, milestones: entries, total: (entries as any[]).length, by_person });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/relationship/milestones', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { milestone_date, person, relationship_type='romantic', milestone, category='growth', emotional_significance=8, shared_experience, lesson, celebration, photo_url, notes } = req.body;
+    if (!person||!milestone) return res.status(400).json({ success: false, error: 'person, milestone required' });
+    const today = milestone_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO relationship_milestone_log (user_id,milestone_date,person,relationship_type,milestone,category,emotional_significance,shared_experience,lesson,celebration,photo_url,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,person,relationship_type,milestone,category,emotional_significance,shared_experience,lesson,celebration,photo_url,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2054: Financial Win Log ──────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS financial_win_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    win TEXT NOT NULL,
+    category TEXT DEFAULT 'income',
+    amount_usd REAL DEFAULT 0,
+    effort_level INTEGER DEFAULT 5,
+    repeatable INTEGER DEFAULT 0,
+    strategy_used TEXT,
+    lesson TEXT,
+    celebration TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/financial/wins', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { category } = req.query as any;
+    let q = `SELECT * FROM financial_win_log WHERE user_id=?`;
+    const p: any[] = [uid];
+    if (category) { q += ` AND category=?`; p.push(category); }
+    q += ` ORDER BY amount_usd DESC, log_date DESC`;
+    const entries = db.prepare(q).all(...p);
+    const stats = db.prepare(`SELECT SUM(amount_usd) as total_won, COUNT(*) as wins, AVG(amount_usd) as avg_win, MAX(amount_usd) as biggest_win FROM financial_win_log WHERE user_id=?`).get(uid) as any;
+    Object.keys(stats||{}).forEach(k=>{ if(stats[k]) stats[k]=parseFloat(stats[k].toFixed(2)); });
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count, SUM(amount_usd) as total FROM financial_win_log WHERE user_id=? GROUP BY category ORDER BY total DESC`).all(uid) as any[];
+    by_category.forEach(c=>c.total=parseFloat(c.total.toFixed(2)));
+    res.json({ success: true, wins: entries, stats, by_category });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/financial/wins', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, win, category='income', amount_usd=0, effort_level=5, repeatable=0, strategy_used, lesson, celebration, notes } = req.body;
+    if (!win) return res.status(400).json({ success: false, error: 'win required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO financial_win_log (user_id,log_date,win,category,amount_usd,effort_level,repeatable,strategy_used,lesson,celebration,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,win,category,amount_usd,effort_level,repeatable,strategy_used,lesson,celebration,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2055: MILESTONE — Life Wins & Reviews OS ────────────────────────────────
+app.get('/api/life/wins/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const reviews_done = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM goal_review_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const avg_goal_completion = safe(()=>{ const r=db.prepare(`SELECT AVG(CAST(goals_achieved AS REAL)/NULLIF(goals_set,0)*100) as a FROM goal_review_log WHERE user_id=?`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const stress_unresolved = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM stress_audit_log WHERE user_id=? AND resolved=0`).get(uid) as any)?.c||0);
+    const relationship_milestones = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM relationship_milestone_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const financial_wins = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM financial_win_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const total_financial_won = safe(()=>{ const r=db.prepare(`SELECT SUM(amount_usd) as s FROM financial_win_log WHERE user_id=?`).get(uid) as any; return r?.s?parseFloat(r.s.toFixed(2)):0; });
+    const network_size = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM networking_tracker WHERE user_id=?`).get(uid) as any)?.c||0);
+    res.json({ success: true, milestone: 'B2055 — Life Wins & Reviews OS', reviews: { done: reviews_done, avg_goal_completion }, wellbeing: { stress_unresolved }, relationships: { milestones: relationship_milestones, network: network_size }, finances: { wins: financial_wins, total_won: total_financial_won } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2056: Morning Ritual Tracker ───────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS morning_ritual_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    wake_time TEXT,
+    ritual_completed INTEGER DEFAULT 1,
+    duration_min INTEGER DEFAULT 30,
+    items_completed TEXT,
+    meditation INTEGER DEFAULT 0,
+    journaling INTEGER DEFAULT 0,
+    exercise INTEGER DEFAULT 0,
+    reading INTEGER DEFAULT 0,
+    cold_shower INTEGER DEFAULT 0,
+    gratitude INTEGER DEFAULT 0,
+    visualization INTEGER DEFAULT 0,
+    mood_before INTEGER DEFAULT 5,
+    mood_after INTEGER DEFAULT 7,
+    energy_level INTEGER DEFAULT 7,
+    focus_score INTEGER DEFAULT 7,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/morning/ritual', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM morning_ritual_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid) as any[];
+    entries.forEach(e=>{ e.mood_lift=e.mood_after-e.mood_before; });
+    const streak = db.prepare(`SELECT COUNT(*) as s FROM morning_ritual_log WHERE user_id=? AND ritual_completed=1 AND log_date >= date('now','-30 days')`).get(uid) as any;
+    const avg_energy = entries.length>0?parseFloat((entries.reduce((a:number,e:any)=>a+e.energy_level,0)/entries.length).toFixed(1)):0;
+    const avg_mood_lift = entries.length>0?parseFloat((entries.reduce((a:number,e:any)=>a+e.mood_lift,0)/entries.length).toFixed(1)):0;
+    res.json({ success: true, entries, streak: streak?.s||0, avg_energy, avg_mood_lift });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/morning/ritual', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, wake_time, ritual_completed=1, duration_min=30, items_completed, meditation=0, journaling=0, exercise=0, reading=0, cold_shower=0, gratitude=0, visualization=0, mood_before=5, mood_after=7, energy_level=7, focus_score=7, notes } = req.body;
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO morning_ritual_log (user_id,log_date,wake_time,ritual_completed,duration_min,items_completed,meditation,journaling,exercise,reading,cold_shower,gratitude,visualization,mood_before,mood_after,energy_level,focus_score,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,wake_time,ritual_completed,duration_min,items_completed,meditation,journaling,exercise,reading,cold_shower,gratitude,visualization,mood_before,mood_after,energy_level,focus_score,notes);
+    res.json({ success: true, id: r.lastInsertRowid, mood_lift: mood_after-mood_before });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2057: Evening Review Log ────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS evening_review_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    day_rating INTEGER DEFAULT 7,
+    top_win TEXT,
+    top_challenge TEXT,
+    grateful_for TEXT,
+    tomorrow_top_3 TEXT,
+    mood_rating INTEGER DEFAULT 7,
+    energy_end INTEGER DEFAULT 6,
+    stress_level INTEGER DEFAULT 4,
+    productive_hours REAL DEFAULT 4,
+    distractions INTEGER DEFAULT 2,
+    screen_time_hrs REAL DEFAULT 3,
+    exercise_done INTEGER DEFAULT 0,
+    healthy_eating INTEGER DEFAULT 1,
+    social_connection INTEGER DEFAULT 1,
+    sleep_target TEXT DEFAULT '22:30',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/evening/review', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM evening_review_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const stats = db.prepare(`SELECT AVG(day_rating) as avg_day, AVG(mood_rating) as avg_mood, AVG(productive_hours) as avg_productive, AVG(stress_level) as avg_stress FROM evening_review_log WHERE user_id=?`).get(uid) as any;
+    Object.keys(stats||{}).forEach(k=>{ if(stats[k]) stats[k]=parseFloat(stats[k].toFixed(1)); });
+    res.json({ success: true, entries, stats });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/evening/review', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, day_rating=7, top_win, top_challenge, grateful_for, tomorrow_top_3, mood_rating=7, energy_end=6, stress_level=4, productive_hours=4, distractions=2, screen_time_hrs=3, exercise_done=0, healthy_eating=1, social_connection=1, sleep_target='22:30', notes } = req.body;
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO evening_review_log (user_id,log_date,day_rating,top_win,top_challenge,grateful_for,tomorrow_top_3,mood_rating,energy_end,stress_level,productive_hours,distractions,screen_time_hrs,exercise_done,healthy_eating,social_connection,sleep_target,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,day_rating,top_win,top_challenge,grateful_for,tomorrow_top_3,mood_rating,energy_end,stress_level,productive_hours,distractions,screen_time_hrs,exercise_done,healthy_eating,social_connection,sleep_target,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2058: Weekly Planning Log ───────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS weekly_planning_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    week_start TEXT NOT NULL,
+    main_focus TEXT,
+    top_goals TEXT,
+    key_projects TEXT,
+    must_complete TEXT,
+    avoid_this_week TEXT,
+    energy_plan TEXT,
+    social_plan TEXT,
+    health_goal TEXT,
+    finance_goal TEXT,
+    learning_goal TEXT,
+    planned_revenue REAL DEFAULT 0,
+    actual_revenue REAL DEFAULT 0,
+    goals_hit INTEGER DEFAULT 0,
+    goals_total INTEGER DEFAULT 0,
+    week_rating INTEGER DEFAULT 7,
+    key_wins TEXT,
+    key_lessons TEXT,
+    carry_forward TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/weekly/planning', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM weekly_planning_log WHERE user_id=? ORDER BY week_start DESC LIMIT 12`).all(uid) as any[];
+    entries.forEach(e=>{ e.completion_rate = e.goals_total>0?parseFloat((e.goals_hit/e.goals_total*100).toFixed(1)):0; e.revenue_hit = e.planned_revenue>0?parseFloat((e.actual_revenue/e.planned_revenue*100).toFixed(1)):0; });
+    res.json({ success: true, entries });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/weekly/planning', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { week_start, main_focus, top_goals, key_projects, must_complete, avoid_this_week, energy_plan, social_plan, health_goal, finance_goal, learning_goal, planned_revenue=0, actual_revenue=0, goals_hit=0, goals_total=0, week_rating=7, key_wins, key_lessons, carry_forward } = req.body;
+    if (!week_start) return res.status(400).json({ success: false, error: 'week_start required' });
+    db.prepare(`INSERT OR REPLACE INTO weekly_planning_log (user_id,week_start,main_focus,top_goals,key_projects,must_complete,avoid_this_week,energy_plan,social_plan,health_goal,finance_goal,learning_goal,planned_revenue,actual_revenue,goals_hit,goals_total,week_rating,key_wins,key_lessons,carry_forward) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,week_start,main_focus,top_goals,key_projects,must_complete,avoid_this_week,energy_plan,social_plan,health_goal,finance_goal,learning_goal,planned_revenue,actual_revenue,goals_hit,goals_total,week_rating,key_wins,key_lessons,carry_forward);
+    res.json({ success: true, week_start });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2059: Monthly Theme Log ──────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS monthly_theme_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    month TEXT NOT NULL,
+    theme TEXT NOT NULL,
+    focus_word TEXT,
+    north_star TEXT,
+    income_goal REAL DEFAULT 0,
+    savings_goal REAL DEFAULT 0,
+    fitness_goal TEXT,
+    relationship_goal TEXT,
+    skill_goal TEXT,
+    project_goal TEXT,
+    habit_to_build TEXT,
+    habit_to_break TEXT,
+    book_to_read TEXT,
+    income_actual REAL DEFAULT 0,
+    savings_actual REAL DEFAULT 0,
+    month_rating INTEGER DEFAULT 7,
+    biggest_win TEXT,
+    biggest_lesson TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/monthly/themes', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM monthly_theme_log WHERE user_id=? ORDER BY month DESC LIMIT 12`).all(uid) as any[];
+    entries.forEach(e=>{ e.income_pct = e.income_goal>0?parseFloat((e.income_actual/e.income_goal*100).toFixed(1)):0; });
+    res.json({ success: true, themes: entries });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/monthly/themes', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { month, theme, focus_word, north_star, income_goal=0, savings_goal=0, fitness_goal, relationship_goal, skill_goal, project_goal, habit_to_build, habit_to_break, book_to_read, income_actual=0, savings_actual=0, month_rating=7, biggest_win, biggest_lesson } = req.body;
+    if (!month||!theme) return res.status(400).json({ success: false, error: 'month, theme required' });
+    db.prepare(`INSERT OR REPLACE INTO monthly_theme_log (user_id,month,theme,focus_word,north_star,income_goal,savings_goal,fitness_goal,relationship_goal,skill_goal,project_goal,habit_to_build,habit_to_break,book_to_read,income_actual,savings_actual,month_rating,biggest_win,biggest_lesson) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,month,theme,focus_word,north_star,income_goal,savings_goal,fitness_goal,relationship_goal,skill_goal,project_goal,habit_to_build,habit_to_break,book_to_read,income_actual,savings_actual,month_rating,biggest_win,biggest_lesson);
+    res.json({ success: true, month, theme });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2060: MILESTONE — Daily/Weekly/Monthly Ritual OS ────────────────────────
+app.get('/api/ritual/planning/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const morning_streak = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM morning_ritual_log WHERE user_id=? AND ritual_completed=1 AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    const avg_morning_energy = safe(()=>{ const r=db.prepare(`SELECT AVG(energy_level) as a FROM morning_ritual_log WHERE user_id=? AND log_date>=date('now','-7 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const avg_day_rating = safe(()=>{ const r=db.prepare(`SELECT AVG(day_rating) as a FROM evening_review_log WHERE user_id=? AND log_date>=date('now','-7 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const avg_stress = safe(()=>{ const r=db.prepare(`SELECT AVG(stress_level) as a FROM evening_review_log WHERE user_id=? AND log_date>=date('now','-7 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const weeks_planned = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM weekly_planning_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const months_themed = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM monthly_theme_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const goal_reviews = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM goal_review_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    res.json({ success: true, milestone: 'B2060 — Daily/Weekly/Monthly Ritual OS', morning: { streak_30d: morning_streak, avg_energy: avg_morning_energy }, evening: { avg_day_rating, avg_stress }, planning: { weeks_planned, months_themed, goal_reviews } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2061: Body Composition Tracker ─────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS body_composition_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    weight_kg REAL,
+    body_fat_pct REAL,
+    muscle_mass_kg REAL,
+    water_pct REAL,
+    bmi REAL,
+    waist_cm REAL,
+    chest_cm REAL,
+    hips_cm REAL,
+    arms_cm REAL,
+    thighs_cm REAL,
+    method TEXT DEFAULT 'scale',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/body/composition', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM body_composition_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid) as any[];
+    const latest = entries[0]||null;
+    const first = entries.length>1?entries[entries.length-1]:null;
+    const progress = first&&latest ? {
+      weight_change: latest.weight_kg&&first.weight_kg?parseFloat((latest.weight_kg-first.weight_kg).toFixed(1)):0,
+      fat_change: latest.body_fat_pct&&first.body_fat_pct?parseFloat((latest.body_fat_pct-first.body_fat_pct).toFixed(1)):0,
+      muscle_change: latest.muscle_mass_kg&&first.muscle_mass_kg?parseFloat((latest.muscle_mass_kg-first.muscle_mass_kg).toFixed(1)):0
+    } : null;
+    res.json({ success: true, entries, latest, progress, total_entries: entries.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/body/composition', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, weight_kg, body_fat_pct, muscle_mass_kg, water_pct, bmi, waist_cm, chest_cm, hips_cm, arms_cm, thighs_cm, method='scale', notes } = req.body;
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO body_composition_log (user_id,log_date,weight_kg,body_fat_pct,muscle_mass_kg,water_pct,bmi,waist_cm,chest_cm,hips_cm,arms_cm,thighs_cm,method,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,weight_kg,body_fat_pct,muscle_mass_kg,water_pct,bmi,waist_cm,chest_cm,hips_cm,arms_cm,thighs_cm,method,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2062: Nutrition Macro Tracker ──────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS nutrition_macro_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    meal TEXT DEFAULT 'breakfast',
+    food_item TEXT NOT NULL,
+    calories REAL DEFAULT 0,
+    protein_g REAL DEFAULT 0,
+    carbs_g REAL DEFAULT 0,
+    fat_g REAL DEFAULT 0,
+    fiber_g REAL DEFAULT 0,
+    sugar_g REAL DEFAULT 0,
+    sodium_mg REAL DEFAULT 0,
+    serving_size TEXT,
+    servings REAL DEFAULT 1,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/nutrition/macros', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { date } = req.query as any;
+    const target_date = date||new Date().toISOString().slice(0,10);
+    const entries = db.prepare(`SELECT * FROM nutrition_macro_log WHERE user_id=? AND log_date=? ORDER BY id`).all(uid, target_date);
+    const totals = (entries as any[]).reduce((t:any,e:any)=>({ calories:t.calories+e.calories*e.servings, protein_g:t.protein_g+e.protein_g*e.servings, carbs_g:t.carbs_g+e.carbs_g*e.servings, fat_g:t.fat_g+e.fat_g*e.servings, fiber_g:t.fiber_g+e.fiber_g*e.servings }),{ calories:0,protein_g:0,carbs_g:0,fat_g:0,fiber_g:0 });
+    Object.keys(totals).forEach(k=>totals[k]=parseFloat(totals[k].toFixed(1)));
+    const by_date = db.prepare(`SELECT log_date, SUM(calories*servings) as cal, SUM(protein_g*servings) as prot FROM nutrition_macro_log WHERE user_id=? GROUP BY log_date ORDER BY log_date DESC LIMIT 7`).all(uid) as any[];
+    by_date.forEach(d=>{ d.cal=parseFloat(d.cal.toFixed(0)); d.prot=parseFloat(d.prot.toFixed(1)); });
+    res.json({ success: true, entries, totals, by_date, date: target_date });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/nutrition/macros', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, meal='breakfast', food_item, calories=0, protein_g=0, carbs_g=0, fat_g=0, fiber_g=0, sugar_g=0, sodium_mg=0, serving_size, servings=1, notes } = req.body;
+    if (!food_item) return res.status(400).json({ success: false, error: 'food_item required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO nutrition_macro_log (user_id,log_date,meal,food_item,calories,protein_g,carbs_g,fat_g,fiber_g,sugar_g,sodium_mg,serving_size,servings,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,meal,food_item,calories,protein_g,carbs_g,fat_g,fiber_g,sugar_g,sodium_mg,serving_size,servings,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2063: Workout Performance Log ──────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS workout_performance_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    workout_name TEXT NOT NULL,
+    workout_type TEXT DEFAULT 'strength',
+    duration_min INTEGER DEFAULT 45,
+    exercise TEXT NOT NULL,
+    sets INTEGER DEFAULT 3,
+    reps INTEGER DEFAULT 10,
+    weight_kg REAL DEFAULT 0,
+    distance_km REAL DEFAULT 0,
+    pace_min_km REAL DEFAULT 0,
+    rpe INTEGER DEFAULT 7,
+    pr_achieved INTEGER DEFAULT 0,
+    calories_burned INTEGER DEFAULT 0,
+    heart_rate_avg INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/workout/performance', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { exercise } = req.query as any;
+    let q = `SELECT * FROM workout_performance_log WHERE user_id=?`;
+    const p: any[] = [uid];
+    if (exercise) { q+=` AND exercise LIKE ?`; p.push(`%${exercise}%`); }
+    q += ` ORDER BY log_date DESC, id DESC LIMIT 50`;
+    const entries = db.prepare(q).all(...p);
+    const prs = db.prepare(`SELECT exercise, MAX(weight_kg) as max_weight, MAX(reps) as max_reps FROM workout_performance_log WHERE user_id=? GROUP BY exercise ORDER BY max_weight DESC`).all(uid);
+    const total_workouts = (db.prepare(`SELECT COUNT(DISTINCT log_date||workout_name) as c FROM workout_performance_log WHERE user_id=?`).get(uid) as any)?.c||0;
+    res.json({ success: true, entries, personal_records: prs, total_workouts });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/workout/performance', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, workout_name, workout_type='strength', duration_min=45, exercise, sets=3, reps=10, weight_kg=0, distance_km=0, pace_min_km=0, rpe=7, pr_achieved=0, calories_burned=0, heart_rate_avg=0, notes } = req.body;
+    if (!exercise||!workout_name) return res.status(400).json({ success: false, error: 'exercise, workout_name required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO workout_performance_log (user_id,log_date,workout_name,workout_type,duration_min,exercise,sets,reps,weight_kg,distance_km,pace_min_km,rpe,pr_achieved,calories_burned,heart_rate_avg,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,workout_name,workout_type,duration_min,exercise,sets,reps,weight_kg,distance_km,pace_min_km,rpe,pr_achieved,calories_burned,heart_rate_avg,notes);
+    res.json({ success: true, id: r.lastInsertRowid, is_pr: pr_achieved });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2064: Recovery & Sleep Quality Log ─────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS recovery_sleep_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    bedtime TEXT,
+    wake_time TEXT,
+    sleep_hrs REAL DEFAULT 7,
+    sleep_quality INTEGER DEFAULT 7,
+    deep_sleep_hrs REAL DEFAULT 1.5,
+    rem_sleep_hrs REAL DEFAULT 1.5,
+    times_woke INTEGER DEFAULT 0,
+    soreness_level INTEGER DEFAULT 3,
+    recovery_score INTEGER DEFAULT 7,
+    hrv_ms INTEGER DEFAULT 50,
+    resting_hr INTEGER DEFAULT 60,
+    supplements TEXT,
+    alcohol_units INTEGER DEFAULT 0,
+    screen_before_bed INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/recovery/sleep', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM recovery_sleep_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const stats = db.prepare(`SELECT AVG(sleep_hrs) as avg_hrs, AVG(sleep_quality) as avg_quality, AVG(recovery_score) as avg_recovery, AVG(hrv_ms) as avg_hrv FROM recovery_sleep_log WHERE user_id=? AND log_date>=date('now','-7 days')`).get(uid) as any;
+    Object.keys(stats||{}).forEach(k=>{ if(stats[k]) stats[k]=parseFloat(stats[k].toFixed(1)); });
+    res.json({ success: true, entries, weekly_stats: stats });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/recovery/sleep', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, bedtime, wake_time, sleep_hrs=7, sleep_quality=7, deep_sleep_hrs=1.5, rem_sleep_hrs=1.5, times_woke=0, soreness_level=3, recovery_score=7, hrv_ms=50, resting_hr=60, supplements, alcohol_units=0, screen_before_bed=0, notes } = req.body;
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO recovery_sleep_log (user_id,log_date,bedtime,wake_time,sleep_hrs,sleep_quality,deep_sleep_hrs,rem_sleep_hrs,times_woke,soreness_level,recovery_score,hrv_ms,resting_hr,supplements,alcohol_units,screen_before_bed,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,bedtime,wake_time,sleep_hrs,sleep_quality,deep_sleep_hrs,rem_sleep_hrs,times_woke,soreness_level,recovery_score,hrv_ms,resting_hr,supplements,alcohol_units,screen_before_bed,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2065: MILESTONE — Peak Performance Health OS ───────────────────────────
+app.get('/api/peak/performance/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const latest_weight = safe(()=>(db.prepare(`SELECT weight_kg FROM body_composition_log WHERE user_id=? ORDER BY log_date DESC LIMIT 1`).get(uid) as any)?.weight_kg||0);
+    const latest_bf = safe(()=>(db.prepare(`SELECT body_fat_pct FROM body_composition_log WHERE user_id=? ORDER BY log_date DESC LIMIT 1`).get(uid) as any)?.body_fat_pct||0);
+    const today_calories = safe(()=>{ const r=db.prepare(`SELECT SUM(calories*servings) as c FROM nutrition_macro_log WHERE user_id=? AND log_date=date('now')`).get(uid) as any; return r?.c?parseFloat(r.c.toFixed(0)):0; });
+    const today_protein = safe(()=>{ const r=db.prepare(`SELECT SUM(protein_g*servings) as p FROM nutrition_macro_log WHERE user_id=? AND log_date=date('now')`).get(uid) as any; return r?.p?parseFloat(r.p.toFixed(1)):0; });
+    const workouts_week = safe(()=>(db.prepare(`SELECT COUNT(DISTINCT log_date) as c FROM workout_performance_log WHERE user_id=? AND log_date>=date('now','-7 days')`).get(uid) as any)?.c||0);
+    const avg_sleep = safe(()=>{ const r=db.prepare(`SELECT AVG(sleep_hrs) as a FROM recovery_sleep_log WHERE user_id=? AND log_date>=date('now','-7 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const avg_recovery = safe(()=>{ const r=db.prepare(`SELECT AVG(recovery_score) as a FROM recovery_sleep_log WHERE user_id=? AND log_date>=date('now','-7 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const morning_streak = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM morning_ritual_log WHERE user_id=? AND ritual_completed=1 AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    res.json({ success: true, milestone: 'B2065 — Peak Performance Health OS', body: { weight_kg: latest_weight, body_fat_pct: latest_bf }, nutrition: { today_calories, today_protein_g: today_protein }, training: { workouts_this_week: workouts_week }, recovery: { avg_sleep_hrs: avg_sleep, avg_recovery_score: avg_recovery }, habits: { morning_ritual_streak_30d: morning_streak } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2066: Life Values Audit ─────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS life_values_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    value TEXT NOT NULL,
+    category TEXT DEFAULT 'personal',
+    importance_rank INTEGER DEFAULT 5,
+    currently_living INTEGER DEFAULT 5,
+    gap_score INTEGER DEFAULT 0,
+    why_important TEXT,
+    how_to_live_it TEXT,
+    reviewed_date TEXT DEFAULT (date('now')),
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, value)
+  )`);
+} catch(e) {}
+
+app.get('/api/life/values', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM life_values_audit WHERE user_id=? ORDER BY importance_rank`).all(uid) as any[];
+    entries.forEach(e=>{ e.gap_score=e.importance_rank-e.currently_living; });
+    const top_gaps = entries.filter((e:any)=>e.gap_score>3).slice(0,5);
+    const alignment_score = entries.length>0?parseFloat((entries.reduce((a:number,e:any)=>a+e.currently_living,0)/entries.length).toFixed(1)):0;
+    res.json({ success: true, values: entries, top_gaps, alignment_score });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/life/values', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { value, category='personal', importance_rank=5, currently_living=5, why_important, how_to_live_it, reviewed_date, notes } = req.body;
+    if (!value) return res.status(400).json({ success: false, error: 'value required' });
+    const today = reviewed_date||new Date().toISOString().slice(0,10);
+    db.prepare(`INSERT OR REPLACE INTO life_values_audit (user_id,value,category,importance_rank,currently_living,gap_score,why_important,how_to_live_it,reviewed_date,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(uid,value,category,importance_rank,currently_living,importance_rank-currently_living,why_important,how_to_live_it,today,notes);
+    res.json({ success: true, value, gap_score: importance_rank-currently_living });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2067: Bucket List Tracker ───────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS bucket_list (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    item TEXT NOT NULL,
+    category TEXT DEFAULT 'adventure',
+    priority INTEGER DEFAULT 5,
+    target_year INTEGER,
+    estimated_cost REAL DEFAULT 0,
+    completed INTEGER DEFAULT 0,
+    completed_date TEXT,
+    experience_rating INTEGER,
+    story TEXT,
+    photo_url TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, item)
+  )`);
+} catch(e) {}
+
+app.get('/api/bucket/list', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { category } = req.query as any;
+    let q = `SELECT * FROM bucket_list WHERE user_id=?`;
+    const p: any[] = [uid];
+    if (category) { q+=` AND category=?`; p.push(category); }
+    q += ` ORDER BY priority DESC, target_year`;
+    const entries = db.prepare(q).all(...p) as any[];
+    const completed = entries.filter((e:any)=>e.completed);
+    const pending = entries.filter((e:any)=>!e.completed);
+    const total_cost = pending.reduce((a:number,e:any)=>a+(e.estimated_cost||0),0);
+    res.json({ success: true, items: entries, completed_count: completed.length, pending_count: pending.length, estimated_total_cost: parseFloat(total_cost.toFixed(2)) });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/bucket/list', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { item, category='adventure', priority=5, target_year, estimated_cost=0, completed=0, completed_date, experience_rating, story, photo_url, notes } = req.body;
+    if (!item) return res.status(400).json({ success: false, error: 'item required' });
+    db.prepare(`INSERT OR REPLACE INTO bucket_list (user_id,item,category,priority,target_year,estimated_cost,completed,completed_date,experience_rating,story,photo_url,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,item,category,priority,target_year,estimated_cost,completed,completed_date,experience_rating,story,photo_url,notes);
+    res.json({ success: true, item, completed });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2068: Legacy Letter Log ──────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS legacy_letter_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    letter_date TEXT DEFAULT (date('now')),
+    recipient TEXT NOT NULL,
+    relationship TEXT DEFAULT 'family',
+    occasion TEXT DEFAULT 'general',
+    letter_content TEXT NOT NULL,
+    values_expressed TEXT,
+    memories_shared TEXT,
+    wishes_for_them TEXT,
+    life_lessons TEXT,
+    deliver_on TEXT,
+    delivered INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/legacy/letters', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT id,letter_date,recipient,relationship,occasion,deliver_on,delivered,created_at FROM legacy_letter_log WHERE user_id=? ORDER BY letter_date DESC`).all(uid);
+    const undelivered = (entries as any[]).filter((e:any)=>!e.delivered);
+    res.json({ success: true, letters: entries, total: (entries as any[]).length, undelivered_count: undelivered.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/legacy/letters', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { letter_date, recipient, relationship='family', occasion='general', letter_content, values_expressed, memories_shared, wishes_for_them, life_lessons, deliver_on, notes } = req.body;
+    if (!recipient||!letter_content) return res.status(400).json({ success: false, error: 'recipient, letter_content required' });
+    const today = letter_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO legacy_letter_log (user_id,letter_date,recipient,relationship,occasion,letter_content,values_expressed,memories_shared,wishes_for_them,life_lessons,deliver_on,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,recipient,relationship,occasion,letter_content,values_expressed,memories_shared,wishes_for_them,life_lessons,deliver_on,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2069: Personal Mission Statement ────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS mission_statement_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    version INTEGER DEFAULT 1,
+    written_date TEXT DEFAULT (date('now')),
+    mission TEXT NOT NULL,
+    vision TEXT,
+    core_values TEXT,
+    target_impact TEXT,
+    unique_strengths TEXT,
+    who_i_serve TEXT,
+    how_i_serve TEXT,
+    life_areas TEXT,
+    clarity_score INTEGER DEFAULT 7,
+    resonance_score INTEGER DEFAULT 7,
+    is_active INTEGER DEFAULT 1,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/mission/statement', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const active = db.prepare(`SELECT * FROM mission_statement_log WHERE user_id=? AND is_active=1 ORDER BY version DESC LIMIT 1`).get(uid);
+    const history = db.prepare(`SELECT id,version,written_date,clarity_score,resonance_score,is_active FROM mission_statement_log WHERE user_id=? ORDER BY version DESC`).all(uid);
+    res.json({ success: true, active_mission: active, history, total_versions: (history as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/mission/statement', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { mission, vision, core_values, target_impact, unique_strengths, who_i_serve, how_i_serve, life_areas, clarity_score=7, resonance_score=7, notes } = req.body;
+    if (!mission) return res.status(400).json({ success: false, error: 'mission required' });
+    db.prepare(`UPDATE mission_statement_log SET is_active=0 WHERE user_id=?`).run(uid);
+    const last = db.prepare(`SELECT MAX(version) as v FROM mission_statement_log WHERE user_id=?`).get(uid) as any;
+    const version = (last?.v||0)+1;
+    const today = new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO mission_statement_log (user_id,version,written_date,mission,vision,core_values,target_impact,unique_strengths,who_i_serve,how_i_serve,life_areas,clarity_score,resonance_score,is_active,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?)`).run(uid,version,today,mission,vision,core_values,target_impact,unique_strengths,who_i_serve,how_i_serve,life_areas,clarity_score,resonance_score,notes);
+    res.json({ success: true, id: r.lastInsertRowid, version });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2070: MILESTONE — Life Purpose & Legacy OS ──────────────────────────────
+app.get('/api/life/purpose/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const values_count = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM life_values_audit WHERE user_id=?`).get(uid) as any)?.c||0);
+    const alignment_score = safe(()=>{ const r=db.prepare(`SELECT AVG(currently_living) as a FROM life_values_audit WHERE user_id=?`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const bucket_total = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM bucket_list WHERE user_id=?`).get(uid) as any)?.c||0);
+    const bucket_done = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM bucket_list WHERE user_id=? AND completed=1`).get(uid) as any)?.c||0);
+    const letters_written = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM legacy_letter_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const mission_version = safe(()=>(db.prepare(`SELECT MAX(version) as v FROM mission_statement_log WHERE user_id=?`).get(uid) as any)?.v||0);
+    const active_mission = safe(()=>(db.prepare(`SELECT mission FROM mission_statement_log WHERE user_id=? AND is_active=1`).get(uid) as any)?.mission||null, null);
+    const vision_items = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM vision_board_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const vision_achieved = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM vision_board_log WHERE user_id=? AND achieved=1`).get(uid) as any)?.c||0);
+    res.json({ success: true, milestone: 'B2070 — Life Purpose & Legacy OS', values: { tracked: values_count, alignment_score }, bucket_list: { total: bucket_total, completed: bucket_done, completion_pct: bucket_total>0?parseFloat((bucket_done/bucket_total*100).toFixed(1)):0 }, legacy: { letters_written }, mission: { version: mission_version, active: !!active_mission, preview: active_mission?active_mission.slice(0,100):null }, vision: { items: vision_items, achieved: vision_achieved } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── 404 fallback (must be last) ─────────────────────────────────────────────
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
