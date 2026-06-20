@@ -129978,5 +129978,772 @@ app.get('/api/personal/mastery/os', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── B2091: Decision Journal ──────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS decision_journal (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    decision TEXT NOT NULL,
+    category TEXT DEFAULT 'business',
+    options_considered TEXT,
+    chosen_option TEXT NOT NULL,
+    reasoning TEXT NOT NULL,
+    expected_outcome TEXT,
+    confidence INTEGER DEFAULT 7,
+    time_horizon TEXT DEFAULT '3_months',
+    review_date TEXT,
+    actual_outcome TEXT,
+    outcome_score INTEGER,
+    lesson TEXT,
+    status TEXT DEFAULT 'pending_review',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/decision/journal', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM decision_journal WHERE user_id=? ORDER BY log_date DESC LIMIT 50`).all(uid);
+    const reviewed = (entries as any[]).filter(e=>e.status==='reviewed');
+    const avg_outcome = reviewed.length>0?parseFloat((reviewed.reduce((a:number,e:any)=>a+(e.outcome_score||0),0)/reviewed.length).toFixed(1)):0;
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count, AVG(confidence) as avg_conf FROM decision_journal WHERE user_id=? GROUP BY category`).all(uid) as any[];
+    by_category.forEach(c=>c.avg_conf=parseFloat((c.avg_conf||0).toFixed(1)));
+    res.json({ success: true, entries, by_category, avg_outcome_score: avg_outcome, reviewed_count: reviewed.length, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/decision/journal', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, decision, category='business', options_considered, chosen_option, reasoning, expected_outcome, confidence=7, time_horizon='3_months', review_date, actual_outcome, outcome_score, lesson, status='pending_review', notes } = req.body;
+    if (!decision||!chosen_option||!reasoning) return res.status(400).json({ success: false, error: 'decision, chosen_option, reasoning required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO decision_journal (user_id,log_date,decision,category,options_considered,chosen_option,reasoning,expected_outcome,confidence,time_horizon,review_date,actual_outcome,outcome_score,lesson,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,decision,category,options_considered,chosen_option,reasoning,expected_outcome,confidence,time_horizon,review_date,actual_outcome,outcome_score,lesson,status,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2092: Accountability Partner Log ───────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS accountability_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    partner_name TEXT NOT NULL,
+    commitment TEXT NOT NULL,
+    deadline TEXT,
+    completed INTEGER DEFAULT 0,
+    completion_date TEXT,
+    follow_up_date TEXT,
+    self_rating INTEGER DEFAULT 7,
+    partner_rating INTEGER,
+    consequence TEXT,
+    excuse TEXT,
+    lesson TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/accountability/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM accountability_log WHERE user_id=? ORDER BY log_date DESC LIMIT 50`).all(uid);
+    const by_partner = db.prepare(`SELECT partner_name, COUNT(*) as commitments, SUM(completed) as completed FROM accountability_log WHERE user_id=? GROUP BY partner_name`).all(uid) as any[];
+    by_partner.forEach(p=>p.completion_rate=p.commitments>0?parseFloat((p.completed/p.commitments*100).toFixed(1)):0);
+    const overall_rate = (entries as any[]).length>0?parseFloat(((entries as any[]).filter((e:any)=>e.completed).length/(entries as any[]).length*100).toFixed(1)):0;
+    res.json({ success: true, entries, by_partner, overall_completion_rate: overall_rate, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/accountability/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, partner_name, commitment, deadline, completed=0, completion_date, follow_up_date, self_rating=7, partner_rating, consequence, excuse, lesson, notes } = req.body;
+    if (!partner_name||!commitment) return res.status(400).json({ success: false, error: 'partner_name, commitment required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO accountability_log (user_id,log_date,partner_name,commitment,deadline,completed,completion_date,follow_up_date,self_rating,partner_rating,consequence,excuse,lesson,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,partner_name,commitment,deadline,completed,completion_date,follow_up_date,self_rating,partner_rating,consequence,excuse,lesson,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2093: Focus Session Timer Log ──────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS focus_session_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    session_date TEXT DEFAULT (date('now')),
+    session_type TEXT DEFAULT 'pomodoro',
+    duration_mins INTEGER DEFAULT 25,
+    break_mins INTEGER DEFAULT 5,
+    task_worked_on TEXT NOT NULL,
+    completed INTEGER DEFAULT 1,
+    distracted_count INTEGER DEFAULT 0,
+    focus_score INTEGER DEFAULT 8,
+    output TEXT,
+    energy_before INTEGER DEFAULT 7,
+    energy_after INTEGER DEFAULT 6,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/focus/sessions', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { days=7 } = req.query;
+    const sessions = db.prepare(`SELECT * FROM focus_session_log WHERE user_id=? AND session_date>=date('now','-${parseInt(days as string)}days') ORDER BY created_at DESC`).all(uid);
+    const total_mins = (sessions as any[]).reduce((a:number,s:any)=>a+(s.duration_mins||0),0);
+    const avg_focus = (sessions as any[]).length>0?parseFloat(((sessions as any[]).reduce((a:number,s:any)=>a+s.focus_score,0)/(sessions as any[]).length).toFixed(1)):0;
+    const by_day = db.prepare(`SELECT session_date, COUNT(*) as sessions, SUM(duration_mins) as total_mins FROM focus_session_log WHERE user_id=? AND session_date>=date('now','-${parseInt(days as string)}days') GROUP BY session_date ORDER BY session_date`).all(uid);
+    res.json({ success: true, sessions, total_mins, avg_focus_score: avg_focus, by_day, total_sessions: (sessions as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/focus/sessions', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { session_date, session_type='pomodoro', duration_mins=25, break_mins=5, task_worked_on, completed=1, distracted_count=0, focus_score=8, output, energy_before=7, energy_after=6, notes } = req.body;
+    if (!task_worked_on) return res.status(400).json({ success: false, error: 'task_worked_on required' });
+    const today = session_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO focus_session_log (user_id,session_date,session_type,duration_mins,break_mins,task_worked_on,completed,distracted_count,focus_score,output,energy_before,energy_after,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,session_type,duration_mins,break_mins,task_worked_on,completed,distracted_count,focus_score,output,energy_before,energy_after,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2094: Life Energy Audit ─────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS life_energy_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    audit_date TEXT DEFAULT (date('now')),
+    area TEXT NOT NULL,
+    energy_giving INTEGER DEFAULT 7,
+    energy_draining INTEGER DEFAULT 3,
+    time_spent_hrs REAL DEFAULT 0,
+    satisfaction INTEGER DEFAULT 7,
+    want_more INTEGER DEFAULT 1,
+    action_to_change TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, audit_date, area)
+  )`);
+} catch(e) {}
+
+app.get('/api/life/energy/audit', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM life_energy_audit WHERE user_id=? ORDER BY audit_date DESC, energy_giving DESC`).all(uid) as any[];
+    entries.forEach(e=>e.net_energy=e.energy_giving-e.energy_draining);
+    const givers = entries.filter(e=>e.net_energy>0).sort((a:any,b:any)=>b.net_energy-a.net_energy).slice(0,5);
+    const drainers = entries.filter(e=>e.net_energy<0).sort((a:any,b:any)=>a.net_energy-b.net_energy).slice(0,5);
+    res.json({ success: true, entries, top_givers: givers, top_drainers: drainers, total: entries.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/life/energy/audit', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { audit_date, area, energy_giving=7, energy_draining=3, time_spent_hrs=0, satisfaction=7, want_more=1, action_to_change, notes } = req.body;
+    if (!area) return res.status(400).json({ success: false, error: 'area required' });
+    const today = audit_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO life_energy_audit (user_id,audit_date,area,energy_giving,energy_draining,time_spent_hrs,satisfaction,want_more,action_to_change,notes) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id,audit_date,area) DO UPDATE SET energy_giving=excluded.energy_giving, energy_draining=excluded.energy_draining, satisfaction=excluded.satisfaction`).run(uid,today,area,energy_giving,energy_draining,time_spent_hrs,satisfaction,want_more,action_to_change,notes);
+    res.json({ success: true, id: r.lastInsertRowid||'updated' });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2095: MILESTONE — Productivity & Decisions OS ──────────────────────────
+app.get('/api/productivity/decisions/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const decisions_made = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM decision_journal WHERE user_id=?`).get(uid) as any)?.c||0);
+    const decisions_reviewed = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM decision_journal WHERE user_id=? AND status='reviewed'`).get(uid) as any)?.c||0);
+    const avg_decision_confidence = safe(()=>{ const r=db.prepare(`SELECT AVG(confidence) as a FROM decision_journal WHERE user_id=?`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const accountability_rate = safe(()=>{ const r=db.prepare(`SELECT COUNT(*) as total, SUM(completed) as done FROM accountability_log WHERE user_id=?`).get(uid) as any; return r?.total>0?parseFloat((r.done/r.total*100).toFixed(1)):0; });
+    const focus_mins_7d = safe(()=>{ const r=db.prepare(`SELECT SUM(duration_mins) as s FROM focus_session_log WHERE user_id=? AND session_date>=date('now','-7days')`).get(uid) as any; return r?.s||0; });
+    const top_energy_area = safe(()=>{ const r=db.prepare(`SELECT area FROM life_energy_audit WHERE user_id=? ORDER BY (energy_giving-energy_draining) DESC LIMIT 1`).get(uid) as any; return r?.area||null; }, null);
+    res.json({ success: true, milestone: 'B2095 — Productivity & Decisions OS', decisions: { total: decisions_made, reviewed: decisions_reviewed, avg_confidence: avg_decision_confidence }, accountability: { completion_rate: accountability_rate }, focus: { mins_last_7d: focus_mins_7d, hrs_last_7d: parseFloat((focus_mins_7d/60).toFixed(1)) }, energy: { top_giving_area: top_energy_area } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2096: Vision Board Items ────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS vision_board (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    item TEXT NOT NULL,
+    category TEXT DEFAULT 'lifestyle',
+    description TEXT,
+    by_date TEXT,
+    status TEXT DEFAULT 'dreaming',
+    belief_score INTEGER DEFAULT 7,
+    actions_taken TEXT,
+    image_url TEXT,
+    achieved_date TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/vision/board', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const items = db.prepare(`SELECT * FROM vision_board WHERE user_id=? ORDER BY belief_score DESC`).all(uid) as any[];
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count, AVG(belief_score) as avg_belief FROM vision_board WHERE user_id=? GROUP BY category`).all(uid) as any[];
+    by_category.forEach(c=>c.avg_belief=parseFloat((c.avg_belief||0).toFixed(1)));
+    res.json({ success: true, items, by_category, achieved: items.filter(i=>i.status==='achieved').length, total: items.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/vision/board', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { item, category='lifestyle', description, by_date, status='dreaming', belief_score=7, actions_taken, image_url, achieved_date, notes } = req.body;
+    if (!item) return res.status(400).json({ success: false, error: 'item required' });
+    const r = db.prepare(`INSERT INTO vision_board (user_id,item,category,description,by_date,status,belief_score,actions_taken,image_url,achieved_date,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(uid,item,category,description,by_date,status,belief_score,actions_taken,image_url,achieved_date,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2097: Anti-Goals & Stop-Doing List ─────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS anti_goals_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    item TEXT NOT NULL,
+    category TEXT DEFAULT 'behavior',
+    reason TEXT NOT NULL,
+    cost_of_continuing TEXT,
+    benefit_of_stopping TEXT,
+    date_identified TEXT DEFAULT (date('now')),
+    eliminated INTEGER DEFAULT 0,
+    elimination_date TEXT,
+    relapse_count INTEGER DEFAULT 0,
+    current_streak_days INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/anti/goals', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const items = db.prepare(`SELECT * FROM anti_goals_log WHERE user_id=? ORDER BY created_at DESC`).all(uid);
+    const eliminated = (items as any[]).filter(i=>i.eliminated);
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count FROM anti_goals_log WHERE user_id=? GROUP BY category`).all(uid);
+    res.json({ success: true, items, eliminated_count: eliminated.length, by_category, total: (items as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/anti/goals', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { item, category='behavior', reason, cost_of_continuing, benefit_of_stopping, date_identified, eliminated=0, elimination_date, relapse_count=0, current_streak_days=0, notes } = req.body;
+    if (!item||!reason) return res.status(400).json({ success: false, error: 'item, reason required' });
+    const today = date_identified||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO anti_goals_log (user_id,item,category,reason,cost_of_continuing,benefit_of_stopping,date_identified,eliminated,elimination_date,relapse_count,current_streak_days,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,item,category,reason,cost_of_continuing,benefit_of_stopping,today,eliminated,elimination_date,relapse_count,current_streak_days,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2098: Wealth Mindset Log ────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS wealth_mindset_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    money_belief TEXT NOT NULL,
+    belief_type TEXT DEFAULT 'abundance',
+    strength INTEGER DEFAULT 7,
+    evidence TEXT,
+    affirmation TEXT,
+    money_action_taken TEXT,
+    income_generated REAL DEFAULT 0,
+    value_created TEXT,
+    gratitude_for_money TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/wealth/mindset', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM wealth_mindset_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const abundance_pct = (entries as any[]).length>0?parseFloat(((entries as any[]).filter((e:any)=>e.belief_type==='abundance').length/(entries as any[]).length*100).toFixed(1)):0;
+    const total_income = parseFloat((entries as any[]).reduce((a:number,e:any)=>a+(e.income_generated||0),0).toFixed(2));
+    res.json({ success: true, entries, abundance_pct, total_income_logged: total_income, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/wealth/mindset', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, money_belief, belief_type='abundance', strength=7, evidence, affirmation, money_action_taken, income_generated=0, value_created, gratitude_for_money, notes } = req.body;
+    if (!money_belief) return res.status(400).json({ success: false, error: 'money_belief required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO wealth_mindset_log (user_id,log_date,money_belief,belief_type,strength,evidence,affirmation,money_action_taken,income_generated,value_created,gratitude_for_money,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,money_belief,belief_type,strength,evidence,affirmation,money_action_taken,income_generated,value_created,gratitude_for_money,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2099: Ideal Day Designer ────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS ideal_day_design (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    design_date TEXT DEFAULT (date('now')),
+    wake_time TEXT DEFAULT '06:00',
+    morning_ritual_mins INTEGER DEFAULT 60,
+    deep_work_1_start TEXT DEFAULT '08:00',
+    deep_work_1_hrs REAL DEFAULT 3,
+    deep_work_1_task TEXT,
+    lunch_time TEXT DEFAULT '12:00',
+    deep_work_2_start TEXT DEFAULT '13:00',
+    deep_work_2_hrs REAL DEFAULT 2,
+    admin_hrs REAL DEFAULT 1,
+    exercise_time TEXT DEFAULT '17:00',
+    exercise_mins INTEGER DEFAULT 45,
+    evening_ritual TEXT,
+    sleep_time TEXT DEFAULT '22:00',
+    total_deep_work_hrs REAL DEFAULT 5,
+    actual_satisfaction INTEGER,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/ideal/day', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const designs = db.prepare(`SELECT * FROM ideal_day_design WHERE user_id=? ORDER BY design_date DESC LIMIT 10`).all(uid);
+    res.json({ success: true, designs, current: (designs as any[])[0]||null, total: (designs as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/ideal/day', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { design_date, wake_time='06:00', morning_ritual_mins=60, deep_work_1_start='08:00', deep_work_1_hrs=3, deep_work_1_task, lunch_time='12:00', deep_work_2_start='13:00', deep_work_2_hrs=2, admin_hrs=1, exercise_time='17:00', exercise_mins=45, evening_ritual, sleep_time='22:00', actual_satisfaction, notes } = req.body;
+    const today = design_date||new Date().toISOString().slice(0,10);
+    const total_deep_work_hrs = (deep_work_1_hrs||0)+(deep_work_2_hrs||0);
+    const r = db.prepare(`INSERT INTO ideal_day_design (user_id,design_date,wake_time,morning_ritual_mins,deep_work_1_start,deep_work_1_hrs,deep_work_1_task,lunch_time,deep_work_2_start,deep_work_2_hrs,admin_hrs,exercise_time,exercise_mins,evening_ritual,sleep_time,total_deep_work_hrs,actual_satisfaction,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,wake_time,morning_ritual_mins,deep_work_1_start,deep_work_1_hrs,deep_work_1_task,lunch_time,deep_work_2_start,deep_work_2_hrs,admin_hrs,exercise_time,exercise_mins,evening_ritual,sleep_time,total_deep_work_hrs,actual_satisfaction,notes);
+    res.json({ success: true, id: r.lastInsertRowid, total_deep_work_hrs });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2100: MILESTONE — Life Design Master OS ────────────────────────────────
+app.get('/api/life/design/master/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const vision_items = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM vision_board WHERE user_id=?`).get(uid) as any)?.c||0);
+    const vision_achieved = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM vision_board WHERE user_id=? AND status='achieved'`).get(uid) as any)?.c||0);
+    const anti_goals = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM anti_goals_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const anti_eliminated = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM anti_goals_log WHERE user_id=? AND eliminated=1`).get(uid) as any)?.c||0);
+    const abundance_pct = safe(()=>{ const r=db.prepare(`SELECT COUNT(*) as total, SUM(CASE WHEN belief_type='abundance' THEN 1 ELSE 0 END) as ab FROM wealth_mindset_log WHERE user_id=?`).get(uid) as any; return r?.total>0?parseFloat((r.ab/r.total*100).toFixed(1)):0; });
+    const ideal_day_exists = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM ideal_day_design WHERE user_id=?`).get(uid) as any)?.c>0,false);
+    const deep_work_avg = safe(()=>{ const r=db.prepare(`SELECT AVG(total_deep_work_hrs) as a FROM ideal_day_design WHERE user_id=?`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const focus_total_hrs = safe(()=>{ const r=db.prepare(`SELECT SUM(duration_mins)/60.0 as h FROM focus_session_log WHERE user_id=? AND session_date>=date('now','-30days')`).get(uid) as any; return r?.h?parseFloat(r.h.toFixed(1)):0; });
+    const life_os_score = Math.min(100, Math.round((vision_achieved/Math.max(1,vision_items))*25 + (anti_eliminated/Math.max(1,anti_goals))*20 + (abundance_pct/100)*20 + (ideal_day_exists?15:0) + Math.min(20, focus_total_hrs/3*20)));
+    res.json({ success: true, milestone: 'B2100 — Life Design Master OS', life_os_score, vision: { total: vision_items, achieved: vision_achieved, pct: vision_items>0?parseFloat((vision_achieved/vision_items*100).toFixed(1)):0 }, anti_goals: { total: anti_goals, eliminated: anti_eliminated }, wealth_mindset: { abundance_pct }, ideal_day: { designed: ideal_day_exists, avg_deep_work_hrs: deep_work_avg }, focus: { hrs_last_30d: focus_total_hrs } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2101: Podcast Guest Tracker v2 ─────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS podcast_guest_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    show_name TEXT NOT NULL,
+    host_name TEXT,
+    episode_title TEXT,
+    record_date TEXT,
+    publish_date TEXT,
+    status TEXT DEFAULT 'pitched',
+    niche TEXT DEFAULT 'business',
+    listeners INTEGER DEFAULT 0,
+    pitch_angle TEXT,
+    talking_points TEXT,
+    outcome TEXT,
+    leads_generated INTEGER DEFAULT 0,
+    revenue_attributed REAL DEFAULT 0,
+    rating INTEGER DEFAULT 8,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/podcast/guest/v2', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const episodes = db.prepare(`SELECT * FROM podcast_guest_v2 WHERE user_id=? ORDER BY created_at DESC`).all(uid) as any[];
+    const booked = episodes.filter(e=>['scheduled','recorded','published'].includes(e.status));
+    const total_leads = episodes.reduce((a:number,e:any)=>a+(e.leads_generated||0),0);
+    const total_revenue = parseFloat(episodes.reduce((a:number,e:any)=>a+(e.revenue_attributed||0),0).toFixed(2));
+    const by_status = db.prepare(`SELECT status, COUNT(*) as count FROM podcast_guest_v2 WHERE user_id=? GROUP BY status`).all(uid);
+    res.json({ success: true, episodes, booked_count: booked.length, total_leads, total_revenue, by_status, total: episodes.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/podcast/guest/v2', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { show_name, host_name, episode_title, record_date, publish_date, status='pitched', niche='business', listeners=0, pitch_angle, talking_points, outcome, leads_generated=0, revenue_attributed=0, rating=8, notes } = req.body;
+    if (!show_name) return res.status(400).json({ success: false, error: 'show_name required' });
+    const r = db.prepare(`INSERT INTO podcast_guest_v2 (user_id,show_name,host_name,episode_title,record_date,publish_date,status,niche,listeners,pitch_angle,talking_points,outcome,leads_generated,revenue_attributed,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,show_name,host_name,episode_title,record_date,publish_date,status,niche,listeners,pitch_angle,talking_points,outcome,leads_generated,revenue_attributed,rating,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2102: Speaking Engagements v2 ──────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS speaking_engagements_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    event_name TEXT NOT NULL,
+    organizer TEXT,
+    event_type TEXT DEFAULT 'conference',
+    talk_title TEXT,
+    event_date TEXT,
+    location TEXT,
+    audience_size INTEGER DEFAULT 0,
+    fee REAL DEFAULT 0,
+    status TEXT DEFAULT 'applied',
+    topic TEXT,
+    key_message TEXT,
+    leads_generated INTEGER DEFAULT 0,
+    revenue_attributed REAL DEFAULT 0,
+    rating INTEGER DEFAULT 8,
+    recording_url TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/speaking/v2', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const engagements = db.prepare(`SELECT * FROM speaking_engagements_v2 WHERE user_id=? ORDER BY event_date DESC`).all(uid) as any[];
+    const confirmed = engagements.filter(e=>['confirmed','delivered'].includes(e.status));
+    const total_audience = engagements.reduce((a:number,e:any)=>a+(e.audience_size||0),0);
+    const total_fees = parseFloat(engagements.reduce((a:number,e:any)=>a+(e.fee||0),0).toFixed(2));
+    res.json({ success: true, engagements, confirmed_count: confirmed.length, total_audience, total_fees, total: engagements.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/speaking/v2', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { event_name, organizer, event_type='conference', talk_title, event_date, location, audience_size=0, fee=0, status='applied', topic, key_message, leads_generated=0, revenue_attributed=0, rating=8, recording_url, notes } = req.body;
+    if (!event_name) return res.status(400).json({ success: false, error: 'event_name required' });
+    const r = db.prepare(`INSERT INTO speaking_engagements_v2 (user_id,event_name,organizer,event_type,talk_title,event_date,location,audience_size,fee,status,topic,key_message,leads_generated,revenue_attributed,rating,recording_url,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,event_name,organizer,event_type,talk_title,event_date,location,audience_size,fee,status,topic,key_message,leads_generated,revenue_attributed,rating,recording_url,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2103: Online Course Tracker ────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS online_course_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    course_name TEXT NOT NULL,
+    platform TEXT DEFAULT 'udemy',
+    price REAL DEFAULT 0,
+    students INTEGER DEFAULT 0,
+    revenue REAL DEFAULT 0,
+    rating REAL DEFAULT 0,
+    reviews_count INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'in_development',
+    launch_date TEXT,
+    last_updated TEXT,
+    completion_rate REAL DEFAULT 0,
+    modules_count INTEGER DEFAULT 0,
+    hours_content REAL DEFAULT 0,
+    topic TEXT,
+    target_audience TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/online/courses', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const courses = db.prepare(`SELECT * FROM online_course_tracker WHERE user_id=? ORDER BY revenue DESC`).all(uid) as any[];
+    const total_revenue = parseFloat(courses.reduce((a:number,c:any)=>a+(c.revenue||0),0).toFixed(2));
+    const total_students = courses.reduce((a:number,c:any)=>a+(c.students||0),0);
+    const by_platform = db.prepare(`SELECT platform, COUNT(*) as count, SUM(revenue) as total_rev FROM online_course_tracker WHERE user_id=? GROUP BY platform ORDER BY total_rev DESC`).all(uid) as any[];
+    by_platform.forEach(p=>p.total_rev=parseFloat((p.total_rev||0).toFixed(2)));
+    res.json({ success: true, courses, total_revenue, total_students, by_platform, total: courses.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/online/courses', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { course_name, platform='udemy', price=0, students=0, revenue=0, rating=0, reviews_count=0, status='in_development', launch_date, last_updated, completion_rate=0, modules_count=0, hours_content=0, topic, target_audience, notes } = req.body;
+    if (!course_name) return res.status(400).json({ success: false, error: 'course_name required' });
+    const r = db.prepare(`INSERT INTO online_course_tracker (user_id,course_name,platform,price,students,revenue,rating,reviews_count,status,launch_date,last_updated,completion_rate,modules_count,hours_content,topic,target_audience,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,course_name,platform,price,students,revenue,rating,reviews_count,status,launch_date,last_updated,completion_rate,modules_count,hours_content,topic,target_audience,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2104: Newsletter Stats Tracker ─────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS newsletter_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    issue_date TEXT DEFAULT (date('now')),
+    issue_number INTEGER DEFAULT 1,
+    subject TEXT NOT NULL,
+    subscribers INTEGER DEFAULT 0,
+    opens INTEGER DEFAULT 0,
+    clicks INTEGER DEFAULT 0,
+    unsubscribes INTEGER DEFAULT 0,
+    new_subscribers INTEGER DEFAULT 0,
+    revenue REAL DEFAULT 0,
+    top_link TEXT,
+    main_topic TEXT,
+    cta TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/newsletter/stats', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const issues = db.prepare(`SELECT * FROM newsletter_stats WHERE user_id=? ORDER BY issue_date DESC LIMIT 52`).all(uid) as any[];
+    issues.forEach(i=>{ i.open_rate=i.subscribers>0?parseFloat((i.opens/i.subscribers*100).toFixed(1)):0; i.click_rate=i.opens>0?parseFloat((i.clicks/i.opens*100).toFixed(1)):0; });
+    const latest = (issues as any[])[0];
+    const avg_open_rate = issues.length>0?parseFloat((issues.reduce((a:number,i:any)=>a+i.open_rate,0)/issues.length).toFixed(1)):0;
+    const total_revenue = parseFloat(issues.reduce((a:number,i:any)=>a+(i.revenue||0),0).toFixed(2));
+    res.json({ success: true, issues, latest_subscribers: latest?.subscribers||0, avg_open_rate, total_revenue, total_issues: issues.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/newsletter/stats', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { issue_date, issue_number=1, subject, subscribers=0, opens=0, clicks=0, unsubscribes=0, new_subscribers=0, revenue=0, top_link, main_topic, cta, notes } = req.body;
+    if (!subject) return res.status(400).json({ success: false, error: 'subject required' });
+    const today = issue_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO newsletter_stats (user_id,issue_date,issue_number,subject,subscribers,opens,clicks,unsubscribes,new_subscribers,revenue,top_link,main_topic,cta,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,issue_number,subject,subscribers,opens,clicks,unsubscribes,new_subscribers,revenue,top_link,main_topic,cta,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2105: MILESTONE — Authority & Audience OS ──────────────────────────────
+app.get('/api/authority/audience/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const podcast_episodes = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM podcast_guest_v2 WHERE user_id=? AND status IN ('recorded','published')`).get(uid) as any)?.c||0);
+    const speaking_delivered = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM speaking_engagements_v2 WHERE user_id=? AND status='delivered'`).get(uid) as any)?.c||0);
+    const total_audience = safe(()=>{ const r=db.prepare(`SELECT SUM(audience_size) as s FROM speaking_engagements_v2 WHERE user_id=? AND status='delivered'`).get(uid) as any; return r?.s||0; });
+    const courses = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM online_course_tracker WHERE user_id=? AND status='live'`).get(uid) as any)?.c||0);
+    const course_students = safe(()=>{ const r=db.prepare(`SELECT SUM(students) as s FROM online_course_tracker WHERE user_id=?`).get(uid) as any; return r?.s||0; });
+    const course_revenue = safe(()=>{ const r=db.prepare(`SELECT SUM(revenue) as s FROM online_course_tracker WHERE user_id=?`).get(uid) as any; return r?.s?parseFloat(r.s.toFixed(2)):0; });
+    const newsletter_subs = safe(()=>{ const r=db.prepare(`SELECT MAX(subscribers) as m FROM newsletter_stats WHERE user_id=?`).get(uid) as any; return r?.m||0; });
+    const avg_open_rate = safe(()=>{ const r=db.prepare(`SELECT AVG(CAST(opens AS REAL)/NULLIF(subscribers,0)*100) as a FROM newsletter_stats WHERE user_id=?`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    res.json({ success: true, milestone: 'B2105 — Authority & Audience OS', podcast: { episodes_delivered: podcast_episodes }, speaking: { delivered: speaking_delivered, total_audience }, courses: { live: courses, total_students: course_students, total_revenue: course_revenue }, newsletter: { subscribers: newsletter_subs, avg_open_rate } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2106: Brand Assets Tracker ─────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS brand_assets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    asset_name TEXT NOT NULL,
+    asset_type TEXT DEFAULT 'logo',
+    file_url TEXT,
+    version TEXT DEFAULT '1.0',
+    colors TEXT,
+    fonts TEXT,
+    usage_guidelines TEXT,
+    status TEXT DEFAULT 'active',
+    created_date TEXT DEFAULT (date('now')),
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/brand/assets', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const assets = db.prepare(`SELECT * FROM brand_assets WHERE user_id=? ORDER BY created_at DESC`).all(uid);
+    const by_type = db.prepare(`SELECT asset_type, COUNT(*) as count FROM brand_assets WHERE user_id=? GROUP BY asset_type`).all(uid);
+    res.json({ success: true, assets, by_type, total: (assets as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/brand/assets', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { asset_name, asset_type='logo', file_url, version='1.0', colors, fonts, usage_guidelines, status='active', created_date, notes } = req.body;
+    if (!asset_name) return res.status(400).json({ success: false, error: 'asset_name required' });
+    const today = created_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO brand_assets (user_id,asset_name,asset_type,file_url,version,colors,fonts,usage_guidelines,status,created_date,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(uid,asset_name,asset_type,file_url,version,colors,fonts,usage_guidelines,status,today,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2107: Testimonial & Social Proof Vault ─────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS testimonial_vault (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date_received TEXT DEFAULT (date('now')),
+    from_name TEXT NOT NULL,
+    from_title TEXT,
+    from_company TEXT,
+    platform TEXT DEFAULT 'email',
+    content TEXT NOT NULL,
+    result_achieved TEXT,
+    permission_to_use INTEGER DEFAULT 1,
+    category TEXT DEFAULT 'general',
+    rating INTEGER DEFAULT 5,
+    featured INTEGER DEFAULT 0,
+    used_in TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/testimonials', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { featured } = req.query;
+    let q = `SELECT * FROM testimonial_vault WHERE user_id=?`;
+    const params: any[] = [uid];
+    if (featured==='1') { q += ` AND featured=1`; }
+    q += ` ORDER BY rating DESC, created_at DESC`;
+    const testimonials = db.prepare(q).all(...params);
+    const by_platform = db.prepare(`SELECT platform, COUNT(*) as count FROM testimonial_vault WHERE user_id=? GROUP BY platform ORDER BY count DESC`).all(uid);
+    res.json({ success: true, testimonials, by_platform, featured_count: (testimonials as any[]).filter(t=>t.featured).length, total: (testimonials as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/testimonials', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { date_received, from_name, from_title, from_company, platform='email', content, result_achieved, permission_to_use=1, category='general', rating=5, featured=0, used_in, notes } = req.body;
+    if (!from_name||!content) return res.status(400).json({ success: false, error: 'from_name, content required' });
+    const today = date_received||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO testimonial_vault (user_id,date_received,from_name,from_title,from_company,platform,content,result_achieved,permission_to_use,category,rating,featured,used_in,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,from_name,from_title,from_company,platform,content,result_achieved,permission_to_use,category,rating,featured,used_in,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2108: Affiliate & JV Partner Tracker ───────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS affiliate_partners (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    partner_name TEXT NOT NULL,
+    partner_type TEXT DEFAULT 'affiliate',
+    niche TEXT,
+    audience_size INTEGER DEFAULT 0,
+    commission_pct REAL DEFAULT 30,
+    status TEXT DEFAULT 'prospect',
+    first_contact_date TEXT,
+    agreement_date TEXT,
+    total_referrals INTEGER DEFAULT 0,
+    total_revenue REAL DEFAULT 0,
+    last_promo_date TEXT,
+    next_collab TEXT,
+    relationship_strength INTEGER DEFAULT 5,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/affiliate/partners', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const partners = db.prepare(`SELECT * FROM affiliate_partners WHERE user_id=? ORDER BY total_revenue DESC`).all(uid) as any[];
+    const active = partners.filter(p=>p.status==='active');
+    const total_revenue = parseFloat(partners.reduce((a:number,p:any)=>a+(p.total_revenue||0),0).toFixed(2));
+    const total_referrals = partners.reduce((a:number,p:any)=>a+(p.total_referrals||0),0);
+    res.json({ success: true, partners, active_count: active.length, total_revenue, total_referrals, total: partners.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/affiliate/partners', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { partner_name, partner_type='affiliate', niche, audience_size=0, commission_pct=30, status='prospect', first_contact_date, agreement_date, total_referrals=0, total_revenue=0, last_promo_date, next_collab, relationship_strength=5, notes } = req.body;
+    if (!partner_name) return res.status(400).json({ success: false, error: 'partner_name required' });
+    const r = db.prepare(`INSERT INTO affiliate_partners (user_id,partner_name,partner_type,niche,audience_size,commission_pct,status,first_contact_date,agreement_date,total_referrals,total_revenue,last_promo_date,next_collab,relationship_strength,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,partner_name,partner_type,niche,audience_size,commission_pct,status,first_contact_date,agreement_date,total_referrals,total_revenue,last_promo_date,next_collab,relationship_strength,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2109: Competitor Intelligence ──────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS competitor_intel (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    competitor_name TEXT NOT NULL,
+    website TEXT,
+    niche TEXT,
+    est_revenue TEXT,
+    pricing_model TEXT,
+    price_point TEXT,
+    audience_size INTEGER DEFAULT 0,
+    strengths TEXT,
+    weaknesses TEXT,
+    differentiator TEXT,
+    content_frequency TEXT,
+    main_channels TEXT,
+    threat_level INTEGER DEFAULT 5,
+    opportunity TEXT,
+    last_analyzed TEXT DEFAULT (date('now')),
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/competitor/intel', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const competitors = db.prepare(`SELECT * FROM competitor_intel WHERE user_id=? ORDER BY threat_level DESC`).all(uid);
+    res.json({ success: true, competitors, total: (competitors as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/competitor/intel', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { competitor_name, website, niche, est_revenue, pricing_model, price_point, audience_size=0, strengths, weaknesses, differentiator, content_frequency, main_channels, threat_level=5, opportunity, last_analyzed, notes } = req.body;
+    if (!competitor_name) return res.status(400).json({ success: false, error: 'competitor_name required' });
+    const today = last_analyzed||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO competitor_intel (user_id,competitor_name,website,niche,est_revenue,pricing_model,price_point,audience_size,strengths,weaknesses,differentiator,content_frequency,main_channels,threat_level,opportunity,last_analyzed,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,competitor_name,website,niche,est_revenue,pricing_model,price_point,audience_size,strengths,weaknesses,differentiator,content_frequency,main_channels,threat_level,opportunity,today,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2110: MILESTONE — Business Infrastructure OS ───────────────────────────
+app.get('/api/business/infrastructure/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const brand_assets = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM brand_assets WHERE user_id=? AND status='active'`).get(uid) as any)?.c||0);
+    const testimonials = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM testimonial_vault WHERE user_id=?`).get(uid) as any)?.c||0);
+    const featured_testimonials = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM testimonial_vault WHERE user_id=? AND featured=1`).get(uid) as any)?.c||0);
+    const affiliate_partners = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM affiliate_partners WHERE user_id=? AND status='active'`).get(uid) as any)?.c||0);
+    const affiliate_revenue = safe(()=>{ const r=db.prepare(`SELECT SUM(total_revenue) as s FROM affiliate_partners WHERE user_id=?`).get(uid) as any; return r?.s?parseFloat(r.s.toFixed(2)):0; });
+    const competitors_tracked = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM competitor_intel WHERE user_id=?`).get(uid) as any)?.c||0);
+    res.json({ success: true, milestone: 'B2110 — Business Infrastructure OS', brand: { active_assets: brand_assets }, social_proof: { testimonials, featured: featured_testimonials }, partnerships: { active_affiliates: affiliate_partners, total_affiliate_revenue: affiliate_revenue }, competitive: { competitors_tracked } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── 404 fallback (must be last) ─────────────────────────────────────────────
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
