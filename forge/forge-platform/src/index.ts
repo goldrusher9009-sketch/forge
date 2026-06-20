@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v110.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v111.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5274,7 +5274,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v110.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v111.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -155337,5 +155337,1170 @@ app.get('/api/forge/coffee-tea-cocktail-wine-mead-manifest', (_req: any, res: an
 });
 
 
+// ============================================================
+// B2111-B2150: Feature Modules (40 new modules)
+// ============================================================
+
+// B2111 — AI Debate Arena
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_debate_arena (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  topic TEXT NOT NULL,
+  pro_args TEXT DEFAULT '[]',
+  con_args TEXT DEFAULT '[]',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error ai_debate_arena:', e); }
+
+app.get('/api/debate-arena', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM ai_debate_arena WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, debates: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/debate-arena', auth, (req: any, res: any) => {
+  try {
+    const { topic, pro_args, con_args } = req.body;
+    const r = db.prepare('INSERT INTO ai_debate_arena (user_id, topic, pro_args, con_args) VALUES (?,?,?,?)').run(req.user.id, topic || '', JSON.stringify(pro_args || []), JSON.stringify(con_args || []));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/debate-arena/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM ai_debate_arena WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2112 — Code Review Autopilot
+try { db.prepare(`CREATE TABLE IF NOT EXISTS code_review_autopilot (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error code_review_autopilot:', e); }
+
+app.get('/api/code-review-autopilot', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM code_review_autopilot WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, reviews: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/code-review-autopilot', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO code_review_autopilot (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/code-review-autopilot/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM code_review_autopilot WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2113 — Meeting Notes Distiller
+try { db.prepare(`CREATE TABLE IF NOT EXISTS meeting_notes_distiller (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error meeting_notes_distiller:', e); }
+
+app.get('/api/meeting-notes-distiller', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM meeting_notes_distiller WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, notes: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/meeting-notes-distiller', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO meeting_notes_distiller (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/meeting-notes-distiller/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM meeting_notes_distiller WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2114 — Sales Script Generator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS sales_script_generator (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error sales_script_generator:', e); }
+
+app.get('/api/sales-script-generator', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM sales_script_generator WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, scripts: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/sales-script-generator', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO sales_script_generator (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/sales-script-generator/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM sales_script_generator WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2115 — Brand Voice Analyzer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS brand_voice_analyzer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error brand_voice_analyzer:', e); }
+
+app.get('/api/brand-voice-analyzer', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM brand_voice_analyzer WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, analyses: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/brand-voice-analyzer', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO brand_voice_analyzer (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/brand-voice-analyzer/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM brand_voice_analyzer WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2116 — Competitive Intel Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS competitive_intel_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error competitive_intel_tracker:', e); }
+
+app.get('/api/competitive-intel-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM competitive_intel_tracker WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, items: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/competitive-intel-tracker', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO competitive_intel_tracker (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/competitive-intel-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM competitive_intel_tracker WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2117 — Grant Proposal Writer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS grant_proposal_writer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error grant_proposal_writer:', e); }
+
+app.get('/api/grant-proposal-writer', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM grant_proposal_writer WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, proposals: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/grant-proposal-writer', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO grant_proposal_writer (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/grant-proposal-writer/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM grant_proposal_writer WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2118 — Legal Clause Library
+try { db.prepare(`CREATE TABLE IF NOT EXISTS legal_clause_library (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error legal_clause_library:', e); }
+
+app.get('/api/legal-clause-library', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM legal_clause_library WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, clauses: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/legal-clause-library', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO legal_clause_library (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/legal-clause-library/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM legal_clause_library WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2119 — Investor Update Generator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS investor_update_generator (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error investor_update_generator:', e); }
+
+app.get('/api/investor-update-generator', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM investor_update_generator WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, updates: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/investor-update-generator', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO investor_update_generator (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/investor-update-generator/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM investor_update_generator WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2120 — Product Launch Checklist
+try { db.prepare(`CREATE TABLE IF NOT EXISTS product_launch_checklist (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error product_launch_checklist:', e); }
+
+app.get('/api/product-launch-checklist', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM product_launch_checklist WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, checklists: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/product-launch-checklist', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO product_launch_checklist (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/product-launch-checklist/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM product_launch_checklist WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2121 — API Documentation Generator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS api_documentation_generator (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error api_documentation_generator:', e); }
+
+app.get('/api/api-documentation-generator', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM api_documentation_generator WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, docs: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/api-documentation-generator', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO api_documentation_generator (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/api-documentation-generator/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM api_documentation_generator WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2122 — Bug Report Classifier
+try { db.prepare(`CREATE TABLE IF NOT EXISTS bug_report_classifier (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error bug_report_classifier:', e); }
+
+app.get('/api/bug-report-classifier', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM bug_report_classifier WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, reports: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/bug-report-classifier', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO bug_report_classifier (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/bug-report-classifier/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM bug_report_classifier WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2123 — Feature Flag Manager
+try { db.prepare(`CREATE TABLE IF NOT EXISTS feature_flag_manager (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error feature_flag_manager:', e); }
+
+app.get('/api/feature-flag-manager', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM feature_flag_manager WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, flags: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/feature-flag-manager', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO feature_flag_manager (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/feature-flag-manager/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM feature_flag_manager WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2124 — Load Test Simulator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS load_test_simulator (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error load_test_simulator:', e); }
+
+app.get('/api/load-test-simulator', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM load_test_simulator WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, tests: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/load-test-simulator', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO load_test_simulator (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/load-test-simulator/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM load_test_simulator WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2125 — Database Schema Visualizer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS database_schema_visualizer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error database_schema_visualizer:', e); }
+
+app.get('/api/database-schema-visualizer', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM database_schema_visualizer WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, schemas: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/database-schema-visualizer', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO database_schema_visualizer (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/database-schema-visualizer/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM database_schema_visualizer WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2126 — Security Audit Checklist
+try { db.prepare(`CREATE TABLE IF NOT EXISTS security_audit_checklist (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error security_audit_checklist:', e); }
+
+app.get('/api/security-audit-checklist', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM security_audit_checklist WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, checklists: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/security-audit-checklist', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO security_audit_checklist (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/security-audit-checklist/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM security_audit_checklist WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2127 — Deployment Pipeline Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS deployment_pipeline_builder (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error deployment_pipeline_builder:', e); }
+
+app.get('/api/deployment-pipeline-builder', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM deployment_pipeline_builder WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, pipelines: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/deployment-pipeline-builder', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO deployment_pipeline_builder (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/deployment-pipeline-builder/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM deployment_pipeline_builder WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2128 — Error Budget Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS error_budget_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error error_budget_tracker:', e); }
+
+app.get('/api/error-budget-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM error_budget_tracker WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, budgets: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/error-budget-tracker', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO error_budget_tracker (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/error-budget-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM error_budget_tracker WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2129 — Incident Timeline Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS incident_timeline_builder (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error incident_timeline_builder:', e); }
+
+app.get('/api/incident-timeline-builder', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM incident_timeline_builder WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, timelines: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/incident-timeline-builder', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO incident_timeline_builder (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/incident-timeline-builder/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM incident_timeline_builder WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2130 — On-Call Schedule Manager
+try { db.prepare(`CREATE TABLE IF NOT EXISTS oncall_schedule_manager (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error oncall_schedule_manager:', e); }
+
+app.get('/api/oncall-schedule-manager', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM oncall_schedule_manager WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, schedules: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/oncall-schedule-manager', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO oncall_schedule_manager (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/oncall-schedule-manager/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM oncall_schedule_manager WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2131 — Personal OKR Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS personal_okr_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error personal_okr_tracker:', e); }
+
+app.get('/api/personal-okr-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM personal_okr_tracker WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, okrs: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/personal-okr-tracker', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO personal_okr_tracker (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/personal-okr-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM personal_okr_tracker WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2132 — Book Summary Generator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS book_summary_generator (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error book_summary_generator:', e); }
+
+app.get('/api/book-summary-generator', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM book_summary_generator WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, summaries: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/book-summary-generator', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO book_summary_generator (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/book-summary-generator/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM book_summary_generator WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2133 — Debate Prep Assistant
+try { db.prepare(`CREATE TABLE IF NOT EXISTS debate_prep_assistant (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error debate_prep_assistant:', e); }
+
+app.get('/api/debate-prep-assistant', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM debate_prep_assistant WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, preps: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/debate-prep-assistant', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO debate_prep_assistant (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/debate-prep-assistant/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM debate_prep_assistant WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2134 — Interview Answer Coach
+try { db.prepare(`CREATE TABLE IF NOT EXISTS interview_answer_coach (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error interview_answer_coach:', e); }
+
+app.get('/api/interview-answer-coach', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM interview_answer_coach WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, answers: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/interview-answer-coach', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO interview_answer_coach (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/interview-answer-coach/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM interview_answer_coach WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2135 — Networking Follow-Up AI
+try { db.prepare(`CREATE TABLE IF NOT EXISTS networking_followup_ai (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error networking_followup_ai:', e); }
+
+app.get('/api/networking-followup-ai', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM networking_followup_ai WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, followups: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/networking-followup-ai', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO networking_followup_ai (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/networking-followup-ai/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM networking_followup_ai WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2136 — Conference Talk Proposer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS conference_talk_proposer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error conference_talk_proposer:', e); }
+
+app.get('/api/conference-talk-proposer', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM conference_talk_proposer WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, proposals: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/conference-talk-proposer', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO conference_talk_proposer (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/conference-talk-proposer/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM conference_talk_proposer WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2137 — Award Nomination Writer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS award_nomination_writer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error award_nomination_writer:', e); }
+
+app.get('/api/award-nomination-writer', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM award_nomination_writer WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, nominations: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/award-nomination-writer', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO award_nomination_writer (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/award-nomination-writer/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM award_nomination_writer WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2138 — Reference Letter Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS reference_letter_builder (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error reference_letter_builder:', e); }
+
+app.get('/api/reference-letter-builder', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM reference_letter_builder WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, letters: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/reference-letter-builder', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO reference_letter_builder (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/reference-letter-builder/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM reference_letter_builder WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2139 — Exit Interview Analyzer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS exit_interview_analyzer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error exit_interview_analyzer:', e); }
+
+app.get('/api/exit-interview-analyzer', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM exit_interview_analyzer WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, analyses: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/exit-interview-analyzer', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO exit_interview_analyzer (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/exit-interview-analyzer/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM exit_interview_analyzer WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2140 — Team Retrospective Facilitator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS team_retrospective_facilitator (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error team_retrospective_facilitator:', e); }
+
+app.get('/api/team-retrospective-facilitator', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM team_retrospective_facilitator WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, retros: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/team-retrospective-facilitator', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO team_retrospective_facilitator (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/team-retrospective-facilitator/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM team_retrospective_facilitator WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2141 — Supply Chain Risk Monitor
+try { db.prepare(`CREATE TABLE IF NOT EXISTS supply_chain_risk_monitor (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error supply_chain_risk_monitor:', e); }
+
+app.get('/api/supply-chain-risk-monitor', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM supply_chain_risk_monitor WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, risks: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/supply-chain-risk-monitor', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO supply_chain_risk_monitor (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/supply-chain-risk-monitor/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM supply_chain_risk_monitor WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2142 — Invoice Dispute Resolver
+try { db.prepare(`CREATE TABLE IF NOT EXISTS invoice_dispute_resolver (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error invoice_dispute_resolver:', e); }
+
+app.get('/api/invoice-dispute-resolver', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM invoice_dispute_resolver WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, disputes: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/invoice-dispute-resolver', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO invoice_dispute_resolver (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/invoice-dispute-resolver/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM invoice_dispute_resolver WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2143 — Contract Renewal Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS contract_renewal_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error contract_renewal_tracker:', e); }
+
+app.get('/api/contract-renewal-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM contract_renewal_tracker WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, contracts: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/contract-renewal-tracker', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO contract_renewal_tracker (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/contract-renewal-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM contract_renewal_tracker WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2144 — Vendor Performance Scorecard
+try { db.prepare(`CREATE TABLE IF NOT EXISTS vendor_performance_scorecard (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error vendor_performance_scorecard:', e); }
+
+app.get('/api/vendor-performance-scorecard', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM vendor_performance_scorecard WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, scorecards: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/vendor-performance-scorecard', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO vendor_performance_scorecard (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/vendor-performance-scorecard/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM vendor_performance_scorecard WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2145 — RFP Response Generator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS rfp_response_generator (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error rfp_response_generator:', e); }
+
+app.get('/api/rfp-response-generator', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM rfp_response_generator WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, responses: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/rfp-response-generator', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO rfp_response_generator (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/rfp-response-generator/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM rfp_response_generator WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2146 — Procurement Workflow Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS procurement_workflow_builder (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error procurement_workflow_builder:', e); }
+
+app.get('/api/procurement-workflow-builder', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM procurement_workflow_builder WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, workflows: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/procurement-workflow-builder', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO procurement_workflow_builder (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/procurement-workflow-builder/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM procurement_workflow_builder WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2147 — Spend Analytics Dashboard
+try { db.prepare(`CREATE TABLE IF NOT EXISTS spend_analytics_dashboard (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error spend_analytics_dashboard:', e); }
+
+app.get('/api/spend-analytics-dashboard', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM spend_analytics_dashboard WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, analytics: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/spend-analytics-dashboard', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO spend_analytics_dashboard (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/spend-analytics-dashboard/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM spend_analytics_dashboard WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2148 — Budget Variance Explainer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS budget_variance_explainer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error budget_variance_explainer:', e); }
+
+app.get('/api/budget-variance-explainer', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM budget_variance_explainer WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, variances: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/budget-variance-explainer', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO budget_variance_explainer (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/budget-variance-explainer/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM budget_variance_explainer WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2149 — Audit Evidence Collector
+try { db.prepare(`CREATE TABLE IF NOT EXISTS audit_evidence_collector (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error audit_evidence_collector:', e); }
+
+app.get('/api/audit-evidence-collector', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM audit_evidence_collector WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, evidence: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/audit-evidence-collector', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO audit_evidence_collector (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/audit-evidence-collector/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM audit_evidence_collector WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2150 — Compliance Calendar
+try { db.prepare(`CREATE TABLE IF NOT EXISTS compliance_calendar (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  data TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error compliance_calendar:', e); }
+
+app.get('/api/compliance-calendar', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM compliance_calendar WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, events: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/compliance-calendar', auth, (req: any, res: any) => {
+  try {
+    const { title, data } = req.body;
+    const r = db.prepare('INSERT INTO compliance_calendar (user_id, title, data) VALUES (?,?,?)').run(req.user.id, title || '', JSON.stringify(data || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/compliance-calendar/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM compliance_calendar WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // 404 fallback (must be last)
-app.use((_req: any, res: any) => res.status(404).json({ success: fals
+app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
