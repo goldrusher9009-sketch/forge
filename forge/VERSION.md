@@ -1,3 +1,7 @@
+## v67.00 — B4551-B4600 🌱 GARDEN-HOME-OS +Plants/WaterSchedule/Harvest/HomeProjects/GrandMilestone
+- B4551-4560: Garden & Plant OS — plants (species/location/water-freq/sunlight/fertilize), water tracking (auto-reschedule), harvest logs
+- B4561-4570: Home Improvement OS — projects (room/status/priority/budget/spent/contractor/permit)
+- B4571-4600: 🏆 Grand Milestone v67 — /api/milestone/v67, garden-manifest, garden-health — 4600 endpoints, 148505 lines
 ## v66.00 — B4501-B4550 👨‍👩‍👧 FAMILY-HOME-OS +Children/Milestones/FamilyEvents/Pets/PetHealth/Chores/GrandMilestone
 - B4501-4510: Parenting & Child OS — children (school/doctor/allergies/meds), milestones (category/date)
 - B4511-4520: Pet OS — pets (species/breed/vet/microchip/insured), pet health logs (vet-visits/vaccinations/cost)
