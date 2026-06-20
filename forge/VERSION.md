@@ -1,3 +1,27 @@
+## v29.00 — B2651-B2700 🌿 LIFESTYLE-OS +CookingOS/GardenOS/PetOS/KidsEduOS/VolunteeringOS/LanguageOSv2/MeditationOSv2/FinanceOSv2/BusinessIdeasOS/GrandMilestone
+- B2651-2655: Cooking OS — recipes (cuisine/prep+cook time/difficulty/source/rating), meal-plan (week_start/day/meal_type/recipe); milestone
+- B2656-2660: Garden OS — plants (type/location/watering_freq/sunlight/harvest, active filter), log (activity/plant join); milestone
+- B2661-2665: Pet OS — profiles (species/breed/birthdate/weight/vet), health-log (type/next_due/cost, join pet name); milestone
+- B2666-2670: Kids Education OS — children (grade/school/learning_style/strengths/challenges), activities (subject/engagement/duration, weekly stats); milestone
+- B2671-2675: Volunteering OS — organizations (cause/role/commitment_hrs), log (hours/activity/impact, yearly total); milestone
+- B2676-2680: Language OS v2 — sessions (language/activity/words_learned/quality, days active 30d), vocab (word/translation/example/mastery/times_reviewed); milestone
+- B2681-2685: Meditation OS v2 — sessions (technique/mood before+after/insights, 30d days + total min), programs (duration_days/current_day/completed); milestone
+- B2686-2690: Finance OS v2 — accounts (type/institution/balance/interest_rate, net worth calc), transactions (category/subcategory/amount/type, monthly income+expenses); milestone
+- B2691-2695: Business Ideas OS — ideas (problem/solution/target_market/revenue_model/potential/effort), experiments (hypothesis/method/metric/target/result/learnings); milestone
+- B2696-2700: 🏆 GRAND MILESTONE v29.00 = 2700 endpoints; /api/milestone/v29, /api/forge/lifestyle-health, /api/forge/ultimate-life-manifest — 137,699 lines
+
+## v28.00 — B2601-B2650 🎨 CREATIVE-PHYSICAL-OS +CreativityOS/MusicOS/ArtOS/PhotographyOS/GamingOS/SportsOS/NutritionOSv2/SleepOSv2/FocusOS/GrandMilestone
+- B2601-2605: Creativity OS — projects (medium/status/inspiration/goal), ideas (category/potential/tags); milestone
+- B2606-2610: Music OS — practice (instrument/pieces/techniques/flow_state, weekly minutes), repertoire (mastery_level/performance_ready); milestone
+- B2611-2615: Art OS — works (medium/dimensions/style/for_sale/price), study-log (topic/resource/skill_area/duration); milestone
+- B2616-2620: Photography OS — shoots (genre/shots_taken/keepers/camera/lens, total stats), portfolio (featured/rating); milestone
+- B2621-2625: Gaming OS — games (platform/genre/status/hours_played/completion_pct/rating), sessions (objective/achieved/mood before+after); milestone
+- B2626-2630: Sports OS — activities (sport/distance/calories/heart_rate/performance/weather, weekly stats), goals (metric/target/current/deadline); milestone
+- B2631-2635: Nutrition OS v2 — meals (meal_type/macros full breakdown/satisfaction/hunger_before, today totals), targets (calories/protein/carbs/fat/fiber/water); milestone
+- B2636-2640: Sleep OS v2 — log (bedtime/wake/duration/quality/rem/deep/awakenings/dreams/rested, 14d avg), routines (evening/morning steps/time_offset); milestone
+- B2641-2645: Focus OS — sessions (technique/planned vs actual/distractions/focus_score, today stats), blockers (category/impact/mitigation); milestone
+- B2646-2650: 🏆 GRAND MILESTONE v28.00 = 2650 endpoints; /api/milestone/v28, /api/forge/creative-health, /api/forge/full-life-manifest — 137,698 lines
+
 ## v27.00 — B2551-B2600 🌟 INNER-LIFE-OS +SpiritualOS/GratitudeOS/MindsetOS/CommunityOS/InfluenceOS/WritingOSv2/ReadingOSv2/MemoryOS/AdventureOS/GrandMilestone
 - B2551-2555: Spiritual OS — practices (tradition/frequency/duration, active list), insights (depth/source, journal); milestone
 - B2556-2560: Gratitude OS — daily entries (3 items/person/why/mood_before+after, week streak), appreciation letters (sent flag); milestone

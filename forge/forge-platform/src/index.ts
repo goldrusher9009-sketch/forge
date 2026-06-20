@@ -137691,6 +137691,8 @@ app.get('/api/forge/total-empire-manifest', (req: any, res: any) => {
   const bucket = safe(()=>db.prepare('SELECT SUM(completed) as d FROM adventure_bucket_list WHERE user_id=?').get(u) as any);
   res.json({ success:true, version:'v27.00', total_endpoints:2600, empire:{ memory_items:memory?.c||0, gratitude_entries:gratitude?.c||0, bucket_list_done:bucket?.d||0 }, modules_total:78 });
 
+
+
 });
 
 // 404 fallback (must be last)
