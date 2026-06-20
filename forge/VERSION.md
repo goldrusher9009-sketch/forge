@@ -1,3 +1,9 @@
+## v58.00 — B4101-B4150 📚 ENTERTAINMENT-READING-OS +Books/ReadingGoals/Watchlist/Movies/TV/Podcasts/Episodes/GrandMilestone
+- B4101-4110: Reading OS — books (genre/pages/status/progress/rating/review), reading goals (yearly/books/pages), progress tracking
+- B4111-4120: Movie & TV OS — watchlist (type/platform/status/season-progress/rating), favorites (rating>=4)
+- B4121-4130: Podcast OS — subscriptions (host/category/feed-url/rating), episodes (duration/progress/listened)
+- B4131-4150: 🏆 Grand Milestone v58 — /api/milestone/v58, entertainment-manifest, entertainment-health — 4150 endpoints, 147343 lines
+
 ## v57.00 — B4051-B4100 💼 FREELANCE-BUSINESS-OS +Clients/Projects/TimeTracking/Invoices/GrandMilestone
 - B4051-4060: Freelance OS — clients (hourly-rate/currency/total-billed), projects (budget-type/hours-logged/invoiced/paid)
 - B4061-4070: Time Tracking OS — entries (project/client/hours/billable/invoiced/30d-summary); Invoice OS — (invoice-number/line-items/tax/outstanding/mark-paid)
