@@ -11,4 +11,4 @@ RUN npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --fo
 
 EXPOSE 3000
 
-CMD ["node", "--max-old-space-size=512", "dist/index.js"]
+CMD ["node", "--max-old-space-size=1024", "dist/index.js"]

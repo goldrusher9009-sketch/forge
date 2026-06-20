@@ -8,7 +8,7 @@ nixPkgs = ["python3", "make", "gcc", "nodejs_20"]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --outfile=dist/index.js"]
+cmds = ["npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outfile=dist/index.js"]
 
-[start]
-cmd = "node dist/index.js"
+[phases.start]
+cmd = "node --max-old-space-size=1024 dist/index.js"

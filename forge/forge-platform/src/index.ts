@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v21.50' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v104.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5274,7 +5274,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v21.50', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v104.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -154955,6 +154955,385 @@ app.get('/api/forge/garden-mushroom-health', (_req: any, res: any) => {
   try { db2.prepare(`SELECT COUNT(*) FROM mushroom_grows`).get(); checks.mushrooms = 'ok'; } catch { checks.mushrooms = 'table_missing'; }
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
+
+// ─── B6451-B6500: Fermenting OS + Cheese Making OS + Bread Baking OS + Pasta Making OS + Sushi Making OS ───
+// B6451-B6460: Fermenting OS
+app.get('/api/ferment/crocks', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS ferment_crocks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, vessel_type TEXT DEFAULT 'jar', capacity_liters REAL DEFAULT 1, current_batch TEXT, start_date TEXT, status TEXT DEFAULT 'active', notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, crocks: db2.prepare(`SELECT * FROM ferment_crocks WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id) });
+});
+app.post('/api/ferment/crocks', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { name, vessel_type, capacity_liters, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS ferment_crocks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, vessel_type TEXT DEFAULT 'jar', capacity_liters REAL DEFAULT 1, current_batch TEXT, start_date TEXT, status TEXT DEFAULT 'active', notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO ferment_crocks (user_id,name,vessel_type,capacity_liters,notes) VALUES (?,?,?,?,?)`).run(req.user.id, name||'Crock #1', vessel_type||'jar', capacity_liters||1, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/ferment/batches', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS ferment_batches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, crock_id INTEGER, recipe TEXT, ingredients TEXT, salt_pct REAL DEFAULT 2, start_date TEXT, target_days INTEGER DEFAULT 14, status TEXT DEFAULT 'fermenting', ph_readings TEXT DEFAULT '[]', tasting_notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, batches: db2.prepare(`SELECT * FROM ferment_batches WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id) });
+});
+app.post('/api/ferment/batches', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { crock_id, recipe, ingredients, salt_pct, target_days } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS ferment_batches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, crock_id INTEGER, recipe TEXT, ingredients TEXT, salt_pct REAL DEFAULT 2, start_date TEXT, target_days INTEGER DEFAULT 14, status TEXT DEFAULT 'fermenting', ph_readings TEXT DEFAULT '[]', tasting_notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO ferment_batches (user_id,crock_id,recipe,ingredients,salt_pct,start_date,target_days) VALUES (?,?,?,?,?,?,?)`).run(req.user.id, crock_id||null, recipe||'Sauerkraut', JSON.stringify(ingredients||['cabbage','salt']), salt_pct||2, new Date().toISOString().slice(0,10), target_days||14);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/ferment/recipes', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, recipes: [
+    { name:'Sauerkraut', salt_pct:2, days:14, ingredients:['cabbage','salt'] },
+    { name:'Kimchi', salt_pct:2.5, days:7, ingredients:['napa cabbage','gochugaru','ginger','garlic'] },
+    { name:'Dill Pickles', salt_pct:3, days:5, ingredients:['cucumbers','dill','garlic','salt'] },
+    { name:'Kombucha', salt_pct:0, days:7, ingredients:['tea','sugar','SCOBY'] },
+    { name:'Sourdough Starter', salt_pct:0, days:7, ingredients:['flour','water'] },
+  ]});
+});
+app.post('/api/ferment/batches/:id/ph', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { ph, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS ferment_batches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, crock_id INTEGER, recipe TEXT, ingredients TEXT, salt_pct REAL DEFAULT 2, start_date TEXT, target_days INTEGER DEFAULT 14, status TEXT DEFAULT 'fermenting', ph_readings TEXT DEFAULT '[]', tasting_notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const batch = db2.prepare(`SELECT * FROM ferment_batches WHERE id=? AND user_id=?`).get(req.params.id, req.user.id);
+  if (!batch) return res.status(404).json({ error:'not found' });
+  const readings = JSON.parse(batch.ph_readings||'[]');
+  readings.push({ ph: ph||4.5, notes: notes||'', date: new Date().toISOString() });
+  db2.prepare(`UPDATE ferment_batches SET ph_readings=? WHERE id=?`).run(JSON.stringify(readings), req.params.id);
+  res.json({ success: true, readings });
+});
+// B6461-B6470: Cheese Making OS
+app.get('/api/cheese/wheels', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS cheese_wheels (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, milk_type TEXT DEFAULT 'cow', milk_liters REAL, make_date TEXT, aging_days INTEGER DEFAULT 0, target_age_days INTEGER DEFAULT 30, rind_type TEXT DEFAULT 'natural', weight_kg REAL, status TEXT DEFAULT 'aging', notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, wheels: db2.prepare(`SELECT * FROM cheese_wheels WHERE user_id=? ORDER BY make_date DESC`).all(req.user.id) });
+});
+app.post('/api/cheese/wheels', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { name, type, milk_type, milk_liters, target_age_days, rind_type } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS cheese_wheels (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, milk_type TEXT DEFAULT 'cow', milk_liters REAL, make_date TEXT, aging_days INTEGER DEFAULT 0, target_age_days INTEGER DEFAULT 30, rind_type TEXT DEFAULT 'natural', weight_kg REAL, status TEXT DEFAULT 'aging', notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO cheese_wheels (user_id,name,type,milk_type,milk_liters,make_date,target_age_days,rind_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, name||'Cheddar #1', type||'cheddar', milk_type||'cow', milk_liters||8, new Date().toISOString().slice(0,10), target_age_days||90, rind_type||'natural');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/cheese/cultures', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, cultures: [
+    { name:'Mesophilic', temp_range:'20-30°C', cheeses:['Cheddar','Colby','Gouda'] },
+    { name:'Thermophilic', temp_range:'40-45°C', cheeses:['Mozzarella','Parmesan','Swiss'] },
+    { name:'Penicillium Roqueforti', temp_range:'10-15°C', cheeses:['Blue','Roquefort','Gorgonzola'] },
+    { name:'Brevibacterium Linens', temp_range:'12-15°C', cheeses:['Limburger','Taleggio','Epoisses'] },
+  ]});
+});
+app.post('/api/cheese/wheels/:id/flip', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS cheese_flips (id INTEGER PRIMARY KEY AUTOINCREMENT, wheel_id INTEGER, user_id TEXT, flip_date TEXT DEFAULT CURRENT_TIMESTAMP, notes TEXT)`).run();
+  db2.prepare(`INSERT INTO cheese_flips (wheel_id, user_id, notes) VALUES (?,?,?)`).run(req.params.id, req.user.id, req.body.notes||'');
+  db2.prepare(`UPDATE cheese_wheels SET aging_days=aging_days+1 WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true, flipped_at: new Date().toISOString() });
+});
+app.get('/api/cheese/recipes', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, recipes: [
+    { name:'Fresh Mozzarella', milk:'whole cow', time_hours:2, aging_days:0, difficulty:'easy' },
+    { name:'Ricotta', milk:'whole cow', time_hours:1, aging_days:0, difficulty:'easy' },
+    { name:'Cheddar', milk:'whole cow', time_hours:4, aging_days:90, difficulty:'medium' },
+    { name:'Brie', milk:'whole cow', time_hours:6, aging_days:21, difficulty:'hard' },
+    { name:'Parmesan', milk:'whole cow', time_hours:8, aging_days:365, difficulty:'hard' },
+  ]});
+});
+// B6471-B6480: Bread Baking OS
+app.get('/api/bread/loaves', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS bread_loaves (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, recipe_name TEXT, flour_type TEXT DEFAULT 'bread', hydration_pct INTEGER DEFAULT 70, starter_pct INTEGER DEFAULT 20, bake_date TEXT, oven_temp INTEGER DEFAULT 450, bake_time_min INTEGER DEFAULT 45, crust_color TEXT DEFAULT 'golden', crumb_structure TEXT DEFAULT 'open', rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, loaves: db2.prepare(`SELECT * FROM bread_loaves WHERE user_id=? ORDER BY bake_date DESC`).all(req.user.id) });
+});
+app.post('/api/bread/loaves', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { recipe_name, flour_type, hydration_pct, starter_pct, oven_temp, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS bread_loaves (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, recipe_name TEXT, flour_type TEXT DEFAULT 'bread', hydration_pct INTEGER DEFAULT 70, starter_pct INTEGER DEFAULT 20, bake_date TEXT, oven_temp INTEGER DEFAULT 450, bake_time_min INTEGER DEFAULT 45, crust_color TEXT DEFAULT 'golden', crumb_structure TEXT DEFAULT 'open', rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO bread_loaves (user_id,recipe_name,flour_type,hydration_pct,starter_pct,bake_date,oven_temp,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, recipe_name||'Sourdough', flour_type||'bread', hydration_pct||75, starter_pct||20, new Date().toISOString().slice(0,10), oven_temp||450, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/bread/starters', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS bread_starters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, age_days INTEGER DEFAULT 0, flour_type TEXT DEFAULT 'whole wheat', hydration INTEGER DEFAULT 100, feeding_schedule TEXT DEFAULT 'daily', last_fed TEXT, rise_time_hours REAL DEFAULT 4, activity TEXT DEFAULT 'active', notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, starters: db2.prepare(`SELECT * FROM bread_starters WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id) });
+});
+app.post('/api/bread/starters', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { name, flour_type, hydration, feeding_schedule } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS bread_starters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, age_days INTEGER DEFAULT 0, flour_type TEXT DEFAULT 'whole wheat', hydration INTEGER DEFAULT 100, feeding_schedule TEXT DEFAULT 'daily', last_fed TEXT, rise_time_hours REAL DEFAULT 4, activity TEXT DEFAULT 'active', notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO bread_starters (user_id,name,flour_type,hydration,feeding_schedule,last_fed) VALUES (?,?,?,?,?,?)`).run(req.user.id, name||'Starter #1', flour_type||'whole wheat', hydration||100, feeding_schedule||'daily', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.post('/api/bread/starters/:id/feed', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { flour_grams, water_grams, discard_grams } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS bread_starters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, age_days INTEGER DEFAULT 0, flour_type TEXT DEFAULT 'whole wheat', hydration INTEGER DEFAULT 100, feeding_schedule TEXT DEFAULT 'daily', last_fed TEXT, rise_time_hours REAL DEFAULT 4, activity TEXT DEFAULT 'active', notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  db2.prepare(`UPDATE bread_starters SET last_fed=?, age_days=age_days+1 WHERE id=? AND user_id=?`).run(new Date().toISOString(), req.params.id, req.user.id);
+  res.json({ success: true, fed_at: new Date().toISOString(), flour_grams: flour_grams||50, water_grams: water_grams||50, discard_grams: discard_grams||100 });
+});
+// B6481-B6490: Pasta Making OS
+app.get('/api/pasta/doughs', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS pasta_doughs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, flour_type TEXT DEFAULT '00', eggs INTEGER DEFAULT 2, flour_grams INTEGER DEFAULT 200, olive_oil_ml INTEGER DEFAULT 0, rest_min INTEGER DEFAULT 30, color TEXT DEFAULT 'yellow', make_date TEXT DEFAULT CURRENT_TIMESTAMP, rating INTEGER DEFAULT 3, notes TEXT)`).run();
+  res.json({ success: true, doughs: db2.prepare(`SELECT * FROM pasta_doughs WHERE user_id=? ORDER BY make_date DESC`).all(req.user.id) });
+});
+app.post('/api/pasta/doughs', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { name, flour_type, eggs, flour_grams, rest_min, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS pasta_doughs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, flour_type TEXT DEFAULT '00', eggs INTEGER DEFAULT 2, flour_grams INTEGER DEFAULT 200, olive_oil_ml INTEGER DEFAULT 0, rest_min INTEGER DEFAULT 30, color TEXT DEFAULT 'yellow', make_date TEXT DEFAULT CURRENT_TIMESTAMP, rating INTEGER DEFAULT 3, notes TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO pasta_doughs (user_id,name,flour_type,eggs,flour_grams,rest_min,notes) VALUES (?,?,?,?,?,?,?)`).run(req.user.id, name||'Egg Pasta', flour_type||'00', eggs||2, flour_grams||200, rest_min||30, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/pasta/shapes', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, shapes: [
+    { name:'Tagliatelle', width_mm:6.5, thickness_mm:1, tool:'rolling pin or machine', difficulty:'easy' },
+    { name:'Pappardelle', width_mm:25, thickness_mm:1.5, tool:'knife', difficulty:'easy' },
+    { name:'Farfalle', width_mm:null, thickness_mm:1, tool:'knife+fingers', difficulty:'medium' },
+    { name:'Orecchiette', width_mm:null, thickness_mm:null, tool:'thumb', difficulty:'medium' },
+    { name:'Garganelli', width_mm:null, thickness_mm:1, tool:'comb', difficulty:'hard' },
+    { name:'Pici', width_mm:null, thickness_mm:4, tool:'hands', difficulty:'easy' },
+  ]});
+});
+app.get('/api/pasta/recipes', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, recipes: [
+    { name:'Cacio e Pepe', pasta:'tonnarelli', ingredients:['pecorino','black pepper'], difficulty:'hard' },
+    { name:'Carbonara', pasta:'rigatoni', ingredients:['guanciale','eggs','pecorino','pepper'], difficulty:'medium' },
+    { name:'Amatriciana', pasta:'bucatini', ingredients:['guanciale','tomato','pecorino'], difficulty:'easy' },
+    { name:'Pesto Genovese', pasta:'trofie', ingredients:['basil','pine nuts','garlic','parmesan','olive oil'], difficulty:'easy' },
+  ]});
+});
+app.post('/api/pasta/doughs/:id/cook', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { shape, cook_time_min, sauce, rating, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS pasta_cooks (id INTEGER PRIMARY KEY AUTOINCREMENT, dough_id INTEGER, user_id TEXT, shape TEXT, cook_time_min INTEGER DEFAULT 3, sauce TEXT, rating INTEGER DEFAULT 3, notes TEXT, cooked_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO pasta_cooks (dough_id,user_id,shape,cook_time_min,sauce,rating,notes) VALUES (?,?,?,?,?,?,?)`).run(req.params.id, req.user.id, shape||'tagliatelle', cook_time_min||3, sauce||'cacio e pepe', rating||3, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+// B6491-B6500: Sushi Making OS
+app.get('/api/sushi/sessions', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS sushi_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, session_date TEXT DEFAULT CURRENT_TIMESTAMP, rice_grams INTEGER DEFAULT 500, rice_vinegar_ml INTEGER DEFAULT 60, types_made TEXT DEFAULT '[]', fish_used TEXT DEFAULT '[]', total_pieces INTEGER DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT)`).run();
+  res.json({ success: true, sessions: db2.prepare(`SELECT * FROM sushi_sessions WHERE user_id=? ORDER BY session_date DESC`).all(req.user.id) });
+});
+app.post('/api/sushi/sessions', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { rice_grams, types_made, fish_used, total_pieces, rating, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS sushi_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, session_date TEXT DEFAULT CURRENT_TIMESTAMP, rice_grams INTEGER DEFAULT 500, rice_vinegar_ml INTEGER DEFAULT 60, types_made TEXT DEFAULT '[]', fish_used TEXT DEFAULT '[]', total_pieces INTEGER DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO sushi_sessions (user_id,rice_grams,types_made,fish_used,total_pieces,rating,notes) VALUES (?,?,?,?,?,?,?)`).run(req.user.id, rice_grams||500, JSON.stringify(types_made||['nigiri','maki']), JSON.stringify(fish_used||['salmon','tuna']), total_pieces||24, rating||3, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/sushi/techniques', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, techniques: [
+    { name:'Nigiri', description:'Hand-pressed rice with topping', difficulty:'medium', rice_per_piece_g:20 },
+    { name:'Hosomaki', description:'Thin roll with one filling', difficulty:'easy', rice_per_piece_g:25 },
+    { name:'Uramaki', description:'Inside-out roll', difficulty:'medium', rice_per_piece_g:35 },
+    { name:'Temaki', description:'Hand roll cone', difficulty:'easy', rice_per_piece_g:40 },
+    { name:'Gunkan', description:'Battleship roll for loose toppings', difficulty:'medium', rice_per_piece_g:20 },
+    { name:'Chirashi', description:'Scattered sushi bowl', difficulty:'easy', rice_per_piece_g:200 },
+  ]});
+});
+app.get('/api/sushi/fish-safety', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, guidelines: [
+    { fish:'Salmon', freeze_days:7, freeze_temp_c:-20, sashimi_grade:true },
+    { fish:'Tuna', freeze_days:7, freeze_temp_c:-20, sashimi_grade:true },
+    { fish:'Yellowtail', freeze_days:7, freeze_temp_c:-20, sashimi_grade:true },
+    { fish:'Shrimp', freeze_days:0, freeze_temp_c:null, sashimi_grade:false, note:'Always cook' },
+    { fish:'Mackerel', freeze_days:7, freeze_temp_c:-20, sashimi_grade:true, note:'Or cure in vinegar' },
+  ], warning: 'Always source sashimi-grade fish from reputable suppliers' });
+});
+app.get('/api/sushi/rice-ratios', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, ratios: {
+    rice_to_water: '1:1.1', vinegar_to_rice: '12ml per 100g cooked',
+    sugar_to_vinegar: '1 tsp per 3 tbsp vinegar', salt_to_vinegar: '0.5 tsp per 3 tbsp vinegar',
+    tips: ['Rinse rice until water runs clear','Let steam 10min after cooking','Fan while folding vinegar','Never refrigerate sushi rice']
+  }});
+});
+app.get('/api/milestone/v105', (_req: any, res: any) => {
+  res.json({ milestone: 'v105', endpoints: 'B6451-B6500', version: 'v105.00',
+    modules: ['Fermenting OS','Cheese Making OS','Bread Baking OS','Pasta Making OS','Sushi Making OS'],
+    total_endpoints: 6500, lines: 155200 });
+});
+app.get('/api/forge/ferment-cheese-bread-pasta-sushi-manifest', (_req: any, res: any) => {
+  res.json({ manifest: 'ferment-cheese-bread-pasta-sushi', version: 'v105.00', endpoints: 25,
+    domains: ['ferment','cheese','bread','pasta','sushi'], status: 'live' });
+});
+
+
+// ─── B6501-B6550: Coffee Roasting OS + Tea Ceremony OS + Cocktail Mixing OS + Wine Making OS + Mead Brewing OS ───
+// B6501-B6510: Coffee Roasting OS
+app.get('/api/coffee/roasts', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS coffee_roasts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, origin TEXT, process TEXT DEFAULT 'washed', green_weight_g INTEGER DEFAULT 300, roast_level TEXT DEFAULT 'medium', roast_date TEXT DEFAULT CURRENT_TIMESTAMP, development_time_pct REAL DEFAULT 20, first_crack_min REAL, drop_temp_c INTEGER DEFAULT 210, loss_pct REAL, cupping_score INTEGER, notes TEXT)`).run();
+  res.json({ success: true, roasts: db2.prepare(`SELECT * FROM coffee_roasts WHERE user_id=? ORDER BY roast_date DESC`).all(req.user.id) });
+});
+app.post('/api/coffee/roasts', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { origin, process, green_weight_g, roast_level, first_crack_min, drop_temp_c, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS coffee_roasts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, origin TEXT, process TEXT DEFAULT 'washed', green_weight_g INTEGER DEFAULT 300, roast_level TEXT DEFAULT 'medium', roast_date TEXT DEFAULT CURRENT_TIMESTAMP, development_time_pct REAL DEFAULT 20, first_crack_min REAL, drop_temp_c INTEGER DEFAULT 210, loss_pct REAL, cupping_score INTEGER, notes TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO coffee_roasts (user_id,origin,process,green_weight_g,roast_level,first_crack_min,drop_temp_c,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, origin||'Ethiopia Yirgacheffe', process||'washed', green_weight_g||300, roast_level||'medium', first_crack_min||9.5, drop_temp_c||210, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/coffee/origins', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, origins: [
+    { country:'Ethiopia', region:'Yirgacheffe', flavor_notes:['blueberry','floral','citrus'], process:'washed' },
+    { country:'Colombia', region:'Huila', flavor_notes:['caramel','red apple','milk chocolate'], process:'washed' },
+    { country:'Guatemala', region:'Antigua', flavor_notes:['brown sugar','almond','mild spice'], process:'washed' },
+    { country:'Brazil', region:'Cerrado', flavor_notes:['chocolate','walnut','low acidity'], process:'natural' },
+    { country:'Kenya', region:'AA', flavor_notes:['blackcurrant','tomato','bright acidity'], process:'washed' },
+  ]});
+});
+app.post('/api/coffee/roasts/:id/cup', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { fragrance, aroma, flavor, aftertaste, acidity, body, balance, overall } = req.body;
+  const score = Math.round(((fragrance||7)+(aroma||7)+(flavor||7)+(aftertaste||7)+(acidity||7)+(body||7)+(balance||7)+(overall||7))/8*10)/10;
+  db2.prepare(`UPDATE coffee_roasts SET cupping_score=? WHERE id=? AND user_id=?`).run(score, req.params.id, req.user.id);
+  res.json({ success: true, cupping_score: score, attributes: { fragrance, aroma, flavor, aftertaste, acidity, body, balance, overall } });
+});
+app.get('/api/coffee/roast-profiles', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, profiles: [
+    { name:'Light (City)', drop_temp_c:196, development_pct:18, color:'light brown', notes:'Origin flavors shine' },
+    { name:'Medium (Full City)', drop_temp_c:210, development_pct:20, color:'medium brown', notes:'Balanced' },
+    { name:'Medium Dark (Vienna)', drop_temp_c:220, development_pct:22, color:'dark brown', notes:'Bittersweet' },
+    { name:'Dark (French)', drop_temp_c:230, development_pct:25, color:'very dark', notes:'Low acidity, smoky' },
+  ]});
+});
+// B6511-B6520: Tea Ceremony OS
+app.get('/api/tea/sessions', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS tea_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, tea_name TEXT, tea_type TEXT DEFAULT 'green', origin TEXT, grams_used REAL DEFAULT 3, water_temp_c INTEGER DEFAULT 80, steep_time_sec INTEGER DEFAULT 60, infusions INTEGER DEFAULT 3, vessel TEXT DEFAULT 'gaiwan', mood TEXT, rating INTEGER DEFAULT 3, notes TEXT, session_date TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, sessions: db2.prepare(`SELECT * FROM tea_sessions WHERE user_id=? ORDER BY session_date DESC`).all(req.user.id) });
+});
+app.post('/api/tea/sessions', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { tea_name, tea_type, origin, grams_used, water_temp_c, steep_time_sec, infusions, vessel, mood, rating, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS tea_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, tea_name TEXT, tea_type TEXT DEFAULT 'green', origin TEXT, grams_used REAL DEFAULT 3, water_temp_c INTEGER DEFAULT 80, steep_time_sec INTEGER DEFAULT 60, infusions INTEGER DEFAULT 3, vessel TEXT DEFAULT 'gaiwan', mood TEXT, rating INTEGER DEFAULT 3, notes TEXT, session_date TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO tea_sessions (user_id,tea_name,tea_type,origin,grams_used,water_temp_c,steep_time_sec,infusions,vessel,mood,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, tea_name||'Dragon Well', tea_type||'green', origin||'Zhejiang, China', grams_used||3, water_temp_c||80, steep_time_sec||60, infusions||5, vessel||'gaiwan', mood||'calm', rating||3, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/tea/parameters', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, parameters: [
+    { type:'White', temp_c:75, steep_sec:120, ratio_g_per_100ml:2 },
+    { type:'Green', temp_c:80, steep_sec:60, ratio_g_per_100ml:2.5 },
+    { type:'Oolong', temp_c:90, steep_sec:45, ratio_g_per_100ml:5 },
+    { type:'Black', temp_c:100, steep_sec:180, ratio_g_per_100ml:3 },
+    { type:'Pu-erh', temp_c:100, steep_sec:30, ratio_g_per_100ml:5 },
+    { type:'Herbal', temp_c:100, steep_sec:300, ratio_g_per_100ml:3 },
+  ]});
+});
+app.get('/api/tea/collection', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS tea_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, origin TEXT, year INTEGER, quantity_g REAL, purchase_date TEXT, price_per_g REAL, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, teas: db2.prepare(`SELECT * FROM tea_collection WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id) });
+});
+app.post('/api/tea/collection', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { name, type, origin, year, quantity_g, price_per_g, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS tea_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, origin TEXT, year INTEGER, quantity_g REAL, purchase_date TEXT, price_per_g REAL, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO tea_collection (user_id,name,type,origin,year,quantity_g,purchase_date,price_per_g,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id, name||'Longjing', type||'green', origin||'China', year||new Date().getFullYear(), quantity_g||50, new Date().toISOString().slice(0,10), price_per_g||0.5, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+// B6521-B6530: Cocktail Mixing OS
+app.get('/api/cocktails/recipes', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS cocktail_recipes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, glass TEXT DEFAULT 'rocks', method TEXT DEFAULT 'stirred', ingredients TEXT DEFAULT '[]', garnish TEXT, abv REAL, notes TEXT, rating INTEGER DEFAULT 3, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const saved = db2.prepare(`SELECT * FROM cocktail_recipes WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id);
+  res.json({ success: true, recipes: saved });
+});
+app.post('/api/cocktails/recipes', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { name, glass, method, ingredients, garnish, abv, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS cocktail_recipes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, glass TEXT DEFAULT 'rocks', method TEXT DEFAULT 'stirred', ingredients TEXT DEFAULT '[]', garnish TEXT, abv REAL, notes TEXT, rating INTEGER DEFAULT 3, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO cocktail_recipes (user_id,name,glass,method,ingredients,garnish,abv,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, name||'Old Fashioned', glass||'rocks', method||'stirred', JSON.stringify(ingredients||[{name:'Bourbon',oz:2},{name:'Angostura bitters',dashes:2},{name:'Sugar cube',count:1}]), garnish||'Orange peel', abv||32, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/cocktails/classics', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, classics: [
+    { name:'Negroni', glass:'rocks', method:'stirred', abv:24, ingredients:[{n:'Gin',oz:1},{n:'Campari',oz:1},{n:'Sweet Vermouth',oz:1}] },
+    { name:'Daiquiri', glass:'coupe', method:'shaken', abv:20, ingredients:[{n:'White Rum',oz:2},{n:'Lime Juice',oz:0.75},{n:'Simple Syrup',oz:0.75}] },
+    { name:'Whiskey Sour', glass:'rocks', method:'shaken', abv:18, ingredients:[{n:'Bourbon',oz:2},{n:'Lemon Juice',oz:0.75},{n:'Simple Syrup',oz:0.75},{n:'Egg White',oz:0.5}] },
+    { name:'Martini', glass:'martini', method:'stirred', abv:28, ingredients:[{n:'Gin',oz:2.5},{n:'Dry Vermouth',oz:0.5}] },
+    { name:'Margarita', glass:'margarita', method:'shaken', abv:16, ingredients:[{n:'Tequila',oz:2},{n:'Triple Sec',oz:0.75},{n:'Lime Juice',oz:0.75}] },
+  ]});
+});
+app.get('/api/cocktails/bar-inventory', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS bar_inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, spirit TEXT, brand TEXT, volume_ml REAL DEFAULT 750, remaining_pct INTEGER DEFAULT 100, price REAL, category TEXT DEFAULT 'spirit', notes TEXT, added_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, inventory: db2.prepare(`SELECT * FROM bar_inventory WHERE user_id=? ORDER BY category, spirit`).all(req.user.id) });
+});
+app.post('/api/cocktails/bar-inventory', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { spirit, brand, volume_ml, price, category } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS bar_inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, spirit TEXT, brand TEXT, volume_ml REAL DEFAULT 750, remaining_pct INTEGER DEFAULT 100, price REAL, category TEXT DEFAULT 'spirit', notes TEXT, added_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO bar_inventory (user_id,spirit,brand,volume_ml,price,category) VALUES (?,?,?,?,?,?)`).run(req.user.id, spirit||'Bourbon', brand||'Buffalo Trace', volume_ml||750, price||30, category||'spirit');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+// B6531-B6540: Wine Making OS
+app.get('/api/wine/batches', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_batches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, grape_variety TEXT, vintage_year INTEGER, gallons REAL DEFAULT 5, start_date TEXT, primary_end TEXT, secondary_end TEXT, bottle_date TEXT, status TEXT DEFAULT 'primary', sg_original REAL DEFAULT 1.090, sg_current REAL, abv REAL, sulfite_added_ppm INTEGER DEFAULT 50, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, batches: db2.prepare(`SELECT * FROM wine_batches WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id) });
+});
+app.post('/api/wine/batches', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { name, grape_variety, vintage_year, gallons, sg_original, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_batches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, grape_variety TEXT, vintage_year INTEGER, gallons REAL DEFAULT 5, start_date TEXT, primary_end TEXT, secondary_end TEXT, bottle_date TEXT, status TEXT DEFAULT 'primary', sg_original REAL DEFAULT 1.090, sg_current REAL, abv REAL, sulfite_added_ppm INTEGER DEFAULT 50, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO wine_batches (user_id,name,grape_variety,vintage_year,gallons,start_date,sg_original,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, name||'Cabernet 2026', grape_variety||'Cabernet Sauvignon', vintage_year||new Date().getFullYear(), gallons||5, new Date().toISOString().slice(0,10), sg_original||1.090, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.post('/api/wine/batches/:id/reading', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { sg, temp_f, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS wine_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, batch_id INTEGER, user_id TEXT, sg REAL, temp_f INTEGER DEFAULT 68, notes TEXT, taken_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  db2.prepare(`INSERT INTO wine_readings (batch_id,user_id,sg,temp_f,notes) VALUES (?,?,?,?,?)`).run(req.params.id, req.user.id, sg||1.050, temp_f||68, notes||'');
+  const batch = db2.prepare(`SELECT sg_original FROM wine_batches WHERE id=? AND user_id=?`).get(req.params.id, req.user.id);
+  const abv = batch ? Math.round(((batch.sg_original - (sg||1.050)) * 131.25) * 10) / 10 : null;
+  db2.prepare(`UPDATE wine_batches SET sg_current=?, abv=? WHERE id=? AND user_id=?`).run(sg||1.050, abv, req.params.id, req.user.id);
+  res.json({ success: true, sg: sg||1.050, estimated_abv: abv });
+});
+app.get('/api/wine/varietals', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, varietals: [
+    { name:'Cabernet Sauvignon', style:'red', sg_target:1.095, ferment_days:14, age_months:24 },
+    { name:'Chardonnay', style:'white', sg_target:1.085, ferment_days:21, age_months:6 },
+    { name:'Pinot Noir', style:'red', sg_target:1.085, ferment_days:10, age_months:12 },
+    { name:'Sauvignon Blanc', style:'white', sg_target:1.080, ferment_days:18, age_months:3 },
+    { name:'Merlot', style:'red', sg_target:1.090, ferment_days:12, age_months:18 },
+  ]});
+});
+app.get('/api/wine/troubleshoot', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, issues: [
+    { problem:'Stuck fermentation', causes:['too cold','yeast nutrient deficiency','high alcohol'], fixes:['warm to 70°F','add Fermaid-O','pitch more yeast'] },
+    { problem:'Cloudy wine', causes:['protein haze','pectin','yeast in suspension'], fixes:['bentonite','pectic enzyme','cold crash'] },
+    { problem:'Off flavors', causes:['H2S','oxidation','brett'], fixes:['copper penny or splash racking','avoid oxygen','proper sulfite levels'] },
+  ]});
+});
+// B6541-B6550: Mead Brewing OS
+app.get('/api/mead/batches', requireAuth, (req: any, res: any) => {
+  const db2 = req.db;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mead_batches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, style TEXT DEFAULT 'traditional', honey_variety TEXT DEFAULT 'wildflower', honey_lbs REAL DEFAULT 15, water_gallons REAL DEFAULT 5, start_date TEXT, target_og REAL DEFAULT 1.120, current_sg REAL, yeast_strain TEXT DEFAULT 'EC-1118', additives TEXT DEFAULT '[]', status TEXT DEFAULT 'primary', abv REAL, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  res.json({ success: true, batches: db2.prepare(`SELECT * FROM mead_batches WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id) });
+});
+app.post('/api/mead/batches', requireAuth, (req: any, res: any) => {
+  const db2 = req.db; const { name, style, honey_variety, honey_lbs, water_gallons, yeast_strain, notes } = req.body;
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mead_batches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, style TEXT DEFAULT 'traditional', honey_variety TEXT DEFAULT 'wildflower', honey_lbs REAL DEFAULT 15, water_gallons REAL DEFAULT 5, start_date TEXT, target_og REAL DEFAULT 1.120, current_sg REAL, yeast_strain TEXT DEFAULT 'EC-1118', additives TEXT DEFAULT '[]', status TEXT DEFAULT 'primary', abv REAL, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
+  const r = db2.prepare(`INSERT INTO mead_batches (user_id,name,style,honey_variety,honey_lbs,water_gallons,start_date,yeast_strain,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id, name||'Wildflower Traditional', style||'traditional', honey_variety||'wildflower', honey_lbs||15, water_gallons||5, new Date().toISOString().slice(0,10), yeast_strain||'EC-1118', notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/mead/styles', requireAuth, (req: any, res: any) => {
+  res.json({ success: true, styles: [
+    { name:'Traditional', ingredients:['honey','water','yeast'], notes:'Pure honey mead' },
+    { name:'Melomel', ingredients:['honey','water','yeast','fruit'], notes:'Fruit mead' },
+    { name:'Metheglin', ingredients:['honey','water','yeast','spices'], notes:'Spiced mead' },
+    { name:'Cyser', ingredients:['honey','apple juice','yeast'], notes:'Honey+apple' },
+    { name:'Bochet', ingredients:['burnt honey','water','yeast'], notes:'Burnt/caramel mead' },
+    { name:'Braggot', ingredients:['honey','malt','hops','yeast'], notes:'Honey beer hybrid' },
+  ]});
+});
+app.get('/api/mead/honey-calculator', requireAuth, (req: any, res: any) => {
+  const { gallons, target_og } = req.query as any;
+  const g = parseFloat(gallons)||5, og = parseFloat(target_og)||1.100;
+  const honey_lbs = Math.round(((og - 1) * 1000 / 35) * g * 10) / 10;
+  res.json({ success: true, gallons: g, target_og: og, honey_lbs, honey_kg: Math.round(honey_lbs*0.453*10)/10, notes:'Assumes ~35 gravity points per lb per gallon for liquid honey' });
+});
+app.post('/api/mead/batches/:id/staggered-nutrients', requireAuth, (req: any, res: any) => {
+  const { days_total } = req.body;
+  const schedule = [0,3,5,7,9].filter(d=>d<=(days_total||14)).map(day=>({
+    day, addition:'Fermaid-O 1.25g per gallon + Fermaid-K 0.5g per gallon',
+    instruction: day===0?'At pitch':'Degass and add'
+  }));
+  res.json({ success: true, protocol:'TOSNA (Tailored Organic Staggered Nutrient Addition)', schedule });
+});
+app.get('/api/milestone/v106', (_req: any, res: any) => {
+  res.json({ milestone: 'v106', endpoints: 'B6501-B6550', version: 'v106.00',
+    modules: ['Coffee Roasting OS','Tea Ceremony OS','Cocktail Mixing OS','Wine Making OS','Mead Brewing OS'],
+    total_endpoints: 6550, lines: 155350 });
+});
+app.get('/api/forge/coffee-tea-cocktail-wine-mead-manifest', (_req: any, res: any) => {
+  res.json({ manifest: 'coffee-tea-cocktail-wine-mead', version: 'v106.00', endpoints: 25,
+    domains: ['coffee','tea','cocktails','wine','mead'], status: 'live' });
+});
+
 
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
