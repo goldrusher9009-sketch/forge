@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v107.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v108.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5274,7 +5274,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v107.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v108.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -26014,6 +26014,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_api_rate_limits (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`).run();
 
+// B152-MARKER-v108 rate-limits-present
 app.get('/api/rate-limits', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
   if (!ws) return res.json([]);
@@ -40030,6 +40031,7 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+// B-CAMPAIGNS-MARKER-v108
 app.get('/api/campaigns', requireAuth, (req: any, res: any) => {
   const campaigns = db.prepare(`SELECT *, CASE WHEN goal_amount > 0 THEN ROUND(raised_amount / goal_amount * 100, 1) ELSE 0 END as funding_pct, CAST((julianday(end_date) - julianday('now')) AS INTEGER) as days_left FROM campaigns_v2 WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id);
   res.json({ campaigns });
