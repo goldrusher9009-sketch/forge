@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v108.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v109.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5274,7 +5274,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v108.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v109.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -25588,7 +25588,7 @@ app.post('/api/bucket-list-v2', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_okr_heatmap (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_okr_heatmap (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   objective TEXT NOT NULL,
@@ -25597,11 +25597,11 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_okr_heatmap (
   month1_score REAL DEFAULT 0,
   month2_score REAL DEFAULT 0,
   month3_score REAL DEFAULT 0,
-  avg_score REAL GENERATED ALWAYS AS (ROUND((month1_score+month2_score+month3_score)/3.0,2)) VIRTUAL,
+  avg_score REAL DEFAULT 0,
   status TEXT DEFAULT 'on_track',
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/okr-heatmap', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -25742,7 +25742,7 @@ app.post('/api/gratitude-jar', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_content_brief (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_content_brief (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   title TEXT NOT NULL,
@@ -25753,12 +25753,12 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_content_brief (
   tone TEXT DEFAULT 'informative',
   word_count_target INTEGER DEFAULT 1000,
   outline TEXT,
-  references TEXT,
+  refs TEXT,
   assigned_to TEXT,
   due_date TEXT,
   status TEXT DEFAULT 'draft',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/content-briefs', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -25774,7 +25774,7 @@ app.post('/api/content-briefs', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_tagline_v2 (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_tagline_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   brand_name TEXT NOT NULL,
@@ -25785,7 +25785,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_tagline_v2 (
   taglines TEXT,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/tagline-v2', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM ai_tagline_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(req.user!.id);
@@ -25809,7 +25809,7 @@ app.post('/api/tagline-v2', auth, async (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid, taglines });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_symptom_checker (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_symptom_checker (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   log_date TEXT NOT NULL,
@@ -25821,7 +25821,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_symptom_checker (
   outcome TEXT,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/symptoms', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_symptom_checker WHERE user_id=? ORDER BY log_date DESC, created_at DESC`).all(req.user!.id);
@@ -25833,7 +25833,7 @@ app.post('/api/symptoms', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_sprint_goals (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_sprint_goals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   sprint_name TEXT NOT NULL,
@@ -25849,7 +25849,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_sprint_goals (
   outcome TEXT,
   status TEXT DEFAULT 'planning',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/sprint-goals', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -25867,7 +25867,7 @@ app.post('/api/sprint-goals', auth, (req: AuthRequest, res: Response) => {
 
 // ─── B152: User Fitness Goals, Workspace Event Planner, AI Story Generator, User Mindfulness Reminders, Workspace API Rate Limits ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_fitness_goals (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_fitness_goals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   goal_name TEXT NOT NULL,
@@ -25882,7 +25882,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_fitness_goals (
   achieved_date TEXT,
   pct_complete REAL GENERATED ALWAYS AS (ROUND((CAST(current_value AS REAL)/NULLIF(target_value,0))*100,1)) VIRTUAL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/fitness-goals', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_fitness_goals WHERE user_id=? ORDER BY achieved ASC, deadline ASC`).all(req.user!.id);
@@ -25894,7 +25894,7 @@ app.post('/api/fitness-goals', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_event_planner (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_event_planner (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   event_name TEXT NOT NULL,
@@ -25911,7 +25911,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_event_planner (
   agenda TEXT,
   status TEXT DEFAULT 'planning',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/event-planner', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -25927,7 +25927,7 @@ app.post('/api/event-planner', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_story_generator (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_story_generator (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   genre TEXT DEFAULT 'fantasy',
@@ -25941,7 +25941,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_story_generator (
   word_count INTEGER DEFAULT 0,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/story-generator', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,genre,protagonist,setting,tone,title,word_count,model_used,created_at FROM ai_story_generator WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -25975,7 +25975,7 @@ app.post('/api/story-generator', auth, async (req: AuthRequest, res: Response) =
   res.json({ id: r.lastInsertRowid, title, story_text, word_count });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_mindfulness_reminders (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_mindfulness_reminders (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   reminder_time TEXT NOT NULL,
@@ -25987,7 +25987,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_mindfulness_reminders (
   last_completed TEXT,
   streak_days INTEGER DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/mindfulness', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_mindfulness_reminders WHERE user_id=? ORDER BY reminder_time`).all(req.user!.id);
@@ -25999,7 +25999,7 @@ app.post('/api/mindfulness', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_api_rate_limits (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_api_rate_limits (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   api_name TEXT NOT NULL,
@@ -26012,7 +26012,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_api_rate_limits (
   alert_threshold_pct INTEGER DEFAULT 80,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 // B152-MARKER-v108 rate-limits-present
 app.get('/api/rate-limits', auth, (req: AuthRequest, res: Response) => {
@@ -26031,7 +26031,7 @@ app.post('/api/rate-limits', auth, (req: AuthRequest, res: Response) => {
 
 // ─── B153: User Career Journal, Workspace Feedback Walls, AI Poem Generator, User Plant Tracker, Workspace Data Requests ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_career_journal (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_career_journal (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   entry_date TEXT NOT NULL,
@@ -26043,7 +26043,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_career_journal (
   lessons_learned TEXT,
   mood_rating INTEGER DEFAULT 3,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/career-journal', auth, (req: AuthRequest, res: Response) => {
   const type = req.query.type as string;
@@ -26059,7 +26059,7 @@ app.post('/api/career-journal', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_walls (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_walls (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   wall_name TEXT NOT NULL,
@@ -26071,7 +26071,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_walls (
   pinned INTEGER DEFAULT 0,
   tags TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/feedback-walls', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26095,7 +26095,7 @@ app.post('/api/feedback-walls/:id/vote', auth, (req: AuthRequest, res: Response)
   res.json({ ok: true });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_poem_generator (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_poem_generator (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   theme TEXT NOT NULL,
@@ -26107,7 +26107,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_poem_generator (
   line_count INTEGER DEFAULT 0,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/poem-generator', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,theme,style,mood,title,line_count,model_used,created_at FROM ai_poem_generator WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(req.user!.id);
@@ -26141,7 +26141,7 @@ app.post('/api/poem-generator', auth, async (req: AuthRequest, res: Response) =>
   res.json({ id: r.lastInsertRowid, title, poem_text, line_count });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_plant_tracker (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_plant_tracker (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   plant_name TEXT NOT NULL,
@@ -26156,7 +26156,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_plant_tracker (
   notes TEXT,
   photo_url TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/plants', auth, (req: AuthRequest, res: Response) => {
   const today = new Date().toISOString().slice(0,10);
@@ -26178,7 +26178,7 @@ app.post('/api/plants', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_data_requests (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_data_requests (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   request_title TEXT NOT NULL,
@@ -26193,7 +26193,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_data_requests (
   status TEXT DEFAULT 'pending',
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/data-requests', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26211,7 +26211,7 @@ app.post('/api/data-requests', auth, (req: AuthRequest, res: Response) => {
 
 // ─── B154: User Habit Challenges, Workspace Meeting Rooms, AI Recipe Generator, User Mood Playlist, Workspace Idea Pipeline ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_challenges (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_challenges (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   challenge_name TEXT NOT NULL,
@@ -26227,7 +26227,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_challenges (
   status TEXT DEFAULT 'active',
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/habit-challenges', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_habit_challenges WHERE user_id=? ORDER BY status='active' DESC, start_date DESC`).all(req.user!.id);
@@ -26246,7 +26246,7 @@ app.post('/api/habit-challenges/:id/checkin', auth, (req: AuthRequest, res: Resp
   res.json({ ok: true });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_rooms (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_rooms (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   room_name TEXT NOT NULL,
@@ -26260,7 +26260,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_rooms (
   status TEXT DEFAULT 'available',
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/meeting-rooms', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26276,7 +26276,7 @@ app.post('/api/meeting-rooms', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_recipe_generator (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_recipe_generator (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   ingredients TEXT NOT NULL,
@@ -26290,7 +26290,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_recipe_generator (
   servings INTEGER DEFAULT 2,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/recipe-generator', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,ingredients,cuisine_preference,recipe_name,estimated_time,servings,model_used,created_at FROM ai_recipe_generator WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -26319,7 +26319,7 @@ app.post('/api/recipe-generator', auth, async (req: AuthRequest, res: Response) 
   res.json({ id: r.lastInsertRowid, recipe_name, recipe_text, estimated_time });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_mood_playlist (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_mood_playlist (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   playlist_date TEXT NOT NULL,
@@ -26331,7 +26331,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_mood_playlist (
   spotify_link TEXT,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/mood-playlist', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_mood_playlist WHERE user_id=? ORDER BY playlist_date DESC`).all(req.user!.id);
@@ -26343,7 +26343,7 @@ app.post('/api/mood-playlist', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_idea_pipeline (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_idea_pipeline (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   idea_title TEXT NOT NULL,
@@ -26359,7 +26359,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_idea_pipeline (
   target_quarter TEXT,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/idea-pipeline', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26385,7 +26385,7 @@ app.post('/api/idea-pipeline/:id/vote', auth, (req: AuthRequest, res: Response) 
 
 // ─── B155: User Life Areas, Workspace Announcement Board, AI Meeting Agenda, User Detox Log, Workspace KPI Alerts ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_life_areas (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_life_areas (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   area_name TEXT NOT NULL,
@@ -26397,7 +26397,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_life_areas (
   notes TEXT,
   icon TEXT DEFAULT '\U0001f4a1',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/life-areas', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_life_areas WHERE user_id=? ORDER BY current_score ASC`).all(req.user!.id);
@@ -26414,7 +26414,7 @@ app.put('/api/life-areas/:id', auth, (req: AuthRequest, res: Response) => {
   res.json({ ok: true });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   title TEXT NOT NULL,
@@ -26426,7 +26426,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements (
   expires_at TEXT,
   view_count INTEGER DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/announcements', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26443,7 +26443,7 @@ app.post('/api/announcements', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_meeting_agenda (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_meeting_agenda (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   meeting_title TEXT NOT NULL,
@@ -26457,7 +26457,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_meeting_agenda (
   pre_read TEXT,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/meeting-agenda', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,meeting_title,meeting_date,duration_minutes,attendees,model_used,created_at FROM ai_meeting_agenda WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -26485,7 +26485,7 @@ app.post('/api/meeting-agenda', auth, async (req: AuthRequest, res: Response) =>
   res.json({ id: r.lastInsertRowid, agenda_items, pre_read });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_detox_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_detox_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   detox_date TEXT NOT NULL,
@@ -26499,7 +26499,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_detox_log (
   notes TEXT,
   completed INTEGER DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/detox-log', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT *, AVG(mood_after-mood_before) OVER (ORDER BY detox_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) as rolling_mood_lift FROM user_detox_log WHERE user_id=? ORDER BY detox_date DESC`).all(req.user!.id);
@@ -26511,7 +26511,7 @@ app.post('/api/detox-log', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_kpi_alerts (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_kpi_alerts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   kpi_name TEXT NOT NULL,
@@ -26525,7 +26525,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_kpi_alerts (
   acknowledged_at DATETIME,
   auto_resolved INTEGER DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/kpi-alerts', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26548,7 +26548,7 @@ app.post('/api/kpi-alerts/:id/acknowledge', auth, (req: AuthRequest, res: Respon
 
 // ─── B156: User Conversation Starters, Workspace Dependency Map, AI FAQ Generator, User Expense Split, Workspace Change Log ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_conversation_starters (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_conversation_starters (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   context TEXT DEFAULT 'general',
@@ -26559,7 +26559,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_conversation_starters (
   rating INTEGER DEFAULT 0,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/conversation-starters', auth, (req: AuthRequest, res: Response) => {
   const context = req.query.context as string;
@@ -26576,7 +26576,7 @@ app.post('/api/conversation-starters', auth, (req: AuthRequest, res: Response) =
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_dependency_map (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_dependency_map (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   item_name TEXT NOT NULL,
@@ -26589,7 +26589,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_dependency_map (
   status TEXT DEFAULT 'active',
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/dependency-map', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26605,7 +26605,7 @@ app.post('/api/dependency-map', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_faq_generator (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_faq_generator (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   topic TEXT NOT NULL,
@@ -26616,7 +26616,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_faq_generator (
   question_count INTEGER DEFAULT 0,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/faq-generator', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,topic,audience,num_questions,question_count,model_used,created_at FROM ai_faq_generator WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -26641,7 +26641,7 @@ app.post('/api/faq-generator', auth, async (req: AuthRequest, res: Response) => 
   res.json({ id: r.lastInsertRowid, faq_content, question_count });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_expense_split (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_expense_split (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   expense_date TEXT NOT NULL,
@@ -26656,7 +26656,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_expense_split (
   settled_date TEXT,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/expense-split', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_expense_split WHERE user_id=? ORDER BY settled ASC, expense_date DESC`).all(req.user!.id);
@@ -26669,7 +26669,7 @@ app.post('/api/expense-split', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_change_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_change_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   change_date TEXT NOT NULL,
@@ -26683,7 +26683,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_change_log (
   ticket_ref TEXT,
   status TEXT DEFAULT 'shipped',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/change-log', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26701,7 +26701,7 @@ app.post('/api/change-log', auth, (req: AuthRequest, res: Response) => {
 
 // ─── B157: User Focus Sprints, Workspace Asset Library, AI Slogan Generator, User Vision Statement, Workspace Meeting Cost Calculator ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_focus_sprints (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_focus_sprints (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   sprint_date TEXT NOT NULL,
@@ -26714,7 +26714,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_focus_sprints (
   outcome TEXT,
   category TEXT DEFAULT 'work',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/focus-sprints', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT *, COUNT(*) OVER() as total_count, SUM(completed) OVER() as completed_count FROM user_focus_sprints WHERE user_id=? ORDER BY sprint_date DESC, created_at DESC LIMIT 50`).all(req.user!.id);
@@ -26726,7 +26726,7 @@ app.post('/api/focus-sprints', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_asset_library (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_asset_library (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   asset_name TEXT NOT NULL,
@@ -26742,7 +26742,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_asset_library (
   status TEXT DEFAULT 'active',
   downloads INTEGER DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/asset-library', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26761,7 +26761,7 @@ app.post('/api/asset-library', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_slogan_generator (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_slogan_generator (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   brand_name TEXT NOT NULL,
@@ -26772,7 +26772,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_slogan_generator (
   slogan_count INTEGER DEFAULT 0,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/slogan-generator', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,brand_name,industry,tone,slogan_count,model_used,created_at FROM ai_slogan_generator WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -26797,7 +26797,7 @@ app.post('/api/slogan-generator', auth, async (req: AuthRequest, res: Response) 
   res.json({ id: r.lastInsertRowid, slogans, slogan_count });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_vision_statement (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_vision_statement (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   statement_type TEXT DEFAULT 'personal',
@@ -26810,7 +26810,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_vision_statement (
   status TEXT DEFAULT 'active',
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/vision-statements', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_vision_statement WHERE user_id=? ORDER BY status='active' DESC, created_at DESC`).all(req.user!.id);
@@ -26822,7 +26822,7 @@ app.post('/api/vision-statements', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_cost (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_cost (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   meeting_title TEXT NOT NULL,
@@ -26837,7 +26837,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_cost (
   could_be_email INTEGER DEFAULT 0,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/meeting-cost', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26857,7 +26857,7 @@ app.post('/api/meeting-cost', auth, (req: AuthRequest, res: Response) => {
 
 // ─── B158: User Book Wishlist, Workspace Integration Health, AI Cover Letter v2, User Moon Phase Log, Workspace Capacity Forecast ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_book_wishlist (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_book_wishlist (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   title TEXT NOT NULL,
@@ -26873,7 +26873,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_book_wishlist (
   rating INTEGER,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/book-wishlist', auth, (req: AuthRequest, res: Response) => {
   const status = req.query.status as string;
@@ -26889,7 +26889,7 @@ app.post('/api/book-wishlist', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_integration_health (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_integration_health (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   integration_name TEXT NOT NULL,
@@ -26904,7 +26904,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_integration_health (
   check_interval_min INTEGER DEFAULT 15,
   owner TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/integration-health', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -26920,7 +26920,7 @@ app.post('/api/integration-health', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_cover_letter_v2 (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_cover_letter_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   job_title TEXT NOT NULL,
@@ -26933,7 +26933,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_cover_letter_v2 (
   word_count INTEGER DEFAULT 0,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/cover-letter-v2', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,job_title,company_name,tone,word_count,model_used,created_at FROM ai_cover_letter_v2 WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -26958,7 +26958,7 @@ app.post('/api/cover-letter-v2', auth, async (req: AuthRequest, res: Response) =
   res.json({ id: r.lastInsertRowid, cover_letter, word_count });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_moon_phase_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_moon_phase_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   log_date TEXT NOT NULL,
@@ -26970,7 +26970,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_moon_phase_log (
   reflections TEXT,
   manifestation_focus TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/moon-log', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_moon_phase_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(req.user!.id);
@@ -26982,7 +26982,7 @@ app.post('/api/moon-log', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_capacity_forecast (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_capacity_forecast (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   forecast_period TEXT NOT NULL,
@@ -26995,7 +26995,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_capacity_forecast (
   notes TEXT,
   created_by TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/capacity-forecast', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -27013,7 +27013,7 @@ app.post('/api/capacity-forecast', auth, (req: AuthRequest, res: Response) => {
 
 // ─── B159: User Coffee Journal, Workspace Decision Matrix, AI Pitch Analyzer, User Financial Independence Tracker, Workspace Feedback Collector ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_coffee_journal (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_coffee_journal (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   brew_date TEXT NOT NULL,
@@ -27034,7 +27034,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_coffee_journal (
   tasting_notes TEXT,
   would_brew_again INTEGER DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/coffee-journal', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_coffee_journal WHERE user_id=? ORDER BY brew_date DESC LIMIT 50`).all(req.user!.id);
@@ -27047,7 +27047,7 @@ app.post('/api/coffee-journal', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_decision_matrix (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_decision_matrix (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   decision_title TEXT NOT NULL,
@@ -27061,7 +27061,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_decision_matrix (
   decision_date TEXT,
   status TEXT DEFAULT 'open',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/decision-matrix', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -27077,7 +27077,7 @@ app.post('/api/decision-matrix', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_pitch_analyzer (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_pitch_analyzer (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   pitch_title TEXT NOT NULL,
@@ -27093,7 +27093,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_pitch_analyzer (
   improvement_areas TEXT,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/pitch-analyzer', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,pitch_title,target_audience,overall_score,clarity_score,hook_score,model_used,created_at FROM ai_pitch_analyzer WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -27127,7 +27127,7 @@ app.post('/api/pitch-analyzer', auth, async (req: AuthRequest, res: Response) =>
   res.json({ id: r.lastInsertRowid, overall_score, clarity_score, hook_score, key_strengths, improvement_areas });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_fi_tracker (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_fi_tracker (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   snapshot_date TEXT NOT NULL,
@@ -27141,7 +27141,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_fi_tracker (
   target_date TEXT,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/fi-tracker', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_fi_tracker WHERE user_id=? ORDER BY snapshot_date DESC LIMIT 24`).all(req.user!.id);
@@ -27153,7 +27153,7 @@ app.post('/api/fi-tracker', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_collector (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_collector (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   feedback_date TEXT NOT NULL,
@@ -27168,7 +27168,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_collector (
   actioned INTEGER DEFAULT 0,
   action_taken TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/feedback-collector', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -27186,7 +27186,7 @@ app.post('/api/feedback-collector', auth, (req: AuthRequest, res: Response) => {
 
 // ─── B160: User Habit Stacking, Workspace Localization Strings, AI Value Proposition, User Breathwork Log, Workspace Onboarding Checklist ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_stacking (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_stacking (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   stack_name TEXT NOT NULL,
@@ -27201,7 +27201,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_stacking (
   success_rate_pct REAL DEFAULT 0,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/habit-stacking', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_habit_stacking WHERE user_id=? ORDER BY active DESC, streak_count DESC`).all(req.user!.id);
@@ -27218,7 +27218,7 @@ app.post('/api/habit-stacking/:id/complete', auth, (req: AuthRequest, res: Respo
   res.json({ ok: true });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_localization (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_localization (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   string_key TEXT NOT NULL,
@@ -27233,7 +27233,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_localization (
   category TEXT DEFAULT 'ui',
   last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/localization', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -27254,7 +27254,7 @@ app.post('/api/localization', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_value_proposition (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_value_proposition (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   product_name TEXT NOT NULL,
@@ -27268,7 +27268,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_value_proposition (
   subheadline TEXT,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/value-proposition', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,product_name,target_customer,tone,headline,model_used,created_at FROM ai_value_proposition WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -27296,7 +27296,7 @@ app.post('/api/value-proposition', auth, async (req: AuthRequest, res: Response)
   res.json({ id: r.lastInsertRowid, headline, subheadline, value_prop });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_breathwork_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_breathwork_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   session_date TEXT NOT NULL,
@@ -27312,7 +27312,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_breathwork_log (
   energy_after INTEGER DEFAULT 5,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/breathwork', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_breathwork_log WHERE user_id=? ORDER BY session_date DESC LIMIT 30`).all(req.user!.id);
@@ -27325,7 +27325,7 @@ app.post('/api/breathwork', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_onboarding_checklist (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_onboarding_checklist (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   member_name TEXT NOT NULL,
@@ -27344,7 +27344,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_onboarding_checklist (
   status TEXT DEFAULT 'in_progress',
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/onboarding-checklist', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -27362,7 +27362,7 @@ app.post('/api/onboarding-checklist', auth, (req: AuthRequest, res: Response) =>
 
 // ─── B161: User Digital Detox Planner, Workspace Experiment Log, AI Objection Handler, User Language Goals, Workspace Product Metrics ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_digital_detox_planner (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_digital_detox_planner (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   detox_name TEXT NOT NULL,
@@ -27377,7 +27377,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_digital_detox_planner (
   streak_days INTEGER DEFAULT 0,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/digital-detox', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_digital_detox_planner WHERE user_id=? ORDER BY start_date DESC`).all(req.user!.id);
@@ -27389,7 +27389,7 @@ app.post('/api/digital-detox', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_experiment_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_experiment_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   experiment_name TEXT NOT NULL,
@@ -27407,7 +27407,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_experiment_log (
   next_steps TEXT,
   owner TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/experiment-log', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -27423,7 +27423,7 @@ app.post('/api/experiment-log', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_objection_handler (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_objection_handler (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   product_context TEXT NOT NULL,
@@ -27434,7 +27434,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_objection_handler (
   follow_up_question TEXT,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/objection-handler', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT id,objection,customer_type,tone,model_used,created_at FROM ai_objection_handler WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
@@ -27462,7 +27462,7 @@ app.post('/api/objection-handler', auth, async (req: AuthRequest, res: Response)
   res.json({ id: r.lastInsertRowid, response, follow_up_question });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_language_goals (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_language_goals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   language TEXT NOT NULL,
@@ -27478,7 +27478,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_language_goals (
   target_date TEXT,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/language-goals', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_language_goals WHERE user_id=? ORDER BY streak_days DESC`).all(req.user!.id);
@@ -27496,7 +27496,7 @@ app.post('/api/language-goals/:id/practice', auth, (req: AuthRequest, res: Respo
   res.json({ ok: true });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_product_metrics (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_product_metrics (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   metric_date TEXT NOT NULL,
@@ -27514,7 +27514,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_product_metrics (
   avg_session_min REAL DEFAULT 0,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) {}
 
 app.get('/api/product-metrics', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -155338,4 +155338,4 @@ app.get('/api/forge/coffee-tea-cocktail-wine-mead-manifest', (_req: any, res: an
 
 
 // 404 fallback (must be last)
-app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
+app.use((_req: any, res: any) => res.status(404).json({ success: fals
