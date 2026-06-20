@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v117.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v118.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -3023,6 +3023,67 @@ app.delete('/api/projects/:id', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, message: 'Project deleted' });
 });
 
+// ── Missing core routes ────────────────────────────────────────
+// /api/messages — list recent messages for authenticated user
+app.get('/api/messages', requireAuth, (req: AuthRequest, res: any) => {
+  try {
+    const { thread_id, limit = '50' } = req.query as any;
+    if (thread_id) {
+      const rows = db.prepare('SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC LIMIT ?').all(thread_id, parseInt(limit));
+      return res.json({ success: true, messages: rows });
+    }
+    const rows = db.prepare('SELECT m.* FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? ORDER BY m.created_at DESC LIMIT ?').all(req.user!.sub, parseInt(limit));
+    res.json({ success: true, messages: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// /api/usage — token usage summary for authenticated user
+app.get('/api/usage', requireAuth, (req: AuthRequest, res: any) => {
+  try {
+    const period = (req.query as any).period || '30d';
+    const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+    const rows = db.prepare(`SELECT model, SUM(input_tokens) as input_tokens, SUM(output_tokens) as output_tokens, SUM(total_tokens) as total_tokens, COUNT(*) as requests FROM token_usage WHERE user_id=? AND created_at >= datetime('now','-${days} days') GROUP BY model`).all(req.user!.sub);
+    const total = db.prepare(`SELECT SUM(total_tokens) as total, COUNT(*) as requests FROM token_usage WHERE user_id=? AND created_at >= datetime('now','-${days} days')`).get(req.user!.sub) as any;
+    res.json({ success: true, by_model: rows, total_tokens: total?.total || 0, total_requests: total?.requests || 0, period });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// /api/referrals — referral list for authenticated user
+app.get('/api/referrals', requireAuth, (req: AuthRequest, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM referrals WHERE referrer_id=? ORDER BY created_at DESC').all(req.user!.sub);
+    const stats = { total: rows.length, converted: rows.filter((r: any) => r.status === 'converted').length };
+    res.json({ success: true, referrals: rows, stats });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/referrals', requireAuth, (req: AuthRequest, res: any) => {
+  try {
+    const { email } = req.body;
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const r = db.prepare('INSERT INTO referrals (referrer_id, referred_email, code, status) VALUES (?,?,?,?) ON CONFLICT DO NOTHING').run(req.user!.sub, email, code, 'pending');
+    res.json({ success: true, code, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// /api/billing/status — current billing/subscription status
+app.get('/api/billing/status', requireAuth, (req: AuthRequest, res: any) => {
+  try {
+    const sub = db.prepare('SELECT * FROM subscriptions WHERE user_id=? ORDER BY created_at DESC LIMIT 1').get(req.user!.sub) as any;
+    const usage = db.prepare(`SELECT SUM(total_tokens) as tokens FROM token_usage WHERE user_id=? AND created_at >= datetime('now','-30 days')`).get(req.user!.sub) as any;
+    res.json({ success: true, plan: sub?.plan || 'free', status: sub?.status || 'active', tokens_used: usage?.tokens || 0, subscription: sub || null });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// /api/brief — morning brief / daily digest
+app.get('/api/brief', requireAuth, (req: AuthRequest, res: any) => {
+  try {
+    const threads = db.prepare('SELECT COUNT(*) as count FROM threads WHERE user_id=? AND created_at >= datetime("now","-1 day")').get(req.user!.sub) as any;
+    const messages = db.prepare('SELECT COUNT(*) as count FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at >= datetime("now","-1 day")').get(req.user!.sub) as any;
+    const usage = db.prepare('SELECT SUM(total_tokens) as tokens FROM token_usage WHERE user_id=? AND created_at >= datetime("now","-1 day")').get(req.user!.sub) as any;
+    res.json({ success: true, brief: { threads_today: threads?.count || 0, messages_today: messages?.count || 0, tokens_today: usage?.tokens || 0, generated_at: new Date().toISOString() } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ── Threads ───────────────────────────────────────────────────
 app.get('/api/threads', requireAuth, (req: AuthRequest, res) => {
   const { project_id, limit = '20' } = req.query;
@@ -5274,7 +5335,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v117.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v118.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -25769,8 +25830,8 @@ app.get('/api/content-briefs', auth, (req: AuthRequest, res: Response) => {
 app.post('/api/content-briefs', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
   if (!ws) return res.status(400).json({ error: 'No workspace' });
-  const { title, target_audience, content_type, primary_keyword, secondary_keywords, tone, word_count_target, outline, references, assigned_to, due_date } = req.body;
-  const r = db.prepare(`INSERT INTO workspace_content_brief (workspace_id,title,target_audience,content_type,primary_keyword,secondary_keywords,tone,word_count_target,outline,references,assigned_to,due_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(ws.workspace_id, title, target_audience, content_type||'blog_post', primary_keyword, secondary_keywords, tone||'informative', word_count_target||1000, outline, references, assigned_to, due_date);
+  const { title, target_audience, content_type, primary_keyword, secondary_keywords, tone, word_count_target, outline, refs, assigned_to, due_date } = req.body;
+  const r = db.prepare(`INSERT INTO workspace_content_brief (workspace_id,title,target_audience,content_type,primary_keyword,secondary_keywords,tone,word_count_target,outline,refs,assigned_to,due_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(ws.workspace_id, title, target_audience, content_type||'blog_post', primary_keyword, secondary_keywords, tone||'informative', word_count_target||1000, outline, refs, assigned_to, due_date);
   res.json({ id: r.lastInsertRowid });
 });
 
@@ -164177,5 +164238,1220 @@ app.delete('/api/archive-research/:id', auth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// 404 fallback (must be last)
-app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
+
+// B2391 — Space Mission Planner
+try { db.prepare(`CREATE TABLE IF NOT EXISTS space_missions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  mission_name TEXT NOT NULL,
+  mission_type TEXT DEFAULT 'orbital',
+  status TEXT DEFAULT 'planning',
+  timeline TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/space-missions', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM space_missions WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, missions: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/space-missions', auth, (req: any, res: any) => {
+  try {
+    const { mission_name, mission_type, status, timeline, notes } = req.body;
+    const r = db.prepare('INSERT INTO space_missions (user_id, mission_name, mission_type, status, timeline, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, mission_name || '', mission_type || 'orbital', status || 'planning', JSON.stringify(timeline || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/space-missions/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM space_missions WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2392 — Satellite Data Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS satellite_data (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  satellite_name TEXT NOT NULL,
+  downlink_schedule TEXT DEFAULT '[]',
+  data_products TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'active',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/satellite-data', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM satellite_data WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, satellites: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/satellite-data', auth, (req: any, res: any) => {
+  try {
+    const { satellite_name, downlink_schedule, data_products, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO satellite_data (user_id, satellite_name, downlink_schedule, data_products, status, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, satellite_name || '', JSON.stringify(downlink_schedule || []), JSON.stringify(data_products || []), status || 'active', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/satellite-data/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM satellite_data WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2393 — Astronomy Observation Log
+try { db.prepare(`CREATE TABLE IF NOT EXISTS astronomy_observations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  object_name TEXT NOT NULL,
+  session_date TEXT NOT NULL,
+  telescope TEXT DEFAULT '',
+  conditions TEXT DEFAULT '',
+  catalog_data TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/astronomy-observations', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM astronomy_observations WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, observations: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/astronomy-observations', auth, (req: any, res: any) => {
+  try {
+    const { object_name, session_date, telescope, conditions, catalog_data, notes } = req.body;
+    const r = db.prepare('INSERT INTO astronomy_observations (user_id, object_name, session_date, telescope, conditions, catalog_data, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, object_name || '', session_date || '', telescope || '', conditions || '', JSON.stringify(catalog_data || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/astronomy-observations/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM astronomy_observations WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2394 — Rocketry Safety Checklist
+try { db.prepare(`CREATE TABLE IF NOT EXISTS rocketry_safety (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  launch_name TEXT NOT NULL,
+  launch_date TEXT DEFAULT '',
+  checklist_items TEXT DEFAULT '[]',
+  range_safety_status TEXT DEFAULT 'pending',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/rocketry-safety', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM rocketry_safety WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, checklists: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/rocketry-safety', auth, (req: any, res: any) => {
+  try {
+    const { launch_name, launch_date, checklist_items, range_safety_status, notes } = req.body;
+    const r = db.prepare('INSERT INTO rocketry_safety (user_id, launch_name, launch_date, checklist_items, range_safety_status, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, launch_name || '', launch_date || '', JSON.stringify(checklist_items || []), range_safety_status || 'pending', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/rocketry-safety/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM rocketry_safety WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2395 — Planetary Science Note Taker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS planetary_science_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  planet_body TEXT NOT NULL,
+  research_topic TEXT DEFAULT '',
+  data_points TEXT DEFAULT '[]',
+  source TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/planetary-science-notes', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM planetary_science_notes WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, notes: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/planetary-science-notes', auth, (req: any, res: any) => {
+  try {
+    const { planet_body, research_topic, data_points, source, notes } = req.body;
+    const r = db.prepare('INSERT INTO planetary_science_notes (user_id, planet_body, research_topic, data_points, source, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, planet_body || '', research_topic || '', JSON.stringify(data_points || []), source || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/planetary-science-notes/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM planetary_science_notes WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2396 — Space Startup Pitch Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS space_pitches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  startup_name TEXT NOT NULL,
+  pitch_stage TEXT DEFAULT 'seed',
+  slides TEXT DEFAULT '[]',
+  investor_targets TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/space-pitches', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM space_pitches WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, pitches: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/space-pitches', auth, (req: any, res: any) => {
+  try {
+    const { startup_name, pitch_stage, slides, investor_targets, notes } = req.body;
+    const r = db.prepare('INSERT INTO space_pitches (user_id, startup_name, pitch_stage, slides, investor_targets, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, startup_name || '', pitch_stage || 'seed', JSON.stringify(slides || []), JSON.stringify(investor_targets || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/space-pitches/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM space_pitches WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2397 — Ground Station Scheduler
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ground_station_schedules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  station_name TEXT NOT NULL,
+  pass_windows TEXT DEFAULT '[]',
+  communication_windows TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'active',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/ground-station-schedules', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM ground_station_schedules WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, schedules: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/ground-station-schedules', auth, (req: any, res: any) => {
+  try {
+    const { station_name, pass_windows, communication_windows, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO ground_station_schedules (user_id, station_name, pass_windows, communication_windows, status, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, station_name || '', JSON.stringify(pass_windows || []), JSON.stringify(communication_windows || []), status || 'active', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/ground-station-schedules/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM ground_station_schedules WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2398 — Space Law Compliance Checker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS space_law_compliance (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  filing_name TEXT NOT NULL,
+  filing_type TEXT DEFAULT 'ITU',
+  compliance_items TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'pending',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/space-law-compliance', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM space_law_compliance WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, filings: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/space-law-compliance', auth, (req: any, res: any) => {
+  try {
+    const { filing_name, filing_type, compliance_items, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO space_law_compliance (user_id, filing_name, filing_type, compliance_items, status, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, filing_name || '', filing_type || 'ITU', JSON.stringify(compliance_items || []), status || 'pending', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/space-law-compliance/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM space_law_compliance WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2399 — Astronaut Training Log
+try { db.prepare(`CREATE TABLE IF NOT EXISTS astronaut_training (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  session_date TEXT NOT NULL,
+  training_type TEXT DEFAULT 'physical',
+  physical_metrics TEXT DEFAULT '{}',
+  cognitive_metrics TEXT DEFAULT '{}',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/astronaut-training', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM astronaut_training WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, sessions: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/astronaut-training', auth, (req: any, res: any) => {
+  try {
+    const { session_date, training_type, physical_metrics, cognitive_metrics, notes } = req.body;
+    const r = db.prepare('INSERT INTO astronaut_training (user_id, session_date, training_type, physical_metrics, cognitive_metrics, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, session_date || '', training_type || 'physical', JSON.stringify(physical_metrics || {}), JSON.stringify(cognitive_metrics || {}), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/astronaut-training/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM astronaut_training WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2400 — Exoplanet Research Organizer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS exoplanet_research (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  planet_name TEXT NOT NULL,
+  transit_data TEXT DEFAULT '[]',
+  habitability_score REAL DEFAULT 0,
+  star_system TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/exoplanet-research', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM exoplanet_research WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, planets: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/exoplanet-research', auth, (req: any, res: any) => {
+  try {
+    const { planet_name, transit_data, habitability_score, star_system, notes } = req.body;
+    const r = db.prepare('INSERT INTO exoplanet_research (user_id, planet_name, transit_data, habitability_score, star_system, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, planet_name || '', JSON.stringify(transit_data || []), habitability_score || 0, star_system || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/exoplanet-research/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM exoplanet_research WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2401 — Blockchain Project Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS blockchain_projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  project_name TEXT NOT NULL,
+  chain TEXT DEFAULT 'ethereum',
+  contract_deployments TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'active',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/blockchain-projects', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM blockchain_projects WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, projects: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/blockchain-projects', auth, (req: any, res: any) => {
+  try {
+    const { project_name, chain, contract_deployments, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO blockchain_projects (user_id, project_name, chain, contract_deployments, status, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, project_name || '', chain || 'ethereum', JSON.stringify(contract_deployments || []), status || 'active', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/blockchain-projects/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM blockchain_projects WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2402 — DeFi Protocol Analyzer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS defi_protocols (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  protocol_name TEXT NOT NULL,
+  chain TEXT DEFAULT 'ethereum',
+  liquidity_pools TEXT DEFAULT '[]',
+  yield_farming TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/defi-protocols', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM defi_protocols WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, protocols: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/defi-protocols', auth, (req: any, res: any) => {
+  try {
+    const { protocol_name, chain, liquidity_pools, yield_farming, notes } = req.body;
+    const r = db.prepare('INSERT INTO defi_protocols (user_id, protocol_name, chain, liquidity_pools, yield_farming, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, protocol_name || '', chain || 'ethereum', JSON.stringify(liquidity_pools || []), JSON.stringify(yield_farming || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/defi-protocols/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM defi_protocols WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2403 — NFT Collection Manager
+try { db.prepare(`CREATE TABLE IF NOT EXISTS nft_collections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  collection_name TEXT NOT NULL,
+  chain TEXT DEFAULT 'ethereum',
+  mint_tracker TEXT DEFAULT '[]',
+  royalty_log TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/nft-collections', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM nft_collections WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, collections: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/nft-collections', auth, (req: any, res: any) => {
+  try {
+    const { collection_name, chain, mint_tracker, royalty_log, notes } = req.body;
+    const r = db.prepare('INSERT INTO nft_collections (user_id, collection_name, chain, mint_tracker, royalty_log, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, collection_name || '', chain || 'ethereum', JSON.stringify(mint_tracker || []), JSON.stringify(royalty_log || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/nft-collections/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM nft_collections WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2404 — DAO Governance Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS dao_governance (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  dao_name TEXT NOT NULL,
+  proposals TEXT DEFAULT '[]',
+  voting_log TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'active',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/dao-governance', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM dao_governance WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, daos: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/dao-governance', auth, (req: any, res: any) => {
+  try {
+    const { dao_name, proposals, voting_log, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO dao_governance (user_id, dao_name, proposals, voting_log, status, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, dao_name || '', JSON.stringify(proposals || []), JSON.stringify(voting_log || []), status || 'active', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/dao-governance/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM dao_governance WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2405 — Crypto Tax Lot Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS crypto_tax_lots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  asset TEXT NOT NULL,
+  lot_method TEXT DEFAULT 'FIFO',
+  lots TEXT DEFAULT '[]',
+  realized_gains REAL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/crypto-tax-lots', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM crypto_tax_lots WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, lots: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/crypto-tax-lots', auth, (req: any, res: any) => {
+  try {
+    const { asset, lot_method, lots, realized_gains, notes } = req.body;
+    const r = db.prepare('INSERT INTO crypto_tax_lots (user_id, asset, lot_method, lots, realized_gains, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, asset || '', lot_method || 'FIFO', JSON.stringify(lots || []), realized_gains || 0, notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/crypto-tax-lots/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM crypto_tax_lots WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2406 — Web3 Security Audit Notes
+try { db.prepare(`CREATE TABLE IF NOT EXISTS web3_security_audits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  contract_name TEXT NOT NULL,
+  chain TEXT DEFAULT 'ethereum',
+  vulnerabilities TEXT DEFAULT '[]',
+  severity TEXT DEFAULT 'medium',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/web3-security-audits', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM web3_security_audits WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, audits: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/web3-security-audits', auth, (req: any, res: any) => {
+  try {
+    const { contract_name, chain, vulnerabilities, severity, notes } = req.body;
+    const r = db.prepare('INSERT INTO web3_security_audits (user_id, contract_name, chain, vulnerabilities, severity, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, contract_name || '', chain || 'ethereum', JSON.stringify(vulnerabilities || []), severity || 'medium', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/web3-security-audits/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM web3_security_audits WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2407 — Token Economics Designer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS token_economics (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  token_name TEXT NOT NULL,
+  total_supply REAL DEFAULT 0,
+  supply_schedule TEXT DEFAULT '[]',
+  distribution_model TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/token-economics', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM token_economics WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, tokens: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/token-economics', auth, (req: any, res: any) => {
+  try {
+    const { token_name, total_supply, supply_schedule, distribution_model, notes } = req.body;
+    const r = db.prepare('INSERT INTO token_economics (user_id, token_name, total_supply, supply_schedule, distribution_model, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, token_name || '', total_supply || 0, JSON.stringify(supply_schedule || []), JSON.stringify(distribution_model || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/token-economics/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM token_economics WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2408 — Cross-Chain Bridge Monitor
+try { db.prepare(`CREATE TABLE IF NOT EXISTS bridge_monitor (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  bridge_name TEXT NOT NULL,
+  source_chain TEXT DEFAULT '',
+  dest_chain TEXT DEFAULT '',
+  transactions TEXT DEFAULT '[]',
+  fee_log TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/bridge-monitor', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM bridge_monitor WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, bridges: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/bridge-monitor', auth, (req: any, res: any) => {
+  try {
+    const { bridge_name, source_chain, dest_chain, transactions, fee_log, notes } = req.body;
+    const r = db.prepare('INSERT INTO bridge_monitor (user_id, bridge_name, source_chain, dest_chain, transactions, fee_log, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, bridge_name || '', source_chain || '', dest_chain || '', JSON.stringify(transactions || []), JSON.stringify(fee_log || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/bridge-monitor/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM bridge_monitor WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2409 — Crypto Portfolio Rebalancer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS crypto_portfolio_rebalancer (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  portfolio_name TEXT NOT NULL,
+  target_allocations TEXT DEFAULT '[]',
+  current_allocations TEXT DEFAULT '[]',
+  drift_alerts TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/crypto-portfolio-rebalancer', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM crypto_portfolio_rebalancer WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, portfolios: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/crypto-portfolio-rebalancer', auth, (req: any, res: any) => {
+  try {
+    const { portfolio_name, target_allocations, current_allocations, drift_alerts, notes } = req.body;
+    const r = db.prepare('INSERT INTO crypto_portfolio_rebalancer (user_id, portfolio_name, target_allocations, current_allocations, drift_alerts, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, portfolio_name || '', JSON.stringify(target_allocations || []), JSON.stringify(current_allocations || []), JSON.stringify(drift_alerts || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/crypto-portfolio-rebalancer/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM crypto_portfolio_rebalancer WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2410 — Staking Rewards Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS staking_rewards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  validator_name TEXT NOT NULL,
+  asset TEXT DEFAULT '',
+  apy REAL DEFAULT 0,
+  rewards_log TEXT DEFAULT '[]',
+  performance_metrics TEXT DEFAULT '{}',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/staking-rewards', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM staking_rewards WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, staking: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/staking-rewards', auth, (req: any, res: any) => {
+  try {
+    const { validator_name, asset, apy, rewards_log, performance_metrics, notes } = req.body;
+    const r = db.prepare('INSERT INTO staking_rewards (user_id, validator_name, asset, apy, rewards_log, performance_metrics, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, validator_name || '', asset || '', apy || 0, JSON.stringify(rewards_log || []), JSON.stringify(performance_metrics || {}), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/staking-rewards/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM staking_rewards WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2411 — Quantum Computing Notes
+try { db.prepare(`CREATE TABLE IF NOT EXISTS quantum_computing_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  experiment_name TEXT NOT NULL,
+  circuit_design TEXT DEFAULT '{}',
+  qubit_count INTEGER DEFAULT 0,
+  results TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/quantum-computing-notes', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM quantum_computing_notes WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, experiments: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/quantum-computing-notes', auth, (req: any, res: any) => {
+  try {
+    const { experiment_name, circuit_design, qubit_count, results, notes } = req.body;
+    const r = db.prepare('INSERT INTO quantum_computing_notes (user_id, experiment_name, circuit_design, qubit_count, results, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, experiment_name || '', JSON.stringify(circuit_design || {}), qubit_count || 0, JSON.stringify(results || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/quantum-computing-notes/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM quantum_computing_notes WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2412 — AR/VR Experience Planner
+try { db.prepare(`CREATE TABLE IF NOT EXISTS arvr_experiences (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  experience_name TEXT NOT NULL,
+  platform TEXT DEFAULT 'VR',
+  storyboard TEXT DEFAULT '[]',
+  assets TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'planning',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/arvr-experiences', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM arvr_experiences WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, experiences: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/arvr-experiences', auth, (req: any, res: any) => {
+  try {
+    const { experience_name, platform, storyboard, assets, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO arvr_experiences (user_id, experience_name, platform, storyboard, assets, status, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, experience_name || '', platform || 'VR', JSON.stringify(storyboard || []), JSON.stringify(assets || []), status || 'planning', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/arvr-experiences/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM arvr_experiences WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2413 — IoT Device Registry
+try { db.prepare(`CREATE TABLE IF NOT EXISTS iot_devices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  device_name TEXT NOT NULL,
+  device_type TEXT DEFAULT 'sensor',
+  firmware_version TEXT DEFAULT '',
+  firmware_log TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'online',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/iot-devices', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM iot_devices WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, devices: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/iot-devices', auth, (req: any, res: any) => {
+  try {
+    const { device_name, device_type, firmware_version, firmware_log, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO iot_devices (user_id, device_name, device_type, firmware_version, firmware_log, status, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, device_name || '', device_type || 'sensor', firmware_version || '', JSON.stringify(firmware_log || []), status || 'online', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/iot-devices/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM iot_devices WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2414 — Edge Computing Deployment Log
+try { db.prepare(`CREATE TABLE IF NOT EXISTS edge_deployments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  node_name TEXT NOT NULL,
+  location TEXT DEFAULT '',
+  status TEXT DEFAULT 'active',
+  latency_log TEXT DEFAULT '[]',
+  deployments TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/edge-deployments', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM edge_deployments WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, deployments: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/edge-deployments', auth, (req: any, res: any) => {
+  try {
+    const { node_name, location, status, latency_log, deployments, notes } = req.body;
+    const r = db.prepare('INSERT INTO edge_deployments (user_id, node_name, location, status, latency_log, deployments, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, node_name || '', location || '', status || 'active', JSON.stringify(latency_log || []), JSON.stringify(deployments || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/edge-deployments/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM edge_deployments WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2415 — Digital Twin Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS digital_twins (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  asset_name TEXT NOT NULL,
+  asset_type TEXT DEFAULT 'equipment',
+  simulation_data TEXT DEFAULT '{}',
+  sensor_feeds TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/digital-twins', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM digital_twins WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, twins: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/digital-twins', auth, (req: any, res: any) => {
+  try {
+    const { asset_name, asset_type, simulation_data, sensor_feeds, notes } = req.body;
+    const r = db.prepare('INSERT INTO digital_twins (user_id, asset_name, asset_type, simulation_data, sensor_feeds, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, asset_name || '', asset_type || 'equipment', JSON.stringify(simulation_data || {}), JSON.stringify(sensor_feeds || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/digital-twins/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM digital_twins WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2416 — Neuromorphic Computing Notes
+try { db.prepare(`CREATE TABLE IF NOT EXISTS neuromorphic_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  experiment_name TEXT NOT NULL,
+  network_architecture TEXT DEFAULT '{}',
+  spike_patterns TEXT DEFAULT '[]',
+  results TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/neuromorphic-notes', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM neuromorphic_notes WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, experiments: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/neuromorphic-notes', auth, (req: any, res: any) => {
+  try {
+    const { experiment_name, network_architecture, spike_patterns, results, notes } = req.body;
+    const r = db.prepare('INSERT INTO neuromorphic_notes (user_id, experiment_name, network_architecture, spike_patterns, results, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, experiment_name || '', JSON.stringify(network_architecture || {}), JSON.stringify(spike_patterns || []), JSON.stringify(results || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/neuromorphic-notes/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM neuromorphic_notes WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2417 — Robotics Task Planner
+try { db.prepare(`CREATE TABLE IF NOT EXISTS robotics_tasks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  robot_name TEXT NOT NULL,
+  mission TEXT DEFAULT '',
+  sensor_data TEXT DEFAULT '[]',
+  task_log TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'idle',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/robotics-tasks', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM robotics_tasks WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, tasks: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/robotics-tasks', auth, (req: any, res: any) => {
+  try {
+    const { robot_name, mission, sensor_data, task_log, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO robotics_tasks (user_id, robot_name, mission, sensor_data, task_log, status, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, robot_name || '', mission || '', JSON.stringify(sensor_data || []), JSON.stringify(task_log || []), status || 'idle', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/robotics-tasks/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM robotics_tasks WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2418 — Autonomous Vehicle Test Log
+try { db.prepare(`CREATE TABLE IF NOT EXISTS av_test_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  vehicle_id TEXT NOT NULL,
+  test_date TEXT NOT NULL,
+  route TEXT DEFAULT '',
+  scenarios TEXT DEFAULT '[]',
+  results TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/av-test-logs', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM av_test_logs WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, tests: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/av-test-logs', auth, (req: any, res: any) => {
+  try {
+    const { vehicle_id, test_date, route, scenarios, results, notes } = req.body;
+    const r = db.prepare('INSERT INTO av_test_logs (user_id, vehicle_id, test_date, route, scenarios, results, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, vehicle_id || '', test_date || '', route || '', JSON.stringify(scenarios || []), JSON.stringify(results || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/av-test-logs/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM av_test_logs WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2419 — Brain-Computer Interface Notes
+try { db.prepare(`CREATE TABLE IF NOT EXISTS bci_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  experiment_name TEXT NOT NULL,
+  signal_processing TEXT DEFAULT '{}',
+  electrode_config TEXT DEFAULT '[]',
+  results TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/bci-notes', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM bci_notes WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, experiments: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/bci-notes', auth, (req: any, res: any) => {
+  try {
+    const { experiment_name, signal_processing, electrode_config, results, notes } = req.body;
+    const r = db.prepare('INSERT INTO bci_notes (user_id, experiment_name, signal_processing, electrode_config, results, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, experiment_name || '', JSON.stringify(signal_processing || {}), JSON.stringify(electrode_config || []), JSON.stringify(results || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/bci-notes/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM bci_notes WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2420 — Synthetic Biology Lab Notebook
+try { db.prepare(`CREATE TABLE IF NOT EXISTS synbio_lab_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  project_name TEXT NOT NULL,
+  gene_circuits TEXT DEFAULT '[]',
+  protocols TEXT DEFAULT '[]',
+  results TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/synbio-lab-notes', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM synbio_lab_notes WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, projects: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/synbio-lab-notes', auth, (req: any, res: any) => {
+  try {
+    const { project_name, gene_circuits, protocols, results, notes } = req.body;
+    const r = db.prepare('INSERT INTO synbio_lab_notes (user_id, project_name, gene_circuits, protocols, results, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, project_name || '', JSON.stringify(gene_circuits || []), JSON.stringify(protocols || []), JSON.stringify(results || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/synbio-lab-notes/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM synbio_lab_notes WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2421 — Creative Agency Pipeline
+try { db.prepare(`CREATE TABLE IF NOT EXISTS agency_pipeline (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  project_name TEXT NOT NULL,
+  client TEXT DEFAULT '',
+  stage TEXT DEFAULT 'intake',
+  brief TEXT DEFAULT '',
+  deliverables TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/agency-pipeline', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM agency_pipeline WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, projects: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/agency-pipeline', auth, (req: any, res: any) => {
+  try {
+    const { project_name, client, stage, brief, deliverables, notes } = req.body;
+    const r = db.prepare('INSERT INTO agency_pipeline (user_id, project_name, client, stage, brief, deliverables, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, project_name || '', client || '', stage || 'intake', brief || '', JSON.stringify(deliverables || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/agency-pipeline/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM agency_pipeline WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2422 — Retainer Client Manager
+try { db.prepare(`CREATE TABLE IF NOT EXISTS retainer_clients (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  client_name TEXT NOT NULL,
+  monthly_fee REAL DEFAULT 0,
+  deliverables TEXT DEFAULT '[]',
+  completion_status TEXT DEFAULT '{}',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/retainer-clients', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM retainer_clients WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, clients: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/retainer-clients', auth, (req: any, res: any) => {
+  try {
+    const { client_name, monthly_fee, deliverables, completion_status, notes } = req.body;
+    const r = db.prepare('INSERT INTO retainer_clients (user_id, client_name, monthly_fee, deliverables, completion_status, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, client_name || '', monthly_fee || 0, JSON.stringify(deliverables || []), JSON.stringify(completion_status || {}), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/retainer-clients/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM retainer_clients WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2423 — Studio Booking System
+try { db.prepare(`CREATE TABLE IF NOT EXISTS studio_bookings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  studio_name TEXT NOT NULL,
+  client TEXT DEFAULT '',
+  session_date TEXT NOT NULL,
+  equipment_log TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'confirmed',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/studio-bookings', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM studio_bookings WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, bookings: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/studio-bookings', auth, (req: any, res: any) => {
+  try {
+    const { studio_name, client, session_date, equipment_log, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO studio_bookings (user_id, studio_name, client, session_date, equipment_log, status, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, studio_name || '', client || '', session_date || '', JSON.stringify(equipment_log || []), status || 'confirmed', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/studio-bookings/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM studio_bookings WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2424 — Talent Roster Manager
+try { db.prepare(`CREATE TABLE IF NOT EXISTS talent_roster (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  talent_name TEXT NOT NULL,
+  skills TEXT DEFAULT '[]',
+  availability TEXT DEFAULT '{}',
+  rate REAL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/talent-roster', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM talent_roster WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, talent: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/talent-roster', auth, (req: any, res: any) => {
+  try {
+    const { talent_name, skills, availability, rate, notes } = req.body;
+    const r = db.prepare('INSERT INTO talent_roster (user_id, talent_name, skills, availability, rate, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, talent_name || '', JSON.stringify(skills || []), JSON.stringify(availability || {}), rate || 0, notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/talent-roster/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM talent_roster WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2425 — Creative Brief Templater
+try { db.prepare(`CREATE TABLE IF NOT EXISTS creative_briefs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  brief_name TEXT NOT NULL,
+  client TEXT DEFAULT '',
+  template_fields TEXT DEFAULT '{}',
+  objectives TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'draft',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/creative-briefs', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM creative_briefs WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, briefs: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/creative-briefs', auth, (req: any, res: any) => {
+  try {
+    const { brief_name, client, template_fields, objectives, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO creative_briefs (user_id, brief_name, client, template_fields, objectives, status, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, brief_name || '', client || '', JSON.stringify(template_fields || {}), JSON.stringify(objectives || []), status || 'draft', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/creative-briefs/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM creative_briefs WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2426 — Client Approval Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS client_approvals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  project_name TEXT NOT NULL,
+  client TEXT DEFAULT '',
+  revision_rounds TEXT DEFAULT '[]',
+  sign_off_status TEXT DEFAULT 'pending',
+  sign_off_date TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/client-approvals', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM client_approvals WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, approvals: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/client-approvals', auth, (req: any, res: any) => {
+  try {
+    const { project_name, client, revision_rounds, sign_off_status, sign_off_date, notes } = req.body;
+    const r = db.prepare('INSERT INTO client_approvals (user_id, project_name, client, revision_rounds, sign_off_status, sign_off_date, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, project_name || '', client || '', JSON.stringify(revision_rounds || []), sign_off_status || 'pending', sign_off_date || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/client-approvals/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM client_approvals WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2427 — Asset Version Controller
+try { db.prepare(`CREATE TABLE IF NOT EXISTS asset_versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  asset_name TEXT NOT NULL,
+  file_type TEXT DEFAULT '',
+  versions TEXT DEFAULT '[]',
+  current_version TEXT DEFAULT 'v1',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/asset-versions', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM asset_versions WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, assets: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/asset-versions', auth, (req: any, res: any) => {
+  try {
+    const { asset_name, file_type, versions, current_version, notes } = req.body;
+    const r = db.prepare('INSERT INTO asset_versions (user_id, asset_name, file_type, versions, current_version, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, asset_name || '', file_type || '', JSON.stringify(versions || []), current_version || 'v1', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/asset-versions/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM asset_versions WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2428 — Production Budget Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS production_budgets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  project_name TEXT NOT NULL,
+  total_budget REAL DEFAULT 0,
+  line_items TEXT DEFAULT '[]',
+  actual_spend REAL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+
+app.get('/api/production-budgets', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM production_budgets WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, budgets: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/production-budgets', auth, (req: any, res: any) => {
+  
