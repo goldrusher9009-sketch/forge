@@ -1,3 +1,9 @@
+## v135.00 — Fix sauna_sessions, bonsai_trees, freelance_invoices schema mismatches
+- sauna_sessions: ALTER TABLE adds total_min, temp_c, location, round_mins, humidity, pr flags
+- bonsai_trees: adds acquired_date (backfilled from acquisition_date), pot_size/material, health, alive, value cols
+- bonsai_work_log: CREATE TABLE IF NOT EXISTS for worklog entries
+- freelance_invoices: adds date (backfilled from issued_date), project, client, amount cols
+
 ## v134.00 — Fix photo_sessions, vehicles, life_goals, podcast_episodes, foraging_finds
 - photo_sessions: ALTER TABLE adds shots_taken, keepers, edited, posted, camera_body, lens, city, genre, weather
 - photo_gear: adds current_value_usd, purchase_price_usd columns
