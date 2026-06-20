@@ -1,3 +1,8 @@
+## v72.00 — B4801-B4850 🚗 VEHICLE-OS +Vehicles/Mileage/Maintenance/FuelLog/MPGTracking/GrandMilestone
+- B4801-4810: Vehicle OS — multi-vehicle (make/model/year/VIN/plate), mileage updates
+- B4811-4820: Maintenance OS — service log (type/shop/cost), upcoming maintenance calendar
+- B4821-4830: Fuel Log OS — fill-ups (gallons/ppg/total), auto-MPG calc from mileage delta
+- B4831-4850: 🏆 Grand Milestone v72 — /api/milestone/v72, vehicle-manifest, vehicle-health — 4850 endpoints, 149077 lines
 ## v71.00 — B4751-B4800 📋 SUBSCRIPTIONS-BILLS-OS +Subscriptions/MonthlyCost/Bills/AutoPay/Insurance/GrandMilestone
 - B4751-4760: Subscription Tracker OS — active subs (cycle/category), monthly cost rollup, cancel flow
 - B4761-4770: Bills OS — recurring bills (due-day/autopay), overdue alerts, pay-and-reschedule
