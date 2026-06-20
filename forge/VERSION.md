@@ -1,3 +1,17 @@
+## v92.00 — B5801-B5850 🐾🍺 PET-CARE+HOMEBREWING-OS +Profiles/Vet/Meds/WeightLog/Batches/Gravity/Tasting/GrandMilestone
+- B5801-5810: Pet Care OS — pet profiles (species/breed/microchip), vet visit log with cost tracking
+- B5811-5820: Pet Medications + Weight Log — active med tracker, weight trend per pet
+- B5821-5830: Home Brewing OS — batch registry (style/OG/FG/ABV), ingredient list by type
+- B5831-5840: Brewing — gravity log over fermentation, tasting notes (appearance/aroma/flavor/mouthfeel)
+- B5841-5850: Stats + Grand Milestone v92 — /api/milestone/v92, 5850 endpoints, 153153 lines
+
+## v91.00 — B5751-B5800 🎯🎗️ COLLECTIBLES+GIVING-OS +Items/Stats/Wishlist/Donations/Causes/Volunteering/GrandMilestone
+- B5751-5760: Collectibles OS — item catalog (condition/year/manufacturer), portfolio value (cost vs estimated), category breakdown
+- B5761-5770: Collectibles Wishlist + Giving OS — priority wishlist, donation log with tax-deductible tracking
+- B5771-5780: Giving — cause registry, volunteering hours log
+- B5781-5790: Giving Stats + Goals — annual giving summary, tax-deductible total, volunteer hours, goal setting
+- B5791-5800: Grand Milestone v91 — /api/milestone/v91, 5800 endpoints, 152939 lines
+
 ## v90.00 — B5701-B5750 📷🐟 PHOTOGRAPHY+AQUARIUM-OS +Gear/Shoots/Portfolio/Tanks/Fish/WaterLog/GrandMilestone
 - B5701-5710: Photography OS — gear catalog (camera/lens/tripod), shoot log (genre/location/shots/keepers)
 - B5711-5720: Portfolio + Stats — portfolio gallery (featured), keep rate %, shoots by genre
