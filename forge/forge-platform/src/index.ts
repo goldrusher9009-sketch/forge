@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v116.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v117.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5274,7 +5274,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v116.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v117.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -162923,6 +162923,1256 @@ app.post('/api/seasonal-maintenance', auth, (req: any, res: any) => {
 app.delete('/api/seasonal-maintenance/:id', auth, (req: any, res: any) => {
   try {
     db.prepare('DELETE FROM seasonal_maintenance_scheduler WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+
+// B2351 — AI Sports Analyst
+try { db.prepare(`CREATE TABLE IF NOT EXISTS sports_analysis (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  game_title TEXT NOT NULL,
+  sport TEXT DEFAULT 'general',
+  notes TEXT DEFAULT '',
+  stats TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/sports-analysis', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM sports_analysis WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, analyses: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/sports-analysis', auth, (req: any, res: any) => {
+  try {
+    const { game_title, sport, notes, stats } = req.body;
+    const r = db.prepare('INSERT INTO sports_analysis (user_id, game_title, sport, notes, stats) VALUES (?,?,?,?,?)').run(req.user.id, game_title || '', sport || 'general', notes || '', JSON.stringify(stats || {}));
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/sports-analysis/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM sports_analysis WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2352 — Athlete Performance Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS athlete_performance (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  athlete_name TEXT NOT NULL,
+  session_date TEXT NOT NULL,
+  training_load INTEGER DEFAULT 0,
+  recovery_score INTEGER DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/athlete-performance', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM athlete_performance WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, records: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/athlete-performance', auth, (req: any, res: any) => {
+  try {
+    const { athlete_name, session_date, training_load, recovery_score, notes } = req.body;
+    const r = db.prepare('INSERT INTO athlete_performance (user_id, athlete_name, session_date, training_load, recovery_score, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, athlete_name || '', session_date || '', training_load || 0, recovery_score || 0, notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/athlete-performance/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM athlete_performance WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2353 — Team Chemistry Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS team_chemistry (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  team_name TEXT NOT NULL,
+  roster TEXT DEFAULT '[]',
+  compatibility_notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/team-chemistry', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM team_chemistry WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, teams: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/team-chemistry', auth, (req: any, res: any) => {
+  try {
+    const { team_name, roster, compatibility_notes } = req.body;
+    const r = db.prepare('INSERT INTO team_chemistry (user_id, team_name, roster, compatibility_notes) VALUES (?,?,?,?)').run(req.user.id, team_name || '', JSON.stringify(roster || []), compatibility_notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/team-chemistry/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM team_chemistry WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2354 — Sports Injury Risk Assessor
+try { db.prepare(`CREATE TABLE IF NOT EXISTS injury_risk (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  athlete_name TEXT NOT NULL,
+  risk_level TEXT DEFAULT 'low',
+  overtraining_flags TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/injury-risk', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM injury_risk WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, assessments: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/injury-risk', auth, (req: any, res: any) => {
+  try {
+    const { athlete_name, risk_level, overtraining_flags, notes } = req.body;
+    const r = db.prepare('INSERT INTO injury_risk (user_id, athlete_name, risk_level, overtraining_flags, notes) VALUES (?,?,?,?,?)').run(req.user.id, athlete_name || '', risk_level || 'low', JSON.stringify(overtraining_flags || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/injury-risk/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM injury_risk WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2355 — Scouting Report Generator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS scouting_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  player_name TEXT NOT NULL,
+  position TEXT DEFAULT '',
+  evaluation TEXT DEFAULT '',
+  strengths TEXT DEFAULT '',
+  weaknesses TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/scouting-reports', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM scouting_reports WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, reports: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/scouting-reports', auth, (req: any, res: any) => {
+  try {
+    const { player_name, position, evaluation, strengths, weaknesses } = req.body;
+    const r = db.prepare('INSERT INTO scouting_reports (user_id, player_name, position, evaluation, strengths, weaknesses) VALUES (?,?,?,?,?,?)').run(req.user.id, player_name || '', position || '', evaluation || '', strengths || '', weaknesses || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/scouting-reports/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM scouting_reports WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2356 — Fantasy Sports Optimizer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS fantasy_lineups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  lineup_name TEXT NOT NULL,
+  sport TEXT DEFAULT 'football',
+  players TEXT DEFAULT '[]',
+  injury_flags TEXT DEFAULT '[]',
+  projected_points REAL DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/fantasy-lineups', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM fantasy_lineups WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, lineups: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/fantasy-lineups', auth, (req: any, res: any) => {
+  try {
+    const { lineup_name, sport, players, injury_flags, projected_points } = req.body;
+    const r = db.prepare('INSERT INTO fantasy_lineups (user_id, lineup_name, sport, players, injury_flags, projected_points) VALUES (?,?,?,?,?,?)').run(req.user.id, lineup_name || '', sport || 'football', JSON.stringify(players || []), JSON.stringify(injury_flags || []), projected_points || 0);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/fantasy-lineups/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM fantasy_lineups WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2357 — Sports Betting Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS betting_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  event_name TEXT NOT NULL,
+  bet_type TEXT DEFAULT '',
+  stake REAL DEFAULT 0,
+  odds REAL DEFAULT 0,
+  outcome TEXT DEFAULT 'pending',
+  pnl REAL DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/betting-log', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM betting_log WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, bets: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/betting-log', auth, (req: any, res: any) => {
+  try {
+    const { event_name, bet_type, stake, odds, outcome, pnl } = req.body;
+    const r = db.prepare('INSERT INTO betting_log (user_id, event_name, bet_type, stake, odds, outcome, pnl) VALUES (?,?,?,?,?,?,?)').run(req.user.id, event_name || '', bet_type || '', stake || 0, odds || 0, outcome || 'pending', pnl || 0);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/betting-log/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM betting_log WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2358 — Coaching Playbook Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS coaching_playbook (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  play_name TEXT NOT NULL,
+  sport TEXT DEFAULT 'general',
+  diagram_notes TEXT DEFAULT '',
+  situational_notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/coaching-playbook', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM coaching_playbook WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, plays: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/coaching-playbook', auth, (req: any, res: any) => {
+  try {
+    const { play_name, sport, diagram_notes, situational_notes } = req.body;
+    const r = db.prepare('INSERT INTO coaching_playbook (user_id, play_name, sport, diagram_notes, situational_notes) VALUES (?,?,?,?,?)').run(req.user.id, play_name || '', sport || 'general', diagram_notes || '', situational_notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/coaching-playbook/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM coaching_playbook WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2359 — Referee Decision Log
+try { db.prepare(`CREATE TABLE IF NOT EXISTS referee_decisions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  game_id TEXT NOT NULL,
+  call_type TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  disputed INTEGER DEFAULT 0,
+  review_outcome TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/referee-decisions', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM referee_decisions WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, decisions: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/referee-decisions', auth, (req: any, res: any) => {
+  try {
+    const { game_id, call_type, description, disputed, review_outcome } = req.body;
+    const r = db.prepare('INSERT INTO referee_decisions (user_id, game_id, call_type, description, disputed, review_outcome) VALUES (?,?,?,?,?,?)').run(req.user.id, game_id || '', call_type || '', description || '', disputed ? 1 : 0, review_outcome || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/referee-decisions/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM referee_decisions WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2360 — Sports Sponsorship Pitch
+try { db.prepare(`CREATE TABLE IF NOT EXISTS sports_sponsorship (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  entity_name TEXT NOT NULL,
+  entity_type TEXT DEFAULT 'athlete',
+  sponsor_target TEXT DEFAULT '',
+  pitch_notes TEXT DEFAULT '',
+  deck_url TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/sports-sponsorship', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM sports_sponsorship WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, pitches: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/sports-sponsorship', auth, (req: any, res: any) => {
+  try {
+    const { entity_name, entity_type, sponsor_target, pitch_notes, deck_url } = req.body;
+    const r = db.prepare('INSERT INTO sports_sponsorship (user_id, entity_name, entity_type, sponsor_target, pitch_notes, deck_url) VALUES (?,?,?,?,?,?)').run(req.user.id, entity_name || '', entity_type || 'athlete', sponsor_target || '', pitch_notes || '', deck_url || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/sports-sponsorship/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM sports_sponsorship WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2361 — Political Campaign Manager
+try { db.prepare(`CREATE TABLE IF NOT EXISTS campaign_manager (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  segment_name TEXT NOT NULL,
+  voter_count INTEGER DEFAULT 0,
+  message TEXT DEFAULT '',
+  status TEXT DEFAULT 'draft',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/campaign-manager', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM campaign_manager WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, segments: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/campaign-manager', auth, (req: any, res: any) => {
+  try {
+    const { segment_name, voter_count, message, status } = req.body;
+    const r = db.prepare('INSERT INTO campaign_manager (user_id, segment_name, voter_count, message, status) VALUES (?,?,?,?,?)').run(req.user.id, segment_name || '', voter_count || 0, message || '', status || 'draft');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/campaign-manager/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM campaign_manager WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2362 — Policy Brief Generator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS policy_briefs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  policy_area TEXT DEFAULT '',
+  position TEXT DEFAULT '',
+  evidence TEXT DEFAULT '',
+  recommendations TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/policy-briefs', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM policy_briefs WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, briefs: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/policy-briefs', auth, (req: any, res: any) => {
+  try {
+    const { title, policy_area, position, evidence, recommendations } = req.body;
+    const r = db.prepare('INSERT INTO policy_briefs (user_id, title, policy_area, position, evidence, recommendations) VALUES (?,?,?,?,?,?)').run(req.user.id, title || '', policy_area || '', position || '', evidence || '', recommendations || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/policy-briefs/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM policy_briefs WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2363 — Legislative Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS legislative_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  bill_number TEXT NOT NULL,
+  title TEXT DEFAULT '',
+  current_stage TEXT DEFAULT 'introduced',
+  committee TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/legislative-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM legislative_tracker WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, bills: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/legislative-tracker', auth, (req: any, res: any) => {
+  try {
+    const { bill_number, title, current_stage, committee, notes } = req.body;
+    const r = db.prepare('INSERT INTO legislative_tracker (user_id, bill_number, title, current_stage, committee, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, bill_number || '', title || '', current_stage || 'introduced', committee || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/legislative-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM legislative_tracker WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2364 — Constituent Feedback Aggregator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS constituent_feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  source TEXT DEFAULT '',
+  theme TEXT DEFAULT '',
+  feedback_text TEXT NOT NULL,
+  sentiment TEXT DEFAULT 'neutral',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/constituent-feedback', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM constituent_feedback WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, feedback: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/constituent-feedback', auth, (req: any, res: any) => {
+  try {
+    const { source, theme, feedback_text, sentiment } = req.body;
+    const r = db.prepare('INSERT INTO constituent_feedback (user_id, source, theme, feedback_text, sentiment) VALUES (?,?,?,?,?)').run(req.user.id, source || '', theme || '', feedback_text || '', sentiment || 'neutral');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/constituent-feedback/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM constituent_feedback WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2365 — Grassroots Organizing Planner
+try { db.prepare(`CREATE TABLE IF NOT EXISTS grassroots_organizing (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  activity_type TEXT DEFAULT 'canvassing',
+  scheduled_date TEXT NOT NULL,
+  location TEXT DEFAULT '',
+  volunteers INTEGER DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/grassroots-organizing', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM grassroots_organizing WHERE user_id = ? ORDER BY scheduled_date DESC').all(req.user.id);
+    res.json({ success: true, activities: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/grassroots-organizing', auth, (req: any, res: any) => {
+  try {
+    const { activity_type, scheduled_date, location, volunteers, notes } = req.body;
+    const r = db.prepare('INSERT INTO grassroots_organizing (user_id, activity_type, scheduled_date, location, volunteers, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, activity_type || 'canvassing', scheduled_date || '', location || '', volunteers || 0, notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/grassroots-organizing/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM grassroots_organizing WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2366 — Opposition Research Organizer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS opposition_research (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  opponent_name TEXT NOT NULL,
+  topic TEXT DEFAULT '',
+  position TEXT DEFAULT '',
+  source TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/opposition-research', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM opposition_research WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, records: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/opposition-research', auth, (req: any, res: any) => {
+  try {
+    const { opponent_name, topic, position, source, notes } = req.body;
+    const r = db.prepare('INSERT INTO opposition_research (user_id, opponent_name, topic, position, source, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, opponent_name || '', topic || '', position || '', source || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/opposition-research/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM opposition_research WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2367 — Debate Prep Briefing Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS debate_prep (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  topic TEXT NOT NULL,
+  position_paper TEXT DEFAULT '',
+  zingers TEXT DEFAULT '',
+  anticipated_attacks TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/debate-prep', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM debate_prep WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, briefs: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/debate-prep', auth, (req: any, res: any) => {
+  try {
+    const { topic, position_paper, zingers, anticipated_attacks } = req.body;
+    const r = db.prepare('INSERT INTO debate_prep (user_id, topic, position_paper, zingers, anticipated_attacks) VALUES (?,?,?,?,?)').run(req.user.id, topic || '', position_paper || '', zingers || '', anticipated_attacks || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/debate-prep/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM debate_prep WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2368 — Press Release Writer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS press_releases (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  headline TEXT NOT NULL,
+  dateline TEXT DEFAULT '',
+  body TEXT DEFAULT '',
+  contact_info TEXT DEFAULT '',
+  status TEXT DEFAULT 'draft',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/press-releases', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM press_releases WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, releases: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/press-releases', auth, (req: any, res: any) => {
+  try {
+    const { headline, dateline, body, contact_info, status } = req.body;
+    const r = db.prepare('INSERT INTO press_releases (user_id, headline, dateline, body, contact_info, status) VALUES (?,?,?,?,?,?)').run(req.user.id, headline || '', dateline || '', body || '', contact_info || '', status || 'draft');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/press-releases/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM press_releases WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2369 — Voter Registration Drive Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS voter_registration (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  location TEXT NOT NULL,
+  drive_date TEXT NOT NULL,
+  contacts INTEGER DEFAULT 0,
+  registrations INTEGER DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/voter-registration', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM voter_registration WHERE user_id = ? ORDER BY drive_date DESC').all(req.user.id);
+    res.json({ success: true, drives: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/voter-registration', auth, (req: any, res: any) => {
+  try {
+    const { location, drive_date, contacts, registrations, notes } = req.body;
+    const r = db.prepare('INSERT INTO voter_registration (user_id, location, drive_date, contacts, registrations, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, location || '', drive_date || '', contacts || 0, registrations || 0, notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/voter-registration/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM voter_registration WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2370 — Public Records Request Manager
+try { db.prepare(`CREATE TABLE IF NOT EXISTS foia_tracker (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  agency TEXT NOT NULL,
+  request_description TEXT DEFAULT '',
+  submitted_date TEXT DEFAULT '',
+  status TEXT DEFAULT 'pending',
+  response_due TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/foia-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM foia_tracker WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, requests: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/foia-tracker', auth, (req: any, res: any) => {
+  try {
+    const { agency, request_description, submitted_date, status, response_due, notes } = req.body;
+    const r = db.prepare('INSERT INTO foia_tracker (user_id, agency, request_description, submitted_date, status, response_due, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, agency || '', request_description || '', submitted_date || '', status || 'pending', response_due || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/foia-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM foia_tracker WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2371 — Insurance Policy Comparator
+try { db.prepare(`CREATE TABLE IF NOT EXISTS insurance_comparator (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  policy_name TEXT NOT NULL,
+  provider TEXT DEFAULT '',
+  coverage_details TEXT DEFAULT '{}',
+  premium REAL DEFAULT 0,
+  deductible REAL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/insurance-comparator', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM insurance_comparator WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, policies: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/insurance-comparator', auth, (req: any, res: any) => {
+  try {
+    const { policy_name, provider, coverage_details, premium, deductible, notes } = req.body;
+    const r = db.prepare('INSERT INTO insurance_comparator (user_id, policy_name, provider, coverage_details, premium, deductible, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, policy_name || '', provider || '', JSON.stringify(coverage_details || {}), premium || 0, deductible || 0, notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/insurance-comparator/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM insurance_comparator WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2372 — Claims Documentation Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS claims_documentation (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  claim_number TEXT NOT NULL,
+  incident_date TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  photos TEXT DEFAULT '[]',
+  narrative TEXT DEFAULT '',
+  status TEXT DEFAULT 'open',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/claims-documentation', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM claims_documentation WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, claims: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/claims-documentation', auth, (req: any, res: any) => {
+  try {
+    const { claim_number, incident_date, description, photos, narrative, status } = req.body;
+    const r = db.prepare('INSERT INTO claims_documentation (user_id, claim_number, incident_date, description, photos, narrative, status) VALUES (?,?,?,?,?,?,?)').run(req.user.id, claim_number || '', incident_date || '', description || '', JSON.stringify(photos || []), narrative || '', status || 'open');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/claims-documentation/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM claims_documentation WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2373 — Actuarial Risk Notes
+try { db.prepare(`CREATE TABLE IF NOT EXISTS actuarial_risk (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  risk_category TEXT NOT NULL,
+  factor_name TEXT NOT NULL,
+  factor_value TEXT DEFAULT '',
+  impact_notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/actuarial-risk', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM actuarial_risk WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, notes: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/actuarial-risk', auth, (req: any, res: any) => {
+  try {
+    const { risk_category, factor_name, factor_value, impact_notes } = req.body;
+    const r = db.prepare('INSERT INTO actuarial_risk (user_id, risk_category, factor_name, factor_value, impact_notes) VALUES (?,?,?,?,?)').run(req.user.id, risk_category || '', factor_name || '', factor_value || '', impact_notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/actuarial-risk/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM actuarial_risk WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2374 — Underwriting Checklist
+try { db.prepare(`CREATE TABLE IF NOT EXISTS underwriting_checklist (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  applicant_name TEXT NOT NULL,
+  checklist_items TEXT DEFAULT '[]',
+  risk_score INTEGER DEFAULT 0,
+  decision TEXT DEFAULT 'pending',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/underwriting-checklist', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM underwriting_checklist WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, checklists: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/underwriting-checklist', auth, (req: any, res: any) => {
+  try {
+    const { applicant_name, checklist_items, risk_score, decision, notes } = req.body;
+    const r = db.prepare('INSERT INTO underwriting_checklist (user_id, applicant_name, checklist_items, risk_score, decision, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, applicant_name || '', JSON.stringify(checklist_items || []), risk_score || 0, decision || 'pending', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/underwriting-checklist/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM underwriting_checklist WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2375 — Loss Run Report Analyzer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS loss_run_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  policy_number TEXT NOT NULL,
+  report_year INTEGER NOT NULL,
+  total_claims INTEGER DEFAULT 0,
+  total_losses REAL DEFAULT 0,
+  summary TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/loss-run-reports', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM loss_run_reports WHERE user_id = ? ORDER BY report_year DESC').all(req.user.id);
+    res.json({ success: true, reports: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/loss-run-reports', auth, (req: any, res: any) => {
+  try {
+    const { policy_number, report_year, total_claims, total_losses, summary } = req.body;
+    const r = db.prepare('INSERT INTO loss_run_reports (user_id, policy_number, report_year, total_claims, total_losses, summary) VALUES (?,?,?,?,?,?)').run(req.user.id, policy_number || '', report_year || new Date().getFullYear(), total_claims || 0, total_losses || 0, summary || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/loss-run-reports/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM loss_run_reports WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2376 — Reinsurance Treaty Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS reinsurance_treaties (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  treaty_name TEXT NOT NULL,
+  reinsurer TEXT DEFAULT '',
+  treaty_type TEXT DEFAULT '',
+  effective_date TEXT DEFAULT '',
+  renewal_date TEXT DEFAULT '',
+  terms TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/reinsurance-treaties', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM reinsurance_treaties WHERE user_id = ? ORDER BY renewal_date ASC').all(req.user.id);
+    res.json({ success: true, treaties: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/reinsurance-treaties', auth, (req: any, res: any) => {
+  try {
+    const { treaty_name, reinsurer, treaty_type, effective_date, renewal_date, terms } = req.body;
+    const r = db.prepare('INSERT INTO reinsurance_treaties (user_id, treaty_name, reinsurer, treaty_type, effective_date, renewal_date, terms) VALUES (?,?,?,?,?,?,?)').run(req.user.id, treaty_name || '', reinsurer || '', treaty_type || '', effective_date || '', renewal_date || '', terms || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/reinsurance-treaties/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM reinsurance_treaties WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2377 — Premium Calculation Worksheet
+try { db.prepare(`CREATE TABLE IF NOT EXISTS premium_worksheets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  policy_type TEXT NOT NULL,
+  base_rate REAL DEFAULT 0,
+  endorsements TEXT DEFAULT '[]',
+  modifiers TEXT DEFAULT '{}',
+  final_premium REAL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/premium-worksheets', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM premium_worksheets WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, worksheets: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/premium-worksheets', auth, (req: any, res: any) => {
+  try {
+    const { policy_type, base_rate, endorsements, modifiers, final_premium, notes } = req.body;
+    const r = db.prepare('INSERT INTO premium_worksheets (user_id, policy_type, base_rate, endorsements, modifiers, final_premium, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, policy_type || '', base_rate || 0, JSON.stringify(endorsements || []), JSON.stringify(modifiers || {}), final_premium || 0, notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/premium-worksheets/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM premium_worksheets WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2378 — Compliance Filing Calendar
+try { db.prepare(`CREATE TABLE IF NOT EXISTS compliance_filings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  state TEXT NOT NULL,
+  filing_type TEXT NOT NULL,
+  due_date TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/compliance-filings', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM compliance_filings WHERE user_id = ? ORDER BY due_date ASC').all(req.user.id);
+    res.json({ success: true, filings: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/compliance-filings', auth, (req: any, res: any) => {
+  try {
+    const { state, filing_type, due_date, status, notes } = req.body;
+    const r = db.prepare('INSERT INTO compliance_filings (user_id, state, filing_type, due_date, status, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, state || '', filing_type || '', due_date || '', status || 'pending', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/compliance-filings/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM compliance_filings WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2379 — Agent License Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS agent_licenses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  agent_name TEXT NOT NULL,
+  license_number TEXT DEFAULT '',
+  state TEXT DEFAULT '',
+  expiry_date TEXT DEFAULT '',
+  ce_credits_required INTEGER DEFAULT 0,
+  ce_credits_completed INTEGER DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/agent-licenses', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM agent_licenses WHERE user_id = ? ORDER BY expiry_date ASC').all(req.user.id);
+    res.json({ success: true, licenses: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/agent-licenses', auth, (req: any, res: any) => {
+  try {
+    const { agent_name, license_number, state, expiry_date, ce_credits_required, ce_credits_completed, notes } = req.body;
+    const r = db.prepare('INSERT INTO agent_licenses (user_id, agent_name, license_number, state, expiry_date, ce_credits_required, ce_credits_completed, notes) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, agent_name || '', license_number || '', state || '', expiry_date || '', ce_credits_required || 0, ce_credits_completed || 0, notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/agent-licenses/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM agent_licenses WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2380 — Policyholder Communication Templates
+try { db.prepare(`CREATE TABLE IF NOT EXISTS policyholder_comms (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  template_name TEXT NOT NULL,
+  comm_type TEXT DEFAULT 'renewal',
+  subject TEXT DEFAULT '',
+  body TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/policyholder-comms', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM policyholder_comms WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, templates: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/policyholder-comms', auth, (req: any, res: any) => {
+  try {
+    const { template_name, comm_type, subject, body } = req.body;
+    const r = db.prepare('INSERT INTO policyholder_comms (user_id, template_name, comm_type, subject, body) VALUES (?,?,?,?,?)').run(req.user.id, template_name || '', comm_type || 'renewal', subject || '', body || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/policyholder-comms/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM policyholder_comms WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2381 — Genealogy Tree Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS genealogy_tree (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  person_name TEXT NOT NULL,
+  birth_year INTEGER DEFAULT 0,
+  death_year INTEGER DEFAULT 0,
+  relation TEXT DEFAULT '',
+  sources TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/genealogy-tree', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM genealogy_tree WHERE user_id = ? ORDER BY birth_year ASC').all(req.user.id);
+    res.json({ success: true, people: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/genealogy-tree', auth, (req: any, res: any) => {
+  try {
+    const { person_name, birth_year, death_year, relation, sources, notes } = req.body;
+    const r = db.prepare('INSERT INTO genealogy_tree (user_id, person_name, birth_year, death_year, relation, sources, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, person_name || '', birth_year || 0, death_year || 0, relation || '', JSON.stringify(sources || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/genealogy-tree/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM genealogy_tree WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2382 — DNA Results Interpreter
+try { db.prepare(`CREATE TABLE IF NOT EXISTS dna_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  test_provider TEXT NOT NULL,
+  ethnicity_breakdown TEXT DEFAULT '{}',
+  haplogroup TEXT DEFAULT '',
+  match_notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/dna-results', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM dna_results WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, results: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/dna-results', auth, (req: any, res: any) => {
+  try {
+    const { test_provider, ethnicity_breakdown, haplogroup, match_notes } = req.body;
+    const r = db.prepare('INSERT INTO dna_results (user_id, test_provider, ethnicity_breakdown, haplogroup, match_notes) VALUES (?,?,?,?,?)').run(req.user.id, test_provider || '', JSON.stringify(ethnicity_breakdown || {}), haplogroup || '', match_notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/dna-results/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM dna_results WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2383 — Historical Document Transcriber
+try { db.prepare(`CREATE TABLE IF NOT EXISTS historical_transcriptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  document_title TEXT NOT NULL,
+  document_date TEXT DEFAULT '',
+  original_text TEXT DEFAULT '',
+  transcription TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/historical-transcriptions', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM historical_transcriptions WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, transcriptions: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/historical-transcriptions', auth, (req: any, res: any) => {
+  try {
+    const { document_title, document_date, original_text, transcription, notes } = req.body;
+    const r = db.prepare('INSERT INTO historical_transcriptions (user_id, document_title, document_date, original_text, transcription, notes) VALUES (?,?,?,?,?,?)').run(req.user.id, document_title || '', document_date || '', original_text || '', transcription || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/historical-transcriptions/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM historical_transcriptions WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2384 — Military Service Record Organizer
+try { db.prepare(`CREATE TABLE IF NOT EXISTS military_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  veteran_name TEXT NOT NULL,
+  branch TEXT DEFAULT '',
+  service_dates TEXT DEFAULT '',
+  rank TEXT DEFAULT '',
+  units TEXT DEFAULT '',
+  decorations TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/military-records', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM military_records WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, records: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/military-records', auth, (req: any, res: any) => {
+  try {
+    const { veteran_name, branch, service_dates, rank, units, decorations, notes } = req.body;
+    const r = db.prepare('INSERT INTO military_records (user_id, veteran_name, branch, service_dates, rank, units, decorations, notes) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, veteran_name || '', branch || '', service_dates || '', rank || '', units || '', decorations || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/military-records/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM military_records WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2385 — Immigration Record Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS immigration_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  person_name TEXT NOT NULL,
+  origin_country TEXT DEFAULT '',
+  arrival_date TEXT DEFAULT '',
+  port_of_entry TEXT DEFAULT '',
+  naturalization_date TEXT DEFAULT '',
+  document_refs TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/immigration-records', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM immigration_records WHERE user_id = ? ORDER BY arrival_date ASC').all(req.user.id);
+    res.json({ success: true, records: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/immigration-records', auth, (req: any, res: any) => {
+  try {
+    const { person_name, origin_country, arrival_date, port_of_entry, naturalization_date, document_refs, notes } = req.body;
+    const r = db.prepare('INSERT INTO immigration_records (user_id, person_name, origin_country, arrival_date, port_of_entry, naturalization_date, document_refs, notes) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, person_name || '', origin_country || '', arrival_date || '', port_of_entry || '', naturalization_date || '', JSON.stringify(document_refs || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/immigration-records/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM immigration_records WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2386 — Family History Newsletter Builder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS family_newsletters (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  issue_title TEXT NOT NULL,
+  issue_date TEXT DEFAULT '',
+  content TEXT DEFAULT '',
+  recipients TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'draft',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/family-newsletters', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM family_newsletters WHERE user_id = ? ORDER BY issue_date DESC').all(req.user.id);
+    res.json({ success: true, newsletters: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/family-newsletters', auth, (req: any, res: any) => {
+  try {
+    const { issue_title, issue_date, content, recipients, status } = req.body;
+    const r = db.prepare('INSERT INTO family_newsletters (user_id, issue_title, issue_date, content, recipients, status) VALUES (?,?,?,?,?,?)').run(req.user.id, issue_title || '', issue_date || '', content || '', JSON.stringify(recipients || []), status || 'draft');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/family-newsletters/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM family_newsletters WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2387 — Cemetery Research Log
+try { db.prepare(`CREATE TABLE IF NOT EXISTS cemetery_research (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  cemetery_name TEXT NOT NULL,
+  location TEXT DEFAULT '',
+  person_name TEXT DEFAULT '',
+  grave_location TEXT DEFAULT '',
+  epitaph TEXT DEFAULT '',
+  photo_url TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/cemetery-research', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM cemetery_research WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+    res.json({ success: true, entries: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/cemetery-research', auth, (req: any, res: any) => {
+  try {
+    const { cemetery_name, location, person_name, grave_location, epitaph, photo_url, notes } = req.body;
+    const r = db.prepare('INSERT INTO cemetery_research (user_id, cemetery_name, location, person_name, grave_location, epitaph, photo_url, notes) VALUES (?,?,?,?,?,?,?,?)').run(req.user.id, cemetery_name || '', location || '', person_name || '', grave_location || '', epitaph || '', photo_url || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/cemetery-research/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM cemetery_research WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2388 — Land Record Tracker
+try { db.prepare(`CREATE TABLE IF NOT EXISTS land_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  parcel_id TEXT NOT NULL,
+  location TEXT DEFAULT '',
+  deed_date TEXT DEFAULT '',
+  grantor TEXT DEFAULT '',
+  grantee TEXT DEFAULT '',
+  plat_ref TEXT DEFAULT '',
+  ownership_chain TEXT DEFAULT '[]',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/land-records', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM land_records WHERE user_id = ? ORDER BY deed_date DESC').all(req.user.id);
+    res.json({ success: true, records: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/land-records', auth, (req: any, res: any) => {
+  try {
+    const { parcel_id, location, deed_date, grantor, grantee, plat_ref, ownership_chain, notes } = req.body;
+    const r = db.prepare('INSERT INTO land_records (user_id, parcel_id, location, deed_date, grantor, grantee, plat_ref, ownership_chain, notes) VALUES (?,?,?,?,?,?,?,?,?)').run(req.user.id, parcel_id || '', location || '', deed_date || '', grantor || '', grantee || '', plat_ref || '', JSON.stringify(ownership_chain || []), notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/land-records/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM land_records WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2389 — Oral History Recorder
+try { db.prepare(`CREATE TABLE IF NOT EXISTS oral_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  subject_name TEXT NOT NULL,
+  interview_date TEXT DEFAULT '',
+  questions TEXT DEFAULT '[]',
+  responses TEXT DEFAULT '[]',
+  audio_ref TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/oral-history', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM oral_history WHERE user_id = ? ORDER BY interview_date DESC').all(req.user.id);
+    res.json({ success: true, interviews: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/oral-history', auth, (req: any, res: any) => {
+  try {
+    const { subject_name, interview_date, questions, responses, audio_ref, notes } = req.body;
+    const r = db.prepare('INSERT INTO oral_history (user_id, subject_name, interview_date, questions, responses, audio_ref, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, subject_name || '', interview_date || '', JSON.stringify(questions || []), JSON.stringify(responses || []), audio_ref || '', notes || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/oral-history/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM oral_history WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// B2390 — Archive Research Planner
+try { db.prepare(`CREATE TABLE IF NOT EXISTS archive_research (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  repository_name TEXT NOT NULL,
+  visit_date TEXT DEFAULT '',
+  research_goals TEXT DEFAULT '',
+  collections_to_check TEXT DEFAULT '[]',
+  findings TEXT DEFAULT '',
+  follow_up TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+app.get('/api/archive-research', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM archive_research WHERE user_id = ? ORDER BY visit_date DESC').all(req.user.id);
+    res.json({ success: true, plans: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/archive-research', auth, (req: any, res: any) => {
+  try {
+    const { repository_name, visit_date, research_goals, collections_to_check, findings, follow_up } = req.body;
+    const r = db.prepare('INSERT INTO archive_research (user_id, repository_name, visit_date, research_goals, collections_to_check, findings, follow_up) VALUES (?,?,?,?,?,?,?)').run(req.user.id, repository_name || '', visit_date || '', research_goals || '', JSON.stringify(collections_to_check || []), findings || '', follow_up || '');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/archive-research/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM archive_research WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
     res.json({ success: true });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
