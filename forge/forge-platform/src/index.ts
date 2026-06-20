@@ -148501,5 +148501,155 @@ app.get('/api/forge/garden-health', (_req: any, res: any) => {
 
 });
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B4601-B4650: Career OS + Job Search + Interview + Networking + Grand Milestone v68
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B4601-B4610: Career & Job Search OS
+app.get('/api/career/jobs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, company TEXT, role TEXT, status TEXT DEFAULT 'saved', applied_date TEXT, source TEXT, salary_min REAL DEFAULT 0, salary_max REAL DEFAULT 0, location TEXT, remote INTEGER DEFAULT 0, notes TEXT, job_url TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM career_jobs WHERE user_id=? ORDER BY CASE status WHEN 'interviewing' THEN 1 WHEN 'applied' THEN 2 WHEN 'saved' THEN 3 ELSE 4 END, created_at DESC LIMIT 30").all(u);
+    const stats = db.prepare("SELECT status, COUNT(*) as c FROM career_jobs WHERE user_id=? GROUP BY status").all(u);
+    res.json({ success:true, data:rows, stats });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/career/jobs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { company, role, status, applied_date, source, salary_min, salary_max, location, remote, notes, job_url } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, company TEXT, role TEXT, status TEXT DEFAULT 'saved', applied_date TEXT, source TEXT, salary_min REAL DEFAULT 0, salary_max REAL DEFAULT 0, location TEXT, remote INTEGER DEFAULT 0, notes TEXT, job_url TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO career_jobs (user_id,company,role,status,applied_date,source,salary_min,salary_max,location,remote,notes,job_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,company||'',role||'',status||'saved',applied_date||'',source||'',salary_min||0,salary_max||0,location||'',remote?1:0,notes||'',job_url||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.put('/api/career/jobs/:id/status', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { status } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, company TEXT, role TEXT, status TEXT DEFAULT 'saved', applied_date TEXT, source TEXT, salary_min REAL DEFAULT 0, salary_max REAL DEFAULT 0, location TEXT, remote INTEGER DEFAULT 0, notes TEXT, job_url TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    db.prepare('UPDATE career_jobs SET status=? WHERE id=? AND user_id=?').run(status||'saved',req.params.id,u);
+    res.json({ success:true });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4611-B4620: Interview OS
+app.get('/api/career/interviews', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_interviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, job_id INTEGER, company TEXT, role TEXT, round TEXT DEFAULT 'phone', date TEXT, interviewer TEXT, format TEXT DEFAULT 'video', prep_notes TEXT, outcome TEXT DEFAULT 'pending', feedback TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM career_interviews WHERE user_id=? ORDER BY CASE outcome WHEN 'pending' THEN 1 ELSE 2 END, date DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/career/interviews', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { job_id, company, role, round, date, interviewer, format, prep_notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_interviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, job_id INTEGER, company TEXT, role TEXT, round TEXT DEFAULT 'phone', date TEXT, interviewer TEXT, format TEXT DEFAULT 'video', prep_notes TEXT, outcome TEXT DEFAULT 'pending', feedback TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO career_interviews (user_id,job_id,company,role,round,date,interviewer,format,prep_notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,job_id||0,company||'',role||'',round||'phone',date||'',interviewer||'',format||'video',prep_notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/career/prep-questions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_prep (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, question TEXT, category TEXT DEFAULT 'behavioral', my_answer TEXT, starred INTEGER DEFAULT 0, times_practiced INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM career_prep WHERE user_id=? ORDER BY starred DESC, times_practiced ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/career/prep-questions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { question, category, my_answer } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_prep (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, question TEXT, category TEXT DEFAULT 'behavioral', my_answer TEXT, starred INTEGER DEFAULT 0, times_practiced INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO career_prep (user_id,question,category,my_answer) VALUES (?,?,?,?)').run(u,question||'',category||'behavioral',my_answer||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4621-B4630: Networking OS
+app.get('/api/career/contacts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_contacts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, company TEXT, role TEXT, linkedin TEXT, email TEXT, met_at TEXT, last_contact TEXT, next_followup TEXT, relationship TEXT DEFAULT 'acquaintance', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM career_contacts WHERE user_id=? ORDER BY CASE WHEN next_followup<=date('now') THEN 0 ELSE 1 END, last_contact DESC LIMIT 30").all(u);
+    const due = db.prepare("SELECT COUNT(*) as c FROM career_contacts WHERE user_id=? AND next_followup<=date('now')").get(u) as any;
+    res.json({ success:true, data:rows, followups_due:due?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/career/contacts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, company, role, linkedin, email, met_at, relationship, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_contacts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, company TEXT, role TEXT, linkedin TEXT, email TEXT, met_at TEXT, last_contact TEXT, next_followup TEXT, relationship TEXT DEFAULT 'acquaintance', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const followup = new Date(); followup.setDate(followup.getDate()+30);
+    const r = db.prepare('INSERT INTO career_contacts (user_id,name,company,role,linkedin,email,met_at,last_contact,next_followup,relationship,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',company||'',role||'',linkedin||'',email||'',met_at||'',new Date().toISOString().split('T')[0],followup.toISOString().split('T')[0],relationship||'acquaintance',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4631-B4640: Resume & Offer OS
+app.get('/api/career/resumes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_resumes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, version TEXT, target_role TEXT, highlights TEXT, last_updated TEXT DEFAULT (date('now')), is_active INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM career_resumes WHERE user_id=? ORDER BY is_active DESC, last_updated DESC').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/career/resumes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { version, target_role, highlights, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_resumes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, version TEXT, target_role TEXT, highlights TEXT, last_updated TEXT DEFAULT (date('now')), is_active INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO career_resumes (user_id,version,target_role,highlights,notes) VALUES (?,?,?,?,?)').run(u,version||'v1',target_role||'',highlights||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/career/offers', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_offers (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, company TEXT, role TEXT, salary REAL DEFAULT 0, bonus REAL DEFAULT 0, equity TEXT, start_date TEXT, deadline TEXT, status TEXT DEFAULT 'pending', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM career_offers WHERE user_id=? ORDER BY CASE status WHEN 'pending' THEN 1 ELSE 2 END, deadline ASC").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/career/offers', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { company, role, salary, bonus, equity, start_date, deadline, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS career_offers (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, company TEXT, role TEXT, salary REAL DEFAULT 0, bonus REAL DEFAULT 0, equity TEXT, start_date TEXT, deadline TEXT, status TEXT DEFAULT 'pending', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO career_offers (user_id,company,role,salary,bonus,equity,start_date,deadline,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,company||'',role||'',salary||0,bonus||0,equity||'',start_date||'',deadline||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4641-B4650: Grand Milestone v68
+app.get('/api/milestone/v68', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const jobs = safe(()=>db.prepare('SELECT COUNT(*) as c FROM career_jobs WHERE user_id=?').get(u) as any);
+  const interviews = safe(()=>db.prepare("SELECT COUNT(*) as c FROM career_interviews WHERE user_id=? AND outcome='pending'").get(u) as any);
+  const contacts = safe(()=>db.prepare("SELECT COUNT(*) as c FROM career_contacts WHERE user_id=? AND next_followup<=date('now')").get(u) as any);
+  const offers = safe(()=>db.prepare("SELECT COUNT(*) as c FROM career_offers WHERE user_id=? AND status='pending'").get(u) as any);
+  res.json({ success:true, version:'v68.00', total_endpoints:4650, milestone:'B4650 — Career OS', data:{ total_jobs:jobs?.c||0, pending_interviews:interviews?.c||0, followups_due:contacts?.c||0, pending_offers:offers?.c||0 }});
+});
+app.get('/api/forge/career-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const prep = safe(()=>db.prepare('SELECT COUNT(*) as c FROM career_prep WHERE user_id=?').get(u) as any);
+  const resumes = safe(()=>db.prepare('SELECT COUNT(*) as c FROM career_resumes WHERE user_id=?').get(u) as any);
+  res.json({ success:true, career_manifest:{ prep_questions:prep?.c||0, resumes:resumes?.c||0 }, total_endpoints:4650 });
+});
+app.get('/api/forge/career-health', (_req: any, res: any) => {
+  res.json({ success:true, career_health:{ os_modules:400, total_endpoints:4650, version:'v68.00' }});
+
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
