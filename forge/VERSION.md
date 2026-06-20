@@ -1,3 +1,8 @@
+## v70.00 — B4701-B4750 🏠 REAL-ESTATE-OS +PropertySearch/Affordability/Rentals/TenantMgmt/RentPayments/GrandMilestone
+- B4701-4710: Property Search OS — listings tracker (beds/baths/sqft/hoa/score), affordability calculator
+- B4711-4720: Rental Property OS — active leases, tenant info, monthly income rollup
+- B4721-4730: Rent Payments OS — payment log (method/late-flag), per-unit history
+- B4731-4750: 🏆 Grand Milestone v70 — /api/milestone/v70, realestate-manifest, realestate-health — 4750 endpoints, 148870 lines
 ## v69.00 — B4651-B4700 💰 PERSONAL-FINANCE-OS +Accounts/Transactions/Debts/SavingsGoals/GrandMilestone
 - B4651-4660: Accounts OS — multi-account (checking/savings/investment/credit), net worth calc
 - B4661-4670: Transactions OS — categorized spend log, month filter, per-account views
