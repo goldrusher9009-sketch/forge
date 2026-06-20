@@ -1,3 +1,9 @@
+## v78.00 — B5101-B5150 🛒📚 SHOPPING+LEARNING-OS +Lists/PriceTrack/Purchases/Courses/Flashcards/GrandMilestone
+- B5101-5110: Shopping Lists OS — lists, items, check-off, budget tracking, category grouping
+- B5111-5120: Price Tracking + Purchase History — target price alerts, spending by store/category
+- B5121-5130: Learning OS — course tracker, skill map, status/progress/rating, provider tracking
+- B5131-5140: Study Sessions + Spaced Repetition Flashcards — SM-2 algorithm, due-card queue, review scoring
+- B5141-5150: Grand Milestone v78 — /api/milestone/v78, shopping-learning-manifest, health — 5150 endpoints, 150098 lines
 ## v77.00 — B5051-B5100 📓 JOURNAL+READING-OS +JournalEntries/Prompts/Templates/BookTracker/Sessions/Highlights/Goals/GrandMilestone
 - B5051-5060: Journaling OS — CRUD entries, mood, word count, tags, weather, location
 - B5061-5070: Journal Stats + Prompts — streak, mood dist, random prompts, search, templates
