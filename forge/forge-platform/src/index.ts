@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v133.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v134.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5335,7 +5335,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v133.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v134.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -167533,6 +167533,39 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY AUTOI
 try { db.prepare(`CREATE TABLE IF NOT EXISTS photos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, album_id INTEGER, filename TEXT, title TEXT, description TEXT, camera TEXT, lens TEXT, aperture TEXT, shutter_speed TEXT, iso INTEGER, focal_length TEXT, location TEXT, tags TEXT, rating INTEGER, taken_at TEXT, created_at TEXT)`).run(); } catch(e) {}
 // ─── end v133 migrations ──────────────────────────────────────────────────────
 
+// ─── v134 Schema Migrations ────────────────────────────────────────────────────
+// photo_sessions — early schema lacks shots_taken, keepers, edited, posted, etc.
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN shots_taken INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN keepers INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN edited INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN posted INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN golden_hour INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN camera_body TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN lens TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN city TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN genre TEXT DEFAULT 'street'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN weather TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN duration_hours REAL DEFAULT 2`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN best_shot_description TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN portfolio_worthy INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_sessions ADD COLUMN rating INTEGER DEFAULT 8`).run(); } catch(e) {}
+// photo_gear — ensure current_value_usd column exists
+try { db.prepare(`ALTER TABLE photo_gear ADD COLUMN current_value_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_gear ADD COLUMN purchase_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+// vehicles — early schema has status='active' but later handler needs active INTEGER column
+try { db.prepare(`ALTER TABLE vehicles ADD COLUMN active INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`UPDATE vehicles SET active=CASE WHEN status='active' THEN 1 ELSE 0 END WHERE active IS NULL`).run(); } catch(e) {}
+// life_goals — early schema lacks priority column
+try { db.prepare(`ALTER TABLE life_goals ADD COLUMN priority TEXT DEFAULT 'medium'`).run(); } catch(e) {}
+// podcast_episodes — early schema lacks downloads_30d, downloads_total, audio_file_url
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN downloads_30d INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN downloads_total INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN audio_file_url TEXT DEFAULT ''`).run(); } catch(e) {}
+// foraging_finds — early schema has species/common_name but later handler needs species_common
+try { db.prepare(`ALTER TABLE foraging_finds ADD COLUMN species_common TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE foraging_finds SET species_common=COALESCE(NULLIF(species_common,''),common_name,'') WHERE species_common=''`).run(); } catch(e) {}
+// ─── end v134 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
@@ -167704,16 +167737,4 @@ app.delete('/api/dev-environments/:id', auth, (req: any, res: any) => { try { db
 try { db.prepare(`CREATE TABLE IF NOT EXISTS api_rate_limits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, api_name TEXT, endpoint TEXT DEFAULT '', limit_per_minute INTEGER DEFAULT 60, limit_per_hour INTEGER DEFAULT 3600, limit_per_day INTEGER DEFAULT 86400, current_usage_min INTEGER DEFAULT 0, current_usage_hour INTEGER DEFAULT 0, current_usage_day INTEGER DEFAULT 0, throttled_count INTEGER DEFAULT 0, last_throttled TEXT, window_reset TEXT, status TEXT DEFAULT 'healthy', notes TEXT DEFAULT '', updated_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) { console.error('DB init error:', e); }
 app.get('/api/rate-limits', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM api_rate_limits WHERE user_id = ? ORDER BY api_name ASC').all(req.user.id); res.json({ success: true, limits: rows.map((r: any) => ({ ...r, utilization_min: r.limit_per_minute>0?(r.current_usage_min/r.limit_per_minute)*100:0, utilization_hour: r.limit_per_hour>0?(r.current_usage_hour/r.limit_per_hour)*100:0 })), throttled_count: rows.filter((r: any) => r.status==='throttled').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/rate-limits', auth, (req: any, res: any) => { try { const { api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes } = req.body; const r = db.prepare('INSERT INTO api_rate_limits (user_id, api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, api_name, endpoint||'', limit_per_minute||60, limit_per_hour||3600, limit_per_day||86400, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.put('/api/rate-limits/:id/reset', auth, (req: any, res: any) => { try { db.prepare("UPDATE api_rate_limits SET current_usage_min=0, current_usage_hour=0, current_usage_day=0, status='healthy', window_reset=? WHERE id=? AND user_id=?").run(new Date().toISOString(), req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.delete('/api/rate-limits/:id', auth, (req: any, res: any) => { try { db.prepare('DELETE FROM api_rate_limits WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-
-// B2747 — Microservice Registry
-try { db.prepare(`CREATE TABLE IF NOT EXISTS microservices (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, service_name TEXT, description TEXT DEFAULT '', owner_team TEXT DEFAULT '', language TEXT DEFAULT 'nodejs', repo_url TEXT DEFAULT '', docs_url TEXT DEFAULT '', health_url TEXT DEFAULT '', port INTEGER DEFAULT 3000, dependencies TEXT DEFAULT '[]', endpoints_count INTEGER DEFAULT 0, version TEXT DEFAULT '1.0.0', status TEXT DEFAULT 'healthy', last_health_check TEXT, slo_uptime REAL DEFAULT 99.9, notes TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) { console.error('DB init error:', e); }
-app.get('/api/microservices', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM microservices WHERE user_id = ? ORDER BY service_name ASC').all(req.user.id); res.json({ success: true, services: rows, healthy_count: rows.filter((r: any) => r.status==='healthy').length, degraded_count: rows.filter((r: any) => r.status==='degraded').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.post('/api/microservices', auth, (req: any, res: any) => { try { const { service_name, description, owner_team, language, repo_url, docs_url, health_url, port, dependencies, endpoints_count, version, slo_uptime, notes } = req.body; const r = db.prepare('INSERT INTO microservices (user_id, service_name, description, owner_team, language, repo_url, docs_url, health_url, port, dependencies, endpoints_count, version, slo_uptime, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)').run(req.user.id, service_name, description||'', owner_team||'', language||'nodejs', repo_url||'', docs_url||'', health_url||'', port||3000, JSON.stringify(dependencies||[]), endpoints_count||0, version||'1.0.0', slo_uptime||99.9, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.put('/api/microservices/:id/health', auth, (req: any, res: any) => { try { const { status } = req.body; db.prepare('UPDATE microservices SET status=?, last_health_check=? WHERE id=? AND user_id=?').run(status||'healthy', new Date().toISOString(), req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-app.delete('/api/microservices/:id', auth, (req: any, res: any) => { try { db.prepare('DELETE FROM microservices WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
-
-// B2748 — Customer Journey Mapper
-try { db.prepare(`CREATE TABLE IF NOT EXISTS customer_journeys (id INTEGER PRIMARY KEY AUTOINCR
+app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }

@@ -1,3 +1,11 @@
+## v134.00 — Fix photo_sessions, vehicles, life_goals, podcast_episodes, foraging_finds
+- photo_sessions: ALTER TABLE adds shots_taken, keepers, edited, posted, camera_body, lens, city, genre, weather
+- photo_gear: adds current_value_usd, purchase_price_usd columns
+- vehicles: adds active INTEGER column, backfilled from status field
+- life_goals: adds priority column
+- podcast_episodes: adds downloads_30d, downloads_total, audio_file_url columns
+- foraging_finds: adds species_common column, backfilled from common_name
+
 ## v133.00 — Fix habits, garden, reading, travel, freelance, astronomy routes
 - habits: fixed date() SQLite query (was using param substitution incompatible with Railway SQLite)
 - reading/books: fixed double-quote identifier bug in ORDER BY CASE WHEN clause
