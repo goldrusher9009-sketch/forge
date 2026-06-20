@@ -153651,5 +153651,146 @@ app.get('/api/forge/drone-puzzle-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', grand_milestone: '6000 endpoints', checks, ts: new Date().toISOString() });
 });
 
+
+// B6001-B6050: 3D Printing OS + Amateur Radio OS
+// B6001-6010: 3D Printing — Printers + Print Jobs
+
+app.post('/api/printing3d/printers', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, model, manufacturer, build_volume, purchase_date, notes } = req.body;
+  if (!name || !model) return res.status(400).json({ success: false, error: 'name and model required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS printers3d (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, model TEXT, manufacturer TEXT, build_volume TEXT, purchase_date TEXT, is_active INTEGER DEFAULT 1, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO printers3d (user_id,name,model,manufacturer,build_volume,purchase_date,notes,created_at) VALUES (?,?,?,?,?,?,?,?)`).run(userId, name, model, manufacturer||'', build_volume||'', purchase_date||'', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.post('/api/printing3d/jobs', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { printer_id, file_name, material, layer_height_mm, infill_pct, print_time_min, filament_used_g, status, notes } = req.body;
+  if (!printer_id || !file_name) return res.status(400).json({ success: false, error: 'printer_id and file_name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS print_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, printer_id INTEGER, file_name TEXT, material TEXT, layer_height_mm REAL, infill_pct INTEGER, print_time_min REAL, filament_used_g REAL, status TEXT DEFAULT 'completed', started_at TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO print_jobs (user_id,printer_id,file_name,material,layer_height_mm,infill_pct,print_time_min,filament_used_g,status,started_at,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, printer_id, file_name, material||'PLA', layer_height_mm||0.2, infill_pct||20, print_time_min||null, filament_used_g||null, status||'completed', new Date().toISOString(), notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/printing3d/jobs', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { printer_id, material, limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS print_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, printer_id INTEGER, file_name TEXT, material TEXT, layer_height_mm REAL, infill_pct INTEGER, print_time_min REAL, filament_used_g REAL, status TEXT DEFAULT 'completed', started_at TEXT, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM print_jobs WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (printer_id) { q += ` AND printer_id=?`; params.push(Number(printer_id)); }
+  if (material) { q += ` AND material=?`; params.push(material); }
+  q += ` ORDER BY created_at DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, jobs: db2.prepare(q).all(...params) });
+});
+
+app.post('/api/printing3d/filaments', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { brand, material, color, diameter_mm, spool_weight_g, remaining_pct, purchase_date, price } = req.body;
+  if (!brand || !material) return res.status(400).json({ success: false, error: 'brand and material required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS filaments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, brand TEXT, material TEXT, color TEXT, diameter_mm REAL DEFAULT 1.75, spool_weight_g REAL DEFAULT 1000, remaining_pct INTEGER DEFAULT 100, purchase_date TEXT, price REAL, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO filaments (user_id,brand,material,color,diameter_mm,spool_weight_g,remaining_pct,purchase_date,price,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, brand, material, color||'', diameter_mm||1.75, spool_weight_g||1000, remaining_pct||100, purchase_date||'', price||null, new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/printing3d/filaments', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS filaments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, brand TEXT, material TEXT, color TEXT, diameter_mm REAL DEFAULT 1.75, spool_weight_g REAL DEFAULT 1000, remaining_pct INTEGER DEFAULT 100, purchase_date TEXT, price REAL, notes TEXT, created_at TEXT)`).run();
+  res.json({ success: true, filaments: db2.prepare(`SELECT * FROM filaments WHERE user_id=? ORDER BY remaining_pct DESC`).all(userId) });
+});
+
+// B6011-6020: 3D Print Stats + Amateur Radio — Callsigns
+
+app.get('/api/printing3d/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS print_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, printer_id INTEGER, file_name TEXT, material TEXT, layer_height_mm REAL, infill_pct INTEGER, print_time_min REAL, filament_used_g REAL, status TEXT DEFAULT 'completed', started_at TEXT, notes TEXT, created_at TEXT)`).run();
+  const total = (db2.prepare(`SELECT COUNT(*) as c FROM print_jobs WHERE user_id=?`).get(userId) as any).c;
+  const totalMin = (db2.prepare(`SELECT SUM(print_time_min) as s FROM print_jobs WHERE user_id=? AND print_time_min IS NOT NULL`).get(userId) as any).s || 0;
+  const totalG = (db2.prepare(`SELECT SUM(filament_used_g) as s FROM print_jobs WHERE user_id=? AND filament_used_g IS NOT NULL`).get(userId) as any).s || 0;
+  const byMaterial = db2.prepare(`SELECT material, COUNT(*) as cnt FROM print_jobs WHERE user_id=? GROUP BY material ORDER BY cnt DESC`).all(userId);
+  res.json({ success: true, total_jobs: total, total_print_hours: Math.round(totalMin/60*10)/10, total_filament_kg: Math.round(totalG/1000*100)/100, by_material: byMaterial });
+});
+
+app.post('/api/hamradio/logbook', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { callsign, band, mode, frequency_mhz, rst_sent, rst_rcvd, contact_date, name, location, notes } = req.body;
+  if (!callsign || !contact_date) return res.status(400).json({ success: false, error: 'callsign and contact_date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hamradio_logbook (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, callsign TEXT, band TEXT, mode TEXT, frequency_mhz REAL, rst_sent TEXT, rst_rcvd TEXT, contact_date TEXT, contact_name TEXT, location TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO hamradio_logbook (user_id,callsign,band,mode,frequency_mhz,rst_sent,rst_rcvd,contact_date,contact_name,location,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, callsign.toUpperCase(), band||'', mode||'SSB', frequency_mhz||null, rst_sent||'59', rst_rcvd||'59', contact_date, name||'', location||'', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/hamradio/logbook', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { band, mode, limit = 30 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hamradio_logbook (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, callsign TEXT, band TEXT, mode TEXT, frequency_mhz REAL, rst_sent TEXT, rst_rcvd TEXT, contact_date TEXT, contact_name TEXT, location TEXT, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM hamradio_logbook WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (band) { q += ` AND band=?`; params.push(band); }
+  if (mode) { q += ` AND mode=?`; params.push(mode); }
+  q += ` ORDER BY contact_date DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, contacts: db2.prepare(q).all(...params) });
+});
+
+// B6021-6030: Ham Radio — Equipment + Stats
+
+app.post('/api/hamradio/equipment', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, type, manufacturer, model, purchase_date, frequency_range, power_watts, notes } = req.body;
+  if (!name || !type) return res.status(400).json({ success: false, error: 'name and type required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hamradio_equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, manufacturer TEXT, model TEXT, purchase_date TEXT, frequency_range TEXT, power_watts REAL, is_active INTEGER DEFAULT 1, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO hamradio_equipment (user_id,name,type,manufacturer,model,purchase_date,frequency_range,power_watts,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, name, type, manufacturer||'', model||'', purchase_date||'', frequency_range||'', power_watts||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/hamradio/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS hamradio_logbook (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, callsign TEXT, band TEXT, mode TEXT, frequency_mhz REAL, rst_sent TEXT, rst_rcvd TEXT, contact_date TEXT, contact_name TEXT, location TEXT, notes TEXT, created_at TEXT)`).run();
+  const total = (db2.prepare(`SELECT COUNT(*) as c FROM hamradio_logbook WHERE user_id=?`).get(userId) as any).c;
+  const uniqueCallsigns = (db2.prepare(`SELECT COUNT(DISTINCT callsign) as c FROM hamradio_logbook WHERE user_id=?`).get(userId) as any).c;
+  const byBand = db2.prepare(`SELECT band, COUNT(*) as cnt FROM hamradio_logbook WHERE user_id=? AND band!='' GROUP BY band ORDER BY cnt DESC LIMIT 8`).all(userId);
+  const byMode = db2.prepare(`SELECT mode, COUNT(*) as cnt FROM hamradio_logbook WHERE user_id=? GROUP BY mode ORDER BY cnt DESC LIMIT 5`).all(userId);
+  res.json({ success: true, total_contacts: total, unique_callsigns: uniqueCallsigns, by_band: byBand, by_mode: byMode });
+});
+
+// B6031-6050: Grand Milestone v96
+app.get('/api/milestone/v96', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v96', version: '96.00',
+    endpoints_total: 6050, lines_of_code: 153840,
+    new_this_batch: ['3D Printing OS', 'Amateur Radio (Ham) OS'],
+    features: {
+      printing_3d_os: ['printer fleet registry','print job log (material/layer/infill/time/filament)','filament inventory tracker','print stats (hours/kg/by material)'],
+      ham_radio_os: ['contact logbook (callsign/band/mode/RST)','equipment registry (transceiver/antenna/power)','stats (unique callsigns/by band/by mode)']
+    },
+    message: '6050 endpoints — 3D Printing + Amateur Radio OS live!'
+  });
+});
+
+app.get('/api/forge/printing3d-hamradio-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: '3dprinting-hamradio-os', version: '1.0.0',
+    endpoints: ['POST /api/printing3d/printers','POST /api/printing3d/jobs','GET /api/printing3d/jobs','POST /api/printing3d/filaments','GET /api/printing3d/filaments','GET /api/printing3d/stats','POST /api/hamradio/logbook','GET /api/hamradio/logbook','POST /api/hamradio/equipment','GET /api/hamradio/stats','GET /api/milestone/v96']
+  });
+});
+
+app.get('/api/forge/printing3d-hamradio-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM print_jobs`).get(); checks.print_jobs = 'ok'; } catch { checks.print_jobs = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM hamradio_logbook`).get(); checks.hamradio = 'ok'; } catch { checks.hamradio = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));

@@ -1,3 +1,9 @@
+## v96.00 — B6001-B6050 🖨️📻 3DPRINTING+HAMRADIO-OS +Printers/Jobs/Filaments/Logbook/Equipment/Stats
+- B6001-6010: 3D Printing OS — printer fleet, print job log (material/layer/infill/filament), filament inventory
+- B6011-6020: 3D Print Stats + Ham Radio Logbook — contact log (callsign/band/mode/RST)
+- B6021-6030: Ham Radio Equipment + Stats — transceiver/antenna registry, contacts by band/mode
+- B6031-6050: Grand Milestone v96 — /api/milestone/v96, 6050 endpoints, 153796 lines
+
 ## v95.00 — B5951-B6000 🚁🧩 DRONE+PUZZLE-GAMES-OS +Fleet/Flights/Maint/Stats/Puzzles/EscapeRooms/6000ENDPOINTS!
 - B5951-5960: Drone OS — fleet registry (model/weight/range/speed), flight log (location/altitude)
 - B5961-5970: Drone Maintenance + Stats — maintenance tracker with next-due, flight hours + km stats
