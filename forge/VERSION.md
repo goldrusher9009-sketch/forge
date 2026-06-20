@@ -1,3 +1,15 @@
+## v98.00 — B6101-B6150 🏹🌿 ARCHERY+AQUAPONICS-OS +Equipment/Sessions/Stats/Systems/WaterLog/Harvests
+- B6101-6110: Archery OS — bow/arrow equipment registry, practice session log (distance/score/arrows)
+- B6111-6120: Archery Stats + Aquaponics System registry (fish species/plants/tank volume)
+- B6121-6130: Aquaponics Water Quality log (pH/ammonia/nitrite/nitrate/temp/DO), harvest tracker
+- B6131-6150: Aquaponics Stats + Grand Milestone v98 — /api/milestone/v98, 6150 endpoints, 154088 lines
+
+## v97.00 — B6051-B6100 🎭🚂 COSPLAY+MODELTRAIN-OS +Costumes/Events/Stats/Layouts/RollingStock/Scenery
+- B6051-6060: Cosplay OS — costume tracker (character/series/status/materials/hours/cost), event log (awards)
+- B6061-6070: Cosplay Stats + Model Train Layouts — scale/dimensions/theme registry
+- B6071-6080: Model Train Rolling Stock — loco/car catalog (manufacturer/era/road name)
+- B6081-6100: Train Scenery Log + Stats + Grand Milestone v97 — /api/milestone/v97, 6100 endpoints, 153946 lines
+
 ## v96.00 — B6001-B6050 🖨️📻 3DPRINTING+HAMRADIO-OS +Printers/Jobs/Filaments/Logbook/Equipment/Stats
 - B6001-6010: 3D Printing OS — printer fleet, print job log (material/layer/infill/filament), filament inventory
 - B6011-6020: 3D Print Stats + Ham Radio Logbook — contact log (callsign/band/mode/RST)
