@@ -1,3 +1,15 @@
+## v35.00 — B2951-B3000 🎯 B3000-CONNOISSEUR-CREATURE-OS +PetCareOSv2/AquariumOS/ReptileOS/BirdOS/HomebrewingOS/WineOS/CoffeeOSv2/TeaOS/WhiskeyOS/GrandMilestone
+- B2951-2955: Pet Care OS v2 — pets (microchip/insurance/vet/weight), health logs (type/cost/next_due)
+- B2956-2960: Aquarium OS — tanks (volume/type/filtration/CO2), water tests (ph/ammonia/nitrite/nitrate/temp)
+- B2961-2965: Reptile OS — animals (species/morph/sex/last_shed), feeding logs (prey_type/size/accepted)
+- B2966-2970: Bird OS — sightings (life_list/behavior/photo, distinct species count), feeders (type/food_type)
+- B2971-2975: Homebrewing OS — batches (style/OG/FG/ABV/IBU/status), recipes (grain_bill/hops/yeast)
+- B2976-2980: Wine OS — cellar (vintage/varietal/drink_from/drink_by), tastings (nose/palate/finish/pairing)
+- B2981-2985: Coffee OS v2 — brews (dose/yield/time/temp/ratio, full dial-in), beans (roaster/process/roast)
+- B2986-2990: Tea OS — sessions (steep_temp/time/infusions/mood/tasting_notes), collection (vendor/weight)
+- B2991-2995: Whiskey OS — collection (distillery/age/abv/region/vintage), tastings (nose/palate/value)
+- B2996-B3000: 🏆🎉 GRAND MILESTONE v35.00 = 3000 ENDPOINTS! /api/milestone/b3000 — 141008 lines
+
 ## v34.00 — B2901-B2950 🌍 COMMUNITY-PLANET-OS +VolunteerOS/AdvocacyOS/CivicOS/EnvironmentOS/SustainabilityOS/ZeroWasteOS/GardeningOSv2/BeekeepingOS/FarmingOS/GrandMilestone
 - B2901-2905: Volunteer OS — activities (cause/hours/impact/org), organizations (cause/contact/status)
 - B2906-2910: Advocacy OS — campaigns (issue/goal/status/actions_taken), actions (type/target/outcome)
