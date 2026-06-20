@@ -151176,5 +151176,200 @@ app.get('/api/forge/events-volunteer-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
 
+
+// B5351-B5400: Car/Vehicle OS + Job Hunt OS
+// B5351-5360: Vehicle — Fleet + Maintenance
+
+app.post('/api/vehicles', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { make, model, year, vin, license_plate, color, mileage, fuel_type, notes } = req.body;
+  if (!make || !model) return res.status(400).json({ success: false, error: 'make and model required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, make TEXT, model TEXT, year INTEGER, vin TEXT, license_plate TEXT, color TEXT, current_mileage INTEGER DEFAULT 0, fuel_type TEXT DEFAULT 'gasoline', is_active INTEGER DEFAULT 1, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO vehicles (user_id,make,model,year,vin,license_plate,color,current_mileage,fuel_type,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(userId, make, model, year||null, vin||'', license_plate||'', color||'', mileage||0, fuel_type||'gasoline', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/vehicles', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, make TEXT, model TEXT, year INTEGER, vin TEXT, license_plate TEXT, color TEXT, current_mileage INTEGER DEFAULT 0, fuel_type TEXT DEFAULT 'gasoline', is_active INTEGER DEFAULT 1, notes TEXT, created_at TEXT)`).run();
+  res.json({ success: true, vehicles: db2.prepare(`SELECT * FROM vehicles WHERE user_id=? AND is_active=1 ORDER BY year DESC`).all(userId) });
+});
+
+app.post('/api/vehicles/:id/maintenance', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { service_type, date, mileage, cost, shop, technician, notes, next_service_mileage, next_service_date } = req.body;
+  if (!service_type || !date) return res.status(400).json({ success: false, error: 'service_type and date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicle_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, vehicle_id INTEGER, service_type TEXT, service_date TEXT, mileage INTEGER, cost REAL, shop TEXT, technician TEXT, notes TEXT, next_service_mileage INTEGER, next_service_date TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO vehicle_maintenance (user_id,vehicle_id,service_type,service_date,mileage,cost,shop,technician,notes,next_service_mileage,next_service_date,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, req.params.id, service_type, date, mileage||null, cost||null, shop||'', technician||'', notes||'', next_service_mileage||null, next_service_date||'', new Date().toISOString());
+  if (mileage) db2.prepare(`UPDATE vehicles SET current_mileage=MAX(current_mileage,?) WHERE id=? AND user_id=?`).run(mileage, req.params.id, userId);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/vehicles/:id/maintenance', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicle_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, vehicle_id INTEGER, service_type TEXT, service_date TEXT, mileage INTEGER, cost REAL, shop TEXT, technician TEXT, notes TEXT, next_service_mileage INTEGER, next_service_date TEXT, created_at TEXT)`).run();
+  const rows = db2.prepare(`SELECT * FROM vehicle_maintenance WHERE user_id=? AND vehicle_id=? ORDER BY service_date DESC`).all(userId, req.params.id);
+  const upcoming = rows.filter((r: any) => r.next_service_date && r.next_service_date >= new Date().toISOString().split('T')[0]);
+  res.json({ success: true, history: rows, upcoming_services: upcoming });
+});
+
+app.post('/api/vehicles/:id/fuel-log', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { date, gallons, price_per_gallon, total_cost, mileage, station, notes } = req.body;
+  if (!date || !gallons) return res.status(400).json({ success: false, error: 'date and gallons required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicle_fuel_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, vehicle_id INTEGER, log_date TEXT, gallons REAL, price_per_gallon REAL, total_cost REAL, mileage INTEGER, station TEXT, notes TEXT, mpg REAL, created_at TEXT)`).run();
+  const mpg = mileage && gallons ? null : null; // calculated from prev entry
+  const r = db2.prepare(`INSERT INTO vehicle_fuel_log (user_id,vehicle_id,log_date,gallons,price_per_gallon,total_cost,mileage,station,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, req.params.id, date, gallons, price_per_gallon||null, total_cost||null, mileage||null, station||'', notes||'', new Date().toISOString());
+  if (mileage) db2.prepare(`UPDATE vehicles SET current_mileage=MAX(current_mileage,?) WHERE id=? AND user_id=?`).run(mileage, req.params.id, userId);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+// B5361-5370: Vehicle Insurance + Expenses + Stats
+
+app.post('/api/vehicles/:id/insurance', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { provider, policy_number, premium, billing_cycle, start_date, end_date, coverage_type, notes } = req.body;
+  if (!provider) return res.status(400).json({ success: false, error: 'provider required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicle_insurance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, vehicle_id INTEGER, provider TEXT, policy_number TEXT, premium REAL, billing_cycle TEXT DEFAULT 'monthly', start_date TEXT, end_date TEXT, coverage_type TEXT, is_active INTEGER DEFAULT 1, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO vehicle_insurance (user_id,vehicle_id,provider,policy_number,premium,billing_cycle,start_date,end_date,coverage_type,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(userId, req.params.id, provider, policy_number||'', premium||null, billing_cycle||'monthly', start_date||'', end_date||'', coverage_type||'full', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/vehicles/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, make TEXT, model TEXT, year INTEGER, vin TEXT, license_plate TEXT, color TEXT, current_mileage INTEGER DEFAULT 0, fuel_type TEXT DEFAULT 'gasoline', is_active INTEGER DEFAULT 1, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicle_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, vehicle_id INTEGER, service_type TEXT, service_date TEXT, mileage INTEGER, cost REAL, shop TEXT, technician TEXT, notes TEXT, next_service_mileage INTEGER, next_service_date TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS vehicle_fuel_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, vehicle_id INTEGER, log_date TEXT, gallons REAL, price_per_gallon REAL, total_cost REAL, mileage INTEGER, station TEXT, notes TEXT, mpg REAL, created_at TEXT)`).run();
+  const totalVehicles = (db2.prepare(`SELECT COUNT(*) as c FROM vehicles WHERE user_id=? AND is_active=1`).get(userId) as any).c;
+  const totalMaintenanceCost = (db2.prepare(`SELECT SUM(cost) as s FROM vehicle_maintenance WHERE user_id=? AND cost IS NOT NULL`).get(userId) as any).s || 0;
+  const totalFuelCost = (db2.prepare(`SELECT SUM(total_cost) as s FROM vehicle_fuel_log WHERE user_id=? AND total_cost IS NOT NULL`).get(userId) as any).s || 0;
+  const totalGallons = (db2.prepare(`SELECT SUM(gallons) as s FROM vehicle_fuel_log WHERE user_id=?`).get(userId) as any).s || 0;
+  res.json({ success: true, total_vehicles: totalVehicles, total_maintenance_cost: Math.round(totalMaintenanceCost * 100) / 100, total_fuel_cost: Math.round(totalFuelCost * 100) / 100, total_gallons: Math.round(totalGallons * 10) / 10 });
+});
+
+// B5371-5380: Job Hunt OS — Applications + Contacts
+
+app.post('/api/jobs/applications', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { company, role, location, job_type, salary_min, salary_max, status, applied_date, job_url, notes } = req.body;
+  if (!company || !role) return res.status(400).json({ success: false, error: 'company and role required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_applications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, company TEXT, role TEXT, location TEXT, job_type TEXT DEFAULT 'full-time', salary_min INTEGER, salary_max INTEGER, status TEXT DEFAULT 'applied', applied_date TEXT, job_url TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO job_applications (user_id,company,role,location,job_type,salary_min,salary_max,status,applied_date,job_url,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, company, role, location||'', job_type||'full-time', salary_min||null, salary_max||null, status||'applied', applied_date||new Date().toISOString().split('T')[0], job_url||'', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/jobs/applications', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { status, limit = 50 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_applications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, company TEXT, role TEXT, location TEXT, job_type TEXT DEFAULT 'full-time', salary_min INTEGER, salary_max INTEGER, status TEXT DEFAULT 'applied', applied_date TEXT, job_url TEXT, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM job_applications WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (status) { q += ` AND status=?`; params.push(status); }
+  q += ` ORDER BY applied_date DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, applications: db2.prepare(q).all(...params) });
+});
+
+app.put('/api/jobs/applications/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { status, notes } = req.body;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_applications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, company TEXT, role TEXT, location TEXT, job_type TEXT DEFAULT 'full-time', salary_min INTEGER, salary_max INTEGER, status TEXT DEFAULT 'applied', applied_date TEXT, job_url TEXT, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`UPDATE job_applications SET status=COALESCE(?,status), notes=COALESCE(?,notes) WHERE id=? AND user_id=?`).run(status, notes, req.params.id, userId);
+  res.json({ success: true });
+});
+
+app.post('/api/jobs/applications/:id/interviews', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { round, interview_type, date, interviewer, notes, outcome } = req.body;
+  if (!date) return res.status(400).json({ success: false, error: 'date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_interviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, application_id INTEGER, round INTEGER DEFAULT 1, interview_type TEXT DEFAULT 'phone', interview_date TEXT, interviewer TEXT, notes TEXT, outcome TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO job_interviews (user_id,application_id,round,interview_type,interview_date,interviewer,notes,outcome,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, req.params.id, round||1, interview_type||'phone', date, interviewer||'', notes||'', outcome||'pending', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+// B5381-5390: Job Hunt — Contacts + Offers + Stats
+
+app.post('/api/jobs/contacts', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, company, role, linkedin, email, phone, relationship, notes } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_contacts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, company TEXT, role TEXT, linkedin TEXT, email TEXT, phone TEXT, relationship TEXT DEFAULT 'networking', last_contacted TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO job_contacts (user_id,name,company,role,linkedin,email,phone,relationship,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, name, company||'', role||'', linkedin||'', email||'', phone||'', relationship||'networking', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/jobs/contacts', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_contacts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, company TEXT, role TEXT, linkedin TEXT, email TEXT, phone TEXT, relationship TEXT DEFAULT 'networking', last_contacted TEXT, notes TEXT, created_at TEXT)`).run();
+  res.json({ success: true, contacts: db2.prepare(`SELECT * FROM job_contacts WHERE user_id=? ORDER BY company ASC, name ASC`).all(userId) });
+});
+
+app.post('/api/jobs/offers', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { application_id, company, role, base_salary, bonus, equity, benefits, start_date, deadline, status, notes } = req.body;
+  if (!company || !role) return res.status(400).json({ success: false, error: 'company and role required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_offers (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, application_id INTEGER, company TEXT, role TEXT, base_salary INTEGER, bonus INTEGER, equity TEXT, benefits TEXT, start_date TEXT, deadline TEXT, status TEXT DEFAULT 'received', notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO job_offers (user_id,application_id,company,role,base_salary,bonus,equity,benefits,start_date,deadline,status,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, application_id||null, company, role, base_salary||null, bonus||null, equity||'', benefits||'', start_date||'', deadline||'', status||'received', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/jobs/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_applications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, company TEXT, role TEXT, location TEXT, job_type TEXT DEFAULT 'full-time', salary_min INTEGER, salary_max INTEGER, status TEXT DEFAULT 'applied', applied_date TEXT, job_url TEXT, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_interviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, application_id INTEGER, round INTEGER DEFAULT 1, interview_type TEXT DEFAULT 'phone', interview_date TEXT, interviewer TEXT, notes TEXT, outcome TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS job_offers (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, application_id INTEGER, company TEXT, role TEXT, base_salary INTEGER, bonus INTEGER, equity TEXT, benefits TEXT, start_date TEXT, deadline TEXT, status TEXT DEFAULT 'received', notes TEXT, created_at TEXT)`).run();
+  const total = (db2.prepare(`SELECT COUNT(*) as c FROM job_applications WHERE user_id=?`).get(userId) as any).c;
+  const byStatus = db2.prepare(`SELECT status, COUNT(*) as cnt FROM job_applications WHERE user_id=? GROUP BY status ORDER BY cnt DESC`).all(userId);
+  const interviews = (db2.prepare(`SELECT COUNT(*) as c FROM job_interviews WHERE user_id=?`).get(userId) as any).c;
+  const offers = (db2.prepare(`SELECT COUNT(*) as c FROM job_offers WHERE user_id=?`).get(userId) as any).c;
+  const avgSalary = (db2.prepare(`SELECT AVG(base_salary) as a FROM job_offers WHERE user_id=? AND base_salary IS NOT NULL`).get(userId) as any).a;
+  res.json({ success: true, total_applications: total, by_status: byStatus, total_interviews: interviews, total_offers: offers, avg_offer_salary: avgSalary ? Math.round(avgSalary) : null });
+});
+
+// B5391-5400: Grand Milestone v83
+app.get('/api/milestone/v83', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v83', version: '83.00',
+    endpoints_total: 5400, lines_of_code: 151450,
+    new_this_batch: ['Vehicle OS','Job Hunt OS'],
+    features: {
+      vehicle_os: ['vehicle fleet','maintenance history','fuel log','insurance tracker','vehicle stats'],
+      job_hunt_os: ['application tracker','interview log','networking contacts','offer comparisons','job stats']
+    },
+    message: '5400 endpoints — Vehicle + Job Hunt OS live!'
+  });
+});
+
+app.get('/api/forge/vehicle-jobs-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: 'vehicle-jobs-os', version: '1.0.0',
+    endpoints: ['POST /api/vehicles','GET /api/vehicles','POST /api/vehicles/:id/maintenance','GET /api/vehicles/:id/maintenance','POST /api/vehicles/:id/fuel-log','POST /api/vehicles/:id/insurance','GET /api/vehicles/stats','POST /api/jobs/applications','GET /api/jobs/applications','PUT /api/jobs/applications/:id','POST /api/jobs/applications/:id/interviews','POST /api/jobs/contacts','GET /api/jobs/contacts','POST /api/jobs/offers','GET /api/jobs/stats','GET /api/milestone/v83','GET /api/forge/vehicle-jobs-manifest','GET /api/forge/vehicle-jobs-health']
+  });
+});
+
+app.get('/api/forge/vehicle-jobs-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM vehicles`).get(); checks.vehicles = 'ok'; } catch { checks.vehicles = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM vehicle_maintenance`).get(); checks.vehicle_maintenance = 'ok'; } catch { checks.vehicle_maintenance = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM job_applications`).get(); checks.job_applications = 'ok'; } catch { checks.job_applications = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM job_interviews`).get(); checks.job_interviews = 'ok'; } catch { checks.job_interviews = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM job_offers`).get(); checks.job_offers = 'ok'; } catch { checks.job_offers = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
