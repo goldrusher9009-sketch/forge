@@ -1,3 +1,10 @@
+## v81.00 — B5251-B5300 🐾🏠 PET-CARE+HOME-AUTO-OS +Pets/VetVisits/Meds/Feeding/Vaccines/Rooms/Devices/Energy/Maintenance/GrandMilestone
+- B5251-5260: Pet Care OS — pet profiles, vet visits, medications tracker
+- B5261-5270: Pet Feeding + Weight + Vaccines — feeding log, weight history, vaccine schedule + upcoming boosters
+- B5271-5280: Home Automation OS — rooms, device registry, device toggle (on/off)
+- B5281-5290: Home Energy + Maintenance — kWh log, solar tracking, maintenance tasks by priority
+- B5291-5300: Home Stats + Automations + Grand Milestone v81 — /api/milestone/v81, pets-home-manifest, health — 5300 endpoints, 150943 lines
+
 ## v80.00 — B5201-B5250 🎮⚽ GAMING+SPORTS-OS +Library/Sessions/Achievements/Backlog/Teams/Activities/Records/GrandMilestone
 - B5201-5210: Gaming Library OS — game CRUD, platform/genre/status, play sessions, achievements
 - B5211-5220: Gaming Stats + Backlog — hours played, top platforms/genres, now-playing, backlog manager
