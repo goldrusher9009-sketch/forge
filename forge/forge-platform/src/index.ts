@@ -129394,8 +129394,587 @@ app.get('/api/emotional/intelligence/os', requireAuth, (req: any, res: any) => {
     const reg_sessions = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM emotional_regulation_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
     const avg_reduction = safe(()=>{ const r=db.prepare(`SELECT AVG(intensity_before-intensity_after) as a FROM emotional_regulation_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
     const reframes = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM mindset_reframe_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
-    const eq_score = parseFloat(Math.min(10, Math.max(1, (avg_joy - avg_anxiety*0.5 - avg_anger*0.3 + reg_sessions*0.2 + reframes*0.1 + 5)).toFixed(1));
+    const eq_raw = Math.min(10, Math.max(1, avg_joy - avg_anxiety*0.5 - avg_anger*0.3 + reg_sessions*0.2 + reframes*0.1 + 5));
+    const eq_score = parseFloat(eq_raw.toFixed(1));
     res.json({ success: true, milestone: 'B2075 — Emotional Intelligence OS', anger: { episodes_30d: anger_30d, avg_intensity: avg_anger }, anxiety: { episodes_30d: anxiety_30d, avg_level: avg_anxiety }, joy: { moments_30d: joy_30d, avg_intensity: avg_joy }, regulation: { sessions_30d: reg_sessions, avg_intensity_reduction: avg_reduction }, mindset_reframes_30d: reframes, eq_score });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2076: Conflict Resolution Log ──────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS conflict_resolution_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    conflict_with TEXT NOT NULL,
+    relationship_type TEXT DEFAULT 'work',
+    conflict_topic TEXT NOT NULL,
+    my_role TEXT DEFAULT 'participant',
+    intensity INTEGER DEFAULT 6,
+    approach_used TEXT DEFAULT 'compromise',
+    outcome TEXT DEFAULT 'resolved',
+    resolution TEXT,
+    lesson TEXT,
+    relationship_impact INTEGER DEFAULT 0,
+    would_do_differently TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/conflict/resolution', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM conflict_resolution_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const by_outcome = db.prepare(`SELECT outcome, COUNT(*) as count FROM conflict_resolution_log WHERE user_id=? GROUP BY outcome`).all(uid);
+    const resolved_pct = (entries as any[]).length>0?parseFloat(((entries as any[]).filter((e:any)=>e.outcome==='resolved').length/(entries as any[]).length*100).toFixed(1)):0;
+    res.json({ success: true, entries, by_outcome, resolved_pct, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/conflict/resolution', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, conflict_with, relationship_type='work', conflict_topic, my_role='participant', intensity=6, approach_used='compromise', outcome='resolved', resolution, lesson, relationship_impact=0, would_do_differently, notes } = req.body;
+    if (!conflict_with||!conflict_topic) return res.status(400).json({ success: false, error: 'conflict_with, conflict_topic required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO conflict_resolution_log (user_id,log_date,conflict_with,relationship_type,conflict_topic,my_role,intensity,approach_used,outcome,resolution,lesson,relationship_impact,would_do_differently,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,conflict_with,relationship_type,conflict_topic,my_role,intensity,approach_used,outcome,resolution,lesson,relationship_impact,would_do_differently,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2077: Empathy Practice Log ─────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS empathy_practice_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    person TEXT NOT NULL,
+    situation TEXT NOT NULL,
+    their_perspective TEXT,
+    emotions_identified TEXT,
+    my_initial_reaction TEXT,
+    reframe TEXT,
+    action_taken TEXT,
+    empathy_score INTEGER DEFAULT 7,
+    outcome TEXT,
+    lesson TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/empathy/practice', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM empathy_practice_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const avg_empathy = (entries as any[]).length>0?parseFloat(((entries as any[]).reduce((a:number,e:any)=>a+e.empathy_score,0)/(entries as any[]).length).toFixed(1)):0;
+    res.json({ success: true, entries, avg_empathy_score: avg_empathy, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/empathy/practice', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, person, situation, their_perspective, emotions_identified, my_initial_reaction, reframe, action_taken, empathy_score=7, outcome, lesson, notes } = req.body;
+    if (!person||!situation) return res.status(400).json({ success: false, error: 'person, situation required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO empathy_practice_log (user_id,log_date,person,situation,their_perspective,emotions_identified,my_initial_reaction,reframe,action_taken,empathy_score,outcome,lesson,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,person,situation,their_perspective,emotions_identified,my_initial_reaction,reframe,action_taken,empathy_score,outcome,lesson,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2078: Social Energy Tracker ────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS social_energy_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    interaction_type TEXT DEFAULT 'social_gathering',
+    people_count INTEGER DEFAULT 5,
+    duration_hrs REAL DEFAULT 2,
+    energy_before INTEGER DEFAULT 7,
+    energy_after INTEGER DEFAULT 5,
+    enjoyment INTEGER DEFAULT 7,
+    introvert_score INTEGER DEFAULT 5,
+    drained INTEGER DEFAULT 0,
+    recharged INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/social/energy', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM social_energy_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid) as any[];
+    entries.forEach(e=>{ e.energy_delta=e.energy_after-e.energy_before; });
+    const draining = entries.filter(e=>e.energy_delta<0);
+    const recharging = entries.filter(e=>e.energy_delta>0);
+    const by_type = db.prepare(`SELECT interaction_type, COUNT(*) as count, AVG(energy_after-energy_before) as avg_delta FROM social_energy_log WHERE user_id=? GROUP BY interaction_type ORDER BY avg_delta DESC`).all(uid) as any[];
+    by_type.forEach(t=>t.avg_delta=parseFloat(t.avg_delta.toFixed(1)));
+    res.json({ success: true, entries, draining_count: draining.length, recharging_count: recharging.length, by_type });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/social/energy', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, interaction_type='social_gathering', people_count=5, duration_hrs=2, energy_before=7, energy_after=5, enjoyment=7, introvert_score=5, notes } = req.body;
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const drained = energy_after<energy_before?1:0;
+    const recharged = energy_after>energy_before?1:0;
+    const r = db.prepare(`INSERT INTO social_energy_log (user_id,log_date,interaction_type,people_count,duration_hrs,energy_before,energy_after,enjoyment,introvert_score,drained,recharged,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,interaction_type,people_count,duration_hrs,energy_before,energy_after,enjoyment,introvert_score,drained,recharged,notes);
+    res.json({ success: true, id: r.lastInsertRowid, energy_delta: energy_after-energy_before });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2079: Boundaries Log ────────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS boundaries_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    boundary_type TEXT DEFAULT 'time',
+    with_whom TEXT NOT NULL,
+    situation TEXT NOT NULL,
+    boundary_set TEXT NOT NULL,
+    held INTEGER DEFAULT 1,
+    guilt_level INTEGER DEFAULT 3,
+    confidence_level INTEGER DEFAULT 7,
+    outcome TEXT DEFAULT 'respected',
+    lesson TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/boundaries/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM boundaries_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const held_pct = (entries as any[]).length>0?parseFloat(((entries as any[]).filter((e:any)=>e.held).length/(entries as any[]).length*100).toFixed(1)):0;
+    const avg_confidence = (entries as any[]).length>0?parseFloat(((entries as any[]).reduce((a:number,e:any)=>a+e.confidence_level,0)/(entries as any[]).length).toFixed(1)):0;
+    const by_type = db.prepare(`SELECT boundary_type, COUNT(*) as count, AVG(held) as hold_rate FROM boundaries_log WHERE user_id=? GROUP BY boundary_type`).all(uid) as any[];
+    by_type.forEach(t=>t.hold_rate=parseFloat((t.hold_rate*100).toFixed(1)));
+    res.json({ success: true, entries, held_pct, avg_confidence, by_type, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/boundaries/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, boundary_type='time', with_whom, situation, boundary_set, held=1, guilt_level=3, confidence_level=7, outcome='respected', lesson, notes } = req.body;
+    if (!with_whom||!situation||!boundary_set) return res.status(400).json({ success: false, error: 'with_whom, situation, boundary_set required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO boundaries_log (user_id,log_date,boundary_type,with_whom,situation,boundary_set,held,guilt_level,confidence_level,outcome,lesson,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,boundary_type,with_whom,situation,boundary_set,held,guilt_level,confidence_level,outcome,lesson,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2080: MILESTONE — Relationships & Social OS ────────────────────────────
+app.get('/api/relationships/social/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const conflicts_resolved = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM conflict_resolution_log WHERE user_id=? AND outcome='resolved'`).get(uid) as any)?.c||0);
+    const empathy_sessions = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM empathy_practice_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const avg_empathy = safe(()=>{ const r=db.prepare(`SELECT AVG(empathy_score) as a FROM empathy_practice_log WHERE user_id=?`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const social_draining = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM social_energy_log WHERE user_id=? AND drained=1 AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    const social_recharging = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM social_energy_log WHERE user_id=? AND recharged=1 AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    const boundaries_held = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM boundaries_log WHERE user_id=? AND held=1`).get(uid) as any)?.c||0);
+    const boundaries_total = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM boundaries_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const network_size = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM networking_tracker WHERE user_id=?`).get(uid) as any)?.c||0);
+    const rel_milestones = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM relationship_milestone_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    res.json({ success: true, milestone: 'B2080 — Relationships & Social OS', conflict: { resolved: conflicts_resolved }, empathy: { sessions: empathy_sessions, avg_score: avg_empathy }, social_energy: { draining_30d: social_draining, recharging_30d: social_recharging }, boundaries: { set: boundaries_total, held: boundaries_held, hold_pct: boundaries_total>0?parseFloat((boundaries_held/boundaries_total*100).toFixed(1)):0 }, network: { size: network_size, milestones: rel_milestones } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2081: Creative Project Log ─────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS creative_project_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    project_name TEXT NOT NULL,
+    category TEXT DEFAULT 'art',
+    description TEXT,
+    status TEXT DEFAULT 'in_progress',
+    start_date TEXT,
+    target_date TEXT,
+    completed_date TEXT,
+    hours_invested REAL DEFAULT 0,
+    satisfaction INTEGER DEFAULT 7,
+    public_share INTEGER DEFAULT 0,
+    revenue REAL DEFAULT 0,
+    lessons TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/creative/projects', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { status } = req.query;
+    let q = `SELECT * FROM creative_project_log WHERE user_id=?`;
+    const params: any[] = [uid];
+    if (status) { q += ` AND status=?`; params.push(status); }
+    q += ` ORDER BY created_at DESC`;
+    const projects = db.prepare(q).all(...params);
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count, SUM(hours_invested) as total_hours FROM creative_project_log WHERE user_id=? GROUP BY category`).all(uid) as any[];
+    by_category.forEach(c=>c.total_hours=parseFloat((c.total_hours||0).toFixed(1)));
+    const completed = (projects as any[]).filter(p=>p.status==='completed');
+    res.json({ success: true, projects, by_category, completed_count: completed.length, total_hours: parseFloat((projects as any[]).reduce((a:number,p:any)=>a+p.hours_invested,0).toFixed(1)) });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/creative/projects', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { project_name, category='art', description, status='in_progress', start_date, target_date, completed_date, hours_invested=0, satisfaction=7, public_share=0, revenue=0, lessons, notes } = req.body;
+    if (!project_name) return res.status(400).json({ success: false, error: 'project_name required' });
+    const r = db.prepare(`INSERT INTO creative_project_log (user_id,project_name,category,description,status,start_date,target_date,completed_date,hours_invested,satisfaction,public_share,revenue,lessons,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,project_name,category,description,status,start_date,target_date,completed_date,hours_invested,satisfaction,public_share,revenue,lessons,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2082: Skill Learning Tracker ───────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS skill_learning_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    skill_name TEXT NOT NULL,
+    category TEXT DEFAULT 'technical',
+    current_level INTEGER DEFAULT 1,
+    target_level INTEGER DEFAULT 10,
+    hours_practiced REAL DEFAULT 0,
+    resources_used TEXT,
+    last_practice TEXT,
+    next_milestone TEXT,
+    status TEXT DEFAULT 'active',
+    monetizable INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, skill_name)
+  )`);
+} catch(e) {}
+
+app.get('/api/skill/learning', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const skills = db.prepare(`SELECT * FROM skill_learning_log WHERE user_id=? ORDER BY updated_at DESC`).all(uid) as any[];
+    skills.forEach(s=>s.progress_pct=parseFloat(((s.current_level/s.target_level)*100).toFixed(1)));
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count, SUM(hours_practiced) as total_hours FROM skill_learning_log WHERE user_id=? GROUP BY category`).all(uid) as any[];
+    by_category.forEach(c=>c.total_hours=parseFloat((c.total_hours||0).toFixed(1)));
+    res.json({ success: true, skills, by_category, total_skills: skills.length, total_hours: parseFloat(skills.reduce((a,s)=>a+s.hours_practiced,0).toFixed(1)) });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/skill/learning', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { skill_name, category='technical', current_level=1, target_level=10, hours_practiced=0, resources_used, last_practice, next_milestone, status='active', monetizable=0, notes } = req.body;
+    if (!skill_name) return res.status(400).json({ success: false, error: 'skill_name required' });
+    const r = db.prepare(`INSERT INTO skill_learning_log (user_id,skill_name,category,current_level,target_level,hours_practiced,resources_used,last_practice,next_milestone,status,monetizable,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id,skill_name) DO UPDATE SET current_level=excluded.current_level, hours_practiced=hours_practiced+excluded.hours_practiced, last_practice=excluded.last_practice, updated_at=datetime('now')`).run(uid,skill_name,category,current_level,target_level,hours_practiced,resources_used,last_practice,next_milestone,status,monetizable,notes);
+    res.json({ success: true, id: r.lastInsertRowid||'updated' });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2083: Book/Content Insights ────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS content_insights_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    author TEXT,
+    content_type TEXT DEFAULT 'book',
+    date_consumed TEXT DEFAULT (date('now')),
+    rating INTEGER DEFAULT 8,
+    top_insight TEXT,
+    key_quotes TEXT,
+    action_items TEXT,
+    applied INTEGER DEFAULT 0,
+    recommended_to TEXT,
+    category TEXT DEFAULT 'self_development',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/content/insights', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { type } = req.query;
+    let q = `SELECT * FROM content_insights_log WHERE user_id=?`;
+    const params: any[] = [uid];
+    if (type) { q += ` AND content_type=?`; params.push(type); }
+    q += ` ORDER BY date_consumed DESC LIMIT 50`;
+    const items = db.prepare(q).all(...params);
+    const avg_rating = (items as any[]).length>0?parseFloat(((items as any[]).reduce((a:number,i:any)=>a+i.rating,0)/(items as any[]).length).toFixed(1)):0;
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count FROM content_insights_log WHERE user_id=? GROUP BY category ORDER BY count DESC`).all(uid);
+    res.json({ success: true, items, avg_rating, by_category, total: (items as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/content/insights', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { title, author, content_type='book', date_consumed, rating=8, top_insight, key_quotes, action_items, applied=0, recommended_to, category='self_development', notes } = req.body;
+    if (!title) return res.status(400).json({ success: false, error: 'title required' });
+    const today = date_consumed||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO content_insights_log (user_id,title,author,content_type,date_consumed,rating,top_insight,key_quotes,action_items,applied,recommended_to,category,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,title,author,content_type,today,rating,top_insight,key_quotes,action_items,applied,recommended_to,category,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2084: Travel & Experience Log ──────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS travel_experience_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    destination TEXT NOT NULL,
+    country TEXT,
+    trip_type TEXT DEFAULT 'leisure',
+    start_date TEXT NOT NULL,
+    end_date TEXT,
+    days INTEGER DEFAULT 1,
+    cost REAL DEFAULT 0,
+    rating INTEGER DEFAULT 8,
+    highlight TEXT,
+    people TEXT,
+    new_experiences TEXT,
+    would_return INTEGER DEFAULT 1,
+    photos_link TEXT,
+    memories TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/travel/experiences', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const trips = db.prepare(`SELECT * FROM travel_experience_log WHERE user_id=? ORDER BY start_date DESC`).all(uid) as any[];
+    const countries = [...new Set(trips.map((t:any)=>t.country).filter(Boolean))];
+    const total_days = trips.reduce((a:number,t:any)=>a+(t.days||0),0);
+    const total_spent = parseFloat(trips.reduce((a:number,t:any)=>a+(t.cost||0),0).toFixed(2));
+    const by_type = db.prepare(`SELECT trip_type, COUNT(*) as count FROM travel_experience_log WHERE user_id=? GROUP BY trip_type`).all(uid);
+    res.json({ success: true, trips, countries_visited: countries.length, countries, total_days, total_spent, total_trips: trips.length, by_type });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/travel/experiences', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { destination, country, trip_type='leisure', start_date, end_date, days=1, cost=0, rating=8, highlight, people, new_experiences, would_return=1, photos_link, memories, notes } = req.body;
+    if (!destination||!start_date) return res.status(400).json({ success: false, error: 'destination, start_date required' });
+    const r = db.prepare(`INSERT INTO travel_experience_log (user_id,destination,country,trip_type,start_date,end_date,days,cost,rating,highlight,people,new_experiences,would_return,photos_link,memories,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,destination,country,trip_type,start_date,end_date,days,cost,rating,highlight,people,new_experiences,would_return,photos_link,memories,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2085: MILESTONE — Creativity & Growth OS ───────────────────────────────
+app.get('/api/creativity/growth/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const creative_projects = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM creative_project_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const completed_projects = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM creative_project_log WHERE user_id=? AND status='completed'`).get(uid) as any)?.c||0);
+    const skills_tracked = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM skill_learning_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const total_skill_hours = safe(()=>{ const r=db.prepare(`SELECT SUM(hours_practiced) as s FROM skill_learning_log WHERE user_id=?`).get(uid) as any; return r?.s?parseFloat(r.s.toFixed(1)):0; });
+    const books_consumed = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM content_insights_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const avg_rating = safe(()=>{ const r=db.prepare(`SELECT AVG(rating) as a FROM content_insights_log WHERE user_id=?`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const trips = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM travel_experience_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const countries = safe(()=>(db.prepare(`SELECT COUNT(DISTINCT country) as c FROM travel_experience_log WHERE user_id=? AND country IS NOT NULL`).get(uid) as any)?.c||0);
+    res.json({ success: true, milestone: 'B2085 — Creativity & Growth OS', creative: { projects: creative_projects, completed: completed_projects, completion_rate: creative_projects>0?parseFloat((completed_projects/creative_projects*100).toFixed(1)):0 }, learning: { skills: skills_tracked, total_hours: total_skill_hours }, content: { consumed: books_consumed, avg_rating }, travel: { trips, countries } });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2086: Daily Wins Log ────────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS daily_wins_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    win_1 TEXT NOT NULL,
+    win_2 TEXT,
+    win_3 TEXT,
+    biggest_win TEXT NOT NULL,
+    win_category TEXT DEFAULT 'personal',
+    impact_score INTEGER DEFAULT 7,
+    mood INTEGER DEFAULT 7,
+    gratitude TEXT,
+    tomorrow_intention TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/daily/wins', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { days=30 } = req.query;
+    const entries = db.prepare(`SELECT * FROM daily_wins_log WHERE user_id=? AND log_date>=date('now','-${parseInt(days as string)}days') ORDER BY log_date DESC`).all(uid);
+    const streak = (() => { let s=0; const today=new Date(); for(let i=0;i<30;i++){const d=new Date(today);d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);if((entries as any[]).find((e:any)=>e.log_date===ds))s++;else break;} return s; })();
+    const avg_mood = (entries as any[]).length>0?parseFloat(((entries as any[]).reduce((a:number,e:any)=>a+e.mood,0)/(entries as any[]).length).toFixed(1)):0;
+    res.json({ success: true, entries, streak, avg_mood, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/daily/wins', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, win_1, win_2, win_3, biggest_win, win_category='personal', impact_score=7, mood=7, gratitude, tomorrow_intention, notes } = req.body;
+    if (!win_1||!biggest_win) return res.status(400).json({ success: false, error: 'win_1, biggest_win required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO daily_wins_log (user_id,log_date,win_1,win_2,win_3,biggest_win,win_category,impact_score,mood,gratitude,tomorrow_intention,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,win_1,win_2,win_3,biggest_win,win_category,impact_score,mood,gratitude,tomorrow_intention,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2087: Failure & Lesson Log ─────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS failure_lessons_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    failure_description TEXT NOT NULL,
+    category TEXT DEFAULT 'business',
+    root_cause TEXT,
+    what_i_tried TEXT,
+    lesson TEXT NOT NULL,
+    action_to_prevent TEXT,
+    cost REAL DEFAULT 0,
+    emotional_impact INTEGER DEFAULT 5,
+    growth_score INTEGER DEFAULT 7,
+    reframed TEXT,
+    applied_lesson INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/failure/lessons', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM failure_lessons_log WHERE user_id=? ORDER BY log_date DESC LIMIT 50`).all(uid);
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count, AVG(growth_score) as avg_growth FROM failure_lessons_log WHERE user_id=? GROUP BY category`).all(uid) as any[];
+    by_category.forEach(c=>c.avg_growth=parseFloat((c.avg_growth||0).toFixed(1)));
+    const avg_growth = (entries as any[]).length>0?parseFloat(((entries as any[]).reduce((a:number,e:any)=>a+e.growth_score,0)/(entries as any[]).length).toFixed(1)):0;
+    res.json({ success: true, entries, by_category, avg_growth_score: avg_growth, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/failure/lessons', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, failure_description, category='business', root_cause, what_i_tried, lesson, action_to_prevent, cost=0, emotional_impact=5, growth_score=7, reframed, applied_lesson=0, notes } = req.body;
+    if (!failure_description||!lesson) return res.status(400).json({ success: false, error: 'failure_description, lesson required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO failure_lessons_log (user_id,log_date,failure_description,category,root_cause,what_i_tried,lesson,action_to_prevent,cost,emotional_impact,growth_score,reframed,applied_lesson,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,failure_description,category,root_cause,what_i_tried,lesson,action_to_prevent,cost,emotional_impact,growth_score,reframed,applied_lesson,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2088: Mindset & Belief Tracker ─────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS mindset_beliefs_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    limiting_belief TEXT NOT NULL,
+    area TEXT DEFAULT 'money',
+    strength INTEGER DEFAULT 7,
+    origin TEXT,
+    counter_evidence TEXT,
+    empowering_replacement TEXT,
+    affirmation TEXT,
+    practiced_days INTEGER DEFAULT 0,
+    strength_after INTEGER DEFAULT 5,
+    status TEXT DEFAULT 'working_on',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/mindset/beliefs', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const beliefs = db.prepare(`SELECT * FROM mindset_beliefs_log WHERE user_id=? ORDER BY log_date DESC`).all(uid) as any[];
+    beliefs.forEach(b=>b.reduction=b.strength-b.strength_after);
+    const by_area = db.prepare(`SELECT area, COUNT(*) as count, AVG(strength) as avg_strength FROM mindset_beliefs_log WHERE user_id=? GROUP BY area`).all(uid) as any[];
+    by_area.forEach(a=>a.avg_strength=parseFloat((a.avg_strength||0).toFixed(1)));
+    res.json({ success: true, beliefs, by_area, total: beliefs.length, resolved_count: beliefs.filter(b=>b.status==='resolved').length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/mindset/beliefs', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, limiting_belief, area='money', strength=7, origin, counter_evidence, empowering_replacement, affirmation, practiced_days=0, strength_after=5, status='working_on', notes } = req.body;
+    if (!limiting_belief) return res.status(400).json({ success: false, error: 'limiting_belief required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO mindset_beliefs_log (user_id,log_date,limiting_belief,area,strength,origin,counter_evidence,empowering_replacement,affirmation,practiced_days,strength_after,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,limiting_belief,area,strength,origin,counter_evidence,empowering_replacement,affirmation,practiced_days,strength_after,status,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2089: Mentorship & Coaching Log ────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS mentorship_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    mentor_name TEXT NOT NULL,
+    relationship_type TEXT DEFAULT 'mentor',
+    topic TEXT NOT NULL,
+    key_advice TEXT NOT NULL,
+    action_item TEXT,
+    follow_up_date TEXT,
+    implemented INTEGER DEFAULT 0,
+    impact_score INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/mentorship/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM mentorship_log WHERE user_id=? ORDER BY log_date DESC LIMIT 50`).all(uid);
+    const by_mentor = db.prepare(`SELECT mentor_name, COUNT(*) as sessions, AVG(impact_score) as avg_impact FROM mentorship_log WHERE user_id=? GROUP BY mentor_name ORDER BY sessions DESC`).all(uid) as any[];
+    by_mentor.forEach(m=>m.avg_impact=parseFloat((m.avg_impact||0).toFixed(1)));
+    const implemented_pct = (entries as any[]).length>0?parseFloat(((entries as any[]).filter((e:any)=>e.implemented).length/(entries as any[]).length*100).toFixed(1)):0;
+    res.json({ success: true, entries, by_mentor, implemented_pct, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/mentorship/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, mentor_name, relationship_type='mentor', topic, key_advice, action_item, follow_up_date, implemented=0, impact_score=0, notes } = req.body;
+    if (!mentor_name||!topic||!key_advice) return res.status(400).json({ success: false, error: 'mentor_name, topic, key_advice required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO mentorship_log (user_id,log_date,mentor_name,relationship_type,topic,key_advice,action_item,follow_up_date,implemented,impact_score,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,mentor_name,relationship_type,topic,key_advice,action_item,follow_up_date,implemented,impact_score,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2090: MILESTONE — Personal Mastery OS ──────────────────────────────────
+app.get('/api/personal/mastery/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const wins_streak = safe(()=>{ const entries=db.prepare(`SELECT log_date FROM daily_wins_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid) as any[]; let s=0; const today=new Date(); for(let i=0;i<30;i++){const d=new Date(today);d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);if(entries.find((e:any)=>e.log_date===ds))s++;else break;} return s; });
+    const failures_logged = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM failure_lessons_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const avg_growth = safe(()=>{ const r=db.prepare(`SELECT AVG(growth_score) as a FROM failure_lessons_log WHERE user_id=?`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const beliefs_resolved = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM mindset_beliefs_log WHERE user_id=? AND status='resolved'`).get(uid) as any)?.c||0);
+    const beliefs_total = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM mindset_beliefs_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const mentor_sessions = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM mentorship_log WHERE user_id=?`).get(uid) as any)?.c||0);
+    const advice_implemented = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM mentorship_log WHERE user_id=? AND implemented=1`).get(uid) as any)?.c||0);
+    res.json({ success: true, milestone: 'B2090 — Personal Mastery OS', wins: { streak: wins_streak }, failures: { logged: failures_logged, avg_growth_score: avg_growth }, mindset: { limiting_beliefs: beliefs_total, resolved: beliefs_resolved }, mentorship: { sessions: mentor_sessions, advice_implemented: advice_implemented } });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
