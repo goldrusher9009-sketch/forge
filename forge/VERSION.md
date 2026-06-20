@@ -1,3 +1,15 @@
+## v37.00 — B3051-B3100 🔨 HANDCRAFT-TEXTILE-OS +WoodworkingOS/MetalworkingOS/LeatherOS/KnittingOS/CrochetOS/QuiltingOS/CrossStitchOS/PrintmakingOS/TextileOS/GrandMilestone
+- B3051-3055: Woodworking OS — projects (species/hours/cost), tool inventory (category/brand/condition)
+- B3056-3060: Metalworking OS — projects (metal/technique), weld log (process/material/thickness/quality)
+- B3061-3065: Leather OS — projects (oz/dye/finish), stamp inventory (code/category)
+- B3066-3070: Knitting OS — projects (yarn/needle/gauge), stash manager (weight/fiber/yardage/skeins)
+- B3071-3075: Crochet OS — projects (hook/type/recipient), stitch library (abbreviation/mastered)
+- B3076-3080: Quilting OS — quilts (pattern/size/fabrics_count), fabric stash (designer/collection/yards)
+- B3081-3085: Cross-Stitch OS — projects (count/stitches/colors), floss inventory (DMC number/skeins)
+- B3086-3090: Printmaking OS — editions (technique/edition_size/paper/ink), plate registry
+- B3091-3095: Textile/Weaving OS — loom registry (shafts/width), warp log (sett/fiber/length)
+- B3096-3100: 🏆 Grand Milestone v37 — /api/milestone/v37, handcraft-manifest, craft-total — 3100 endpoints, 141828 lines
+
 ## v36.00 — B3001-B3050 🎨 CREATIVE-CRAFT-PERFORMANCE-OS +DrawingOS/SculptureOS/CalligraphyOS/OrigamiOS/MagicOS/StandUpOS/ImprovOS/DebateOS/EscapeRoomOS/GrandMilestone
 - B3001-3005: Drawing OS — works (medium/subject/style/time), practice sessions (gesture/still-life/portrait focus)
 - B3006-3010: Sculpture OS — works (material/technique/dimensions), kiln firings (cone/outcome)

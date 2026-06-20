@@ -141415,5 +141415,414 @@ app.get('/api/forge/craft-health', (_req: any, res: any) => {
 
 
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B3051-B3100: Woodworking OS + Metalworking OS + Leather OS + Textile OS
+//              Knitting OS + Crochet OS + Quilting OS + Cross-Stitch OS
+//              Printmaking OS + Grand Milestone v37
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B3051-B3055: Woodworking OS
+app.get('/api/woodworking/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS woodworking_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'furniture', wood_species TEXT DEFAULT 'pine', status TEXT DEFAULT 'in-progress', hours_spent REAL DEFAULT 0, cost_materials REAL DEFAULT 0, date_started TEXT, date_completed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM woodworking_projects WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 ELSE 1 END, date_completed DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/woodworking/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, wood_species, hours_spent, cost_materials, date_started, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS woodworking_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'furniture', wood_species TEXT DEFAULT 'pine', status TEXT DEFAULT 'in-progress', hours_spent REAL DEFAULT 0, cost_materials REAL DEFAULT 0, date_started TEXT, date_completed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO woodworking_projects (user_id,name,type,wood_species,hours_spent,cost_materials,date_started,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'furniture',wood_species||'pine',hours_spent||0,cost_materials||0,date_started||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/woodworking/tools', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS woodworking_tools (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'hand', brand TEXT, condition TEXT DEFAULT 'good', acquired_date TEXT, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM woodworking_tools WHERE user_id=? ORDER BY category ASC, name ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/woodworking/tools', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, brand, condition, acquired_date, cost, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS woodworking_tools (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'hand', brand TEXT, condition TEXT DEFAULT 'good', acquired_date TEXT, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO woodworking_tools (user_id,name,category,brand,condition,acquired_date,cost,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',category||'hand',brand||'',condition||'good',acquired_date||'',cost||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/woodworking-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare("SELECT COUNT(*) as t, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as c FROM woodworking_projects WHERE user_id=?").get(u) as any);
+  res.json({ success:true, woodworking_os:{ projects:p?.t||0, completed:p?.c||0 }});
+});
+
+// B3056-B3060: Metalworking OS
+app.get('/api/metalworking/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS metalworking_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'welding', metal TEXT DEFAULT 'steel', status TEXT DEFAULT 'in-progress', hours_spent REAL DEFAULT 0, cost_materials REAL DEFAULT 0, date_started TEXT, date_completed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM metalworking_projects WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 ELSE 1 END, date_completed DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/metalworking/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, metal, hours_spent, cost_materials, date_started, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS metalworking_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'welding', metal TEXT DEFAULT 'steel', status TEXT DEFAULT 'in-progress', hours_spent REAL DEFAULT 0, cost_materials REAL DEFAULT 0, date_started TEXT, date_completed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO metalworking_projects (user_id,name,type,metal,hours_spent,cost_materials,date_started,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'welding',metal||'steel',hours_spent||0,cost_materials||0,date_started||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/metalworking/welds', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS metalworking_welds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, process TEXT DEFAULT 'MIG', material TEXT, thickness_mm REAL DEFAULT 3, quality INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM metalworking_welds WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/metalworking/welds', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, process, material, thickness_mm, quality, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS metalworking_welds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, process TEXT DEFAULT 'MIG', material TEXT, thickness_mm REAL DEFAULT 3, quality INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO metalworking_welds (user_id,date,process,material,thickness_mm,quality,notes) VALUES (?,?,?,?,?,?,?)').run(u,date||'',process||'MIG',material||'',thickness_mm||3,quality||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/metalworking-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare('SELECT COUNT(*) as c FROM metalworking_projects WHERE user_id=?').get(u) as any);
+  res.json({ success:true, metalworking_os:{ projects:p?.c||0 }});
+});
+
+// B3061-B3065: Leather OS
+app.get('/api/leather/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS leather_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'wallet', leather_type TEXT DEFAULT 'vegetable-tanned', oz INTEGER DEFAULT 4, status TEXT DEFAULT 'in-progress', hours_spent REAL DEFAULT 0, cost_materials REAL DEFAULT 0, dye_color TEXT, finish TEXT DEFAULT 'natural', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM leather_projects WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 ELSE 1 END, created_at DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/leather/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, leather_type, oz, hours_spent, cost_materials, dye_color, finish, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS leather_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'wallet', leather_type TEXT DEFAULT 'vegetable-tanned', oz INTEGER DEFAULT 4, status TEXT DEFAULT 'in-progress', hours_spent REAL DEFAULT 0, cost_materials REAL DEFAULT 0, dye_color TEXT, finish TEXT DEFAULT 'natural', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO leather_projects (user_id,name,type,leather_type,oz,hours_spent,cost_materials,dye_color,finish,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',type||'wallet',leather_type||'vegetable-tanned',oz||4,hours_spent||0,cost_materials||0,dye_color||'',finish||'natural',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/leather/stamps', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS leather_stamps (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, code TEXT, category TEXT DEFAULT 'floral', count INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM leather_stamps WHERE user_id=? ORDER BY category ASC, name ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/leather/stamps', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, code, category, count, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS leather_stamps (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, code TEXT, category TEXT DEFAULT 'floral', count INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO leather_stamps (user_id,name,code,category,count,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',code||'',category||'floral',count||1,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/leather-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare("SELECT COUNT(*) as c FROM leather_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, leather_os:{ completed:p?.c||0 }});
+});
+
+// B3066-B3070: Knitting OS
+app.get('/api/knitting/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS knitting_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'sweater', yarn TEXT, needle_size TEXT DEFAULT '4mm', gauge TEXT, status TEXT DEFAULT 'in-progress', rows_knit INTEGER DEFAULT 0, date_started TEXT, date_completed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM knitting_projects WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 ELSE 1 END, date_completed DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/knitting/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, yarn, needle_size, gauge, date_started, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS knitting_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'sweater', yarn TEXT, needle_size TEXT DEFAULT '4mm', gauge TEXT, status TEXT DEFAULT 'in-progress', rows_knit INTEGER DEFAULT 0, date_started TEXT, date_completed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO knitting_projects (user_id,name,type,yarn,needle_size,gauge,date_started,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'sweater',yarn||'',needle_size||'4mm',gauge||'',date_started||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/knitting/stash', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS knitting_stash (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, yarn_name TEXT, brand TEXT, weight TEXT DEFAULT 'worsted', fiber TEXT DEFAULT 'wool', colorway TEXT, skeins REAL DEFAULT 1, yardage REAL DEFAULT 200, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM knitting_stash WHERE user_id=? ORDER BY brand ASC, yarn_name ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/knitting/stash', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { yarn_name, brand, weight, fiber, colorway, skeins, yardage, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS knitting_stash (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, yarn_name TEXT, brand TEXT, weight TEXT DEFAULT 'worsted', fiber TEXT DEFAULT 'wool', colorway TEXT, skeins REAL DEFAULT 1, yardage REAL DEFAULT 200, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO knitting_stash (user_id,yarn_name,brand,weight,fiber,colorway,skeins,yardage,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,yarn_name||'',brand||'',weight||'worsted',fiber||'wool',colorway||'',skeins||1,yardage||200,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/knitting-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare("SELECT COUNT(*) as c FROM knitting_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, knitting_os:{ projects_completed:p?.c||0 }});
+});
+
+// B3071-B3075: Crochet OS
+app.get('/api/crochet/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS crochet_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'amigurumi', yarn TEXT, hook_size TEXT DEFAULT '5mm', status TEXT DEFAULT 'in-progress', date_started TEXT, date_completed TEXT, recipient TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM crochet_projects WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 ELSE 1 END, date_completed DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/crochet/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, yarn, hook_size, date_started, recipient, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS crochet_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'amigurumi', yarn TEXT, hook_size TEXT DEFAULT '5mm', status TEXT DEFAULT 'in-progress', date_started TEXT, date_completed TEXT, recipient TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO crochet_projects (user_id,name,type,yarn,hook_size,date_started,recipient,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'amigurumi',yarn||'',hook_size||'5mm',date_started||'',recipient||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/crochet/stitches', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS crochet_stitches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, abbreviation TEXT, difficulty INTEGER DEFAULT 2, mastered INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM crochet_stitches WHERE user_id=? ORDER BY difficulty ASC, mastered DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/crochet/stitches', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, abbreviation, difficulty, mastered, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS crochet_stitches (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, abbreviation TEXT, difficulty INTEGER DEFAULT 2, mastered INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO crochet_stitches (user_id,name,abbreviation,difficulty,mastered,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',abbreviation||'',difficulty||2,mastered?1:0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/crochet-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare("SELECT COUNT(*) as c FROM crochet_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, crochet_os:{ completed:p?.c||0 }});
+});
+
+// B3076-B3080: Quilting OS
+app.get('/api/quilting/quilts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS quilting_quilts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, pattern TEXT, size TEXT DEFAULT 'throw', fabrics_count INTEGER DEFAULT 0, status TEXT DEFAULT 'planning', date_started TEXT, date_completed TEXT, recipient TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM quilting_quilts WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 WHEN 'planning' THEN 1 ELSE 2 END, created_at DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/quilting/quilts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, pattern, size, fabrics_count, date_started, recipient, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS quilting_quilts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, pattern TEXT, size TEXT DEFAULT 'throw', fabrics_count INTEGER DEFAULT 0, status TEXT DEFAULT 'planning', date_started TEXT, date_completed TEXT, recipient TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO quilting_quilts (user_id,name,pattern,size,fabrics_count,date_started,recipient,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',pattern||'',size||'throw',fabrics_count||0,date_started||'',recipient||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/quilting/fabric-stash', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS quilting_fabric_stash (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, designer TEXT, collection TEXT, color TEXT, yards REAL DEFAULT 1, width_in INTEGER DEFAULT 44, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM quilting_fabric_stash WHERE user_id=? ORDER BY color ASC, name ASC LIMIT 50').all(u);
+    const total = db.prepare('SELECT COALESCE(SUM(yards),0) as y FROM quilting_fabric_stash WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_yards:total?.y||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/quilting/fabric-stash', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, designer, collection, color, yards, width_in, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS quilting_fabric_stash (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, designer TEXT, collection TEXT, color TEXT, yards REAL DEFAULT 1, width_in INTEGER DEFAULT 44, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO quilting_fabric_stash (user_id,name,designer,collection,color,yards,width_in,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',designer||'',collection||'',color||'',yards||1,width_in||44,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/quilting-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const q = safe(()=>db.prepare("SELECT COUNT(*) as c FROM quilting_quilts WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, quilting_os:{ quilts_completed:q?.c||0 }});
+});
+
+// B3081-B3085: Cross-Stitch OS
+app.get('/api/cross-stitch/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cross_stitch_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, fabric TEXT DEFAULT 'aida', count INTEGER DEFAULT 14, width_stitches INTEGER DEFAULT 0, height_stitches INTEGER DEFAULT 0, colors_used INTEGER DEFAULT 1, status TEXT DEFAULT 'in-progress', stitches_done INTEGER DEFAULT 0, date_started TEXT, date_completed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM cross_stitch_projects WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 ELSE 1 END, created_at DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/cross-stitch/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, fabric, count, width_stitches, height_stitches, colors_used, date_started, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cross_stitch_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, fabric TEXT DEFAULT 'aida', count INTEGER DEFAULT 14, width_stitches INTEGER DEFAULT 0, height_stitches INTEGER DEFAULT 0, colors_used INTEGER DEFAULT 1, status TEXT DEFAULT 'in-progress', stitches_done INTEGER DEFAULT 0, date_started TEXT, date_completed TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO cross_stitch_projects (user_id,name,fabric,count,width_stitches,height_stitches,colors_used,date_started,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',fabric||'aida',count||14,width_stitches||0,height_stitches||0,colors_used||1,date_started||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/cross-stitch/floss', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cross_stitch_floss (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, number TEXT, brand TEXT DEFAULT 'DMC', color_name TEXT, skeins REAL DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM cross_stitch_floss WHERE user_id=? ORDER BY number ASC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/cross-stitch/floss', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { number, brand, color_name, skeins, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS cross_stitch_floss (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, number TEXT, brand TEXT DEFAULT 'DMC', color_name TEXT, skeins REAL DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO cross_stitch_floss (user_id,number,brand,color_name,skeins,notes) VALUES (?,?,?,?,?,?)').run(u,number||'',brand||'DMC',color_name||'',skeins||1,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/cross-stitch-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare("SELECT COUNT(*) as c FROM cross_stitch_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, cross_stitch_os:{ completed:p?.c||0 }});
+});
+
+// B3086-B3090: Printmaking OS
+app.get('/api/printmaking/editions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS printmaking_editions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, technique TEXT DEFAULT 'linocut', edition_size INTEGER DEFAULT 10, printed INTEGER DEFAULT 0, paper TEXT DEFAULT 'BFK Rives', ink TEXT DEFAULT 'oil-based', date TEXT, status TEXT DEFAULT 'in-progress', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM printmaking_editions WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/printmaking/editions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, technique, edition_size, paper, ink, date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS printmaking_editions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, technique TEXT DEFAULT 'linocut', edition_size INTEGER DEFAULT 10, printed INTEGER DEFAULT 0, paper TEXT DEFAULT 'BFK Rives', ink TEXT DEFAULT 'oil-based', date TEXT, status TEXT DEFAULT 'in-progress', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO printmaking_editions (user_id,title,technique,edition_size,paper,ink,date,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,title||'',technique||'linocut',edition_size||10,paper||'BFK Rives',ink||'oil-based',date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/printmaking/plates', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS printmaking_plates (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, medium TEXT DEFAULT 'linoleum', size TEXT, condition TEXT DEFAULT 'good', prints_pulled INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM printmaking_plates WHERE user_id=? ORDER BY prints_pulled DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/printmaking/plates', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, medium, size, condition, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS printmaking_plates (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, medium TEXT DEFAULT 'linoleum', size TEXT, condition TEXT DEFAULT 'good', prints_pulled INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO printmaking_plates (user_id,name,medium,size,condition,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',medium||'linoleum',size||'',condition||'good',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/printmaking-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const e = safe(()=>db.prepare('SELECT COUNT(*) as c FROM printmaking_editions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, printmaking_os:{ editions:e?.c||0 }});
+});
+
+// B3091-B3095: Textile OS (general weaving/fiber)
+app.get('/api/textile/looms', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS textile_looms (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'floor', shafts INTEGER DEFAULT 4, width_in INTEGER DEFAULT 20, brand TEXT, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM textile_looms WHERE user_id=? ORDER BY width_in DESC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/textile/looms', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, shafts, width_in, brand, condition, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS textile_looms (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'floor', shafts INTEGER DEFAULT 4, width_in INTEGER DEFAULT 20, brand TEXT, condition TEXT DEFAULT 'good', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO textile_looms (user_id,name,type,shafts,width_in,brand,condition,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'floor',shafts||4,width_in||20,brand||'',condition||'good',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/textile/warps', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS textile_warps (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sett INTEGER DEFAULT 10, length_yards REAL DEFAULT 3, width_in INTEGER DEFAULT 15, warp_fiber TEXT DEFAULT 'cotton', weft_fiber TEXT DEFAULT 'wool', status TEXT DEFAULT 'on-loom', date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM textile_warps WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/textile/warps', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, sett, length_yards, width_in, warp_fiber, weft_fiber, date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS textile_warps (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sett INTEGER DEFAULT 10, length_yards REAL DEFAULT 3, width_in INTEGER DEFAULT 15, warp_fiber TEXT DEFAULT 'cotton', weft_fiber TEXT DEFAULT 'wool', status TEXT DEFAULT 'on-loom', date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO textile_warps (user_id,name,sett,length_yards,width_in,warp_fiber,weft_fiber,date,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',sett||10,length_yards||3,width_in||15,warp_fiber||'cotton',weft_fiber||'wool',date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/textile-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const w = safe(()=>db.prepare("SELECT COUNT(*) as c FROM textile_warps WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, textile_os:{ warps_woven:w?.c||0 }});
+});
+
+// B3096-B3100: Grand Milestone v37
+app.get('/api/milestone/v37', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const wood = safe(()=>db.prepare("SELECT COUNT(*) as c FROM woodworking_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  const knit = safe(()=>db.prepare("SELECT COUNT(*) as c FROM knitting_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  const quilt = safe(()=>db.prepare("SELECT COUNT(*) as c FROM quilting_quilts WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, version:'v37.00', total_endpoints:3100, milestone:'B3100 — Handcraft & Textile OS Complete', crafts:{ woodworking_done:wood?.c||0, knitting_done:knit?.c||0, quilts_done:quilt?.c||0 }});
+});
+app.get('/api/forge/handcraft-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const leather = safe(()=>db.prepare("SELECT COUNT(*) as c FROM leather_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  const xstitch = safe(()=>db.prepare("SELECT COUNT(*) as c FROM cross_stitch_projects WHERE user_id=? AND status='completed'").get(u) as any);
+  const prints = safe(()=>db.prepare('SELECT COUNT(*) as c FROM printmaking_editions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, handcraft:{ leather_done:leather?.c||0, xstitch_done:xstitch?.c||0, print_editions:prints?.c||0 }, total_endpoints:3100 });
+});
+app.get('/api/forge/craft-total', (_req: any, res: any) => {
+  res.json({ success:true, craft_total:{ os_modules:162, total_endpoints:3100, version:'v37.00', lines:141830 }});
+});
+
+
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
