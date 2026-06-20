@@ -137271,5 +137271,427 @@ app.get('/api/forge/complete-human-manifest', (req: any, res: any) => {
 });
 
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B2551-B2600: Spiritual OS + Gratitude OS + Mindset OS + Community OS
+//              Influence OS + Writing OS v2 + Reading OS v2 + Memory OS
+//              Adventure OS + Grand Milestone v27
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B2551-B2555: Spiritual OS
+app.get('/api/spiritual/practices', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS spiritual_practices (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, tradition TEXT DEFAULT 'general', frequency TEXT DEFAULT 'daily', duration_min INTEGER DEFAULT 20, doing INTEGER DEFAULT 1, description TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM spiritual_practices WHERE user_id=? ORDER BY doing DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/spiritual/practices', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, tradition, frequency, duration_min, description } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS spiritual_practices (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, tradition TEXT DEFAULT 'general', frequency TEXT DEFAULT 'daily', duration_min INTEGER DEFAULT 20, doing INTEGER DEFAULT 1, description TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO spiritual_practices (user_id,name,tradition,frequency,duration_min,description) VALUES (?,?,?,?,?,?)').run(u,name||'',tradition||'general',frequency||'daily',duration_min||20,description||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/spiritual/insights', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS spiritual_insights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, insight TEXT, source TEXT, depth INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM spiritual_insights WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/spiritual/insights', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, insight, source, depth, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS spiritual_insights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, insight TEXT, source TEXT, depth INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO spiritual_insights (user_id,date,insight,source,depth,notes) VALUES (?,?,?,?,?,?)').run(u,date||'',insight||'',source||'',depth||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/spiritual-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare('SELECT COUNT(*) as c FROM spiritual_practices WHERE user_id=? AND doing=1').get(u) as any);
+  res.json({ success:true, spiritual_os:{ active_practices:p?.c||0 }});
+});
+
+// B2556-B2560: Gratitude OS
+app.get('/api/gratitude/entries', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS gratitude_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, item_1 TEXT, item_2 TEXT, item_3 TEXT, person_grateful_for TEXT, why TEXT, mood_before INTEGER DEFAULT 3, mood_after INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM gratitude_entries WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const streak = db.prepare("SELECT COUNT(*) as c FROM gratitude_entries WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any;
+    res.json({ success:true, data:rows, entries_this_week:streak?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/gratitude/entries', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, item_1, item_2, item_3, person_grateful_for, why, mood_before, mood_after } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS gratitude_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, item_1 TEXT, item_2 TEXT, item_3 TEXT, person_grateful_for TEXT, why TEXT, mood_before INTEGER DEFAULT 3, mood_after INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO gratitude_entries (user_id,date,item_1,item_2,item_3,person_grateful_for,why,mood_before,mood_after) VALUES (?,?,?,?,?,?,?,?,?)').run(u,date||'',item_1||'',item_2||'',item_3||'',person_grateful_for||'',why||'',mood_before||3,mood_after||3);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/gratitude/appreciation-letters', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS gratitude_letters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, recipient TEXT, relationship TEXT, letter_content TEXT, sent INTEGER DEFAULT 0, date TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM gratitude_letters WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/gratitude/appreciation-letters', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { recipient, relationship, letter_content, sent, date } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS gratitude_letters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, recipient TEXT, relationship TEXT, letter_content TEXT, sent INTEGER DEFAULT 0, date TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO gratitude_letters (user_id,recipient,relationship,letter_content,sent,date) VALUES (?,?,?,?,?,?)').run(u,recipient||'',relationship||'',letter_content||'',sent?1:0,date||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/gratitude-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const total = safe(()=>db.prepare('SELECT COUNT(*) as c FROM gratitude_entries WHERE user_id=?').get(u) as any);
+  const week = safe(()=>db.prepare("SELECT COUNT(*) as c FROM gratitude_entries WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any);
+  res.json({ success:true, gratitude_os:{ total_entries:total?.c||0, this_week:week?.c||0 }});
+});
+
+// B2561-B2565: Mindset OS
+app.get('/api/mindset/beliefs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS mindset_beliefs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, belief TEXT, type TEXT DEFAULT 'empowering', area TEXT DEFAULT 'general', evidence_for TEXT, evidence_against TEXT, reframe TEXT, strength INTEGER DEFAULT 5, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const empowering = db.prepare("SELECT * FROM mindset_beliefs WHERE user_id=? AND type='empowering' ORDER BY strength DESC LIMIT 20").all(u);
+    const limiting = db.prepare("SELECT * FROM mindset_beliefs WHERE user_id=? AND type='limiting' ORDER BY strength DESC LIMIT 20").all(u);
+    res.json({ success:true, empowering, limiting });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/mindset/beliefs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { belief, type, area, evidence_for, evidence_against, reframe, strength } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS mindset_beliefs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, belief TEXT, type TEXT DEFAULT 'empowering', area TEXT DEFAULT 'general', evidence_for TEXT, evidence_against TEXT, reframe TEXT, strength INTEGER DEFAULT 5, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO mindset_beliefs (user_id,belief,type,area,evidence_for,evidence_against,reframe,strength) VALUES (?,?,?,?,?,?,?,?)').run(u,belief||'',type||'empowering',area||'general',evidence_for||'',evidence_against||'',reframe||'',strength||5);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/mindset/affirmations', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS mindset_affirmations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, affirmation TEXT, category TEXT DEFAULT 'identity', active INTEGER DEFAULT 1, times_used INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM mindset_affirmations WHERE user_id=? AND active=1 ORDER BY times_used DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/mindset/affirmations', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { affirmation, category } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS mindset_affirmations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, affirmation TEXT, category TEXT DEFAULT 'identity', active INTEGER DEFAULT 1, times_used INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO mindset_affirmations (user_id,affirmation,category) VALUES (?,?,?)').run(u,affirmation||'',category||'identity');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/mindset-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const e = safe(()=>db.prepare("SELECT COUNT(*) as c FROM mindset_beliefs WHERE user_id=? AND type='empowering'").get(u) as any);
+  const l = safe(()=>db.prepare("SELECT COUNT(*) as c FROM mindset_beliefs WHERE user_id=? AND type='limiting'").get(u) as any);
+  res.json({ success:true, mindset_os:{ empowering_beliefs:e?.c||0, limiting_beliefs_identified:l?.c||0 }});
+});
+
+// B2566-B2570: Community OS
+app.get('/api/community/groups', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'online', purpose TEXT, meeting_frequency TEXT, member_count INTEGER DEFAULT 0, role TEXT DEFAULT 'member', value_score INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM community_groups WHERE user_id=? ORDER BY value_score DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/community/groups', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, purpose, meeting_frequency, member_count, role, value_score } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'online', purpose TEXT, meeting_frequency TEXT, member_count INTEGER DEFAULT 0, role TEXT DEFAULT 'member', value_score INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO community_groups (user_id,name,type,purpose,meeting_frequency,member_count,role,value_score) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'online',purpose||'',meeting_frequency||'',member_count||0,role||'member',value_score||3);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/community/contributions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_contributions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, group_id INTEGER, date TEXT, type TEXT DEFAULT 'help', description TEXT, impact TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT c.*, g.name as group_name FROM community_contributions c LEFT JOIN community_groups g ON c.group_id=g.id WHERE c.user_id=? ORDER BY c.date DESC LIMIT 30").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/community/contributions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { group_id, date, type, description, impact } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_contributions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, group_id INTEGER, date TEXT, type TEXT DEFAULT 'help', description TEXT, impact TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO community_contributions (user_id,group_id,date,type,description,impact) VALUES (?,?,?,?,?,?)').run(u,group_id||0,date||'',type||'help',description||'',impact||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/community-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const g = safe(()=>db.prepare('SELECT COUNT(*) as c FROM community_groups WHERE user_id=?').get(u) as any);
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as c FROM community_contributions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, community_os:{ groups:g?.c||0, contributions:c?.c||0 }});
+});
+
+// B2571-B2575: Influence OS
+app.get('/api/influence/speaking', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS influence_speaking (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, topic TEXT, audience_size INTEGER DEFAULT 0, format TEXT DEFAULT 'presentation', rating INTEGER DEFAULT 3, recording_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM influence_speaking WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const total_reached = db.prepare('SELECT SUM(audience_size) as t FROM influence_speaking WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_audience_reached:total_reached?.t||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/influence/speaking', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, venue, topic, audience_size, format, rating, recording_url, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS influence_speaking (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, topic TEXT, audience_size INTEGER DEFAULT 0, format TEXT DEFAULT 'presentation', rating INTEGER DEFAULT 3, recording_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO influence_speaking (user_id,date,venue,topic,audience_size,format,rating,recording_url,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,date||'',venue||'',topic||'',audience_size||0,format||'presentation',rating||3,recording_url||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/influence/publications', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS influence_publications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, type TEXT DEFAULT 'article', platform TEXT, publish_date TEXT, views INTEGER DEFAULT 0, shares INTEGER DEFAULT 0, url TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM influence_publications WHERE user_id=? ORDER BY publish_date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/influence/publications', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, type, platform, publish_date, views, shares, url } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS influence_publications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, type TEXT DEFAULT 'article', platform TEXT, publish_date TEXT, views INTEGER DEFAULT 0, shares INTEGER DEFAULT 0, url TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO influence_publications (user_id,title,type,platform,publish_date,views,shares,url) VALUES (?,?,?,?,?,?,?,?)').run(u,title||'',type||'article',platform||'',publish_date||'',views||0,shares||0,url||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/influence-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const reach = safe(()=>db.prepare('SELECT SUM(audience_size) as t FROM influence_speaking WHERE user_id=?').get(u) as any);
+  const pubs = safe(()=>db.prepare('SELECT COUNT(*) as c, SUM(views) as v FROM influence_publications WHERE user_id=?').get(u) as any);
+  res.json({ success:true, influence_os:{ total_speaking_reach:reach?.t||0, publications:pubs?.c||0, total_content_views:pubs?.v||0 }});
+});
+
+// B2576-B2580: Writing OS v2
+app.get('/api/writing-v2/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS writing_v2_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, genre TEXT DEFAULT 'nonfiction', target_word_count INTEGER DEFAULT 0, current_word_count INTEGER DEFAULT 0, daily_word_goal INTEGER DEFAULT 500, status TEXT DEFAULT 'drafting', deadline TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM writing_v2_projects WHERE user_id=? ORDER BY status ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/writing-v2/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, genre, target_word_count, daily_word_goal, deadline, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS writing_v2_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, genre TEXT DEFAULT 'nonfiction', target_word_count INTEGER DEFAULT 0, current_word_count INTEGER DEFAULT 0, daily_word_goal INTEGER DEFAULT 500, status TEXT DEFAULT 'drafting', deadline TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO writing_v2_projects (user_id,title,genre,target_word_count,daily_word_goal,deadline,notes) VALUES (?,?,?,?,?,?,?)').run(u,title||'',genre||'nonfiction',target_word_count||0,daily_word_goal||500,deadline||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/writing-v2/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS writing_v2_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_id INTEGER, date TEXT, words_written INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 60, flow_state INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM writing_v2_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const week_words = db.prepare("SELECT SUM(words_written) as w FROM writing_v2_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any;
+    res.json({ success:true, data:rows, words_this_week:week_words?.w||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/writing-v2/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { project_id, date, words_written, duration_min, flow_state, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS writing_v2_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_id INTEGER, date TEXT, words_written INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 60, flow_state INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO writing_v2_sessions (user_id,project_id,date,words_written,duration_min,flow_state,notes) VALUES (?,?,?,?,?,?,?)').run(u,project_id||0,date||'',words_written||0,duration_min||60,flow_state||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/writing-v2-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const wk = safe(()=>db.prepare("SELECT SUM(words_written) as w FROM writing_v2_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any);
+  res.json({ success:true, writing_v2_os:{ words_this_week:wk?.w||0 }});
+});
+
+// B2581-B2585: Reading OS v2
+app.get('/api/reading-v2/books', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS reading_v2_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, genre TEXT DEFAULT 'nonfiction', status TEXT DEFAULT 'to-read', pages INTEGER DEFAULT 0, pages_read INTEGER DEFAULT 0, rating INTEGER DEFAULT 0, key_ideas TEXT, action_items TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM reading_v2_books WHERE user_id=? ORDER BY status ASC, rating DESC LIMIT 50').all(u);
+    const by_status = db.prepare('SELECT status, COUNT(*) as c FROM reading_v2_books WHERE user_id=? GROUP BY status').all(u);
+    res.json({ success:true, data:rows, by_status });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/reading-v2/books', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, author, genre, pages, key_ideas, action_items } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS reading_v2_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, genre TEXT DEFAULT 'nonfiction', status TEXT DEFAULT 'to-read', pages INTEGER DEFAULT 0, pages_read INTEGER DEFAULT 0, rating INTEGER DEFAULT 0, key_ideas TEXT, action_items TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO reading_v2_books (user_id,title,author,genre,pages,key_ideas,action_items) VALUES (?,?,?,?,?,?,?)').run(u,title||'',author||'',genre||'nonfiction',pages||0,key_ideas||'',action_items||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/reading-v2/quotes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS reading_v2_quotes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, book_id INTEGER, quote TEXT, page INTEGER DEFAULT 0, resonance INTEGER DEFAULT 3, tags TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT q.*, b.title as book_title FROM reading_v2_quotes q LEFT JOIN reading_v2_books b ON q.book_id=b.id WHERE q.user_id=? ORDER BY q.resonance DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/reading-v2/quotes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { book_id, quote, page, resonance, tags } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS reading_v2_quotes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, book_id INTEGER, quote TEXT, page INTEGER DEFAULT 0, resonance INTEGER DEFAULT 3, tags TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO reading_v2_quotes (user_id,book_id,quote,page,resonance,tags) VALUES (?,?,?,?,?,?)').run(u,book_id||0,quote||'',page||0,resonance||3,tags||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/reading-v2-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const b = safe(()=>db.prepare("SELECT COUNT(*) as c FROM reading_v2_books WHERE user_id=? AND status='completed'").get(u) as any);
+  const q = safe(()=>db.prepare('SELECT COUNT(*) as c FROM reading_v2_quotes WHERE user_id=?').get(u) as any);
+  res.json({ success:true, reading_v2_os:{ books_completed:b?.c||0, quotes_saved:q?.c||0 }});
+});
+
+// B2586-B2590: Memory OS
+app.get('/api/memory-os/spaced-review', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS memory_items (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, category TEXT DEFAULT 'fact', content TEXT, ease_factor REAL DEFAULT 2.5, interval_days INTEGER DEFAULT 1, repetitions INTEGER DEFAULT 0, next_review TEXT, last_score INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const due = db.prepare("SELECT * FROM memory_items WHERE user_id=? AND (next_review IS NULL OR next_review<=date('now')) ORDER BY next_review ASC LIMIT 20").all(u);
+    const counts = db.prepare('SELECT COUNT(*) as total, SUM(CASE WHEN repetitions>=5 THEN 1 ELSE 0 END) as mature FROM memory_items WHERE user_id=?').get(u) as any;
+    res.json({ success:true, due_for_review:due, stats:{ total:counts?.total||0, mature:counts?.mature||0 } });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/memory-os/spaced-review', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { topic, category, content } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS memory_items (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, category TEXT DEFAULT 'fact', content TEXT, ease_factor REAL DEFAULT 2.5, interval_days INTEGER DEFAULT 1, repetitions INTEGER DEFAULT 0, next_review TEXT, last_score INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const tomorrow = new Date(Date.now()+86400000).toISOString().split('T')[0];
+    const r = db.prepare('INSERT INTO memory_items (user_id,topic,category,content,next_review) VALUES (?,?,?,?,?)').run(u,topic||'',category||'fact',content||'',tomorrow);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/memory-os/review-result', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item_id, score } = req.body||{};
+  try {
+    const item = db.prepare('SELECT * FROM memory_items WHERE id=? AND user_id=?').get(item_id, u) as any;
+    if (!item) return res.status(404).json({ success:false, error:'not found' });
+    let ef = (item.ease_factor||2.5) + (0.1 - (5 - score) * (0.08 + (5 - score) * 0.02));
+    if (ef < 1.3) ef = 1.3;
+    const reps = score < 3 ? 0 : (item.repetitions||0) + 1;
+    let interval = 1;
+    if (reps === 1) interval = 1;
+    else if (reps === 2) interval = 6;
+    else interval = Math.round((item.interval_days||1) * ef);
+    const next = new Date(Date.now() + interval*86400000).toISOString().split('T')[0];
+    db.prepare('UPDATE memory_items SET ease_factor=?, interval_days=?, repetitions=?, next_review=?, last_score=? WHERE id=?').run(ef, interval, reps, next, score, item_id);
+    res.json({ success:true, next_review:next, interval_days:interval });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/memory-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as t, SUM(CASE WHEN repetitions>=5 THEN 1 ELSE 0 END) as m FROM memory_items WHERE user_id=?').get(u) as any);
+  res.json({ success:true, memory_os:{ total_items:s?.t||0, mature_items:s?.m||0 }});
+});
+
+// B2591-B2595: Adventure OS
+app.get('/api/adventure/bucket-list', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS adventure_bucket_list (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'travel', priority INTEGER DEFAULT 3, completed INTEGER DEFAULT 0, target_date TEXT, notes TEXT, completed_date TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const pending = db.prepare("SELECT * FROM adventure_bucket_list WHERE user_id=? AND completed=0 ORDER BY priority DESC LIMIT 30").all(u);
+    const done = db.prepare("SELECT COUNT(*) as c FROM adventure_bucket_list WHERE user_id=? AND completed=1").get(u) as any;
+    res.json({ success:true, pending, completed_count:done?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/adventure/bucket-list', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, category, priority, target_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS adventure_bucket_list (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'travel', priority INTEGER DEFAULT 3, completed INTEGER DEFAULT 0, target_date TEXT, notes TEXT, completed_date TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO adventure_bucket_list (user_id,title,category,priority,target_date,notes) VALUES (?,?,?,?,?,?)').run(u,title||'',category||'travel',priority||3,target_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/adventure/experiences', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS adventure_experiences (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'travel', date TEXT, location TEXT, people_with TEXT, description TEXT, impact_score INTEGER DEFAULT 3, photos_count INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM adventure_experiences WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/adventure/experiences', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, category, date, location, people_with, description, impact_score } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS adventure_experiences (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'travel', date TEXT, location TEXT, people_with TEXT, description TEXT, impact_score INTEGER DEFAULT 3, photos_count INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO adventure_experiences (user_id,title,category,date,location,people_with,description,impact_score) VALUES (?,?,?,?,?,?,?,?)').run(u,title||'',category||'travel',date||'',location||'',people_with||'',description||'',impact_score||3);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/adventure-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const bl = safe(()=>db.prepare('SELECT COUNT(*) as t, SUM(completed) as d FROM adventure_bucket_list WHERE user_id=?').get(u) as any);
+  res.json({ success:true, adventure_os:{ bucket_list_items:bl?.t||0, completed:bl?.d||0 }});
+});
+
+// B2596-B2600: Grand Milestone v27
+app.get('/api/milestone/v27', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const gratitude = safe(()=>db.prepare("SELECT COUNT(*) as c FROM gratitude_entries WHERE user_id=? AND date>=date('now','-30 days')").get(u) as any);
+  const memory = safe(()=>db.prepare('SELECT COUNT(*) as c FROM memory_items WHERE user_id=?').get(u) as any);
+  const adventures = safe(()=>db.prepare('SELECT COUNT(*) as c FROM adventure_experiences WHERE user_id=?').get(u) as any);
+  const books = safe(()=>db.prepare("SELECT COUNT(*) as c FROM reading_v2_books WHERE user_id=? AND status='completed'").get(u) as any);
+  res.json({ success:true, version:'v27.00', total_endpoints:2600, milestone:'B2600 — Inner Life OS Complete', inner_life:{ gratitude_entries_30d:gratitude?.c||0, memory_items:memory?.c||0, adventures_logged:adventures?.c||0, books_read:books?.c||0 }});
+});
+app.get('/api/forge/inner-health', (_req: any, res: any) => {
+  res.json({ success:true, inner_health:{ os_modules:78, total_endpoints:2600, version:'v27.00' }});
+});
+app.get('/api/forge/total-empire-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const memory = safe(()=>db.prepare('SELECT COUNT(*) as c FROM memory_items WHERE user_id=?').get(u) as any);
+  const gratitude = safe(()=>db.prepare('SELECT COUNT(*) as c FROM gratitude_entries WHERE user_id=?').get(u) as any);
+  const bucket = safe(()=>db.prepare('SELECT SUM(completed) as d FROM adventure_bucket_list WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v27.00', total_endpoints:2600, empire:{ memory_items:memory?.c||0, gratitude_entries:gratitude?.c||0, bucket_list_done:bucket?.d||0 }, modules_total:78 });
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
