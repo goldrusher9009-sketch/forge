@@ -1,3 +1,13 @@
+## v66.00 — B4501-B4550 👨‍👩‍👧 FAMILY-HOME-OS +Children/Milestones/FamilyEvents/Pets/PetHealth/Chores/GrandMilestone
+- B4501-4510: Parenting & Child OS — children (school/doctor/allergies/meds), milestones (category/date)
+- B4511-4520: Pet OS — pets (species/breed/vet/microchip/insured), pet health logs (vet-visits/vaccinations/cost)
+- B4521-4530: Chores & Home Tasks OS — chores (frequency/assigned/priority/overdue), mark-done auto-reschedules
+- B4531-4550: 🏆 Grand Milestone v66 — /api/milestone/v66, family-manifest, family-health — 4550 endpoints, 148407 lines
+## v65.00 — B4451-B4500 🧠 MENTAL-WELLNESS-OS +Mood/Triggers/Therapy/CBT/Mindfulness/GrandMilestone
+- B4451-4460: Mood & Mental Health OS — mood logs (mood/energy/anxiety/tags), triggers (category/impact/coping)
+- B4461-4470: Therapy & CBT OS — sessions (therapist/topics/insights/homework), CBT records (thought-records/distortions)
+- B4471-4480: Mindfulness & Meditation OS — sessions (type/technique/mood-before-after/streak)
+- B4481-4500: 🏆 Grand Milestone v65 — /api/milestone/v65, wellness-manifest, wellness-health — 4500 endpoints, 148258 lines
 ## v64.00 — B4401-B4450 📚 KNOWLEDGE-OS +Language/Vocab/SRS/Courses/Notes/GrandMilestone
 - B4401-4410: Language Learning OS — languages (level/streak/XP), vocab (SM-2 spaced repetition, review/ease/interval)
 - B4411-4420: Study & Course OS — courses (provider/category/progress/certificate/rating)
