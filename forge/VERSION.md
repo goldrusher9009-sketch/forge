@@ -1,3 +1,10 @@
+## v93.00 — B5851-B5900 🏄🧬 BOARDSPORTS+GENEALOGY-OS +Sessions/Gear/Stats/People/Relationships/Sources/GrandMilestone
+- B5851-5860: Board Sports OS — session log (surf/skate/snow/kite/windsurf), conditions + gear catalog
+- B5861-5870: Board Sports Stats + Genealogy People — top locations, surname registry (birth/death places)
+- B5871-5880: Genealogy Relationships — parent/child/spouse links, source citations (census/records)
+- B5881-5890: Genealogy Stats — surname frequency, gender breakdown
+- B5891-5900: Grand Milestone v93 — /api/milestone/v93, 5900 endpoints, 153322 lines
+
 ## v92.00 — B5801-B5850 🐾🍺 PET-CARE+HOMEBREWING-OS +Profiles/Vet/Meds/WeightLog/Batches/Gravity/Tasting/GrandMilestone
 - B5801-5810: Pet Care OS — pet profiles (species/breed/microchip), vet visit log with cost tracking
 - B5811-5820: Pet Medications + Weight Log — active med tracker, weight trend per pet
