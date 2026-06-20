@@ -129210,5 +129210,194 @@ app.get('/api/life/purpose/os', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── B2071: Anger Log ─────────────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS anger_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    trigger TEXT NOT NULL,
+    category TEXT DEFAULT 'work',
+    intensity INTEGER DEFAULT 6,
+    duration_min INTEGER DEFAULT 10,
+    physical_response TEXT,
+    thoughts TEXT,
+    response_used TEXT DEFAULT 'breathing',
+    outcome TEXT DEFAULT 'resolved',
+    lesson TEXT,
+    could_have_done TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/anger/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM anger_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const by_trigger = db.prepare(`SELECT category, COUNT(*) as count, AVG(intensity) as avg_intensity FROM anger_log WHERE user_id=? GROUP BY category ORDER BY count DESC`).all(uid) as any[];
+    by_trigger.forEach(t=>t.avg_intensity=parseFloat(t.avg_intensity.toFixed(1)));
+    const avg_intensity = (entries as any[]).length>0?parseFloat(((entries as any[]).reduce((a:number,e:any)=>a+e.intensity,0)/(entries as any[]).length).toFixed(1)):0;
+    res.json({ success: true, entries, by_category: by_trigger, avg_intensity, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/anger/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, trigger, category='work', intensity=6, duration_min=10, physical_response, thoughts, response_used='breathing', outcome='resolved', lesson, could_have_done, notes } = req.body;
+    if (!trigger) return res.status(400).json({ success: false, error: 'trigger required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO anger_log (user_id,log_date,trigger,category,intensity,duration_min,physical_response,thoughts,response_used,outcome,lesson,could_have_done,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,trigger,category,intensity,duration_min,physical_response,thoughts,response_used,outcome,lesson,could_have_done,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2072: Anxiety Tracker ────────────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS anxiety_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    anxiety_level INTEGER DEFAULT 5,
+    trigger TEXT,
+    category TEXT DEFAULT 'social',
+    physical_symptoms TEXT,
+    thoughts TEXT,
+    coping_used TEXT,
+    effectiveness INTEGER DEFAULT 5,
+    duration_min INTEGER DEFAULT 20,
+    avoided_something INTEGER DEFAULT 0,
+    catastrophized INTEGER DEFAULT 0,
+    reality_check TEXT,
+    outcome TEXT DEFAULT 'manageable',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/anxiety/tracker', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM anxiety_tracker WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const stats = db.prepare(`SELECT AVG(anxiety_level) as avg_level, AVG(effectiveness) as avg_coping, COUNT(*) as total FROM anxiety_tracker WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any;
+    if(stats){ stats.avg_level=parseFloat((stats.avg_level||0).toFixed(1)); stats.avg_coping=parseFloat((stats.avg_coping||0).toFixed(1)); }
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count FROM anxiety_tracker WHERE user_id=? GROUP BY category ORDER BY count DESC`).all(uid);
+    res.json({ success: true, entries, stats_30d: stats, by_category });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/anxiety/tracker', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, anxiety_level=5, trigger, category='social', physical_symptoms, thoughts, coping_used, effectiveness=5, duration_min=20, avoided_something=0, catastrophized=0, reality_check, outcome='manageable', notes } = req.body;
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO anxiety_tracker (user_id,log_date,anxiety_level,trigger,category,physical_symptoms,thoughts,coping_used,effectiveness,duration_min,avoided_something,catastrophized,reality_check,outcome,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,anxiety_level,trigger,category,physical_symptoms,thoughts,coping_used,effectiveness,duration_min,avoided_something,catastrophized,reality_check,outcome,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2073: Joy & Happiness Log ───────────────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS joy_happiness_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    joy_source TEXT NOT NULL,
+    category TEXT DEFAULT 'connection',
+    intensity INTEGER DEFAULT 8,
+    duration_min INTEGER DEFAULT 30,
+    shared_with TEXT,
+    why_joyful TEXT,
+    savored INTEGER DEFAULT 1,
+    photo_url TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/joy/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM joy_happiness_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid);
+    const by_category = db.prepare(`SELECT category, COUNT(*) as count, AVG(intensity) as avg_joy FROM joy_happiness_log WHERE user_id=? GROUP BY category ORDER BY avg_joy DESC`).all(uid) as any[];
+    by_category.forEach(c=>c.avg_joy=parseFloat(c.avg_joy.toFixed(1)));
+    const avg_joy = (entries as any[]).length>0?parseFloat(((entries as any[]).reduce((a:number,e:any)=>a+e.intensity,0)/(entries as any[]).length).toFixed(1)):0;
+    res.json({ success: true, entries, by_category, avg_joy, total: (entries as any[]).length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/joy/log', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, joy_source, category='connection', intensity=8, duration_min=30, shared_with, why_joyful, savored=1, photo_url, notes } = req.body;
+    if (!joy_source) return res.status(400).json({ success: false, error: 'joy_source required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO joy_happiness_log (user_id,log_date,joy_source,category,intensity,duration_min,shared_with,why_joyful,savored,photo_url,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,joy_source,category,intensity,duration_min,shared_with,why_joyful,savored,photo_url,notes);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2074: Emotional Regulation Toolkit ──────────────────────────────────────
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS emotional_regulation_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT DEFAULT (date('now')),
+    emotion TEXT NOT NULL,
+    intensity_before INTEGER DEFAULT 7,
+    intensity_after INTEGER DEFAULT 4,
+    technique TEXT NOT NULL,
+    technique_category TEXT DEFAULT 'breathing',
+    duration_min INTEGER DEFAULT 5,
+    effectiveness INTEGER DEFAULT 7,
+    context TEXT,
+    insight TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+} catch(e) {}
+
+app.get('/api/emotional/regulation', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const entries = db.prepare(`SELECT * FROM emotional_regulation_log WHERE user_id=? ORDER BY log_date DESC LIMIT 30`).all(uid) as any[];
+    entries.forEach(e=>{ e.reduction=e.intensity_before-e.intensity_after; });
+    const top_techniques = db.prepare(`SELECT technique, COUNT(*) as uses, AVG(effectiveness) as avg_eff, AVG(intensity_before-intensity_after) as avg_reduction FROM emotional_regulation_log WHERE user_id=? GROUP BY technique ORDER BY avg_eff DESC LIMIT 5`).all(uid) as any[];
+    top_techniques.forEach(t=>{ t.avg_eff=parseFloat(t.avg_eff.toFixed(1)); t.avg_reduction=parseFloat(t.avg_reduction.toFixed(1)); });
+    res.json({ success: true, entries, top_techniques, total: entries.length });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/emotional/regulation', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, emotion, intensity_before=7, intensity_after=4, technique, technique_category='breathing', duration_min=5, effectiveness=7, context, insight, notes } = req.body;
+    if (!emotion||!technique) return res.status(400).json({ success: false, error: 'emotion, technique required' });
+    const today = log_date||new Date().toISOString().slice(0,10);
+    const r = db.prepare(`INSERT INTO emotional_regulation_log (user_id,log_date,emotion,intensity_before,intensity_after,technique,technique_category,duration_min,effectiveness,context,insight,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,emotion,intensity_before,intensity_after,technique,technique_category,duration_min,effectiveness,context,insight,notes);
+    res.json({ success: true, id: r.lastInsertRowid, reduction: intensity_before-intensity_after });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── B2075: MILESTONE — Emotional Intelligence OS ─────────────────────────────
+app.get('/api/emotional/intelligence/os', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const safe = (fn: ()=>any, def: any=0) => { try { return fn(); } catch(e) { return def; } };
+    const anger_30d = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM anger_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    const avg_anger = safe(()=>{ const r=db.prepare(`SELECT AVG(intensity) as a FROM anger_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const anxiety_30d = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM anxiety_tracker WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    const avg_anxiety = safe(()=>{ const r=db.prepare(`SELECT AVG(anxiety_level) as a FROM anxiety_tracker WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const joy_30d = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM joy_happiness_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    const avg_joy = safe(()=>{ const r=db.prepare(`SELECT AVG(intensity) as a FROM joy_happiness_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const reg_sessions = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM emotional_regulation_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    const avg_reduction = safe(()=>{ const r=db.prepare(`SELECT AVG(intensity_before-intensity_after) as a FROM emotional_regulation_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any; return r?.a?parseFloat(r.a.toFixed(1)):0; });
+    const reframes = safe(()=>(db.prepare(`SELECT COUNT(*) as c FROM mindset_reframe_log WHERE user_id=? AND log_date>=date('now','-30 days')`).get(uid) as any)?.c||0);
+    const eq_score = parseFloat(Math.min(10, Math.max(1, (avg_joy - avg_anxiety*0.5 - avg_anger*0.3 + reg_sessions*0.2 + reframes*0.1 + 5)).toFixed(1));
+    res.json({ success: true, milestone: 'B2075 — Emotional Intelligence OS', anger: { episodes_30d: anger_30d, avg_intensity: avg_anger }, anxiety: { episodes_30d: anxiety_30d, avg_level: avg_anxiety }, joy: { moments_30d: joy_30d, avg_intensity: avg_joy }, regulation: { sessions_30d: reg_sessions, avg_intensity_reduction: avg_reduction }, mindset_reframes_30d: reframes, eq_score });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── 404 fallback (must be last) ─────────────────────────────────────────────
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
