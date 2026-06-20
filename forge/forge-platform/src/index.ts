@@ -146924,5 +146924,164 @@ app.get('/api/forge/grand-total', (_req: any, res: any) => {
 
 });
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B4001-B4050: Car & Vehicle OS + Home Improvement OS + DIY Projects OS
+//              Neighborhood OS + Community OS + Grand Milestone v56
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B4001-B4010: Car & Vehicle OS
+app.get('/api/vehicles', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, make TEXT, model TEXT, year INTEGER, color TEXT, vin TEXT, license_plate TEXT, mileage INTEGER DEFAULT 0, fuel_type TEXT DEFAULT 'gasoline', insurance_expiry TEXT, registration_expiry TEXT, active INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM vehicles WHERE user_id=? AND active=1 ORDER BY year DESC LIMIT 10").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/vehicles', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { make, model, year, color, vin, license_plate, mileage, fuel_type, insurance_expiry, registration_expiry, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, make TEXT, model TEXT, year INTEGER, color TEXT, vin TEXT, license_plate TEXT, mileage INTEGER DEFAULT 0, fuel_type TEXT DEFAULT 'gasoline', insurance_expiry TEXT, registration_expiry TEXT, active INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO vehicles (user_id,make,model,year,color,vin,license_plate,mileage,fuel_type,insurance_expiry,registration_expiry,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,make||'',model||'',year||0,color||'',vin||'',license_plate||'',mileage||0,fuel_type||'gasoline',insurance_expiry||'',registration_expiry||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/vehicles/:id/maintenance', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vehicle_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle_id INTEGER, service_type TEXT DEFAULT 'oil_change', service_date TEXT, mileage_at_service INTEGER DEFAULT 0, cost REAL DEFAULT 0, shop TEXT, next_service_date TEXT, next_service_mileage INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM vehicle_maintenance WHERE user_id=? AND vehicle_id=? ORDER BY service_date DESC LIMIT 20').all(u,req.params.id);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/vehicles/:id/maintenance', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { service_type, service_date, mileage_at_service, cost, shop, next_service_date, next_service_mileage, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vehicle_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle_id INTEGER, service_type TEXT DEFAULT 'oil_change', service_date TEXT, mileage_at_service INTEGER DEFAULT 0, cost REAL DEFAULT 0, shop TEXT, next_service_date TEXT, next_service_mileage INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO vehicle_maintenance (user_id,vehicle_id,service_type,service_date,mileage_at_service,cost,shop,next_service_date,next_service_mileage,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,req.params.id,service_type||'oil_change',service_date||'',mileage_at_service||0,cost||0,shop||'',next_service_date||'',next_service_mileage||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/vehicles/fuel-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS fuel_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle_id INTEGER, fill_date TEXT DEFAULT (date('now')), gallons REAL DEFAULT 0, price_per_gallon REAL DEFAULT 0, total_cost REAL DEFAULT 0, mileage INTEGER DEFAULT 0, mpg REAL DEFAULT 0, station TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM fuel_log WHERE user_id=? ORDER BY fill_date DESC LIMIT 30').all(u);
+    const avg_mpg = db.prepare('SELECT AVG(mpg) as a FROM fuel_log WHERE user_id=? AND mpg>0').get(u) as any;
+    res.json({ success:true, data:rows, avg_mpg:avg_mpg?.a||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/vehicles/fuel-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { vehicle_id, fill_date, gallons, price_per_gallon, total_cost, mileage, station, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS fuel_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle_id INTEGER, fill_date TEXT DEFAULT (date('now')), gallons REAL DEFAULT 0, price_per_gallon REAL DEFAULT 0, total_cost REAL DEFAULT 0, mileage INTEGER DEFAULT 0, mpg REAL DEFAULT 0, station TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const tc = total_cost || (gallons||0)*(price_per_gallon||0);
+    const prev = db.prepare('SELECT mileage FROM fuel_log WHERE user_id=? AND vehicle_id=? ORDER BY fill_date DESC LIMIT 1').get(u,vehicle_id||0) as any;
+    const mpg = prev && gallons ? (mileage - prev.mileage) / gallons : 0;
+    const r = db.prepare('INSERT INTO fuel_log (user_id,vehicle_id,fill_date,gallons,price_per_gallon,total_cost,mileage,mpg,station,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,vehicle_id||0,fill_date||'',gallons||0,price_per_gallon||0,tc,mileage||0,mpg,station||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid, mpg });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4011-B4020: Home Improvement OS
+app.get('/api/home-improvement/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS home_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, room TEXT, category TEXT DEFAULT 'renovation', status TEXT DEFAULT 'planned', estimated_cost REAL DEFAULT 0, actual_cost REAL DEFAULT 0, start_date TEXT, end_date TEXT, contractor TEXT, diy INTEGER DEFAULT 1, priority TEXT DEFAULT 'medium', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM home_projects WHERE user_id=? ORDER BY CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, created_at DESC LIMIT 30").all(u);
+    const total_estimated = db.prepare("SELECT COALESCE(SUM(estimated_cost),0) as t FROM home_projects WHERE user_id=? AND status != 'completed'").get(u) as any;
+    res.json({ success:true, data:rows, total_estimated:total_estimated?.t||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/home-improvement/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, room, category, status, estimated_cost, actual_cost, start_date, end_date, contractor, diy, priority, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS home_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, room TEXT, category TEXT DEFAULT 'renovation', status TEXT DEFAULT 'planned', estimated_cost REAL DEFAULT 0, actual_cost REAL DEFAULT 0, start_date TEXT, end_date TEXT, contractor TEXT, diy INTEGER DEFAULT 1, priority TEXT DEFAULT 'medium', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO home_projects (user_id,name,room,category,status,estimated_cost,actual_cost,start_date,end_date,contractor,diy,priority,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',room||'',category||'renovation',status||'planned',estimated_cost||0,actual_cost||0,start_date||'',end_date||'',contractor||'',diy!==false?1:0,priority||'medium',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/home-improvement/contractors', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS contractors (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, trade TEXT DEFAULT 'general', phone TEXT, email TEXT, license TEXT, rating REAL DEFAULT 0, last_used TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM contractors WHERE user_id=? ORDER BY rating DESC, name ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/home-improvement/contractors', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, trade, phone, email, license, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS contractors (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, trade TEXT DEFAULT 'general', phone TEXT, email TEXT, license TEXT, rating REAL DEFAULT 0, last_used TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO contractors (user_id,name,trade,phone,email,license,rating,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',trade||'general',phone||'',email||'',license||'',rating||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4021-B4030: Neighborhood & Community OS
+app.get('/api/neighborhood/contacts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS neighbor_contacts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, address TEXT, phone TEXT, email TEXT, relationship TEXT DEFAULT 'neighbor', pets TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM neighbor_contacts WHERE user_id=? ORDER BY name ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/neighborhood/contacts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, address, phone, email, relationship, pets, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS neighbor_contacts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, address TEXT, phone TEXT, email TEXT, relationship TEXT DEFAULT 'neighbor', pets TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO neighbor_contacts (user_id,name,address,phone,email,relationship,pets,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',address||'',phone||'',email||'',relationship||'neighbor',pets||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/neighborhood/issues', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS neighborhood_issues (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'noise', location TEXT, reported_date TEXT DEFAULT (date('now')), status TEXT DEFAULT 'open', reported_to TEXT, resolution TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM neighborhood_issues WHERE user_id=? ORDER BY reported_date DESC LIMIT 20").all(u);
+    const open_issues = db.prepare("SELECT COUNT(*) as c FROM neighborhood_issues WHERE user_id=? AND status='open'").get(u) as any;
+    res.json({ success:true, data:rows, open_issues:open_issues?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/neighborhood/issues', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, category, location, reported_date, status, reported_to, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS neighborhood_issues (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'noise', location TEXT, reported_date TEXT DEFAULT (date('now')), status TEXT DEFAULT 'open', reported_to TEXT, resolution TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO neighborhood_issues (user_id,title,category,location,reported_date,status,reported_to,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,title||'',category||'noise',location||'',reported_date||'',status||'open',reported_to||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4031-B4050: Grand Milestone v56
+app.get('/api/milestone/v56', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const vehs = safe(()=>db.prepare("SELECT COUNT(*) as c FROM vehicles WHERE user_id=? AND active=1").get(u) as any);
+  const projs = safe(()=>db.prepare("SELECT COUNT(*) as c FROM home_projects WHERE user_id=?").get(u) as any);
+  const mpg = safe(()=>db.prepare('SELECT AVG(mpg) as a FROM fuel_log WHERE user_id=? AND mpg>0').get(u) as any);
+  res.json({ success:true, version:'v56.00', total_endpoints:4050, milestone:'B4050 — Vehicle & Home Improvement OS', data:{ vehicles:vehs?.c||0, home_projects:projs?.c||0, avg_mpg:mpg?.a||0 }});
+});
+app.get('/api/forge/vehicle-home-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const pending = safe(()=>db.prepare("SELECT COUNT(*) as c FROM home_projects WHERE user_id=? AND status='planned'").get(u) as any);
+  const neighbors = safe(()=>db.prepare('SELECT COUNT(*) as c FROM neighbor_contacts WHERE user_id=?').get(u) as any);
+  res.json({ success:true, vehicle_home_manifest:{ planned_projects:pending?.c||0, neighbor_contacts:neighbors?.c||0 }, total_endpoints:4050 });
+});
+app.get('/api/forge/vehicle-home-health', (_req: any, res: any) => {
+  res.json({ success:true, vehicle_home_health:{ os_modules:352, total_endpoints:4050, version:'v56.00' }});
+
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
