@@ -133455,7 +133455,870 @@ app.get('/api/creator/os', (req: any, res: any) => {
     youtube_videos: youtube?.c||0, total_views: youtube?.v||0, youtube_revenue: youtube?.r||0,
     newsletters_sent: newsletter?.c||0, avg_open_rate: Math.round((newsletter?.or_||0)*10)/10,
     total_creator_revenue: revenue?.s||0
-  }});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B2251-B2300: Creator OS v2 + Sports v2 + Maker v2 + Collector v2 + Scholar v2
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B2251-B2255: Creator OS v2
+app.get('/api/creator/youtube-analytics', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS creator_youtube_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, video_title TEXT, views INTEGER DEFAULT 0, watch_time_hrs REAL DEFAULT 0, ctr_pct REAL DEFAULT 0, revenue_usd REAL DEFAULT 0, published_at TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM creator_youtube_analytics WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(u);
+    const totals = db.prepare('SELECT SUM(views) as tv, SUM(revenue_usd) as tr, AVG(ctr_pct) as ac FROM creator_youtube_analytics WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, totals:{ total_views:totals?.tv||0, total_revenue:totals?.tr||0, avg_ctr:totals?.ac||0 } });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/creator/youtube-analytics', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { video_title, views, watch_time_hrs, ctr_pct, revenue_usd, published_at } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS creator_youtube_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, video_title TEXT, views INTEGER DEFAULT 0, watch_time_hrs REAL DEFAULT 0, ctr_pct REAL DEFAULT 0, revenue_usd REAL DEFAULT 0, published_at TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO creator_youtube_analytics (user_id,video_title,views,watch_time_hrs,ctr_pct,revenue_usd,published_at) VALUES (?,?,?,?,?,?,?)').run(u,video_title||'',views||0,watch_time_hrs||0,ctr_pct||0,revenue_usd||0,published_at||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/creator/sponsorships', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS creator_sponsorships (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, brand TEXT, deal_value REAL DEFAULT 0, status TEXT DEFAULT 'prospect', deliverables TEXT, deadline TEXT, paid INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM creator_sponsorships WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(u);
+    const total = db.prepare('SELECT SUM(deal_value) as t FROM creator_sponsorships WHERE user_id=? AND paid=1').get(u) as any;
+    res.json({ success:true, data:rows, total_earned:total?.t||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/creator/sponsorships', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { brand, deal_value, status, deliverables, deadline } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS creator_sponsorships (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, brand TEXT, deal_value REAL DEFAULT 0, status TEXT DEFAULT 'prospect', deliverables TEXT, deadline TEXT, paid INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO creator_sponsorships (user_id,brand,deal_value,status,deliverables,deadline) VALUES (?,?,?,?,?,?)').run(u,brand||'',deal_value||0,status||'prospect',deliverables||'',deadline||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/creator/content-pipeline', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS creator_content_pipeline (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, platform TEXT, stage TEXT DEFAULT 'idea', priority TEXT DEFAULT 'medium', due_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM creator_content_pipeline WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(u);
+    const byStage = db.prepare("SELECT stage, COUNT(*) as c FROM creator_content_pipeline WHERE user_id=? GROUP BY stage").all(u);
+    res.json({ success:true, data:rows, by_stage:byStage });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/creator/content-pipeline', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, platform, stage, priority, due_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS creator_content_pipeline (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, platform TEXT, stage TEXT DEFAULT 'idea', priority TEXT DEFAULT 'medium', due_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO creator_content_pipeline (user_id,title,platform,stage,priority,due_date,notes) VALUES (?,?,?,?,?,?,?)').run(u,title||'',platform||'',stage||'idea',priority||'medium',due_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/creator/audience-insights', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS creator_audience_insights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, platform TEXT, followers INTEGER DEFAULT 0, engagement_rate REAL DEFAULT 0, top_age_group TEXT, top_country TEXT, recorded_at TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM creator_audience_insights WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/creator/audience-insights', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { platform, followers, engagement_rate, top_age_group, top_country, recorded_at } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS creator_audience_insights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, platform TEXT, followers INTEGER DEFAULT 0, engagement_rate REAL DEFAULT 0, top_age_group TEXT, top_country TEXT, recorded_at TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO creator_audience_insights (user_id,platform,followers,engagement_rate,top_age_group,top_country,recorded_at) VALUES (?,?,?,?,?,?,?)').run(u,platform||'',followers||0,engagement_rate||0,top_age_group||'',top_country||'',recorded_at||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2255 Milestone: Creator OS v2
+app.get('/api/milestone/creator-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const vids = safe(()=>db.prepare('SELECT COUNT(*) as c FROM creator_youtube_analytics WHERE user_id=?').get(u) as any);
+  const spons = safe(()=>db.prepare('SELECT SUM(deal_value) as t FROM creator_sponsorships WHERE user_id=? AND paid=1').get(u) as any);
+  const pipe = safe(()=>db.prepare('SELECT COUNT(*) as c FROM creator_content_pipeline WHERE user_id=?').get(u) as any);
+  res.json({ success:true, creator_v2:{ videos_tracked:vids?.c||0, sponsorship_revenue:spons?.t||0, pipeline_items:pipe?.c||0 }});
+});
+
+// B2256-B2260: Sports Analytics OS v2
+app.get('/api/sports/performance-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_performance_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, sport TEXT, metric_name TEXT, metric_value REAL, unit TEXT, notes TEXT, recorded_at TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM sports_performance_log WHERE user_id=? ORDER BY recorded_at DESC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/sports/performance-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { sport, metric_name, metric_value, unit, notes, recorded_at } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_performance_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, sport TEXT, metric_name TEXT, metric_value REAL, unit TEXT, notes TEXT, recorded_at TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO sports_performance_log (user_id,sport,metric_name,metric_value,unit,notes,recorded_at) VALUES (?,?,?,?,?,?,?)').run(u,sport||'',metric_name||'',metric_value||0,unit||'',notes||'',recorded_at||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/sports/gear-inventory', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_gear_inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, sport TEXT, brand TEXT, purchase_price REAL DEFAULT 0, condition TEXT DEFAULT 'good', purchase_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM sports_gear_inventory WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(u);
+    const total = db.prepare('SELECT SUM(purchase_price) as t FROM sports_gear_inventory WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_invested:total?.t||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/sports/gear-inventory', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item_name, sport, brand, purchase_price, condition, purchase_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_gear_inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, sport TEXT, brand TEXT, purchase_price REAL DEFAULT 0, condition TEXT DEFAULT 'good', purchase_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO sports_gear_inventory (user_id,item_name,sport,brand,purchase_price,condition,purchase_date,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,item_name||'',sport||'',brand||'',purchase_price||0,condition||'good',purchase_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/sports/coaching-notes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_coaching_notes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, coach_name TEXT, session_date TEXT, focus_area TEXT, drills TEXT, feedback TEXT, action_items TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM sports_coaching_notes WHERE user_id=? ORDER BY session_date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/sports/coaching-notes', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { coach_name, session_date, focus_area, drills, feedback, action_items } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_coaching_notes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, coach_name TEXT, session_date TEXT, focus_area TEXT, drills TEXT, feedback TEXT, action_items TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO sports_coaching_notes (user_id,coach_name,session_date,focus_area,drills,feedback,action_items) VALUES (?,?,?,?,?,?,?)').run(u,coach_name||'',session_date||'',focus_area||'',drills||'',feedback||'',action_items||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/sports/competition-calendar', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_competition_calendar (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, event_name TEXT, sport TEXT, event_date TEXT, location TEXT, goal TEXT, result TEXT, placement TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM sports_competition_calendar WHERE user_id=? ORDER BY event_date ASC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/sports/competition-calendar', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { event_name, sport, event_date, location, goal, result, placement, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_competition_calendar (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, event_name TEXT, sport TEXT, event_date TEXT, location TEXT, goal TEXT, result TEXT, placement TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO sports_competition_calendar (user_id,event_name,sport,event_date,location,goal,result,placement,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,event_name||'',sport||'',event_date||'',location||'',goal||'',result||'',placement||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2260 Milestone: Sports OS v2
+app.get('/api/milestone/sports-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const perf = safe(()=>db.prepare('SELECT COUNT(*) as c FROM sports_performance_log WHERE user_id=?').get(u) as any);
+  const gear = safe(()=>db.prepare('SELECT SUM(purchase_price) as t FROM sports_gear_inventory WHERE user_id=?').get(u) as any);
+  const comp = safe(()=>db.prepare('SELECT COUNT(*) as c FROM sports_competition_calendar WHERE user_id=?').get(u) as any);
+  res.json({ success:true, sports_v2:{ performance_entries:perf?.c||0, gear_invested:gear?.t||0, competitions:comp?.c||0 }});
+});
+
+// B2261-B2265: Maker OS v2
+app.get('/api/maker/project-tracker', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maker_project_tracker (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_name TEXT, category TEXT, status TEXT DEFAULT 'planning', materials_cost REAL DEFAULT 0, time_spent_hrs REAL DEFAULT 0, difficulty TEXT DEFAULT 'medium', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM maker_project_tracker WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(u);
+    const stats = db.prepare('SELECT SUM(materials_cost) as mc, SUM(time_spent_hrs) as ts FROM maker_project_tracker WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_cost:stats?.mc||0, total_hours:stats?.ts||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/maker/project-tracker', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { project_name, category, status, materials_cost, time_spent_hrs, difficulty, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maker_project_tracker (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_name TEXT, category TEXT, status TEXT DEFAULT 'planning', materials_cost REAL DEFAULT 0, time_spent_hrs REAL DEFAULT 0, difficulty TEXT DEFAULT 'medium', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO maker_project_tracker (user_id,project_name,category,status,materials_cost,time_spent_hrs,difficulty,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,project_name||'',category||'',status||'planning',materials_cost||0,time_spent_hrs||0,difficulty||'medium',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/maker/parts-inventory', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maker_parts_inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, part_name TEXT, category TEXT, quantity INTEGER DEFAULT 0, unit_cost REAL DEFAULT 0, supplier TEXT, location TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM maker_parts_inventory WHERE user_id=? ORDER BY part_name ASC LIMIT 200').all(u);
+    const total = db.prepare('SELECT SUM(quantity*unit_cost) as t FROM maker_parts_inventory WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, inventory_value:total?.t||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/maker/parts-inventory', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { part_name, category, quantity, unit_cost, supplier, location, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maker_parts_inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, part_name TEXT, category TEXT, quantity INTEGER DEFAULT 0, unit_cost REAL DEFAULT 0, supplier TEXT, location TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO maker_parts_inventory (user_id,part_name,category,quantity,unit_cost,supplier,location,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,part_name||'',category||'',quantity||0,unit_cost||0,supplier||'',location||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/maker/tools-maintenance', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maker_tools_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tool_name TEXT, last_maintenance TEXT, next_maintenance TEXT, maintenance_type TEXT, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM maker_tools_maintenance WHERE user_id=? ORDER BY next_maintenance ASC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/maker/tools-maintenance', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { tool_name, last_maintenance, next_maintenance, maintenance_type, cost, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maker_tools_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tool_name TEXT, last_maintenance TEXT, next_maintenance TEXT, maintenance_type TEXT, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO maker_tools_maintenance (user_id,tool_name,last_maintenance,next_maintenance,maintenance_type,cost,notes) VALUES (?,?,?,?,?,?,?)').run(u,tool_name||'',last_maintenance||'',next_maintenance||'',maintenance_type||'',cost||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/maker/build-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maker_build_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_id INTEGER, step_number INTEGER, description TEXT, duration_min INTEGER DEFAULT 0, photo_url TEXT, issues TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM maker_build_log WHERE user_id=? ORDER BY created_at DESC LIMIT 200').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/maker/build-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { project_id, step_number, description, duration_min, photo_url, issues } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maker_build_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_id INTEGER, step_number INTEGER, description TEXT, duration_min INTEGER DEFAULT 0, photo_url TEXT, issues TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO maker_build_log (user_id,project_id,step_number,description,duration_min,photo_url,issues) VALUES (?,?,?,?,?,?,?)').run(u,project_id||0,step_number||1,description||'',duration_min||0,photo_url||'',issues||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2265 Milestone: Maker OS v2
+app.get('/api/milestone/maker-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const proj = safe(()=>db.prepare('SELECT COUNT(*) as c FROM maker_project_tracker WHERE user_id=?').get(u) as any);
+  const parts = safe(()=>db.prepare('SELECT COUNT(*) as c FROM maker_parts_inventory WHERE user_id=?').get(u) as any);
+  const cost = safe(()=>db.prepare('SELECT SUM(materials_cost) as t FROM maker_project_tracker WHERE user_id=?').get(u) as any);
+  res.json({ success:true, maker_v2:{ projects:proj?.c||0, parts_tracked:parts?.c||0, total_materials_cost:cost?.t||0 }});
+});
+
+// B2266-B2270: Collector OS v2
+app.get('/api/collector/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collector_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, category TEXT, target_price REAL DEFAULT 0, priority TEXT DEFAULT 'medium', source_url TEXT, notes TEXT, acquired INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM collector_wishlist WHERE user_id=? AND acquired=0 ORDER BY priority DESC, created_at DESC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/collector/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item_name, category, target_price, priority, source_url, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collector_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, category TEXT, target_price REAL DEFAULT 0, priority TEXT DEFAULT 'medium', source_url TEXT, notes TEXT, acquired INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO collector_wishlist (user_id,item_name,category,target_price,priority,source_url,notes) VALUES (?,?,?,?,?,?,?)').run(u,item_name||'',category||'',target_price||0,priority||'medium',source_url||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/collector/appraisals', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collector_appraisals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, collection_category TEXT, purchase_price REAL DEFAULT 0, appraised_value REAL DEFAULT 0, appraiser TEXT, appraisal_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM collector_appraisals WHERE user_id=? ORDER BY appraisal_date DESC LIMIT 50').all(u);
+    const gain = db.prepare('SELECT SUM(appraised_value-purchase_price) as g FROM collector_appraisals WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, unrealized_gain:gain?.g||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/collector/appraisals', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item_name, collection_category, purchase_price, appraised_value, appraiser, appraisal_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collector_appraisals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, collection_category TEXT, purchase_price REAL DEFAULT 0, appraised_value REAL DEFAULT 0, appraiser TEXT, appraisal_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO collector_appraisals (user_id,item_name,collection_category,purchase_price,appraised_value,appraiser,appraisal_date,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,item_name||'',collection_category||'',purchase_price||0,appraised_value||0,appraiser||'',appraisal_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/collector/trades', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collector_trades (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_given TEXT, item_received TEXT, counterparty TEXT, trade_date TEXT, my_value REAL DEFAULT 0, their_value REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM collector_trades WHERE user_id=? ORDER BY trade_date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/collector/trades', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item_given, item_received, counterparty, trade_date, my_value, their_value, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collector_trades (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_given TEXT, item_received TEXT, counterparty TEXT, trade_date TEXT, my_value REAL DEFAULT 0, their_value REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO collector_trades (user_id,item_given,item_received,counterparty,trade_date,my_value,their_value,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,item_given||'',item_received||'',counterparty||'',trade_date||'',my_value||0,their_value||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/collector/insurance', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collector_insurance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, provider TEXT, policy_number TEXT, coverage_amount REAL DEFAULT 0, annual_premium REAL DEFAULT 0, items_covered TEXT, renewal_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM collector_insurance WHERE user_id=? ORDER BY renewal_date ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/collector/insurance', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { provider, policy_number, coverage_amount, annual_premium, items_covered, renewal_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS collector_insurance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, provider TEXT, policy_number TEXT, coverage_amount REAL DEFAULT 0, annual_premium REAL DEFAULT 0, items_covered TEXT, renewal_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO collector_insurance (user_id,provider,policy_number,coverage_amount,annual_premium,items_covered,renewal_date,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,provider||'',policy_number||'',coverage_amount||0,annual_premium||0,items_covered||'',renewal_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2270 Milestone: Collector OS v2
+app.get('/api/milestone/collector-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const wish = safe(()=>db.prepare('SELECT COUNT(*) as c FROM collector_wishlist WHERE user_id=?').get(u) as any);
+  const gain = safe(()=>db.prepare('SELECT SUM(appraised_value-purchase_price) as g FROM collector_appraisals WHERE user_id=?').get(u) as any);
+  res.json({ success:true, collector_v2:{ wishlist_items:wish?.c||0, unrealized_gain:gain?.g||0 }});
+});
+
+// B2271-B2275: Scholar OS v2
+app.get('/api/scholar/reading-queue', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS scholar_reading_queue (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, type TEXT DEFAULT 'paper', status TEXT DEFAULT 'queued', priority TEXT DEFAULT 'medium', tags TEXT, notes TEXT, added_at TEXT DEFAULT (datetime('now')), created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM scholar_reading_queue WHERE user_id=? AND status!='done' ORDER BY priority DESC, added_at ASC LIMIT 100").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/scholar/reading-queue', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, author, type, priority, tags, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS scholar_reading_queue (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, type TEXT DEFAULT 'paper', status TEXT DEFAULT 'queued', priority TEXT DEFAULT 'medium', tags TEXT, notes TEXT, added_at TEXT DEFAULT (datetime('now')), created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO scholar_reading_queue (user_id,title,author,type,priority,tags,notes) VALUES (?,?,?,?,?,?,?)').run(u,title||'',author||'',type||'paper',priority||'medium',tags||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/scholar/writing-projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS scholar_writing_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, type TEXT DEFAULT 'paper', status TEXT DEFAULT 'draft', target_journal TEXT, word_count INTEGER DEFAULT 0, deadline TEXT, co_authors TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM scholar_writing_projects WHERE user_id=? ORDER BY deadline ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/scholar/writing-projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, type, status, target_journal, word_count, deadline, co_authors, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS scholar_writing_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, type TEXT DEFAULT 'paper', status TEXT DEFAULT 'draft', target_journal TEXT, word_count INTEGER DEFAULT 0, deadline TEXT, co_authors TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO scholar_writing_projects (user_id,title,type,status,target_journal,word_count,deadline,co_authors,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,title||'',type||'paper',status||'draft',target_journal||'',word_count||0,deadline||'',co_authors||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/scholar/grants', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS scholar_grants (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, grant_name TEXT, funder TEXT, amount REAL DEFAULT 0, status TEXT DEFAULT 'researching', deadline TEXT, submitted_date TEXT, awarded_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM scholar_grants WHERE user_id=? ORDER BY deadline ASC LIMIT 50').all(u);
+    const awarded = db.prepare("SELECT SUM(amount) as t FROM scholar_grants WHERE user_id=? AND status='awarded'").get(u) as any;
+    res.json({ success:true, data:rows, total_awarded:awarded?.t||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/scholar/grants', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { grant_name, funder, amount, status, deadline, submitted_date, awarded_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS scholar_grants (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, grant_name TEXT, funder TEXT, amount REAL DEFAULT 0, status TEXT DEFAULT 'researching', deadline TEXT, submitted_date TEXT, awarded_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO scholar_grants (user_id,grant_name,funder,amount,status,deadline,submitted_date,awarded_date,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,grant_name||'',funder||'',amount||0,status||'researching',deadline||'',submitted_date||'',awarded_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/scholar/conference-submissions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS scholar_conference_submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, paper_title TEXT, conference_name TEXT, submission_deadline TEXT, notification_date TEXT, status TEXT DEFAULT 'preparing', presenter TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM scholar_conference_submissions WHERE user_id=? ORDER BY submission_deadline ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/scholar/conference-submissions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { paper_title, conference_name, submission_deadline, notification_date, status, presenter, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS scholar_conference_submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, paper_title TEXT, conference_name TEXT, submission_deadline TEXT, notification_date TEXT, status TEXT DEFAULT 'preparing', presenter TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO scholar_conference_submissions (user_id,paper_title,conference_name,submission_deadline,notification_date,status,presenter,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,paper_title||'',conference_name||'',submission_deadline||'',notification_date||'',status||'preparing',presenter||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2275 Milestone: Scholar OS v2
+app.get('/api/milestone/scholar-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const reading = safe(()=>db.prepare('SELECT COUNT(*) as c FROM scholar_reading_queue WHERE user_id=?').get(u) as any);
+  const writing = safe(()=>db.prepare('SELECT COUNT(*) as c FROM scholar_writing_projects WHERE user_id=?').get(u) as any);
+  const grants = safe(()=>db.prepare("SELECT SUM(amount) as t FROM scholar_grants WHERE user_id=? AND status='awarded'").get(u) as any);
+  res.json({ success:true, scholar_v2:{ reading_queue:reading?.c||0, writing_projects:writing?.c||0, grants_awarded:grants?.t||0 }});
+});
+
+// B2276-B2280: Nomad OS v2
+app.get('/api/nomad/accommodation-reviews', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS nomad_accommodation_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, city TEXT, country TEXT, type TEXT, rating INTEGER DEFAULT 5, monthly_cost REAL DEFAULT 0, wifi_speed_mbps REAL, pros TEXT, cons TEXT, stayed_from TEXT, stayed_to TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM nomad_accommodation_reviews WHERE user_id=? ORDER BY rating DESC, created_at DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/nomad/accommodation-reviews', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, city, country, type, rating, monthly_cost, wifi_speed_mbps, pros, cons, stayed_from, stayed_to } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS nomad_accommodation_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, city TEXT, country TEXT, type TEXT, rating INTEGER DEFAULT 5, monthly_cost REAL DEFAULT 0, wifi_speed_mbps REAL, pros TEXT, cons TEXT, stayed_from TEXT, stayed_to TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO nomad_accommodation_reviews (user_id,name,city,country,type,rating,monthly_cost,wifi_speed_mbps,pros,cons,stayed_from,stayed_to) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',city||'',country||'',type||'',rating||5,monthly_cost||0,wifi_speed_mbps||0,pros||'',cons||'',stayed_from||'',stayed_to||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/nomad/coworking-spots', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS nomad_coworking_spots (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, city TEXT, country TEXT, rating INTEGER DEFAULT 5, daily_rate REAL DEFAULT 0, monthly_rate REAL DEFAULT 0, wifi_reliable INTEGER DEFAULT 1, has_standing_desk INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM nomad_coworking_spots WHERE user_id=? ORDER BY rating DESC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/nomad/coworking-spots', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, city, country, rating, daily_rate, monthly_rate, wifi_reliable, has_standing_desk, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS nomad_coworking_spots (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, city TEXT, country TEXT, rating INTEGER DEFAULT 5, daily_rate REAL DEFAULT 0, monthly_rate REAL DEFAULT 0, wifi_reliable INTEGER DEFAULT 1, has_standing_desk INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO nomad_coworking_spots (user_id,name,city,country,rating,daily_rate,monthly_rate,wifi_reliable,has_standing_desk,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',city||'',country||'',rating||5,daily_rate||0,monthly_rate||0,wifi_reliable?1:1,has_standing_desk?1:0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/nomad/health-insurance', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS nomad_health_insurance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, provider TEXT, plan_name TEXT, monthly_premium REAL DEFAULT 0, coverage_regions TEXT, deductible REAL DEFAULT 0, policy_number TEXT, expiry_date TEXT, emergency_number TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM nomad_health_insurance WHERE user_id=? ORDER BY expiry_date ASC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/nomad/health-insurance', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { provider, plan_name, monthly_premium, coverage_regions, deductible, policy_number, expiry_date, emergency_number, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS nomad_health_insurance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, provider TEXT, plan_name TEXT, monthly_premium REAL DEFAULT 0, coverage_regions TEXT, deductible REAL DEFAULT 0, policy_number TEXT, expiry_date TEXT, emergency_number TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO nomad_health_insurance (user_id,provider,plan_name,monthly_premium,coverage_regions,deductible,policy_number,expiry_date,emergency_number,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,provider||'',plan_name||'',monthly_premium||0,coverage_regions||'',deductible||0,policy_number||'',expiry_date||'',emergency_number||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/nomad/tax-obligations', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS nomad_tax_obligations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, country TEXT, tax_year INTEGER, status TEXT DEFAULT 'researching', filing_deadline TEXT, estimated_owed REAL DEFAULT 0, paid_amount REAL DEFAULT 0, accountant TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM nomad_tax_obligations WHERE user_id=? ORDER BY filing_deadline ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/nomad/tax-obligations', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { country, tax_year, status, filing_deadline, estimated_owed, paid_amount, accountant, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS nomad_tax_obligations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, country TEXT, tax_year INTEGER, status TEXT DEFAULT 'researching', filing_deadline TEXT, estimated_owed REAL DEFAULT 0, paid_amount REAL DEFAULT 0, accountant TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO nomad_tax_obligations (user_id,country,tax_year,status,filing_deadline,estimated_owed,paid_amount,accountant,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,country||'',tax_year||new Date().getFullYear(),status||'researching',filing_deadline||'',estimated_owed||0,paid_amount||0,accountant||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2280 Milestone: Nomad OS v2
+app.get('/api/milestone/nomad-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const accom = safe(()=>db.prepare('SELECT COUNT(*) as c, AVG(rating) as r FROM nomad_accommodation_reviews WHERE user_id=?').get(u) as any);
+  const cowo = safe(()=>db.prepare('SELECT COUNT(*) as c FROM nomad_coworking_spots WHERE user_id=?').get(u) as any);
+  res.json({ success:true, nomad_v2:{ accommodations:accom?.c||0, avg_rating:accom?.r||0, coworking_spots:cowo?.c||0 }});
+});
+
+// B2281-B2285: Executive OS v2
+app.get('/api/exec/decision-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS exec_decision_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, decision TEXT, context TEXT, options_considered TEXT, chosen_option TEXT, rationale TEXT, expected_outcome TEXT, actual_outcome TEXT, decision_date TEXT, review_date TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM exec_decision_log WHERE user_id=? ORDER BY decision_date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/exec/decision-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { decision, context, options_considered, chosen_option, rationale, expected_outcome, decision_date, review_date } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS exec_decision_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, decision TEXT, context TEXT, options_considered TEXT, chosen_option TEXT, rationale TEXT, expected_outcome TEXT, actual_outcome TEXT, decision_date TEXT, review_date TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO exec_decision_log (user_id,decision,context,options_considered,chosen_option,rationale,expected_outcome,decision_date,review_date) VALUES (?,?,?,?,?,?,?,?,?)').run(u,decision||'',context||'',options_considered||'',chosen_option||'',rationale||'',expected_outcome||'',decision_date||'',review_date||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/exec/team-pulse', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS exec_team_pulse (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, team_member TEXT, pulse_date TEXT, morale INTEGER DEFAULT 3, performance INTEGER DEFAULT 3, concerns TEXT, wins TEXT, action_items TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM exec_team_pulse WHERE user_id=? ORDER BY pulse_date DESC LIMIT 100').all(u);
+    const avg = db.prepare('SELECT AVG(morale) as am, AVG(performance) as ap FROM exec_team_pulse WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, avg_morale:avg?.am||0, avg_performance:avg?.ap||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/exec/team-pulse', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { team_member, pulse_date, morale, performance, concerns, wins, action_items } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS exec_team_pulse (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, team_member TEXT, pulse_date TEXT, morale INTEGER DEFAULT 3, performance INTEGER DEFAULT 3, concerns TEXT, wins TEXT, action_items TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO exec_team_pulse (user_id,team_member,pulse_date,morale,performance,concerns,wins,action_items) VALUES (?,?,?,?,?,?,?,?)').run(u,team_member||'',pulse_date||'',morale||3,performance||3,concerns||'',wins||'',action_items||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/exec/investor-relations', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS exec_investor_relations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, investor_name TEXT, fund TEXT, investment_amount REAL DEFAULT 0, ownership_pct REAL DEFAULT 0, last_update TEXT, next_update_due TEXT, sentiment TEXT DEFAULT 'neutral', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM exec_investor_relations WHERE user_id=? ORDER BY next_update_due ASC LIMIT 50').all(u);
+    const total = db.prepare('SELECT SUM(investment_amount) as t FROM exec_investor_relations WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_raised:total?.t||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/exec/investor-relations', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { investor_name, fund, investment_amount, ownership_pct, last_update, next_update_due, sentiment, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS exec_investor_relations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, investor_name TEXT, fund TEXT, investment_amount REAL DEFAULT 0, ownership_pct REAL DEFAULT 0, last_update TEXT, next_update_due TEXT, sentiment TEXT DEFAULT 'neutral', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO exec_investor_relations (user_id,investor_name,fund,investment_amount,ownership_pct,last_update,next_update_due,sentiment,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,investor_name||'',fund||'',investment_amount||0,ownership_pct||0,last_update||'',next_update_due||'',sentiment||'neutral',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/exec/okrs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS exec_okrs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, quarter TEXT, objective TEXT, key_result TEXT, target_value REAL DEFAULT 100, current_value REAL DEFAULT 0, owner TEXT, status TEXT DEFAULT 'on_track', created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM exec_okrs WHERE user_id=? ORDER BY quarter DESC, objective ASC LIMIT 100').all(u);
+    const avgProgress = db.prepare('SELECT AVG(current_value*100.0/NULLIF(target_value,0)) as p FROM exec_okrs WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, avg_progress_pct:avgProgress?.p||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/exec/okrs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { quarter, objective, key_result, target_value, current_value, owner, status } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS exec_okrs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, quarter TEXT, objective TEXT, key_result TEXT, target_value REAL DEFAULT 100, current_value REAL DEFAULT 0, owner TEXT, status TEXT DEFAULT 'on_track', created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO exec_okrs (user_id,quarter,objective,key_result,target_value,current_value,owner,status) VALUES (?,?,?,?,?,?,?,?)').run(u,quarter||'',objective||'',key_result||'',target_value||100,current_value||0,owner||'',status||'on_track');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2285 Milestone: Executive OS v2
+app.get('/api/milestone/exec-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const decisions = safe(()=>db.prepare('SELECT COUNT(*) as c FROM exec_decision_log WHERE user_id=?').get(u) as any);
+  const raised = safe(()=>db.prepare('SELECT SUM(investment_amount) as t FROM exec_investor_relations WHERE user_id=?').get(u) as any);
+  const okrPct = safe(()=>db.prepare('SELECT AVG(current_value*100.0/NULLIF(target_value,0)) as p FROM exec_okrs WHERE user_id=?').get(u) as any);
+  res.json({ success:true, exec_v2:{ decisions_logged:decisions?.c||0, total_raised:raised?.t||0, avg_okr_progress:okrPct?.p||0 }});
+});
+
+// B2286-B2290: Health OS v2
+app.get('/api/health/lab-results', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS health_lab_results (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, test_name TEXT, value REAL, unit TEXT, normal_min REAL, normal_max REAL, lab_date TEXT, ordered_by TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM health_lab_results WHERE user_id=? ORDER BY lab_date DESC LIMIT 200').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/health/lab-results', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { test_name, value, unit, normal_min, normal_max, lab_date, ordered_by, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS health_lab_results (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, test_name TEXT, value REAL, unit TEXT, normal_min REAL, normal_max REAL, lab_date TEXT, ordered_by TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO health_lab_results (user_id,test_name,value,unit,normal_min,normal_max,lab_date,ordered_by,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,test_name||'',value||0,unit||'',normal_min||0,normal_max||0,lab_date||'',ordered_by||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/health/medications', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS health_medications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, medication_name TEXT, dosage TEXT, frequency TEXT, prescribed_by TEXT, start_date TEXT, end_date TEXT, purpose TEXT, side_effects TEXT, active INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM health_medications WHERE user_id=? AND active=1 ORDER BY medication_name ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/health/medications', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { medication_name, dosage, frequency, prescribed_by, start_date, end_date, purpose, side_effects } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS health_medications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, medication_name TEXT, dosage TEXT, frequency TEXT, prescribed_by TEXT, start_date TEXT, end_date TEXT, purpose TEXT, side_effects TEXT, active INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO health_medications (user_id,medication_name,dosage,frequency,prescribed_by,start_date,end_date,purpose,side_effects) VALUES (?,?,?,?,?,?,?,?,?)').run(u,medication_name||'',dosage||'',frequency||'',prescribed_by||'',start_date||'',end_date||'',purpose||'',side_effects||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/health/body-composition', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS health_body_composition (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, weight_kg REAL, body_fat_pct REAL, muscle_mass_kg REAL, bone_density REAL, water_pct REAL, bmi REAL, measured_at TEXT, method TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM health_body_composition WHERE user_id=? ORDER BY measured_at DESC LIMIT 100').all(u);
+    const latest = rows[0] || null;
+    res.json({ success:true, data:rows, latest });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/health/body-composition', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { weight_kg, body_fat_pct, muscle_mass_kg, bone_density, water_pct, bmi, measured_at, method } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS health_body_composition (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, weight_kg REAL, body_fat_pct REAL, muscle_mass_kg REAL, bone_density REAL, water_pct REAL, bmi REAL, measured_at TEXT, method TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO health_body_composition (user_id,weight_kg,body_fat_pct,muscle_mass_kg,bone_density,water_pct,bmi,measured_at,method) VALUES (?,?,?,?,?,?,?,?,?)').run(u,weight_kg||0,body_fat_pct||0,muscle_mass_kg||0,bone_density||0,water_pct||0,bmi||0,measured_at||'',method||'scale');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/health/appointments', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS health_appointments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, provider TEXT, specialty TEXT, appointment_date TEXT, appointment_time TEXT, location TEXT, purpose TEXT, notes TEXT, follow_up TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM health_appointments WHERE user_id=? ORDER BY appointment_date ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/health/appointments', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { provider, specialty, appointment_date, appointment_time, location, purpose, notes, follow_up } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS health_appointments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, provider TEXT, specialty TEXT, appointment_date TEXT, appointment_time TEXT, location TEXT, purpose TEXT, notes TEXT, follow_up TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO health_appointments (user_id,provider,specialty,appointment_date,appointment_time,location,purpose,notes,follow_up) VALUES (?,?,?,?,?,?,?,?,?)').run(u,provider||'',specialty||'',appointment_date||'',appointment_time||'',location||'',purpose||'',notes||'',follow_up||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2290 Milestone: Health OS v2
+app.get('/api/milestone/health-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const labs = safe(()=>db.prepare('SELECT COUNT(*) as c FROM health_lab_results WHERE user_id=?').get(u) as any);
+  const meds = safe(()=>db.prepare('SELECT COUNT(*) as c FROM health_medications WHERE user_id=? AND active=1').get(u) as any);
+  const body = safe(()=>db.prepare('SELECT * FROM health_body_composition WHERE user_id=? ORDER BY measured_at DESC LIMIT 1').get(u) as any);
+  res.json({ success:true, health_v2:{ lab_results:labs?.c||0, active_medications:meds?.c||0, latest_weight_kg:body?.weight_kg||0, latest_body_fat:body?.body_fat_pct||0 }});
+});
+
+// B2291-B2295: Finance OS v2
+app.get('/api/finance/tax-planning', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS finance_tax_planning (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tax_year INTEGER, income_estimate REAL DEFAULT 0, deductions_estimate REAL DEFAULT 0, tax_owed_estimate REAL DEFAULT 0, paid_so_far REAL DEFAULT 0, strategy_notes TEXT, accountant TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM finance_tax_planning WHERE user_id=? ORDER BY tax_year DESC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/finance/tax-planning', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { tax_year, income_estimate, deductions_estimate, tax_owed_estimate, paid_so_far, strategy_notes, accountant } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS finance_tax_planning (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tax_year INTEGER, income_estimate REAL DEFAULT 0, deductions_estimate REAL DEFAULT 0, tax_owed_estimate REAL DEFAULT 0, paid_so_far REAL DEFAULT 0, strategy_notes TEXT, accountant TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO finance_tax_planning (user_id,tax_year,income_estimate,deductions_estimate,tax_owed_estimate,paid_so_far,strategy_notes,accountant) VALUES (?,?,?,?,?,?,?,?)').run(u,tax_year||new Date().getFullYear(),income_estimate||0,deductions_estimate||0,tax_owed_estimate||0,paid_so_far||0,strategy_notes||'',accountant||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/finance/emergency-fund', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS finance_emergency_fund (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, current_balance REAL DEFAULT 0, target_balance REAL DEFAULT 0, monthly_expenses REAL DEFAULT 0, account_name TEXT, recorded_at TEXT DEFAULT (datetime('now')), created_at TEXT DEFAULT (datetime('now')))`).run();
+    const latest = db.prepare('SELECT * FROM finance_emergency_fund WHERE user_id=? ORDER BY recorded_at DESC LIMIT 1').get(u) as any;
+    const history = db.prepare('SELECT * FROM finance_emergency_fund WHERE user_id=? ORDER BY recorded_at DESC LIMIT 24').all(u);
+    const pct = latest ? ((latest.current_balance / (latest.target_balance||1)) * 100).toFixed(1) : '0';
+    res.json({ success:true, latest, history, coverage_pct:parseFloat(pct) });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/finance/emergency-fund', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { current_balance, target_balance, monthly_expenses, account_name, recorded_at } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS finance_emergency_fund (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, current_balance REAL DEFAULT 0, target_balance REAL DEFAULT 0, monthly_expenses REAL DEFAULT 0, account_name TEXT, recorded_at TEXT DEFAULT (datetime('now')), created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO finance_emergency_fund (user_id,current_balance,target_balance,monthly_expenses,account_name,recorded_at) VALUES (?,?,?,?,?,?)').run(u,current_balance||0,target_balance||0,monthly_expenses||0,account_name||'',recorded_at||new Date().toISOString());
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/finance/subscriptions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS finance_subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, service_name TEXT, category TEXT, monthly_cost REAL DEFAULT 0, annual_cost REAL DEFAULT 0, billing_cycle TEXT DEFAULT 'monthly', next_billing TEXT, active INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM finance_subscriptions WHERE user_id=? AND active=1 ORDER BY monthly_cost DESC LIMIT 100').all(u);
+    const total = db.prepare('SELECT SUM(monthly_cost) as t FROM finance_subscriptions WHERE user_id=? AND active=1').get(u) as any;
+    res.json({ success:true, data:rows, total_monthly:total?.t||0, total_annual:(total?.t||0)*12 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/finance/subscriptions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { service_name, category, monthly_cost, annual_cost, billing_cycle, next_billing, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS finance_subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, service_name TEXT, category TEXT, monthly_cost REAL DEFAULT 0, annual_cost REAL DEFAULT 0, billing_cycle TEXT DEFAULT 'monthly', next_billing TEXT, active INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO finance_subscriptions (user_id,service_name,category,monthly_cost,annual_cost,billing_cycle,next_billing,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,service_name||'',category||'',monthly_cost||0,annual_cost||0,billing_cycle||'monthly',next_billing||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+app.get('/api/finance/insurance-policies', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS finance_insurance_policies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, policy_type TEXT, provider TEXT, coverage_amount REAL DEFAULT 0, annual_premium REAL DEFAULT 0, policy_number TEXT, beneficiary TEXT, renewal_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM finance_insurance_policies WHERE user_id=? ORDER BY renewal_date ASC LIMIT 20').all(u);
+    const total_coverage = db.prepare('SELECT SUM(coverage_amount) as t FROM finance_insurance_policies WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_coverage:total_coverage?.t||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/finance/insurance-policies', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { policy_type, provider, coverage_amount, annual_premium, policy_number, beneficiary, renewal_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS finance_insurance_policies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, policy_type TEXT, provider TEXT, coverage_amount REAL DEFAULT 0, annual_premium REAL DEFAULT 0, policy_number TEXT, beneficiary TEXT, renewal_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO finance_insurance_policies (user_id,policy_type,provider,coverage_amount,annual_premium,policy_number,beneficiary,renewal_date,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,policy_type||'',provider||'',coverage_amount||0,annual_premium||0,policy_number||'',beneficiary||'',renewal_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B2295 Milestone: Finance OS v2
+app.get('/api/milestone/finance-v2', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const subs = safe(()=>db.prepare('SELECT SUM(monthly_cost) as t FROM finance_subscriptions WHERE user_id=? AND active=1').get(u) as any);
+  const emerg = safe(()=>db.prepare('SELECT * FROM finance_emergency_fund WHERE user_id=? ORDER BY recorded_at DESC LIMIT 1').get(u) as any);
+  const insur = safe(()=>db.prepare('SELECT SUM(coverage_amount) as t FROM finance_insurance_policies WHERE user_id=?').get(u) as any);
+  res.json({ success:true, finance_v2:{ monthly_subscriptions:subs?.t||0, emergency_fund_balance:emerg?.current_balance||0, total_insurance_coverage:insur?.t||0 }});
+});
+
+// B2296-B2300: Grand Milestone OS — v21.50 Super Dashboard
+app.get('/api/milestone/v21-50', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const creator = safe(()=>db.prepare('SELECT COUNT(*) as c FROM creator_youtube_analytics WHERE user_id=?').get(u) as any);
+  const sports = safe(()=>db.prepare('SELECT COUNT(*) as c FROM sports_performance_log WHERE user_id=?').get(u) as any);
+  const maker = safe(()=>db.prepare('SELECT COUNT(*) as c FROM maker_project_tracker WHERE user_id=?').get(u) as any);
+  const collector = safe(()=>db.prepare('SELECT COUNT(*) as c FROM collector_wishlist WHERE user_id=?').get(u) as any);
+  const scholar = safe(()=>db.prepare('SELECT COUNT(*) as c FROM scholar_writing_projects WHERE user_id=?').get(u) as any);
+  const nomad = safe(()=>db.prepare('SELECT COUNT(*) as c FROM nomad_accommodation_reviews WHERE user_id=?').get(u) as any);
+  const exec = safe(()=>db.prepare('SELECT COUNT(*) as c FROM exec_decision_log WHERE user_id=?').get(u) as any);
+  const health = safe(()=>db.prepare('SELECT COUNT(*) as c FROM health_lab_results WHERE user_id=?').get(u) as any);
+  const finance = safe(()=>db.prepare('SELECT SUM(monthly_cost) as t FROM finance_subscriptions WHERE user_id=? AND active=1').get(u) as any);
+  res.json({
+    success: true,
+    version: 'v21.50',
+    total_endpoints: 2300,
+    milestone: 'B2300 — Grand OS v2 Complete',
+    os_modules: {
+      creator_v2: { videos: creator?.c||0 },
+      sports_v2: { performance_entries: sports?.c||0 },
+      maker_v2: { projects: maker?.c||0 },
+      collector_v2: { wishlist_items: collector?.c||0 },
+      scholar_v2: { writing_projects: scholar?.c||0 },
+      nomad_v2: { accommodations: nomad?.c||0 },
+      exec_v2: { decisions: exec?.c||0 },
+      health_v2: { lab_results: health?.c||0 },
+      finance_v2: { monthly_subs: finance?.t||0 },
+    }
+  });
+});
+
+app.get('/api/forge/os-registry', (req: any, res: any) => {
+  res.json({
+    success: true,
+    version: 'v21.50',
+    total_os_modules: 50,
+    total_endpoints: 2300,
+    os_modules: [
+      'Learning OS','Freelance OS','Wellness OS','Network OS','Community OS',
+      'Lifestyle OS','Wealth OS','Knowledge OS','Inner Life OS','Ops Intelligence OS',
+      'Creator OS v2','Sports Analytics OS v2','Maker OS v2','Collector OS v2','Scholar OS v2',
+      'Nomad OS v2','Executive OS v2','Health OS v2','Finance OS v2','Grand Milestone v21.50',
+      'Career OS','Travel OS','Pet Owner OS','Home Owner OS','Investor OS',
+      'AI Router OS','Prompt Engine OS','Multi-Agent OS','Life OS','Mind OS',
+      'Writing Studio OS','CRM OS v2','PM OS v2','Analytics OS','Billing OS',
+      'Automation OS','Webhook OS','Social Media OS','Content OS','Email OS',
+      'Health Tracker OS','Recipe OS','Habit OS','Sleep OS','Mindfulness OS',
+      'Finance Tracker OS','Investment OS','Crypto OS','Budget OS','Net Worth OS'
+    ]
+  });
+});
+
+app.get('/api/forge/system-health', (req: any, res: any) => {
+  const safe = (fn: ()=>any, d:any=null) => { try { return fn(); } catch { return d; } };
+  const dbSize = safe(()=>{ const r = db.prepare("SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()").get() as any; return r?.size||0; });
+  res.json({
+    success: true,
+    status: 'healthy',
+    version: 'v21.50',
+    timestamp: new Date().toISOString(),
+    db_size_bytes: dbSize,
+    uptime_ms: process.uptime() * 1000,
+    memory_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    endpoints: 2300,
+    features: 'B1-B2300 all active'
+  });
+});
+
+app.get('/api/forge/changelog', (_req: any, res: any) => {
+  res.json({
+    success: true,
+    changelog: [
+      { version: 'v21.50', endpoints: 'B2251-B2300', features: 'Creator v2, Sports v2, Maker v2, Collector v2, Scholar v2, Nomad v2, Exec v2, Health v2, Finance v2' },
+      { version: 'v21.25', endpoints: 'B2201-B2250', features: 'ESM fix + 50 OS endpoints + Executive OS, Investor OS, Home Owner OS, Pet OS, Nomad OS' },
+      { version: 'v21.20', endpoints: 'B2151-B2200', features: 'Learning, Freelance, Wellness, Network, Community, Lifestyle, Wealth, Knowledge, Inner Life, Ops' },
+      { version: 'v20.50', endpoints: 'B2001-B2050', features: 'Habit Stacks, Energy Mgmt, Identity, Failure Analysis, Decision Journal, Creative Projects' },
+    ]
+  });
+});
+
+app.get('/api/forge/feature-flags', (_req: any, res: any) => {
+  res.json({
+    success: true,
+    flags: {
+      streaming: true,
+      multi_model: true,
+      voice_input: true,
+      image_generation: true,
+      thread_branching: true,
+      smart_suggestions: true,
+      analytics: true,
+      billing: true,
+      webhooks: true,
+      autonomy_os: true,
+      grand_milestone_2300: true
+    }
+  });
 });
 
 // ─── 404 fallback (must be last) ─────────────────────────────────────────────

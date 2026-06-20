@@ -595,26 +595,21 @@
 - B2241-2245: Investor OS — Angel Deals, VC Pipeline, Cap Table, Startup Watchlist, Investor OS Milestone
 - B2246-2250: Executive OS — Board Prep, Stakeholder Map, KPI Dashboard, Exec Journal, Executive OS Milestone
 - Total: 133,462 lines across 2250+ backend endpoints
-stronomy Star Party Log (bortle, objects, nights, travel)
-- B804: Traditional Archery & Crossbow Log (accuracy_pct auto-calc)
-- B805: Quilting & Textile Art Studio (profit, hourly_rate)
 
-## v9.40 — B761-B790 MILESTONE (2026-06-19)
-- B761: Rug Tufting & Textile Art Studio (commission tracking, hourly rate)
-- B762: Magic: The Gathering / TCG Deck & Game Log (win tracking per deck)
-- B763: Homebrewing Spirits & Distillation Log (ABV auto-calc from OG/FG)
-- B764: Rock Climbing Route Ticklist & Training Log (grade distribution, projects)
-- B765: Amateur Astrophotography Log (integration time, dark-sky sessions)
-- B766: Leatherworking Studio (project types, effective hourly)
-- B767: Amateur Radio / Ham Radio QSO Log (DX count, band breakdown)
-- B768: Hydroponics & Indoor Grow Room (pH/EC alerts, readings log)
-- B769: Podcast Production & Hosting (download stats, edit ratio)
-- B770: Exotic Car Track Day Log (lap times, cost_per_lap, track PBs)
-- B771: Skateboarding Trick Log & Spot Map (auto-add to tricks list on land)
-- B772: Antique & Vintage Collecting (portfolio gain, by_category)
-- B773: Bow Hunting Season Journal (sits, recovery_pct, stands)
-- B774: Fly Tying Bench & Pattern Log (top producers, tying sessions)
-- B775: Vintage Watch Collection & Service Log (service_due alerts, daily_driver swap)
+## v21.50 — B2251-B2300 (50 New Features) — Grand OS v2 Complete
+- B2251-2255: Creator OS v2 — YouTube Analytics, Sponsorships, Content Pipeline, Audience Insights, Milestone
+- B2256-2260: Sports Analytics OS v2 — Performance Log, Gear Inventory, Coaching Notes, Competition Calendar, Milestone
+- B2261-2265: Maker OS v2 — Project Tracker, Parts Inventory, Tools Maintenance, Build Log, Milestone
+- B2266-2270: Collector OS v2 — Wishlist, Appraisals, Trades, Insurance, Milestone
+- B2271-2275: Scholar OS v2 — Reading Queue, Writing Projects, Grants, Conference Submissions, Milestone
+- B2276-2280: Nomad OS v2 — Accommodation Reviews, Coworking Spots, Health Insurance, Tax Obligations, Milestone
+- B2281-2285: Executive OS v2 — Decision Log, Team Pulse, Investor Relations, OKRs, Milestone
+- B2286-2290: Health OS v2 — Lab Results, Medications, Body Composition, Appointments, Milestone
+- B2291-2295: Finance OS v2 — Tax Planning, Emergency Fund, Subscriptions, Insurance Policies, Milestone
+- B2296-2300: Grand Milestone — v21.50 Super Dashboard, OS Registry, System Health, Changelog, Feature Flags
+- Total: 134,325 lines across 2300+ backend endpoints
+- CRITICAL FIX: Dockerfile esbuild --format=cjs to resolve ESM require() crash
+on & Service Log (service_due alerts, daily_driver swap)
 - B776: Snowboard & Ski Day Log (cost_per_1k_vert, by_resort)
 - B777: Paragliding & Hang Gliding Log (XC distance, total_hours)
 - B778: Canyoneering & Rappelling Log (rappels, total descent)
