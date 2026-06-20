@@ -141824,5 +141824,415 @@ app.get('/api/forge/craft-total', (_req: any, res: any) => {
 
 
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B3101-B3150: 3D Printing OS + Electronics OS + Robotics OS + RC OS
+//              Drones OS + Ham Radio OS + Astronomy v2 OS + Meteorology OS
+//              Geology OS + Grand Milestone v38
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B3101-B3105: 3D Printing OS
+app.get('/api/3d-printing/prints', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS printing3d_prints (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, file TEXT, printer TEXT DEFAULT 'FDM', material TEXT DEFAULT 'PLA', color TEXT, infill_pct INTEGER DEFAULT 20, print_time_min INTEGER DEFAULT 60, filament_g REAL DEFAULT 10, status TEXT DEFAULT 'completed', rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM printing3d_prints WHERE user_id=? ORDER BY created_at DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/3d-printing/prints', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, file, printer, material, color, infill_pct, print_time_min, filament_g, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS printing3d_prints (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, file TEXT, printer TEXT DEFAULT 'FDM', material TEXT DEFAULT 'PLA', color TEXT, infill_pct INTEGER DEFAULT 20, print_time_min INTEGER DEFAULT 60, filament_g REAL DEFAULT 10, status TEXT DEFAULT 'completed', rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO printing3d_prints (user_id,name,file,printer,material,color,infill_pct,print_time_min,filament_g,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',file||'',printer||'FDM',material||'PLA',color||'',infill_pct||20,print_time_min||60,filament_g||10,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/3d-printing/filaments', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS printing3d_filaments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, brand TEXT, material TEXT DEFAULT 'PLA', color TEXT, diameter_mm REAL DEFAULT 1.75, weight_g REAL DEFAULT 1000, remaining_pct INTEGER DEFAULT 100, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM printing3d_filaments WHERE user_id=? ORDER BY remaining_pct DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/3d-printing/filaments', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { brand, material, color, diameter_mm, weight_g, remaining_pct, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS printing3d_filaments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, brand TEXT, material TEXT DEFAULT 'PLA', color TEXT, diameter_mm REAL DEFAULT 1.75, weight_g REAL DEFAULT 1000, remaining_pct INTEGER DEFAULT 100, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO printing3d_filaments (user_id,brand,material,color,diameter_mm,weight_g,remaining_pct,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,brand||'',material||'PLA',color||'',diameter_mm||1.75,weight_g||1000,remaining_pct||100,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/3d-printing-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(filament_g),0) as g FROM printing3d_prints WHERE user_id=?').get(u) as any);
+  res.json({ success:true, printing3d_os:{ prints:p?.c||0, filament_used_g:p?.g||0 }});
+});
+
+// B3106-B3110: Electronics Hobby OS
+app.get('/api/electronics/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS electronics_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'circuit', microcontroller TEXT DEFAULT 'Arduino', status TEXT DEFAULT 'in-progress', voltage REAL DEFAULT 5, current_ma REAL DEFAULT 0, hours_spent REAL DEFAULT 0, cost REAL DEFAULT 0, github_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM electronics_projects WHERE user_id=? ORDER BY CASE status WHEN 'in-progress' THEN 0 ELSE 1 END, created_at DESC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/electronics/projects', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, microcontroller, voltage, current_ma, hours_spent, cost, github_url, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS electronics_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'circuit', microcontroller TEXT DEFAULT 'Arduino', status TEXT DEFAULT 'in-progress', voltage REAL DEFAULT 5, current_ma REAL DEFAULT 0, hours_spent REAL DEFAULT 0, cost REAL DEFAULT 0, github_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO electronics_projects (user_id,name,type,microcontroller,voltage,current_ma,hours_spent,cost,github_url,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',type||'circuit',microcontroller||'Arduino',voltage||5,current_ma||0,hours_spent||0,cost||0,github_url||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/electronics/components', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS electronics_components (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'resistor', value TEXT, quantity INTEGER DEFAULT 1, location TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM electronics_components WHERE user_id=? ORDER BY type ASC, name ASC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/electronics/components', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, value, quantity, location, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS electronics_components (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'resistor', value TEXT, quantity INTEGER DEFAULT 1, location TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO electronics_components (user_id,name,type,value,quantity,location,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',type||'resistor',value||'',quantity||1,location||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/electronics-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare('SELECT COUNT(*) as c FROM electronics_projects WHERE user_id=?').get(u) as any);
+  res.json({ success:true, electronics_os:{ projects:p?.c||0 }});
+});
+
+// B3111-B3115: Robotics OS
+app.get('/api/robotics/robots', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS robotics_robots (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'wheeled', platform TEXT DEFAULT 'Arduino', sensors TEXT, actuators TEXT, status TEXT DEFAULT 'building', github_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM robotics_robots WHERE user_id=? ORDER BY status ASC, created_at DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/robotics/robots', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, platform, sensors, actuators, github_url, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS robotics_robots (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'wheeled', platform TEXT DEFAULT 'Arduino', sensors TEXT, actuators TEXT, status TEXT DEFAULT 'building', github_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO robotics_robots (user_id,name,type,platform,sensors,actuators,github_url,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'wheeled',platform||'Arduino',sensors||'',actuators||'',github_url||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/robotics/competitions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS robotics_competitions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, date TEXT, robot TEXT, category TEXT, placement INTEGER DEFAULT 0, team_size INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM robotics_competitions WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/robotics/competitions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, date, robot, category, placement, team_size, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS robotics_competitions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, date TEXT, robot TEXT, category TEXT, placement INTEGER DEFAULT 0, team_size INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO robotics_competitions (user_id,name,date,robot,category,placement,team_size,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',date||'',robot||'',category||'',placement||0,team_size||1,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/robotics-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const r = safe(()=>db.prepare('SELECT COUNT(*) as c FROM robotics_robots WHERE user_id=?').get(u) as any);
+  res.json({ success:true, robotics_os:{ robots:r?.c||0 }});
+});
+
+// B3116-B3120: RC Hobby OS
+app.get('/api/rc/vehicles', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rc_vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'car', scale TEXT DEFAULT '1:10', motor TEXT DEFAULT 'brushless', battery TEXT DEFAULT 'LiPo', esc TEXT, top_speed_mph REAL DEFAULT 0, run_time_min INTEGER DEFAULT 20, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM rc_vehicles WHERE user_id=? ORDER BY type ASC, name ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/rc/vehicles', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, scale, motor, battery, esc, top_speed_mph, run_time_min, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rc_vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'car', scale TEXT DEFAULT '1:10', motor TEXT DEFAULT 'brushless', battery TEXT DEFAULT 'LiPo', esc TEXT, top_speed_mph REAL DEFAULT 0, run_time_min INTEGER DEFAULT 20, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rc_vehicles (user_id,name,type,scale,motor,battery,esc,top_speed_mph,run_time_min,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',type||'car',scale||'1:10',motor||'brushless',battery||'LiPo',esc||'',top_speed_mph||0,run_time_min||20,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/rc/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rc_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, vehicle TEXT, location TEXT, duration_min INTEGER DEFAULT 30, crashes INTEGER DEFAULT 0, repairs TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM rc_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/rc/sessions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, vehicle, location, duration_min, crashes, repairs, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rc_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, vehicle TEXT, location TEXT, duration_min INTEGER DEFAULT 30, crashes INTEGER DEFAULT 0, repairs TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rc_sessions (user_id,date,vehicle,location,duration_min,crashes,repairs,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,date||'',vehicle||'',location||'',duration_min||30,crashes||0,repairs||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/rc-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const v = safe(()=>db.prepare('SELECT COUNT(*) as c FROM rc_vehicles WHERE user_id=?').get(u) as any);
+  res.json({ success:true, rc_os:{ vehicles:v?.c||0 }});
+});
+
+// B3121-B3125: Drones OS
+app.get('/api/drones/fleet', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS drones_fleet (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'quadcopter', flight_controller TEXT, weight_g INTEGER DEFAULT 250, max_speed_mph REAL DEFAULT 30, flight_time_min INTEGER DEFAULT 20, status TEXT DEFAULT 'airworthy', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM drones_fleet WHERE user_id=? ORDER BY type ASC, name ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/drones/fleet', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, flight_controller, weight_g, max_speed_mph, flight_time_min, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS drones_fleet (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'quadcopter', flight_controller TEXT, weight_g INTEGER DEFAULT 250, max_speed_mph REAL DEFAULT 30, flight_time_min INTEGER DEFAULT 20, status TEXT DEFAULT 'airworthy', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO drones_fleet (user_id,name,type,flight_controller,weight_g,max_speed_mph,flight_time_min,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',type||'quadcopter',flight_controller||'',weight_g||250,max_speed_mph||30,flight_time_min||20,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/drones/flights', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS drones_flights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, drone TEXT, location TEXT, duration_min INTEGER DEFAULT 15, max_altitude_m REAL DEFAULT 0, distance_km REAL DEFAULT 0, mode TEXT DEFAULT 'manual', incidents TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM drones_flights WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const totals = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(duration_min),0) as m FROM drones_flights WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_flights:totals?.c||0, total_minutes:totals?.m||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/drones/flights', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, drone, location, duration_min, max_altitude_m, distance_km, mode, incidents, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS drones_flights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, drone TEXT, location TEXT, duration_min INTEGER DEFAULT 15, max_altitude_m REAL DEFAULT 0, distance_km REAL DEFAULT 0, mode TEXT DEFAULT 'manual', incidents TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO drones_flights (user_id,date,drone,location,duration_min,max_altitude_m,distance_km,mode,incidents,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,date||'',drone||'',location||'',duration_min||15,max_altitude_m||0,distance_km||0,mode||'manual',incidents||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/drones-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const f = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(duration_min),0) as m FROM drones_flights WHERE user_id=?').get(u) as any);
+  res.json({ success:true, drones_os:{ flights:f?.c||0, air_time_min:f?.m||0 }});
+});
+
+// B3126-B3130: Ham Radio OS
+app.get('/api/ham-radio/logs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ham_radio_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time_utc TEXT, callsign TEXT, frequency_mhz REAL, band TEXT DEFAULT '40m', mode TEXT DEFAULT 'SSB', rst_sent TEXT DEFAULT '59', rst_recv TEXT DEFAULT '59', country TEXT, grid TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM ham_radio_logs WHERE user_id=? ORDER BY date DESC, time_utc DESC LIMIT 50').all(u);
+    const dxcc = db.prepare('SELECT COUNT(DISTINCT country) as c FROM ham_radio_logs WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, dxcc_count:dxcc?.c||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/ham-radio/logs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, time_utc, callsign, frequency_mhz, band, mode, rst_sent, rst_recv, country, grid, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ham_radio_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time_utc TEXT, callsign TEXT, frequency_mhz REAL, band TEXT DEFAULT '40m', mode TEXT DEFAULT 'SSB', rst_sent TEXT DEFAULT '59', rst_recv TEXT DEFAULT '59', country TEXT, grid TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO ham_radio_logs (user_id,date,time_utc,callsign,frequency_mhz,band,mode,rst_sent,rst_recv,country,grid,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,date||'',time_utc||'',callsign||'',frequency_mhz||0,band||'40m',mode||'SSB',rst_sent||'59',rst_recv||'59',country||'',grid||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/ham-radio/equipment', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ham_radio_equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'transceiver', brand TEXT, model TEXT, power_w INTEGER DEFAULT 100, bands TEXT, condition TEXT DEFAULT 'excellent', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM ham_radio_equipment WHERE user_id=? ORDER BY type ASC, name ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/ham-radio/equipment', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, brand, model, power_w, bands, condition, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ham_radio_equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'transceiver', brand TEXT, model TEXT, power_w INTEGER DEFAULT 100, bands TEXT, condition TEXT DEFAULT 'excellent', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO ham_radio_equipment (user_id,name,type,brand,model,power_w,bands,condition,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,name||'',type||'transceiver',brand||'',model||'',power_w||100,bands||'',condition||'excellent',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/ham-radio-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const l = safe(()=>db.prepare('SELECT COUNT(*) as c, COUNT(DISTINCT country) as d FROM ham_radio_logs WHERE user_id=?').get(u) as any);
+  res.json({ success:true, ham_radio_os:{ qsos:l?.c||0, dxcc:l?.d||0 }});
+});
+
+// B3131-B3135: Astronomy v2 OS
+app.get('/api/astronomy/observations', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS astronomy_observations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, object TEXT, type TEXT DEFAULT 'deep-sky', constellation TEXT, magnitude REAL DEFAULT 0, scope TEXT, magnification INTEGER DEFAULT 50, seeing INTEGER DEFAULT 3, transparency INTEGER DEFAULT 3, sketch INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM astronomy_observations WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/astronomy/observations', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, object, type, constellation, magnitude, scope, magnification, seeing, transparency, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS astronomy_observations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, object TEXT, type TEXT DEFAULT 'deep-sky', constellation TEXT, magnitude REAL DEFAULT 0, scope TEXT, magnification INTEGER DEFAULT 50, seeing INTEGER DEFAULT 3, transparency INTEGER DEFAULT 3, sketch INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO astronomy_observations (user_id,date,object,type,constellation,magnitude,scope,magnification,seeing,transparency,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,date||'',object||'',type||'deep-sky',constellation||'',magnitude||0,scope||'',magnification||50,seeing||3,transparency||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/astronomy/equipment', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS astronomy_equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'refractor', aperture_mm INTEGER DEFAULT 80, focal_length_mm INTEGER DEFAULT 600, mount TEXT DEFAULT 'alt-az', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM astronomy_equipment WHERE user_id=? ORDER BY aperture_mm DESC LIMIT 15').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/astronomy/equipment', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, aperture_mm, focal_length_mm, mount, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS astronomy_equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'refractor', aperture_mm INTEGER DEFAULT 80, focal_length_mm INTEGER DEFAULT 600, mount TEXT DEFAULT 'alt-az', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO astronomy_equipment (user_id,name,type,aperture_mm,focal_length_mm,mount,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',type||'refractor',aperture_mm||80,focal_length_mm||600,mount||'alt-az',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/astronomy-v2-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const o = safe(()=>db.prepare('SELECT COUNT(*) as c, COUNT(DISTINCT constellation) as co FROM astronomy_observations WHERE user_id=?').get(u) as any);
+  res.json({ success:true, astronomy_v2_os:{ observations:o?.c||0, constellations:o?.co||0 }});
+});
+
+// B3136-B3140: Meteorology OS
+app.get('/api/meteorology/readings', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS meteorology_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time TEXT, temp_f REAL DEFAULT 70, humidity_pct INTEGER DEFAULT 50, pressure_mb REAL DEFAULT 1013, wind_dir TEXT DEFAULT 'N', wind_mph REAL DEFAULT 0, rain_in REAL DEFAULT 0, sky TEXT DEFAULT 'clear', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM meteorology_readings WHERE user_id=? ORDER BY date DESC, time DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/meteorology/readings', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, time, temp_f, humidity_pct, pressure_mb, wind_dir, wind_mph, rain_in, sky, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS meteorology_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time TEXT, temp_f REAL DEFAULT 70, humidity_pct INTEGER DEFAULT 50, pressure_mb REAL DEFAULT 1013, wind_dir TEXT DEFAULT 'N', wind_mph REAL DEFAULT 0, rain_in REAL DEFAULT 0, sky TEXT DEFAULT 'clear', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO meteorology_readings (user_id,date,time,temp_f,humidity_pct,pressure_mb,wind_dir,wind_mph,rain_in,sky,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,date||'',time||'',temp_f||70,humidity_pct||50,pressure_mb||1013,wind_dir||'N',wind_mph||0,rain_in||0,sky||'clear',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/meteorology/events', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS meteorology_events (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'thunderstorm', severity INTEGER DEFAULT 1, peak_wind_mph REAL DEFAULT 0, total_rain_in REAL DEFAULT 0, snow_in REAL DEFAULT 0, hail INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM meteorology_events WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/meteorology/events', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, type, severity, peak_wind_mph, total_rain_in, snow_in, hail, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS meteorology_events (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'thunderstorm', severity INTEGER DEFAULT 1, peak_wind_mph REAL DEFAULT 0, total_rain_in REAL DEFAULT 0, snow_in REAL DEFAULT 0, hail INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO meteorology_events (user_id,date,type,severity,peak_wind_mph,total_rain_in,snow_in,hail,notes) VALUES (?,?,?,?,?,?,?,?,?)').run(u,date||'',type||'thunderstorm',severity||1,peak_wind_mph||0,total_rain_in||0,snow_in||0,hail?1:0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/meteorology-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const r = safe(()=>db.prepare('SELECT COUNT(*) as c FROM meteorology_readings WHERE user_id=?').get(u) as any);
+  res.json({ success:true, meteorology_os:{ readings:r?.c||0 }});
+});
+
+// B3141-B3145: Geology OS
+app.get('/api/geology/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS geology_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'mineral', mineral_class TEXT, hardness REAL DEFAULT 0, luster TEXT, color TEXT, crystal_system TEXT, locality TEXT, acquired_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM geology_collection WHERE user_id=? ORDER BY type ASC, name ASC LIMIT 100').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/geology/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, mineral_class, hardness, luster, color, crystal_system, locality, acquired_date, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS geology_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'mineral', mineral_class TEXT, hardness REAL DEFAULT 0, luster TEXT, color TEXT, crystal_system TEXT, locality TEXT, acquired_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO geology_collection (user_id,name,type,mineral_class,hardness,luster,color,crystal_system,locality,acquired_date,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',type||'mineral',mineral_class||'',hardness||0,luster||'',color||'',crystal_system||'',locality||'',acquired_date||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/geology/field-trips', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS geology_field_trips (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, formation TEXT, specimens_collected INTEGER DEFAULT 0, photos_taken INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM geology_field_trips WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/geology/field-trips', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, location, formation, specimens_collected, photos_taken, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS geology_field_trips (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, formation TEXT, specimens_collected INTEGER DEFAULT 0, photos_taken INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO geology_field_trips (user_id,date,location,formation,specimens_collected,photos_taken,notes) VALUES (?,?,?,?,?,?,?)').run(u,date||'',location||'',formation||'',specimens_collected||0,photos_taken||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/geology-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as c FROM geology_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, geology_os:{ specimens:c?.c||0 }});
+});
+
+// B3146-B3150: Grand Milestone v38
+app.get('/api/milestone/v38', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const prints3d = safe(()=>db.prepare('SELECT COUNT(*) as c FROM printing3d_prints WHERE user_id=?').get(u) as any);
+  const flights = safe(()=>db.prepare('SELECT COUNT(*) as c FROM drones_flights WHERE user_id=?').get(u) as any);
+  const rocks = safe(()=>db.prepare('SELECT COUNT(*) as c FROM geology_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v38.00', total_endpoints:3150, milestone:'B3150 — Tech Hobby & Science OS Complete', data:{ prints_3d:prints3d?.c||0, drone_flights:flights?.c||0, rock_specimens:rocks?.c||0 }});
+});
+app.get('/api/forge/tech-hobby-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const robots = safe(()=>db.prepare('SELECT COUNT(*) as c FROM robotics_robots WHERE user_id=?').get(u) as any);
+  const qso = safe(()=>db.prepare('SELECT COUNT(*) as c FROM ham_radio_logs WHERE user_id=?').get(u) as any);
+  const obs = safe(()=>db.prepare('SELECT COUNT(*) as c FROM astronomy_observations WHERE user_id=?').get(u) as any);
+  res.json({ success:true, tech_hobby:{ robots_built:robots?.c||0, ham_qsos:qso?.c||0, astronomy_sessions:obs?.c||0 }, total_endpoints:3150 });
+});
+app.get('/api/forge/science-os-health', (_req: any, res: any) => {
+  res.json({ success:true, science_os:{ os_modules:172, total_endpoints:3150, version:'v38.00' }});
+});
+
+
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
