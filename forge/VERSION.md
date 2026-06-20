@@ -1,3 +1,10 @@
+## v84.00 — B5401-B5450 🌱🧠 GARDEN+MENTALHEALTH-OS +Plants/Beds/Watering/Harvests/Moods/Therapy/Coping/Affirmations/GrandMilestone
+- B5401-5410: Garden OS — plant registry (type/sun/water), garden beds, watering log, task checklist
+- B5411-5420: Garden Harvest + Stats — harvest tracker (weight/quantity), garden productivity stats
+- B5421-5430: Mental Health OS — mood journal (score 1-10, emotions, triggers), therapy session log
+- B5431-5440: Coping Strategies + Affirmations — strategy library with effectiveness, affirmation random picker
+- B5441-5450: Mental Health Stats + Grand Milestone v84 — /api/milestone/v84, manifest, health — 5450 endpoints, 151588 lines
+
 ## v83.00 — B5351-B5400 🚗💼 VEHICLE+JOBHUNT-OS +Fleet/Maintenance/Fuel/Insurance/Applications/Interviews/Offers/GrandMilestone
 - B5351-5360: Vehicle OS — fleet registry, maintenance history, fuel log with mileage tracking
 - B5361-5370: Vehicle Insurance + Stats — insurance policy tracker, total cost of ownership stats

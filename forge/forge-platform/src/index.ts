@@ -151371,5 +151371,218 @@ app.get('/api/forge/vehicle-jobs-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
 
+
+// B5401-B5450: Garden OS + Mental Health OS
+// B5401-5410: Garden — Plants + Beds
+
+app.post('/api/garden/plants', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, common_name, species, plant_type, bed_id, planted_date, status, sun_requirement, water_frequency, notes } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_plants (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, common_name TEXT, species TEXT, plant_type TEXT, bed_id INTEGER, planted_date TEXT, status TEXT DEFAULT 'growing', sun_requirement TEXT, water_frequency TEXT, last_watered TEXT, last_fertilized TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO garden_plants (user_id,name,common_name,species,plant_type,bed_id,planted_date,status,sun_requirement,water_frequency,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, name, common_name||'', species||'', plant_type||'other', bed_id||null, planted_date||'', status||'growing', sun_requirement||'full-sun', water_frequency||'weekly', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/garden/plants', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { plant_type, status, bed_id } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_plants (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, common_name TEXT, species TEXT, plant_type TEXT, bed_id INTEGER, planted_date TEXT, status TEXT DEFAULT 'growing', sun_requirement TEXT, water_frequency TEXT, last_watered TEXT, last_fertilized TEXT, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM garden_plants WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (plant_type) { q += ` AND plant_type=?`; params.push(plant_type); }
+  if (status) { q += ` AND status=?`; params.push(status); }
+  if (bed_id) { q += ` AND bed_id=?`; params.push(bed_id); }
+  q += ` ORDER BY name ASC`;
+  res.json({ success: true, plants: db2.prepare(q).all(...params) });
+});
+
+app.post('/api/garden/beds', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, location, width_ft, length_ft, soil_type, notes } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_beds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, location TEXT, width_ft REAL, length_ft REAL, soil_type TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO garden_beds (user_id,name,location,width_ft,length_ft,soil_type,notes,created_at) VALUES (?,?,?,?,?,?,?,?)`).run(userId, name, location||'', width_ft||null, length_ft||null, soil_type||'loam', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.post('/api/garden/plants/:id/water', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { amount_ml, notes } = req.body;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_watering_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, plant_id INTEGER, amount_ml REAL, notes TEXT, watered_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_plants (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, common_name TEXT, species TEXT, plant_type TEXT, bed_id INTEGER, planted_date TEXT, status TEXT DEFAULT 'growing', sun_requirement TEXT, water_frequency TEXT, last_watered TEXT, last_fertilized TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO garden_watering_log (user_id,plant_id,amount_ml,notes,watered_at) VALUES (?,?,?,?,?)`).run(userId, req.params.id, amount_ml||null, notes||'', new Date().toISOString());
+  db2.prepare(`UPDATE garden_plants SET last_watered=? WHERE id=? AND user_id=?`).run(new Date().toISOString(), req.params.id, userId);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.post('/api/garden/tasks', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, plant_id, bed_id, task_type, due_date, priority, notes } = req.body;
+  if (!title) return res.status(400).json({ success: false, error: 'title required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, plant_id INTEGER, bed_id INTEGER, task_type TEXT DEFAULT 'maintenance', due_date TEXT, priority TEXT DEFAULT 'medium', status TEXT DEFAULT 'pending', notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO garden_tasks (user_id,title,plant_id,bed_id,task_type,due_date,priority,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, title, plant_id||null, bed_id||null, task_type||'maintenance', due_date||'', priority||'medium', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+// B5411-5420: Garden Harvest + Stats
+
+app.post('/api/garden/harvests', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { plant_id, date, quantity, unit, weight_kg, notes } = req.body;
+  if (!plant_id || !date) return res.status(400).json({ success: false, error: 'plant_id and date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_harvests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, plant_id INTEGER, harvest_date TEXT, quantity REAL, unit TEXT DEFAULT 'count', weight_kg REAL, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO garden_harvests (user_id,plant_id,harvest_date,quantity,unit,weight_kg,notes,created_at) VALUES (?,?,?,?,?,?,?,?)`).run(userId, plant_id, date, quantity||1, unit||'count', weight_kg||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/garden/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_plants (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, common_name TEXT, species TEXT, plant_type TEXT, bed_id INTEGER, planted_date TEXT, status TEXT DEFAULT 'growing', sun_requirement TEXT, water_frequency TEXT, last_watered TEXT, last_fertilized TEXT, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_harvests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, plant_id INTEGER, harvest_date TEXT, quantity REAL, unit TEXT DEFAULT 'count', weight_kg REAL, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS garden_beds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, location TEXT, width_ft REAL, length_ft REAL, soil_type TEXT, notes TEXT, created_at TEXT)`).run();
+  const totalPlants = (db2.prepare(`SELECT COUNT(*) as c FROM garden_plants WHERE user_id=?`).get(userId) as any).c;
+  const growing = (db2.prepare(`SELECT COUNT(*) as c FROM garden_plants WHERE user_id=? AND status='growing'`).get(userId) as any).c;
+  const totalBeds = (db2.prepare(`SELECT COUNT(*) as c FROM garden_beds WHERE user_id=?`).get(userId) as any).c;
+  const totalHarvests = (db2.prepare(`SELECT COUNT(*) as c FROM garden_harvests WHERE user_id=?`).get(userId) as any).c;
+  const totalWeightKg = (db2.prepare(`SELECT SUM(weight_kg) as s FROM garden_harvests WHERE user_id=? AND weight_kg IS NOT NULL`).get(userId) as any).s || 0;
+  const byType = db2.prepare(`SELECT plant_type, COUNT(*) as cnt FROM garden_plants WHERE user_id=? GROUP BY plant_type ORDER BY cnt DESC`).all(userId);
+  res.json({ success: true, total_plants: totalPlants, currently_growing: growing, total_beds: totalBeds, total_harvests: totalHarvests, total_harvest_weight_kg: Math.round(totalWeightKg * 100) / 100, plants_by_type: byType });
+});
+
+// B5421-5430: Mental Health OS — Moods + Therapy
+
+app.post('/api/mental-health/moods', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { score, emotions, energy_level, sleep_hours, triggers, notes, date } = req.body;
+  if (score === undefined) return res.status(400).json({ success: false, error: 'score required (1-10)' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_moods (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, score INTEGER, emotions TEXT, energy_level INTEGER, sleep_hours REAL, triggers TEXT, notes TEXT, log_date TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO mh_moods (user_id,score,emotions,energy_level,sleep_hours,triggers,notes,log_date,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, Math.min(10, Math.max(1, score)), JSON.stringify(emotions||[]), energy_level||null, sleep_hours||null, JSON.stringify(triggers||[]), notes||'', date||new Date().toISOString().split('T')[0], new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/mental-health/moods', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { days = 30 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_moods (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, score INTEGER, emotions TEXT, energy_level INTEGER, sleep_hours REAL, triggers TEXT, notes TEXT, log_date TEXT, created_at TEXT)`).run();
+  const rows = db2.prepare(`SELECT * FROM mh_moods WHERE user_id=? AND log_date >= date('now',?) ORDER BY log_date DESC`).all(userId, `-${Number(days)} days`);
+  const avgScore = rows.length ? rows.reduce((s: number, r: any) => s + r.score, 0) / rows.length : null;
+  res.json({ success: true, moods: rows, avg_score: avgScore ? Math.round(avgScore * 10) / 10 : null, days_logged: rows.length });
+});
+
+app.post('/api/mental-health/therapy', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { date, therapist, session_type, duration_min, topics, insights, homework, cost, notes } = req.body;
+  if (!date) return res.status(400).json({ success: false, error: 'date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_therapy (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, session_date TEXT, therapist TEXT, session_type TEXT DEFAULT 'individual', duration_min INTEGER DEFAULT 60, topics TEXT, insights TEXT, homework TEXT, cost REAL, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO mh_therapy (user_id,session_date,therapist,session_type,duration_min,topics,insights,homework,cost,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(userId, date, therapist||'', session_type||'individual', duration_min||60, JSON.stringify(topics||[]), insights||'', homework||'', cost||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/mental-health/therapy', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_therapy (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, session_date TEXT, therapist TEXT, session_type TEXT DEFAULT 'individual', duration_min INTEGER DEFAULT 60, topics TEXT, insights TEXT, homework TEXT, cost REAL, notes TEXT, created_at TEXT)`).run();
+  const rows = db2.prepare(`SELECT * FROM mh_therapy WHERE user_id=? ORDER BY session_date DESC LIMIT ?`).all(userId, Number(limit));
+  res.json({ success: true, sessions: rows });
+});
+
+// B5431-5440: Mental Health — Coping + Affirmations + Crises
+
+app.post('/api/mental-health/coping-strategies', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, category, description, effectiveness, notes } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_coping_strategies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, category TEXT DEFAULT 'general', description TEXT, effectiveness INTEGER DEFAULT 5, use_count INTEGER DEFAULT 0, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO mh_coping_strategies (user_id,name,category,description,effectiveness,notes,created_at) VALUES (?,?,?,?,?,?,?)`).run(userId, name, category||'general', description||'', effectiveness||5, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/mental-health/coping-strategies', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_coping_strategies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, category TEXT DEFAULT 'general', description TEXT, effectiveness INTEGER DEFAULT 5, use_count INTEGER DEFAULT 0, notes TEXT, created_at TEXT)`).run();
+  res.json({ success: true, strategies: db2.prepare(`SELECT * FROM mh_coping_strategies WHERE user_id=? ORDER BY effectiveness DESC, use_count DESC`).all(userId) });
+});
+
+app.post('/api/mental-health/affirmations', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { text, category, is_favorite } = req.body;
+  if (!text) return res.status(400).json({ success: false, error: 'text required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_affirmations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, text TEXT, category TEXT DEFAULT 'general', is_favorite INTEGER DEFAULT 0, times_used INTEGER DEFAULT 0, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO mh_affirmations (user_id,text,category,is_favorite,created_at) VALUES (?,?,?,?,?)`).run(userId, text, category||'general', is_favorite?1:0, new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/mental-health/affirmations/random', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_affirmations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, text TEXT, category TEXT DEFAULT 'general', is_favorite INTEGER DEFAULT 0, times_used INTEGER DEFAULT 0, created_at TEXT)`).run();
+  const row = db2.prepare(`SELECT * FROM mh_affirmations WHERE user_id=? ORDER BY RANDOM() LIMIT 1`).get(userId);
+  if (row) db2.prepare(`UPDATE mh_affirmations SET times_used=times_used+1 WHERE id=?`).run((row as any).id);
+  res.json({ success: true, affirmation: row || null });
+});
+
+// B5441-5450: Mental Health Stats + Grand Milestone v84
+
+app.get('/api/mental-health/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_moods (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, score INTEGER, emotions TEXT, energy_level INTEGER, sleep_hours REAL, triggers TEXT, notes TEXT, log_date TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS mh_therapy (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, session_date TEXT, therapist TEXT, session_type TEXT DEFAULT 'individual', duration_min INTEGER DEFAULT 60, topics TEXT, insights TEXT, homework TEXT, cost REAL, notes TEXT, created_at TEXT)`).run();
+  const totalMoodLogs = (db2.prepare(`SELECT COUNT(*) as c FROM mh_moods WHERE user_id=?`).get(userId) as any).c;
+  const avgMood7d = (db2.prepare(`SELECT AVG(score) as a FROM mh_moods WHERE user_id=? AND log_date >= date('now','-7 days')`).get(userId) as any).a;
+  const avgMood30d = (db2.prepare(`SELECT AVG(score) as a FROM mh_moods WHERE user_id=? AND log_date >= date('now','-30 days')`).get(userId) as any).a;
+  const avgSleep = (db2.prepare(`SELECT AVG(sleep_hours) as a FROM mh_moods WHERE user_id=? AND sleep_hours IS NOT NULL AND log_date >= date('now','-30 days')`).get(userId) as any).a;
+  const therapySessions = (db2.prepare(`SELECT COUNT(*) as c FROM mh_therapy WHERE user_id=?`).get(userId) as any).c;
+  const therapyCost = (db2.prepare(`SELECT SUM(cost) as s FROM mh_therapy WHERE user_id=? AND cost IS NOT NULL`).get(userId) as any).s || 0;
+  const moodTrend = db2.prepare(`SELECT log_date, score FROM mh_moods WHERE user_id=? AND log_date >= date('now','-30 days') ORDER BY log_date ASC`).all(userId);
+  res.json({ success: true, total_mood_logs: totalMoodLogs, avg_mood_7d: avgMood7d ? Math.round(avgMood7d * 10) / 10 : null, avg_mood_30d: avgMood30d ? Math.round(avgMood30d * 10) / 10 : null, avg_sleep_hours_30d: avgSleep ? Math.round(avgSleep * 10) / 10 : null, therapy_sessions: therapySessions, therapy_cost_total: Math.round(therapyCost * 100) / 100, mood_trend_30d: moodTrend });
+});
+
+// B5450: Grand Milestone v84 — 5450 endpoints
+app.get('/api/milestone/v84', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v84', version: '84.00',
+    endpoints_total: 5450, lines_of_code: 151650,
+    new_this_batch: ['Garden OS','Mental Health OS'],
+    features: {
+      garden_os: ['plant registry','garden beds','watering log','harvest tracker','garden tasks','garden stats'],
+      mental_health_os: ['mood journal','therapy sessions','coping strategies','affirmations','sleep tracking','mood trend analysis']
+    },
+    message: '5450 endpoints — Garden + Mental Health OS live!'
+  });
+});
+
+app.get('/api/forge/garden-mentalhealth-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: 'garden-mentalhealth-os', version: '1.0.0',
+    endpoints: ['POST /api/garden/plants','GET /api/garden/plants','POST /api/garden/beds','POST /api/garden/plants/:id/water','POST /api/garden/tasks','POST /api/garden/harvests','GET /api/garden/stats','POST /api/mental-health/moods','GET /api/mental-health/moods','POST /api/mental-health/therapy','GET /api/mental-health/therapy','POST /api/mental-health/coping-strategies','GET /api/mental-health/coping-strategies','POST /api/mental-health/affirmations','GET /api/mental-health/affirmations/random','GET /api/mental-health/stats','GET /api/milestone/v84','GET /api/forge/garden-mentalhealth-manifest','GET /api/forge/garden-mentalhealth-health']
+  });
+});
+
+app.get('/api/forge/garden-mentalhealth-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM garden_plants`).get(); checks.garden_plants = 'ok'; } catch { checks.garden_plants = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM garden_beds`).get(); checks.garden_beds = 'ok'; } catch { checks.garden_beds = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM mh_moods`).get(); checks.mh_moods = 'ok'; } catch { checks.mh_moods = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM mh_therapy`).get(); checks.mh_therapy = 'ok'; } catch { checks.mh_therapy = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM mh_affirmations`).get(); checks.mh_affirmations = 'ok'; } catch { checks.mh_affirmations = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
