@@ -1,3 +1,10 @@
+## v89.00 — B5651-B5700 🍷🥾 WINE-SPIRITS+HIKING-OS +Cellar/Tastings/Spirits/Trails/Logs/Gear/GrandMilestone
+- B5651-5660: Wine OS — cellar catalog (varietal/vintage/value), tasting notes (appearance/aroma/taste/finish)
+- B5661-5670: Wine Stats + Spirits — cellar value by varietal/country, spirits collection (whisky/rum/gin/etc)
+- B5671-5680: Hiking OS — trail registry (distance/elevation/difficulty), hike log with weather/conditions
+- B5681-5690: Hiking Stats + Gear — total km/elevation tracked, gear inventory by category (boots/tent/pack)
+- B5691-5700: Grand Milestone v89 — /api/milestone/v89, manifest, health — 5700 endpoints, 152572 lines
+
 ## v88.00 — B5601-B5650 🎵🎲 MUSIC-PRACTICE+BOARDGAME-OS +Instruments/Sessions/Repertoire/Collection/Plays/Wishlist/GrandMilestone
 - B5601-5610: Music Practice OS — instrument registry (skill level), practice session log (pieces/techniques/quality)
 - B5611-5620: Music Repertoire + Stats — piece tracker (learning/mastered), practice hours by instrument

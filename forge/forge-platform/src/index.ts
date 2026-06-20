@@ -152568,7 +152568,5 @@ app.get('/api/forge/wine-hiking-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
 
-});
-
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
