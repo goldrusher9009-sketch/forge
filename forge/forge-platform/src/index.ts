@@ -167679,6 +167679,92 @@ try { db.prepare(`UPDATE home_maintenance SET date=COALESCE(NULLIF(date,''),comp
 try { db.prepare(`CREATE TABLE IF NOT EXISTS pet_health (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pet_id INTEGER, date TEXT, type TEXT DEFAULT 'vet_visit', description TEXT, weight_kg REAL DEFAULT 0, cost REAL DEFAULT 0, next_due TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
 // ─── end v138 migrations ──────────────────────────────────────────────────────
 
+// ─── v139 Schema Migrations ────────────────────────────────────────────────────
+// music_practice: early (63450) has practice_date/duration_minutes/quality_rating
+// later handlers (137816, 145569) use date/duration_min/quality/pieces/focus
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN duration_min INTEGER DEFAULT 30`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN quality INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN pieces TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN focus TEXT DEFAULT 'technique'`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET date=COALESCE(NULLIF(date,''),practice_date,'') WHERE date='' AND practice_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET duration_min=COALESCE(NULLIF(duration_min,30),duration_minutes,30) WHERE duration_min=30 AND duration_minutes IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET quality=COALESCE(NULLIF(quality,3),quality_rating,3) WHERE quality=3 AND quality_rating IS NOT NULL`).run(); } catch(e) {}
+// garden_plants: early (53756) has plant_name/expected_harvest_date/plot_id
+// later handlers (145384, 148478) use name/harvest_date/species/location/water_frequency_days/last_watered/next_water
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN harvest_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN species TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN location TEXT DEFAULT 'indoor'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN water_frequency_days INTEGER DEFAULT 7`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN last_watered TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN next_water TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN watering_freq_days INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN expected_harvest TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE garden_plants SET name=COALESCE(NULLIF(name,''),plant_name,'') WHERE name='' AND plant_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE garden_plants SET harvest_date=COALESCE(NULLIF(harvest_date,''),expected_harvest_date,'') WHERE harvest_date='' AND expected_harvest_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE garden_plants SET expected_harvest=COALESCE(NULLIF(expected_harvest,''),expected_harvest_date,'') WHERE expected_harvest='' AND expected_harvest_date IS NOT NULL`).run(); } catch(e) {}
+// garden_log: early (138248) has activity/plant_id, later (145401) uses plant TEXT not plant_id
+try { db.prepare(`ALTER TABLE garden_log ADD COLUMN plant TEXT DEFAULT ''`).run(); } catch(e) {}
+// mushroom_grows: early (48876) missing strain/harvest_g/contaminated
+// late handlers (154964) need strain/harvest_g/contaminated/colonization_date/fruiting_date
+try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN strain TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN harvest_g REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN contaminated INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN colonization_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN fruiting_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE mushroom_grows SET colonization_date=COALESCE(NULLIF(colonization_date,''),colonization_complete,'') WHERE colonization_date='' AND colonization_complete IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE mushroom_grows SET fruiting_date=COALESCE(NULLIF(fruiting_date,''),fruiting_start,'') WHERE fruiting_date='' AND fruiting_start IS NOT NULL`).run(); } catch(e) {}
+// mushroom_grows: add substrate_id for new handlers
+try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN substrate_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
+// mushroom_substrates table for late endpoints
+try { db.prepare(`CREATE TABLE IF NOT EXISTS mushroom_substrates (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, composition TEXT, prepared_date TEXT, sterilization_method TEXT, weight_kg REAL, status TEXT DEFAULT 'ready', notes TEXT, created_at TEXT)`).run(); } catch(e) {}
+// ─── end v139 migrations ──────────────────────────────────────────────────────
+
+// ─── v140 Schema Migrations ────────────────────────────────────────────────────
+// vehicle_maintenance: early (40425) has vendor/description, later (149079) uses shop/type vs service_type
+// also: mileage_at_service vs mileage, next_service_date vs next_date
+try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN type TEXT DEFAULT 'oil_change'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN mileage_at_service INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN shop TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN next_service_mileage INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN technician TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE vehicle_maintenance SET type=COALESCE(NULLIF(type,'oil_change'),service_type,'oil_change') WHERE type='oil_change' AND service_type IS NOT NULL AND service_type!=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE vehicle_maintenance SET date=COALESCE(NULLIF(date,''),service_date,'') WHERE date='' AND service_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE vehicle_maintenance SET mileage_at_service=COALESCE(NULLIF(mileage_at_service,0),mileage,0) WHERE mileage_at_service=0 AND mileage IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE vehicle_maintenance SET shop=COALESCE(NULLIF(shop,''),vendor,'') WHERE shop='' AND vendor IS NOT NULL`).run(); } catch(e) {}
+// aquarium_tanks: early (60449) has volume_l/co2, late (152727) uses volume_liters/temperature_c/ph/fish_count
+try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN volume_liters REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN temperature_c REAL DEFAULT 25`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN ph REAL DEFAULT 7`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN fish_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE aquarium_tanks SET volume_liters=COALESCE(NULLIF(volume_liters,0),volume_l,0) WHERE volume_liters=0 AND volume_l IS NOT NULL`).run(); } catch(e) {}
+// subscriptions: early (391) has cost/active/cancel_url/rating, late (148941) uses amount/payment_method/status/trial_end
+try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN amount REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN payment_method TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN trial_end TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN cancel_url TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN rating REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE subscriptions SET amount=COALESCE(NULLIF(amount,0),cost,0) WHERE amount=0 AND cost IS NOT NULL`).run(); } catch(e) {}
+// job_applications: early (35069) uses TEXT id + remote + contacts JSON + next_action
+// late (151327) uses INTEGER id + job_type + job_url (vs job_url already there)
+try { db.prepare(`ALTER TABLE job_applications ADD COLUMN job_type TEXT DEFAULT 'full_time'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE job_applications ADD COLUMN job_url TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE job_applications ADD COLUMN remote INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE job_applications ADD COLUMN contacts TEXT DEFAULT '[]'`).run(); } catch(e) {}
+try { db.prepare(`UPDATE job_applications SET job_type=COALESCE(NULLIF(job_type,'full_type'),type,'full_time') WHERE job_type='full_type' AND type IS NOT NULL AND type!=''`).run(); } catch(e) {}
+// print_jobs: early (45003) has job_name/filament_grams/print_time_hours/success
+// late (153736) uses file_name/filament_used_g/print_time_min/status/printer_id/started_at
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN file_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN filament_used_g REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN print_time_min REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN started_at TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE print_jobs SET file_name=COALESCE(NULLIF(file_name,''),job_name,model_file,'') WHERE file_name='' AND (job_name IS NOT NULL OR model_file IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE print_jobs SET filament_used_g=COALESCE(NULLIF(filament_used_g,0),filament_grams,0) WHERE filament_used_g=0 AND filament_grams IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE print_jobs SET print_time_min=COALESCE(NULLIF(print_time_min,0),ROUND(print_time_hours*60),0) WHERE print_time_min=0 AND print_time_hours IS NOT NULL`).run(); } catch(e) {}
+// ─── end v140 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

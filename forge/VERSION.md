@@ -1,3 +1,10 @@
+## v139.00 — Fix music_practice, garden_plants, garden_log, mushroom_grows schema gaps
+- music_practice: adds date/duration_min/quality/pieces/focus (backfilled from practice_date/duration_minutes/quality_rating)
+- garden_plants: adds name/harvest_date/species/location/water_frequency_days/last_watered/next_water (backfilled from plant_name/expected_harvest_date)
+- garden_log: adds plant TEXT col for newer handlers
+- mushroom_grows: adds strain/harvest_g/contaminated/colonization_date/fruiting_date/substrate_id
+- mushroom_substrates: CREATE TABLE IF NOT EXISTS
+
 ## v138.00 — Fix pets schema aliases, home_maintenance column gaps, pet_health table
 - pets: adds birthdate/vet/microchip/insured (backfilled from date_of_birth/vet_name/microchip_id)
 - home_maintenance: adds date/task/room/category/contractor/status/next_due cols with backfill
