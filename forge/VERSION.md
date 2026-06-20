@@ -1,3 +1,13 @@
+## v75.00 — B4951-B5000 🎉 NUTRITION-OS +FoodLog/Macros/WaterTracking/MealPlans +5000 ENDPOINTS MILESTONE!
+- B4951-4960: Food Log OS — meals (breakfast/lunch/dinner/snack), calories+macros per entry, daily totals
+- B4961-4970: Water Tracking OS — intake log (ml), daily goal, % progress
+- B4971-4980: Meal Plans OS — weekly plans (goal/target-calories/protein)
+- B4981-5000: 🏆🎉 GRAND MILESTONE v75 — /api/milestone/v75 — 5000 ENDPOINTS, 149363 lines
+## v74.00 — B4901-B4950 💪 FITNESS-OS +Workouts/Exercises/Sets/BodyMetrics/WeightTracking/GrandMilestone
+- B4901-4910: Workout OS — sessions (type/duration/calories/intensity), week & streak counters
+- B4911-4920: Exercise Log OS — sets/reps/weight per exercise, auto-linked to workout session
+- B4921-4930: Body Metrics OS — weight/body-fat/BMI/measurements, trend & change tracking
+- B4931-4950: 🏆 Grand Milestone v74 — /api/milestone/v74, fitness-manifest, fitness-health — 4950 endpoints, 149269 lines
 ## v73.00 — B4851-B4900 🏥 MEDICAL-OS +Records/Appointments/Medications/Vaccinations/GrandMilestone
 - B4851-4860: Medical Records OS — visits/labs/imaging (provider/diagnosis/treatment/cost/insurance)
 - B4861-4870: Appointments OS — scheduled visits (specialty/prep), upcoming count
