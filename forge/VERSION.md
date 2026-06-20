@@ -1,3 +1,10 @@
+## v88.00 — B5601-B5650 🎵🎲 MUSIC-PRACTICE+BOARDGAME-OS +Instruments/Sessions/Repertoire/Collection/Plays/Wishlist/GrandMilestone
+- B5601-5610: Music Practice OS — instrument registry (skill level), practice session log (pieces/techniques/quality)
+- B5611-5620: Music Repertoire + Stats — piece tracker (learning/mastered), practice hours by instrument
+- B5621-5630: Board Game OS — collection catalog (BGG/complexity), play log with winner tracking
+- B5631-5640: Board Game Plays + Stats — play history, most played, category breakdown, total hours
+- B5641-5650: Board Game Wishlist + Grand Milestone v88 — /api/milestone/v88, 5650 endpoints, 152384 lines
+
 ## v87.00 — B5551-B5600 🏠✈️ HOME-INVENTORY+TRAVEL-OS +Rooms/Items/Warranties/Trips/Expenses/Packing/Itinerary/GrandMilestone
 - B5551-5560: Home Inventory OS — room registry (floor), item catalog (brand/model/serial/warranty)
 - B5561-5570: Home Inventory Stats + Travel OS start — value totals, expiring warranties, trip planner

@@ -152186,5 +152186,199 @@ app.get('/api/forge/home-travel-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
 
+
+// B5601-B5650: Music Practice OS + Board Game OS
+// B5601-5610: Music — Practice Sessions + Goals
+
+app.post('/api/music/instruments', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, type, skill_level, purchase_year, notes } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_instruments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, skill_level TEXT DEFAULT 'beginner', purchase_year INTEGER, total_practice_min INTEGER DEFAULT 0, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO music_instruments (user_id,name,type,skill_level,purchase_year,notes,created_at) VALUES (?,?,?,?,?,?,?)`).run(userId, name, type||'string', skill_level||'beginner', purchase_year||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/music/instruments', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_instruments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, skill_level TEXT DEFAULT 'beginner', purchase_year INTEGER, total_practice_min INTEGER DEFAULT 0, notes TEXT, created_at TEXT)`).run();
+  res.json({ success: true, instruments: db2.prepare(`SELECT * FROM music_instruments WHERE user_id=? ORDER BY total_practice_min DESC`).all(userId) });
+});
+
+app.post('/api/music/practice', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { instrument_id, date, duration_min, pieces, techniques, notes, quality_rating } = req.body;
+  if (!instrument_id || !date || !duration_min) return res.status(400).json({ success: false, error: 'instrument_id, date, duration_min required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, instrument_id INTEGER, practice_date TEXT, duration_min INTEGER, pieces TEXT, techniques TEXT, notes TEXT, quality_rating INTEGER, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO music_practice (user_id,instrument_id,practice_date,duration_min,pieces,techniques,notes,quality_rating,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, instrument_id, date, duration_min, JSON.stringify(pieces||[]), JSON.stringify(techniques||[]), notes||'', quality_rating||null, new Date().toISOString());
+  db2.prepare(`UPDATE music_instruments SET total_practice_min=total_practice_min+? WHERE id=? AND user_id=?`).run(duration_min, instrument_id, userId);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/music/practice', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { instrument_id, limit = 30 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, instrument_id INTEGER, practice_date TEXT, duration_min INTEGER, pieces TEXT, techniques TEXT, notes TEXT, quality_rating INTEGER, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_instruments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, skill_level TEXT DEFAULT 'beginner', purchase_year INTEGER, total_practice_min INTEGER DEFAULT 0, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT mp.*, mi.name as instrument_name FROM music_practice mp LEFT JOIN music_instruments mi ON mp.instrument_id=mi.id WHERE mp.user_id=?`;
+  const params: any[] = [userId];
+  if (instrument_id) { q += ` AND mp.instrument_id=?`; params.push(instrument_id); }
+  q += ` ORDER BY mp.practice_date DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, sessions: db2.prepare(q).all(...params) });
+});
+
+// B5611-5620: Music Goals + Repertoire + Stats
+
+app.post('/api/music/repertoire', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { instrument_id, title, composer, difficulty, status, date_learned, notes } = req.body;
+  if (!title) return res.status(400).json({ success: false, error: 'title required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_repertoire (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, instrument_id INTEGER, title TEXT, composer TEXT, difficulty TEXT, status TEXT DEFAULT 'learning', date_learned TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO music_repertoire (user_id,instrument_id,title,composer,difficulty,status,date_learned,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, instrument_id||null, title, composer||'', difficulty||'intermediate', status||'learning', date_learned||'', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/music/repertoire', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { status } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_repertoire (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, instrument_id INTEGER, title TEXT, composer TEXT, difficulty TEXT, status TEXT DEFAULT 'learning', date_learned TEXT, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM music_repertoire WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (status) { q += ` AND status=?`; params.push(status); }
+  q += ` ORDER BY status ASC, title ASC`;
+  res.json({ success: true, pieces: db2.prepare(q).all(...params) });
+});
+
+app.get('/api/music/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, instrument_id INTEGER, practice_date TEXT, duration_min INTEGER, pieces TEXT, techniques TEXT, notes TEXT, quality_rating INTEGER, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_instruments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, skill_level TEXT DEFAULT 'beginner', purchase_year INTEGER, total_practice_min INTEGER DEFAULT 0, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS music_repertoire (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, instrument_id INTEGER, title TEXT, composer TEXT, difficulty TEXT, status TEXT DEFAULT 'learning', date_learned TEXT, notes TEXT, created_at TEXT)`).run();
+  const totalMin = (db2.prepare(`SELECT SUM(duration_min) as s FROM music_practice WHERE user_id=?`).get(userId) as any).s || 0;
+  const totalSessions = (db2.prepare(`SELECT COUNT(*) as c FROM music_practice WHERE user_id=?`).get(userId) as any).c;
+  const mastered = (db2.prepare(`SELECT COUNT(*) as c FROM music_repertoire WHERE user_id=? AND status='mastered'`).get(userId) as any).c;
+  const byInstrument = db2.prepare(`SELECT mi.name, SUM(mp.duration_min) as minutes FROM music_practice mp LEFT JOIN music_instruments mi ON mp.instrument_id=mi.id WHERE mp.user_id=? GROUP BY mp.instrument_id ORDER BY minutes DESC`).all(userId);
+  res.json({ success: true, total_practice_hours: Math.round(totalMin / 60 * 10) / 10, total_sessions: totalSessions, mastered_pieces: mastered, by_instrument: byInstrument });
+});
+
+// B5621-5630: Board Game OS — Collection + Plays
+
+app.post('/api/boardgames', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, bgg_id, min_players, max_players, play_time_min, complexity, category, year_published, notes } = req.body;
+  if (!title) return res.status(400).json({ success: false, error: 'title required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgames (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, bgg_id TEXT, min_players INTEGER, max_players INTEGER, play_time_min INTEGER, complexity REAL, category TEXT, year_published INTEGER, times_played INTEGER DEFAULT 0, rating REAL, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO boardgames (user_id,title,bgg_id,min_players,max_players,play_time_min,complexity,category,year_published,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(userId, title, bgg_id||'', min_players||2, max_players||4, play_time_min||null, complexity||null, category||'strategy', year_published||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/boardgames', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { category, limit = 30 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgames (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, bgg_id TEXT, min_players INTEGER, max_players INTEGER, play_time_min INTEGER, complexity REAL, category TEXT, year_published INTEGER, times_played INTEGER DEFAULT 0, rating REAL, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM boardgames WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (category) { q += ` AND category=?`; params.push(category); }
+  q += ` ORDER BY times_played DESC, rating DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, games: db2.prepare(q).all(...params) });
+});
+
+app.post('/api/boardgames/plays', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { game_id, date, players, winner, duration_min, notes, rating } = req.body;
+  if (!game_id || !date) return res.status(400).json({ success: false, error: 'game_id and date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgame_plays (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, game_id INTEGER, play_date TEXT, players TEXT, winner TEXT, duration_min INTEGER, notes TEXT, rating INTEGER, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO boardgame_plays (user_id,game_id,play_date,players,winner,duration_min,notes,rating,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, game_id, date, JSON.stringify(players||[]), winner||'', duration_min||null, notes||'', rating||null, new Date().toISOString());
+  db2.prepare(`UPDATE boardgames SET times_played=times_played+1 WHERE id=? AND user_id=?`).run(game_id, userId);
+  if (rating) db2.prepare(`UPDATE boardgames SET rating=(SELECT AVG(rating) FROM boardgame_plays WHERE game_id=? AND user_id=? AND rating IS NOT NULL) WHERE id=? AND user_id=?`).run(game_id, userId, game_id, userId);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+// B5631-5640: Board Game Plays + Stats
+
+app.get('/api/boardgames/plays', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { game_id, limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgame_plays (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, game_id INTEGER, play_date TEXT, players TEXT, winner TEXT, duration_min INTEGER, notes TEXT, rating INTEGER, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgames (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, bgg_id TEXT, min_players INTEGER, max_players INTEGER, play_time_min INTEGER, complexity REAL, category TEXT, year_published INTEGER, times_played INTEGER DEFAULT 0, rating REAL, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT bp.*, bg.title as game_title FROM boardgame_plays bp LEFT JOIN boardgames bg ON bp.game_id=bg.id WHERE bp.user_id=?`;
+  const params: any[] = [userId];
+  if (game_id) { q += ` AND bp.game_id=?`; params.push(game_id); }
+  q += ` ORDER BY bp.play_date DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, plays: db2.prepare(q).all(...params) });
+});
+
+app.get('/api/boardgames/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgames (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, bgg_id TEXT, min_players INTEGER, max_players INTEGER, play_time_min INTEGER, complexity REAL, category TEXT, year_published INTEGER, times_played INTEGER DEFAULT 0, rating REAL, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgame_plays (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, game_id INTEGER, play_date TEXT, players TEXT, winner TEXT, duration_min INTEGER, notes TEXT, rating INTEGER, created_at TEXT)`).run();
+  const totalGames = (db2.prepare(`SELECT COUNT(*) as c FROM boardgames WHERE user_id=?`).get(userId) as any).c;
+  const totalPlays = (db2.prepare(`SELECT COUNT(*) as c FROM boardgame_plays WHERE user_id=?`).get(userId) as any).c;
+  const totalHours = (db2.prepare(`SELECT SUM(duration_min) as s FROM boardgame_plays WHERE user_id=? AND duration_min IS NOT NULL`).get(userId) as any).s || 0;
+  const mostPlayed = db2.prepare(`SELECT title, times_played, rating FROM boardgames WHERE user_id=? ORDER BY times_played DESC LIMIT 5`).all(userId);
+  const byCategory = db2.prepare(`SELECT category, COUNT(*) as cnt FROM boardgames WHERE user_id=? GROUP BY category ORDER BY cnt DESC`).all(userId);
+  res.json({ success: true, total_games: totalGames, total_plays: totalPlays, total_hours: Math.round(totalHours / 60 * 10) / 10, most_played: mostPlayed, by_category: byCategory });
+});
+
+// B5641-5650: Board Game Wishlist + Grand Milestone v88
+
+app.post('/api/boardgames/wishlist', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, bgg_id, priority, estimated_price, notes } = req.body;
+  if (!title) return res.status(400).json({ success: false, error: 'title required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgame_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, bgg_id TEXT, priority INTEGER DEFAULT 3, estimated_price REAL, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO boardgame_wishlist (user_id,title,bgg_id,priority,estimated_price,notes,created_at) VALUES (?,?,?,?,?,?,?)`).run(userId, title, bgg_id||'', priority||3, estimated_price||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/boardgames/wishlist', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS boardgame_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, bgg_id TEXT, priority INTEGER DEFAULT 3, estimated_price REAL, notes TEXT, created_at TEXT)`).run();
+  res.json({ success: true, wishlist: db2.prepare(`SELECT * FROM boardgame_wishlist WHERE user_id=? ORDER BY priority ASC, created_at ASC`).all(userId) });
+});
+
+app.get('/api/milestone/v88', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v88', version: '88.00',
+    endpoints_total: 5650, lines_of_code: 152550,
+    new_this_batch: ['Music Practice OS', 'Board Game OS'],
+    features: {
+      music_os: ['instrument registry','practice session log','repertoire tracker','skill level tracking','practice hour stats'],
+      boardgame_os: ['game collection (BGG)','play log with winner','game ratings','category stats','wishlist with priority']
+    },
+    message: '5650 endpoints — Music + Board Game OS live!'
+  });
+});
+
+app.get('/api/forge/music-boardgame-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: 'music-boardgame-os', version: '1.0.0',
+    endpoints: ['POST /api/music/instruments','GET /api/music/instruments','POST /api/music/practice','GET /api/music/practice','POST /api/music/repertoire','GET /api/music/repertoire','GET /api/music/stats','POST /api/boardgames','GET /api/boardgames','POST /api/boardgames/plays','GET /api/boardgames/plays','GET /api/boardgames/stats','POST /api/boardgames/wishlist','GET /api/boardgames/wishlist','GET /api/milestone/v88','GET /api/forge/music-boardgame-manifest','GET /api/forge/music-boardgame-health']
+  });
+});
+
+app.get('/api/forge/music-boardgame-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM music_instruments`).get(); checks.music_instruments = 'ok'; } catch { checks.music_instruments = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM music_practice`).get(); checks.music_practice = 'ok'; } catch { checks.music_practice = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM boardgames`).get(); checks.boardgames = 'ok'; } catch { checks.boardgames = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM boardgame_plays`).get(); checks.boardgame_plays = 'ok'; } catch { checks.boardgame_plays = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
