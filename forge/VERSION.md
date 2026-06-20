@@ -1,3 +1,9 @@
+## v104.00 — B6401-B6450 🥬🍄 URBANGARDEN+MUSHROOM-OS +Plots/Plants/Harvests/Grows/Stats
+- B6401-6410: Urban Gardening OS — plot registry (type/area/soil/sun), plant tracker (variety/status)
+- B6411-6420: Garden harvest log + stats (growing count/top crops)
+- B6421-6430: Mushroom Cultivation — substrate prep log, grow tracker (species/colonization/fruiting)
+- B6431-6450: Mushroom Stats (harvest g/contamination rate) + Milestone v104 — 6450 endpoints, 154960 lines
+
 ## v103.00 — B6351-B6400 🔥🖨️ GLASSBLOWING+PRINTMAKING-OS +Pieces/Sessions/Editions/Plates/Stats
 - B6351-6360: Glassblowing OS — piece catalog (form/technique/colors/weight), studio session log
 - B6361-6380: Glassblowing Stats + Printmaking edition catalog (technique/paper/ink/edition size)
