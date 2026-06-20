@@ -1,3 +1,8 @@
+## v138.00 — Fix pets schema aliases, home_maintenance column gaps, pet_health table
+- pets: adds birthdate/vet/microchip/insured (backfilled from date_of_birth/vet_name/microchip_id)
+- home_maintenance: adds date/task/room/category/contractor/status/next_due cols with backfill
+- pet_health: CREATE TABLE IF NOT EXISTS for health tracking
+
 ## v137.00 — Fix wine_cellar column aliases (wine_name→name, bottle_count→quantity, etc)
 - wine_cellar: adds name, quantity, purchase_price, rating, type, winery, tasting_notes, pairing cols
 - wine_cellar: backfills alias cols from original wine_name/bottle_count/purchase_price_usd/rating_pts

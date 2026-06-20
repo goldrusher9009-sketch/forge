@@ -167655,6 +167655,30 @@ try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN food_pairing TEXT DEFAULT
 try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
 // ─── end v137 migrations ──────────────────────────────────────────────────────
 
+// ─── v138 Schema Migrations ────────────────────────────────────────────────────
+// pets: early schema has date_of_birth/vet_name/microchip_id, later handlers use birthdate/vet/microchip/insured
+try { db.prepare(`ALTER TABLE pets ADD COLUMN birthdate TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN vet TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN microchip TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN insured INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pets SET birthdate=COALESCE(NULLIF(birthdate,''),date_of_birth,'') WHERE birthdate='' AND date_of_birth IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pets SET vet=COALESCE(NULLIF(vet,''),vet_name,'') WHERE vet='' AND vet_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pets SET microchip=COALESCE(NULLIF(microchip,''),microchip_id,'') WHERE microchip='' AND microchip_id IS NOT NULL`).run(); } catch(e) {}
+// home_maintenance: first CREATE has task_name/area, later handler needs date/task/room/contractor/status
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN task TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN room TEXT DEFAULT 'general'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN category TEXT DEFAULT 'repair'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN contractor TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN status TEXT DEFAULT 'completed'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN next_due TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET task=COALESCE(NULLIF(task,''),task_name,'') WHERE task='' AND task_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET room=COALESCE(NULLIF(room,'general'),area,'general') WHERE room='general' AND area IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET date=COALESCE(NULLIF(date,''),completed_date,logged_at,'') WHERE date='' AND (completed_date IS NOT NULL OR logged_at IS NOT NULL)`).run(); } catch(e) {}
+// pet_health table for /api/pets/:id/health endpoints
+try { db.prepare(`CREATE TABLE IF NOT EXISTS pet_health (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pet_id INTEGER, date TEXT, type TEXT DEFAULT 'vet_visit', description TEXT, weight_kg REAL DEFAULT 0, cost REAL DEFAULT 0, next_due TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+// ─── end v138 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
