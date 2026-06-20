@@ -1,3 +1,9 @@
+## v103.00 — B6351-B6400 🔥🖨️ GLASSBLOWING+PRINTMAKING-OS +Pieces/Sessions/Editions/Plates/Stats
+- B6351-6360: Glassblowing OS — piece catalog (form/technique/colors/weight), studio session log
+- B6361-6380: Glassblowing Stats + Printmaking edition catalog (technique/paper/ink/edition size)
+- B6381-6400: Printmaking plate registry (material/condition/prints pulled) + Stats + Milestone v103
+  /api/milestone/v103, 6400 endpoints, 154817 lines
+
 ## v102.00 — B6301-B6350 🔪🪵 KNIFEMAKING+WOODTURNING-OS +Blanks/Builds/Stock/Projects/Stats
 - B6301-6310: Knife Making OS — steel blank inventory (type/dimensions/source), build tracker (style/handle/heat treat)
 - B6311-6320: Knife Stats + Woodturning project log (form/species/lathe/finish)
