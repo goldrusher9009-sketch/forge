@@ -1,8 +1,5 @@
-[phases.setup]
-nixPkgs = ["nodejs_20", "python3", "gcc", "gnumake"]
-
-[phases.install]
-cmds = ["npm install --include=dev"]
+[phases.build]
+cmds = ["npm install", "npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --outfile=dist/index.js"]
 
 [start]
-cmd = "npx ts-node --transpile-only src/index.ts"
+cmd = "node dist/index.js"
