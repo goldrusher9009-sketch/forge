@@ -1,3 +1,12 @@
+## v131.00 — Schema conflict fixes + migration patches
+- Fixed nps_surveys schema conflict: ALTER TABLE migrations add surveyed_at, follow_up columns
+- Fixed skills_inventory conflict: migrations add proficiency_level, employee_name, department
+- Fixed feature_flags conflict: migrations add flag_key, flag_name, rollout_pct, targeting_rules
+- Fixed api_docs conflict: migrations add category, example_request, example_response
+- Fixed /api/brief SQLite datetime quoting bug (double→single quotes)
+- B2725-B2733 routes now live: product_launches, bug_reports, onboarding, pricing_monitor, waitlist, sla, interviews, territories, content_calendar
+- 167535 lines
+
 ## v104.00 — B6401-B6450 🥬🍄 URBANGARDEN+MUSHROOM-OS +Plots/Plants/Harvests/Grows/Stats
 - B6401-6410: Urban Gardening OS — plot registry (type/area/soil/sun), plant tracker (variety/status)
 - B6411-6420: Garden harvest log + stats (growing count/top crops)
