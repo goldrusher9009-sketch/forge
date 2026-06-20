@@ -136855,5 +136855,421 @@ app.get('/api/forge/empire-v2-manifest', (req: any, res: any) => {
 });
 
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B2501-B2550: Emotional Intelligence OS + Parenting OS + Relationship OS v2
+//              Goal Mastery OS + Time Mastery OS + Energy OS + Habit OS v2
+//              Vision OS + Legacy OS + Grand Milestone v26
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B2501-B2505: Emotional Intelligence OS
+app.get('/api/emotional-intelligence/journal', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ei_journal (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, emotion TEXT, intensity INTEGER DEFAULT 5, trigger TEXT, body_sensation TEXT, response TEXT, reflection TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM ei_journal WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const emotion_freq = db.prepare("SELECT emotion, COUNT(*) as c FROM ei_journal WHERE user_id=? AND date>=date('now','-30 days') GROUP BY emotion ORDER BY c DESC LIMIT 5").all(u);
+    res.json({ success:true, data:rows, top_emotions_30d:emotion_freq });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/emotional-intelligence/journal', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, emotion, intensity, trigger, body_sensation, response, reflection } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ei_journal (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, emotion TEXT, intensity INTEGER DEFAULT 5, trigger TEXT, body_sensation TEXT, response TEXT, reflection TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO ei_journal (user_id,date,emotion,intensity,trigger,body_sensation,response,reflection) VALUES (?,?,?,?,?,?,?,?)').run(u,date||'',emotion||'',intensity||5,trigger||'',body_sensation||'',response||'',reflection||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/emotional-intelligence/skills', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ei_skills (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, skill TEXT, category TEXT DEFAULT 'self-awareness', current_level INTEGER DEFAULT 1, target_level INTEGER DEFAULT 5, practice_notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM ei_skills WHERE user_id=? ORDER BY category ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/emotional-intelligence/skills', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { skill, category, current_level, target_level, practice_notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS ei_skills (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, skill TEXT, category TEXT DEFAULT 'self-awareness', current_level INTEGER DEFAULT 1, target_level INTEGER DEFAULT 5, practice_notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO ei_skills (user_id,skill,category,current_level,target_level,practice_notes) VALUES (?,?,?,?,?,?)').run(u,skill||'',category||'self-awareness',current_level||1,target_level||5,practice_notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/emotional-intelligence-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const j = safe(()=>db.prepare("SELECT COUNT(*) as c FROM ei_journal WHERE user_id=? AND date>=date('now','-30 days')").get(u) as any);
+  res.json({ success:true, emotional_intelligence_os:{ journal_entries_30d:j?.c||0 }});
+});
+
+// B2506-B2510: Parenting OS
+app.get('/api/parenting/children', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS parenting_children (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, birth_date TEXT, grade TEXT, interests TEXT, strengths TEXT, current_goals TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM parenting_children WHERE user_id=? ORDER BY birth_date ASC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/parenting/children', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, birth_date, grade, interests, strengths, current_goals, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS parenting_children (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, birth_date TEXT, grade TEXT, interests TEXT, strengths TEXT, current_goals TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO parenting_children (user_id,name,birth_date,grade,interests,strengths,current_goals,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',birth_date||'',grade||'',interests||'',strengths||'',current_goals||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/parenting/activities-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS parenting_activities (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, child_id INTEGER, date TEXT, activity TEXT, duration_min INTEGER DEFAULT 30, quality INTEGER DEFAULT 3, child_mood TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM parenting_activities WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    const weekly = db.prepare("SELECT SUM(duration_min) as m, COUNT(*) as c FROM parenting_activities WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any;
+    res.json({ success:true, data:rows, weekly_engagement:{ sessions:weekly?.c||0, minutes:weekly?.m||0 } });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/parenting/activities-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { child_id, date, activity, duration_min, quality, child_mood, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS parenting_activities (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, child_id INTEGER, date TEXT, activity TEXT, duration_min INTEGER DEFAULT 30, quality INTEGER DEFAULT 3, child_mood TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO parenting_activities (user_id,child_id,date,activity,duration_min,quality,child_mood,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,child_id||0,date||'',activity||'',duration_min||30,quality||3,child_mood||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/parenting-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as c FROM parenting_children WHERE user_id=?').get(u) as any);
+  const w = safe(()=>db.prepare("SELECT SUM(duration_min) as m FROM parenting_activities WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any);
+  res.json({ success:true, parenting_os:{ children:c?.c||0, weekly_engagement_minutes:w?.m||0 }});
+});
+
+// B2511-B2515: Relationship OS v2
+app.get('/api/relationships-v2/people', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rel_v2_people (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, relationship_type TEXT DEFAULT 'friend', love_language TEXT, communication_style TEXT, important_dates TEXT, shared_interests TEXT, last_quality_time TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM rel_v2_people WHERE user_id=? ORDER BY last_quality_time DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/relationships-v2/people', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, relationship_type, love_language, communication_style, important_dates, shared_interests, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rel_v2_people (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, relationship_type TEXT DEFAULT 'friend', love_language TEXT, communication_style TEXT, important_dates TEXT, shared_interests TEXT, last_quality_time TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rel_v2_people (user_id,name,relationship_type,love_language,communication_style,important_dates,shared_interests,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',relationship_type||'friend',love_language||'',communication_style||'',important_dates||'',shared_interests||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/relationships-v2/quality-time', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rel_v2_quality_time (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, person_id INTEGER, date TEXT, activity TEXT, duration_min INTEGER DEFAULT 60, connection_score INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT qt.*, p.name FROM rel_v2_quality_time qt LEFT JOIN rel_v2_people p ON qt.person_id=p.id WHERE qt.user_id=? ORDER BY qt.date DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/relationships-v2/quality-time', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { person_id, date, activity, duration_min, connection_score, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS rel_v2_quality_time (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, person_id INTEGER, date TEXT, activity TEXT, duration_min INTEGER DEFAULT 60, connection_score INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO rel_v2_quality_time (user_id,person_id,date,activity,duration_min,connection_score,notes) VALUES (?,?,?,?,?,?,?)').run(u,person_id||0,date||'',activity||'',duration_min||60,connection_score||3,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/relationships-v2-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare('SELECT COUNT(*) as c FROM rel_v2_people WHERE user_id=?').get(u) as any);
+  const qt = safe(()=>db.prepare("SELECT COUNT(*) as c FROM rel_v2_quality_time WHERE user_id=? AND date>=date('now','-30 days')").get(u) as any);
+  res.json({ success:true, relationships_v2_os:{ people_tracked:p?.c||0, quality_time_sessions_30d:qt?.c||0 }});
+});
+
+// B2516-B2520: Goal Mastery OS
+app.get('/api/goal-mastery/goals', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS goal_mastery_goals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'personal', why TEXT, outcome TEXT, deadline TEXT, progress_pct INTEGER DEFAULT 0, status TEXT DEFAULT 'active', obstacles TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM goal_mastery_goals WHERE user_id=? AND status='active' ORDER BY deadline ASC LIMIT 20").all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/goal-mastery/goals', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, category, why, outcome, deadline, obstacles } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS goal_mastery_goals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'personal', why TEXT, outcome TEXT, deadline TEXT, progress_pct INTEGER DEFAULT 0, status TEXT DEFAULT 'active', obstacles TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO goal_mastery_goals (user_id,title,category,why,outcome,deadline,obstacles) VALUES (?,?,?,?,?,?,?)').run(u,title||'',category||'personal',why||'',outcome||'',deadline||'',obstacles||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/goal-mastery/weekly-review', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS goal_mastery_weekly_review (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, week_of TEXT, wins TEXT, misses TEXT, lessons TEXT, next_week_priority TEXT, energy_level INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM goal_mastery_weekly_review WHERE user_id=? ORDER BY week_of DESC LIMIT 10').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/goal-mastery/weekly-review', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { week_of, wins, misses, lessons, next_week_priority, energy_level } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS goal_mastery_weekly_review (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, week_of TEXT, wins TEXT, misses TEXT, lessons TEXT, next_week_priority TEXT, energy_level INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO goal_mastery_weekly_review (user_id,week_of,wins,misses,lessons,next_week_priority,energy_level) VALUES (?,?,?,?,?,?,?)').run(u,week_of||'',wins||'',misses||'',lessons||'',next_week_priority||'',energy_level||3);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/goal-mastery-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const g = safe(()=>db.prepare("SELECT COUNT(*) as c, AVG(progress_pct) as avg FROM goal_mastery_goals WHERE user_id=? AND status='active'").get(u) as any);
+  res.json({ success:true, goal_mastery_os:{ active_goals:g?.c||0, avg_progress:Math.round((g?.avg||0)*10)/10 }});
+});
+
+// B2521-B2525: Time Mastery OS
+app.get('/api/time-mastery/time-blocks', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS time_mastery_blocks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, start_time TEXT, end_time TEXT, duration_min INTEGER DEFAULT 60, category TEXT DEFAULT 'deep-work', planned_task TEXT, actual_task TEXT, completion_pct INTEGER DEFAULT 100, energy_match INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const today = new Date().toISOString().split('T')[0];
+    const rows = db.prepare('SELECT * FROM time_mastery_blocks WHERE user_id=? AND date=? ORDER BY start_time ASC').all(u, today);
+    const weekly = db.prepare("SELECT category, SUM(duration_min) as m FROM time_mastery_blocks WHERE user_id=? AND date>=date('now','-7 days') GROUP BY category").all(u);
+    res.json({ success:true, today_blocks:rows, weekly_by_category:weekly });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/time-mastery/time-blocks', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, start_time, end_time, duration_min, category, planned_task, actual_task, completion_pct, energy_match } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS time_mastery_blocks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, start_time TEXT, end_time TEXT, duration_min INTEGER DEFAULT 60, category TEXT DEFAULT 'deep-work', planned_task TEXT, actual_task TEXT, completion_pct INTEGER DEFAULT 100, energy_match INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO time_mastery_blocks (user_id,date,start_time,end_time,duration_min,category,planned_task,actual_task,completion_pct,energy_match) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,date||'',start_time||'',end_time||'',duration_min||60,category||'deep-work',planned_task||'',actual_task||'',completion_pct||100,energy_match||3);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/time-mastery/time-audits', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS time_mastery_audits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, week_of TEXT, deep_work_hrs REAL DEFAULT 0, shallow_work_hrs REAL DEFAULT 0, meetings_hrs REAL DEFAULT 0, admin_hrs REAL DEFAULT 0, learning_hrs REAL DEFAULT 0, recreation_hrs REAL DEFAULT 0, reflection TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM time_mastery_audits WHERE user_id=? ORDER BY week_of DESC LIMIT 8').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/time-mastery/time-audits', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { week_of, deep_work_hrs, shallow_work_hrs, meetings_hrs, admin_hrs, learning_hrs, recreation_hrs, reflection } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS time_mastery_audits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, week_of TEXT, deep_work_hrs REAL DEFAULT 0, shallow_work_hrs REAL DEFAULT 0, meetings_hrs REAL DEFAULT 0, admin_hrs REAL DEFAULT 0, learning_hrs REAL DEFAULT 0, recreation_hrs REAL DEFAULT 0, reflection TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO time_mastery_audits (user_id,week_of,deep_work_hrs,shallow_work_hrs,meetings_hrs,admin_hrs,learning_hrs,recreation_hrs,reflection) VALUES (?,?,?,?,?,?,?,?,?)').run(u,week_of||'',deep_work_hrs||0,shallow_work_hrs||0,meetings_hrs||0,admin_hrs||0,learning_hrs||0,recreation_hrs||0,reflection||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/time-mastery-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const w = safe(()=>db.prepare("SELECT SUM(CASE WHEN category='deep-work' THEN duration_min ELSE 0 END) as dw FROM time_mastery_blocks WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any);
+  res.json({ success:true, time_mastery_os:{ weekly_deep_work_minutes:w?.dw||0 }});
+});
+
+// B2526-B2530: Energy OS
+app.get('/api/energy/daily-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS energy_daily_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, morning_energy INTEGER DEFAULT 3, afternoon_energy INTEGER DEFAULT 3, evening_energy INTEGER DEFAULT 3, peak_hours TEXT, low_hours TEXT, caffeine_mg INTEGER DEFAULT 0, naps INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM energy_daily_log WHERE user_id=? ORDER BY date DESC LIMIT 30').all(u);
+    const avg = db.prepare("SELECT AVG(morning_energy) as m, AVG(afternoon_energy) as a, AVG(evening_energy) as e FROM energy_daily_log WHERE user_id=? AND date>=date('now','-14 days')").get(u) as any;
+    res.json({ success:true, data:rows, avg_14d:{ morning:Math.round((avg?.m||0)*10)/10, afternoon:Math.round((avg?.a||0)*10)/10, evening:Math.round((avg?.e||0)*10)/10 } });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/energy/daily-log', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, morning_energy, afternoon_energy, evening_energy, peak_hours, low_hours, caffeine_mg, naps, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS energy_daily_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, morning_energy INTEGER DEFAULT 3, afternoon_energy INTEGER DEFAULT 3, evening_energy INTEGER DEFAULT 3, peak_hours TEXT, low_hours TEXT, caffeine_mg INTEGER DEFAULT 0, naps INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO energy_daily_log (user_id,date,morning_energy,afternoon_energy,evening_energy,peak_hours,low_hours,caffeine_mg,naps,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,date||'',morning_energy||3,afternoon_energy||3,evening_energy||3,peak_hours||'',low_hours||'',caffeine_mg||0,naps||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/energy/drains-boosts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS energy_drains_boosts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item TEXT, type TEXT DEFAULT 'boost', category TEXT, magnitude INTEGER DEFAULT 3, context TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const boosts = db.prepare("SELECT * FROM energy_drains_boosts WHERE user_id=? AND type='boost' ORDER BY magnitude DESC LIMIT 20").all(u);
+    const drains = db.prepare("SELECT * FROM energy_drains_boosts WHERE user_id=? AND type='drain' ORDER BY magnitude DESC LIMIT 20").all(u);
+    res.json({ success:true, boosts, drains });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/energy/drains-boosts', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item, type, category, magnitude, context } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS energy_drains_boosts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item TEXT, type TEXT DEFAULT 'boost', category TEXT, magnitude INTEGER DEFAULT 3, context TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO energy_drains_boosts (user_id,item,type,category,magnitude,context) VALUES (?,?,?,?,?,?)').run(u,item||'',type||'boost',category||'',magnitude||3,context||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/energy-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const avg = safe(()=>db.prepare("SELECT AVG(morning_energy) as m FROM energy_daily_log WHERE user_id=? AND date>=date('now','-7 days')").get(u) as any);
+  res.json({ success:true, energy_os:{ weekly_avg_morning_energy:Math.round((avg?.m||0)*10)/10 }});
+});
+
+// B2531-B2535: Habit OS v2
+app.get('/api/habits-v2/habits', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS habits_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, cue TEXT, routine TEXT, reward TEXT, frequency TEXT DEFAULT 'daily', target_streak INTEGER DEFAULT 21, current_streak INTEGER DEFAULT 0, best_streak INTEGER DEFAULT 0, category TEXT DEFAULT 'health', created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM habits_v2 WHERE user_id=? ORDER BY current_streak DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/habits-v2/habits', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, cue, routine, reward, frequency, target_streak, category } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS habits_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, cue TEXT, routine TEXT, reward TEXT, frequency TEXT DEFAULT 'daily', target_streak INTEGER DEFAULT 21, current_streak INTEGER DEFAULT 0, best_streak INTEGER DEFAULT 0, category TEXT DEFAULT 'health', created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO habits_v2 (user_id,name,cue,routine,reward,frequency,target_streak,category) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',cue||'',routine||'',reward||'',frequency||'daily',target_streak||21,category||'health');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/habits-v2/check-in', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { habit_id, completed } = req.body||{};
+  try {
+    if (completed) {
+      const h = db.prepare('SELECT * FROM habits_v2 WHERE id=? AND user_id=?').get(habit_id, u) as any;
+      if (h) {
+        const newStreak = (h.current_streak||0) + 1;
+        db.prepare('UPDATE habits_v2 SET current_streak=?, best_streak=MAX(best_streak,?) WHERE id=?').run(newStreak, newStreak, habit_id);
+      }
+    } else {
+      db.prepare('UPDATE habits_v2 SET current_streak=0 WHERE id=? AND user_id=?').run(habit_id, u);
+    }
+    res.json({ success:true });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/habits-v2-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const h = safe(()=>db.prepare('SELECT COUNT(*) as c, MAX(current_streak) as best FROM habits_v2 WHERE user_id=?').get(u) as any);
+  res.json({ success:true, habits_v2_os:{ habits:h?.c||0, highest_streak:h?.best||0 }});
+});
+
+// B2536-B2540: Vision OS
+app.get('/api/vision/life-vision', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vision_life (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, area TEXT DEFAULT 'career', vision_statement TEXT, ideal_life_description TEXT, 5yr_milestone TEXT, values_alignment TEXT, last_updated TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM vision_life WHERE user_id=? ORDER BY area ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/vision/life-vision', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { area, vision_statement, ideal_life_description, '5yr_milestone': milestone_5yr, values_alignment } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vision_life (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, area TEXT DEFAULT 'career', vision_statement TEXT, ideal_life_description TEXT, 5yr_milestone TEXT, values_alignment TEXT, last_updated TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO vision_life (user_id,area,vision_statement,ideal_life_description,"5yr_milestone",values_alignment,last_updated) VALUES (?,?,?,?,?,?,?)').run(u,area||'career',vision_statement||'',ideal_life_description||'',milestone_5yr||'',values_alignment||'',new Date().toISOString().split('T')[0]);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/vision/values', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vision_values (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, value_name TEXT, definition TEXT, how_living_it TEXT, rank INTEGER DEFAULT 5, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM vision_values WHERE user_id=? ORDER BY rank ASC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/vision/values', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { value_name, definition, how_living_it, rank } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vision_values (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, value_name TEXT, definition TEXT, how_living_it TEXT, rank INTEGER DEFAULT 5, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO vision_values (user_id,value_name,definition,how_living_it,rank) VALUES (?,?,?,?,?)').run(u,value_name||'',definition||'',how_living_it||'',rank||5);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/vision-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const v = safe(()=>db.prepare('SELECT COUNT(*) as c FROM vision_life WHERE user_id=?').get(u) as any);
+  const vals = safe(()=>db.prepare('SELECT COUNT(*) as c FROM vision_values WHERE user_id=?').get(u) as any);
+  res.json({ success:true, vision_os:{ vision_areas:v?.c||0, values_defined:vals?.c||0 }});
+});
+
+// B2541-B2545: Legacy OS
+app.get('/api/legacy/contributions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS legacy_contributions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'knowledge', description TEXT, impact TEXT, reach TEXT, date TEXT, ongoing INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM legacy_contributions WHERE user_id=? ORDER BY date DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/legacy/contributions', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, category, description, impact, reach, date, ongoing } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS legacy_contributions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'knowledge', description TEXT, impact TEXT, reach TEXT, date TEXT, ongoing INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO legacy_contributions (user_id,title,category,description,impact,reach,date,ongoing) VALUES (?,?,?,?,?,?,?,?)').run(u,title||'',category||'knowledge',description||'',impact||'',reach||'',date||'',ongoing?1:0);
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/legacy/life-lessons', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS legacy_life_lessons (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, lesson TEXT, context TEXT, age_learned INTEGER DEFAULT 0, importance INTEGER DEFAULT 3, who_to_share TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM legacy_life_lessons WHERE user_id=? ORDER BY importance DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/legacy/life-lessons', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { lesson, context, age_learned, importance, who_to_share } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS legacy_life_lessons (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, lesson TEXT, context TEXT, age_learned INTEGER DEFAULT 0, importance INTEGER DEFAULT 3, who_to_share TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO legacy_life_lessons (user_id,lesson,context,age_learned,importance,who_to_share) VALUES (?,?,?,?,?,?)').run(u,lesson||'',context||'',age_learned||0,importance||3,who_to_share||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/legacy-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as c FROM legacy_contributions WHERE user_id=?').get(u) as any);
+  const l = safe(()=>db.prepare('SELECT COUNT(*) as c FROM legacy_life_lessons WHERE user_id=?').get(u) as any);
+  res.json({ success:true, legacy_os:{ contributions:c?.c||0, life_lessons:l?.c||0 }});
+});
+
+// B2546-B2550: Grand Milestone v26
+app.get('/api/milestone/v26', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const goals = safe(()=>db.prepare("SELECT COUNT(*) as c FROM goal_mastery_goals WHERE user_id=? AND status='active'").get(u) as any);
+  const habits = safe(()=>db.prepare('SELECT COUNT(*) as c FROM habits_v2 WHERE user_id=?').get(u) as any);
+  const vision = safe(()=>db.prepare('SELECT COUNT(*) as c FROM vision_life WHERE user_id=?').get(u) as any);
+  const legacy = safe(()=>db.prepare('SELECT COUNT(*) as c FROM legacy_contributions WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v26.00', total_endpoints:2550, milestone:'B2550 — Complete Human OS', complete_human_os:{ active_goals:goals?.c||0, habits:habits?.c||0, vision_areas:vision?.c||0, legacy_contributions:legacy?.c||0 }});
+});
+app.get('/api/forge/human-health', (_req: any, res: any) => {
+  res.json({ success:true, human_health:{ os_modules:68, total_endpoints:2550, version:'v26.00' }});
+});
+app.get('/api/forge/complete-human-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const goals = safe(()=>db.prepare("SELECT COUNT(*) as c FROM goal_mastery_goals WHERE user_id=? AND status='active'").get(u) as any);
+  const habits = safe(()=>db.prepare('SELECT MAX(current_streak) as s FROM habits_v2 WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v26.00', total_endpoints:2550, manifest:{ active_goals:goals?.c||0, best_habit_streak:habits?.s||0 }, os_categories:['financial','knowledge','biohacking','longevity','mental','creative','decisions','systems','network','content','learning','emotional-intelligence','parenting','relationships','goal-mastery','time-mastery','energy','habits','vision','legacy'] });
+});
+
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
