@@ -142649,5 +142649,422 @@ app.get('/api/forge/hobby-health', (_req: any, res: any) => {
 
 });
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B3201-B3250: Vintage OS + Antiques OS + Stamp Collecting OS + Coin Collecting OS
+//              Sports Memorabilia OS + Record Collecting OS + Book Collecting OS
+//              Map Collecting OS + Postcard OS + Grand Milestone v40
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B3201-B3205: Vintage Fashion OS
+app.get('/api/vintage/wardrobe', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vintage_wardrobe (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'dress', decade TEXT DEFAULT '1970s', brand TEXT, size TEXT, condition TEXT DEFAULT 'good', paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, source TEXT DEFAULT 'thrift', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM vintage_wardrobe WHERE user_id=? ORDER BY value_usd DESC, decade ASC LIMIT 100').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM vintage_wardrobe WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, items:total?.c||0, total_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/vintage/wardrobe', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, type, decade, brand, size, condition, paid_usd, value_usd, source, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vintage_wardrobe (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'dress', decade TEXT DEFAULT '1970s', brand TEXT, size TEXT, condition TEXT DEFAULT 'good', paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, source TEXT DEFAULT 'thrift', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO vintage_wardrobe (user_id,name,type,decade,brand,size,condition,paid_usd,value_usd,source,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',type||'dress',decade||'1970s',brand||'',size||'',condition||'good',paid_usd||0,value_usd||0,source||'thrift',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/vintage/shopping-list', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vintage_shopping (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item TEXT, type TEXT, decade TEXT, max_price_usd REAL DEFAULT 50, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM vintage_shopping WHERE user_id=? ORDER BY priority DESC, max_price_usd ASC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/vintage/shopping-list', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item, type, decade, max_price_usd, priority, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS vintage_shopping (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item TEXT, type TEXT, decade TEXT, max_price_usd REAL DEFAULT 50, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO vintage_shopping (user_id,item,type,decade,max_price_usd,priority,notes) VALUES (?,?,?,?,?,?,?)').run(u,item||'',type||'',decade||'',max_price_usd||50,priority||2,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/vintage-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const w = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM vintage_wardrobe WHERE user_id=?').get(u) as any);
+  res.json({ success:true, vintage_os:{ items:w?.c||0, total_value:w?.v||0 }});
+});
+
+// B3206-B3210: Antiques OS
+app.get('/api/antiques/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS antiques_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'furniture', period TEXT, origin TEXT, condition TEXT DEFAULT 'good', paid_usd REAL DEFAULT 0, appraised_usd REAL DEFAULT 0, acquired_date TEXT, provenance TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM antiques_collection WHERE user_id=? ORDER BY appraised_usd DESC LIMIT 50').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(appraised_usd),0) as v FROM antiques_collection WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_items:total?.c||0, appraised_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/antiques/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, period, origin, condition, paid_usd, appraised_usd, acquired_date, provenance, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS antiques_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'furniture', period TEXT, origin TEXT, condition TEXT DEFAULT 'good', paid_usd REAL DEFAULT 0, appraised_usd REAL DEFAULT 0, acquired_date TEXT, provenance TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO antiques_collection (user_id,name,category,period,origin,condition,paid_usd,appraised_usd,acquired_date,provenance,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',category||'furniture',period||'',origin||'',condition||'good',paid_usd||0,appraised_usd||0,acquired_date||'',provenance||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/antiques/appraisals', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS antiques_appraisals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, appraiser TEXT, date TEXT, low_usd REAL DEFAULT 0, high_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM antiques_appraisals WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/antiques/appraisals', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item_name, appraiser, date, low_usd, high_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS antiques_appraisals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, appraiser TEXT, date TEXT, low_usd REAL DEFAULT 0, high_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO antiques_appraisals (user_id,item_name,appraiser,date,low_usd,high_usd,notes) VALUES (?,?,?,?,?,?,?)').run(u,item_name||'',appraiser||'',date||'',low_usd||0,high_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/antiques-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as n, COALESCE(SUM(appraised_usd),0) as v FROM antiques_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, antiques_os:{ items:c?.n||0, appraised_value:c?.v||0 }});
+});
+
+// B3211-B3215: Stamp Collecting OS
+app.get('/api/stamps/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS stamps_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, country TEXT, year INTEGER DEFAULT 1950, denomination TEXT, condition TEXT DEFAULT 'FVF', catalog_number TEXT, catalog TEXT DEFAULT 'Scott', mint INTEGER DEFAULT 0, value_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM stamps_collection WHERE user_id=? ORDER BY value_usd DESC, year ASC LIMIT 200').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM stamps_collection WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_stamps:total?.c||0, catalog_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/stamps/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, country, year, denomination, condition, catalog_number, catalog, mint, value_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS stamps_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, country TEXT, year INTEGER DEFAULT 1950, denomination TEXT, condition TEXT DEFAULT 'FVF', catalog_number TEXT, catalog TEXT DEFAULT 'Scott', mint INTEGER DEFAULT 0, value_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO stamps_collection (user_id,name,country,year,denomination,condition,catalog_number,catalog,mint,value_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',country||'',year||1950,denomination||'',condition||'FVF',catalog_number||'',catalog||'Scott',mint?1:0,value_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/stamps/wantlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS stamps_wantlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, country TEXT, catalog_number TEXT, max_price_usd REAL DEFAULT 20, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM stamps_wantlist WHERE user_id=? ORDER BY max_price_usd DESC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/stamps/wantlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, country, catalog_number, max_price_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS stamps_wantlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, country TEXT, catalog_number TEXT, max_price_usd REAL DEFAULT 20, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO stamps_wantlist (user_id,name,country,catalog_number,max_price_usd,notes) VALUES (?,?,?,?,?,?)').run(u,name||'',country||'',catalog_number||'',max_price_usd||20,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/stamps-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM stamps_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, stamps_os:{ stamps:s?.c||0, catalog_value:s?.v||0 }});
+});
+
+// B3216-B3220: Coin Collecting OS
+app.get('/api/coins/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS coins_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, country TEXT, year INTEGER DEFAULT 1900, denomination TEXT, composition TEXT DEFAULT 'silver', grade TEXT DEFAULT 'VF', mint_mark TEXT, pcgs_id TEXT, value_usd REAL DEFAULT 0, paid_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM coins_collection WHERE user_id=? ORDER BY value_usd DESC, year ASC LIMIT 200').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM coins_collection WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_coins:total?.c||0, total_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/coins/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, country, year, denomination, composition, grade, mint_mark, pcgs_id, value_usd, paid_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS coins_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, country TEXT, year INTEGER DEFAULT 1900, denomination TEXT, composition TEXT DEFAULT 'silver', grade TEXT DEFAULT 'VF', mint_mark TEXT, pcgs_id TEXT, value_usd REAL DEFAULT 0, paid_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO coins_collection (user_id,name,country,year,denomination,composition,grade,mint_mark,pcgs_id,value_usd,paid_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',country||'',year||1900,denomination||'',composition||'silver',grade||'VF',mint_mark||'',pcgs_id||'',value_usd||0,paid_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/coins/wantlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS coins_wantlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, country TEXT, year INTEGER, denomination TEXT, max_price_usd REAL DEFAULT 50, grade TEXT DEFAULT 'VF', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM coins_wantlist WHERE user_id=? ORDER BY max_price_usd DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/coins/wantlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, country, year, denomination, max_price_usd, grade, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS coins_wantlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, country TEXT, year INTEGER, denomination TEXT, max_price_usd REAL DEFAULT 50, grade TEXT DEFAULT 'VF', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO coins_wantlist (user_id,name,country,year,denomination,max_price_usd,grade,notes) VALUES (?,?,?,?,?,?,?,?)').run(u,name||'',country||'',year||0,denomination||'',max_price_usd||50,grade||'VF',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/coins-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const c = safe(()=>db.prepare('SELECT COUNT(*) as n, COALESCE(SUM(value_usd),0) as v FROM coins_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, coins_os:{ coins:c?.n||0, total_value:c?.v||0 }});
+});
+
+// B3221-B3225: Sports Memorabilia OS
+app.get('/api/sports-memo/items', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_memo (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sport TEXT DEFAULT 'baseball', player TEXT, team TEXT, year INTEGER DEFAULT 2000, type TEXT DEFAULT 'card', authenticated INTEGER DEFAULT 0, auth_company TEXT, condition TEXT DEFAULT 'excellent', value_usd REAL DEFAULT 0, paid_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM sports_memo WHERE user_id=? ORDER BY value_usd DESC LIMIT 100').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM sports_memo WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, items:total?.c||0, total_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/sports-memo/items', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, sport, player, team, year, type, authenticated, auth_company, condition, value_usd, paid_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_memo (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sport TEXT DEFAULT 'baseball', player TEXT, team TEXT, year INTEGER DEFAULT 2000, type TEXT DEFAULT 'card', authenticated INTEGER DEFAULT 0, auth_company TEXT, condition TEXT DEFAULT 'excellent', value_usd REAL DEFAULT 0, paid_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO sports_memo (user_id,name,sport,player,team,year,type,authenticated,auth_company,condition,value_usd,paid_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',sport||'baseball',player||'',team||'',year||2000,type||'card',authenticated?1:0,auth_company||'',condition||'excellent',value_usd||0,paid_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/sports-memo/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_memo_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sport TEXT, player TEXT, max_price_usd REAL DEFAULT 100, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM sports_memo_wishlist WHERE user_id=? ORDER BY priority DESC, max_price_usd DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/sports-memo/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, sport, player, max_price_usd, priority, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS sports_memo_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sport TEXT, player TEXT, max_price_usd REAL DEFAULT 100, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO sports_memo_wishlist (user_id,name,sport,player,max_price_usd,priority,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',sport||'',player||'',max_price_usd||100,priority||2,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/sports-memo-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const s = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM sports_memo WHERE user_id=?').get(u) as any);
+  res.json({ success:true, sports_memo_os:{ items:s?.c||0, total_value:s?.v||0 }});
+});
+
+// B3226-B3230: Record Collecting OS
+app.get('/api/records/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS records_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, artist TEXT, label TEXT, year INTEGER DEFAULT 1970, format TEXT DEFAULT 'LP', genre TEXT DEFAULT 'rock', condition TEXT DEFAULT 'VG+', pressing TEXT DEFAULT 'original', paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, plays INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM records_collection WHERE user_id=? ORDER BY artist ASC, year ASC LIMIT 200').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM records_collection WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_records:total?.c||0, total_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/records/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, artist, label, year, format, genre, condition, pressing, paid_usd, value_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS records_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, artist TEXT, label TEXT, year INTEGER DEFAULT 1970, format TEXT DEFAULT 'LP', genre TEXT DEFAULT 'rock', condition TEXT DEFAULT 'VG+', pressing TEXT DEFAULT 'original', paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, plays INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO records_collection (user_id,title,artist,label,year,format,genre,condition,pressing,paid_usd,value_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,title||'',artist||'',label||'',year||1970,format||'LP',genre||'rock',condition||'VG+',pressing||'original',paid_usd||0,value_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/records/wantlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS records_wantlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, artist TEXT, format TEXT DEFAULT 'LP', max_price_usd REAL DEFAULT 30, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM records_wantlist WHERE user_id=? ORDER BY priority DESC, artist ASC LIMIT 50').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/records/wantlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, artist, format, max_price_usd, priority, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS records_wantlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, artist TEXT, format TEXT DEFAULT 'LP', max_price_usd REAL DEFAULT 30, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO records_wantlist (user_id,title,artist,format,max_price_usd,priority,notes) VALUES (?,?,?,?,?,?,?)').run(u,title||'',artist||'',format||'LP',max_price_usd||30,priority||2,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/records-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const r = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM records_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, records_os:{ records:r?.c||0, total_value:r?.v||0 }});
+});
+
+// B3231-B3235: Book Collecting OS
+app.get('/api/book-collecting/books', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS book_collecting (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, publisher TEXT, year INTEGER DEFAULT 1950, edition TEXT DEFAULT 'first', signed INTEGER DEFAULT 0, condition TEXT DEFAULT 'VG+', paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, isbn TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM book_collecting WHERE user_id=? ORDER BY value_usd DESC, year ASC LIMIT 200').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM book_collecting WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_books:total?.c||0, total_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/book-collecting/books', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, author, publisher, year, edition, signed, condition, paid_usd, value_usd, isbn, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS book_collecting (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, publisher TEXT, year INTEGER DEFAULT 1950, edition TEXT DEFAULT 'first', signed INTEGER DEFAULT 0, condition TEXT DEFAULT 'VG+', paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, isbn TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO book_collecting (user_id,title,author,publisher,year,edition,signed,condition,paid_usd,value_usd,isbn,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,title||'',author||'',publisher||'',year||1950,edition||'first',signed?1:0,condition||'VG+',paid_usd||0,value_usd||0,isbn||'',notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/book-collecting/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS book_collecting_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, edition TEXT DEFAULT 'first', max_price_usd REAL DEFAULT 100, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM book_collecting_wishlist WHERE user_id=? ORDER BY priority DESC, max_price_usd DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/book-collecting/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, author, edition, max_price_usd, priority, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS book_collecting_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, author TEXT, edition TEXT DEFAULT 'first', max_price_usd REAL DEFAULT 100, priority INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO book_collecting_wishlist (user_id,title,author,edition,max_price_usd,priority,notes) VALUES (?,?,?,?,?,?,?)').run(u,title||'',author||'',edition||'first',max_price_usd||100,priority||2,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/book-collecting-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const b = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM book_collecting WHERE user_id=?').get(u) as any);
+  res.json({ success:true, book_collecting_os:{ books:b?.c||0, total_value:b?.v||0 }});
+});
+
+// B3236-B3240: Map Collecting OS
+app.get('/api/maps/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maps_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, cartographer TEXT, year INTEGER DEFAULT 1800, region TEXT, publisher TEXT, size_cm TEXT, condition TEXT DEFAULT 'VG', color INTEGER DEFAULT 0, paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM maps_collection WHERE user_id=? ORDER BY value_usd DESC, year ASC LIMIT 100').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM maps_collection WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_maps:total?.c||0, total_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/maps/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, cartographer, year, region, publisher, size_cm, condition, color, paid_usd, value_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maps_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, cartographer TEXT, year INTEGER DEFAULT 1800, region TEXT, publisher TEXT, size_cm TEXT, condition TEXT DEFAULT 'VG', color INTEGER DEFAULT 0, paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO maps_collection (user_id,title,cartographer,year,region,publisher,size_cm,condition,color,paid_usd,value_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,title||'',cartographer||'',year||1800,region||'',publisher||'',size_cm||'',condition||'VG',color?1:0,paid_usd||0,value_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/maps/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maps_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, region TEXT, year_range TEXT, max_price_usd REAL DEFAULT 200, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM maps_wishlist WHERE user_id=? ORDER BY max_price_usd DESC LIMIT 20').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/maps/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, region, year_range, max_price_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS maps_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, region TEXT, year_range TEXT, max_price_usd REAL DEFAULT 200, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO maps_wishlist (user_id,title,region,year_range,max_price_usd,notes) VALUES (?,?,?,?,?,?)').run(u,title||'',region||'',year_range||'',max_price_usd||200,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/maps-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const m = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM maps_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, maps_os:{ maps:m?.c||0, total_value:m?.v||0 }});
+});
+
+// B3241-B3245: Postcard Collecting OS
+app.get('/api/postcards/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS postcards_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, origin TEXT, era TEXT DEFAULT 'golden_age', publisher TEXT, real_photo INTEGER DEFAULT 0, postmarked INTEGER DEFAULT 0, postmark_date TEXT, condition TEXT DEFAULT 'VG', paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM postcards_collection WHERE user_id=? ORDER BY value_usd DESC, era ASC LIMIT 200').all(u);
+    const total = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM postcards_collection WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_postcards:total?.c||0, total_value:total?.v||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/postcards/collection', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { title, origin, era, publisher, real_photo, postmarked, postmark_date, condition, paid_usd, value_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS postcards_collection (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, origin TEXT, era TEXT DEFAULT 'golden_age', publisher TEXT, real_photo INTEGER DEFAULT 0, postmarked INTEGER DEFAULT 0, postmark_date TEXT, condition TEXT DEFAULT 'VG', paid_usd REAL DEFAULT 0, value_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO postcards_collection (user_id,title,origin,era,publisher,real_photo,postmarked,postmark_date,condition,paid_usd,value_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,title||'',origin||'',era||'golden_age',publisher||'',real_photo?1:0,postmarked?1:0,postmark_date||'',condition||'VG',paid_usd||0,value_usd||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/postcards/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS postcards_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, origin TEXT, era TEXT DEFAULT 'golden_age', max_price_usd REAL DEFAULT 15, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM postcards_wishlist WHERE user_id=? ORDER BY max_price_usd DESC LIMIT 30').all(u);
+    res.json({ success:true, data:rows });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/postcards/wishlist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { topic, origin, era, max_price_usd, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS postcards_wishlist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, origin TEXT, era TEXT DEFAULT 'golden_age', max_price_usd REAL DEFAULT 15, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO postcards_wishlist (user_id,topic,origin,era,max_price_usd,notes) VALUES (?,?,?,?,?,?)').run(u,topic||'',origin||'',era||'golden_age',max_price_usd||15,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/milestone/postcards-os', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const p = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(value_usd),0) as v FROM postcards_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, postcards_os:{ postcards:p?.c||0, total_value:p?.v||0 }});
+});
+
+// B3246-B3250: Grand Milestone v40
+app.get('/api/milestone/v40', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const coins = safe(()=>db.prepare('SELECT COUNT(*) as c FROM coins_collection WHERE user_id=?').get(u) as any);
+  const records = safe(()=>db.prepare('SELECT COUNT(*) as c FROM records_collection WHERE user_id=?').get(u) as any);
+  const stamps = safe(()=>db.prepare('SELECT COUNT(*) as c FROM stamps_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v40.00', total_endpoints:3250, milestone:'B3250 — Collector-Vintage OS Complete', data:{ coins:coins?.c||0, records:records?.c||0, stamps:stamps?.c||0 }});
+});
+app.get('/api/forge/collector-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const postcards = safe(()=>db.prepare('SELECT COUNT(*) as c FROM postcards_collection WHERE user_id=?').get(u) as any);
+  const books = safe(()=>db.prepare('SELECT COUNT(*) as c FROM book_collecting WHERE user_id=?').get(u) as any);
+  const antiques = safe(()=>db.prepare('SELECT COUNT(*) as c FROM antiques_collection WHERE user_id=?').get(u) as any);
+  res.json({ success:true, collector:{ postcards:postcards?.c||0, rare_books:books?.c||0, antiques:antiques?.c||0 }, total_endpoints:3250 });
+});
+app.get('/api/forge/collector-health', (_req: any, res: any) => {
+  res.json({ success:true, collector_health:{ os_modules:192, total_endpoints:3250, version:'v40.00' }});
+
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
