@@ -159,7 +159,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v109.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v110.00' }));
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5274,7 +5274,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v109.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v110.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -13187,11 +13187,11 @@ app.delete('/api/ai-usage-budgets/:id', requireAuth, (req: any, res: any) => {
 });
 
 // Batch 56: ai_snippets, workspace_announcements, ai_memory_nodes, thread_labels, user_streaks_v2
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_snippets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, content TEXT, language TEXT DEFAULT 'text', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, body TEXT, audience TEXT DEFAULT 'all', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_memory_nodes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, label TEXT, content TEXT, node_type TEXT DEFAULT 'fact', strength REAL DEFAULT 1.0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS thread_labels_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, label TEXT, color TEXT DEFAULT '#6366f1', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, streak_type TEXT, current_count INTEGER DEFAULT 0, best_count INTEGER DEFAULT 0, last_date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_snippets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, content TEXT, language TEXT DEFAULT 'text', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, body TEXT, audience TEXT DEFAULT 'all', pinned INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_memory_nodes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, label TEXT, content TEXT, node_type TEXT DEFAULT 'fact', strength REAL DEFAULT 1.0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS thread_labels_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, label TEXT, color TEXT DEFAULT '#6366f1', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, streak_type TEXT, current_count INTEGER DEFAULT 0, best_count INTEGER DEFAULT 0, last_date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 app.get('/api/ai-snippets', requireAuth, (req: any, res: any) => {
   res.json(db.prepare('SELECT * FROM ai_snippets WHERE user_id=? ORDER BY pinned DESC, created_at DESC').all(req.user.id));
@@ -13292,11 +13292,11 @@ app.delete('/api/user-streaks-v2/:id', requireAuth, (req: any, res: any) => {
 
 
 // Batch 57: ai_prompt_versions, workspace_digests, ai_cost_breakdown, thread_mentions, user_preferences_v2
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_prompt_versions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, prompt_id TEXT, version INTEGER DEFAULT 1, content TEXT, note TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_digests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, body TEXT, digest_type TEXT DEFAULT 'weekly', sent INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_cost_breakdown (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, model TEXT, input_tokens INTEGER DEFAULT 0, output_tokens INTEGER DEFAULT 0, cost_usd REAL DEFAULT 0, thread_id TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS thread_mentions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, mentioned_user TEXT, context TEXT, seen INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS user_preferences_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pref_key TEXT, pref_value TEXT, category TEXT DEFAULT 'general', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, pref_key))`).run();
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_prompt_versions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, prompt_id TEXT, version INTEGER DEFAULT 1, content TEXT, note TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_digests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, body TEXT, digest_type TEXT DEFAULT 'weekly', sent INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_cost_breakdown (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, model TEXT, input_tokens INTEGER DEFAULT 0, output_tokens INTEGER DEFAULT 0, cost_usd REAL DEFAULT 0, thread_id TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS thread_mentions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, thread_id TEXT, mentioned_user TEXT, context TEXT, seen INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_preferences_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pref_key TEXT, pref_value TEXT, category TEXT DEFAULT 'general', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, pref_key))`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // AI Prompt Versions
 app.get('/api/ai-prompt-versions', requireAuth, (req: any, res: any) => {
@@ -14448,32 +14448,32 @@ app.delete('/api/ai-model-presets/:id', requireAuth, (req:any,res:any) => {
 
 
 // ── Batch 66 ──────────────────────────────────────────────────────────────
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_draft_reviews (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_draft_reviews (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, draft TEXT, reviewer_model TEXT DEFAULT 'claude',
   score INTEGER DEFAULT 0, feedback TEXT, reviewed_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_milestones (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_milestones (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, title TEXT, description TEXT, due_date TEXT,
   completed INTEGER DEFAULT 0, pinned INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS thread_reactions_v2 (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS thread_reactions_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, thread_id TEXT, emoji TEXT, created_at TEXT DEFAULT (datetime('now')),
   UNIQUE(user_id, thread_id, emoji)
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS user_energy_log (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_energy_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, level INTEGER DEFAULT 3, label TEXT,
   note TEXT, logged_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_eval_results (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_eval_results (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, eval_name TEXT, model TEXT, score REAL,
   details TEXT, ran_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // AI Draft Reviews
 app.get('/api/ai-draft-reviews', requireAuth, (req: Request, res: Response) => {
@@ -14571,34 +14571,34 @@ app.delete('/api/ai-eval-results/:id', requireAuth, (req: Request, res: Response
 
 
 // ── Batch 67 ──────────────────────────────────────────────────────────────
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_rewrite_history (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_rewrite_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, original TEXT, rewritten TEXT, model TEXT DEFAULT 'claude',
   reason TEXT, created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_labels_v2 (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_labels_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, name TEXT, color TEXT DEFAULT '#888888',
   description TEXT, pinned INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS thread_pins_v2 (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS thread_pins_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, thread_id TEXT, label TEXT,
   note TEXT, pinned_at TEXT DEFAULT (datetime('now')),
   UNIQUE(user_id, thread_id)
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS user_decision_log (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_decision_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, decision TEXT, context TEXT,
   outcome TEXT, decided_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_batch_jobs (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_batch_jobs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, name TEXT, status TEXT DEFAULT 'pending',
   total_items INTEGER DEFAULT 0, completed_items INTEGER DEFAULT 0,
   model TEXT DEFAULT 'claude', created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // AI Rewrite History
 app.get('/api/ai-rewrite-history', requireAuth, (req: Request, res: Response) => {
@@ -14692,35 +14692,35 @@ app.delete('/api/ai-batch-jobs/:id', requireAuth, (req: Request, res: Response) 
 
 
 // ── Batch 68 ──────────────────────────────────────────────────────────────
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_suggestion_history (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_suggestion_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, context TEXT, suggestion TEXT,
   model TEXT DEFAULT 'claude', accepted INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_filters_v2 (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_filters_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, name TEXT, filter_json TEXT,
   pinned INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS thread_attachments_v2 (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS thread_attachments_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, thread_id TEXT, filename TEXT,
   file_type TEXT, size_bytes INTEGER DEFAULT 0,
   url TEXT, created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS user_focus_sessions (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_focus_sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, label TEXT, duration_min INTEGER DEFAULT 25,
   completed INTEGER DEFAULT 0, started_at TEXT, ended_at TEXT,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_intent_log (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_intent_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, intent TEXT, model TEXT DEFAULT 'claude',
   confidence REAL DEFAULT 1.0, outcome TEXT,
   logged_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // AI Suggestion History
 app.get('/api/ai-suggestion-history', requireAuth, (req: Request, res: Response) => {
@@ -14819,35 +14819,35 @@ app.delete('/api/ai-intent-log/:id', requireAuth, (req: Request, res: Response) 
 
 
 // ── Batch 69 ──────────────────────────────────────────────────────────────
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_classifier_results (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_classifier_results (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, input_text TEXT, label TEXT,
   model TEXT DEFAULT 'claude', confidence REAL DEFAULT 1.0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_views (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_views (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, name TEXT, view_type TEXT DEFAULT 'list',
   config_json TEXT DEFAULT '{}', pinned INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS thread_reminders_v2 (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS thread_reminders_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, thread_id TEXT, remind_at TEXT,
   message TEXT, completed INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS user_achievement_log (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_achievement_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, achievement TEXT, description TEXT,
   icon TEXT DEFAULT 'trophy', earned_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_code_snippets (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_code_snippets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, title TEXT, language TEXT DEFAULT 'javascript',
   code TEXT, description TEXT, pinned INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // AI Classifier Results
 app.get('/api/ai-classifier-results', requireAuth, (req: Request, res: Response) => {
@@ -14945,36 +14945,36 @@ app.delete('/api/ai-code-snippets/:id', requireAuth, (req: Request, res: Respons
 
 
 // ── Batch 70 ──────────────────────────────────────────────────────────────
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_topic_clusters (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_topic_clusters (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, cluster_name TEXT, keywords TEXT,
   model TEXT DEFAULT 'claude', doc_count INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_shortcuts (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_shortcuts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, name TEXT, shortcut_key TEXT,
   action_type TEXT DEFAULT 'navigate', action_value TEXT,
   pinned INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS thread_collaborators (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS thread_collaborators (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, thread_id TEXT, collaborator_email TEXT,
   role TEXT DEFAULT 'viewer', invited_at TEXT DEFAULT (datetime('now')),
   UNIQUE(user_id, thread_id, collaborator_email)
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS user_reading_list (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_reading_list (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, title TEXT, url TEXT,
   notes TEXT, read_status TEXT DEFAULT 'unread',
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_output_ratings (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_output_ratings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, output_id TEXT, rating INTEGER DEFAULT 3,
   model TEXT DEFAULT 'claude', feedback TEXT,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // AI Topic Clusters
 app.get('/api/ai-topic-clusters', requireAuth, (req: Request, res: Response) => {
@@ -15069,35 +15069,35 @@ app.delete('/api/ai-output-ratings/:id', requireAuth, (req: Request, res: Respon
 
 
 // ── Batch 71 ──────────────────────────────────────────────────────────────
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_summarization_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_summarization_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, source_type TEXT DEFAULT 'thread',
   source_id TEXT, summary TEXT, model TEXT DEFAULT 'claude',
   word_count INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_announcements (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, title TEXT, body TEXT,
   audience TEXT DEFAULT 'all', pinned INTEGER DEFAULT 0,
   expires_at TEXT, created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS thread_status_v2 (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS thread_status_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, thread_id TEXT UNIQUE,
   status TEXT DEFAULT 'open', assignee TEXT,
   priority TEXT DEFAULT 'medium', updated_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS user_study_sessions (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_study_sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, topic TEXT, duration_min INTEGER DEFAULT 30,
   notes TEXT, completed INTEGER DEFAULT 0,
   started_at TEXT, created_at TEXT DEFAULT (datetime('now'))
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_persona_messages (
+)`).run(); } catch(e) { console.error('DB init error:', e); }
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_persona_messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER, persona_id INTEGER, role TEXT DEFAULT 'user',
   content TEXT, created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // AI Summarization Log
 app.get('/api/ai-summarization-log', requireAuth, (req: Request, res: Response) => {
@@ -17779,7 +17779,7 @@ app.delete('/api/user-focus-goals/:id', authMiddleware, (req: any, res: any) => 
 // ─── Batch 92 ────────────────────────────────────────────────────────────────
 // user_habit_tracker, workspace_link_vault, ai_question_bank, workspace_capacity_plan, user_energy_log
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_tracker (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_tracker (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   habit_name TEXT NOT NULL,
@@ -17789,9 +17789,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_habit_tracker (
   longest_streak INTEGER DEFAULT 0,
   last_checked_in TEXT,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_link_vault (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_link_vault (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   added_by INTEGER,
@@ -17801,9 +17801,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_link_vault (
   description TEXT,
   tags TEXT,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_question_bank (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_question_bank (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   question TEXT NOT NULL,
@@ -17812,9 +17812,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_question_bank (
   answered INTEGER DEFAULT 0,
   source_thread_id INTEGER,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_capacity_plan (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_capacity_plan (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   member_name TEXT NOT NULL,
@@ -17824,16 +17824,16 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_capacity_plan (
   notes TEXT,
   period TEXT DEFAULT 'current-sprint',
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_energy_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_energy_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   energy_level INTEGER DEFAULT 5,
   mood TEXT DEFAULT 'neutral',
   notes TEXT,
   logged_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // user_habit_tracker
 app.get('/api/user-habit-tracker', requireAuth, (req: any, res: any) => {
@@ -17943,7 +17943,7 @@ app.delete('/api/user-energy-log/:id', requireAuth, (req: any, res: any) => {
 // ─── Batch 93 ────────────────────────────────────────────────────────────────
 // user_learning_paths, workspace_glossary, ai_draft_history, workspace_feedback_board, user_sleep_log
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_learning_paths (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_learning_paths (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   title TEXT NOT NULL,
@@ -17952,9 +17952,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_learning_paths (
   progress_pct INTEGER DEFAULT 0,
   completed INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_glossary (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_glossary (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   term TEXT NOT NULL,
@@ -17962,9 +17962,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_glossary (
   category TEXT DEFAULT 'general',
   added_by INTEGER,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_draft_history (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_draft_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   draft_type TEXT DEFAULT 'message',
@@ -17973,9 +17973,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_draft_history (
   used INTEGER DEFAULT 0,
   thread_id INTEGER,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_board (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_board (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   submitted_by INTEGER,
@@ -17985,9 +17985,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_feedback_board (
   status TEXT DEFAULT 'open',
   upvotes INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_sleep_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_sleep_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   sleep_hours REAL DEFAULT 7,
@@ -17996,7 +17996,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_sleep_log (
   wake_time TEXT,
   notes TEXT,
   logged_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // user_learning_paths
 app.get('/api/user-learning-paths', requireAuth, (req: any, res: any) => {
@@ -18072,7 +18072,7 @@ app.delete('/api/user-sleep-log/:id', requireAuth, (req: any, res: any) => {
 // ─── Batch 94 ────────────────────────────────────────────────────────────────
 // workspace_meeting_calendar, user_interview_prep, ai_rewrite_log, workspace_standup_config, user_project_log
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_calendar (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_calendar (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   title TEXT NOT NULL,
@@ -18083,9 +18083,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_meeting_calendar (
   notes TEXT,
   recurring TEXT DEFAULT 'none',
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_interview_prep (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_interview_prep (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   role TEXT NOT NULL,
@@ -18095,9 +18095,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_interview_prep (
   category TEXT DEFAULT 'behavioral',
   mastered INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_rewrite_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_rewrite_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   original_text TEXT NOT NULL,
@@ -18106,9 +18106,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_rewrite_log (
   accepted INTEGER DEFAULT 0,
   thread_id INTEGER,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_standup_config (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_standup_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER UNIQUE,
   schedule_days TEXT DEFAULT 'Mon,Tue,Wed,Thu,Fri',
@@ -18117,9 +18117,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_standup_config (
   channel TEXT DEFAULT 'general',
   active INTEGER DEFAULT 1,
   updated_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_project_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_project_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   project_name TEXT NOT NULL,
@@ -18127,7 +18127,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_project_log (
   entry_type TEXT DEFAULT 'progress',
   hours_spent REAL DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // workspace_meeting_calendar
 app.get('/api/workspace-meeting-calendar', requireAuth, (req: any, res: any) => {
@@ -18221,7 +18221,7 @@ app.delete('/api/user-project-log/:id', requireAuth, (req: any, res: any) => {
 // ─── Batch 95 ────────────────────────────────────────────────────────────────
 // workspace_escalation_log, user_wins_journal, ai_context_snapshots, workspace_vendor_list, user_net_promoter
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_escalation_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_escalation_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   raised_by INTEGER,
@@ -18231,27 +18231,27 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_escalation_log (
   status TEXT DEFAULT 'open',
   resolved_at TEXT,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_wins_journal (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_wins_journal (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   win TEXT NOT NULL,
   impact TEXT,
   category TEXT DEFAULT 'work',
   logged_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_context_snapshots (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_context_snapshots (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   snapshot_name TEXT NOT NULL,
   context_data TEXT NOT NULL,
   thread_id INTEGER,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_vendor_list (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_vendor_list (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   vendor_name TEXT NOT NULL,
@@ -18262,16 +18262,16 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_vendor_list (
   notes TEXT,
   status TEXT DEFAULT 'active',
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_net_promoter (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_net_promoter (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   score INTEGER NOT NULL,
   feedback TEXT,
   feature TEXT,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // workspace_escalation_log
 app.get('/api/workspace-escalation-log', requireAuth, (req: any, res: any) => {
@@ -18368,7 +18368,7 @@ app.delete('/api/user-net-promoter/:id', requireAuth, (req: any, res: any) => {
 // ─── Batch 96 ────────────────────────────────────────────────────────────────
 // user_time_blocks, workspace_knowledge_graph, ai_tone_analyzer, user_goals_tracker, workspace_audit_log
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_time_blocks (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_time_blocks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   label TEXT NOT NULL,
@@ -18378,9 +18378,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_time_blocks (
   date TEXT NOT NULL,
   completed INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_knowledge_graph (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_knowledge_graph (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   node_label TEXT NOT NULL,
@@ -18388,9 +18388,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_knowledge_graph (
   related_to TEXT,
   description TEXT,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_tone_analyzer (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_tone_analyzer (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   input_text TEXT NOT NULL,
@@ -18399,9 +18399,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_tone_analyzer (
   suggestions TEXT,
   thread_id INTEGER,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_goals_tracker (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_goals_tracker (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   goal TEXT NOT NULL,
@@ -18411,9 +18411,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_goals_tracker (
   progress_pct INTEGER DEFAULT 0,
   completed INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_audit_log (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_audit_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER,
   actor_id INTEGER,
@@ -18422,7 +18422,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_audit_log (
   resource_id INTEGER,
   details TEXT,
   created_at TEXT DEFAULT (datetime('now'))
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 // user_time_blocks
 app.get('/api/user-time-blocks', requireAuth, (req: any, res: any) => {
@@ -25564,7 +25564,7 @@ app.post('/api/budget-v2', requireAuth, (req: AuthRequest, res: Response) => {
 
 // ─── B150: User Bucket List v2, Workspace OKR Heatmap, AI Email Reply, User Dream Journal, Workspace Tech Radar ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_bucket_list_v2 (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_bucket_list_v2 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   item TEXT NOT NULL,
@@ -25576,7 +25576,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_bucket_list_v2 (
   completed INTEGER DEFAULT 0,
   completed_date TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 app.get('/api/bucket-list-v2', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_bucket_list_v2 WHERE user_id=? ORDER BY completed ASC, priority ASC, created_at DESC`).all(req.user!.id);
@@ -25621,7 +25621,7 @@ app.post('/api/okr-heatmap', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS ai_email_reply (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS ai_email_reply (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   original_email TEXT NOT NULL,
@@ -25633,7 +25633,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS ai_email_reply (
   follow_up_needed INTEGER DEFAULT 0,
   model_used TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 app.get('/api/email-reply', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM ai_email_reply WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(req.user!.id);
@@ -25661,7 +25661,7 @@ app.post('/api/email-reply', auth, async (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid, reply_draft, key_points });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_dream_journal (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_dream_journal (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   dream_date TEXT NOT NULL,
@@ -25674,7 +25674,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_dream_journal (
   clarity INTEGER DEFAULT 3,
   interpretation TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 app.get('/api/dream-journal', auth, (req: AuthRequest, res: Response) => {
   const rows = db.prepare(`SELECT * FROM user_dream_journal WHERE user_id=? ORDER BY dream_date DESC, created_at DESC`).all(req.user!.id);
@@ -25686,7 +25686,7 @@ app.post('/api/dream-journal', auth, (req: AuthRequest, res: Response) => {
   res.json({ id: r.lastInsertRowid });
 });
 
-db.prepare(`CREATE TABLE IF NOT EXISTS workspace_tech_radar (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_tech_radar (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workspace_id INTEGER NOT NULL,
   technology TEXT NOT NULL,
@@ -25698,7 +25698,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS workspace_tech_radar (
   moved INTEGER DEFAULT 0,
   last_reviewed TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 app.get('/api/tech-radar', auth, (req: AuthRequest, res: Response) => {
   const ws = db.prepare(`SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1`).get(req.user!.id) as any;
@@ -25720,7 +25720,7 @@ app.post('/api/tech-radar', auth, (req: AuthRequest, res: Response) => {
 
 // ─── B151: User Gratitude Jar, Workspace Content Brief, AI Tagline v2, User Symptom Checker, Workspace Sprint Goals ───
 
-db.prepare(`CREATE TABLE IF NOT EXISTS user_gratitude_jar (
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_gratitude_jar (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   entry_date TEXT NOT NULL,
@@ -25729,7 +25729,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS user_gratitude_jar (
   mood_rating INTEGER DEFAULT 3,
   tags TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
+)`).run(); } catch(e) { console.error('DB init error:', e); }
 
 app.get('/api/gratitude-jar', auth, (req: AuthRequest, res: Response) => {
   const limit = parseInt(req.query.limit as string) || 50;
