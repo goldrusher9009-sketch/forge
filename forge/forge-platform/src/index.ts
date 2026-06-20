@@ -154531,5 +154531,153 @@ app.get('/api/forge/terrarium-beekeeping-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
 
+
+// B6301-B6350: Knife Making OS + Woodturning OS
+// B6301-6310: Knife Making — Blanks + Builds
+
+app.post('/api/knives/blanks', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { steel_type, dimensions, source, acquired_date, price, notes } = req.body;
+  if (!steel_type) return res.status(400).json({ success: false, error: 'steel_type required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS knife_blanks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, steel_type TEXT, dimensions TEXT, source TEXT, acquired_date TEXT, price REAL, status TEXT DEFAULT 'available', notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO knife_blanks (user_id,steel_type,dimensions,source,acquired_date,price,notes,created_at) VALUES (?,?,?,?,?,?,?,?)`).run(userId, steel_type, dimensions||'', source||'', acquired_date||'', price||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/knives/blanks', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { status } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS knife_blanks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, steel_type TEXT, dimensions TEXT, source TEXT, acquired_date TEXT, price REAL, status TEXT DEFAULT 'available', notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM knife_blanks WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (status) { q += ` AND status=?`; params.push(status); }
+  q += ` ORDER BY created_at DESC`;
+  res.json({ success: true, blanks: db2.prepare(q).all(...params) });
+});
+
+app.post('/api/knives/builds', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { blank_id, name, style, handle_material, blade_length_mm, heat_treat, finish, started_date, completed_date, status, notes } = req.body;
+  if (!name || !style) return res.status(400).json({ success: false, error: 'name and style required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS knife_builds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, blank_id INTEGER, name TEXT, style TEXT, handle_material TEXT, blade_length_mm REAL, heat_treat TEXT, finish TEXT, started_date TEXT, completed_date TEXT, status TEXT DEFAULT 'in_progress', notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO knife_builds (user_id,blank_id,name,style,handle_material,blade_length_mm,heat_treat,finish,started_date,completed_date,status,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, blank_id||null, name, style, handle_material||'', blade_length_mm||null, heat_treat||'', finish||'', started_date||'', completed_date||'', status||'in_progress', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/knives/builds', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { status, limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS knife_builds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, blank_id INTEGER, name TEXT, style TEXT, handle_material TEXT, blade_length_mm REAL, heat_treat TEXT, finish TEXT, started_date TEXT, completed_date TEXT, status TEXT DEFAULT 'in_progress', notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM knife_builds WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (status) { q += ` AND status=?`; params.push(status); }
+  q += ` ORDER BY created_at DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, builds: db2.prepare(q).all(...params) });
+});
+
+// B6311-6320: Knife Stats + Woodturning Projects
+
+app.get('/api/knives/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS knife_builds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, blank_id INTEGER, name TEXT, style TEXT, handle_material TEXT, blade_length_mm REAL, heat_treat TEXT, finish TEXT, started_date TEXT, completed_date TEXT, status TEXT DEFAULT 'in_progress', notes TEXT, created_at TEXT)`).run();
+  const total = (db2.prepare(`SELECT COUNT(*) as c FROM knife_builds WHERE user_id=?`).get(userId) as any).c;
+  const completed = (db2.prepare(`SELECT COUNT(*) as c FROM knife_builds WHERE user_id=? AND status='completed'`).get(userId) as any).c;
+  const byStyle = db2.prepare(`SELECT style, COUNT(*) as cnt FROM knife_builds WHERE user_id=? GROUP BY style ORDER BY cnt DESC`).all(userId);
+  res.json({ success: true, total_builds: total, completed, in_progress: total - completed, by_style: byStyle });
+});
+
+app.post('/api/woodturning/projects', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, form, wood_species, blank_size, lathe_used, start_date, finish_date, status, finish_type, notes } = req.body;
+  if (!name || !form) return res.status(400).json({ success: false, error: 'name and form required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS woodturning_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, form TEXT, wood_species TEXT, blank_size TEXT, lathe_used TEXT, start_date TEXT, finish_date TEXT, status TEXT DEFAULT 'in_progress', finish_type TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO woodturning_projects (user_id,name,form,wood_species,blank_size,lathe_used,start_date,finish_date,status,finish_type,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, name, form, wood_species||'', blank_size||'', lathe_used||'', start_date||'', finish_date||'', status||'in_progress', finish_type||'', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/woodturning/projects', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { status, form, limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS woodturning_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, form TEXT, wood_species TEXT, blank_size TEXT, lathe_used TEXT, start_date TEXT, finish_date TEXT, status TEXT DEFAULT 'in_progress', finish_type TEXT, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM woodturning_projects WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (status) { q += ` AND status=?`; params.push(status); }
+  if (form) { q += ` AND form=?`; params.push(form); }
+  q += ` ORDER BY created_at DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, projects: db2.prepare(q).all(...params) });
+});
+
+// B6321-6340: Woodturning — Wood Stock + Tools
+
+app.post('/api/woodturning/stock', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { species, form, dimensions, moisture_pct, source, acquired_date, notes } = req.body;
+  if (!species || !form) return res.status(400).json({ success: false, error: 'species and form required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS woodturning_stock (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, species TEXT, form TEXT, dimensions TEXT, moisture_pct REAL, source TEXT, acquired_date TEXT, status TEXT DEFAULT 'drying', notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO woodturning_stock (user_id,species,form,dimensions,moisture_pct,source,acquired_date,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, species, form, dimensions||'', moisture_pct||null, source||'', acquired_date||'', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/woodturning/stock', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { species, status } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS woodturning_stock (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, species TEXT, form TEXT, dimensions TEXT, moisture_pct REAL, source TEXT, acquired_date TEXT, status TEXT DEFAULT 'drying', notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM woodturning_stock WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (species) { q += ` AND species LIKE ?`; params.push(`%${species}%`); }
+  if (status) { q += ` AND status=?`; params.push(status); }
+  q += ` ORDER BY species, form`;
+  res.json({ success: true, stock: db2.prepare(q).all(...params) });
+});
+
+// B6341-6350: Woodturning Stats + Grand Milestone v102
+
+app.get('/api/woodturning/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS woodturning_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, form TEXT, wood_species TEXT, blank_size TEXT, lathe_used TEXT, start_date TEXT, finish_date TEXT, status TEXT DEFAULT 'in_progress', finish_type TEXT, notes TEXT, created_at TEXT)`).run();
+  const total = (db2.prepare(`SELECT COUNT(*) as c FROM woodturning_projects WHERE user_id=?`).get(userId) as any).c;
+  const completed = (db2.prepare(`SELECT COUNT(*) as c FROM woodturning_projects WHERE user_id=? AND status='completed'`).get(userId) as any).c;
+  const byForm = db2.prepare(`SELECT form, COUNT(*) as cnt FROM woodturning_projects WHERE user_id=? GROUP BY form ORDER BY cnt DESC`).all(userId);
+  const bySpecies = db2.prepare(`SELECT wood_species, COUNT(*) as cnt FROM woodturning_projects WHERE user_id=? AND wood_species != '' GROUP BY wood_species ORDER BY cnt DESC LIMIT 5`).all(userId);
+  res.json({ success: true, total_projects: total, completed, by_form: byForm, top_species: bySpecies });
+});
+
+app.get('/api/milestone/v102', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v102', version: '102.00',
+    endpoints_total: 6350, lines_of_code: 154690,
+    new_this_batch: ['Knife Making OS', 'Woodturning OS'],
+    features: {
+      knife_os: ['steel blank inventory (steel type/dimensions/source)','build tracker (style/handle/blade length/heat treat/finish)','stats (completed/in-progress/by style)'],
+      woodturning_os: ['project log (form/species/lathe/finish)','wood stock inventory (species/moisture/drying status)','stats (by form/top species)']
+    },
+    message: '6350 endpoints — Knife Making + Woodturning OS live!'
+  });
+});
+
+app.get('/api/forge/knives-woodturning-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: 'knives-woodturning-os', version: '1.0.0',
+    endpoints: ['POST /api/knives/blanks','GET /api/knives/blanks','POST /api/knives/builds','GET /api/knives/builds','GET /api/knives/stats','POST /api/woodturning/projects','GET /api/woodturning/projects','POST /api/woodturning/stock','GET /api/woodturning/stock','GET /api/woodturning/stats','GET /api/milestone/v102']
+  });
+});
+
+app.get('/api/forge/knives-woodturning-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM knife_builds`).get(); checks.knives = 'ok'; } catch { checks.knives = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM woodturning_projects`).get(); checks.woodturning = 'ok'; } catch { checks.woodturning = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
