@@ -1,3 +1,10 @@
+## v95.00 — B5951-B6000 🚁🧩 DRONE+PUZZLE-GAMES-OS +Fleet/Flights/Maint/Stats/Puzzles/EscapeRooms/6000ENDPOINTS!
+- B5951-5960: Drone OS — fleet registry (model/weight/range/speed), flight log (location/altitude)
+- B5961-5970: Drone Maintenance + Stats — maintenance tracker with next-due, flight hours + km stats
+- B5971-5980: Puzzle & Games OS — puzzle log (type/pieces/time), escape room log (escaped/team)
+- B5981-5990: Games Stats — escape rate %, puzzles by type
+- B5991-6000: 🎉 GRAND MILESTONE v95 — /api/milestone/v95, 6000 ENDPOINTS!, 153655 lines
+
 ## v94.00 — B5901-B5950 🥋☕ MARTIALARTS+COFFEE-TEA-OS +Sessions/Belts/Stats/Catalog/Brews/Steep/GrandMilestone
 - B5901-5910: Martial Arts OS — training session log (art/techniques/sparring), belt/rank progression
 - B5911-5920: Martial Arts Stats + Coffee Catalog — hours by art, coffee catalog (origin/roast/process/flavor)
