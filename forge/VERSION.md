@@ -1,3 +1,8 @@
+## v143.00 — Fix sleep_logs (5 competing schemas), budgets column gaps
+- sleep_logs: adds date/duration_min/quality/interruptions/deep_sleep_min/rem_min aliases
+- sleep_logs: backfills from sleep_date/sleep_quality/awakenings/sleep_duration_hours/total_hours
+- budgets: adds amount/spent/category/period cols
+
 ## v142.00 — Fix podcast_episodes, language_vocab/sessions, workouts schema gaps
 - podcast_episodes: adds episode_title/guest/topics/publish_date/downloads aliases
 - language_vocab: adds word/translation/language/mastery_level/next_review cols

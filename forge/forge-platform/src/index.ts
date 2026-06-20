@@ -167843,6 +167843,33 @@ try { db.prepare(`ALTER TABLE workouts ADD COLUMN calories INTEGER DEFAULT 0`).r
 try { db.prepare(`UPDATE workouts SET date=COALESCE(NULLIF(date,''),workout_date,created_at,'') WHERE date='' AND (workout_date IS NOT NULL OR created_at IS NOT NULL)`).run(); } catch(e) {}
 // ─── end v142 migrations ──────────────────────────────────────────────────────
 
+// ─── v143 Schema Migrations ────────────────────────────────────────────────────
+// sleep_logs: early (41707) uses sleep_date/sleep_duration_hours/sleep_quality/awakenings/deep_sleep_pct/rem_pct
+// later handlers (149434) use date/duration_min/quality/interruptions/deep_sleep_min/rem_min
+// also: log_date (94809), total_hours (52399), duration_minutes (44301)
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN quality INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN interruptions INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN deep_sleep_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN total_hours REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET date=COALESCE(NULLIF(date,''),sleep_date,log_date,'') WHERE date='' AND (sleep_date IS NOT NULL OR log_date IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET log_date=COALESCE(NULLIF(log_date,''),sleep_date,date,'') WHERE log_date='' AND (sleep_date IS NOT NULL OR date IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET quality=COALESCE(NULLIF(quality,3),sleep_quality,3) WHERE quality=3 AND sleep_quality IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET interruptions=COALESCE(NULLIF(interruptions,0),awakenings,0) WHERE interruptions=0 AND awakenings IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,CAST(total_hours*60 AS INTEGER),CAST(sleep_duration_hours*60 AS INTEGER),0) WHERE duration_min=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET deep_sleep_min=COALESCE(NULLIF(deep_sleep_min,0),CAST(deep_sleep_pct*duration_min/100 AS INTEGER),0) WHERE deep_sleep_min=0 AND deep_sleep_pct IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET rem_min=COALESCE(NULLIF(rem_min,0),CAST(rem_pct*duration_min/100 AS INTEGER),CAST(rem_sleep_pct*duration_min/100 AS INTEGER),0) WHERE rem_min=0`).run(); } catch(e) {}
+// budget_categories / budgets: ensure standard cols exist
+try { db.prepare(`ALTER TABLE budgets ADD COLUMN amount REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE budgets ADD COLUMN spent REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE budgets ADD COLUMN category TEXT DEFAULT 'other'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE budgets ADD COLUMN period TEXT DEFAULT 'monthly'`).run(); } catch(e) {}
+// ─── end v143 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
