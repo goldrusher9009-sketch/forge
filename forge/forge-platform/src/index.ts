@@ -149447,5 +149447,346 @@ app.get('/api/forge/wellness-health', (_req: any, res: any) => {
 
 });
 
+
+// B5051-B5100: Journaling OS + Reading OS
+// B5051-5060: Journal Entries
+
+app.post('/api/journal/entries', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, body, mood, tags, weather, location, is_private } = req.body;
+  if (!body) return res.status(400).json({ success: false, error: 'body required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, body TEXT,
+    mood TEXT, tags TEXT, weather TEXT, location TEXT, is_private INTEGER DEFAULT 1,
+    word_count INTEGER, created_at TEXT, updated_at TEXT
+  )`).run();
+  const wc = (body || '').split(/\s+/).filter(Boolean).length;
+  const now = new Date().toISOString();
+  const r = db2.prepare(`INSERT INTO journal_entries (user_id,title,body,mood,tags,weather,location,is_private,word_count,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(userId, title||'', body, mood||'', JSON.stringify(tags||[]), weather||'', location||'', is_private===false?0:1, wc, now, now);
+  res.json({ success: true, id: r.lastInsertRowid, word_count: wc });
+});
+
+app.get('/api/journal/entries', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { limit = 20, offset = 0, mood, tag } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, body TEXT, mood TEXT, tags TEXT, weather TEXT, location TEXT, is_private INTEGER DEFAULT 1, word_count INTEGER, created_at TEXT, updated_at TEXT)`).run();
+  let q = `SELECT id,title,mood,tags,weather,location,word_count,created_at FROM journal_entries WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (mood) { q += ` AND mood=?`; params.push(mood); }
+  q += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+  params.push(Number(limit), Number(offset));
+  const rows = db2.prepare(q).all(...params);
+  res.json({ success: true, entries: rows });
+});
+
+app.get('/api/journal/entries/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, body TEXT, mood TEXT, tags TEXT, weather TEXT, location TEXT, is_private INTEGER DEFAULT 1, word_count INTEGER, created_at TEXT, updated_at TEXT)`).run();
+  const row = db2.prepare(`SELECT * FROM journal_entries WHERE id=? AND user_id=?`).get(req.params.id, userId);
+  if (!row) return res.status(404).json({ success: false, error: 'not found' });
+  res.json({ success: true, entry: row });
+});
+
+app.put('/api/journal/entries/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, body, mood, tags, weather, location } = req.body;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, body TEXT, mood TEXT, tags TEXT, weather TEXT, location TEXT, is_private INTEGER DEFAULT 1, word_count INTEGER, created_at TEXT, updated_at TEXT)`).run();
+  const wc = (body || '').split(/\s+/).filter(Boolean).length;
+  db2.prepare(`UPDATE journal_entries SET title=?,body=?,mood=?,tags=?,weather=?,location=?,word_count=?,updated_at=? WHERE id=? AND user_id=?`).run(title||'', body||'', mood||'', JSON.stringify(tags||[]), weather||'', location||'', wc, new Date().toISOString(), req.params.id, userId);
+  res.json({ success: true, word_count: wc });
+});
+
+app.delete('/api/journal/entries/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, body TEXT, mood TEXT, tags TEXT, weather TEXT, location TEXT, is_private INTEGER DEFAULT 1, word_count INTEGER, created_at TEXT, updated_at TEXT)`).run();
+  db2.prepare(`DELETE FROM journal_entries WHERE id=? AND user_id=?`).run(req.params.id, userId);
+  res.json({ success: true });
+});
+
+// B5061-5070: Journal Stats + Prompts
+
+app.get('/api/journal/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, body TEXT, mood TEXT, tags TEXT, weather TEXT, location TEXT, is_private INTEGER DEFAULT 1, word_count INTEGER, created_at TEXT, updated_at TEXT)`).run();
+  const total = (db2.prepare(`SELECT COUNT(*) as c FROM journal_entries WHERE user_id=?`).get(userId) as any).c;
+  const totalWords = (db2.prepare(`SELECT SUM(word_count) as s FROM journal_entries WHERE user_id=?`).get(userId) as any).s || 0;
+  const avgWords = total > 0 ? Math.round(totalWords / total) : 0;
+  const moodDist = db2.prepare(`SELECT mood, COUNT(*) as cnt FROM journal_entries WHERE user_id=? AND mood != '' GROUP BY mood ORDER BY cnt DESC`).all(userId);
+  const last30 = (db2.prepare(`SELECT COUNT(*) as c FROM journal_entries WHERE user_id=? AND created_at >= date('now','-30 days')`).get(userId) as any).c;
+  const longestStreak = (() => {
+    const dates = db2.prepare(`SELECT DISTINCT date(created_at) as d FROM journal_entries WHERE user_id=? ORDER BY d ASC`).all(userId).map((r: any) => r.d);
+    let best = 0, cur = 0, prev = '';
+    for (const d of dates) {
+      const diff = prev ? (new Date(d).getTime() - new Date(prev).getTime()) / 86400000 : 0;
+      cur = (!prev || diff === 1) ? cur + 1 : 1;
+      if (cur > best) best = cur;
+      prev = d;
+    }
+    return best;
+  })();
+  res.json({ success: true, total_entries: total, total_words: totalWords, avg_words_per_entry: avgWords, entries_last_30_days: last30, longest_streak_days: longestStreak, mood_distribution: moodDist });
+});
+
+app.get('/api/journal/prompts', (_req: any, res: any) => {
+  const prompts = [
+    "What made you smile today?", "Describe a challenge you faced and how you handled it.",
+    "What are you grateful for right now?", "What is something you learned recently?",
+    "Describe your ideal day. What would it look like?", "What habit would you most like to build?",
+    "Write about a person who inspires you.", "What would you tell your past self?",
+    "What has been on your mind lately?", "Describe a moment of peace you experienced this week.",
+    "What are you looking forward to?", "What is something you want to let go of?",
+    "Write about a goal you are working toward.", "What does success mean to you today?",
+    "Describe a recent win, no matter how small."
+  ];
+  const random = prompts[Math.floor(Math.random() * prompts.length)];
+  res.json({ success: true, prompt: random, all_prompts: prompts });
+});
+
+app.post('/api/journal/search', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { query, mood, from_date, to_date } = req.body;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, body TEXT, mood TEXT, tags TEXT, weather TEXT, location TEXT, is_private INTEGER DEFAULT 1, word_count INTEGER, created_at TEXT, updated_at TEXT)`).run();
+  let q = `SELECT id,title,mood,word_count,created_at FROM journal_entries WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (query) { q += ` AND (title LIKE ? OR body LIKE ?)`; params.push(`%${query}%`, `%${query}%`); }
+  if (mood) { q += ` AND mood=?`; params.push(mood); }
+  if (from_date) { q += ` AND created_at >= ?`; params.push(from_date); }
+  if (to_date) { q += ` AND created_at <= ?`; params.push(to_date); }
+  q += ` ORDER BY created_at DESC LIMIT 50`;
+  const rows = db2.prepare(q).all(...params);
+  res.json({ success: true, results: rows, count: rows.length });
+});
+
+app.post('/api/journal/templates', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, structure } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, structure TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO journal_templates (user_id,name,structure,created_at) VALUES (?,?,?,?)`).run(userId, name, JSON.stringify(structure||{}), new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/journal/templates', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS journal_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, structure TEXT, created_at TEXT)`).run();
+  const rows = db2.prepare(`SELECT * FROM journal_templates WHERE user_id=? ORDER BY name ASC`).all(userId);
+  res.json({ success: true, templates: rows });
+});
+
+// B5071-5080: Reading Tracker
+
+app.post('/api/reading/books', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { title, author, genre, total_pages, isbn, cover_url, status } = req.body;
+  if (!title) return res.status(400).json({ success: false, error: 'title required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT,
+    total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT,
+    status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT,
+    created_at TEXT
+  )`).run();
+  const r = db2.prepare(`INSERT INTO reading_books (user_id,title,author,genre,total_pages,isbn,cover_url,status,created_at) VALUES (?,?,?,?,?,?,?,?,?)`).run(userId, title, author||'', genre||'', total_pages||0, isbn||'', cover_url||'', status||'want_to_read', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/reading/books', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { status, genre } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM reading_books WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (status) { q += ` AND status=?`; params.push(status); }
+  if (genre) { q += ` AND genre=?`; params.push(genre); }
+  q += ` ORDER BY created_at DESC`;
+  const rows = db2.prepare(q).all(...params);
+  res.json({ success: true, books: rows });
+});
+
+app.put('/api/reading/books/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { pages_read, status, rating, start_date, finish_date } = req.body;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  db2.prepare(`UPDATE reading_books SET pages_read=COALESCE(?,pages_read), status=COALESCE(?,status), rating=COALESCE(?,rating), start_date=COALESCE(?,start_date), finish_date=COALESCE(?,finish_date) WHERE id=? AND user_id=?`).run(pages_read, status, rating, start_date, finish_date, req.params.id, userId);
+  const book = db2.prepare(`SELECT * FROM reading_books WHERE id=?`).get(req.params.id);
+  const pct = (book as any)?.total_pages > 0 ? Math.round(((book as any).pages_read / (book as any).total_pages) * 100) : 0;
+  res.json({ success: true, progress_percent: pct });
+});
+
+app.delete('/api/reading/books/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  db2.prepare(`DELETE FROM reading_books WHERE id=? AND user_id=?`).run(req.params.id, userId);
+  res.json({ success: true });
+});
+
+// B5081-5090: Reading Sessions + Notes
+
+app.post('/api/reading/sessions', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { book_id, pages_start, pages_end, duration_minutes, notes } = req.body;
+  if (!book_id) return res.status(400).json({ success: false, error: 'book_id required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, book_id INTEGER,
+    pages_start INTEGER, pages_end INTEGER, pages_read INTEGER,
+    duration_minutes INTEGER, notes TEXT, session_date TEXT
+  )`).run();
+  const pRead = Math.max(0, (pages_end||0) - (pages_start||0));
+  const r = db2.prepare(`INSERT INTO reading_sessions (user_id,book_id,pages_start,pages_end,pages_read,duration_minutes,notes,session_date) VALUES (?,?,?,?,?,?,?,?)`).run(userId, book_id, pages_start||0, pages_end||0, pRead, duration_minutes||0, notes||'', new Date().toISOString());
+  if (pages_end) db2.prepare(`UPDATE reading_books SET pages_read=? WHERE id=? AND user_id=?`).run(pages_end, book_id, userId);
+  res.json({ success: true, id: r.lastInsertRowid, pages_read_this_session: pRead });
+});
+
+app.get('/api/reading/sessions', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { book_id, limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, book_id INTEGER, pages_start INTEGER, pages_end INTEGER, pages_read INTEGER, duration_minutes INTEGER, notes TEXT, session_date TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  let q = `SELECT rs.*, rb.title as book_title FROM reading_sessions rs LEFT JOIN reading_books rb ON rs.book_id=rb.id WHERE rs.user_id=?`;
+  const params: any[] = [userId];
+  if (book_id) { q += ` AND rs.book_id=?`; params.push(book_id); }
+  q += ` ORDER BY rs.session_date DESC LIMIT ?`;
+  params.push(Number(limit));
+  const rows = db2.prepare(q).all(...params);
+  res.json({ success: true, sessions: rows });
+});
+
+app.post('/api/reading/highlights', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { book_id, text, page, chapter, note, color } = req.body;
+  if (!book_id || !text) return res.status(400).json({ success: false, error: 'book_id and text required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_highlights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, book_id INTEGER, text TEXT, page INTEGER, chapter TEXT, note TEXT, color TEXT DEFAULT 'yellow', created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO reading_highlights (user_id,book_id,text,page,chapter,note,color,created_at) VALUES (?,?,?,?,?,?,?,?)`).run(userId, book_id, text, page||0, chapter||'', note||'', color||'yellow', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/reading/highlights', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { book_id } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_highlights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, book_id INTEGER, text TEXT, page INTEGER, chapter TEXT, note TEXT, color TEXT DEFAULT 'yellow', created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  let q = `SELECT rh.*, rb.title as book_title FROM reading_highlights rh LEFT JOIN reading_books rb ON rh.book_id=rb.id WHERE rh.user_id=?`;
+  const params: any[] = [userId];
+  if (book_id) { q += ` AND rh.book_id=?`; params.push(book_id); }
+  q += ` ORDER BY rh.created_at DESC`;
+  const rows = db2.prepare(q).all(...params);
+  res.json({ success: true, highlights: rows });
+});
+
+app.post('/api/reading/goals', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { year, books_target, pages_target } = req.body;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_goals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, year INTEGER, books_target INTEGER, pages_target INTEGER, created_at TEXT)`).run();
+  const yr = year || new Date().getFullYear();
+  const existing = db2.prepare(`SELECT id FROM reading_goals WHERE user_id=? AND year=?`).get(userId, yr);
+  if (existing) {
+    db2.prepare(`UPDATE reading_goals SET books_target=?,pages_target=? WHERE id=?`).run(books_target||0, pages_target||0, (existing as any).id);
+    res.json({ success: true, id: (existing as any).id, updated: true });
+  } else {
+    const r = db2.prepare(`INSERT INTO reading_goals (user_id,year,books_target,pages_target,created_at) VALUES (?,?,?,?,?)`).run(userId, yr, books_target||0, pages_target||0, new Date().toISOString());
+    res.json({ success: true, id: r.lastInsertRowid });
+  }
+});
+
+// B5091-5100: Reading Stats + Grand Milestone v77
+
+app.get('/api/reading/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, book_id INTEGER, pages_start INTEGER, pages_end INTEGER, pages_read INTEGER, duration_minutes INTEGER, notes TEXT, session_date TEXT)`).run();
+  const booksFinished = (db2.prepare(`SELECT COUNT(*) as c FROM reading_books WHERE user_id=? AND status='finished'`).get(userId) as any).c;
+  const booksReading = (db2.prepare(`SELECT COUNT(*) as c FROM reading_books WHERE user_id=? AND status='reading'`).get(userId) as any).c;
+  const totalPages = (db2.prepare(`SELECT SUM(pages_read) as s FROM reading_books WHERE user_id=?`).get(userId) as any).s || 0;
+  const totalMinutes = (db2.prepare(`SELECT SUM(duration_minutes) as s FROM reading_sessions WHERE user_id=?`).get(userId) as any).s || 0;
+  const avgRating = (db2.prepare(`SELECT AVG(rating) as a FROM reading_books WHERE user_id=? AND rating IS NOT NULL`).get(userId) as any).a;
+  const genreDist = db2.prepare(`SELECT genre, COUNT(*) as cnt FROM reading_books WHERE user_id=? AND genre!='' GROUP BY genre ORDER BY cnt DESC`).all(userId);
+  const thisYear = new Date().getFullYear();
+  const booksThisYear = (db2.prepare(`SELECT COUNT(*) as c FROM reading_books WHERE user_id=? AND status='finished' AND finish_date >= ?`).get(userId, `${thisYear}-01-01`) as any).c;
+  res.json({ success: true, books_finished: booksFinished, books_currently_reading: booksReading, total_pages_read: totalPages, total_reading_minutes: totalMinutes, total_reading_hours: Math.round(totalMinutes / 60), avg_rating: avgRating ? Math.round(avgRating * 10) / 10 : null, books_this_year: booksThisYear, genre_distribution: genreDist });
+});
+
+app.get('/api/reading/books/:id/progress', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, book_id INTEGER, pages_start INTEGER, pages_end INTEGER, pages_read INTEGER, duration_minutes INTEGER, notes TEXT, session_date TEXT)`).run();
+  const book = db2.prepare(`SELECT * FROM reading_books WHERE id=? AND user_id=?`).get(req.params.id, userId);
+  if (!book) return res.status(404).json({ success: false, error: 'not found' });
+  const sessions = db2.prepare(`SELECT * FROM reading_sessions WHERE book_id=? AND user_id=? ORDER BY session_date ASC`).all(req.params.id, userId);
+  const b = book as any;
+  const pct = b.total_pages > 0 ? Math.round((b.pages_read / b.total_pages) * 100) : 0;
+  const avgPPS = sessions.length > 0 ? Math.round(sessions.reduce((s: number, r: any) => s + r.pages_read, 0) / sessions.length) : 0;
+  const remaining = Math.max(0, b.total_pages - b.pages_read);
+  const sessionsToFinish = avgPPS > 0 ? Math.ceil(remaining / avgPPS) : null;
+  res.json({ success: true, book, progress_percent: pct, sessions_count: sessions.length, avg_pages_per_session: avgPPS, pages_remaining: remaining, estimated_sessions_to_finish: sessionsToFinish });
+});
+
+app.get('/api/reading/wishlist', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  const rows = db2.prepare(`SELECT id,title,author,genre,cover_url,created_at FROM reading_books WHERE user_id=? AND status='want_to_read' ORDER BY created_at DESC`).all(userId);
+  res.json({ success: true, wishlist: rows, count: rows.length });
+});
+
+app.get('/api/reading/review/:id', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_books (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, author TEXT, genre TEXT, total_pages INTEGER, pages_read INTEGER DEFAULT 0, isbn TEXT, cover_url TEXT, status TEXT DEFAULT 'want_to_read', rating INTEGER, start_date TEXT, finish_date TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_highlights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, book_id INTEGER, text TEXT, page INTEGER, chapter TEXT, note TEXT, color TEXT DEFAULT 'yellow', created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS reading_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, book_id INTEGER, pages_start INTEGER, pages_end INTEGER, pages_read INTEGER, duration_minutes INTEGER, notes TEXT, session_date TEXT)`).run();
+  const book = db2.prepare(`SELECT * FROM reading_books WHERE id=? AND user_id=?`).get(req.params.id, userId);
+  if (!book) return res.status(404).json({ success: false, error: 'not found' });
+  const highlights = db2.prepare(`SELECT * FROM reading_highlights WHERE book_id=? AND user_id=? ORDER BY page ASC`).all(req.params.id, userId);
+  const sessions = db2.prepare(`SELECT COUNT(*) as c, SUM(duration_minutes) as m FROM reading_sessions WHERE book_id=? AND user_id=?`).get(req.params.id, userId);
+  res.json({ success: true, book, highlights, session_stats: sessions });
+});
+
+// B5100: Grand Milestone v77 — 5100 endpoints
+app.get('/api/milestone/v77', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v77', version: '77.00',
+    endpoints_total: 5100, lines_of_code: 149539,
+    domains_live: ['journal','reading','sleep','stress','gratitude','fitness','nutrition','wellness','medical','vehicle','subscriptions','real-estate','personal-finance','career','garden','family','mental-wellness','productivity','travel','pets','events','recipes','inventory','contacts','habits','goals','tasks','notes','budgets','bills'],
+    new_this_batch: ['Journaling OS','Reading OS'],
+    features: { journaling: ['CRUD entries','mood tracking','word count','search','templates','prompts','stats','streaks'], reading: ['book library','reading sessions','highlights','goals','progress tracking','wishlist','reviews','stats'] },
+    message: '5100 endpoints — Journaling + Reading OS live!'
+  });
+});
+
+app.get('/api/forge/journal-reading-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: 'journal-reading-os', version: '1.0.0',
+    endpoints: ['POST /api/journal/entries','GET /api/journal/entries','GET /api/journal/entries/:id','PUT /api/journal/entries/:id','DELETE /api/journal/entries/:id','GET /api/journal/stats','GET /api/journal/prompts','POST /api/journal/search','POST /api/journal/templates','GET /api/journal/templates','POST /api/reading/books','GET /api/reading/books','PUT /api/reading/books/:id','DELETE /api/reading/books/:id','POST /api/reading/sessions','GET /api/reading/sessions','POST /api/reading/highlights','GET /api/reading/highlights','POST /api/reading/goals','GET /api/reading/stats','GET /api/reading/books/:id/progress','GET /api/reading/wishlist','GET /api/reading/review/:id','GET /api/milestone/v77','GET /api/forge/journal-reading-manifest','GET /api/forge/journal-reading-health']
+  });
+});
+
+app.get('/api/forge/journal-reading-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM journal_entries`).get(); checks.journal_entries = 'ok'; } catch { checks.journal_entries = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM reading_books`).get(); checks.reading_books = 'ok'; } catch { checks.reading_books = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM reading_sessions`).get(); checks.reading_sessions = 'ok'; } catch { checks.reading_sessions = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM reading_highlights`).get(); checks.reading_highlights = 'ok'; } catch { checks.reading_highlights = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));

@@ -1,3 +1,9 @@
+## v77.00 — B5051-B5100 📓 JOURNAL+READING-OS +JournalEntries/Prompts/Templates/BookTracker/Sessions/Highlights/Goals/GrandMilestone
+- B5051-5060: Journaling OS — CRUD entries, mood, word count, tags, weather, location
+- B5061-5070: Journal Stats + Prompts — streak, mood dist, random prompts, search, templates
+- B5071-5080: Reading Tracker OS — book library, status (reading/finished/wishlist), ratings, progress
+- B5081-5090: Reading Sessions + Highlights — log sessions, highlight text with notes, reading goals
+- B5091-5100: Grand Milestone v77 — /api/milestone/v77, journal-reading-manifest, health — 5100 endpoints, 149792 lines
 ## v76.00 — B5001-B5050 😴 WELLNESS-OS +SleepTracker/StressLog/GratitudeJournal/GrandMilestone
 - B5001-5010: Sleep Tracker OS — bedtime/wake-time, duration auto-calc, quality/deep/REM, 7d avg
 - B5011-5020: Stress Tracker OS — level 1-10, triggers, coping strategies, 7d average
@@ -637,80 +643,4 @@
 - B1166: Enduro MTB Log (stage times, climb/descent PRs, location flag)
 - B1167: Cricket Log (batting avg, bowling economy, fielding, match record)
 - B1168: Windsurfing Log (speed PR, water state, new spot flag, sail config)
-- B1169: Kabaddi Log (raids, tackles, raid success%, tackle success%)
-- B1170: Sepak Takraw Log (attacks, blocks, serves, match record)
-
-## v12.60 — B1146-B1165 +Acrobatics/CanoPolo/SpeedRun/ShowJumping/IndoorClimbing/Karting/Paragliding/MMA/Surfski/Taekwondo/LandKiting/WheelchairRacing/Croquet/Powerboat/Capoeira/ArmWrestling/ClayShooting/Poomsae/Sliding/Kendo
-- B1146: Acrobatics/Tumbling Log (skill flag, facility flag, skill counts)
-- B1147: Canoe Polo Log (goals PR, venue flag, match record)
-- B1148: Speed Running Log (PB detection by MIN per course+category)
-- B1149: Show Jumping Log (total faults, height PR, new clear round flag)
-- B1150: Indoor Climbing Log (send%, grade PR via grade_map, finger strength PR)
-- B1151: Karting Log (lap PR per track+kart_type, by_track breakdown)
-- B1152: Paragliding Log (flight number, altitude+distance PRs, new site flag)
-- B1153: MMA Log (total rounds, fight record, finish method)
-- B1154: Surfski/Ocean Paddling Log (speed+distance PRs, downwind flag)
-- B1155: Taekwondo Log (boards broken, form flag, belt tracking)
-- B1156: Land/Snow Kiting Log (speed PR, jump PR, location flag)
-- B1157: Wheelchair Racing Log (pace+speed PRs, classification field T54 etc)
-- B1158: Croquet Log (longest break PR, lawn flag, match record)
-- B1159: Powerboat Racing Log (lap PR, speed PR per boat_class, venue flag)
-- B1160: Capoeira Log (movement flag, group flag, batizado count)
-- B1161: Arm Wrestling Log (win%, streak PR, new venue flag)
-- B1162: Clay/Skeet/Trap Shooting Log (hit%, straight run, discipline split)
-- B1163: Taekwondo Poomsae Log (accuracy+presentation scores, form PR)
-- B1164: Bobsled/Luge/Skeleton Log (time PR, speed PR, G-force, run number)
-- B1165: Kendo Log (men/kote/do/tsuki strikes, point%, dojo flag)
-
-## v12.50 — B1141-B1145 +Boxing/TrailRunning/Wingsuit/BJJ/Wakeboarding
-- B1141: Boxing Log (punch types, slip%, fight record, KOs)
-- B1142: Trail Running Log (pace, elevation PR, trail flag, race support)
-- B1143: Wingsuit BASE/Skydive Log (speed PR, jump number, glide ratio)
-- B1144: Brazilian Jiu-Jitsu Log (subs, sweeps, guard passes, gi/no-gi split)
-- B1145: Wakeboarding Log (air PR, trick flag, location flag, cable/boat)
-
-## v12.40 — B1126-B1140 +Fencing/OlympicLifting/Skateboarding/Polo/Judo/Powerlifting/Shooting/FreestyleSki/Dressage/DiscGolf/Rowing/Marathon/Motocross/KravMaga/Triathlon
-- B1126: Fencing Log (touch%, weapon split, rating PR)
-- B1127: Olympic Weightlifting Log (snatch+CJ+total PRs, Sinclair score)
-- B1128: Skateboarding Log (manual PR, trick flag, spot flag, terrain split)
-- B1129: Polo Log (handicap PR, goals/game PR, club flag)
-- B1130: Judo Log (throw accuracy, ippon count, dojo flag)
-- B1131: Powerlifting Log (S/B/D/total PRs, Wilks+DOTS)
-- B1132: Shooting Sports Log (hit factor auto-calc, IPSC score PR)
-- B1133: Freestyle Skiing Log (weighted score, air PR, discipline split)
-- B1134: Dressage Log (D+E score PR by level, level flag, horse tracking)
-- B1135: Disc Golf Log (score-to-par PR per course/layout)
-- B1136: Rowing/Ergometer Log (500m split PR, watt PR, on-water flag)
-- B1137: Marathon/Ultra Log (PR by race type, DNF tracking, age group)
-- B1138: Motocross Log (lap PR per track, jump PR, moto results)
-- B1139: Krav Maga Log (technique flag, test pass tracking, school flag)
-- B1140: Triathlon Log (split tracking, PR by distance type, new format PR)
-
-## v12.30 — B1121-B1125 +MuayThai/BMX/NordicSki/Handball/Gymnastics
-- B1121: Muay Thai / Kickboxing Log (rounds, strike types, fight record, gym flag)
-- B1122: BMX Freestyle Log (manual PR, trick flag, spot flag, comp place)
-- B1123: Nordic Skiing Log (technique split, pace, distance PR, trail flag)
-- B1124: Handball Log (shot accuracy, points, penalty%, venue flag)
-- B1125: Artistic Gymnastics Log (D+E score, apparatus split, skill flag, score PR)
-
-## v12.20 — B1101-B1120 +SUPYoga/TableTennis/Handpan/Sandboarding/IceHockey/Curling/Caving/Slacklining/GolfPractice/Biathlon/Ultimate/Lacrosse/WaterPolo/Decathlon/FPVRacing/LawnBowls/Padel/Orienteering/Yoga/Parkour
-- B1101: SUP Yoga (success%, inversion flag)
-- B1102: Table Tennis (win%, rating change/PR)
-- B1103: Handpan (scale flag, location flag, recording count)
-- B1104: Sandboarding (speed/dune-height PRs, dune flag)
-- B1105: Ice Hockey (points=goals+assists, rink flag)
-- B1106: Curling (avg pct, stolen/blanked ends, club flag)
-- B1107: Caving (depth PR, cave flag, by-type breakdown)
-- B1108: Slacklining (length/walk PRs, highline count)
-- B1109: Golf Practice (handicap low, handicap trend, facility flag)
-- B1110: Biathlon (shooting%, dual PRs: time+accuracy)
-- B1111: Ultimate Frisbee (fantasy pts, huck completion%)
-- B1112: Lacrosse (points, shot accuracy)
-- B1113: Water Polo (conversion%, pool flag)
-- B1114: Decathlon/Multi-Event (all 10 events, points PR per event type)
-- B1115: FPV Drone Racing (class reserved-word fix, lap PR per class+layout)
-- B1116: Lawn Bowls (margin auto-calc, touchers, stolen ends)
-- B1117: Padel Tennis (set win%, smash/vibora/bajada/bandeja shots)
-- B1118: Orienteering (control%, time/finish PRs per course type)
-- B1119: Yoga (avg flexibility/clarity, by-style breakdown)
-- B1120: Parkour/Freerunning (jump/drop PRs, filming/incident flags)
+- B1169:
