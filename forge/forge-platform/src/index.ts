@@ -167457,6 +167457,58 @@ try { db.prepare(`ALTER TABLE nps_surveys ADD COLUMN channel TEXT DEFAULT 'email
 try { db.prepare(`ALTER TABLE nps_surveys ADD COLUMN follow_up_needed INTEGER DEFAULT 0`).run(); } catch(e) {}
 try { db.prepare(`ALTER TABLE nps_surveys ADD COLUMN follow_up_done INTEGER DEFAULT 0`).run(); } catch(e) {}
 try { db.prepare(`ALTER TABLE nps_surveys ADD COLUMN surveyed_at TEXT DEFAULT (datetime('now'))`).run(); } catch(e) {}
+
+// ─── v132 Schema Migrations: fix remaining broken routes ─────────────────────
+// token_usage — required by /api/usage and /api/billing/status
+try { db.prepare(`CREATE TABLE IF NOT EXISTS token_usage (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, model TEXT, input_tokens INTEGER DEFAULT 0, output_tokens INTEGER DEFAULT 0, total_tokens INTEGER DEFAULT 0, cost_usd REAL DEFAULT 0, endpoint TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+
+// print_jobs — old schema missing filament_used_g, print_date, print_success
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN filament_used_g REAL DEFAULT 30`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN print_date TEXT DEFAULT (date('now'))`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN print_success INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN filament_cost_per_kg REAL DEFAULT 25`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN print_time_hours REAL DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN filament_color TEXT DEFAULT 'black'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN printer TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN model_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN purpose TEXT DEFAULT 'personal'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN sold INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN sale_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN rating INTEGER DEFAULT 8`).run(); } catch(e) {}
+
+// bonsai_trees — old schema missing estimated_value_usd, pot_size, acquisition_method, etc.
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN estimated_value_usd REAL DEFAULT 100`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN pot_size TEXT DEFAULT 'medium'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN acquisition_method TEXT DEFAULT 'nursery'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN next_repot_due TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN last_fertilized TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN current_health TEXT DEFAULT 'excellent'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN indoor_outdoor TEXT DEFAULT 'outdoor'`).run(); } catch(e) {}
+
+// book_clubs — old schema has 'name'; newer queries use 'club_name'
+try { db.prepare(`ALTER TABLE book_clubs ADD COLUMN club_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE book_clubs SET club_name=name WHERE club_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE book_clubs ADD COLUMN meeting_frequency TEXT DEFAULT 'monthly'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE book_clubs ADD COLUMN member_count INTEGER DEFAULT 4`).run(); } catch(e) {}
+
+// affirmation_log — old schema missing total_sessions, affirmation column
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN total_sessions INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN affirmation TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN belief_before INTEGER DEFAULT 5`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN belief_after INTEGER DEFAULT 7`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN belief_shift INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN said_aloud INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN wrote_it INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN felt_it INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN streak_day INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN category TEXT DEFAULT 'confidence'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE affirmation_log ADD COLUMN repetitions INTEGER DEFAULT 10`).run(); } catch(e) {}
+
+// invoices — old schema missing client_id / project_id
+try { db.prepare(`ALTER TABLE invoices ADD COLUMN client_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE invoices ADD COLUMN project_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
+// ─── end v132 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

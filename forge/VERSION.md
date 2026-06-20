@@ -1,3 +1,12 @@
+## v132.00 — Fix 6 more broken routes: token_usage, print_jobs, bonsai, book_clubs, affirmations, invoices
+- Created token_usage table (was missing entirely — fixes /api/usage + /api/billing/status)
+- print_jobs: ALTER TABLE adds filament_used_g, print_date, print_success, print_time_hours
+- bonsai_trees: ALTER TABLE adds estimated_value_usd, pot_size, acquisition_method, current_health
+- book_clubs: ALTER TABLE adds club_name (backfilled from old 'name' column), meeting_frequency
+- affirmation_log: ALTER TABLE adds total_sessions, affirmation, belief_before/after/shift columns
+- invoices: ALTER TABLE adds client_id, project_id columns
+- 167610 lines
+
 ## v131.00 — Schema conflict fixes + migration patches
 - Fixed nps_surveys schema conflict: ALTER TABLE migrations add surveyed_at, follow_up columns
 - Fixed skills_inventory conflict: migrations add proficiency_level, employee_name, department
