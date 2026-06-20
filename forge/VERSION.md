@@ -581,28 +581,21 @@
 - B2191-2195: Inner Life OS — Dream Journal, Vision Board, Life Goals, Personal Manifesto, Inner Life OS Milestone
 - B2196-2200: Ops Intelligence OS — Integration Hub, Automation Scripts, Pipeline Monitor, Model Performance, Ops OS Milestone
 - Total: 132,555 lines across 2200+ backend endpoints
-tal, all_in)
-- B840: Hang Gliding & Paramotor Flight Log (glide_ratio, XC flights)
-- B841: FPV Drone Racing League (lap PR, by_track best times)
-- B842: Ice Fishing & Winter Conditions (safe_ice assessment, fish_per_hour)
-- B843: Mushroom Cultivation (/harvest PATCH: yield + BE_pct)
-- B844: Sports Betting & Handicapping (to_win auto-calc, ROI, CLV)
-- B845: Custom PC Build & Benchmark Log (new_pr detect, primary_use swap)
 
-## v9.60 — B791-B810 MILESTONE (2026-06-19)
-- B791: Tattoo Collection & Artist Log (cost_per_hour, artist/style tracking)
-- B792: Concert & Live Event Journal (total_cost auto-sum, venue history)
-- B793: Language Exchange & Tutoring Session Log (speaking_ratio_pct)
-- B794: Personal Training Client & Session Manager (sessions_remaining decrement)
-- B795: Miniature Painting & Wargaming Studio (cost_per_model returned)
-- B796: Airsoft / Tactical Gaming League (KD ratio, gear loadout)
-- B797: Audiobook & Podcast Library Tracker (actual_listen_hours from speed)
-- B798: Indoor Houseplants Care Journal (needs_water via julianday, /watered)
-- B799: Whiskey Tasting Collection Log (by_region avg rating)
-- B800: Fantasy Sports League Manager (career W-L record string)
-- B801: Hot Springs & Natural Pool Adventure Log (hike_in, temp, crowd)
-- B802: Book Club & Reading Circle Organizer (by_genre avg rating)
-- B803: Astronomy Star Party Log (bortle, objects, nights, travel)
+## v21.25 — B2201-B2250 (50 New Features) + ESM Fix
+- FIX: esbuild --format=cjs to prevent "require is not defined in ES module scope" crash
+- B2201-2205: Creator OS — YouTube Script, Podcast Production, Newsletter OS, Merch Tracker, Creator OS Milestone
+- B2206-2210: Sports Analytics OS — Fantasy Sports, Sports Betting Log, Fitness Competition, Race Training, Sports OS Milestone
+- B2211-2215: Maker OS — 3D Printing Queue, Electronics Lab, Arduino Projects, Maker OS Dashboard, Maker OS Milestone
+- B2216-2220: Collector OS — Stamp Collection, Coin Collection, Trading Cards, Art Prints, Collector OS Milestone
+- B2221-2225: Scholar OS — Thesis Manager, Citation Manager, Reading Notes, Academic Calendar, Scholar OS Milestone
+- B2226-2230: Nomad OS — Visa Tracker, Cost of Living, Expat Community, Remote Jobs, Nomad OS Milestone
+- B2231-2235: Pet Owner OS — Vet Records, Pet Budget, Breed Research, Training Log, Pet OS Milestone
+- B2236-2240: Home Owner OS — Maintenance Schedule, Contractor Log, Home Value, Utility Tracker, Home OS Milestone
+- B2241-2245: Investor OS — Angel Deals, VC Pipeline, Cap Table, Startup Watchlist, Investor OS Milestone
+- B2246-2250: Executive OS — Board Prep, Stakeholder Map, KPI Dashboard, Exec Journal, Executive OS Milestone
+- Total: 133,462 lines across 2250+ backend endpoints
+stronomy Star Party Log (bortle, objects, nights, travel)
 - B804: Traditional Archery & Crossbow Log (accuracy_pct auto-calc)
 - B805: Quilting & Textile Art Studio (profit, hourly_rate)
 

@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-RUN npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --outfile=dist/index.js
+RUN npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outfile=dist/index.js
 
 EXPOSE 3000
 
