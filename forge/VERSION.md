@@ -1,3 +1,8 @@
+## v136.00 — Fix crypto_holdings, chess_games, chess_profiles schema mismatches
+- crypto_holdings: adds current_price, chain columns
+- chess_games: adds my_rating_after (backfilled), result_reason, eco_code, accuracy_pct, blunders, mistakes, inaccuracies, tournament, otb, analysis_done
+- chess_profiles: CREATE TABLE IF NOT EXISTS for profile storage
+
 ## v135.00 — Fix sauna_sessions, bonsai_trees, freelance_invoices schema mismatches
 - sauna_sessions: ALTER TABLE adds total_min, temp_c, location, round_mins, humidity, pr flags
 - bonsai_trees: adds acquired_date (backfilled from acquisition_date), pot_size/material, health, alive, value cols
