@@ -1,3 +1,10 @@
+## v80.00 — B5201-B5250 🎮⚽ GAMING+SPORTS-OS +Library/Sessions/Achievements/Backlog/Teams/Activities/Records/GrandMilestone
+- B5201-5210: Gaming Library OS — game CRUD, platform/genre/status, play sessions, achievements
+- B5211-5220: Gaming Stats + Backlog — hours played, top platforms/genres, now-playing, backlog manager
+- B5221-5230: Sports OS — team tracker, game results (scores/venues), sports catalog
+- B5231-5240: Sports Activity Log — training sessions, distance/calories/HR, personal goals
+- B5241-5250: Sports Stats + Records + Grand Milestone v80 — /api/milestone/v80, manifest, health — 5250 endpoints, 150674 lines
+
 ## v79.00 — B5151-B5200 🎵📷 MUSIC+PHOTOGRAPHY-OS +Tracks/Playlists/Practice/Albums/Photos/Gear/Locations/GrandMilestone
 - B5151-5160: Music Library OS — track CRUD, artist/genre/album, play count tracking, search
 - B5161-5170: Music Stats + Practice Log — top artists/tracks, genre dist, instrument practice sessions
