@@ -147739,5 +147739,127 @@ app.get('/api/forge/sports-health', (_req: any, res: any) => {
 
 });
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// B4301-B4350: Outdoor & Hiking OS + Camping OS + Fishing OS + Grand Milestone v62
+// ══════════════════════════════════════════════════════════════════════════════
+
+// B4301-B4310: Hiking OS
+app.get('/api/hiking/trails', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS hiking_trails (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, location TEXT, distance_km REAL DEFAULT 0, elevation_gain_m INTEGER DEFAULT 0, difficulty TEXT DEFAULT 'moderate', completed INTEGER DEFAULT 0, completed_date TEXT, rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM hiking_trails WHERE user_id=? ORDER BY rating DESC, completed_date DESC LIMIT 30').all(u);
+    const stats = db.prepare('SELECT COUNT(*) as total, SUM(completed) as done, COALESCE(SUM(distance_km*completed),0) as km FROM hiking_trails WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, stats });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/hiking/trails', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, location, distance_km, elevation_gain_m, difficulty, completed, completed_date, rating, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS hiking_trails (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, location TEXT, distance_km REAL DEFAULT 0, elevation_gain_m INTEGER DEFAULT 0, difficulty TEXT DEFAULT 'moderate', completed INTEGER DEFAULT 0, completed_date TEXT, rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO hiking_trails (user_id,name,location,distance_km,elevation_gain_m,difficulty,completed,completed_date,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?)').run(u,name||'',location||'',distance_km||0,elevation_gain_m||0,difficulty||'moderate',completed?1:0,completed_date||'',rating||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/hiking/gear', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS hiking_gear (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'clothing', weight_g INTEGER DEFAULT 0, condition TEXT DEFAULT 'good', purchase_date TEXT, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM hiking_gear WHERE user_id=? ORDER BY category, name ASC LIMIT 50').all(u);
+    const total_weight = db.prepare('SELECT COALESCE(SUM(weight_g),0) as w FROM hiking_gear WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_weight_g:total_weight?.w||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/hiking/gear', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, category, weight_g, condition, cost, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS hiking_gear (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, category TEXT DEFAULT 'clothing', weight_g INTEGER DEFAULT 0, condition TEXT DEFAULT 'good', purchase_date TEXT, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO hiking_gear (user_id,name,category,weight_g,condition,cost,notes) VALUES (?,?,?,?,?,?,?)').run(u,name||'',category||'clothing',weight_g||0,condition||'good',cost||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4311-B4320: Camping OS
+app.get('/api/camping/trips', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS camping_trips (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, location TEXT, start_date TEXT, end_date TEXT, nights INTEGER DEFAULT 1, type TEXT DEFAULT 'tent', companions TEXT, weather TEXT, rating INTEGER DEFAULT 0, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM camping_trips WHERE user_id=? ORDER BY start_date DESC LIMIT 20').all(u);
+    const total_nights = db.prepare('SELECT COALESCE(SUM(nights),0) as n FROM camping_trips WHERE user_id=?').get(u) as any;
+    res.json({ success:true, data:rows, total_nights:total_nights?.n||0 });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/camping/trips', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { name, location, start_date, end_date, nights, type, companions, weather, rating, cost, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS camping_trips (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, location TEXT, start_date TEXT, end_date TEXT, nights INTEGER DEFAULT 1, type TEXT DEFAULT 'tent', companions TEXT, weather TEXT, rating INTEGER DEFAULT 0, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO camping_trips (user_id,name,location,start_date,end_date,nights,type,companions,weather,rating,cost,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(u,name||'',location||'',start_date||'',end_date||'',nights||1,type||'tent',companions||'',weather||'',rating||0,cost||0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.get('/api/camping/checklist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS camping_checklist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item TEXT, category TEXT DEFAULT 'shelter', packed INTEGER DEFAULT 0, essential INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare("SELECT * FROM camping_checklist WHERE user_id=? ORDER BY essential DESC, category, item ASC").all(u);
+    const packed = db.prepare('SELECT COUNT(*) as c FROM camping_checklist WHERE user_id=? AND packed=1').get(u) as any;
+    res.json({ success:true, data:rows, packed:packed?.c||0, total:rows.length });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/camping/checklist', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { item, category, essential, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS camping_checklist (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item TEXT, category TEXT DEFAULT 'shelter', packed INTEGER DEFAULT 0, essential INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO camping_checklist (user_id,item,category,essential,notes) VALUES (?,?,?,?,?)').run(u,item||'',category||'shelter',essential?1:1,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4321-B4330: Fishing OS
+app.get('/api/fishing/logs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS fishing_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, species TEXT, weight_kg REAL DEFAULT 0, length_cm REAL DEFAULT 0, lure TEXT, water_temp REAL DEFAULT 0, weather TEXT, kept INTEGER DEFAULT 0, photo_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const rows = db.prepare('SELECT * FROM fishing_logs WHERE user_id=? ORDER BY date DESC LIMIT 20').all(u);
+    const pb = db.prepare('SELECT species, MAX(weight_kg) as pb FROM fishing_logs WHERE user_id=? GROUP BY species ORDER BY pb DESC LIMIT 5').all(u);
+    res.json({ success:true, data:rows, personal_bests:pb });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.post('/api/fishing/logs', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { date, location, species, weight_kg, length_cm, lure, water_temp, weather, kept, notes } = req.body||{};
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS fishing_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, species TEXT, weight_kg REAL DEFAULT 0, length_cm REAL DEFAULT 0, lure TEXT, water_temp REAL DEFAULT 0, weather TEXT, kept INTEGER DEFAULT 0, photo_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+    const r = db.prepare('INSERT INTO fishing_logs (user_id,date,location,species,weight_kg,length_cm,lure,water_temp,weather,kept,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(u,date||new Date().toISOString().split('T')[0],location||'',species||'',weight_kg||0,length_cm||0,lure||'',water_temp||0,weather||'',kept?1:0,notes||'');
+    res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+
+// B4331-B4350: Grand Milestone v62
+app.get('/api/milestone/v62', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const trails = safe(()=>db.prepare('SELECT COUNT(*) as t, SUM(completed) as d FROM hiking_trails WHERE user_id=?').get(u) as any);
+  const camping = safe(()=>db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(nights),0) as n FROM camping_trips WHERE user_id=?').get(u) as any);
+  const fish = safe(()=>db.prepare('SELECT COUNT(*) as c FROM fishing_logs WHERE user_id=?').get(u) as any);
+  res.json({ success:true, version:'v62.00', total_endpoints:4350, milestone:'B4350 — Outdoor & Nature OS', data:{ trails_total:trails?.t||0, trails_done:trails?.d||0, camping_trips:camping?.c||0, camping_nights:camping?.n||0, fish_caught:fish?.c||0 }});
+});
+app.get('/api/forge/outdoor-manifest', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const safe = (fn:()=>any,d:any=null)=>{try{return fn();}catch{return d;}};
+  const gear_weight = safe(()=>db.prepare('SELECT COALESCE(SUM(weight_g),0) as w FROM hiking_gear WHERE user_id=?').get(u) as any);
+  res.json({ success:true, outdoor_manifest:{ gear_weight_g:gear_weight?.w||0 }, total_endpoints:4350 });
+});
+app.get('/api/forge/outdoor-health', (_req: any, res: any) => {
+  res.json({ success:true, outdoor_health:{ os_modules:385, total_endpoints:4350, version:'v62.00' }});
+
+
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));

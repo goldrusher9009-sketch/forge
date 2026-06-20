@@ -1,3 +1,8 @@
+## v61.00 — B4251-B4300 🏃 SPORTS-FITNESS-OS +Running/Cycling/Gym/Exercises/PRs/GrandMilestone
+- B4251-4260: Running OS — logs (distance/pace/surface/weather/HR/calories), goals (weekly_km/type/period)
+- B4261-4270: Cycling OS — rides (distance/elevation/avg-speed/bike/type/HR)
+- B4271-4280: Gym & Strength OS — workouts (volume), exercises (sets/reps/weight/RPE/PRs)
+- B4281-4300: 🏆 Grand Milestone v61 — /api/milestone/v61, sports-manifest, sports-health — 4300 endpoints, 147743 lines
 ## v60.00 — B4201-B4250 🎵 MUSIC-INSTRUMENT-CONCERT-SONGWRITING-OS +Library/Playlists/Instruments/Practice/Concerts/Songs/GrandMilestone
 - B4201-4210: Music Library OS — tracks (artist/album/genre/rating/play-count), playlists (mood/duration)
 - B4211-4220: Instrument & Practice OS — instruments (brand/tuning/value), practice sessions (focus/scales/songs/duration)
