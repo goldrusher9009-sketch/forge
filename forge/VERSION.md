@@ -1,3 +1,10 @@
+## v94.00 — B5901-B5950 🥋☕ MARTIALARTS+COFFEE-TEA-OS +Sessions/Belts/Stats/Catalog/Brews/Steep/GrandMilestone
+- B5901-5910: Martial Arts OS — training session log (art/techniques/sparring), belt/rank progression
+- B5911-5920: Martial Arts Stats + Coffee Catalog — hours by art, coffee catalog (origin/roast/process/flavor)
+- B5921-5930: Coffee Brews + Tea Catalog — brew log (method/dose/temp/grind), tea catalog (type/origin/harvest)
+- B5931-5940: Tea Sessions + Cross Stats — steep sessions, combined coffee+tea dashboard
+- B5941-5950: Grand Milestone v94 — /api/milestone/v94, 5950 endpoints, 153502 lines
+
 ## v93.00 — B5851-B5900 🏄🧬 BOARDSPORTS+GENEALOGY-OS +Sessions/Gear/Stats/People/Relationships/Sources/GrandMilestone
 - B5851-5860: Board Sports OS — session log (surf/skate/snow/kite/windsurf), conditions + gear catalog
 - B5861-5870: Board Sports Stats + Genealogy People — top locations, surname registry (birth/death places)

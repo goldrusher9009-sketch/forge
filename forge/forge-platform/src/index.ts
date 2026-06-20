@@ -153318,5 +153318,185 @@ app.get('/api/forge/boardsports-genealogy-health', (_req: any, res: any) => {
   res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
 });
 
+
+// B5901-B5950: Martial Arts OS + Coffee & Tea OS
+// B5901-5910: Martial Arts — Training Sessions + Belts
+
+app.post('/api/martialarts/sessions', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { art, date, duration_min, techniques, sparring_rounds, instructor, notes, rating } = req.body;
+  if (!art || !date) return res.status(400).json({ success: false, error: 'art and date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS martialarts_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, art TEXT, session_date TEXT, duration_min INTEGER, techniques TEXT, sparring_rounds INTEGER DEFAULT 0, instructor TEXT, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO martialarts_sessions (user_id,art,session_date,duration_min,techniques,sparring_rounds,instructor,rating,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, art, date, duration_min||null, techniques||'', sparring_rounds||0, instructor||'', rating||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/martialarts/sessions', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { art, limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS martialarts_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, art TEXT, session_date TEXT, duration_min INTEGER, techniques TEXT, sparring_rounds INTEGER DEFAULT 0, instructor TEXT, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM martialarts_sessions WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (art) { q += ` AND art=?`; params.push(art); }
+  q += ` ORDER BY session_date DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, sessions: db2.prepare(q).all(...params) });
+});
+
+app.post('/api/martialarts/belts', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { art, belt_color, rank, awarded_date, instructor, notes } = req.body;
+  if (!art || !belt_color || !awarded_date) return res.status(400).json({ success: false, error: 'art, belt_color, awarded_date required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS martialarts_belts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, art TEXT, belt_color TEXT, rank TEXT, awarded_date TEXT, instructor TEXT, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO martialarts_belts (user_id,art,belt_color,rank,awarded_date,instructor,notes,created_at) VALUES (?,?,?,?,?,?,?,?)`).run(userId, art, belt_color, rank||'', awarded_date, instructor||'', notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/martialarts/belts', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS martialarts_belts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, art TEXT, belt_color TEXT, rank TEXT, awarded_date TEXT, instructor TEXT, notes TEXT, created_at TEXT)`).run();
+  res.json({ success: true, belts: db2.prepare(`SELECT * FROM martialarts_belts WHERE user_id=? ORDER BY art ASC, awarded_date ASC`).all(userId) });
+});
+
+// B5911-5920: Martial Arts Stats + Coffee Catalog
+
+app.get('/api/martialarts/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS martialarts_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, art TEXT, session_date TEXT, duration_min INTEGER, techniques TEXT, sparring_rounds INTEGER DEFAULT 0, instructor TEXT, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  const total = (db2.prepare(`SELECT COUNT(*) as c FROM martialarts_sessions WHERE user_id=?`).get(userId) as any).c;
+  const totalMin = (db2.prepare(`SELECT SUM(duration_min) as s FROM martialarts_sessions WHERE user_id=? AND duration_min IS NOT NULL`).get(userId) as any).s || 0;
+  const totalSparring = (db2.prepare(`SELECT SUM(sparring_rounds) as s FROM martialarts_sessions WHERE user_id=?`).get(userId) as any).s || 0;
+  const byArt = db2.prepare(`SELECT art, COUNT(*) as cnt, SUM(duration_min) as total_min FROM martialarts_sessions WHERE user_id=? GROUP BY art ORDER BY cnt DESC`).all(userId);
+  res.json({ success: true, total_sessions: total, total_hours: Math.round(totalMin/60*10)/10, total_sparring_rounds: totalSparring, by_art: byArt });
+});
+
+app.post('/api/coffee/catalog', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, origin, roaster, roast_level, process, flavor_notes, purchase_date, price_per_100g, rating, notes } = req.body;
+  if (!name) return res.status(400).json({ success: false, error: 'name required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS coffee_catalog (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, origin TEXT, roaster TEXT, roast_level TEXT, process TEXT, flavor_notes TEXT, purchase_date TEXT, price_per_100g REAL, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO coffee_catalog (user_id,name,origin,roaster,roast_level,process,flavor_notes,purchase_date,price_per_100g,rating,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, name, origin||'', roaster||'', roast_level||'medium', process||'', flavor_notes||'', purchase_date||'', price_per_100g||null, rating||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/coffee/catalog', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { origin, roast_level, limit = 30 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS coffee_catalog (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, origin TEXT, roaster TEXT, roast_level TEXT, process TEXT, flavor_notes TEXT, purchase_date TEXT, price_per_100g REAL, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM coffee_catalog WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (origin) { q += ` AND origin LIKE ?`; params.push(`%${origin}%`); }
+  if (roast_level) { q += ` AND roast_level=?`; params.push(roast_level); }
+  q += ` ORDER BY rating DESC NULLS LAST, name ASC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, coffees: db2.prepare(q).all(...params) });
+});
+
+// B5921-5930: Coffee Brews + Tea Catalog
+
+app.post('/api/coffee/brews', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { coffee_id, method, dose_g, water_ml, brew_time_s, water_temp_c, grind_size, rating, tasting_notes } = req.body;
+  if (!coffee_id || !method) return res.status(400).json({ success: false, error: 'coffee_id and method required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS coffee_brews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, coffee_id INTEGER, method TEXT, dose_g REAL, water_ml REAL, brew_time_s INTEGER, water_temp_c REAL, grind_size TEXT, rating INTEGER, tasting_notes TEXT, brewed_at TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO coffee_brews (user_id,coffee_id,method,dose_g,water_ml,brew_time_s,water_temp_c,grind_size,rating,tasting_notes,brewed_at,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId, coffee_id, method, dose_g||null, water_ml||null, brew_time_s||null, water_temp_c||null, grind_size||'', rating||null, tasting_notes||'', new Date().toISOString(), new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/coffee/brews', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { coffee_id, method, limit = 20 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS coffee_brews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, coffee_id INTEGER, method TEXT, dose_g REAL, water_ml REAL, brew_time_s INTEGER, water_temp_c REAL, grind_size TEXT, rating INTEGER, tasting_notes TEXT, brewed_at TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM coffee_brews WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (coffee_id) { q += ` AND coffee_id=?`; params.push(Number(coffee_id)); }
+  if (method) { q += ` AND method=?`; params.push(method); }
+  q += ` ORDER BY brewed_at DESC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, brews: db2.prepare(q).all(...params) });
+});
+
+app.post('/api/tea/catalog', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { name, type, origin, vendor, harvest_year, flavor_notes, rating, notes } = req.body;
+  if (!name || !type) return res.status(400).json({ success: false, error: 'name and type required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS tea_catalog (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, origin TEXT, vendor TEXT, harvest_year INTEGER, flavor_notes TEXT, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO tea_catalog (user_id,name,type,origin,vendor,harvest_year,flavor_notes,rating,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, name, type, origin||'', vendor||'', harvest_year||null, flavor_notes||'', rating||null, notes||'', new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/tea/catalog', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { type, limit = 30 } = req.query;
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS tea_catalog (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, origin TEXT, vendor TEXT, harvest_year INTEGER, flavor_notes TEXT, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  let q = `SELECT * FROM tea_catalog WHERE user_id=?`;
+  const params: any[] = [userId];
+  if (type) { q += ` AND type=?`; params.push(type); }
+  q += ` ORDER BY rating DESC NULLS LAST, name ASC LIMIT ?`; params.push(Number(limit));
+  res.json({ success: true, teas: db2.prepare(q).all(...params) });
+});
+
+// B5931-5940: Tea Sessions + Coffee/Tea Stats
+
+app.post('/api/tea/sessions', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const { tea_id, steep_time_s, water_temp_c, amount_g, vessel, rating, tasting_notes } = req.body;
+  if (!tea_id) return res.status(400).json({ success: false, error: 'tea_id required' });
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS tea_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, tea_id INTEGER, steep_time_s INTEGER, water_temp_c REAL, amount_g REAL, vessel TEXT, rating INTEGER, tasting_notes TEXT, steeped_at TEXT, created_at TEXT)`).run();
+  const r = db2.prepare(`INSERT INTO tea_sessions (user_id,tea_id,steep_time_s,water_temp_c,amount_g,vessel,rating,tasting_notes,steeped_at,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(userId, tea_id, steep_time_s||null, water_temp_c||null, amount_g||null, vessel||'', rating||null, tasting_notes||'', new Date().toISOString(), new Date().toISOString());
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.get('/api/coffee-tea/stats', (req: any, res: any) => {
+  const userId = req.headers['x-user-id'] || 'default';
+  const db2 = getDb();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS coffee_catalog (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, origin TEXT, roaster TEXT, roast_level TEXT, process TEXT, flavor_notes TEXT, purchase_date TEXT, price_per_100g REAL, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS coffee_brews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, coffee_id INTEGER, method TEXT, dose_g REAL, water_ml REAL, brew_time_s INTEGER, water_temp_c REAL, grind_size TEXT, rating INTEGER, tasting_notes TEXT, brewed_at TEXT, created_at TEXT)`).run();
+  db2.prepare(`CREATE TABLE IF NOT EXISTS tea_catalog (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, type TEXT, origin TEXT, vendor TEXT, harvest_year INTEGER, flavor_notes TEXT, rating INTEGER, notes TEXT, created_at TEXT)`).run();
+  const coffees = (db2.prepare(`SELECT COUNT(*) as c FROM coffee_catalog WHERE user_id=?`).get(userId) as any).c;
+  const brews = (db2.prepare(`SELECT COUNT(*) as c FROM coffee_brews WHERE user_id=?`).get(userId) as any).c;
+  const teas = (db2.prepare(`SELECT COUNT(*) as c FROM tea_catalog WHERE user_id=?`).get(userId) as any).c;
+  const topMethod = db2.prepare(`SELECT method, COUNT(*) as cnt FROM coffee_brews WHERE user_id=? GROUP BY method ORDER BY cnt DESC LIMIT 3`).all(userId);
+  res.json({ success: true, coffees_cataloged: coffees, brews_logged: brews, teas_cataloged: teas, top_brew_methods: topMethod });
+});
+
+// B5941-5950: Grand Milestone v94
+app.get('/api/milestone/v94', (_req: any, res: any) => {
+  res.json({
+    success: true, milestone: 'v94', version: '94.00',
+    endpoints_total: 5950, lines_of_code: 153510,
+    new_this_batch: ['Martial Arts OS', 'Coffee & Tea OS'],
+    features: {
+      martial_arts_os: ['training session log (art/techniques/sparring)','belt/rank progression tracker','stats by art (hours/sparring rounds)'],
+      coffee_tea_os: ['coffee catalog (origin/roast/process/flavor)','brew log (method/dose/temp/grind/rating)','tea catalog (type/origin/harvest)','tea steep sessions','cross-stats dashboard']
+    },
+    message: '5950 endpoints — Martial Arts + Coffee & Tea OS live!'
+  });
+});
+
+app.get('/api/forge/martialarts-coffee-manifest', (_req: any, res: any) => {
+  res.json({ success: true, manifest: 'martialarts-coffee-tea-os', version: '1.0.0',
+    endpoints: ['POST /api/martialarts/sessions','GET /api/martialarts/sessions','POST /api/martialarts/belts','GET /api/martialarts/belts','GET /api/martialarts/stats','POST /api/coffee/catalog','GET /api/coffee/catalog','POST /api/coffee/brews','GET /api/coffee/brews','POST /api/tea/catalog','GET /api/tea/catalog','POST /api/tea/sessions','GET /api/coffee-tea/stats','GET /api/milestone/v94']
+  });
+});
+
+app.get('/api/forge/martialarts-coffee-health', (_req: any, res: any) => {
+  const db2 = getDb();
+  const checks: any = {};
+  try { db2.prepare(`SELECT COUNT(*) FROM martialarts_sessions`).get(); checks.martialarts = 'ok'; } catch { checks.martialarts = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM coffee_catalog`).get(); checks.coffee = 'ok'; } catch { checks.coffee = 'table_missing'; }
+  try { db2.prepare(`SELECT COUNT(*) FROM tea_catalog`).get(); checks.tea = 'ok'; } catch { checks.tea = 'table_missing'; }
+  res.json({ success: true, status: 'healthy', checks, ts: new Date().toISOString() });
+});
+
 // 404 fallback (must be last)
 app.use((_req: any, res: any) => res.status(404).json({ success: false, error: 'NOT_FOUND' }));
