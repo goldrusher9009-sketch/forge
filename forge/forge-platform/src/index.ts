@@ -169323,6 +169323,32 @@ try { db.prepare(`UPDATE life_goals SET category=COALESCE(NULLIF(category,''),li
 try { db.prepare(`UPDATE life_goals SET why=COALESCE(NULLIF(why,''),why_statement,'') WHERE why='' AND why_statement IS NOT NULL`).run(); } catch(e) {}
 // ─── end v168 migrations ──────────────────────────────────────────────────────
 
+// ─── v169 Schema Migrations ────────────────────────────────────────────────────
+// bonsai_trees: multiple handlers use different col names
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN common_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN species_region TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN age_estimate_years INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN height_cm REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN trunk_diameter_cm REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN pot_material TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN pot_size TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN indoor INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN indoor_outdoor TEXT DEFAULT 'outdoor'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN acquisition_method TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN acquired_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN purchase_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN estimated_value_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN health TEXT DEFAULT 'healthy'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE bonsai_trees ADD COLUMN source TEXT DEFAULT ''`).run(); } catch(e) {}
+// backfill aliases
+try { db.prepare(`UPDATE bonsai_trees SET age_estimate_years=COALESCE(NULLIF(age_estimate_years,0),age_years,0) WHERE age_estimate_years=0 AND age_years IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE bonsai_trees SET acquired_date=COALESCE(NULLIF(acquired_date,''),acquisition_date,'') WHERE acquired_date='' AND acquisition_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE bonsai_trees SET purchase_price_usd=COALESCE(NULLIF(purchase_price_usd,0),acquisition_price,0) WHERE purchase_price_usd=0 AND acquisition_price IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE bonsai_trees SET estimated_value_usd=COALESCE(NULLIF(estimated_value_usd,0),current_value,0) WHERE estimated_value_usd=0 AND current_value IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE bonsai_trees SET health=COALESCE(NULLIF(health,'healthy'),health_status,'healthy') WHERE health='healthy' AND health_status IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE bonsai_trees SET pot_material=COALESCE(NULLIF(pot_material,''),pot_type,'') WHERE pot_material='' AND pot_type IS NOT NULL`).run(); } catch(e) {}
+// ─── end v169 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

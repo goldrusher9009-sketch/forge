@@ -1,3 +1,6 @@
+## v169.00 — Fix bonsai_trees schema (15 missing cols across handlers)
+- common_name/species_region/age_estimate_years/height_cm/trunk_diameter_cm/pot_material/pot_size/indoor/acquisition_method/acquired_date/purchase_price_usd/estimated_value_usd/health/source
+
 ## v168.00 — Fix job_applications/life_goals schema
 - job_applications: contact/source/type aliases (3rd handler)
 - life_goals: goal/category/description/why/priority/achieved (3rd handler)
