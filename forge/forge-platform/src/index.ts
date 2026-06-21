@@ -169134,6 +169134,48 @@ try { db.prepare(`UPDATE meeting_notes SET meeting_date=COALESCE(NULLIF(meeting_
 try { db.prepare(`UPDATE meeting_notes SET discussion_notes=COALESCE(NULLIF(discussion_notes,''),notes,'') WHERE discussion_notes=''`).run(); } catch(e) {}
 // ─── end v162 migrations ──────────────────────────────────────────────────────
 
+// ─── v163 Schema Migrations ────────────────────────────────────────────────────
+// gratitude_journal: entry_1/entry_2/entry_3
+try { db.prepare(`ALTER TABLE gratitude_journal ADD COLUMN entry_1 TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gratitude_journal ADD COLUMN entry_2 TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gratitude_journal ADD COLUMN entry_3 TEXT DEFAULT ''`).run(); } catch(e) {}
+// financial_goals: goal_name/category/target_usd/current_usd/monthly_contribution/months_to_goal/pct_complete/status
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN goal_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN category TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN target_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN current_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN monthly_contribution REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN months_to_goal INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN pct_complete REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
+try { db.prepare(`UPDATE financial_goals SET goal_name=COALESCE(NULLIF(goal_name,''),name,'') WHERE goal_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE financial_goals SET target_usd=COALESCE(NULLIF(target_usd,0),target_amount,0) WHERE target_usd=0 AND target_amount IS NOT NULL`).run(); } catch(e) {}
+// savings_goals: category/on_track/pct_complete
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN category TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN on_track INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN pct_complete REAL DEFAULT 0`).run(); } catch(e) {}
+// crypto_holdings: blockchain/chain/current_price/is_staking/staking_apy
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN blockchain TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN chain TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN current_price REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN is_staking INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN staking_apy REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE crypto_holdings SET blockchain=COALESCE(NULLIF(blockchain,''),chain,'') WHERE blockchain=''`).run(); } catch(e) {}
+// net_worth_snapshots: liquid_assets/invested_assets/real_estate_equity/business_equity/retirement_accounts/savings_rate_pct/total_debt/credit_card_debt/mortgage_balance/student_loans/monthly_income/monthly_expenses
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN liquid_assets REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN invested_assets REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN real_estate_equity REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN business_equity REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN retirement_accounts REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN savings_rate_pct REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN total_debt REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN credit_card_debt REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN mortgage_balance REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN student_loans REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN monthly_income REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN monthly_expenses REAL DEFAULT 0`).run(); } catch(e) {}
+// ─── end v163 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

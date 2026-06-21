@@ -1,3 +1,10 @@
+## v163.00 — Fix gratitude_journal/financial_goals/savings_goals/crypto_holdings/net_worth_snapshots schema
+- gratitude_journal: entry_1/entry_2/entry_3 cols
+- financial_goals: goal_name/category/target_usd/current_usd/monthly_contribution/pct_complete/status
+- savings_goals: category/on_track/pct_complete
+- crypto_holdings: blockchain↔chain/current_price/is_staking/staking_apy
+- net_worth_snapshots: 12 missing financial breakdown cols
+
 ## v162.00 — Fix job_applications/meeting_notes schema aliases
 - job_applications: contact/job_type↔type/source cols
 - meeting_notes: book_id/group_id/meeting_date↔date/discussion_notes↔notes/highlights/attendance_count cols
