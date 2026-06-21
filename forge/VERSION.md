@@ -1,3 +1,7 @@
+## v168.00 — Fix job_applications/life_goals schema
+- job_applications: contact/source/type aliases (3rd handler)
+- life_goals: goal/category/description/why/priority/achieved (3rd handler)
+
 ## v167.00 — Fix nutrition_logs/landing_pages schema
 - nutrition_logs: food/food_name/meal/date/serving_size (individual food item handler)
 - landing_pages: title/slug/sections/cta_url/status (second handler cols)
