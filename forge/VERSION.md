@@ -1,3 +1,7 @@
+## v151.00 — CRITICAL fix journal_entries (entry_date/date alias + mood_rating/energy cols) and pets (name/pet_name alias)
+- journal_entries: entry_date↔date alias, mood_rating/energy_rating/energy, gratitude↔gratitude_items, streak_day, wins/challenges/tomorrow_focus
+- pets: name↔pet_name, dob↔birthdate↔date_of_birth, weight_kg↔weight_lbs, microchip_id/vet_clinic/insurance_provider/is_active/color/gender
+
 ## v150.00 — Fix ocr_races (2 schemas), freediving_sessions, disc_golf, photo_shoots, decision_journal, mentorship_log, genealogy_sources
 - ocr_races: race_name↔event_name, series↔brand, distance_miles↔km, finish_time min↔sec, burpees↔burpees_served
 - freediving_sessions: date←session_date, depth_m←max_depth_ft, hold_time_sec←max_hold_secs

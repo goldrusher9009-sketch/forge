@@ -168196,6 +168196,55 @@ try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN repository TEXT DEFAU
 try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN reliability INTEGER DEFAULT 3`).run(); } catch(e) {}
 // ─── end v150 migrations ──────────────────────────────────────────────────────
 
+// ─── v151 Schema Migrations ────────────────────────────────────────────────────
+// journal_entries: CRITICAL — early (6757) uses date/content/mood TEXT
+//   mid (64372) uses entry_date/mood_rating/energy_rating/gratitude_items/streak_day
+//   late (99288) uses entry_date/word_count/mood/energy/gratitude_items/goals_reviewed/streak_day
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN entry_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN mood_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN energy_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN energy INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN journal_type TEXT DEFAULT 'daily'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN daily_intentions TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN wins TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN challenges TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN tomorrow_focus TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN time_to_write_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN gratitude_items TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN goals_reviewed INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN new_word_count_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+// bidirectional date/entry_date
+try { db.prepare(`UPDATE journal_entries SET entry_date=COALESCE(NULLIF(entry_date,''),date,'') WHERE entry_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE journal_entries SET date=COALESCE(NULLIF(date,''),entry_date,'') WHERE date='' AND entry_date IS NOT NULL`).run(); } catch(e) {}
+// mood_rating ↔ mood (TEXT/INT mismatch — store numeric in mood_rating)
+try { db.prepare(`UPDATE journal_entries SET mood_rating=COALESCE(NULLIF(mood_rating,3),CASE WHEN CAST(mood AS INTEGER)>0 THEN CAST(mood AS INTEGER) ELSE 3 END,3) WHERE mood_rating=3 AND mood IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE journal_entries SET energy_rating=COALESCE(NULLIF(energy_rating,3),energy,3) WHERE energy_rating=3 AND energy IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE journal_entries SET gratitude=COALESCE(NULLIF(gratitude,''),gratitude_items,'') WHERE gratitude='' AND gratitude_items IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE journal_entries SET gratitude_items=COALESCE(NULLIF(gratitude_items,''),gratitude,'') WHERE gratitude_items='' AND gratitude IS NOT NULL`).run(); } catch(e) {}
+// pets: CRITICAL — early (41964) uses name/dob/weight_kg; mid (48150) uses pet_name/birthdate; late (52019) uses pet_name/dob/weight_lbs
+try { db.prepare(`ALTER TABLE pets ADD COLUMN pet_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN dob TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN birthdate TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN date_of_birth TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN weight_kg REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN weight_lbs REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN microchip_id TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN vet_clinic TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN insurance_provider TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN is_active INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN color TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pets ADD COLUMN gender TEXT DEFAULT ''`).run(); } catch(e) {}
+// bidirectional name/pet_name
+try { db.prepare(`UPDATE pets SET pet_name=COALESCE(NULLIF(pet_name,''),name,'') WHERE pet_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pets SET name=COALESCE(NULLIF(name,''),pet_name,'') WHERE name='' AND pet_name IS NOT NULL`).run(); } catch(e) {}
+// bidirectional dob aliases
+try { db.prepare(`UPDATE pets SET dob=COALESCE(NULLIF(dob,''),date_of_birth,birthdate,'') WHERE dob='' AND (date_of_birth IS NOT NULL OR birthdate IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pets SET birthdate=COALESCE(NULLIF(birthdate,''),dob,date_of_birth,'') WHERE birthdate='' AND (dob IS NOT NULL OR date_of_birth IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pets SET weight_kg=COALESCE(NULLIF(weight_kg,0),CAST(weight_lbs/2.205 AS REAL),0) WHERE weight_kg=0 AND weight_lbs IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pets SET weight_lbs=COALESCE(NULLIF(weight_lbs,0),CAST(weight_kg*2.205 AS REAL),0) WHERE weight_lbs=0 AND weight_kg IS NOT NULL`).run(); } catch(e) {}
+// ─── end v151 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
