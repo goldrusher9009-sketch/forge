@@ -1,3 +1,9 @@
+## v148.00 — Fix subscriptions collision, aquarium_tanks volume alias, print_jobs, job_applications
+- subscriptions: adds service_name/amount/is_active/renewal_date cols (billing table schema won, tracker cols injected)
+- aquarium_tanks: volume_l←volume_liters/volume_gallons/volume_gal + setup_date/substrate/filtration/lighting/co2
+- print_jobs: adds started_at/completed_at/status/material/color/support_used/notes
+- job_applications: adds remote/contacts/salary_min/salary_max/recruiter/interview_date/offer_amount
+
 ## v147.00 — Fix home_maintenance (3 schemas), wine_cellar, chess_games
 - home_maintenance: task↔task_name, date↔completed_date↔last_done, next_due↔next_due_date, room↔area aliases
 - wine_cellar: name↔wine_name alias + varietal/region/vintage/quantity/purchase_price/rating
