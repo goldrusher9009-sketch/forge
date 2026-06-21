@@ -1,3 +1,8 @@
+## v150.00 — Fix ocr_races (2 schemas), freediving_sessions, disc_golf, photo_shoots, decision_journal, mentorship_log, genealogy_sources
+- ocr_races: race_name↔event_name, series↔brand, distance_miles↔km, finish_time min↔sec, burpees↔burpees_served
+- freediving_sessions: date←session_date, depth_m←max_depth_ft, hold_time_sec←max_hold_secs
+- disc_golf_rounds/photo_shoots/decision_journal/mentorship_log/genealogy_sources: standard cols added
+
 ## v149.00 — Fix freelance_invoices, insurance_policies, golf_rounds, gaming_sessions, diy_projects, flashcards, content_calendar
 - freelance_invoices: amount_usd←total/subtotal alias, issue_date←issued_date
 - insurance_policies: premium_monthly←annual_premium/12, coverage_limit←coverage_amount, renewal_date/contact

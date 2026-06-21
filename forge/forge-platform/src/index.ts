@@ -168128,6 +168128,74 @@ try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN publish_date TEXT DEFA
 try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN tags TEXT DEFAULT ''`).run(); } catch(e) {}
 // ─── end v149 migrations ──────────────────────────────────────────────────────
 
+// ─── v150 Schema Migrations ────────────────────────────────────────────────────
+// ocr_races: early (69015) has race_name/series/distance_miles/finish_time_minutes/burpees_served
+//            late (79303) has event_name/brand/distance_km/finish_time_sec/burpees
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN race_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN event_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN series TEXT DEFAULT 'Spartan'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN brand TEXT DEFAULT 'Spartan'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN distance_miles REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN distance_km REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN finish_time_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN finish_time_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN burpees_served INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN burpees INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN placement INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN elevation_m INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN penalty_laps INTEGER DEFAULT 0`).run(); } catch(e) {}
+// bidirectional backfills
+try { db.prepare(`UPDATE ocr_races SET race_name=COALESCE(NULLIF(race_name,''),event_name,'') WHERE race_name='' AND event_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ocr_races SET event_name=COALESCE(NULLIF(event_name,''),race_name,'') WHERE event_name='' AND race_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ocr_races SET brand=COALESCE(NULLIF(brand,'Spartan'),series,'Spartan') WHERE brand='Spartan' AND series IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ocr_races SET series=COALESCE(NULLIF(series,'Spartan'),brand,'Spartan') WHERE series='Spartan' AND brand IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ocr_races SET finish_time_minutes=COALESCE(NULLIF(finish_time_minutes,0),CAST(finish_time_sec/60 AS INTEGER),0) WHERE finish_time_minutes=0 AND finish_time_sec IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ocr_races SET finish_time_sec=COALESCE(NULLIF(finish_time_sec,0),finish_time_minutes*60,0) WHERE finish_time_sec=0 AND finish_time_minutes IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ocr_races SET burpees=COALESCE(NULLIF(burpees,0),burpees_served,0) WHERE burpees=0 AND burpees_served IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ocr_races SET distance_km=COALESCE(NULLIF(distance_km,0),CAST(distance_miles*1.609 AS REAL),0) WHERE distance_km=0 AND distance_miles IS NOT NULL`).run(); } catch(e) {}
+// freediving_sessions: early (54644) has session_date/max_depth_ft/max_hold_secs; late (76305) may use date/depth_m
+try { db.prepare(`ALTER TABLE freediving_sessions ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freediving_sessions ADD COLUMN depth_m REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freediving_sessions ADD COLUMN hold_time_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freediving_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date='' AND session_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freediving_sessions SET depth_m=COALESCE(NULLIF(depth_m,0),CAST(max_depth_ft*0.3048 AS REAL),0) WHERE depth_m=0 AND max_depth_ft IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freediving_sessions SET hold_time_sec=COALESCE(NULLIF(hold_time_sec,0),max_hold_secs,0) WHERE hold_time_sec=0 AND max_hold_secs IS NOT NULL`).run(); } catch(e) {}
+// disc_golf_rounds: ensure consistent cols
+try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN round_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN course_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN score_vs_par INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN ace_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN birdie_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+// photo_shoots: ensure consistent cols
+try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN shoot_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN client TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN shoot_type TEXT DEFAULT 'portrait'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN fee_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN photos_taken INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN photos_delivered INTEGER DEFAULT 0`).run(); } catch(e) {}
+// decision_journal: ensure standard cols
+try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN context TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN options TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN decision TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN outcome TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN review_date TEXT DEFAULT ''`).run(); } catch(e) {}
+// mentorship_log: ensure standard cols
+try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN mentor TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN topic TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN duration_min INTEGER DEFAULT 60`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN action_items TEXT DEFAULT ''`).run(); } catch(e) {}
+// genealogy_sources: early (42023) vs late (49419) — ensure standard cols
+try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN source_type TEXT DEFAULT 'document'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN url TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN repository TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN reliability INTEGER DEFAULT 3`).run(); } catch(e) {}
+// ─── end v150 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
