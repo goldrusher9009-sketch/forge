@@ -1,3 +1,7 @@
+## v162.00 — Fix job_applications/meeting_notes schema aliases
+- job_applications: contact/job_type↔type/source cols
+- meeting_notes: book_id/group_id/meeting_date↔date/discussion_notes↔notes/highlights/attendance_count cols
+
 ## v161.00 — Fix podcast_episodes schema (14 handlers, massive divergence)
 - podcast_episodes: episode_title/num/type/show_id/show_name, publish_date/record_date aliases, duration_min↔mins↔minutes, guest↔guest_name↔guests, sponsor_revenue↔sponsorship↔ad_revenue, edit_hours↔editing_hours, listen_date aliases, daw/mic/recording/transcript/youtube cols
 

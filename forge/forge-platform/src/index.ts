@@ -169116,6 +169116,24 @@ try { db.prepare(`UPDATE podcast_episodes SET edit_hours=COALESCE(NULLIF(edit_ho
 try { db.prepare(`UPDATE podcast_episodes SET listen_date=COALESCE(NULLIF(listen_date,''),listened_date,date_listened,'') WHERE listen_date=''`).run(); } catch(e) {}
 // ─── end v161 migrations ──────────────────────────────────────────────────────
 
+// ─── v162 Schema Migrations ────────────────────────────────────────────────────
+// job_applications: contact/job_type/source/type aliases
+try { db.prepare(`ALTER TABLE job_applications ADD COLUMN contact TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE job_applications ADD COLUMN job_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE job_applications ADD COLUMN source TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE job_applications ADD COLUMN type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE job_applications SET job_type=COALESCE(NULLIF(job_type,''),type,'') WHERE job_type=''`).run(); } catch(e) {}
+// meeting_notes: book_id/group_id/meeting_date/discussion_notes/highlights/attendance_count
+try { db.prepare(`ALTER TABLE meeting_notes ADD COLUMN book_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meeting_notes ADD COLUMN group_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meeting_notes ADD COLUMN meeting_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meeting_notes ADD COLUMN discussion_notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meeting_notes ADD COLUMN highlights TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meeting_notes ADD COLUMN attendance_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meeting_notes SET meeting_date=COALESCE(NULLIF(meeting_date,''),date,'') WHERE meeting_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meeting_notes SET discussion_notes=COALESCE(NULLIF(discussion_notes,''),notes,'') WHERE discussion_notes=''`).run(); } catch(e) {}
+// ─── end v162 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
