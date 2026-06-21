@@ -1,3 +1,8 @@
+## v147.00 — Fix home_maintenance (3 schemas), wine_cellar, chess_games
+- home_maintenance: task↔task_name, date↔completed_date↔last_done, next_due↔next_due_date, room↔area aliases
+- wine_cellar: name↔wine_name alias + varietal/region/vintage/quantity/purchase_price/rating
+- chess_games: adds date/opponent/result/opening/color/rating_before/rating_after/moves
+
 ## v146.00 — Fix journal_entries (content/body alias), archery_sessions, reading_books
 - journal_entries: body↔content bidirectional alias + title/tags/weather/location/word_count/gratitude/affirmation
 - archery_sessions: score←total_score, arrows_shot←total_arrows, distance_m←distance_yards conversion
