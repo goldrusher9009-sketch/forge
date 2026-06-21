@@ -1,3 +1,7 @@
+## v152.00 — Fix sleep_logs (22 missing cols across 4 handlers) + nutrition_logs (log_date/macros/water)
+- sleep_logs: bedtime/wake_time/sleep_duration_hours/deep_sleep_pct/rem_pct/rem_sleep_pct/fell_asleep_minutes/time_to_fall_asleep_mins/hrv/resting_hr/readiness_score/caffeine_cutoff_hour/alcohol_drinks/alcohol_units/exercise_today/screen_off_minutes_before/screen_off_mins_before/dream_recalled/restedness_on_wake/deep_sleep_hr/rem_sleep_hr/new_hrv_pr/new_duration_pr/device + backfills
+- nutrition_logs: log_date/calories/protein_g/carbs_g/fat_g/fiber_g/water_ml/new_protein_pr + date↔log_date backfill
+
 ## v151.00 — CRITICAL fix journal_entries (entry_date/date alias + mood_rating/energy cols) and pets (name/pet_name alias)
 - journal_entries: entry_date↔date alias, mood_rating/energy_rating/energy, gratitude↔gratitude_items, streak_day, wins/challenges/tomorrow_focus
 - pets: name↔pet_name, dob↔birthdate↔date_of_birth, weight_kg↔weight_lbs, microchip_id/vet_clinic/insurance_provider/is_active/color/gender

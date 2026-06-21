@@ -168245,6 +168245,62 @@ try { db.prepare(`UPDATE pets SET weight_kg=COALESCE(NULLIF(weight_kg,0),CAST(we
 try { db.prepare(`UPDATE pets SET weight_lbs=COALESCE(NULLIF(weight_lbs,0),CAST(weight_kg*2.205 AS REAL),0) WHERE weight_lbs=0 AND weight_kg IS NOT NULL`).run(); } catch(e) {}
 // ─── end v151 migrations ──────────────────────────────────────────────────────
 
+// ─── v152 Schema Migrations ────────────────────────────────────────────────────
+// sleep_logs: v143 added basic cols. Now add ALL remaining cols used across 5 handlers:
+// handler1 (41758): sleep_date/bedtime/wake_time/sleep_duration_hours/sleep_quality/deep_sleep_pct/rem_pct/awakenings
+// handler2 (44301): sleep_date/duration_minutes/fell_asleep_minutes/deep_sleep_pct/rem_sleep_pct/heart_rate_avg/hrv/caffeine_cutoff_hour/alcohol_drinks/exercise_today/screen_off_minutes_before
+// handler3 (52399): sleep_date/total_hours/time_to_fall_asleep_mins/dream_recalled/restedness_on_wake/alcohol_units/screen_off_mins_before/exercise_today
+// handler4 (94795): log_date/total_hours/deep_sleep_hr/rem_sleep_hr/hrv/resting_hr/readiness_score/new_hrv_pr/new_duration_pr/device
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN bedtime TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN wake_time TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN sleep_duration_hours REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN sleep_quality INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN deep_sleep_pct REAL DEFAULT 20`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_pct REAL DEFAULT 20`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_sleep_pct REAL DEFAULT 20`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN fell_asleep_minutes INTEGER DEFAULT 15`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN time_to_fall_asleep_mins INTEGER DEFAULT 15`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN heart_rate_avg INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN hrv INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN resting_hr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN readiness_score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN caffeine_cutoff_hour INTEGER DEFAULT 14`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN alcohol_drinks INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN alcohol_units REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN exercise_today INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN screen_off_minutes_before INTEGER DEFAULT 30`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN screen_off_mins_before INTEGER DEFAULT 30`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN dream_recalled INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN restedness_on_wake INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN deep_sleep_hr REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_sleep_hr REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN new_hrv_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN new_duration_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN device TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN pre_sleep_activities TEXT DEFAULT '[]'`).run(); } catch(e) {}
+// cross-alias backfills
+try { db.prepare(`UPDATE sleep_logs SET sleep_duration_hours=COALESCE(NULLIF(sleep_duration_hours,0),total_hours,CAST(duration_min/60.0 AS REAL),0) WHERE sleep_duration_hours=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET total_hours=COALESCE(NULLIF(total_hours,0),sleep_duration_hours,CAST(duration_min/60.0 AS REAL),0) WHERE total_hours=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET sleep_quality=COALESCE(NULLIF(sleep_quality,3),quality,3) WHERE sleep_quality=3 AND quality IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET sleep_date=COALESCE(NULLIF(sleep_date,''),date,log_date,'') WHERE sleep_date='' AND (date IS NOT NULL OR log_date IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET log_date=COALESCE(NULLIF(log_date,''),sleep_date,date,'') WHERE log_date='' AND (sleep_date IS NOT NULL OR date IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET fell_asleep_minutes=COALESCE(NULLIF(fell_asleep_minutes,15),time_to_fall_asleep_mins,15) WHERE fell_asleep_minutes=15 AND time_to_fall_asleep_mins IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET alcohol_drinks=COALESCE(NULLIF(alcohol_drinks,0),CAST(alcohol_units AS INTEGER),0) WHERE alcohol_drinks=0 AND alcohol_units IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET deep_sleep_hr=COALESCE(NULLIF(deep_sleep_hr,0),CAST(deep_sleep_pct*total_hours/100.0 AS REAL),0) WHERE deep_sleep_hr=0 AND deep_sleep_pct IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET rem_sleep_hr=COALESCE(NULLIF(rem_sleep_hr,0),CAST(rem_pct*total_hours/100.0 AS REAL),0) WHERE rem_sleep_hr=0 AND rem_pct IS NOT NULL`).run(); } catch(e) {}
+// nutrition_logs: handler (94840) uses log_date/calories/protein_g/water_ml
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN protein_g REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN carbs_g REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN fat_g REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN fiber_g REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN water_ml INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN new_protein_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE nutrition_logs SET log_date=COALESCE(NULLIF(log_date,''),date,'') WHERE log_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE nutrition_logs SET date=COALESCE(NULLIF(date,''),log_date,'') WHERE date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
+// ─── end v152 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
