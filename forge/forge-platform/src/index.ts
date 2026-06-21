@@ -168301,6 +168301,117 @@ try { db.prepare(`UPDATE nutrition_logs SET log_date=COALESCE(NULLIF(log_date,''
 try { db.prepare(`UPDATE nutrition_logs SET date=COALESCE(NULLIF(date,''),log_date,'') WHERE date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
 // ─── end v152 migrations ──────────────────────────────────────────────────────
 
+// ─── v153 Schema Migrations ────────────────────────────────────────────────────
+// writing_sessions: project_id/session_date/chapter_worked/session_type/productivity_rating/genre/location/mood/total_project_words/duration_min/streak_day aliases
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN project_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN chapter_worked TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN session_type TEXT DEFAULT 'drafting'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN productivity_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN genre TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN mood INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN total_project_words INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN new_daily_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN new_project_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE writing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE writing_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date='' AND session_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE writing_sessions SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0 AND duration_minutes IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE writing_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0 AND duration_min IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE writing_sessions SET productivity_rating=COALESCE(NULLIF(productivity_rating,3),mood,3) WHERE productivity_rating=3 AND mood IS NOT NULL`).run(); } catch(e) {}
+// woodworking_projects: name↔project_name, type↔project_type, date_started↔start_date, hours_spent↔hours_invested, cost_materials↔material_cost_usd
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN project_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN project_type TEXT DEFAULT 'furniture'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN start_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN hours_invested REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN material_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN tool_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN joinery_methods TEXT DEFAULT '[]'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN joinery_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN tools_used TEXT DEFAULT '[]'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN estimated_cost REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN dimensions TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN plans_source TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN satisfaction_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET project_name=COALESCE(NULLIF(project_name,''),name,'') WHERE project_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET name=COALESCE(NULLIF(name,''),project_name,'') WHERE name='' AND project_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET project_type=COALESCE(NULLIF(project_type,'furniture'),type,'furniture') WHERE project_type='furniture' AND type IS NOT NULL AND type!=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET type=COALESCE(NULLIF(type,''),project_type,'') WHERE type='' AND project_type IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET start_date=COALESCE(NULLIF(start_date,''),date_started,'') WHERE start_date='' AND date_started IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET date_started=COALESCE(NULLIF(date_started,''),start_date,'') WHERE date_started='' AND start_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET hours_invested=COALESCE(NULLIF(hours_invested,0),hours_spent,0) WHERE hours_invested=0 AND hours_spent IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET hours_spent=COALESCE(NULLIF(hours_spent,0),hours_invested,0) WHERE hours_spent=0 AND hours_invested IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET material_cost_usd=COALESCE(NULLIF(material_cost_usd,0),cost_materials,0) WHERE material_cost_usd=0 AND cost_materials IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE woodworking_projects SET cost_materials=COALESCE(NULLIF(cost_materials,0),material_cost_usd,0) WHERE cost_materials=0 AND material_cost_usd IS NOT NULL`).run(); } catch(e) {}
+// wine_tastings: wine_id/tasting_date/aroma/taste/overall_rating/paired_with/occasion vs wine/date/nose/palate/rating/food_pairing
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN wine_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN tasting_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN aroma TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN taste TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN overall_rating INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN paired_with TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN occasion TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN created_at TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_tastings SET tasting_date=COALESCE(NULLIF(tasting_date,''),date,'') WHERE tasting_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_tastings SET date=COALESCE(NULLIF(date,''),tasting_date,'') WHERE date='' AND tasting_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_tastings SET aroma=COALESCE(NULLIF(aroma,''),nose,'') WHERE aroma='' AND nose IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_tastings SET nose=COALESCE(NULLIF(nose,''),aroma,'') WHERE nose='' AND aroma IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_tastings SET taste=COALESCE(NULLIF(taste,''),palate,'') WHERE taste='' AND palate IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_tastings SET palate=COALESCE(NULLIF(palate,''),taste,'') WHERE palate='' AND taste IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_tastings SET overall_rating=COALESCE(NULLIF(overall_rating,0),rating,0) WHERE overall_rating=0 AND rating IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_tastings SET paired_with=COALESCE(NULLIF(paired_with,''),food_pairing,'') WHERE paired_with='' AND food_pairing IS NOT NULL`).run(); } catch(e) {}
+// wine_batches: name↔batch_name↔wine_name, gallons↔volume_gallons↔batch_size_gal, sg_original↔sg_start↔sg_initial, many more
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN wine_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN style TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN base_ingredient TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN volume_gallons REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN batch_size_gal REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN sg_original REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN sg_initial REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN brix_initial REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN ta_g_l REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN so2_ppm INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN oak TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN oak_months INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN bottles_filled INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN competition_medal TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN new_variety_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_batches SET name=COALESCE(NULLIF(name,''),batch_name,wine_name,'') WHERE name=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_batches SET batch_name=COALESCE(NULLIF(batch_name,''),name,wine_name,'') WHERE batch_name=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_batches SET wine_name=COALESCE(NULLIF(wine_name,''),batch_name,name,'') WHERE wine_name=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_batches SET volume_gallons=COALESCE(NULLIF(volume_gallons,0),gallons,batch_size_gal,0) WHERE volume_gallons=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_batches SET gallons=COALESCE(NULLIF(gallons,0),volume_gallons,batch_size_gal,0) WHERE gallons=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_batches SET sg_original=COALESCE(NULLIF(sg_original,0),sg_start,sg_initial,0) WHERE sg_original=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_batches SET sg_start=COALESCE(NULLIF(sg_start,0),sg_original,sg_initial,0) WHERE sg_start=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_batches SET sg_initial=COALESCE(NULLIF(sg_initial,0),sg_original,sg_start,0) WHERE sg_initial=0`).run(); } catch(e) {}
+// volunteer_hours: date↔log_date, role/description/supervisor/org_id/created_at
+try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN role TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN description TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN supervisor TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN org_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN created_at TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE volunteer_hours SET log_date=COALESCE(NULLIF(log_date,''),date,'') WHERE log_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE volunteer_hours SET date=COALESCE(NULLIF(date,''),log_date,'') WHERE date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
+// volunteer_activities: activity↔activity_name, date↔activity_date, cause/location/mileage/impact/impact_notes/role/org_id
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN activity_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN activity_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN org_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN cause TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN mileage REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN impact TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN impact_notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN role TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE volunteer_activities SET activity_name=COALESCE(NULLIF(activity_name,''),activity,'') WHERE activity_name='' AND activity IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE volunteer_activities SET activity=COALESCE(NULLIF(activity,''),activity_name,'') WHERE activity='' AND activity_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE volunteer_activities SET activity_date=COALESCE(NULLIF(activity_date,''),date,'') WHERE activity_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE volunteer_activities SET date=COALESCE(NULLIF(date,''),activity_date,'') WHERE date='' AND activity_date IS NOT NULL`).run(); } catch(e) {}
+// ─── end v153 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

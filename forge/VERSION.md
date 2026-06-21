@@ -1,3 +1,11 @@
+## v153.00 — Fix writing_sessions/woodworking_projects/wine_tastings/wine_batches/volunteer_hours/volunteer_activities schema aliases
+- writing_sessions: session_date↔date, duration_min↔duration_minutes, productivity_rating↔mood, genre/location/chapter_worked/session_type/streak_day/project_id
+- woodworking_projects: project_name↔name, project_type↔type, start_date↔date_started, hours_invested↔hours_spent, material_cost_usd↔cost_materials + 5 more cols
+- wine_tastings: tasting_date↔date, aroma↔nose, taste↔palate, overall_rating↔rating, paired_with↔food_pairing + wine_id/occasion
+- wine_batches: name↔batch_name↔wine_name, gallons↔volume_gallons↔batch_size_gal, sg_original↔sg_start↔sg_initial + brix/ta_g_l/so2_ppm/oak/competition_medal
+- volunteer_hours: log_date↔date + role/description/supervisor/org_id
+- volunteer_activities: activity↔activity_name, date↔activity_date + cause/location/mileage/impact/org_id
+
 ## v152.00 — Fix sleep_logs (22 missing cols across 4 handlers) + nutrition_logs (log_date/macros/water)
 - sleep_logs: bedtime/wake_time/sleep_duration_hours/deep_sleep_pct/rem_pct/rem_sleep_pct/fell_asleep_minutes/time_to_fall_asleep_mins/hrv/resting_hr/readiness_score/caffeine_cutoff_hour/alcohol_drinks/alcohol_units/exercise_today/screen_off_minutes_before/screen_off_mins_before/dream_recalled/restedness_on_wake/deep_sleep_hr/rem_sleep_hr/new_hrv_pr/new_duration_pr/device + backfills
 - nutrition_logs: log_date/calories/protein_g/carbs_g/fat_g/fiber_g/water_ml/new_protein_pr + date↔log_date backfill
