@@ -1,3 +1,12 @@
+## v149.00 — Fix freelance_invoices, insurance_policies, golf_rounds, gaming_sessions, diy_projects, flashcards, content_calendar
+- freelance_invoices: amount_usd←total/subtotal alias, issue_date←issued_date
+- insurance_policies: premium_monthly←annual_premium/12, coverage_limit←coverage_amount, renewal_date/contact
+- golf_rounds: adds date/course/score/par/fairways_hit/greens_in_regulation/putts/weather
+- gaming_sessions: adds game_name/platform/genre cols
+- diy_projects: ensures name/category/difficulty/status/materials_cost/hours_spent/tutorial_url
+- flashcards: ensures deck/ease_factor/interval/due_date/review_count/last_reviewed
+- content_calendar: adds notes/thread_id/body/publish_date/tags
+
 ## v148.00 — Fix subscriptions collision, aquarium_tanks volume alias, print_jobs, job_applications
 - subscriptions: adds service_name/amount/is_active/renewal_date cols (billing table schema won, tracker cols injected)
 - aquarium_tanks: volume_l←volume_liters/volume_gallons/volume_gal + setup_date/substrate/filtration/lighting/co2

@@ -168077,6 +168077,57 @@ try { db.prepare(`ALTER TABLE job_applications ADD COLUMN interview_date TEXT DE
 try { db.prepare(`ALTER TABLE job_applications ADD COLUMN offer_amount REAL DEFAULT 0`).run(); } catch(e) {}
 // ─── end v148 migrations ──────────────────────────────────────────────────────
 
+// ─── v149 Schema Migrations ────────────────────────────────────────────────────
+// freelance_invoices: early (38314) has line_items/subtotal/tax_rate/issued_date; late (61752) has amount_usd/hours_billed/issue_date
+try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN amount_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN hours_billed REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN issue_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN description TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freelance_invoices SET amount_usd=COALESCE(NULLIF(amount_usd,0),total,subtotal,0) WHERE amount_usd=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE freelance_invoices SET issue_date=COALESCE(NULLIF(issue_date,''),issued_date,'') WHERE issue_date=''`).run(); } catch(e) {}
+// insurance_policies: early (135850) has annual_premium; late (143813) has premium_monthly + renewal_date + contact
+try { db.prepare(`ALTER TABLE insurance_policies ADD COLUMN premium_monthly REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE insurance_policies ADD COLUMN renewal_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE insurance_policies ADD COLUMN contact TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE insurance_policies ADD COLUMN coverage_limit REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE insurance_policies SET premium_monthly=COALESCE(NULLIF(premium_monthly,0),CAST(annual_premium/12 AS REAL),0) WHERE premium_monthly=0 AND annual_premium IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE insurance_policies SET coverage_limit=COALESCE(NULLIF(coverage_limit,0),coverage_amount,0) WHERE coverage_limit=0 AND coverage_amount IS NOT NULL`).run(); } catch(e) {}
+// golf_rounds (6x): check early vs late schema
+try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN course TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN par INTEGER DEFAULT 72`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN fairways_hit INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN greens_in_regulation INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN putts INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN weather TEXT DEFAULT ''`).run(); } catch(e) {}
+// gaming_sessions (6x): early (98835) consistent with late (137962) — add game_name col some handlers use
+try { db.prepare(`ALTER TABLE gaming_sessions ADD COLUMN game_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gaming_sessions ADD COLUMN platform TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gaming_sessions ADD COLUMN genre TEXT DEFAULT ''`).run(); } catch(e) {}
+// diy_projects (6x): early (50855) may differ — add missing cols
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN category TEXT DEFAULT 'woodworking'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN difficulty INTEGER DEFAULT 2`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN status TEXT DEFAULT 'planning'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN materials_cost REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN hours_spent REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN tutorial_url TEXT DEFAULT ''`).run(); } catch(e) {}
+// flashcards (6x): consistent across schemas — add missing ease_factor/interval/review_count for early schema
+try { db.prepare(`ALTER TABLE flashcards ADD COLUMN deck TEXT DEFAULT 'default'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE flashcards ADD COLUMN ease_factor REAL DEFAULT 2.5`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE flashcards ADD COLUMN interval INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE flashcards ADD COLUMN due_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE flashcards ADD COLUMN review_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE flashcards ADD COLUMN last_reviewed TEXT DEFAULT ''`).run(); } catch(e) {}
+// content_calendar (6x): add notes/thread_id cols some schemas lack
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN thread_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN body TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN publish_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN tags TEXT DEFAULT ''`).run(); } catch(e) {}
+// ─── end v149 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
