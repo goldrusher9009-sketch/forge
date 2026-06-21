@@ -169521,26 +169521,18 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS api_rate_limits (id INTEGER PRIMARY
 app.get('/api/rate-limits', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM api_rate_limits WHERE user_id = ? ORDER BY api_name ASC').all(req.user.id); res.json({ success: true, limits: rows.map((r: any) => ({ ...r, utilization_min: r.limit_per_minute>0?(r.current_usage_min/r.limit_per_minute)*100:0, utilization_hour: r.limit_per_hour>0?(r.current_usage_hour/r.limit_per_hour)*100:0 })), throttled_count: rows.filter((r: any) => r.status==='throttled').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/rate-limits', auth, (req: any, res: any) => { try { const { api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes } = req.body; const r = db.prepare('INSERT INTO api_rate_limits (user_id, api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, api_name, endpoint||'', limit_per_minute||60, limit_per_hour||3600, limit_per_day||86400, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }
-// v185.00 schema migrations - music_library events wedding_checklist
-try { db.prepare("ALTER TABLE music_library ADD COLUMN title TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_library ADD COLUMN artist TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_library ADD COLUMN album TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_library ADD COLUMN genre TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_library ADD COLUMN year INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_library ADD COLUMN duration_sec INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_library ADD COLUMN format TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_library ADD COLUMN rating INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_library ADD COLUMN notes TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN title TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN event_type TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN event_date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN end_date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN venue TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN address TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN budget REAL").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN status TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE events ADD COLUMN description TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE wedding_checklist ADD COLUMN category TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE wedding_checklist ADD COLUMN task TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE wedding_checklist ADD COLUMN due_months_before INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE wedding_checklist ADD COLUMN notes TEXT").run(); } catch(e) {}
+// v189.00 schema migrations - doctors therapy_sessions
+try { db.prepare("ALTER TABLE doctors ADD COLUMN name TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE doctors ADD COLUMN specialty TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE doctors ADD COLUMN practice TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE doctors ADD COLUMN phone TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE doctors ADD COLUMN address TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE doctors ADD COLUMN npi TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE doctors ADD COLUMN insurance_accepted TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE doctors ADD COLUMN notes TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE therapy_sessions ADD COLUMN session_date TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE therapy_sessions ADD COLUMN session_type TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE therapy_sessions ADD COLUMN duration_minutes INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE therapy_sessions ADD COLUMN homework TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE therapy_sessions ADD COLUMN mood_before INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE therapy_sessions ADD COLUMN mood_after INTEGER").run(); } catch(e) {}
