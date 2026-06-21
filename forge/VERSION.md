@@ -1,3 +1,10 @@
+## v164.00 — Fix flight_logs/recipes/meal_plans/grocery_lists/wine_cellar schema
+- flight_logs: paragliding handler cols (launch_site/glider/glider_class/flight_type/conditions/wind_launch_mph/distance_km/thermal_count/max_climb_fpm/xc_distance_km/rating)
+- recipes: category/instructions/source_url
+- meal_plans: goal/target_calories/target_protein/week_start
+- grocery_lists: meal_plan_id
+- wine_cellar: winery/estimated_value/tasting_notes
+
 ## v163.00 — Fix gratitude_journal/financial_goals/savings_goals/crypto_holdings/net_worth_snapshots schema
 - gratitude_journal: entry_1/entry_2/entry_3 cols
 - financial_goals: goal_name/category/target_usd/current_usd/monthly_contribution/pct_complete/status
