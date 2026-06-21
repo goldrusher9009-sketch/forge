@@ -169209,6 +169209,55 @@ try { db.prepare(`UPDATE wine_cellar SET winery=COALESCE(NULLIF(winery,''),produ
 try { db.prepare(`UPDATE wine_cellar SET estimated_value=COALESCE(NULLIF(estimated_value,0),purchase_price,0) WHERE estimated_value=0 AND purchase_price IS NOT NULL`).run(); } catch(e) {}
 // ─── end v164 migrations ──────────────────────────────────────────────────────
 
+// ─── v165 Schema Migrations ────────────────────────────────────────────────────
+// reading_sessions: aliases pages_start/pages_end/session_date
+try { db.prepare(`ALTER TABLE reading_sessions ADD COLUMN pages_start INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_sessions ADD COLUMN pages_end INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE reading_sessions SET pages_start=COALESCE(NULLIF(pages_start,0),start_page,0) WHERE pages_start=0 AND start_page IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE reading_sessions SET pages_end=COALESCE(NULLIF(pages_end,0),end_page,0) WHERE pages_end=0 AND end_page IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE reading_sessions SET session_date=COALESCE(NULLIF(session_date,''),reading_date,'') WHERE session_date='' AND reading_date IS NOT NULL`).run(); } catch(e) {}
+// sleep_logs: 29 missing cols across 4 handlers
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN total_hours REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN quality INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN fell_asleep_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN time_to_fall_asleep_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_sleep_pct INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_sleep_hr REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN deep_sleep_hr REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN deep_sleep_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN interruptions INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN heart_rate_avg INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN hrv INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN resting_hr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN readiness_score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN device TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN dream_recalled INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN restedness_on_wake INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN alcohol_drinks INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN alcohol_units REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN caffeine_cutoff_hour INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN exercise_today INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN screen_off_minutes_before INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN screen_off_mins_before INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN new_hrv_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN new_duration_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+// backfill sleep_logs aliases
+try { db.prepare(`UPDATE sleep_logs SET log_date=COALESCE(NULLIF(log_date,''),sleep_date,'') WHERE log_date='' AND sleep_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET quality=COALESCE(NULLIF(quality,0),sleep_quality,0) WHERE quality=0 AND sleep_quality IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET total_hours=COALESCE(NULLIF(total_hours,0),sleep_duration_hours,0) WHERE total_hours=0 AND sleep_duration_hours IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET rem_sleep_pct=COALESCE(NULLIF(rem_sleep_pct,0),rem_pct,0) WHERE rem_sleep_pct=0 AND rem_pct IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sleep_logs SET interruptions=COALESCE(NULLIF(interruptions,0),awakenings,0) WHERE interruptions=0 AND awakenings IS NOT NULL`).run(); } catch(e) {}
+// user_meditation_log: session_date alias
+try { db.prepare(`ALTER TABLE user_meditation_log ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE user_meditation_log SET session_date=COALESCE(NULLIF(session_date,''),log_date,'') WHERE session_date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
+// ─── end v165 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

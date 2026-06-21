@@ -1,3 +1,8 @@
+## v165.00 — Fix reading_sessions/sleep_logs/user_meditation_log schema
+- reading_sessions: pages_start/pages_end/session_date aliases
+- sleep_logs: 29 missing cols (log_date/total_hours/hrv/rem_sleep_pct/device/alcohol/caffeine/exercise/etc)
+- user_meditation_log: session_date alias
+
 ## v164.00 — Fix flight_logs/recipes/meal_plans/grocery_lists/wine_cellar schema
 - flight_logs: paragliding handler cols (launch_site/glider/glider_class/flight_type/conditions/wind_launch_mph/distance_km/thermal_count/max_climb_fpm/xc_distance_km/rating)
 - recipes: category/instructions/source_url
