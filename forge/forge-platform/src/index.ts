@@ -169521,16 +169521,6 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS api_rate_limits (id INTEGER PRIMARY
 app.get('/api/rate-limits', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM api_rate_limits WHERE user_id = ? ORDER BY api_name ASC').all(req.user.id); res.json({ success: true, limits: rows.map((r: any) => ({ ...r, utilization_min: r.limit_per_minute>0?(r.current_usage_min/r.limit_per_minute)*100:0, utilization_hour: r.limit_per_hour>0?(r.current_usage_hour/r.limit_per_hour)*100:0 })), throttled_count: rows.filter((r: any) => r.status==='throttled').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/rate-limits', auth, (req: any, res: any) => { try { const { api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes } = req.body; const r = db.prepare('INSERT INTO api_rate_limits (user_id, api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, api_name, endpoint||'', limit_per_minute||60, limit_per_hour||3600, limit_per_day||86400, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }
-// v179.00 schema migrations - job_applications skill_assessments certifications portfolio_projects
-try { db.prepare("ALTER TABLE job_applications ADD COLUMN location TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE job_applications ADD COLUMN remote INTEGER DEFAULT 0").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE job_applications ADD COLUMN job_url TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE job_applications ADD COLUMN next_action TEXT").run(); } catch(e) {}
-
-try { db.prepare("ALTER TABLE skill_assessments ADD COLUMN assessment_date TEXT").run(); } catch(e) {}
-
-try { db.prepare("ALTER TABLE certifications ADD COLUMN issue_date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE certifications ADD COLUMN expiry_date TEXT").run(); } catch(e) {}
-
-try { db.prepare("ALTER TABLE portfolio_projects ADD COLUMN start_date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE portfolio_projects ADD COLUMN end_date TEXT").run(); } catch(e) {}
+// v180.00 schema migrations - trip_expenses visa_tracker
+try { db.prepare("ALTER TABLE trip_expenses ADD COLUMN date TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE visa_tracker ADD COLUMN entry_date TEXT").run(); } catch(e) {}
