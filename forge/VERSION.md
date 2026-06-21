@@ -1,3 +1,11 @@
+## v154.00 — Fix therapy_log/tax_deductions/sup_sessions/skincare_logs/skate_sessions/rpg_campaigns/puzzles_log schema aliases
+- therapy_log: session_date↔log_date, therapist↔therapist_name, topics↔themes, breakthrough↔breakthroughs, mood_before/after/lift/shift cols
+- sup_sessions: duration_min↔duration_mins↔duration_minutes, speed/wind unit aliases (kph/kmh/mph/kts), board_name/wave/competition cols
+- skincare_logs: log_date, hydration/oiliness/redness _level aliases, breakout_count↔new_breakouts
+- skate_sessions: session_date, spot↔skate_park↔spot_name, new_trick aliases, land_rate_pct/manual_max_m PR flags
+- rpg_campaigns: campaign_name↔name, dm↔dm_name↔gm_name, player_character↔character_name
+- puzzles_log: pieces↔piece_count, time_hours↔duration_hours, date_completed
+
 ## v153.00 — Fix writing_sessions/woodworking_projects/wine_tastings/wine_batches/volunteer_hours/volunteer_activities schema aliases
 - writing_sessions: session_date↔date, duration_min↔duration_minutes, productivity_rating↔mood, genre/location/chapter_worked/session_type/streak_day/project_id
 - woodworking_projects: project_name↔name, project_type↔type, start_date↔date_started, hours_invested↔hours_spent, material_cost_usd↔cost_materials + 5 more cols

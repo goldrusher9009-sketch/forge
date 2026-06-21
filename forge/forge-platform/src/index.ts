@@ -168412,6 +168412,131 @@ try { db.prepare(`UPDATE volunteer_activities SET activity_date=COALESCE(NULLIF(
 try { db.prepare(`UPDATE volunteer_activities SET date=COALESCE(NULLIF(date,''),activity_date,'') WHERE date='' AND activity_date IS NOT NULL`).run(); } catch(e) {}
 // ─── end v153 migrations ──────────────────────────────────────────────────────
 
+// ─── v154 Schema Migrations ────────────────────────────────────────────────────
+// therapy_log: session_date↔log_date, therapist↔therapist_name, mood_before↔emotional_state_before, mood_after↔emotional_state_after/energy_after, topics↔themes, sessions_total↔total_sessions↔streak_sessions, breakthrough↔breakthroughs
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN therapist_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN mood_before INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN mood_after INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN emotional_state_before TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN emotional_state_after TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN energy_after INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN themes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN topics TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN breakthrough TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN breakthroughs TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN homework TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN discomfort_level INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN mood_lift INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN mood_shift INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN sessions_total INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN streak_sessions INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN new_therapist_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN temperature_c REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE therapy_log SET session_date=COALESCE(NULLIF(session_date,''),log_date,date,'') WHERE session_date=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE therapy_log SET log_date=COALESCE(NULLIF(log_date,''),session_date,date,'') WHERE log_date=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE therapy_log SET therapist_name=COALESCE(NULLIF(therapist_name,''),therapist,'') WHERE therapist_name=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE therapy_log SET therapist=COALESCE(NULLIF(therapist,''),therapist_name,'') WHERE therapist=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE therapy_log SET themes=COALESCE(NULLIF(themes,''),topics,'') WHERE themes=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE therapy_log SET topics=COALESCE(NULLIF(topics,''),themes,'') WHERE topics=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE therapy_log SET breakthrough=COALESCE(NULLIF(breakthrough,''),breakthroughs,'') WHERE breakthrough=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE therapy_log SET sessions_total=COALESCE(NULLIF(sessions_total,0),total_sessions,streak_sessions,0) WHERE sessions_total=0`).run(); } catch(e) {}
+// tax_deductions: year↔tax_year, receipt↔receipt_available
+try { db.prepare(`ALTER TABLE tax_deductions ADD COLUMN tax_year INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE tax_deductions ADD COLUMN receipt_available INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE tax_deductions SET tax_year=COALESCE(NULLIF(tax_year,0),year,0) WHERE tax_year=0 AND year IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE tax_deductions SET year=COALESCE(NULLIF(year,0),tax_year,0) WHERE year=0 AND tax_year IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE tax_deductions SET receipt_available=COALESCE(NULLIF(receipt_available,0),CASE WHEN receipt IS NOT NULL AND receipt!='' THEN 1 ELSE 0 END,0) WHERE receipt_available=0`).run(); } catch(e) {}
+// sup_sessions: duration_min↔duration_mins↔duration_minutes, avg_speed_kmh↔avg_speed_kph/avg_speed_mph, wind_kph↔wind_kmh/wind_mph/wind_kts, distance_km↔distance_miles, board_name↔board_type, stroke_rate_spm↔avg_stroke_rate
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN avg_speed_kmh REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN avg_speed_kph REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN max_speed_kph REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wind_kph REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wind_kmh REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wind_kts REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN board_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN stroke_rate_spm INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wave_height_ft REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wave_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN longest_ride_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN yoga_session INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN new_distance_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN new_speed_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN new_location_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sup_sessions SET duration_mins=COALESCE(NULLIF(duration_mins,0),duration_min,duration_minutes,0) WHERE duration_mins=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sup_sessions SET avg_speed_kmh=COALESCE(NULLIF(avg_speed_kmh,0),avg_speed_kph,CAST(avg_speed_mph*1.609 AS REAL),0) WHERE avg_speed_kmh=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sup_sessions SET avg_speed_kph=COALESCE(NULLIF(avg_speed_kph,0),avg_speed_kmh,0) WHERE avg_speed_kph=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sup_sessions SET wind_kph=COALESCE(NULLIF(wind_kph,0),wind_kmh,CAST(wind_mph*1.609 AS REAL),CAST(wind_kts*1.852 AS REAL),0) WHERE wind_kph=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sup_sessions SET wind_kmh=COALESCE(NULLIF(wind_kmh,0),wind_kph,0) WHERE wind_kmh=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sup_sessions SET distance_km=COALESCE(NULLIF(distance_km,0),CAST(distance_miles*1.609 AS REAL),0) WHERE distance_km=0 AND distance_miles IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sup_sessions SET stroke_rate_spm=COALESCE(NULLIF(stroke_rate_spm,0),avg_stroke_rate,0) WHERE stroke_rate_spm=0 AND avg_stroke_rate IS NOT NULL`).run(); } catch(e) {}
+// skincare_logs: log_date alias + hydration↔hydration_level, oiliness↔oiliness_level, redness↔redness_level, skin_feel↔skin_condition, new_breakouts↔breakout_count↔breakouts
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN hydration_level INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN oiliness_level INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN redness_level INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN skin_feel TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN breakout_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN new_breakouts INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN new_product_introduced INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN photo_url TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skincare_logs SET log_date=COALESCE(NULLIF(log_date,''),date,'') WHERE log_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skincare_logs SET hydration_level=COALESCE(NULLIF(hydration_level,3),hydration,3) WHERE hydration_level=3 AND hydration IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skincare_logs SET oiliness_level=COALESCE(NULLIF(oiliness_level,3),oiliness,3) WHERE oiliness_level=3 AND oiliness IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skincare_logs SET redness_level=COALESCE(NULLIF(redness_level,0),redness,0) WHERE redness_level=0 AND redness IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skincare_logs SET breakout_count=COALESCE(NULLIF(breakout_count,0),new_breakouts,breakouts,0) WHERE breakout_count=0`).run(); } catch(e) {}
+// skate_sessions: session_date alias + spot↔skate_park↔spot_name, skate_type↔session_type, duration_min↔duration_minutes, new_trick↔new_trick_name↔new_trick_learned, many more
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN skate_park TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN spot_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN skate_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN board_setup TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_trick_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_trick_learned TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN clip_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN land_rate_pct INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN manual_max_m REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_manual_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_land_rate_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_spot_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_park_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_trick_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skate_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skate_sessions SET skate_park=COALESCE(NULLIF(skate_park,''),spot,spot_name,'') WHERE skate_park=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skate_sessions SET spot_name=COALESCE(NULLIF(spot_name,''),spot,skate_park,'') WHERE spot_name=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skate_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE skate_sessions SET new_trick_name=COALESCE(NULLIF(new_trick_name,''),new_trick,new_trick_learned,'') WHERE new_trick_name=''`).run(); } catch(e) {}
+// rpg_campaigns: name↔campaign_name, dm↔dm_name↔gm_name, player_character↔character_name
+try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN campaign_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN dm_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN gm_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN player_character TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN synopsis TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN player_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rpg_campaigns SET campaign_name=COALESCE(NULLIF(campaign_name,''),name,'') WHERE campaign_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rpg_campaigns SET name=COALESCE(NULLIF(name,''),campaign_name,'') WHERE name='' AND campaign_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rpg_campaigns SET dm_name=COALESCE(NULLIF(dm_name,''),dm,gm_name,'') WHERE dm_name=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rpg_campaigns SET dm=COALESCE(NULLIF(dm,''),dm_name,gm_name,'') WHERE dm=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rpg_campaigns SET player_character=COALESCE(NULLIF(player_character,''),character_name,'') WHERE player_character='' AND character_name IS NOT NULL`).run(); } catch(e) {}
+// puzzles_log: pieces↔piece_count, time_hours↔duration_hours, date_completed/date_started
+try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN piece_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN duration_hours REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN date_completed TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN date_started TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN brand TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE puzzles_log SET piece_count=COALESCE(NULLIF(piece_count,0),pieces,0) WHERE piece_count=0 AND pieces IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE puzzles_log SET pieces=COALESCE(NULLIF(pieces,0),piece_count,0) WHERE pieces=0 AND piece_count IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE puzzles_log SET duration_hours=COALESCE(NULLIF(duration_hours,0),time_hours,0) WHERE duration_hours=0 AND time_hours IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE puzzles_log SET time_hours=COALESCE(NULLIF(time_hours,0),duration_hours,0) WHERE time_hours=0 AND duration_hours IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE puzzles_log SET date_completed=COALESCE(NULLIF(date_completed,''),date,'') WHERE date_completed='' AND date IS NOT NULL`).run(); } catch(e) {}
+// ─── end v154 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
