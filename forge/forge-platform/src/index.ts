@@ -168901,6 +168901,102 @@ try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_gym_flag INTE
 try { db.prepare(`UPDATE powerlifting_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
 // ─── end v157 migrations ──────────────────────────────────────────────────────
 
+// ─── v158 Schema Migrations ────────────────────────────────────────────────────
+// archery_sessions: 47 cols across 5 handlers — bow_id/equipment_id/bow_brand/discipline/location/session_type/arrows_shot/score/max_possible/max_possible_score/max_score/round_type/x_count/xs/tens/golds/groups_tight/wind_mph/indoor/target_face/target_type/range_name/bow_draw_weight_lb/draw_length_in/arrow_spine/point_grain/total_arrow_grain/competition/placement/new_score_pr/new_distance_flag/new_range_flag/distance_m/ends
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN bow_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN equipment_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN bow_brand TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN discipline TEXT DEFAULT 'target'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN session_type TEXT DEFAULT 'practice'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN arrows_shot INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN max_possible INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN max_possible_score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN max_score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN round_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN x_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN xs INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN tens INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN golds INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN groups_tight INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN wind_mph REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN indoor INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN target_face TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN target_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN range_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN bow_draw_weight_lb INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN draw_length_in REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN arrow_spine INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN point_grain INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN total_arrow_grain INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN placement INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN new_score_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN new_distance_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN new_range_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN distance_m REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN ends INTEGER DEFAULT 0`).run(); } catch(e) {}
+// backfills: score↔total_score, max_possible↔possible_score↔max_score, arrows_shot↔total_arrows, x_count↔xs, ends↔end_count, draw_weight_lbs↔bow_draw_weight_lb
+try { db.prepare(`UPDATE archery_sessions SET score=COALESCE(NULLIF(score,0),total_score,0) WHERE score=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET total_score=COALESCE(NULLIF(total_score,0),score,0) WHERE total_score=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET max_possible=COALESCE(NULLIF(max_possible,0),possible_score,max_score,0) WHERE max_possible=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET possible_score=COALESCE(NULLIF(possible_score,0),max_possible,max_score,0) WHERE possible_score=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET arrows_shot=COALESCE(NULLIF(arrows_shot,0),total_arrows,0) WHERE arrows_shot=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET total_arrows=COALESCE(NULLIF(total_arrows,0),arrows_shot,0) WHERE total_arrows=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET x_count=COALESCE(NULLIF(x_count,0),xs,0) WHERE x_count=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET xs=COALESCE(NULLIF(xs,0),x_count,0) WHERE xs=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET ends=COALESCE(NULLIF(ends,0),end_count,0) WHERE ends=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET bow_draw_weight_lb=COALESCE(NULLIF(bow_draw_weight_lb,0),draw_weight_lbs,0) WHERE bow_draw_weight_lb=0`).run(); } catch(e) {}
+// equestrian_sessions: stable/score/time_sec/placing/gaits_walked/gaits_trotted/gaits_cantered/gaits_practiced/new_score_pr/new_stable_flag/new_horse_flag
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN stable TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN score REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN time_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN gaits_walked INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN gaits_trotted INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN gaits_cantered INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN gaits_practiced TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN new_score_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN new_stable_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN new_horse_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+// ─── end v158 migrations ──────────────────────────────────────────────────────
+
+// ─── v159 Schema Migrations ────────────────────────────────────────────────────
+// yoga_sessions: calories/flexibility_focus/heart_rate_avg/instructor/intensity/new_pose_flag/new_studio_flag/perceived_exertion/pranayama/streak_day/studio
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN flexibility_focus TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN heart_rate_avg INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN instructor TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN intensity INTEGER DEFAULT 5`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN new_pose_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN new_studio_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN perceived_exertion INTEGER DEFAULT 5`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN pranayama TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN studio TEXT DEFAULT ''`).run(); } catch(e) {}
+// gymnastics_sessions: falls/level/new_skill/new_skill_landed/placing/routine_length_sec/score/skills_practiced
+try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN falls INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN level TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN new_skill TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN new_skill_landed INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN routine_length_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN score REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN skills_practiced TEXT DEFAULT ''`).run(); } catch(e) {}
+// fencing_sessions: actions_per_bout/bouts_fenced/bouts_won/club/competition/double_touches/new_club_flag/new_touches_pr/placing/tableau_round
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN actions_per_bout REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN bouts_fenced INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN bouts_won INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN club TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN double_touches INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN new_club_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN new_touches_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN tableau_round TEXT DEFAULT ''`).run(); } catch(e) {}
+// ─── end v159 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

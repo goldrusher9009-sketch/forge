@@ -1,3 +1,12 @@
+## v159.00 — Fix yoga_sessions/gymnastics_sessions/fencing_sessions schema aliases
+- yoga_sessions: calories/flexibility_focus/heart_rate_avg/instructor/intensity/new_pose_flag/new_studio_flag/pranayama/streak_day/studio
+- gymnastics_sessions: falls/level/new_skill/new_skill_landed/placing/routine_length_sec/score/skills_practiced
+- fencing_sessions: actions_per_bout/bouts_fenced/bouts_won/club/competition/double_touches/new_club_flag/new_touches_pr/placing/tableau_round
+
+## v158.00 — Fix archery_sessions/equestrian_sessions schema aliases
+- archery_sessions: bow_id/equipment_id/discipline/location/arrows_shot/score↔total_score/max_possible↔possible_score/x_count↔xs/ends↔end_count/round_type/indoor/competition/placement PR flags/distance_m
+- equestrian_sessions: stable/score/time_sec/placing/gaits_walked/gaits_trotted/gaits_cantered/new_score_pr/new_stable_flag/new_horse_flag
+
 ## v157.00 — Fix sailing_logs/surfing_sessions/paragliding_flights/martial_arts/boxing/rowing/powerlifting schema aliases
 - sailing_logs: log_date↔date, distance_nm↔nautical_miles, race/boat_id/departure_port/arrival_port cols
 - surfing_sessions: session_date↔date, best_wave/catch_rate_pct/longest_ride_sec/heat_score cols
