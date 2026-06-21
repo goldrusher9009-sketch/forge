@@ -1,3 +1,12 @@
+## v157.00 — Fix sailing_logs/surfing_sessions/paragliding_flights/martial_arts/boxing/rowing/powerlifting schema aliases
+- sailing_logs: log_date↔date, distance_nm↔nautical_miles, race/boat_id/departure_port/arrival_port cols
+- surfing_sessions: session_date↔date, best_wave/catch_rate_pct/longest_ride_sec/heat_score cols
+- paragliding_flights: 4 duration aliases, altitude_max_m/altitude_gain_m, craft_type↔glider↔glider_class
+- martial_arts_sessions: art/belt_level/stripe_count/sparring_rounds/submissions_hit/submissions_received cols
+- boxing_sessions: jab_count↔jabs, cross_count↔crosses, hook_count↔hooks, fight_result↔bout_result↔fight
+- rowing_sessions: avg_split_500m_sec↔avg_split_sec, heart_rate_avg↔avg_hr, avg_spm↔avg_stroke_rate
+- powerlifting_sessions: squat_kg/bench_kg/deadlift_kg/total_kg/wilks_score/weight_class/competition cols
+
 ## v156.00 — Fix climbing_sessions/music_practice/coding_sessions/side_projects/drone_flights schema aliases
 - climbing_sessions: duration_mins↔duration_minutes, sends↔routes_sent, hardest_grade↔hardest_sent↔highest_grade, gym_or_crag↔location
 - music_practice: practice_date↔date, duration_min↔duration_minutes, quality↔quality_rating, focus↔focus_areas, pieces↔pieces_practiced, bpm/scales/technique/repertoire/theory/improv minute cols

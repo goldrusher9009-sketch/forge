@@ -168764,6 +168764,143 @@ try { db.prepare(`UPDATE drone_flights SET incident_flag=COALESCE(NULLIF(inciden
 try { db.prepare(`UPDATE drone_flights SET part107_flight=COALESCE(NULLIF(part107_flight,0),part107,0) WHERE part107_flight=0 AND part107 IS NOT NULL`).run(); } catch(e) {}
 // ─── end v156 migrations ──────────────────────────────────────────────────────
 
+// ─── v157 Schema Migrations ────────────────────────────────────────────────────
+// sailing_logs: log_date/distance_nm↔nautical_miles/race cols
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN distance_nm REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN departure_port TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN destination_port TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN arrival_port TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN avg_wind_kts REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN max_wind_kts REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN max_boat_speed_kts REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN engine_hours REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN fuel_used_gal REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN crew_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN boat_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN race INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN race_class TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN race_fleet_size INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN incidents TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sailing_logs SET log_date=COALESCE(NULLIF(log_date,''),date,'') WHERE log_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sailing_logs SET distance_nm=COALESCE(NULLIF(distance_nm,0),nautical_miles,0) WHERE distance_nm=0 AND nautical_miles IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE sailing_logs SET nautical_miles=COALESCE(NULLIF(nautical_miles,0),distance_nm,0) WHERE nautical_miles=0 AND distance_nm IS NOT NULL`).run(); } catch(e) {}
+// surfing_sessions: session_date↔date, spot↔location, board/conditions/tide/heat_score/catch_rate_pct/longest_ride_sec PR flags
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN best_wave REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN best_maneuver TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN catch_rate_pct INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN longest_ride_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN heat_score REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN swell_period_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN new_spot_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN new_wave_size_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN new_maneuver_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE surfing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE surfing_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date='' AND session_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE surfing_sessions SET spot=COALESCE(NULLIF(spot,''),location,'') WHERE spot='' AND location IS NOT NULL`).run(); } catch(e) {}
+// paragliding_flights: flight_date/duration_min↔duration_minutes↔flight_duration_min↔flight_time_min, altitude cols
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN flight_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN flight_duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN flight_time_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN altitude_max_m INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN altitude_gain_m INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN cloud_base_m INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN best_thermal_ms REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN avg_sink_ms REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN flight_number INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN glider_class TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN craft_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN distance_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN duration_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN altitude_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE paragliding_flights SET flight_date=COALESCE(NULLIF(flight_date,''),date,'') WHERE flight_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE paragliding_flights SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,flight_duration_min,flight_time_min,0) WHERE duration_minutes=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE paragliding_flights SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE paragliding_flights SET glider=COALESCE(NULLIF(glider,''),craft_type,'') WHERE glider='' AND craft_type IS NOT NULL`).run(); } catch(e) {}
+// martial_arts_sessions: session_date, art/belt_level/sparring_rounds/stripe_count/submissions cols
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN art TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN belt_level TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN stripe_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN sparring_rounds INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN submissions_hit INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN submissions_received INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN techniques_drilled INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN instructor TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE martial_arts_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+// boxing_sessions: jabs↔jab_count, crosses↔cross_count, hooks↔hook_count, fight↔fight_result↔bout_result, bouts/kos/power_punches/punch_accuracy_pct cols
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN jab_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN cross_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN hook_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN fight_result TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN bout_result TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN bouts INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN kos INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN power_punches INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN punch_accuracy_pct INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN head_movement INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN cardio_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN round_duration_min INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN new_gym_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN new_combo_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN new_rounds_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE boxing_sessions SET jab_count=COALESCE(NULLIF(jab_count,0),jabs,0) WHERE jab_count=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE boxing_sessions SET jabs=COALESCE(NULLIF(jabs,0),jab_count,0) WHERE jabs=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE boxing_sessions SET cross_count=COALESCE(NULLIF(cross_count,0),crosses,0) WHERE cross_count=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE boxing_sessions SET hook_count=COALESCE(NULLIF(hook_count,0),hooks,0) WHERE hook_count=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE boxing_sessions SET fight_result=COALESCE(NULLIF(fight_result,''),bout_result,fight,'') WHERE fight_result=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE boxing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+// rowing_sessions: avg_split_500m_sec↔avg_split_sec, heart_rate_avg↔avg_hr, avg_spm↔avg_stroke_rate, erg_session/best_2k_sec/best_500m_sec PR cols
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_split_500m_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_split_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_spm INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_stroke_rate INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN heart_rate_avg INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN heart_rate_max INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_watts INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN max_watts INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN drag_factor INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN erg_session INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN boat_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN club TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN coach TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN crew TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN best_2k_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN best_500m_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN new_2k_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN new_500m_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN new_distance_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN new_club_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rowing_sessions SET avg_split_500m_sec=COALESCE(NULLIF(avg_split_500m_sec,0),avg_split_sec,0) WHERE avg_split_500m_sec=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rowing_sessions SET avg_split_sec=COALESCE(NULLIF(avg_split_sec,0),avg_split_500m_sec,0) WHERE avg_split_sec=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rowing_sessions SET heart_rate_avg=COALESCE(NULLIF(heart_rate_avg,0),avg_hr,0) WHERE heart_rate_avg=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rowing_sessions SET avg_hr=COALESCE(NULLIF(avg_hr,0),heart_rate_avg,0) WHERE avg_hr=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rowing_sessions SET avg_spm=COALESCE(NULLIF(avg_spm,0),avg_stroke_rate,0) WHERE avg_spm=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rowing_sessions SET avg_stroke_rate=COALESCE(NULLIF(avg_stroke_rate,0),avg_spm,0) WHERE avg_stroke_rate=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE rowing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+// powerlifting_sessions: squat_kg/bench_kg/deadlift_kg/total_kg/bodyweight_kg/wilks_score/competition cols
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN squat_kg REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN bench_kg REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN deadlift_kg REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN total_kg REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN bodyweight_kg REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN wilks_score REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN weight_class TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN gym TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN session_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_squat_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_bench_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_deadlift_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_total_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_gym_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE powerlifting_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+// ─── end v157 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
