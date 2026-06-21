@@ -1,3 +1,7 @@
+## v167.00 — Fix nutrition_logs/landing_pages schema
+- nutrition_logs: food/food_name/meal/date/serving_size (individual food item handler)
+- landing_pages: title/slug/sections/cta_url/status (second handler cols)
+
 ## v166.00 — Fix content_calendar/ab_tests/user_habit_streaks_v2 schema
 - content_calendar: author/channel/cta/target_keyword/word_count
 - ab_tests: test_name/visitors_a/visitors_b/conv_rate/lift_pct/description/page_url/variant names
