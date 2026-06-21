@@ -10369,7 +10369,7 @@ app.post('/api/achievements', authenticateToken, (req: any, res: any) => {
   }
 });
 app.get('/api/achievements/check', authenticateToken, (req: any, res: any) => {
-  const count = (db.prepare('SELECT COUNT(*) as n FROM ai_conversations WHERE user_id=?').get(req.user.id) as any)?.n || 0;
+  const count = (db.prepare('SELECT COUNT(*) as n FROM threads WHERE user_id=?').get(req.user.id) as any)?.n || 0;
   const unlocked: string[] = [];
   const defs = [
     { key: 'first_chat', thresh: 1, icon: '💬', desc: 'Started first conversation' },
