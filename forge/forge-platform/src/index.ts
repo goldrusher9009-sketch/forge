@@ -169521,11 +169521,40 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS api_rate_limits (id INTEGER PRIMARY
 app.get('/api/rate-limits', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM api_rate_limits WHERE user_id = ? ORDER BY api_name ASC').all(req.user.id); res.json({ success: true, limits: rows.map((r: any) => ({ ...r, utilization_min: r.limit_per_minute>0?(r.current_usage_min/r.limit_per_minute)*100:0, utilization_hour: r.limit_per_hour>0?(r.current_usage_hour/r.limit_per_hour)*100:0 })), throttled_count: rows.filter((r: any) => r.status==='throttled').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/rate-limits', auth, (req: any, res: any) => { try { const { api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes } = req.body; const r = db.prepare('INSERT INTO api_rate_limits (user_id, api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, api_name, endpoint||'', limit_per_minute||60, limit_per_hour||3600, limit_per_day||86400, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }
-// v181.00 schema migrations - drones flight_logs drone_maintenance
-try { db.prepare("ALTER TABLE drones ADD COLUMN purchase_date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE drones ADD COLUMN registration_expiry TEXT").run(); } catch(e) {}
-
-try { db.prepare("ALTER TABLE flight_logs ADD COLUMN flight_date TEXT").run(); } catch(e) {}
-
-try { db.prepare("ALTER TABLE drone_maintenance ADD COLUMN maintenance_date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE drone_maintenance ADD COLUMN next_due_date TEXT").run(); } catch(e) {}
+// v183.00 schema migrations - game_library game_sessions board_games board_game_plays podcast_subscriptions sports_teams
+try { db.prepare("ALTER TABLE game_library ADD COLUMN title TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_library ADD COLUMN platform TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_library ADD COLUMN genre TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_library ADD COLUMN status TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_library ADD COLUMN hours_played REAL").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_library ADD COLUMN rating INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_library ADD COLUMN purchased_price REAL").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_library ADD COLUMN notes TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_sessions ADD COLUMN date TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_sessions ADD COLUMN game TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_sessions ADD COLUMN duration_min INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_sessions ADD COLUMN achievements TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_sessions ADD COLUMN mood TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE game_sessions ADD COLUMN notes TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_games ADD COLUMN game_name TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_games ADD COLUMN year_published INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_games ADD COLUMN max_players INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_games ADD COLUMN complexity REAL").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_games ADD COLUMN bgg_id TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_games ADD COLUMN bgg_rating REAL").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_games ADD COLUMN wishlist INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_game_plays ADD COLUMN game_id INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_game_plays ADD COLUMN play_date TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_game_plays ADD COLUMN duration_mins INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_game_plays ADD COLUMN players TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_game_plays ADD COLUMN winner TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE board_game_plays ADD COLUMN score_data TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE podcast_subscriptions ADD COLUMN podcast_name TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE podcast_subscriptions ADD COLUMN category TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE podcast_subscriptions ADD COLUMN avg_episode_mins INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE sports_teams ADD COLUMN name TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE sports_teams ADD COLUMN sport TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE sports_teams ADD COLUMN league TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE sports_teams ADD COLUMN role TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE sports_teams ADD COLUMN season TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE sports_teams ADD COLUMN notes TEXT").run(); } catch(e) {}
