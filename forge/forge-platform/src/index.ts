@@ -167947,6 +167947,92 @@ try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN hours_total REAL DEFAULT
 try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
 // ─── end v145 migrations ──────────────────────────────────────────────────────
 
+// ─── v146 Schema Migrations ────────────────────────────────────────────────────
+// journal_entries: early (6747) has content+date; late (149537) has body+title+tags+weather+location+word_count
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN body TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN tags TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN weather TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN word_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN gratitude TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN affirmation TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN private INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN is_private INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`UPDATE journal_entries SET body=COALESCE(NULLIF(body,''),content,'') WHERE body='' AND content IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE journal_entries SET content=COALESCE(NULLIF(content,''),body,'') WHERE content='' AND body IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE journal_entries SET word_count=COALESCE(NULLIF(word_count,0),LENGTH(COALESCE(content,body,''))-LENGTH(REPLACE(COALESCE(content,body,''),' ',''))+1,0) WHERE word_count=0`).run(); } catch(e) {}
+// archery_sessions: early (52465) uses session_date/bow_type/total_score/total_arrows; late (154034) uses session_date/distance_m/arrows_shot/score
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN distance_m REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN arrows_shot INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN target_type TEXT DEFAULT 'standard'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN bow_type TEXT DEFAULT 'recurve'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET score=COALESCE(NULLIF(score,0),total_score,0) WHERE score=0 AND total_score IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET arrows_shot=COALESCE(NULLIF(arrows_shot,0),total_arrows,0) WHERE arrows_shot=0 AND total_arrows IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE archery_sessions SET distance_m=COALESCE(NULLIF(distance_m,0),CAST(distance_yards*0.9144 AS REAL),0) WHERE distance_m=0 AND distance_yards IS NOT NULL`).run(); } catch(e) {}
+// reading_books: add missing cols some early schemas lack
+try { db.prepare(`ALTER TABLE reading_books ADD COLUMN genre TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_books ADD COLUMN isbn TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_books ADD COLUMN cover_url TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_books ADD COLUMN start_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_books ADD COLUMN finish_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_books ADD COLUMN rating INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_books ADD COLUMN pages_read INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE reading_books ADD COLUMN total_pages INTEGER DEFAULT 0`).run(); } catch(e) {}
+// ─── end v146 migrations ──────────────────────────────────────────────────────
+
+// ─── v147 Schema Migrations ────────────────────────────────────────────────────
+// home_maintenance: 3 competing schemas
+// early (131487): task_name/completed_date/next_due_date/priority
+// mid  (138707): task/area/last_done/next_due/frequency
+// late (144611): date/room/category/contractor/status
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN task_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN task TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN area TEXT DEFAULT 'general'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN room TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN category TEXT DEFAULT 'repair'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN frequency TEXT DEFAULT 'yearly'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN last_done TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN next_due TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN completed_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN next_due_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN contractor TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN status TEXT DEFAULT 'completed'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN priority TEXT DEFAULT 'normal'`).run(); } catch(e) {}
+// bidirectional backfills
+try { db.prepare(`UPDATE home_maintenance SET task=COALESCE(NULLIF(task,''),task_name,'') WHERE task='' AND task_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET task_name=COALESCE(NULLIF(task_name,''),task,'') WHERE task_name='' AND task IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET date=COALESCE(NULLIF(date,''),completed_date,last_done,'') WHERE date='' AND (completed_date IS NOT NULL OR last_done IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET completed_date=COALESCE(NULLIF(completed_date,''),date,last_done,'') WHERE completed_date='' AND (date IS NOT NULL OR last_done IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET last_done=COALESCE(NULLIF(last_done,''),completed_date,date,'') WHERE last_done='' AND (completed_date IS NOT NULL OR date IS NOT NULL)`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET next_due=COALESCE(NULLIF(next_due,''),next_due_date,'') WHERE next_due='' AND next_due_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET next_due_date=COALESCE(NULLIF(next_due_date,''),next_due,'') WHERE next_due_date='' AND next_due IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE home_maintenance SET room=COALESCE(NULLIF(room,''),area,'') WHERE room='' AND area IS NOT NULL`).run(); } catch(e) {}
+// wine_cellar (9x): check col mismatches
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN wine_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN varietal TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN region TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN vintage INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN quantity INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN purchase_price REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN rating INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_cellar SET name=COALESCE(NULLIF(name,''),wine_name,'') WHERE name='' AND wine_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE wine_cellar SET wine_name=COALESCE(NULLIF(wine_name,''),name,'') WHERE wine_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+// chess_games (9x): ensure standard cols
+try { db.prepare(`ALTER TABLE chess_games ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE chess_games ADD COLUMN opponent TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE chess_games ADD COLUMN result TEXT DEFAULT 'draw'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE chess_games ADD COLUMN opening TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE chess_games ADD COLUMN color TEXT DEFAULT 'white'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE chess_games ADD COLUMN rating_before INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE chess_games ADD COLUMN rating_after INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE chess_games ADD COLUMN moves INTEGER DEFAULT 0`).run(); } catch(e) {}
+// ─── end v147 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

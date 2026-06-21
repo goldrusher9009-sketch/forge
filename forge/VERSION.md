@@ -1,3 +1,8 @@
+## v146.00 — Fix journal_entries (content/body alias), archery_sessions, reading_books
+- journal_entries: body↔content bidirectional alias + title/tags/weather/location/word_count/gratitude/affirmation
+- archery_sessions: score←total_score, arrows_shot←total_arrows, distance_m←distance_yards conversion
+- reading_books: adds genre/isbn/cover_url/start_date/finish_date/rating/pages_read/total_pages
+
 ## v145.00 — Fix podcast_shows, hiking_trails, home_rooms, candle_batches, beekeeping, watches, volunteer
 - podcast_shows: adds title/show_name bidirectional alias + host/status/episodes_total
 - hiking_trails: adds name/trail_name bidirectional alias + location/elevation_gain_m/status
