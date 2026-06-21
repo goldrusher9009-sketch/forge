@@ -1,3 +1,12 @@
+## v145.00 — Fix podcast_shows, hiking_trails, home_rooms, candle_batches, beekeeping, watches, volunteer
+- podcast_shows: adds title/show_name bidirectional alias + host/status/episodes_total
+- hiking_trails: adds name/trail_name bidirectional alias + location/elevation_gain_m/status
+- home_rooms: adds type col
+- candle_batches: adds batch_name/date/wax_type/wax_oz/scent/fragrance_oz/yield_candles/cost
+- beekeeping_inspections: adds date/hive_id/queen_seen/brood_pattern/honey_frames/temper
+- watch_collection: adds brand/model/purchase_price/current_value/condition
+- volunteer_orgs: adds name/role/hours_total/status
+
 ## v144.00 — Fix nutrition_logs food/food_name alias, mood_logs, ensure goals/expenses/transactions tables
 - nutrition_logs: adds food/food_name/meal/date/serving_size + bidirectional backfill
 - mood_logs: adds rating/score aliases (backfilled from mood)

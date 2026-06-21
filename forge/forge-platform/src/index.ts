@@ -167894,6 +167894,59 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AU
 try { db.prepare(`CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount REAL DEFAULT 0, type TEXT DEFAULT 'expense', category TEXT, description TEXT, date TEXT, account TEXT DEFAULT 'checking', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
 // ─── end v144 migrations ──────────────────────────────────────────────────────
 
+// ─── v145 Schema Migrations ────────────────────────────────────────────────────
+// podcast_shows: early (46017) uses show_name, later (139431) uses title
+try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN show_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN host TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN episodes_total INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN episodes_listened INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_shows SET title=COALESCE(NULLIF(title,''),show_name,'') WHERE title='' AND show_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_shows SET show_name=COALESCE(NULLIF(show_name,''),title,'') WHERE show_name='' AND title IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_shows SET episodes_total=COALESCE(NULLIF(episodes_total,0),total_episodes,0) WHERE episodes_total=0 AND total_episodes IS NOT NULL`).run(); } catch(e) {}
+// hiking_trails: early (132207) uses trail_name, later (139687) uses name + location + elevation_gain_m + status
+try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN trail_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN elevation_gain_m INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN status TEXT DEFAULT 'want-to-hike'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN completed INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN completed_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE hiking_trails SET name=COALESCE(NULLIF(name,''),trail_name,'') WHERE name='' AND trail_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE hiking_trails SET trail_name=COALESCE(NULLIF(trail_name,''),name,'') WHERE trail_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE hiking_trails SET elevation_gain_m=COALESCE(NULLIF(elevation_gain_m,0),elevation_m,0) WHERE elevation_gain_m=0 AND elevation_m IS NOT NULL`).run(); } catch(e) {}
+// home_rooms: late (150845) uses TEXT user_id — consistent enough, but add type col that some handlers need
+try { db.prepare(`ALTER TABLE home_rooms ADD COLUMN type TEXT DEFAULT 'bedroom'`).run(); } catch(e) {}
+// candle_batches: check for col mismatch
+try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN batch_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN wax_type TEXT DEFAULT 'soy'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN wax_oz REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN scent TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN fragrance_oz REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN yield_candles INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN cost REAL DEFAULT 0`).run(); } catch(e) {}
+// beekeeping_inspections: ensure standard cols
+try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN hive_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN queen_seen INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN brood_pattern TEXT DEFAULT 'good'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN honey_frames INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN temper TEXT DEFAULT 'calm'`).run(); } catch(e) {}
+// watch_collection: ensure standard cols
+try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN brand TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN model TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN purchase_price REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN current_value REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN condition TEXT DEFAULT 'excellent'`).run(); } catch(e) {}
+// volunteer_orgs: ensure standard cols
+try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN role TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN hours_total REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
+// ─── end v145 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
