@@ -1,3 +1,10 @@
+## v156.00 — Fix climbing_sessions/music_practice/coding_sessions/side_projects/drone_flights schema aliases
+- climbing_sessions: duration_mins↔duration_minutes, sends↔routes_sent, hardest_grade↔hardest_sent↔highest_grade, gym_or_crag↔location
+- music_practice: practice_date↔date, duration_min↔duration_minutes, quality↔quality_rating, focus↔focus_areas, pieces↔pieces_practiced, bpm/scales/technique/repertoire/theory/improv minute cols
+- coding_sessions: session_date, difficulty/language/platform/problems_solved/problems_attempted/streak_day PR flags
+- side_projects: started_date↔start_date, monthly_revenue_usd/monthly_costs_usd/user_count/repo_url/target_launch
+- drone_flights: duration aliases (4 variants), altitude_m↔altitude_ft, speed/wind unit aliases (kph/kmh/mph), purpose↔flight_purpose, incident_flag aliases, part107 alias
+
 ## v155.00 — Fix pottery_pieces (5 handlers, 60+ col unification), research_sources, meditation_sessions schema aliases
 - pottery_pieces: piece_name↔name, creation_date↔made_date↔make_date, clay_weight_g↔clay_weight_grams↔clay_lbs, forming_method↔building_method, price_usd↔asking_price_usd↔selling_price_usd, all bisque/glaze/kiln/fire cols
 - research_sources: source_type↔type, authors↔author, key_findings↔key_points, credibility↔credibility_score, project/project_id/cited

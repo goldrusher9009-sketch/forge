@@ -168652,6 +168652,118 @@ try { db.prepare(`UPDATE meditation_sessions SET practice_type=COALESCE(NULLIF(p
 try { db.prepare(`UPDATE meditation_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
 // ─── end v155 migrations ──────────────────────────────────────────────────────
 
+// ─── v156 Schema Migrations ────────────────────────────────────────────────────
+// climbing_sessions: duration_mins↔duration_minutes, sends↔routes_sent, flashes/onsights/hardest_grade↔hardest_sent↔highest_grade, gym_or_crag↔location
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN hardest_sent TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN highest_grade TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN sends INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN flashes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN onsights INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN routes_attempted INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN routes_climbed INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN falls INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN gym_or_crag TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN climbing_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN session_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE climbing_sessions SET duration_mins=COALESCE(NULLIF(duration_mins,0),duration_minutes,0) WHERE duration_mins=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE climbing_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_mins,0) WHERE duration_minutes=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE climbing_sessions SET sends=COALESCE(NULLIF(sends,0),routes_sent,0) WHERE sends=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE climbing_sessions SET routes_sent=COALESCE(NULLIF(routes_sent,0),sends,0) WHERE routes_sent=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE climbing_sessions SET hardest_sent=COALESCE(NULLIF(hardest_sent,''),hardest_grade,highest_grade,'') WHERE hardest_sent=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE climbing_sessions SET hardest_grade=COALESCE(NULLIF(hardest_grade,''),hardest_sent,highest_grade,'') WHERE hardest_grade=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE climbing_sessions SET gym_or_crag=COALESCE(NULLIF(gym_or_crag,''),location,'') WHERE gym_or_crag='' AND location IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE climbing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+// music_practice: practice_date↔date, duration_min↔duration_minutes, quality↔quality_rating, focus↔focus_areas, pieces↔pieces_practiced, techniques↔techniques_worked, songs_worked/bpm cols
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN practice_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN quality_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN focus_areas TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN pieces_practiced TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN techniques_worked TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN songs_worked TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN bpm_goal INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN bpm_achieved INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN scales_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN technique_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN repertoire_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN theory_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN improvisation_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN instrument_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE music_practice ADD COLUMN created_at TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET practice_date=COALESCE(NULLIF(practice_date,''),date,'') WHERE practice_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET date=COALESCE(NULLIF(date,''),practice_date,'') WHERE date='' AND practice_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET quality_rating=COALESCE(NULLIF(quality_rating,3),quality,3) WHERE quality_rating=3 AND quality IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET focus_areas=COALESCE(NULLIF(focus_areas,''),focus,'') WHERE focus_areas='' AND focus IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET pieces_practiced=COALESCE(NULLIF(pieces_practiced,''),pieces,'') WHERE pieces_practiced='' AND pieces IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE music_practice SET techniques_worked=COALESCE(NULLIF(techniques_worked,''),techniques,'') WHERE techniques_worked='' AND techniques IS NOT NULL`).run(); } catch(e) {}
+// coding_sessions: session_date/difficulty/language/platform/problems_solved/problems_attempted/streak_day/new_language_flag/new_platform_flag/new_problems_pr
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN difficulty TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN language TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN platform TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN problems_solved INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN problems_attempted INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN new_language_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN new_platform_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN new_problems_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE coding_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE coding_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date='' AND session_date IS NOT NULL`).run(); } catch(e) {}
+// side_projects: started_date↔start_date
+try { db.prepare(`ALTER TABLE side_projects ADD COLUMN started_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE side_projects ADD COLUMN monthly_revenue_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE side_projects ADD COLUMN monthly_costs_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE side_projects ADD COLUMN user_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE side_projects ADD COLUMN repo_url TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE side_projects ADD COLUMN target_launch TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE side_projects ADD COLUMN motivation TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE side_projects SET started_date=COALESCE(NULLIF(started_date,''),start_date,'') WHERE started_date='' AND start_date IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE side_projects SET start_date=COALESCE(NULLIF(start_date,''),started_date,'') WHERE start_date='' AND started_date IS NOT NULL`).run(); } catch(e) {}
+// drone_flights: duration_min↔duration_minutes↔flight_time_min↔flight_duration_mins, distance_km↔distance_ft, max_altitude_m↔max_altitude_ft, wind_kph↔wind_mph↔wind_speed_kmh, max_speed_kph↔max_speed_kmh, flight_purpose↔purpose, incident_flag↔incident↔incident_occurred, part107↔part107_flight
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN flight_time_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN flight_duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN distance_ft REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN max_altitude_m REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN max_distance_m REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN max_speed_kmh REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN max_speed_kph REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN wind_kph REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN wind_speed_kmh REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN purpose TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN flight_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN incident_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN incident_occurred INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN incident_desc TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN part107_flight INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN permit_required INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN permit_obtained INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN waiver_required INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN waiver_airspace TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN keeper_clips INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN footage_gb REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN color_profile TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN nd_filter TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN battery_cycles INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN new_location_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN created_at TEXT DEFAULT ''`).run(); } catch(e) {}
+// drone_flights backfills
+try { db.prepare(`UPDATE drone_flights SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,flight_time_min,flight_duration_mins,0) WHERE duration_minutes=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET flight_time_min=COALESCE(NULLIF(flight_time_min,0),duration_min,duration_minutes,0) WHERE flight_time_min=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET max_altitude_m=COALESCE(NULLIF(max_altitude_m,0),CAST(max_altitude_ft*0.3048 AS REAL),0) WHERE max_altitude_m=0 AND max_altitude_ft IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET max_speed_kph=COALESCE(NULLIF(max_speed_kph,0),max_speed_kmh,CAST(wind_mph*1.609 AS REAL),0) WHERE max_speed_kph=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET max_speed_kmh=COALESCE(NULLIF(max_speed_kmh,0),max_speed_kph,0) WHERE max_speed_kmh=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET wind_kph=COALESCE(NULLIF(wind_kph,0),wind_speed_kmh,CAST(wind_mph*1.609 AS REAL),0) WHERE wind_kph=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET wind_speed_kmh=COALESCE(NULLIF(wind_speed_kmh,0),wind_kph,0) WHERE wind_speed_kmh=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET purpose=COALESCE(NULLIF(purpose,''),flight_purpose,'') WHERE purpose='' AND flight_purpose IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET flight_purpose=COALESCE(NULLIF(flight_purpose,''),purpose,'') WHERE flight_purpose='' AND purpose IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET incident_flag=COALESCE(NULLIF(incident_flag,0),incident_occurred,CASE WHEN incident IS NOT NULL AND incident!='' THEN 1 ELSE 0 END,0) WHERE incident_flag=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE drone_flights SET part107_flight=COALESCE(NULLIF(part107_flight,0),part107,0) WHERE part107_flight=0 AND part107 IS NOT NULL`).run(); } catch(e) {}
+// ─── end v156 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
