@@ -64985,6 +64985,16 @@ app.get('/api/smarthome/dashboard', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/smarthome/automations', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { automation_name, trigger_type='time', devices_involved, time_saved_min_per_day=1, notes } = req.body;
+    if (!automation_name) return res.status(400).json({ success: false, error: 'automation_name required' });
+    const r = db.prepare(`INSERT INTO automation_logs (user_id,automation_name,trigger_type,devices_involved,time_saved_min_per_day,notes) VALUES (?,?,?,?,?,?)`).run(uid,automation_name,trigger_type,devices_involved||null,time_saved_min_per_day,notes||null);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.post('/api/smarthome/devices', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
