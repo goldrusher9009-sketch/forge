@@ -168537,6 +168537,121 @@ try { db.prepare(`UPDATE puzzles_log SET time_hours=COALESCE(NULLIF(time_hours,0
 try { db.prepare(`UPDATE puzzles_log SET date_completed=COALESCE(NULLIF(date_completed,''),date,'') WHERE date_completed='' AND date IS NOT NULL`).run(); } catch(e) {}
 // ─── end v154 migrations ──────────────────────────────────────────────────────
 
+// ─── v155 Schema Migrations ────────────────────────────────────────────────────
+// pottery_pieces: 5 handlers — massive schema split. Unify all col variants.
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN piece_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN piece_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN form TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN building_method TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN forming_method TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_body TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_weight_g REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_weight_grams REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_lbs REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN creation_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN made_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN make_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN bisque_fire TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN bisque_cone TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN bisque_fired INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_fire TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_cone TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_fired INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_colors TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_layers INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN fire_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN fire_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN cone TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN kiln TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN kiln_firing TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN kiln_temp_c INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN atmosphere TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN surface_treatment TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN height_cm REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN height_in REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN width_cm REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN diameter_cm REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN diameter_in REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN wall_thickness_mm REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN dimensions TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN hours_worked REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN studio_fee_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN total_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN for_sale INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN asking_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN selling_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN sold INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN sold_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN commission INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN client TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN functional INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN survived INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN survived_bisque INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN survived_glaze INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN survived_firing INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN cracked INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN warped INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN piece_number INTEGER DEFAULT 0`).run(); } catch(e) {}
+// backfills for pottery_pieces
+try { db.prepare(`UPDATE pottery_pieces SET piece_name=COALESCE(NULLIF(piece_name,''),name,'') WHERE piece_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET name=COALESCE(NULLIF(name,''),piece_name,'') WHERE name='' AND piece_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET creation_date=COALESCE(NULLIF(creation_date,''),made_date,make_date,date,'') WHERE creation_date=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET made_date=COALESCE(NULLIF(made_date,''),creation_date,make_date,'') WHERE made_date=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET clay_weight_g=COALESCE(NULLIF(clay_weight_g,0),clay_weight_grams,CAST(clay_lbs*453.592 AS REAL),0) WHERE clay_weight_g=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces ADD COLUMN hours=COALESCE(NULLIF(hours,0),hours_worked,0) WHERE hours=0 AND hours_worked IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET hours_worked=COALESCE(NULLIF(hours_worked,0),hours,0) WHERE hours_worked=0 AND hours IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET price_usd=COALESCE(NULLIF(price_usd,0),asking_price_usd,selling_price_usd,0) WHERE price_usd=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET asking_price_usd=COALESCE(NULLIF(asking_price_usd,0),price_usd,0) WHERE asking_price_usd=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET forming_method=COALESCE(NULLIF(forming_method,''),building_method,'') WHERE forming_method='' AND building_method IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET building_method=COALESCE(NULLIF(building_method,''),forming_method,'') WHERE building_method='' AND forming_method IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET clay_body=COALESCE(NULLIF(clay_body,''),clay_type,'') WHERE clay_body='' AND clay_type IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE pottery_pieces SET clay_type=COALESCE(NULLIF(clay_type,''),clay_body,'') WHERE clay_type='' AND clay_body IS NOT NULL`).run(); } catch(e) {}
+// research_sources: type↔source_type, authors↔author, key_findings↔key_points, credibility↔credibility_score, project↔project_id
+try { db.prepare(`ALTER TABLE research_sources ADD COLUMN source_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE research_sources ADD COLUMN authors TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE research_sources ADD COLUMN key_findings TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE research_sources ADD COLUMN key_points TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE research_sources ADD COLUMN credibility_score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE research_sources ADD COLUMN project TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE research_sources ADD COLUMN project_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE research_sources ADD COLUMN cited INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE research_sources SET source_type=COALESCE(NULLIF(source_type,''),type,'') WHERE source_type='' AND type IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE research_sources SET type=COALESCE(NULLIF(type,''),source_type,'') WHERE type='' AND source_type IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE research_sources SET authors=COALESCE(NULLIF(authors,''),author,'') WHERE authors='' AND author IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE research_sources SET author=COALESCE(NULLIF(author,''),authors,'') WHERE author='' AND authors IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE research_sources SET key_findings=COALESCE(NULLIF(key_findings,''),key_points,'') WHERE key_findings='' AND key_points IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE research_sources SET key_points=COALESCE(NULLIF(key_points,''),key_findings,'') WHERE key_points='' AND key_findings IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE research_sources SET credibility_score=COALESCE(NULLIF(credibility_score,0),credibility,0) WHERE credibility_score=0 AND credibility IS NOT NULL`).run(); } catch(e) {}
+// meditation_sessions: app_or_teacher↔app_used, duration_min↔duration_minutes, insights↔insight_noted, practice_type↔technique, calm_score/focus_quality/mood_delta
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN app_used TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN insight_noted TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN practice_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN calm_score INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN focus_quality INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN mood_before INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN mood_after INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN mood_delta INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN morning INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN sitting_position TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN new_duration_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN new_technique_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meditation_sessions SET app_used=COALESCE(NULLIF(app_used,''),app_or_teacher,'') WHERE app_used='' AND app_or_teacher IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meditation_sessions SET app_or_teacher=COALESCE(NULLIF(app_or_teacher,''),app_used,'') WHERE app_or_teacher='' AND app_used IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meditation_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0 AND duration_min IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meditation_sessions SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0 AND duration_minutes IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meditation_sessions SET insight_noted=COALESCE(NULLIF(insight_noted,''),insights,'') WHERE insight_noted='' AND insights IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meditation_sessions SET insights=COALESCE(NULLIF(insights,''),insight_noted,'') WHERE insights='' AND insight_noted IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meditation_sessions SET practice_type=COALESCE(NULLIF(practice_type,''),technique,'') WHERE practice_type='' AND technique IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE meditation_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
+// ─── end v155 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });

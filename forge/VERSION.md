@@ -1,3 +1,8 @@
+## v155.00 — Fix pottery_pieces (5 handlers, 60+ col unification), research_sources, meditation_sessions schema aliases
+- pottery_pieces: piece_name↔name, creation_date↔made_date↔make_date, clay_weight_g↔clay_weight_grams↔clay_lbs, forming_method↔building_method, price_usd↔asking_price_usd↔selling_price_usd, all bisque/glaze/kiln/fire cols
+- research_sources: source_type↔type, authors↔author, key_findings↔key_points, credibility↔credibility_score, project/project_id/cited
+- meditation_sessions: app_used↔app_or_teacher, duration_min↔duration_minutes, insights↔insight_noted, practice_type↔technique, calm_score/focus_quality/mood_delta/streak_day
+
 ## v154.00 — Fix therapy_log/tax_deductions/sup_sessions/skincare_logs/skate_sessions/rpg_campaigns/puzzles_log schema aliases
 - therapy_log: session_date↔log_date, therapist↔therapist_name, topics↔themes, breakthrough↔breakthroughs, mood_before/after/lift/shift cols
 - sup_sessions: duration_min↔duration_mins↔duration_minutes, speed/wind unit aliases (kph/kmh/mph/kts), board_name/wave/competition cols
