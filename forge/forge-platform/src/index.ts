@@ -60812,6 +60812,25 @@ app.post('/api/sideprojects/projects', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/sideprojects/milestones', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { project_id, milestone, target_date, notes } = req.body;
+    if (!project_id || !milestone) return res.status(400).json({ success: false, error: 'project_id and milestone required' });
+    const r = db.prepare(`INSERT INTO project_milestones (user_id,project_id,milestone,target_date,notes) VALUES (?,?,?,?,?)`).run(uid,project_id,milestone,target_date||null,notes||null);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.patch('/api/sideprojects/milestones/:id', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { completed, completed_date, notes } = req.body;
+    db.prepare(`UPDATE project_milestones SET completed=COALESCE(?,completed), completed_date=COALESCE(?,completed_date), notes=COALESCE(?,notes) WHERE id=? AND user_id=?`).run(completed??null,completed_date||null,notes||null,req.params.id,uid);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── B625: Personal Climate & Weather Station Log ────────────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS weather_readings (
@@ -169521,5 +169540,3 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS api_rate_limits (id INTEGER PRIMARY
 app.get('/api/rate-limits', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM api_rate_limits WHERE user_id = ? ORDER BY api_name ASC').all(req.user.id); res.json({ success: true, limits: rows.map((r: any) => ({ ...r, utilization_min: r.limit_per_minute>0?(r.current_usage_min/r.limit_per_minute)*100:0, utilization_hour: r.limit_per_hour>0?(r.current_usage_hour/r.limit_per_hour)*100:0 })), throttled_count: rows.filter((r: any) => r.status==='throttled').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/rate-limits', auth, (req: any, res: any) => { try { const { api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes } = req.body; const r = db.prepare('INSERT INTO api_rate_limits (user_id, api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, api_name, endpoint||'', limit_per_minute||60, limit_per_hour||3600, limit_per_day||86400, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }
-// v195.00 schema migrations - social_posts scheduled_at
-try { db.prepare("ALTER TABLE social_posts ADD COLUMN scheduled_at DATETIME").run(); } catch(e) {}
