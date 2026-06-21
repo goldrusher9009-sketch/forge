@@ -1,3 +1,8 @@
+## v166.00 — Fix content_calendar/ab_tests/user_habit_streaks_v2 schema
+- content_calendar: author/channel/cta/target_keyword/word_count
+- ab_tests: test_name/visitors_a/visitors_b/conv_rate/lift_pct/description/page_url/variant names
+- user_habit_streaks_v2: habit_name/frequency aliases
+
 ## v165.00 — Fix reading_sessions/sleep_logs/user_meditation_log schema
 - reading_sessions: pages_start/pages_end/session_date aliases
 - sleep_logs: 29 missing cols (log_date/total_hours/hrv/rem_sleep_pct/device/alcohol/caffeine/exercise/etc)

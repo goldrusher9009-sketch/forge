@@ -169258,6 +169258,35 @@ try { db.prepare(`ALTER TABLE user_meditation_log ADD COLUMN session_date TEXT D
 try { db.prepare(`UPDATE user_meditation_log SET session_date=COALESCE(NULLIF(session_date,''),log_date,'') WHERE session_date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
 // ─── end v165 migrations ──────────────────────────────────────────────────────
 
+// ─── v166 Schema Migrations ────────────────────────────────────────────────────
+// content_calendar: author/channel/cta/target_keyword/word_count
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN author TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN channel TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN cta TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN target_keyword TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN word_count INTEGER DEFAULT 0`).run(); } catch(e) {}
+// ab_tests: conv_rate_a/conv_rate_b/description/lift_pct/notes/page_url/test_name/variant_a_name/variant_b_name/visitors_a/visitors_b
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN conv_rate_a REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN conv_rate_b REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN description TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN lift_pct REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN page_url TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN test_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN variant_a_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN variant_b_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN visitors_a INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE ab_tests ADD COLUMN visitors_b INTEGER DEFAULT 0`).run(); } catch(e) {}
+// backfill ab_tests: test_name↔name, visitors↔impressions
+try { db.prepare(`UPDATE ab_tests SET test_name=COALESCE(NULLIF(test_name,''),name,'') WHERE test_name='' AND name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ab_tests SET visitors_a=COALESCE(NULLIF(visitors_a,0),impressions_a,0) WHERE visitors_a=0 AND impressions_a IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE ab_tests SET visitors_b=COALESCE(NULLIF(visitors_b,0),impressions_b,0) WHERE visitors_b=0 AND impressions_b IS NOT NULL`).run(); } catch(e) {}
+// user_habit_streaks_v2: habit_name/frequency (second handler uses them)
+try { db.prepare(`ALTER TABLE user_habit_streaks_v2 ADD COLUMN habit_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE user_habit_streaks_v2 ADD COLUMN frequency TEXT DEFAULT 'daily'`).run(); } catch(e) {}
+try { db.prepare(`UPDATE user_habit_streaks_v2 SET habit_name=COALESCE(NULLIF(habit_name,''),habit,'') WHERE habit_name='' AND habit IS NOT NULL`).run(); } catch(e) {}
+// ─── end v166 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
