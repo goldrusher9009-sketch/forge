@@ -1,3 +1,11 @@
+## v161.00 — Fix podcast_episodes schema (14 handlers, massive divergence)
+- podcast_episodes: episode_title/num/type/show_id/show_name, publish_date/record_date aliases, duration_min↔mins↔minutes, guest↔guest_name↔guests, sponsor_revenue↔sponsorship↔ad_revenue, edit_hours↔editing_hours, listen_date aliases, daw/mic/recording/transcript/youtube cols
+
+## v160.00 — Fix calligraphy_sessions/diy_projects/aquarium_logs schema aliases
+- calligraphy_sessions: unified 4-handler schema divergence (style/script/tool/ink/paper/duration/satisfaction all aliased)
+- diy_projects: name/status/priority/started_date/completed_date/estimated_cost_usd/location_in_home cols
+- aquarium_logs: salinity_sg/hardness_dkh/dosing/feeding_amount/alert/observations cols
+
 ## v159.00 — Fix yoga_sessions/gymnastics_sessions/fencing_sessions schema aliases
 - yoga_sessions: calories/flexibility_focus/heart_rate_avg/instructor/intensity/new_pose_flag/new_studio_flag/pranayama/streak_day/studio
 - gymnastics_sessions: falls/level/new_skill/new_skill_landed/placing/routine_length_sec/score/skills_practiced

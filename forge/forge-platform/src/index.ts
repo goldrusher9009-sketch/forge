@@ -168997,6 +168997,125 @@ try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN placing INTEGER DEFAUL
 try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN tableau_round TEXT DEFAULT ''`).run(); } catch(e) {}
 // ─── end v159 migrations ──────────────────────────────────────────────────────
 
+// ─── v160 Schema Migrations ────────────────────────────────────────────────────
+// calligraphy_sessions: 4 handlers with 3 different schemas — unify all missing cols
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN style TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN script TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN script_style TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN tool TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN tools TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN ink TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN ink_brand TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN paper TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN paper_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN drills_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN letters_practiced TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN project_type TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN project_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN quote_or_text TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN client_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN charged_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN commission INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN commission_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN skill_focus TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN focus TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN breakthrough TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN frustration_level INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN satisfaction_level INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN satisfaction_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN rating INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+// backfills: duration_min↔duration_minutes, satisfaction↔satisfaction_level↔satisfaction_rating↔rating, date↔session_date, focus_area↔focus↔skill_focus, style↔script↔script_style, tool↔tools
+try { db.prepare(`UPDATE calligraphy_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE calligraphy_sessions SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE calligraphy_sessions SET satisfaction_rating=COALESCE(NULLIF(satisfaction_rating,0),satisfaction,satisfaction_level,rating,3) WHERE satisfaction_rating=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE calligraphy_sessions SET satisfaction=COALESCE(NULLIF(satisfaction,0),satisfaction_rating,satisfaction_level,rating,3) WHERE satisfaction=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE calligraphy_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE calligraphy_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE calligraphy_sessions SET focus=COALESCE(NULLIF(focus,''),focus_area,skill_focus,'') WHERE focus=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE calligraphy_sessions SET style=COALESCE(NULLIF(style,''),script,script_style,'') WHERE style=''`).run(); } catch(e) {}
+// diy_projects: name/status/priority/started_date/completed_date/estimated_cost_usd/materials_cost/location_in_home/tutorial_url
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN status TEXT DEFAULT 'planning'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN priority INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN started_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN completed_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN estimated_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN materials_cost REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN location_in_home TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN tutorial_url TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE diy_projects SET name=COALESCE(NULLIF(name,''),project_name,'') WHERE name='' AND project_name IS NOT NULL`).run(); } catch(e) {}
+try { db.prepare(`UPDATE diy_projects SET estimated_cost_usd=COALESCE(NULLIF(estimated_cost_usd,0),materials_cost,0) WHERE estimated_cost_usd=0`).run(); } catch(e) {}
+// aquarium_logs: salinity_sg/hardness_dkh/dosing/feeding_amount/alert/observations
+try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN salinity_sg REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN hardness_dkh REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN dosing TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN feeding_amount TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN alert TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN observations TEXT DEFAULT ''`).run(); } catch(e) {}
+// ─── end v160 migrations ──────────────────────────────────────────────────────
+
+// ─── v161 Schema Migrations ────────────────────────────────────────────────────
+// podcast_episodes: 14 handlers with massive schema divergence — all missing cols
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN episode_title TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN episode_num INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN episode_type TEXT DEFAULT 'interview'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN show_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN show_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN publish_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN published_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN record_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN recording_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN raw_duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN edited_duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN raw_audio_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN progress_min INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest_id INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest_names TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest_title TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guests TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN downloads INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN ad_revenue_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN sponsor TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN sponsor_revenue_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN sponsorship_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN daw TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN mic TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN recording_location TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN recording_quality INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN edit_hours REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN editing_hours REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN hosting_platform TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN outline TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN show_notes_written INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN transcript_done INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN youtube_uploaded INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN topics TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN quotes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN key_takeaways TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN action_items TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN rating INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN listened INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN listen_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN listened_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN date_listened TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN listen_percent INTEGER DEFAULT 0`).run(); } catch(e) {}
+// backfills: duration aliases, date aliases, guest aliases, revenue aliases
+try { db.prepare(`UPDATE podcast_episodes SET duration_min=COALESCE(NULLIF(duration_min,0),duration_mins,duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,duration_mins,0) WHERE duration_minutes=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET publish_date=COALESCE(NULLIF(publish_date,''),published_date,record_date,'') WHERE publish_date=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET guest=COALESCE(NULLIF(guest,''),guest_name,guests,'') WHERE guest=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET sponsor_revenue_usd=COALESCE(NULLIF(sponsor_revenue_usd,0),sponsorship_usd,ad_revenue_usd,0) WHERE sponsor_revenue_usd=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET edit_hours=COALESCE(NULLIF(edit_hours,0),editing_hours,0) WHERE edit_hours=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE podcast_episodes SET listen_date=COALESCE(NULLIF(listen_date,''),listened_date,date_listened,'') WHERE listen_date=''`).run(); } catch(e) {}
+// ─── end v161 migrations ──────────────────────────────────────────────────────
+
 app.get('/api/nps-surveys', auth, (req: any, res: any) => { try { const { segment, product } = req.query as any; let q = 'SELECT * FROM nps_surveys WHERE user_id = ?'; const p: any[] = [req.user.id]; if (segment) { q += ' AND segment = ?'; p.push(segment); } if (product) { q += ' AND product = ?'; p.push(product); } q += ' ORDER BY surveyed_at DESC'; const rows = db.prepare(q).all(...p); const promoters = rows.filter((r: any) => r.score >= 9).length; const detractors = rows.filter((r: any) => r.score <= 6).length; const nps = rows.length > 0 ? Math.round(((promoters - detractors) / rows.length) * 100) : 0; res.json({ success: true, responses: rows, nps_score: nps, promoters, passives: rows.filter((r: any) => r.score >= 7 && r.score <= 8).length, detractors, response_count: rows.length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/nps-surveys', auth, (req: any, res: any) => { try { const { respondent_email, respondent_name, score, comment, product, segment, channel } = req.body; const s = Math.min(10, Math.max(0, score || 0)); const cat = s >= 9 ? 'promoter' : s >= 7 ? 'passive' : 'detractor'; const follow_up = cat === 'detractor' ? 1 : 0; const r = db.prepare('INSERT INTO nps_surveys (user_id, respondent_email, respondent_name, score, category, comment, product, segment, channel, follow_up_needed) VALUES (?,?,?,?,?,?,?,?,?,?)').run(req.user.id, respondent_email || '', respondent_name || '', s, cat, comment || '', product || '', segment || '', channel || 'email', follow_up); res.json({ success: true, id: r.lastInsertRowid, category: cat }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/nps-surveys/:id/followup', auth, (req: any, res: any) => { try { db.prepare('UPDATE nps_surveys SET follow_up_done=1 WHERE id=? AND user_id=?').run(req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
