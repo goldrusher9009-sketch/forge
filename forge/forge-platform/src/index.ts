@@ -169521,104 +169521,126 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS api_rate_limits (id INTEGER PRIMARY
 app.get('/api/rate-limits', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM api_rate_limits WHERE user_id = ? ORDER BY api_name ASC').all(req.user.id); res.json({ success: true, limits: rows.map((r: any) => ({ ...r, utilization_min: r.limit_per_minute>0?(r.current_usage_min/r.limit_per_minute)*100:0, utilization_hour: r.limit_per_hour>0?(r.current_usage_hour/r.limit_per_hour)*100:0 })), throttled_count: rows.filter((r: any) => r.status==='throttled').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/rate-limits', auth, (req: any, res: any) => { try { const { api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes } = req.body; const r = db.prepare('INSERT INTO api_rate_limits (user_id, api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, api_name, endpoint||'', limit_per_minute||60, limit_per_hour||3600, limit_per_day||86400, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }
-// v172 migrations
-// language_sessions
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN language TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN language_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN method TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN activity_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN resource_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN media_title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN words_learned INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN new_words_learned INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN sentences_practiced INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN comprehension_pct INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN difficulty INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN speaking_practice INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN new_language_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN new_duration_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN streak_day INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN total_words_cumulative INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE language_sessions SET duration_min=COALESCE(NULLIF(duration_min,0),duration_mins,duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE language_sessions SET words_learned=COALESCE(NULLIF(words_learned,0),new_words_learned,0) WHERE words_learned=0`).run(); } catch(e) {}
-// journal_entries
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN content TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN body TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN entry_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN journal_type TEXT DEFAULT 'daily'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN mood TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN mood_rating INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN energy INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN energy_rating INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN word_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN time_to_write_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN new_word_count_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN streak_day INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN gratitude TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN gratitude_items TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN wins TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN challenges TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN daily_intentions TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN tomorrow_focus TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN affirmation TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN goals_reviewed INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN weather TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN tags TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN private INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN is_private INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN updated_at TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET content=COALESCE(NULLIF(content,''),body,'') WHERE content='' AND body IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET body=COALESCE(NULLIF(body,''),content,'') WHERE body='' AND content IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET date=COALESCE(NULLIF(date,''),entry_date,'') WHERE date='' AND entry_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET entry_date=COALESCE(NULLIF(entry_date,''),date,'') WHERE entry_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET private=COALESCE(NULLIF(private,0),is_private,0) WHERE private=0 AND is_private IS NOT NULL`).run(); } catch(e) {}
-// gratitude_entries
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN entry_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN entry_type TEXT DEFAULT 'daily'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN content TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN gratitudes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN gratitude_1 TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN gratitude_2 TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN gratitude_3 TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN item_1 TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN item_2 TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN item_3 TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN extra_gratitudes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN mood TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN mood_before INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN mood_after INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN energy INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN overall_wellbeing INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN affirmation TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN today_intention TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN tomorrow_intention TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN highlight_of_day TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN savoring_moment TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN person_grateful_for TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN person_appreciated TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN appreciation_message TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN acts_of_kindness TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN positive_emotions TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN strengths_used TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN flow_activities TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN theme TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN why TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gratitude_entries ADD COLUMN private INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE gratitude_entries SET date=COALESCE(NULLIF(date,''),entry_date,'') WHERE date='' AND entry_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE gratitude_entries SET entry_date=COALESCE(NULLIF(entry_date,''),date,'') WHERE entry_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-// affirmations
-try { db.prepare(`ALTER TABLE affirmations ADD COLUMN text TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE affirmations ADD COLUMN category TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE affirmations ADD COLUMN source TEXT DEFAULT ''`).run(); } catch(e) {}
-// end v172 migrations
+// v173 migrations
+// crypto_holdings
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN symbol TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN quantity REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN avg_buy_price REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN current_price REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN exchange TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN wallet_address TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN blockchain TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN chain TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN is_staking INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN staking_apy REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE crypto_holdings SET blockchain=COALESCE(NULLIF(blockchain,''),chain,'') WHERE blockchain='' AND chain IS NOT NULL`).run(); } catch(e) {}
+// crypto_transactions
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN symbol TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN type TEXT DEFAULT 'buy'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN tx_type TEXT DEFAULT 'buy'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN transaction_type TEXT DEFAULT 'buy'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN tx_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN quantity REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN amount REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN price REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN price_per_unit REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN price_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN total REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN total_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN total_value REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN fee REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN fee_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN exchange TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN tx_hash TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN txhash TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE crypto_transactions ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE crypto_transactions SET type=COALESCE(NULLIF(type,'buy'),tx_type,transaction_type,'buy')`).run(); } catch(e) {}
+try { db.prepare(`UPDATE crypto_transactions SET date=COALESCE(NULLIF(date,''),tx_date,'') WHERE date=''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE crypto_transactions SET price=COALESCE(NULLIF(price,0),price_per_unit,price_usd,0) WHERE price=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE crypto_transactions SET total=COALESCE(NULLIF(total,0),total_usd,total_value,0) WHERE total=0`).run(); } catch(e) {}
+try { db.prepare(`UPDATE crypto_transactions SET tx_hash=COALESCE(NULLIF(tx_hash,''),txhash,'') WHERE tx_hash=''`).run(); } catch(e) {}
+// defi_positions
+try { db.prepare(`ALTER TABLE defi_positions ADD COLUMN protocol TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE defi_positions ADD COLUMN chain TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE defi_positions ADD COLUMN position_type TEXT DEFAULT 'liquidity'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE defi_positions ADD COLUMN tokens TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE defi_positions ADD COLUMN deposited_value REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE defi_positions ADD COLUMN current_value REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE defi_positions ADD COLUMN apy REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE defi_positions ADD COLUMN opened_date TEXT DEFAULT ''`).run(); } catch(e) {}
+// net_worth_snapshots
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN snapshot_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN net_worth REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN total_assets REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN total_liabilities REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN total_debt REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN liquid_assets REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN invested_assets REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN real_estate_equity REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN retirement_accounts REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN business_equity REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN mortgage_balance REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN credit_card_debt REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN student_loans REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN monthly_income REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN monthly_expenses REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN savings_rate_pct REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN assets_breakdown TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN liabilities_breakdown TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE net_worth_snapshots ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE net_worth_snapshots SET total_liabilities=COALESCE(NULLIF(total_liabilities,0),total_debt,0) WHERE total_liabilities=0`).run(); } catch(e) {}
+// subscription_tracker
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN service_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN category TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN cost_monthly REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN annual_cost REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN billing_cycle TEXT DEFAULT 'monthly'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN next_billing_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN start_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN auto_renew INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN cancel_on_next_cycle INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN usage_score INTEGER DEFAULT 5`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN used_last_30_days INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN worth_it INTEGER DEFAULT 1`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE subscription_tracker ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`UPDATE subscription_tracker SET cost_usd=COALESCE(NULLIF(cost_usd,0),cost_monthly,0) WHERE cost_usd=0`).run(); } catch(e) {}
+// debt_tracker
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN debt_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN debt_type TEXT DEFAULT 'credit_card'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN original_balance REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN current_balance REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN interest_rate REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN minimum_payment REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN monthly_payment REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN extra_payment REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN months_to_payoff INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN interest_saved REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN pct_paid REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE debt_tracker ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+// savings_goals
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN goal_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN category TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN target_amount REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN current_amount REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN target_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN pct_complete REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE savings_goals ADD COLUMN on_track INTEGER DEFAULT 1`).run(); } catch(e) {}
+// financial_goals
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN goal_name TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN category TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN target_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN current_usd REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN target_date TEXT DEFAULT ''`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN monthly_contribution REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN months_to_goal INTEGER DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN pct_complete REAL DEFAULT 0`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN priority INTEGER DEFAULT 3`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
+try { db.prepare(`ALTER TABLE financial_goals ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
+// end v173 migrations
