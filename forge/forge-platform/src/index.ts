@@ -169521,3 +169521,27 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS api_rate_limits (id INTEGER PRIMARY
 app.get('/api/rate-limits', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM api_rate_limits WHERE user_id = ? ORDER BY api_name ASC').all(req.user.id); res.json({ success: true, limits: rows.map((r: any) => ({ ...r, utilization_min: r.limit_per_minute>0?(r.current_usage_min/r.limit_per_minute)*100:0, utilization_hour: r.limit_per_hour>0?(r.current_usage_hour/r.limit_per_hour)*100:0 })), throttled_count: rows.filter((r: any) => r.status==='throttled').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/rate-limits', auth, (req: any, res: any) => { try { const { api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes } = req.body; const r = db.prepare('INSERT INTO api_rate_limits (user_id, api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, api_name, endpoint||'', limit_per_minute||60, limit_per_hour||3600, limit_per_day||86400, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }
+// ─── v170 migrations ─────────────────────────────────────────────────────────
+// astronomy_observations: missing cols used by later handlers
+try { db.prepare(ALTER TABLE astronomy_observations ADD COLUMN object TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE astronomy_observations ADD COLUMN object_name TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE astronomy_observations ADD COLUMN session_date TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE astronomy_observations ADD COLUMN catalog_data TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE astronomy_observations ADD COLUMN conditions TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE astronomy_observations ADD COLUMN scope TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE astronomy_observations ADD COLUMN telescope TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE astronomy_observations ADD COLUMN magnification INTEGER DEFAULT 50).run(); } catch(e) {}
+// backfills
+try { db.prepare(UPDATE astronomy_observations SET object=COALESCE(NULLIF(object,''),target,'') WHERE object='' AND target IS NOT NULL).run(); } catch(e) {}
+try { db.prepare(UPDATE astronomy_observations SET object_name=COALESCE(NULLIF(object_name,''),target,'') WHERE object_name='' AND target IS NOT NULL).run(); } catch(e) {}
+try { db.prepare(UPDATE astronomy_observations SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL).run(); } catch(e) {}
+try { db.prepare(UPDATE astronomy_observations SET scope=COALESCE(NULLIF(scope,''),equipment,'') WHERE scope='' AND equipment IS NOT NULL).run(); } catch(e) {}
+try { db.prepare(UPDATE astronomy_observations SET telescope=COALESCE(NULLIF(telescope,''),equipment,'') WHERE telescope='' AND equipment IS NOT NULL).run(); } catch(e) {}
+// aquarium_logs: missing cols
+try { db.prepare(ALTER TABLE aquarium_logs ADD COLUMN observations TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE aquarium_logs ADD COLUMN salinity_sg REAL DEFAULT 0).run(); } catch(e) {}
+try { db.prepare(ALTER TABLE aquarium_logs ADD COLUMN hardness_dkh REAL DEFAULT 0).run(); } catch(e) {}
+try { db.prepare(ALTER TABLE aquarium_logs ADD COLUMN feeding_amount TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE aquarium_logs ADD COLUMN dosing TEXT DEFAULT '').run(); } catch(e) {}
+try { db.prepare(ALTER TABLE aquarium_logs ADD COLUMN alert TEXT DEFAULT '').run(); } catch(e) {}
+// ─── end v170 migrations ─────────────────────────────────────────────────────
