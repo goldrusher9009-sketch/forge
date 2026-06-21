@@ -169521,57 +169521,14 @@ try { db.prepare(`CREATE TABLE IF NOT EXISTS api_rate_limits (id INTEGER PRIMARY
 app.get('/api/rate-limits', auth, (req: any, res: any) => { try { const rows = db.prepare('SELECT * FROM api_rate_limits WHERE user_id = ? ORDER BY api_name ASC').all(req.user.id); res.json({ success: true, limits: rows.map((r: any) => ({ ...r, utilization_min: r.limit_per_minute>0?(r.current_usage_min/r.limit_per_minute)*100:0, utilization_hour: r.limit_per_hour>0?(r.current_usage_hour/r.limit_per_hour)*100:0 })), throttled_count: rows.filter((r: any) => r.status==='throttled').length }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.post('/api/rate-limits', auth, (req: any, res: any) => { try { const { api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes } = req.body; const r = db.prepare('INSERT INTO api_rate_limits (user_id, api_name, endpoint, limit_per_minute, limit_per_hour, limit_per_day, notes) VALUES (?,?,?,?,?,?,?)').run(req.user.id, api_name, endpoint||'', limit_per_minute||60, limit_per_hour||3600, limit_per_day||86400, notes||''); res.json({ success: true, id: r.lastInsertRowid }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }); } });
 app.put('/api/rate-limits/:id/record', auth, (req: any, res: any) => { try { const { throttled } = req.body; const now = new Date().toISOString(); const status = throttled ? 'throttled' : 'healthy'; db.prepare('UPDATE api_rate_limits SET current_usage_min=current_usage_min+1, current_usage_hour=current_usage_hour+1, current_usage_day=current_usage_day+1, throttled_count=throttled_count+?, last_throttled=CASE WHEN ? THEN ? ELSE last_throttled END, status=?, updated_at=? WHERE id=? AND user_id=?').run(throttled?1:0, throttled?1:0, now, status, now, req.params.id, req.user.id); res.json({ success: true }); } catch(e: any) { res.status(500).json({ success: false, error: e.message }
-// v175.00 schema migrations - reading_list book_highlights writing_projects writing_sessions music_practice_log
-try { db.prepare("ALTER TABLE reading_list ADD COLUMN title TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE reading_list ADD COLUMN url TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE reading_list ADD COLUMN notes TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE reading_list ADD COLUMN priority TEXT DEFAULT 'medium'").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE reading_list ADD COLUMN tags TEXT").run(); } catch(e) {}
+// v176.00 schema migrations - meal_plans garden_journal vet_visits
+try { db.prepare("ALTER TABLE meal_plans ADD COLUMN plan_date TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE meal_plans ADD COLUMN meal_type TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE meal_plans ADD COLUMN recipe_id INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE meal_plans ADD COLUMN custom_meal TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE meal_plans ADD COLUMN calories INTEGER").run(); } catch(e) {}
 
-try { db.prepare("ALTER TABLE book_highlights ADD COLUMN book_title TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE book_highlights ADD COLUMN author TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE book_highlights ADD COLUMN highlight TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE book_highlights ADD COLUMN chapter TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE book_highlights ADD COLUMN page_or_loc TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE book_highlights ADD COLUMN my_note TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE book_highlights ADD COLUMN category TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE book_highlights ADD COLUMN rating INTEGER").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE garden_journal ADD COLUMN journal_date TEXT").run(); } catch(e) {}
 
-try { db.prepare("ALTER TABLE writing_projects ADD COLUMN title TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_projects ADD COLUMN type TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_projects ADD COLUMN genre TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_projects ADD COLUMN word_count_target INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_projects ADD COLUMN deadline TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_projects ADD COLUMN notes TEXT").run(); } catch(e) {}
-
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN project TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN project_id INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN session_date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN words_written INTEGER DEFAULT 0").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN duration_min INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN duration_minutes INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN session_type TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN genre TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN chapter_worked TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN mood TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN location TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN productivity_rating INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN notes TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN streak_day INTEGER DEFAULT 0").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN total_project_words INTEGER DEFAULT 0").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN new_daily_pr INTEGER DEFAULT 0").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE writing_sessions ADD COLUMN new_project_flag INTEGER DEFAULT 0").run(); } catch(e) {}
-
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN log_date TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN instrument TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN duration_min INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN practice_type TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN pieces_practiced TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN technique_focus TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN quality_score INTEGER").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN metronome_used INTEGER DEFAULT 0").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN breakthrough TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN notes TEXT").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN streak_day INTEGER DEFAULT 0").run(); } catch(e) {}
-try { db.prepare("ALTER TABLE music_practice_log ADD COLUMN total_min_this_instrument INTEGER DEFAULT 0").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE vet_visits ADD COLUMN visit_date TEXT").run(); } catch(e) {}
+try { db.prepare("ALTER TABLE vet_visits ADD COLUMN next_visit_date TEXT").run(); } catch(e) {}
