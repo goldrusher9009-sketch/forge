@@ -49911,6 +49911,21 @@ app.post('/api/stoic/entries', requireAuth, (req: any, res: any) => {
   const r = db.prepare(`INSERT INTO stoic_entries (user_id,entry_date,morning_intention,evening_reflection,virtue_practiced,challenge_faced,response_quality,amor_fati_moment,dichotomy_exercise) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id, entry_date||new Date().toISOString().slice(0,10), morning_intention||'', evening_reflection||'', virtue_practiced||'wisdom', challenge_faced||'', response_quality||3, amor_fati_moment||'', JSON.stringify(dichotomy_exercise||{}));
   res.json({ id: r.lastInsertRowid });
 });
+app.get('/api/stoic/practices', requireAuth, (req: any, res: any) => {
+  res.json({ practices: db.prepare(`SELECT * FROM stoic_practices WHERE user_id=? ORDER BY streak_current DESC`).all(req.user.id) });
+});
+app.post('/api/stoic/practices', requireAuth, (req: any, res: any) => {
+  const { practice_name, practice_type='daily', description, notes } = req.body;
+  if (!practice_name) return res.status(400).json({ error: 'practice_name required' });
+  const r = db.prepare(`INSERT INTO stoic_practices (user_id,practice_name,practice_type,description,notes) VALUES (?,?,?,?,?)`).run(req.user.id, practice_name, practice_type, description||'', notes||null);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.post('/api/stoic/quotes', requireAuth, (req: any, res: any) => {
+  const { quote_text, author='Marcus Aurelius', source, personal_meaning } = req.body;
+  if (!quote_text) return res.status(400).json({ error: 'quote_text required' });
+  const r = db.prepare(`INSERT INTO stoic_quotes (user_id,quote_text,author,source,personal_meaning) VALUES (?,?,?,?,?)`).run(req.user.id, quote_text, author, source||null, personal_meaning||null);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
 app.post('/api/stoic/practices/:id/log', requireAuth, (req: any, res: any) => {
   const today = new Date().toISOString().slice(0,10);
   const p = db.prepare(`SELECT * FROM stoic_practices WHERE id=? AND user_id=?`).get(req.params.id, req.user.id) as any;
