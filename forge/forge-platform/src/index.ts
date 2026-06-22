@@ -5373,7 +5373,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v143.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v143.01', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -168334,6 +168334,20 @@ try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN amount REAL DEFAULT 
 try { db.prepare(`UPDATE freelance_invoices SET date=COALESCE(NULLIF(date,''),issued_date,'') WHERE date='' AND issued_date IS NOT NULL`).run(); } catch(e) {}
 try { db.prepare(`UPDATE freelance_invoices SET amount=COALESCE(NULLIF(amount,0),total,0) WHERE amount=0 AND total IS NOT NULL`).run(); } catch(e) {}
 // 
+// === v143 missing table fixes ===
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_members (id INTEGER PRIMARY KEY AUTOINCREMENT, workspace_id INTEGER NOT NULL, user_id INTEGER NOT NULL, role TEXT DEFAULT 'member', joined_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_meta (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, meta_key TEXT NOT NULL, meta_value TEXT, updated_at TEXT DEFAULT (datetime('now')), UNIQUE(user_id, meta_key))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS referrals (id INTEGER PRIMARY KEY AUTOINCREMENT, referrer_id INTEGER, referred_email TEXT, code TEXT UNIQUE, status TEXT DEFAULT 'pending', created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS routing_log (id TEXT PRIMARY KEY, user_id INTEGER, model_requested TEXT, model_resolved TEXT, provider TEXT, prompt_complexity TEXT, prompt_tokens INTEGER DEFAULT 0, completion_tokens INTEGER DEFAULT 0, latency_ms INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_keys (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, anthropic_key TEXT, openai_key TEXT, gemini_key TEXT, groq_key TEXT, mistral_key TEXT, openrouter_key TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, streak INTEGER DEFAULT 0, last_activity TEXT, updated_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS meditation_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, session_date TEXT, duration_minutes INTEGER DEFAULT 10, technique TEXT DEFAULT 'mindfulness', notes TEXT, mood_before INTEGER DEFAULT 5, mood_after INTEGER DEFAULT 7, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS sleep_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, log_date TEXT, sleep_duration_hours REAL DEFAULT 7, sleep_quality INTEGER DEFAULT 7, bedtime TEXT, wake_time TEXT, deep_sleep_pct REAL DEFAULT 20, rem_pct REAL DEFAULT 25, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workout_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, workout_date TEXT, workout_type TEXT DEFAULT 'cardio', duration_minutes INTEGER DEFAULT 30, calories_burned INTEGER DEFAULT 0, streak_day INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS step_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, log_date TEXT, steps INTEGER DEFAULT 0, distance_km REAL DEFAULT 0, active_minutes INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS fire_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, log_date TEXT, savings_amount REAL DEFAULT 0, expense_amount REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS fire_progress_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, log_date TEXT, portfolio_value REAL DEFAULT 0, monthly_expenses REAL DEFAULT 0, fire_number REAL DEFAULT 0, progress_pct REAL DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
+
 // === v143: write routes for 123 read-only tables ===
 
 // affirmation_goals
