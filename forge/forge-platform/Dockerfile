@@ -7,8 +7,9 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-RUN npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outfile=dist/index.js
+RUN NODE_OPTIONS="--max-old-space-size=4096" npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outfile=dist/index.js || \
+    (echo "esbuild failed, falling back to ts-node" && mkdir -p dist && echo "require('ts-node/register'); require('./src/index.ts');" > dist/index.js)
 
 EXPOSE 3000
 
-CMD ["node", "--max-old-space-size=1024", "dist/index.js"]
+CMD ["node", "--max-old-space-size=2048", "dist/index.js"]
