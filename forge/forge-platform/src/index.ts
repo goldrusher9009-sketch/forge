@@ -145,6 +145,7 @@ function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): void
 // ── App ───────────────────────────────────────────────────────
 const app = express();
 const httpServer = require('http').createServer(app);
+// httpServer declared near app init above
 // Shared Socket.IO ref — set during bootstrap, used by routes for realtime push
 let ioRef: any = null;
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -16081,7 +16082,7 @@ app.delete('/api/ai-question-log/:id', requireAuth, (req: Request, res: Response
 });
 // ─── End Batch 77 ────────────────────────────────────────────────────────────
 
-httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v20.50 running on port ${PORT}`); });
+// DISABLED v20.50 listen: httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v20.50 running on port ${PORT}`); });
 // ─── Batch 78 ────────────────────────────────────────────────────────────────
 // code_diff_explanations table
 db.exec(`CREATE TABLE IF NOT EXISTS code_diff_explanations (
