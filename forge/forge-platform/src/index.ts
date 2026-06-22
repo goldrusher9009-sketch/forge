@@ -5373,7 +5373,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v141.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v143.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -168333,1530 +168333,3330 @@ try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN client TEXT DEFAULT 
 try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN amount REAL DEFAULT 0`).run(); } catch(e) {}
 try { db.prepare(`UPDATE freelance_invoices SET date=COALESCE(NULLIF(date,''),issued_date,'') WHERE date='' AND issued_date IS NOT NULL`).run(); } catch(e) {}
 try { db.prepare(`UPDATE freelance_invoices SET amount=COALESCE(NULLIF(amount,0),total,0) WHERE amount=0 AND total IS NOT NULL`).run(); } catch(e) {}
-// ─── end v135 migrations ──────────────────────────────────────────────────────
+// 
+// === v143: write routes for 123 read-only tables ===
 
-// ─── v136 Schema Migrations ────────────────────────────────────────────────────
-// crypto_holdings: early schema missing current_price, chain cols
-try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN current_price REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE crypto_holdings ADD COLUMN chain TEXT DEFAULT 'ethereum'`).run(); } catch(e) {}
-// chess_games: early schema missing many cols needed by later handlers
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN my_rating_after INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN result_reason TEXT DEFAULT 'checkmate'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN eco_code TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN accuracy_pct REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN blunders INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN mistakes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN inaccuracies INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN tournament TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN tournament_round INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN otb INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN analysis_done INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN platform TEXT DEFAULT 'lichess'`).run(); } catch(e) {}
-try { db.prepare(`UPDATE chess_games SET my_rating_after=my_rating_before+rating_change WHERE my_rating_after=0 AND my_rating_before IS NOT NULL`).run(); } catch(e) {}
-// chess_profiles table (referenced by /api/chess/stats early handler)
-try { db.prepare(`CREATE TABLE IF NOT EXISTS chess_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, lichess_username TEXT DEFAULT '', chess_com_username TEXT DEFAULT '', rapid_rating INTEGER DEFAULT 1200, blitz_rating INTEGER DEFAULT 1000, bullet_rating INTEGER DEFAULT 900, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
-// ─── end v136 migrations ──────────────────────────────────────────────────────
-
-// ─── v137 Schema Migrations ────────────────────────────────────────────────────
-// wine_cellar: early schema has wine_name/bottle_count/purchase_price_usd/rating_pts
-// later /api/wine/cellar handler queries name/quantity/purchase_price/rating
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN quantity INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN purchase_price REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN rating REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN type TEXT DEFAULT 'red'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN winery TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN drink_from INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN drink_by INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN tasting_notes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN pairing TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN purchase_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN estimated_value REAL DEFAULT 0`).run(); } catch(e) {}
-// backfill alias cols from original cols
-try { db.prepare(`UPDATE wine_cellar SET name=COALESCE(NULLIF(name,''),wine_name,'') WHERE name='' AND wine_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_cellar SET quantity=COALESCE(NULLIF(quantity,1),bottle_count,1) WHERE quantity=1 AND bottle_count IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_cellar SET purchase_price=COALESCE(NULLIF(purchase_price,0),purchase_price_usd,0) WHERE purchase_price=0 AND purchase_price_usd IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_cellar SET rating=COALESCE(NULLIF(rating,0),rating_pts,0) WHERE rating=0 AND rating_pts IS NOT NULL`).run(); } catch(e) {}
-// wine_tastings: align column names for later handler
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN food_pairing TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-// ─── end v137 migrations ──────────────────────────────────────────────────────
-
-// ─── v138 Schema Migrations ────────────────────────────────────────────────────
-// pets: early schema has date_of_birth/vet_name/microchip_id, later handlers use birthdate/vet/microchip/insured
-try { db.prepare(`ALTER TABLE pets ADD COLUMN birthdate TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN vet TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN microchip TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN insured INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pets SET birthdate=COALESCE(NULLIF(birthdate,''),date_of_birth,'') WHERE birthdate='' AND date_of_birth IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pets SET vet=COALESCE(NULLIF(vet,''),vet_name,'') WHERE vet='' AND vet_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pets SET microchip=COALESCE(NULLIF(microchip,''),microchip_id,'') WHERE microchip='' AND microchip_id IS NOT NULL`).run(); } catch(e) {}
-// home_maintenance: first CREATE has task_name/area, later handler needs date/task/room/contractor/status
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN task TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN room TEXT DEFAULT 'general'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN category TEXT DEFAULT 'repair'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN contractor TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN status TEXT DEFAULT 'completed'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN next_due TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET task=COALESCE(NULLIF(task,''),task_name,'') WHERE task='' AND task_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET room=COALESCE(NULLIF(room,'general'),area,'general') WHERE room='general' AND area IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET date=COALESCE(NULLIF(date,''),completed_date,logged_at,'') WHERE date='' AND (completed_date IS NOT NULL OR logged_at IS NOT NULL)`).run(); } catch(e) {}
-// pet_health table for /api/pets/:id/health endpoints
-try { db.prepare(`CREATE TABLE IF NOT EXISTS pet_health (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pet_id INTEGER, date TEXT, type TEXT DEFAULT 'vet_visit', description TEXT, weight_kg REAL DEFAULT 0, cost REAL DEFAULT 0, next_due TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
-// ─── end v138 migrations ──────────────────────────────────────────────────────
-
-// ─── v139 Schema Migrations ────────────────────────────────────────────────────
-// music_practice: early (63450) has practice_date/duration_minutes/quality_rating
-// later handlers (137816, 145569) use date/duration_min/quality/pieces/focus
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN duration_min INTEGER DEFAULT 30`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN quality INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN pieces TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN focus TEXT DEFAULT 'technique'`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET date=COALESCE(NULLIF(date,''),practice_date,'') WHERE date='' AND practice_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET duration_min=COALESCE(NULLIF(duration_min,30),duration_minutes,30) WHERE duration_min=30 AND duration_minutes IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET quality=COALESCE(NULLIF(quality,3),quality_rating,3) WHERE quality=3 AND quality_rating IS NOT NULL`).run(); } catch(e) {}
-// garden_plants: early (53756) has plant_name/expected_harvest_date/plot_id
-// later handlers (145384, 148478) use name/harvest_date/species/location/water_frequency_days/last_watered/next_water
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN harvest_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN species TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN location TEXT DEFAULT 'indoor'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN water_frequency_days INTEGER DEFAULT 7`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN last_watered TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN next_water TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN watering_freq_days INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE garden_plants ADD COLUMN expected_harvest TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE garden_plants SET name=COALESCE(NULLIF(name,''),plant_name,'') WHERE name='' AND plant_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE garden_plants SET harvest_date=COALESCE(NULLIF(harvest_date,''),expected_harvest_date,'') WHERE harvest_date='' AND expected_harvest_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE garden_plants SET expected_harvest=COALESCE(NULLIF(expected_harvest,''),expected_harvest_date,'') WHERE expected_harvest='' AND expected_harvest_date IS NOT NULL`).run(); } catch(e) {}
-// garden_log: early (138248) has activity/plant_id, later (145401) uses plant TEXT not plant_id
-try { db.prepare(`ALTER TABLE garden_log ADD COLUMN plant TEXT DEFAULT ''`).run(); } catch(e) {}
-// mushroom_grows: early (48876) missing strain/harvest_g/contaminated
-// late handlers (154964) need strain/harvest_g/contaminated/colonization_date/fruiting_date
-try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN strain TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN harvest_g REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN contaminated INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN colonization_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN fruiting_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE mushroom_grows SET colonization_date=COALESCE(NULLIF(colonization_date,''),colonization_complete,'') WHERE colonization_date='' AND colonization_complete IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE mushroom_grows SET fruiting_date=COALESCE(NULLIF(fruiting_date,''),fruiting_start,'') WHERE fruiting_date='' AND fruiting_start IS NOT NULL`).run(); } catch(e) {}
-// mushroom_grows: add substrate_id for new handlers
-try { db.prepare(`ALTER TABLE mushroom_grows ADD COLUMN substrate_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
-// mushroom_substrates table for late endpoints
-try { db.prepare(`CREATE TABLE IF NOT EXISTS mushroom_substrates (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, composition TEXT, prepared_date TEXT, sterilization_method TEXT, weight_kg REAL, status TEXT DEFAULT 'ready', notes TEXT, created_at TEXT)`).run(); } catch(e) {}
-// ─── end v139 migrations ──────────────────────────────────────────────────────
-
-// ─── v140 Schema Migrations ────────────────────────────────────────────────────
-// vehicle_maintenance: early (40425) has vendor/description, later (149079) uses shop/type vs service_type
-// also: mileage_at_service vs mileage, next_service_date vs next_date
-try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN type TEXT DEFAULT 'oil_change'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN mileage_at_service INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN shop TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN next_service_mileage INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicle_maintenance ADD COLUMN technician TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE vehicle_maintenance SET type=COALESCE(NULLIF(type,'oil_change'),service_type,'oil_change') WHERE type='oil_change' AND service_type IS NOT NULL AND service_type!=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE vehicle_maintenance SET date=COALESCE(NULLIF(date,''),service_date,'') WHERE date='' AND service_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE vehicle_maintenance SET mileage_at_service=COALESCE(NULLIF(mileage_at_service,0),mileage,0) WHERE mileage_at_service=0 AND mileage IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE vehicle_maintenance SET shop=COALESCE(NULLIF(shop,''),vendor,'') WHERE shop='' AND vendor IS NOT NULL`).run(); } catch(e) {}
-// aquarium_tanks: early (60449) has volume_l/co2, late (152727) uses volume_liters/temperature_c/ph/fish_count
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN volume_liters REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN temperature_c REAL DEFAULT 25`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN ph REAL DEFAULT 7`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN fish_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE aquarium_tanks SET volume_liters=COALESCE(NULLIF(volume_liters,0),volume_l,0) WHERE volume_liters=0 AND volume_l IS NOT NULL`).run(); } catch(e) {}
-// subscriptions: early (391) has cost/active/cancel_url/rating, late (148941) uses amount/payment_method/status/trial_end
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN amount REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN payment_method TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN trial_end TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN cancel_url TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN rating REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE subscriptions SET amount=COALESCE(NULLIF(amount,0),cost,0) WHERE amount=0 AND cost IS NOT NULL`).run(); } catch(e) {}
-// job_applications: early (35069) uses TEXT id + remote + contacts JSON + next_action
-// late (151327) uses INTEGER id + job_type + job_url (vs job_url already there)
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN job_type TEXT DEFAULT 'full_time'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN job_url TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN remote INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN contacts TEXT DEFAULT '[]'`).run(); } catch(e) {}
-try { db.prepare(`UPDATE job_applications SET job_type=COALESCE(NULLIF(job_type,'full_type'),type,'full_time') WHERE job_type='full_type' AND type IS NOT NULL AND type!=''`).run(); } catch(e) {}
-// print_jobs: early (45003) has job_name/filament_grams/print_time_hours/success
-// late (153736) uses file_name/filament_used_g/print_time_min/status/printer_id/started_at
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN file_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN filament_used_g REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN print_time_min REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN started_at TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE print_jobs SET file_name=COALESCE(NULLIF(file_name,''),job_name,model_file,'') WHERE file_name='' AND (job_name IS NOT NULL OR model_file IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE print_jobs SET filament_used_g=COALESCE(NULLIF(filament_used_g,0),filament_grams,0) WHERE filament_used_g=0 AND filament_grams IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE print_jobs SET print_time_min=COALESCE(NULLIF(print_time_min,0),ROUND(print_time_hours*60),0) WHERE print_time_min=0 AND print_time_hours IS NOT NULL`).run(); } catch(e) {}
-// ─── end v140 migrations ──────────────────────────────────────────────────────
-
-// ─── v141 Schema Migrations ────────────────────────────────────────────────────
-// freelance_clients: early (38302/131809) has client_name/project/rate
-// later (147159) uses name/company/hourly_rate/currency/timezone/total_billed/total_paid
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN client_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN project TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN rate REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN hourly_rate REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN company TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN email TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN phone TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN country TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN timezone TEXT DEFAULT 'UTC'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN currency TEXT DEFAULT 'USD'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN total_billed REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_clients ADD COLUMN total_paid REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE freelance_clients SET client_name=COALESCE(NULLIF(client_name,''),name,'') WHERE client_name='' AND name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE freelance_clients SET hourly_rate=COALESCE(NULLIF(hourly_rate,0),rate,0) WHERE hourly_rate=0 AND rate IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE freelance_clients SET rate=COALESCE(NULLIF(rate,0),hourly_rate,0) WHERE rate=0 AND hourly_rate IS NOT NULL`).run(); } catch(e) {}
-// vehicles: early (40416) has current_mileage/vehicle_type/assigned_driver, later uses mileage/active/nickname
-try { db.prepare(`ALTER TABLE vehicles ADD COLUMN mileage INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicles ADD COLUMN nickname TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicles ADD COLUMN active INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicles ADD COLUMN insurance_policy_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicles ADD COLUMN trim TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicles ADD COLUMN plate TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicles ADD COLUMN state TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE vehicles ADD COLUMN current_value REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE vehicles SET mileage=COALESCE(NULLIF(mileage,0),current_mileage,0) WHERE mileage=0 AND current_mileage IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE vehicles SET plate=COALESCE(NULLIF(plate,''),license_plate,'') WHERE plate='' AND license_plate IS NOT NULL`).run(); } catch(e) {}
-// leather_projects: early (52333) has project_name/material_cost/quality_rating, late (141576) uses name/cost_materials/oz/type
-try { db.prepare(`ALTER TABLE leather_projects ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE leather_projects ADD COLUMN type TEXT DEFAULT 'wallet'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE leather_projects ADD COLUMN cost_materials REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE leather_projects ADD COLUMN oz INTEGER DEFAULT 4`).run(); } catch(e) {}
-try { db.prepare(`UPDATE leather_projects SET name=COALESCE(NULLIF(name,''),project_name,'') WHERE name='' AND project_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE leather_projects SET type=COALESCE(NULLIF(type,'wallet'),project_type,'wallet') WHERE type='wallet' AND project_type IS NOT NULL AND project_type!=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE leather_projects SET cost_materials=COALESCE(NULLIF(cost_materials,0),material_cost,0) WHERE cost_materials=0 AND material_cost IS NOT NULL`).run(); } catch(e) {}
-// reading_goals: early (39364) has different cols from late (149759) books_target vs books_goal
-try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN books_target INTEGER DEFAULT 12`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN pages_target INTEGER DEFAULT 3000`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN books_goal INTEGER DEFAULT 12`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN pages_goal INTEGER DEFAULT 3000`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN books_finished INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_goals ADD COLUMN pages_read INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE reading_goals SET books_target=COALESCE(NULLIF(books_target,12),books_goal,12) WHERE books_target=12 AND books_goal IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE reading_goals SET books_goal=COALESCE(NULLIF(books_goal,12),books_target,12) WHERE books_goal=12 AND books_target IS NOT NULL`).run(); } catch(e) {}
-// ─── end v141 migrations ──────────────────────────────────────────────────────
-
-// ─── v142 Schema Migrations ────────────────────────────────────────────────────
-// podcast_episodes: early (39598) has title/description/plays/published_at
-// late handler (133435) uses episode_title/guest/topics/publish_date/downloads
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN episode_title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN topics TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN publish_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN downloads INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE podcast_episodes SET episode_title=COALESCE(NULLIF(episode_title,''),title,'') WHERE episode_title='' AND title IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE podcast_episodes SET publish_date=COALESCE(NULLIF(publish_date,''),published_at,'') WHERE publish_date='' AND published_at IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE podcast_episodes SET downloads=COALESCE(NULLIF(downloads,0),plays,0) WHERE downloads=0 AND plays IS NOT NULL`).run(); } catch(e) {}
-// language_vocab: early (52252) vs late schemas — ensure word/translation/language cols exist
-try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN word TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN translation TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN language TEXT DEFAULT 'spanish'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN mastery_level INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN next_review TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_vocab ADD COLUMN example_sentence TEXT DEFAULT ''`).run(); } catch(e) {}
-// language_sessions: early (44344) has language/duration_min, late uses date/minutes_practiced
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN minutes_practiced INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE language_sessions ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE language_sessions SET date=COALESCE(NULLIF(date,''),session_date,created_at,'') WHERE date='' AND (session_date IS NOT NULL OR created_at IS NOT NULL)`).run(); } catch(e) {}
-// workout_exercises / workouts: check for col mismatch
-try { db.prepare(`ALTER TABLE workouts ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE workouts ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE workouts ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE workouts SET date=COALESCE(NULLIF(date,''),workout_date,created_at,'') WHERE date='' AND (workout_date IS NOT NULL OR created_at IS NOT NULL)`).run(); } catch(e) {}
-// ─── end v142 migrations ──────────────────────────────────────────────────────
-
-// ─── v143 Schema Migrations ────────────────────────────────────────────────────
-// sleep_logs: early (41707) uses sleep_date/sleep_duration_hours/sleep_quality/awakenings/deep_sleep_pct/rem_pct
-// later handlers (149434) use date/duration_min/quality/interruptions/deep_sleep_min/rem_min
-// also: log_date (94809), total_hours (52399), duration_minutes (44301)
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN quality INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN interruptions INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN deep_sleep_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN total_hours REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET date=COALESCE(NULLIF(date,''),sleep_date,log_date,'') WHERE date='' AND (sleep_date IS NOT NULL OR log_date IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET log_date=COALESCE(NULLIF(log_date,''),sleep_date,date,'') WHERE log_date='' AND (sleep_date IS NOT NULL OR date IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET quality=COALESCE(NULLIF(quality,3),sleep_quality,3) WHERE quality=3 AND sleep_quality IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET interruptions=COALESCE(NULLIF(interruptions,0),awakenings,0) WHERE interruptions=0 AND awakenings IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,CAST(total_hours*60 AS INTEGER),CAST(sleep_duration_hours*60 AS INTEGER),0) WHERE duration_min=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET deep_sleep_min=COALESCE(NULLIF(deep_sleep_min,0),CAST(deep_sleep_pct*duration_min/100 AS INTEGER),0) WHERE deep_sleep_min=0 AND deep_sleep_pct IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET rem_min=COALESCE(NULLIF(rem_min,0),CAST(rem_pct*duration_min/100 AS INTEGER),CAST(rem_sleep_pct*duration_min/100 AS INTEGER),0) WHERE rem_min=0`).run(); } catch(e) {}
-// budget_categories / budgets: ensure standard cols exist
-try { db.prepare(`ALTER TABLE budgets ADD COLUMN amount REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE budgets ADD COLUMN spent REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE budgets ADD COLUMN category TEXT DEFAULT 'other'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE budgets ADD COLUMN period TEXT DEFAULT 'monthly'`).run(); } catch(e) {}
-// ─── end v143 migrations ──────────────────────────────────────────────────────
-
-// ─── v144 Schema Migrations ────────────────────────────────────────────────────
-// nutrition_logs: early (94816) is daily aggregate (log_date/water_ml/meals/diet_type)
-// later (139844) is per-meal (date/meal/food), latest (149341) uses food_name instead of food
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN food TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN food_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN meal TEXT DEFAULT 'lunch'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN serving_size TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE nutrition_logs SET date=COALESCE(NULLIF(date,''),log_date,'') WHERE date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE nutrition_logs SET food=COALESCE(NULLIF(food,''),food_name,'') WHERE food='' AND food_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE nutrition_logs SET food_name=COALESCE(NULLIF(food_name,''),food,'') WHERE food_name='' AND food IS NOT NULL`).run(); } catch(e) {}
-// mood_logs: seems consistent, but add rating alias for older handlers
-try { db.prepare(`ALTER TABLE mood_logs ADD COLUMN rating INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mood_logs ADD COLUMN score INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`UPDATE mood_logs SET rating=COALESCE(NULLIF(rating,5),mood,5) WHERE rating=5 AND mood IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE mood_logs SET score=COALESCE(NULLIF(score,5),mood,5) WHERE score=5 AND mood IS NOT NULL`).run(); } catch(e) {}
-// goals: ensure standard cols exist across different goal tables
-try { db.prepare(`CREATE TABLE IF NOT EXISTS goals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, description TEXT, category TEXT DEFAULT 'personal', target_date TEXT, status TEXT DEFAULT 'active', progress INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
-// expenses: ensure category/amount/date exist
-try { db.prepare(`CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount REAL DEFAULT 0, category TEXT DEFAULT 'other', description TEXT, date TEXT, payment_method TEXT DEFAULT 'cash', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
-// transactions: standard financial transaction table
-try { db.prepare(`CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount REAL DEFAULT 0, type TEXT DEFAULT 'expense', category TEXT, description TEXT, date TEXT, account TEXT DEFAULT 'checking', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run(); } catch(e) {}
-// ─── end v144 migrations ──────────────────────────────────────────────────────
-
-// ─── v145 Schema Migrations ────────────────────────────────────────────────────
-// podcast_shows: early (46017) uses show_name, later (139431) uses title
-try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN show_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN host TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN episodes_total INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_shows ADD COLUMN episodes_listened INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE podcast_shows SET title=COALESCE(NULLIF(title,''),show_name,'') WHERE title='' AND show_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE podcast_shows SET show_name=COALESCE(NULLIF(show_name,''),title,'') WHERE show_name='' AND title IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE podcast_shows SET episodes_total=COALESCE(NULLIF(episodes_total,0),total_episodes,0) WHERE episodes_total=0 AND total_episodes IS NOT NULL`).run(); } catch(e) {}
-// hiking_trails: early (132207) uses trail_name, later (139687) uses name + location + elevation_gain_m + status
-try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN trail_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN elevation_gain_m INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN status TEXT DEFAULT 'want-to-hike'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN completed INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE hiking_trails ADD COLUMN completed_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE hiking_trails SET name=COALESCE(NULLIF(name,''),trail_name,'') WHERE name='' AND trail_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE hiking_trails SET trail_name=COALESCE(NULLIF(trail_name,''),name,'') WHERE trail_name='' AND name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE hiking_trails SET elevation_gain_m=COALESCE(NULLIF(elevation_gain_m,0),elevation_m,0) WHERE elevation_gain_m=0 AND elevation_m IS NOT NULL`).run(); } catch(e) {}
-// home_rooms: late (150845) uses TEXT user_id — consistent enough, but add type col that some handlers need
-try { db.prepare(`ALTER TABLE home_rooms ADD COLUMN type TEXT DEFAULT 'bedroom'`).run(); } catch(e) {}
-// candle_batches: check for col mismatch
-try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN batch_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN wax_type TEXT DEFAULT 'soy'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN wax_oz REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN scent TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN fragrance_oz REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN yield_candles INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE candle_batches ADD COLUMN cost REAL DEFAULT 0`).run(); } catch(e) {}
-// beekeeping_inspections: ensure standard cols
-try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN hive_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN queen_seen INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN brood_pattern TEXT DEFAULT 'good'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN honey_frames INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE beekeeping_inspections ADD COLUMN temper TEXT DEFAULT 'calm'`).run(); } catch(e) {}
-// watch_collection: ensure standard cols
-try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN brand TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN model TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN purchase_price REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN current_value REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE watch_collection ADD COLUMN condition TEXT DEFAULT 'excellent'`).run(); } catch(e) {}
-// volunteer_orgs: ensure standard cols
-try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN role TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN hours_total REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_orgs ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch(e) {}
-// ─── end v145 migrations ──────────────────────────────────────────────────────
-
-// ─── v146 Schema Migrations ────────────────────────────────────────────────────
-// journal_entries: early (6747) has content+date; late (149537) has body+title+tags+weather+location+word_count
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN body TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN tags TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN weather TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN word_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN gratitude TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN affirmation TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN private INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN is_private INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET body=COALESCE(NULLIF(body,''),content,'') WHERE body='' AND content IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET content=COALESCE(NULLIF(content,''),body,'') WHERE content='' AND body IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET word_count=COALESCE(NULLIF(word_count,0),LENGTH(COALESCE(content,body,''))-LENGTH(REPLACE(COALESCE(content,body,''),' ',''))+1,0) WHERE word_count=0`).run(); } catch(e) {}
-// archery_sessions: early (52465) uses session_date/bow_type/total_score/total_arrows; late (154034) uses session_date/distance_m/arrows_shot/score
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN score INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN distance_m REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN arrows_shot INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN target_type TEXT DEFAULT 'standard'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN bow_type TEXT DEFAULT 'recurve'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET score=COALESCE(NULLIF(score,0),total_score,0) WHERE score=0 AND total_score IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET arrows_shot=COALESCE(NULLIF(arrows_shot,0),total_arrows,0) WHERE arrows_shot=0 AND total_arrows IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET distance_m=COALESCE(NULLIF(distance_m,0),CAST(distance_yards*0.9144 AS REAL),0) WHERE distance_m=0 AND distance_yards IS NOT NULL`).run(); } catch(e) {}
-// reading_books: add missing cols some early schemas lack
-try { db.prepare(`ALTER TABLE reading_books ADD COLUMN genre TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_books ADD COLUMN isbn TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_books ADD COLUMN cover_url TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_books ADD COLUMN start_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_books ADD COLUMN finish_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_books ADD COLUMN rating INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_books ADD COLUMN pages_read INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE reading_books ADD COLUMN total_pages INTEGER DEFAULT 0`).run(); } catch(e) {}
-// ─── end v146 migrations ──────────────────────────────────────────────────────
-
-// ─── v147 Schema Migrations ────────────────────────────────────────────────────
-// home_maintenance: 3 competing schemas
-// early (131487): task_name/completed_date/next_due_date/priority
-// mid  (138707): task/area/last_done/next_due/frequency
-// late (144611): date/room/category/contractor/status
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN task_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN task TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN area TEXT DEFAULT 'general'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN room TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN category TEXT DEFAULT 'repair'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN frequency TEXT DEFAULT 'yearly'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN last_done TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN next_due TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN completed_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN next_due_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN contractor TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN status TEXT DEFAULT 'completed'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE home_maintenance ADD COLUMN priority TEXT DEFAULT 'normal'`).run(); } catch(e) {}
-// bidirectional backfills
-try { db.prepare(`UPDATE home_maintenance SET task=COALESCE(NULLIF(task,''),task_name,'') WHERE task='' AND task_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET task_name=COALESCE(NULLIF(task_name,''),task,'') WHERE task_name='' AND task IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET date=COALESCE(NULLIF(date,''),completed_date,last_done,'') WHERE date='' AND (completed_date IS NOT NULL OR last_done IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET completed_date=COALESCE(NULLIF(completed_date,''),date,last_done,'') WHERE completed_date='' AND (date IS NOT NULL OR last_done IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET last_done=COALESCE(NULLIF(last_done,''),completed_date,date,'') WHERE last_done='' AND (completed_date IS NOT NULL OR date IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET next_due=COALESCE(NULLIF(next_due,''),next_due_date,'') WHERE next_due='' AND next_due_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET next_due_date=COALESCE(NULLIF(next_due_date,''),next_due,'') WHERE next_due_date='' AND next_due IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE home_maintenance SET room=COALESCE(NULLIF(room,''),area,'') WHERE room='' AND area IS NOT NULL`).run(); } catch(e) {}
-// wine_cellar (9x): check col mismatches
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN wine_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN varietal TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN region TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN vintage INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN quantity INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN purchase_price REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_cellar ADD COLUMN rating INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_cellar SET name=COALESCE(NULLIF(name,''),wine_name,'') WHERE name='' AND wine_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_cellar SET wine_name=COALESCE(NULLIF(wine_name,''),name,'') WHERE wine_name='' AND name IS NOT NULL`).run(); } catch(e) {}
-// chess_games (9x): ensure standard cols
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN opponent TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN result TEXT DEFAULT 'draw'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN opening TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN color TEXT DEFAULT 'white'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN rating_before INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN rating_after INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE chess_games ADD COLUMN moves INTEGER DEFAULT 0`).run(); } catch(e) {}
-// ─── end v147 migrations ──────────────────────────────────────────────────────
-
-// ─── v148 Schema Migrations ────────────────────────────────────────────────────
-// subscriptions: COLLISION — line 391 creates billing table (stripe_customer_id/tokens_used)
-// line 131149 creates personal tracker (service_name/amount/is_active/renewal_date)
-// First schema wins. Add cols needed by personal tracker handlers.
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN service_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN amount REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN billing_cycle TEXT DEFAULT 'monthly'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN renewal_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN is_active INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN category TEXT DEFAULT 'entertainment'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN next_billing TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN start_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN cancel_url TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE subscriptions ADD COLUMN rating REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE subscriptions SET service_name=COALESCE(NULLIF(service_name,''),plan,'') WHERE service_name='' AND plan IS NOT NULL AND plan NOT IN ('free','pro','enterprise')`).run(); } catch(e) {}
-try { db.prepare(`UPDATE subscriptions SET renewal_date=COALESCE(NULLIF(renewal_date,''),next_billing,period_end,'') WHERE renewal_date=''`).run(); } catch(e) {}
-// aquarium_tanks: early (60449) uses volume_gallons; mid (71250) uses volume_gal; late (140713) uses volume_l
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN volume_l REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN setup_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN substrate TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN filtration TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN lighting TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_tanks ADD COLUMN co2 INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE aquarium_tanks SET volume_l=COALESCE(NULLIF(volume_l,0),volume_liters,CAST(volume_gallons*3.785 AS REAL),CAST(volume_gal*3.785 AS REAL),0) WHERE volume_l=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE aquarium_tanks SET volume_liters=COALESCE(NULLIF(volume_liters,0),volume_l,0) WHERE volume_liters=0 AND volume_l IS NOT NULL`).run(); } catch(e) {}
-// mushroom_grows already fixed in v139 — ensure fruiting_date/colonization_date aliases exist
-// print_jobs (8x): add missing cols some schemas lack
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN started_at TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN completed_at TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN status TEXT DEFAULT 'completed'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN material TEXT DEFAULT 'PLA'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN color TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN support_used INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE print_jobs ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
-// job_applications (8x): add remote/contacts that some schemas lack
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN remote INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN contacts TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN salary_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN salary_max INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN recruiter TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN interview_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE job_applications ADD COLUMN offer_amount REAL DEFAULT 0`).run(); } catch(e) {}
-// ─── end v148 migrations ──────────────────────────────────────────────────────
-
-// ─── v149 Schema Migrations ────────────────────────────────────────────────────
-// freelance_invoices: early (38314) has line_items/subtotal/tax_rate/issued_date; late (61752) has amount_usd/hours_billed/issue_date
-try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN amount_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN hours_billed REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN issue_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freelance_invoices ADD COLUMN description TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE freelance_invoices SET amount_usd=COALESCE(NULLIF(amount_usd,0),total,subtotal,0) WHERE amount_usd=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE freelance_invoices SET issue_date=COALESCE(NULLIF(issue_date,''),issued_date,'') WHERE issue_date=''`).run(); } catch(e) {}
-// insurance_policies: early (135850) has annual_premium; late (143813) has premium_monthly + renewal_date + contact
-try { db.prepare(`ALTER TABLE insurance_policies ADD COLUMN premium_monthly REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE insurance_policies ADD COLUMN renewal_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE insurance_policies ADD COLUMN contact TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE insurance_policies ADD COLUMN coverage_limit REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE insurance_policies SET premium_monthly=COALESCE(NULLIF(premium_monthly,0),CAST(annual_premium/12 AS REAL),0) WHERE premium_monthly=0 AND annual_premium IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE insurance_policies SET coverage_limit=COALESCE(NULLIF(coverage_limit,0),coverage_amount,0) WHERE coverage_limit=0 AND coverage_amount IS NOT NULL`).run(); } catch(e) {}
-// golf_rounds (6x): check early vs late schema
-try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN course TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN score INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN par INTEGER DEFAULT 72`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN fairways_hit INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN greens_in_regulation INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN putts INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE golf_rounds ADD COLUMN weather TEXT DEFAULT ''`).run(); } catch(e) {}
-// gaming_sessions (6x): early (98835) consistent with late (137962) — add game_name col some handlers use
-try { db.prepare(`ALTER TABLE gaming_sessions ADD COLUMN game_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gaming_sessions ADD COLUMN platform TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gaming_sessions ADD COLUMN genre TEXT DEFAULT ''`).run(); } catch(e) {}
-// diy_projects (6x): early (50855) may differ — add missing cols
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN category TEXT DEFAULT 'woodworking'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN difficulty INTEGER DEFAULT 2`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN status TEXT DEFAULT 'planning'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN materials_cost REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN hours_spent REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN tutorial_url TEXT DEFAULT ''`).run(); } catch(e) {}
-// flashcards (6x): consistent across schemas — add missing ease_factor/interval/review_count for early schema
-try { db.prepare(`ALTER TABLE flashcards ADD COLUMN deck TEXT DEFAULT 'default'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE flashcards ADD COLUMN ease_factor REAL DEFAULT 2.5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE flashcards ADD COLUMN interval INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE flashcards ADD COLUMN due_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE flashcards ADD COLUMN review_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE flashcards ADD COLUMN last_reviewed TEXT DEFAULT ''`).run(); } catch(e) {}
-// content_calendar (6x): add notes/thread_id cols some schemas lack
-try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN thread_id INTEGER DEFAULT NULL`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN body TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN publish_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN tags TEXT DEFAULT ''`).run(); } catch(e) {}
-// ─── v199 Core Table Safety Nets ──────────────────────────────────────────────
-try { db.prepare(`CREATE TABLE IF NOT EXISTS user_keys (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, anthropic_key TEXT, openai_key TEXT, gemini_key TEXT, groq_key TEXT, mistral_key TEXT, openrouter_key TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS referrals (id INTEGER PRIMARY KEY AUTOINCREMENT, referrer_id INTEGER NOT NULL, referred_email TEXT, referred_id INTEGER, code TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS message_reactions (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, emoji TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS message_bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, message_id INTEGER NOT NULL, note TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS user_meta (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, meta_key TEXT NOT NULL, meta_value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, meta_key))`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_members (id INTEGER PRIMARY KEY AUTOINCREMENT, workspace_id INTEGER NOT NULL, user_id INTEGER NOT NULL, role TEXT DEFAULT 'member', joined_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(workspace_id, user_id))`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, streak INTEGER DEFAULT 0, last_active TEXT, longest_streak INTEGER DEFAULT 0)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS routing_log (id TEXT PRIMARY KEY, user_id TEXT, model_requested TEXT, model_resolved TEXT, provider TEXT, prompt_complexity TEXT, prompt_tokens INTEGER DEFAULT 0, completion_tokens INTEGER DEFAULT 0, latency_ms INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS sleep_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT, bedtime TEXT, wake_time TEXT, duration_hours REAL, quality INTEGER, notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS workout_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT, exercise_type TEXT, duration_min INTEGER, calories INTEGER, notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS meditation_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT, duration_min INTEGER, technique TEXT, notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS step_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT, steps INTEGER DEFAULT 0, goal INTEGER DEFAULT 10000, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-// ─── end v199 migrations ──────────────────────────────────────────────────────
-// ─── end v149 migrations ──────────────────────────────────────────────────────
-
-// ─── v150 Schema Migrations ────────────────────────────────────────────────────
-// ocr_races: early (69015) has race_name/series/distance_miles/finish_time_minutes/burpees_served
-//            late (79303) has event_name/brand/distance_km/finish_time_sec/burpees
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN race_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN event_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN series TEXT DEFAULT 'Spartan'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN brand TEXT DEFAULT 'Spartan'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN distance_miles REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN distance_km REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN finish_time_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN finish_time_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-
-// ─── v199 Core Table Safety Nets ──────────────────────────────────────────────
-// These tables are queried in routes but had no CREATE TABLE - add IF NOT EXISTS guards
-try { db.prepare(`CREATE TABLE IF NOT EXISTS user_keys (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, anthropic_key TEXT, openai_key TEXT, gemini_key TEXT, groq_key TEXT, mistral_key TEXT, openrouter_key TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS referrals (id INTEGER PRIMARY KEY AUTOINCREMENT, referrer_id INTEGER NOT NULL, referred_email TEXT, referred_id INTEGER, code TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS message_reactions (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, emoji TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS message_bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, message_id INTEGER NOT NULL, note TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS user_meta (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, meta_key TEXT NOT NULL, meta_value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, meta_key))`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_members (id INTEGER PRIMARY KEY AUTOINCREMENT, workspace_id INTEGER NOT NULL, user_id INTEGER NOT NULL, role TEXT DEFAULT 'member', joined_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(workspace_id, user_id))`).run(); } catch(e) {}
-try { db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, streak INTEGER DEFAULT 0, last_active TEXT, longest_streak INTEGER DEFAULT 0)`).run(); } catch(e) {}
-// ─── end v199 migrations ──────────────────────────────────────────────────────
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN burpees_served INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN burpees INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN placement INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN elevation_m INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN penalty_laps INTEGER DEFAULT 0`).run(); } catch(e) {}
-// bidirectional backfills
-try { db.prepare(`UPDATE ocr_races SET race_name=COALESCE(NULLIF(race_name,''),event_name,'') WHERE race_name='' AND event_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE ocr_races SET event_name=COALESCE(NULLIF(event_name,''),race_name,'') WHERE event_name='' AND race_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE ocr_races SET brand=COALESCE(NULLIF(brand,'Spartan'),series,'Spartan') WHERE brand='Spartan' AND series IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE ocr_races SET series=COALESCE(NULLIF(series,'Spartan'),brand,'Spartan') WHERE series='Spartan' AND brand IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE ocr_races SET finish_time_minutes=COALESCE(NULLIF(finish_time_minutes,0),CAST(finish_time_sec/60 AS INTEGER),0) WHERE finish_time_minutes=0 AND finish_time_sec IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE ocr_races SET finish_time_sec=COALESCE(NULLIF(finish_time_sec,0),finish_time_minutes*60,0) WHERE finish_time_sec=0 AND finish_time_minutes IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE ocr_races SET burpees=COALESCE(NULLIF(burpees,0),burpees_served,0) WHERE burpees=0 AND burpees_served IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE ocr_races SET distance_km=COALESCE(NULLIF(distance_km,0),CAST(distance_miles*1.609 AS REAL),0) WHERE distance_km=0 AND distance_miles IS NOT NULL`).run(); } catch(e) {}
-// freediving_sessions: early (54644) has session_date/max_depth_ft/max_hold_secs; late (76305) may use date/depth_m
-try { db.prepare(`ALTER TABLE freediving_sessions ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freediving_sessions ADD COLUMN depth_m REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE freediving_sessions ADD COLUMN hold_time_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE freediving_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date='' AND session_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE freediving_sessions SET depth_m=COALESCE(NULLIF(depth_m,0),CAST(max_depth_ft*0.3048 AS REAL),0) WHERE depth_m=0 AND max_depth_ft IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE freediving_sessions SET hold_time_sec=COALESCE(NULLIF(hold_time_sec,0),max_hold_secs,0) WHERE hold_time_sec=0 AND max_hold_secs IS NOT NULL`).run(); } catch(e) {}
-// disc_golf_rounds: ensure consistent cols
-try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN round_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN course_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN score_vs_par INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN ace_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE disc_golf_rounds ADD COLUMN birdie_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-// photo_shoots: ensure consistent cols
-try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN shoot_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN client TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN shoot_type TEXT DEFAULT 'portrait'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN fee_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN photos_taken INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE photo_shoots ADD COLUMN photos_delivered INTEGER DEFAULT 0`).run(); } catch(e) {}
-// decision_journal: ensure standard cols
-try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN context TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN options TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN decision TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN outcome TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE decision_journal ADD COLUMN review_date TEXT DEFAULT ''`).run(); } catch(e) {}
-// mentorship_log: ensure standard cols
-try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN mentor TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN topic TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN duration_min INTEGER DEFAULT 60`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN notes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE mentorship_log ADD COLUMN action_items TEXT DEFAULT ''`).run(); } catch(e) {}
-// genealogy_sources: early (42023) vs late (49419) — ensure standard cols
-try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN source_type TEXT DEFAULT 'document'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN url TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN repository TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE genealogy_sources ADD COLUMN reliability INTEGER DEFAULT 3`).run(); } catch(e) {}
-// ─── end v150 migrations ──────────────────────────────────────────────────────
-
-// ─── v151 Schema Migrations ────────────────────────────────────────────────────
-// journal_entries: CRITICAL — early (6757) uses date/content/mood TEXT
-//   mid (64372) uses entry_date/mood_rating/energy_rating/gratitude_items/streak_day
-//   late (99288) uses entry_date/word_count/mood/energy/gratitude_items/goals_reviewed/streak_day
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN entry_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN mood_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN energy_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN energy INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN journal_type TEXT DEFAULT 'daily'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN daily_intentions TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN wins TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN challenges TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN tomorrow_focus TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN time_to_write_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN gratitude_items TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN goals_reviewed INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE journal_entries ADD COLUMN new_word_count_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-// bidirectional date/entry_date
-try { db.prepare(`UPDATE journal_entries SET entry_date=COALESCE(NULLIF(entry_date,''),date,'') WHERE entry_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET date=COALESCE(NULLIF(date,''),entry_date,'') WHERE date='' AND entry_date IS NOT NULL`).run(); } catch(e) {}
-// mood_rating ↔ mood (TEXT/INT mismatch — store numeric in mood_rating)
-try { db.prepare(`UPDATE journal_entries SET mood_rating=COALESCE(NULLIF(mood_rating,3),CASE WHEN CAST(mood AS INTEGER)>0 THEN CAST(mood AS INTEGER) ELSE 3 END,3) WHERE mood_rating=3 AND mood IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET energy_rating=COALESCE(NULLIF(energy_rating,3),energy,3) WHERE energy_rating=3 AND energy IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET gratitude=COALESCE(NULLIF(gratitude,''),gratitude_items,'') WHERE gratitude='' AND gratitude_items IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE journal_entries SET gratitude_items=COALESCE(NULLIF(gratitude_items,''),gratitude,'') WHERE gratitude_items='' AND gratitude IS NOT NULL`).run(); } catch(e) {}
-// pets: CRITICAL — early (41964) uses name/dob/weight_kg; mid (48150) uses pet_name/birthdate; late (52019) uses pet_name/dob/weight_lbs
-try { db.prepare(`ALTER TABLE pets ADD COLUMN pet_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN dob TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN birthdate TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN date_of_birth TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN weight_kg REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN weight_lbs REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN microchip_id TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN vet_clinic TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN insurance_provider TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN is_active INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN color TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pets ADD COLUMN gender TEXT DEFAULT ''`).run(); } catch(e) {}
-// bidirectional name/pet_name
-try { db.prepare(`UPDATE pets SET pet_name=COALESCE(NULLIF(pet_name,''),name,'') WHERE pet_name='' AND name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pets SET name=COALESCE(NULLIF(name,''),pet_name,'') WHERE name='' AND pet_name IS NOT NULL`).run(); } catch(e) {}
-// bidirectional dob aliases
-try { db.prepare(`UPDATE pets SET dob=COALESCE(NULLIF(dob,''),date_of_birth,birthdate,'') WHERE dob='' AND (date_of_birth IS NOT NULL OR birthdate IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pets SET birthdate=COALESCE(NULLIF(birthdate,''),dob,date_of_birth,'') WHERE birthdate='' AND (dob IS NOT NULL OR date_of_birth IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pets SET weight_kg=COALESCE(NULLIF(weight_kg,0),CAST(weight_lbs/2.205 AS REAL),0) WHERE weight_kg=0 AND weight_lbs IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pets SET weight_lbs=COALESCE(NULLIF(weight_lbs,0),CAST(weight_kg*2.205 AS REAL),0) WHERE weight_lbs=0 AND weight_kg IS NOT NULL`).run(); } catch(e) {}
-// ─── end v151 migrations ──────────────────────────────────────────────────────
-
-// ─── v152 Schema Migrations ────────────────────────────────────────────────────
-// sleep_logs: v143 added basic cols. Now add ALL remaining cols used across 5 handlers:
-// handler1 (41758): sleep_date/bedtime/wake_time/sleep_duration_hours/sleep_quality/deep_sleep_pct/rem_pct/awakenings
-// handler2 (44301): sleep_date/duration_minutes/fell_asleep_minutes/deep_sleep_pct/rem_sleep_pct/heart_rate_avg/hrv/caffeine_cutoff_hour/alcohol_drinks/exercise_today/screen_off_minutes_before
-// handler3 (52399): sleep_date/total_hours/time_to_fall_asleep_mins/dream_recalled/restedness_on_wake/alcohol_units/screen_off_mins_before/exercise_today
-// handler4 (94795): log_date/total_hours/deep_sleep_hr/rem_sleep_hr/hrv/resting_hr/readiness_score/new_hrv_pr/new_duration_pr/device
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN bedtime TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN wake_time TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN sleep_duration_hours REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN sleep_quality INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN deep_sleep_pct REAL DEFAULT 20`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_pct REAL DEFAULT 20`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_sleep_pct REAL DEFAULT 20`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN fell_asleep_minutes INTEGER DEFAULT 15`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN time_to_fall_asleep_mins INTEGER DEFAULT 15`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN heart_rate_avg INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN hrv INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN resting_hr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN readiness_score INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN caffeine_cutoff_hour INTEGER DEFAULT 14`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN alcohol_drinks INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN alcohol_units REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN exercise_today INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN screen_off_minutes_before INTEGER DEFAULT 30`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN screen_off_mins_before INTEGER DEFAULT 30`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN dream_recalled INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN restedness_on_wake INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN deep_sleep_hr REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN rem_sleep_hr REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN new_hrv_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN new_duration_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN device TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sleep_logs ADD COLUMN pre_sleep_activities TEXT DEFAULT '[]'`).run(); } catch(e) {}
-// cross-alias backfills
-try { db.prepare(`UPDATE sleep_logs SET sleep_duration_hours=COALESCE(NULLIF(sleep_duration_hours,0),total_hours,CAST(duration_min/60.0 AS REAL),0) WHERE sleep_duration_hours=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET total_hours=COALESCE(NULLIF(total_hours,0),sleep_duration_hours,CAST(duration_min/60.0 AS REAL),0) WHERE total_hours=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET sleep_quality=COALESCE(NULLIF(sleep_quality,3),quality,3) WHERE sleep_quality=3 AND quality IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET sleep_date=COALESCE(NULLIF(sleep_date,''),date,log_date,'') WHERE sleep_date='' AND (date IS NOT NULL OR log_date IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET log_date=COALESCE(NULLIF(log_date,''),sleep_date,date,'') WHERE log_date='' AND (sleep_date IS NOT NULL OR date IS NOT NULL)`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET fell_asleep_minutes=COALESCE(NULLIF(fell_asleep_minutes,15),time_to_fall_asleep_mins,15) WHERE fell_asleep_minutes=15 AND time_to_fall_asleep_mins IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET alcohol_drinks=COALESCE(NULLIF(alcohol_drinks,0),CAST(alcohol_units AS INTEGER),0) WHERE alcohol_drinks=0 AND alcohol_units IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET deep_sleep_hr=COALESCE(NULLIF(deep_sleep_hr,0),CAST(deep_sleep_pct*total_hours/100.0 AS REAL),0) WHERE deep_sleep_hr=0 AND deep_sleep_pct IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sleep_logs SET rem_sleep_hr=COALESCE(NULLIF(rem_sleep_hr,0),CAST(rem_pct*total_hours/100.0 AS REAL),0) WHERE rem_sleep_hr=0 AND rem_pct IS NOT NULL`).run(); } catch(e) {}
-// nutrition_logs: handler (94840) uses log_date/calories/protein_g/water_ml
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN protein_g REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN carbs_g REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN fat_g REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN fiber_g REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN water_ml INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE nutrition_logs ADD COLUMN new_protein_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE nutrition_logs SET log_date=COALESCE(NULLIF(log_date,''),date,'') WHERE log_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE nutrition_logs SET date=COALESCE(NULLIF(date,''),log_date,'') WHERE date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
-// ─── end v152 migrations ──────────────────────────────────────────────────────
-
-// ─── v153 Schema Migrations ────────────────────────────────────────────────────
-// writing_sessions: project_id/session_date/chapter_worked/session_type/productivity_rating/genre/location/mood/total_project_words/duration_min/streak_day aliases
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN project_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN chapter_worked TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN session_type TEXT DEFAULT 'drafting'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN productivity_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN genre TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN mood INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN total_project_words INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN new_daily_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE writing_sessions ADD COLUMN new_project_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE writing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE writing_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date='' AND session_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE writing_sessions SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0 AND duration_minutes IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE writing_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0 AND duration_min IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE writing_sessions SET productivity_rating=COALESCE(NULLIF(productivity_rating,3),mood,3) WHERE productivity_rating=3 AND mood IS NOT NULL`).run(); } catch(e) {}
-// woodworking_projects: name↔project_name, type↔project_type, date_started↔start_date, hours_spent↔hours_invested, cost_materials↔material_cost_usd
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN project_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN project_type TEXT DEFAULT 'furniture'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN start_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN hours_invested REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN material_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN tool_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN joinery_methods TEXT DEFAULT '[]'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN joinery_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN tools_used TEXT DEFAULT '[]'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN estimated_cost REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN dimensions TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN plans_source TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE woodworking_projects ADD COLUMN satisfaction_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET project_name=COALESCE(NULLIF(project_name,''),name,'') WHERE project_name='' AND name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET name=COALESCE(NULLIF(name,''),project_name,'') WHERE name='' AND project_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET project_type=COALESCE(NULLIF(project_type,'furniture'),type,'furniture') WHERE project_type='furniture' AND type IS NOT NULL AND type!=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET type=COALESCE(NULLIF(type,''),project_type,'') WHERE type='' AND project_type IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET start_date=COALESCE(NULLIF(start_date,''),date_started,'') WHERE start_date='' AND date_started IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET date_started=COALESCE(NULLIF(date_started,''),start_date,'') WHERE date_started='' AND start_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET hours_invested=COALESCE(NULLIF(hours_invested,0),hours_spent,0) WHERE hours_invested=0 AND hours_spent IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET hours_spent=COALESCE(NULLIF(hours_spent,0),hours_invested,0) WHERE hours_spent=0 AND hours_invested IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET material_cost_usd=COALESCE(NULLIF(material_cost_usd,0),cost_materials,0) WHERE material_cost_usd=0 AND cost_materials IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE woodworking_projects SET cost_materials=COALESCE(NULLIF(cost_materials,0),material_cost_usd,0) WHERE cost_materials=0 AND material_cost_usd IS NOT NULL`).run(); } catch(e) {}
-// wine_tastings: wine_id/tasting_date/aroma/taste/overall_rating/paired_with/occasion vs wine/date/nose/palate/rating/food_pairing
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN wine_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN tasting_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN aroma TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN taste TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN overall_rating INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN paired_with TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN occasion TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_tastings ADD COLUMN created_at TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_tastings SET tasting_date=COALESCE(NULLIF(tasting_date,''),date,'') WHERE tasting_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_tastings SET date=COALESCE(NULLIF(date,''),tasting_date,'') WHERE date='' AND tasting_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_tastings SET aroma=COALESCE(NULLIF(aroma,''),nose,'') WHERE aroma='' AND nose IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_tastings SET nose=COALESCE(NULLIF(nose,''),aroma,'') WHERE nose='' AND aroma IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_tastings SET taste=COALESCE(NULLIF(taste,''),palate,'') WHERE taste='' AND palate IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_tastings SET palate=COALESCE(NULLIF(palate,''),taste,'') WHERE palate='' AND taste IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_tastings SET overall_rating=COALESCE(NULLIF(overall_rating,0),rating,0) WHERE overall_rating=0 AND rating IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_tastings SET paired_with=COALESCE(NULLIF(paired_with,''),food_pairing,'') WHERE paired_with='' AND food_pairing IS NOT NULL`).run(); } catch(e) {}
-// wine_batches: name↔batch_name↔wine_name, gallons↔volume_gallons↔batch_size_gal, sg_original↔sg_start↔sg_initial, many more
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN wine_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN style TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN base_ingredient TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN volume_gallons REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN batch_size_gal REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN sg_original REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN sg_initial REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN brix_initial REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN ta_g_l REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN so2_ppm INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN oak TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN oak_months INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN bottles_filled INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN competition_medal TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE wine_batches ADD COLUMN new_variety_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_batches SET name=COALESCE(NULLIF(name,''),batch_name,wine_name,'') WHERE name=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_batches SET batch_name=COALESCE(NULLIF(batch_name,''),name,wine_name,'') WHERE batch_name=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_batches SET wine_name=COALESCE(NULLIF(wine_name,''),batch_name,name,'') WHERE wine_name=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_batches SET volume_gallons=COALESCE(NULLIF(volume_gallons,0),gallons,batch_size_gal,0) WHERE volume_gallons=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_batches SET gallons=COALESCE(NULLIF(gallons,0),volume_gallons,batch_size_gal,0) WHERE gallons=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_batches SET sg_original=COALESCE(NULLIF(sg_original,0),sg_start,sg_initial,0) WHERE sg_original=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_batches SET sg_start=COALESCE(NULLIF(sg_start,0),sg_original,sg_initial,0) WHERE sg_start=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE wine_batches SET sg_initial=COALESCE(NULLIF(sg_initial,0),sg_original,sg_start,0) WHERE sg_initial=0`).run(); } catch(e) {}
-// volunteer_hours: date↔log_date, role/description/supervisor/org_id/created_at
-try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN role TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN description TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN supervisor TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN org_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_hours ADD COLUMN created_at TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE volunteer_hours SET log_date=COALESCE(NULLIF(log_date,''),date,'') WHERE log_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE volunteer_hours SET date=COALESCE(NULLIF(date,''),log_date,'') WHERE date='' AND log_date IS NOT NULL`).run(); } catch(e) {}
-// volunteer_activities: activity↔activity_name, date↔activity_date, cause/location/mileage/impact/impact_notes/role/org_id
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN activity_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN activity_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN org_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN cause TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN mileage REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN impact TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN impact_notes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE volunteer_activities ADD COLUMN role TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE volunteer_activities SET activity_name=COALESCE(NULLIF(activity_name,''),activity,'') WHERE activity_name='' AND activity IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE volunteer_activities SET activity=COALESCE(NULLIF(activity,''),activity_name,'') WHERE activity='' AND activity_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE volunteer_activities SET activity_date=COALESCE(NULLIF(activity_date,''),date,'') WHERE activity_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE volunteer_activities SET date=COALESCE(NULLIF(date,''),activity_date,'') WHERE date='' AND activity_date IS NOT NULL`).run(); } catch(e) {}
-// ─── end v153 migrations ──────────────────────────────────────────────────────
-
-// ─── v154 Schema Migrations ────────────────────────────────────────────────────
-// therapy_log: session_date↔log_date, therapist↔therapist_name, mood_before↔emotional_state_before, mood_after↔emotional_state_after/energy_after, topics↔themes, sessions_total↔total_sessions↔streak_sessions, breakthrough↔breakthroughs
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN therapist_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN mood_before INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN mood_after INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN emotional_state_before TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN emotional_state_after TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN energy_after INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN themes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN topics TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN breakthrough TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN breakthroughs TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN homework TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN discomfort_level INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN mood_lift INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN mood_shift INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN sessions_total INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN streak_sessions INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN new_therapist_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE therapy_log ADD COLUMN temperature_c REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE therapy_log SET session_date=COALESCE(NULLIF(session_date,''),log_date,date,'') WHERE session_date=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE therapy_log SET log_date=COALESCE(NULLIF(log_date,''),session_date,date,'') WHERE log_date=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE therapy_log SET therapist_name=COALESCE(NULLIF(therapist_name,''),therapist,'') WHERE therapist_name=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE therapy_log SET therapist=COALESCE(NULLIF(therapist,''),therapist_name,'') WHERE therapist=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE therapy_log SET themes=COALESCE(NULLIF(themes,''),topics,'') WHERE themes=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE therapy_log SET topics=COALESCE(NULLIF(topics,''),themes,'') WHERE topics=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE therapy_log SET breakthrough=COALESCE(NULLIF(breakthrough,''),breakthroughs,'') WHERE breakthrough=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE therapy_log SET sessions_total=COALESCE(NULLIF(sessions_total,0),total_sessions,streak_sessions,0) WHERE sessions_total=0`).run(); } catch(e) {}
-// tax_deductions: year↔tax_year, receipt↔receipt_available
-try { db.prepare(`ALTER TABLE tax_deductions ADD COLUMN tax_year INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE tax_deductions ADD COLUMN receipt_available INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE tax_deductions SET tax_year=COALESCE(NULLIF(tax_year,0),year,0) WHERE tax_year=0 AND year IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE tax_deductions SET year=COALESCE(NULLIF(year,0),tax_year,0) WHERE year=0 AND tax_year IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE tax_deductions SET receipt_available=COALESCE(NULLIF(receipt_available,0),CASE WHEN receipt IS NOT NULL AND receipt!='' THEN 1 ELSE 0 END,0) WHERE receipt_available=0`).run(); } catch(e) {}
-// sup_sessions: duration_min↔duration_mins↔duration_minutes, avg_speed_kmh↔avg_speed_kph/avg_speed_mph, wind_kph↔wind_kmh/wind_mph/wind_kts, distance_km↔distance_miles, board_name↔board_type, stroke_rate_spm↔avg_stroke_rate
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN avg_speed_kmh REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN avg_speed_kph REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN max_speed_kph REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wind_kph REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wind_kmh REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wind_kts REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN board_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN stroke_rate_spm INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wave_height_ft REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN wave_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN longest_ride_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN yoga_session INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN new_distance_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN new_speed_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sup_sessions ADD COLUMN new_location_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sup_sessions SET duration_mins=COALESCE(NULLIF(duration_mins,0),duration_min,duration_minutes,0) WHERE duration_mins=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sup_sessions SET avg_speed_kmh=COALESCE(NULLIF(avg_speed_kmh,0),avg_speed_kph,CAST(avg_speed_mph*1.609 AS REAL),0) WHERE avg_speed_kmh=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sup_sessions SET avg_speed_kph=COALESCE(NULLIF(avg_speed_kph,0),avg_speed_kmh,0) WHERE avg_speed_kph=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sup_sessions SET wind_kph=COALESCE(NULLIF(wind_kph,0),wind_kmh,CAST(wind_mph*1.609 AS REAL),CAST(wind_kts*1.852 AS REAL),0) WHERE wind_kph=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sup_sessions SET wind_kmh=COALESCE(NULLIF(wind_kmh,0),wind_kph,0) WHERE wind_kmh=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sup_sessions SET distance_km=COALESCE(NULLIF(distance_km,0),CAST(distance_miles*1.609 AS REAL),0) WHERE distance_km=0 AND distance_miles IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sup_sessions SET stroke_rate_spm=COALESCE(NULLIF(stroke_rate_spm,0),avg_stroke_rate,0) WHERE stroke_rate_spm=0 AND avg_stroke_rate IS NOT NULL`).run(); } catch(e) {}
-// skincare_logs: log_date alias + hydration↔hydration_level, oiliness↔oiliness_level, redness↔redness_level, skin_feel↔skin_condition, new_breakouts↔breakout_count↔breakouts
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN hydration_level INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN oiliness_level INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN redness_level INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN skin_feel TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN breakout_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN new_breakouts INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN new_product_introduced INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skincare_logs ADD COLUMN photo_url TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skincare_logs SET log_date=COALESCE(NULLIF(log_date,''),date,'') WHERE log_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skincare_logs SET hydration_level=COALESCE(NULLIF(hydration_level,3),hydration,3) WHERE hydration_level=3 AND hydration IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skincare_logs SET oiliness_level=COALESCE(NULLIF(oiliness_level,3),oiliness,3) WHERE oiliness_level=3 AND oiliness IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skincare_logs SET redness_level=COALESCE(NULLIF(redness_level,0),redness,0) WHERE redness_level=0 AND redness IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skincare_logs SET breakout_count=COALESCE(NULLIF(breakout_count,0),new_breakouts,breakouts,0) WHERE breakout_count=0`).run(); } catch(e) {}
-// skate_sessions: session_date alias + spot↔skate_park↔spot_name, skate_type↔session_type, duration_min↔duration_minutes, new_trick↔new_trick_name↔new_trick_learned, many more
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN skate_park TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN spot_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN skate_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN board_setup TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_trick_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_trick_learned TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN clip_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN land_rate_pct INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN manual_max_m REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_manual_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_land_rate_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_spot_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_park_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE skate_sessions ADD COLUMN new_trick_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skate_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skate_sessions SET skate_park=COALESCE(NULLIF(skate_park,''),spot,spot_name,'') WHERE skate_park=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skate_sessions SET spot_name=COALESCE(NULLIF(spot_name,''),spot,skate_park,'') WHERE spot_name=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skate_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE skate_sessions SET new_trick_name=COALESCE(NULLIF(new_trick_name,''),new_trick,new_trick_learned,'') WHERE new_trick_name=''`).run(); } catch(e) {}
-// rpg_campaigns: name↔campaign_name, dm↔dm_name↔gm_name, player_character↔character_name
-try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN campaign_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN dm_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN gm_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN player_character TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN synopsis TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rpg_campaigns ADD COLUMN player_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rpg_campaigns SET campaign_name=COALESCE(NULLIF(campaign_name,''),name,'') WHERE campaign_name='' AND name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rpg_campaigns SET name=COALESCE(NULLIF(name,''),campaign_name,'') WHERE name='' AND campaign_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rpg_campaigns SET dm_name=COALESCE(NULLIF(dm_name,''),dm,gm_name,'') WHERE dm_name=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rpg_campaigns SET dm=COALESCE(NULLIF(dm,''),dm_name,gm_name,'') WHERE dm=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rpg_campaigns SET player_character=COALESCE(NULLIF(player_character,''),character_name,'') WHERE player_character='' AND character_name IS NOT NULL`).run(); } catch(e) {}
-// puzzles_log: pieces↔piece_count, time_hours↔duration_hours, date_completed/date_started
-try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN piece_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN duration_hours REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN date_completed TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN date_started TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE puzzles_log ADD COLUMN brand TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE puzzles_log SET piece_count=COALESCE(NULLIF(piece_count,0),pieces,0) WHERE piece_count=0 AND pieces IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE puzzles_log SET pieces=COALESCE(NULLIF(pieces,0),piece_count,0) WHERE pieces=0 AND piece_count IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE puzzles_log SET duration_hours=COALESCE(NULLIF(duration_hours,0),time_hours,0) WHERE duration_hours=0 AND time_hours IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE puzzles_log SET time_hours=COALESCE(NULLIF(time_hours,0),duration_hours,0) WHERE time_hours=0 AND duration_hours IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE puzzles_log SET date_completed=COALESCE(NULLIF(date_completed,''),date,'') WHERE date_completed='' AND date IS NOT NULL`).run(); } catch(e) {}
-// ─── end v154 migrations ──────────────────────────────────────────────────────
-
-// ─── v155 Schema Migrations ────────────────────────────────────────────────────
-// pottery_pieces: 5 handlers — massive schema split. Unify all col variants.
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN piece_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN piece_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN form TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN building_method TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN forming_method TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_body TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_weight_g REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_weight_grams REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_lbs REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN clay_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN creation_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN made_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN make_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN bisque_fire TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN bisque_cone TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN bisque_fired INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_fire TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_cone TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_fired INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_colors TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_layers INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN glaze_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN fire_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN fire_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN cone TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN kiln TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN kiln_firing TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN kiln_temp_c INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN atmosphere TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN surface_treatment TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN height_cm REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN height_in REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN width_cm REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN diameter_cm REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN diameter_in REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN wall_thickness_mm REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN dimensions TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN hours_worked REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN studio_fee_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN total_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN for_sale INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN price_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN asking_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN selling_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN sold INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN sold_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN commission INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN client TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN functional INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN survived INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN survived_bisque INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN survived_glaze INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN survived_firing INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN cracked INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN warped INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE pottery_pieces ADD COLUMN piece_number INTEGER DEFAULT 0`).run(); } catch(e) {}
-// backfills for pottery_pieces
-try { db.prepare(`UPDATE pottery_pieces SET piece_name=COALESCE(NULLIF(piece_name,''),name,'') WHERE piece_name='' AND name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET name=COALESCE(NULLIF(name,''),piece_name,'') WHERE name='' AND piece_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET creation_date=COALESCE(NULLIF(creation_date,''),made_date,make_date,date,'') WHERE creation_date=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET made_date=COALESCE(NULLIF(made_date,''),creation_date,make_date,'') WHERE made_date=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET clay_weight_g=COALESCE(NULLIF(clay_weight_g,0),clay_weight_grams,CAST(clay_lbs*453.592 AS REAL),0) WHERE clay_weight_g=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces ADD COLUMN hours=COALESCE(NULLIF(hours,0),hours_worked,0) WHERE hours=0 AND hours_worked IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET hours_worked=COALESCE(NULLIF(hours_worked,0),hours,0) WHERE hours_worked=0 AND hours IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET price_usd=COALESCE(NULLIF(price_usd,0),asking_price_usd,selling_price_usd,0) WHERE price_usd=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET asking_price_usd=COALESCE(NULLIF(asking_price_usd,0),price_usd,0) WHERE asking_price_usd=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET forming_method=COALESCE(NULLIF(forming_method,''),building_method,'') WHERE forming_method='' AND building_method IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET building_method=COALESCE(NULLIF(building_method,''),forming_method,'') WHERE building_method='' AND forming_method IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET clay_body=COALESCE(NULLIF(clay_body,''),clay_type,'') WHERE clay_body='' AND clay_type IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE pottery_pieces SET clay_type=COALESCE(NULLIF(clay_type,''),clay_body,'') WHERE clay_type='' AND clay_body IS NOT NULL`).run(); } catch(e) {}
-// research_sources: type↔source_type, authors↔author, key_findings↔key_points, credibility↔credibility_score, project↔project_id
-try { db.prepare(`ALTER TABLE research_sources ADD COLUMN source_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE research_sources ADD COLUMN authors TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE research_sources ADD COLUMN key_findings TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE research_sources ADD COLUMN key_points TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE research_sources ADD COLUMN credibility_score INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE research_sources ADD COLUMN project TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE research_sources ADD COLUMN project_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE research_sources ADD COLUMN cited INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE research_sources SET source_type=COALESCE(NULLIF(source_type,''),type,'') WHERE source_type='' AND type IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE research_sources SET type=COALESCE(NULLIF(type,''),source_type,'') WHERE type='' AND source_type IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE research_sources SET authors=COALESCE(NULLIF(authors,''),author,'') WHERE authors='' AND author IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE research_sources SET author=COALESCE(NULLIF(author,''),authors,'') WHERE author='' AND authors IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE research_sources SET key_findings=COALESCE(NULLIF(key_findings,''),key_points,'') WHERE key_findings='' AND key_points IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE research_sources SET key_points=COALESCE(NULLIF(key_points,''),key_findings,'') WHERE key_points='' AND key_findings IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE research_sources SET credibility_score=COALESCE(NULLIF(credibility_score,0),credibility,0) WHERE credibility_score=0 AND credibility IS NOT NULL`).run(); } catch(e) {}
-// meditation_sessions: app_or_teacher↔app_used, duration_min↔duration_minutes, insights↔insight_noted, practice_type↔technique, calm_score/focus_quality/mood_delta
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN app_used TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN insight_noted TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN practice_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN calm_score INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN focus_quality INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN mood_before INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN mood_after INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN mood_delta INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN morning INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN sitting_position TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN new_duration_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE meditation_sessions ADD COLUMN new_technique_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE meditation_sessions SET app_used=COALESCE(NULLIF(app_used,''),app_or_teacher,'') WHERE app_used='' AND app_or_teacher IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE meditation_sessions SET app_or_teacher=COALESCE(NULLIF(app_or_teacher,''),app_used,'') WHERE app_or_teacher='' AND app_used IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE meditation_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0 AND duration_min IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE meditation_sessions SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0 AND duration_minutes IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE meditation_sessions SET insight_noted=COALESCE(NULLIF(insight_noted,''),insights,'') WHERE insight_noted='' AND insights IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE meditation_sessions SET insights=COALESCE(NULLIF(insights,''),insight_noted,'') WHERE insights='' AND insight_noted IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE meditation_sessions SET practice_type=COALESCE(NULLIF(practice_type,''),technique,'') WHERE practice_type='' AND technique IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE meditation_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-// ─── end v155 migrations ──────────────────────────────────────────────────────
-
-// ─── v156 Schema Migrations ────────────────────────────────────────────────────
-// climbing_sessions: duration_mins↔duration_minutes, sends↔routes_sent, flashes/onsights/hardest_grade↔hardest_sent↔highest_grade, gym_or_crag↔location
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN hardest_sent TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN highest_grade TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN sends INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN flashes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN onsights INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN routes_attempted INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN routes_climbed INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN falls INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN gym_or_crag TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN climbing_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN session_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE climbing_sessions ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE climbing_sessions SET duration_mins=COALESCE(NULLIF(duration_mins,0),duration_minutes,0) WHERE duration_mins=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE climbing_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_mins,0) WHERE duration_minutes=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE climbing_sessions SET sends=COALESCE(NULLIF(sends,0),routes_sent,0) WHERE sends=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE climbing_sessions SET routes_sent=COALESCE(NULLIF(routes_sent,0),sends,0) WHERE routes_sent=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE climbing_sessions SET hardest_sent=COALESCE(NULLIF(hardest_sent,''),hardest_grade,highest_grade,'') WHERE hardest_sent=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE climbing_sessions SET hardest_grade=COALESCE(NULLIF(hardest_grade,''),hardest_sent,highest_grade,'') WHERE hardest_grade=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE climbing_sessions SET gym_or_crag=COALESCE(NULLIF(gym_or_crag,''),location,'') WHERE gym_or_crag='' AND location IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE climbing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-// music_practice: practice_date↔date, duration_min↔duration_minutes, quality↔quality_rating, focus↔focus_areas, pieces↔pieces_practiced, techniques↔techniques_worked, songs_worked/bpm cols
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN practice_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN quality_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN focus_areas TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN pieces_practiced TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN techniques_worked TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN songs_worked TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN bpm_goal INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN bpm_achieved INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN scales_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN technique_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN repertoire_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN theory_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN improvisation_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN instrument_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE music_practice ADD COLUMN created_at TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET practice_date=COALESCE(NULLIF(practice_date,''),date,'') WHERE practice_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET date=COALESCE(NULLIF(date,''),practice_date,'') WHERE date='' AND practice_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET quality_rating=COALESCE(NULLIF(quality_rating,3),quality,3) WHERE quality_rating=3 AND quality IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET focus_areas=COALESCE(NULLIF(focus_areas,''),focus,'') WHERE focus_areas='' AND focus IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET pieces_practiced=COALESCE(NULLIF(pieces_practiced,''),pieces,'') WHERE pieces_practiced='' AND pieces IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE music_practice SET techniques_worked=COALESCE(NULLIF(techniques_worked,''),techniques,'') WHERE techniques_worked='' AND techniques IS NOT NULL`).run(); } catch(e) {}
-// coding_sessions: session_date/difficulty/language/platform/problems_solved/problems_attempted/streak_day/new_language_flag/new_platform_flag/new_problems_pr
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN difficulty TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN language TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN platform TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN problems_solved INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN problems_attempted INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN new_language_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN new_platform_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN new_problems_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE coding_sessions ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE coding_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE coding_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date='' AND session_date IS NOT NULL`).run(); } catch(e) {}
-// side_projects: started_date↔start_date
-try { db.prepare(`ALTER TABLE side_projects ADD COLUMN started_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE side_projects ADD COLUMN monthly_revenue_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE side_projects ADD COLUMN monthly_costs_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE side_projects ADD COLUMN user_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE side_projects ADD COLUMN repo_url TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE side_projects ADD COLUMN target_launch TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE side_projects ADD COLUMN motivation TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE side_projects SET started_date=COALESCE(NULLIF(started_date,''),start_date,'') WHERE started_date='' AND start_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE side_projects SET start_date=COALESCE(NULLIF(start_date,''),started_date,'') WHERE start_date='' AND started_date IS NOT NULL`).run(); } catch(e) {}
-// drone_flights: duration_min↔duration_minutes↔flight_time_min↔flight_duration_mins, distance_km↔distance_ft, max_altitude_m↔max_altitude_ft, wind_kph↔wind_mph↔wind_speed_kmh, max_speed_kph↔max_speed_kmh, flight_purpose↔purpose, incident_flag↔incident↔incident_occurred, part107↔part107_flight
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN flight_time_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN flight_duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN distance_ft REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN max_altitude_m REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN max_distance_m REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN max_speed_kmh REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN max_speed_kph REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN wind_kph REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN wind_speed_kmh REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN purpose TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN flight_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN incident_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN incident_occurred INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN incident_desc TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN part107_flight INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN permit_required INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN permit_obtained INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN waiver_required INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN waiver_airspace TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN keeper_clips INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN footage_gb REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN color_profile TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN nd_filter TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN battery_cycles INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN new_location_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE drone_flights ADD COLUMN created_at TEXT DEFAULT ''`).run(); } catch(e) {}
-// drone_flights backfills
-try { db.prepare(`UPDATE drone_flights SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,flight_time_min,flight_duration_mins,0) WHERE duration_minutes=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET flight_time_min=COALESCE(NULLIF(flight_time_min,0),duration_min,duration_minutes,0) WHERE flight_time_min=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET max_altitude_m=COALESCE(NULLIF(max_altitude_m,0),CAST(max_altitude_ft*0.3048 AS REAL),0) WHERE max_altitude_m=0 AND max_altitude_ft IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET max_speed_kph=COALESCE(NULLIF(max_speed_kph,0),max_speed_kmh,CAST(wind_mph*1.609 AS REAL),0) WHERE max_speed_kph=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET max_speed_kmh=COALESCE(NULLIF(max_speed_kmh,0),max_speed_kph,0) WHERE max_speed_kmh=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET wind_kph=COALESCE(NULLIF(wind_kph,0),wind_speed_kmh,CAST(wind_mph*1.609 AS REAL),0) WHERE wind_kph=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET wind_speed_kmh=COALESCE(NULLIF(wind_speed_kmh,0),wind_kph,0) WHERE wind_speed_kmh=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET purpose=COALESCE(NULLIF(purpose,''),flight_purpose,'') WHERE purpose='' AND flight_purpose IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET flight_purpose=COALESCE(NULLIF(flight_purpose,''),purpose,'') WHERE flight_purpose='' AND purpose IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET incident_flag=COALESCE(NULLIF(incident_flag,0),incident_occurred,CASE WHEN incident IS NOT NULL AND incident!='' THEN 1 ELSE 0 END,0) WHERE incident_flag=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE drone_flights SET part107_flight=COALESCE(NULLIF(part107_flight,0),part107,0) WHERE part107_flight=0 AND part107 IS NOT NULL`).run(); } catch(e) {}
-// ─── end v156 migrations ──────────────────────────────────────────────────────
-
-// ─── v157 Schema Migrations ────────────────────────────────────────────────────
-// sailing_logs: log_date/distance_nm↔nautical_miles/race cols
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN log_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN distance_nm REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN departure_port TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN destination_port TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN arrival_port TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN avg_wind_kts REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN max_wind_kts REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN max_boat_speed_kts REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN engine_hours REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN fuel_used_gal REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN crew_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN boat_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN race INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN race_class TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN race_fleet_size INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE sailing_logs ADD COLUMN incidents TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sailing_logs SET log_date=COALESCE(NULLIF(log_date,''),date,'') WHERE log_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sailing_logs SET distance_nm=COALESCE(NULLIF(distance_nm,0),nautical_miles,0) WHERE distance_nm=0 AND nautical_miles IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE sailing_logs SET nautical_miles=COALESCE(NULLIF(nautical_miles,0),distance_nm,0) WHERE nautical_miles=0 AND distance_nm IS NOT NULL`).run(); } catch(e) {}
-// surfing_sessions: session_date↔date, spot↔location, board/conditions/tide/heat_score/catch_rate_pct/longest_ride_sec PR flags
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN session_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN best_wave REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN best_maneuver TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN catch_rate_pct INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN longest_ride_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN heat_score REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN swell_period_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN new_spot_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN new_wave_size_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE surfing_sessions ADD COLUMN new_maneuver_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE surfing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE surfing_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date='' AND session_date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE surfing_sessions SET spot=COALESCE(NULLIF(spot,''),location,'') WHERE spot='' AND location IS NOT NULL`).run(); } catch(e) {}
-// paragliding_flights: flight_date/duration_min↔duration_minutes↔flight_duration_min↔flight_time_min, altitude cols
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN flight_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN flight_duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN flight_time_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN altitude_max_m INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN altitude_gain_m INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN cloud_base_m INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN best_thermal_ms REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN avg_sink_ms REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN flight_number INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN glider_class TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN craft_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN distance_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN duration_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE paragliding_flights ADD COLUMN altitude_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE paragliding_flights SET flight_date=COALESCE(NULLIF(flight_date,''),date,'') WHERE flight_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE paragliding_flights SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,flight_duration_min,flight_time_min,0) WHERE duration_minutes=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE paragliding_flights SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE paragliding_flights SET glider=COALESCE(NULLIF(glider,''),craft_type,'') WHERE glider='' AND craft_type IS NOT NULL`).run(); } catch(e) {}
-// martial_arts_sessions: session_date, art/belt_level/sparring_rounds/stripe_count/submissions cols
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN art TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN belt_level TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN stripe_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN sparring_rounds INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN submissions_hit INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN submissions_received INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN techniques_drilled INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN instructor TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE martial_arts_sessions ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE martial_arts_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-// boxing_sessions: jabs↔jab_count, crosses↔cross_count, hooks↔hook_count, fight↔fight_result↔bout_result, bouts/kos/power_punches/punch_accuracy_pct cols
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN jab_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN cross_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN hook_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN fight_result TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN bout_result TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN bouts INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN kos INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN power_punches INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN punch_accuracy_pct INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN head_movement INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN cardio_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN round_duration_min INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN new_gym_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN new_combo_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE boxing_sessions ADD COLUMN new_rounds_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE boxing_sessions SET jab_count=COALESCE(NULLIF(jab_count,0),jabs,0) WHERE jab_count=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE boxing_sessions SET jabs=COALESCE(NULLIF(jabs,0),jab_count,0) WHERE jabs=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE boxing_sessions SET cross_count=COALESCE(NULLIF(cross_count,0),crosses,0) WHERE cross_count=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE boxing_sessions SET hook_count=COALESCE(NULLIF(hook_count,0),hooks,0) WHERE hook_count=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE boxing_sessions SET fight_result=COALESCE(NULLIF(fight_result,''),bout_result,fight,'') WHERE fight_result=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE boxing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-// rowing_sessions: avg_split_500m_sec↔avg_split_sec, heart_rate_avg↔avg_hr, avg_spm↔avg_stroke_rate, erg_session/best_2k_sec/best_500m_sec PR cols
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_split_500m_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_split_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_spm INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_stroke_rate INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN heart_rate_avg INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN heart_rate_max INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN avg_watts INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN max_watts INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN drag_factor INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN erg_session INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN boat_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN club TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN coach TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN crew TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN best_2k_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN best_500m_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN new_2k_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN new_500m_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN new_distance_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE rowing_sessions ADD COLUMN new_club_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rowing_sessions SET avg_split_500m_sec=COALESCE(NULLIF(avg_split_500m_sec,0),avg_split_sec,0) WHERE avg_split_500m_sec=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rowing_sessions SET avg_split_sec=COALESCE(NULLIF(avg_split_sec,0),avg_split_500m_sec,0) WHERE avg_split_sec=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rowing_sessions SET heart_rate_avg=COALESCE(NULLIF(heart_rate_avg,0),avg_hr,0) WHERE heart_rate_avg=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rowing_sessions SET avg_hr=COALESCE(NULLIF(avg_hr,0),heart_rate_avg,0) WHERE avg_hr=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rowing_sessions SET avg_spm=COALESCE(NULLIF(avg_spm,0),avg_stroke_rate,0) WHERE avg_spm=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rowing_sessions SET avg_stroke_rate=COALESCE(NULLIF(avg_stroke_rate,0),avg_spm,0) WHERE avg_stroke_rate=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE rowing_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-// powerlifting_sessions: squat_kg/bench_kg/deadlift_kg/total_kg/bodyweight_kg/wilks_score/competition cols
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN squat_kg REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN bench_kg REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN deadlift_kg REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN total_kg REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN bodyweight_kg REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN wilks_score REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN weight_class TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN gym TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN session_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_squat_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_bench_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_deadlift_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_total_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE powerlifting_sessions ADD COLUMN new_gym_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE powerlifting_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date='' AND date IS NOT NULL`).run(); } catch(e) {}
-// ─── end v157 migrations ──────────────────────────────────────────────────────
-
-// ─── v158 Schema Migrations ────────────────────────────────────────────────────
-// archery_sessions: 47 cols across 5 handlers — bow_id/equipment_id/bow_brand/discipline/location/session_type/arrows_shot/score/max_possible/max_possible_score/max_score/round_type/x_count/xs/tens/golds/groups_tight/wind_mph/indoor/target_face/target_type/range_name/bow_draw_weight_lb/draw_length_in/arrow_spine/point_grain/total_arrow_grain/competition/placement/new_score_pr/new_distance_flag/new_range_flag/distance_m/ends
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN bow_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN equipment_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN bow_brand TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN discipline TEXT DEFAULT 'target'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN location TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN session_type TEXT DEFAULT 'practice'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN arrows_shot INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN score INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN max_possible INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN max_possible_score INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN max_score INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN round_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN x_count INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN xs INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN tens INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN golds INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN groups_tight INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN wind_mph REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN indoor INTEGER DEFAULT 1`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN target_face TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN target_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN range_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN bow_draw_weight_lb INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN draw_length_in REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN arrow_spine INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN point_grain INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN total_arrow_grain INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN placement INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN new_score_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN new_distance_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN new_range_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN distance_m REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE archery_sessions ADD COLUMN ends INTEGER DEFAULT 0`).run(); } catch(e) {}
-// backfills: score↔total_score, max_possible↔possible_score↔max_score, arrows_shot↔total_arrows, x_count↔xs, ends↔end_count, draw_weight_lbs↔bow_draw_weight_lb
-try { db.prepare(`UPDATE archery_sessions SET score=COALESCE(NULLIF(score,0),total_score,0) WHERE score=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET total_score=COALESCE(NULLIF(total_score,0),score,0) WHERE total_score=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET max_possible=COALESCE(NULLIF(max_possible,0),possible_score,max_score,0) WHERE max_possible=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET possible_score=COALESCE(NULLIF(possible_score,0),max_possible,max_score,0) WHERE possible_score=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET arrows_shot=COALESCE(NULLIF(arrows_shot,0),total_arrows,0) WHERE arrows_shot=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET total_arrows=COALESCE(NULLIF(total_arrows,0),arrows_shot,0) WHERE total_arrows=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET x_count=COALESCE(NULLIF(x_count,0),xs,0) WHERE x_count=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET xs=COALESCE(NULLIF(xs,0),x_count,0) WHERE xs=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET ends=COALESCE(NULLIF(ends,0),end_count,0) WHERE ends=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE archery_sessions SET bow_draw_weight_lb=COALESCE(NULLIF(bow_draw_weight_lb,0),draw_weight_lbs,0) WHERE bow_draw_weight_lb=0`).run(); } catch(e) {}
-// equestrian_sessions: stable/score/time_sec/placing/gaits_walked/gaits_trotted/gaits_cantered/gaits_practiced/new_score_pr/new_stable_flag/new_horse_flag
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN stable TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN score REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN time_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN gaits_walked INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN gaits_trotted INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN gaits_cantered INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN gaits_practiced TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN new_score_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN new_stable_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE equestrian_sessions ADD COLUMN new_horse_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-// ─── end v158 migrations ──────────────────────────────────────────────────────
-
-// ─── v159 Schema Migrations ────────────────────────────────────────────────────
-// yoga_sessions: calories/flexibility_focus/heart_rate_avg/instructor/intensity/new_pose_flag/new_studio_flag/perceived_exertion/pranayama/streak_day/studio
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN calories INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN flexibility_focus TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN heart_rate_avg INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN instructor TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN intensity INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN new_pose_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN new_studio_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN perceived_exertion INTEGER DEFAULT 5`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN pranayama TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN streak_day INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE yoga_sessions ADD COLUMN studio TEXT DEFAULT ''`).run(); } catch(e) {}
-// gymnastics_sessions: falls/level/new_skill/new_skill_landed/placing/routine_length_sec/score/skills_practiced
-try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN falls INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN level TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN new_skill TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN new_skill_landed INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN routine_length_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN score REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE gymnastics_sessions ADD COLUMN skills_practiced TEXT DEFAULT ''`).run(); } catch(e) {}
-// fencing_sessions: actions_per_bout/bouts_fenced/bouts_won/club/competition/double_touches/new_club_flag/new_touches_pr/placing/tableau_round
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN actions_per_bout REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN bouts_fenced INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN bouts_won INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN club TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN competition INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN double_touches INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN new_club_flag INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN new_touches_pr INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN placing INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE fencing_sessions ADD COLUMN tableau_round TEXT DEFAULT ''`).run(); } catch(e) {}
-// ─── end v159 migrations ──────────────────────────────────────────────────────
-
-// ─── v160 Schema Migrations ────────────────────────────────────────────────────
-// calligraphy_sessions: 4 handlers with 3 different schemas — unify all missing cols
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN style TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN script TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN script_style TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN tool TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN tools TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN ink TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN ink_brand TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN paper TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN paper_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN drills_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN letters_practiced TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN project_type TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN project_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN quote_or_text TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN client_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN charged_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN commission INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN commission_price_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN skill_focus TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN focus TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN breakthrough TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN frustration_level INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN satisfaction_level INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN satisfaction_rating INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN rating INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE calligraphy_sessions ADD COLUMN date TEXT DEFAULT ''`).run(); } catch(e) {}
-// backfills: duration_min↔duration_minutes, satisfaction↔satisfaction_level↔satisfaction_rating↔rating, date↔session_date, focus_area↔focus↔skill_focus, style↔script↔script_style, tool↔tools
-try { db.prepare(`UPDATE calligraphy_sessions SET duration_minutes=COALESCE(NULLIF(duration_minutes,0),duration_min,0) WHERE duration_minutes=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE calligraphy_sessions SET duration_min=COALESCE(NULLIF(duration_min,0),duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE calligraphy_sessions SET satisfaction_rating=COALESCE(NULLIF(satisfaction_rating,0),satisfaction,satisfaction_level,rating,3) WHERE satisfaction_rating=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE calligraphy_sessions SET satisfaction=COALESCE(NULLIF(satisfaction,0),satisfaction_rating,satisfaction_level,rating,3) WHERE satisfaction=0`).run(); } catch(e) {}
-try { db.prepare(`UPDATE calligraphy_sessions SET date=COALESCE(NULLIF(date,''),session_date,'') WHERE date=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE calligraphy_sessions SET session_date=COALESCE(NULLIF(session_date,''),date,'') WHERE session_date=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE calligraphy_sessions SET focus=COALESCE(NULLIF(focus,''),focus_area,skill_focus,'') WHERE focus=''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE calligraphy_sessions SET style=COALESCE(NULLIF(style,''),script,script_style,'') WHERE style=''`).run(); } catch(e) {}
-// diy_projects: name/status/priority/started_date/completed_date/estimated_cost_usd/materials_cost/location_in_home/tutorial_url
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN status TEXT DEFAULT 'planning'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN priority INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN started_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN completed_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN estimated_cost_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN materials_cost REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN location_in_home TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE diy_projects ADD COLUMN tutorial_url TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`UPDATE diy_projects SET name=COALESCE(NULLIF(name,''),project_name,'') WHERE name='' AND project_name IS NOT NULL`).run(); } catch(e) {}
-try { db.prepare(`UPDATE diy_projects SET estimated_cost_usd=COALESCE(NULLIF(estimated_cost_usd,0),materials_cost,0) WHERE estimated_cost_usd=0`).run(); } catch(e) {}
-// aquarium_logs: salinity_sg/hardness_dkh/dosing/feeding_amount/alert/observations
-try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN salinity_sg REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN hardness_dkh REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN dosing TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN feeding_amount TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN alert TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE aquarium_logs ADD COLUMN observations TEXT DEFAULT ''`).run(); } catch(e) {}
-// ─── end v160 migrations ──────────────────────────────────────────────────────
-
-// ─── v161 Schema Migrations ────────────────────────────────────────────────────
-// podcast_episodes: 14 handlers with massive schema divergence — all missing cols
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN episode_title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN episode_num INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN episode_type TEXT DEFAULT 'interview'`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN show_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN show_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN publish_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN published_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN record_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN recording_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN duration_mins INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN duration_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN raw_duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN edited_duration_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN raw_audio_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN progress_min INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest_id INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest_name TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest_names TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guest_title TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN guests TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN downloads INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN ad_revenue_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN sponsor TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN sponsor_revenue_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN sponsorship_usd REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN daw TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN mic TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN recording_location TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN recording_quality INTEGER DEFAULT 3`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN edit_hours REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN editing_hours REAL DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN hosting_platform TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN outline TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN show_notes_written INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN transcript_done INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN youtube_uploaded INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN topics TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN quotes TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN key_takeaways TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN action_items TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN rating INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN listened INTEGER DEFAULT 0`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN listen_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN listened_date TEXT DEFAULT ''`).run(); } catch(e) {}
-try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN date_listened TEXT DEFAULT ''`).run(); } catch(e) {}
+// affirmation_goals
+app.get('/api/affirmation-goals', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM affirmation_goals WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/affirmation-goals', auth, (req: any, res: any) => {
+  try {
+    const { current_belief, evidence_log } = req.body;
+    const result = db.prepare('INSERT INTO affirmation_goals (user_id, current_belief, evidence_log) VALUES (?, ?, ?)').run(req.user.id, current_belief, evidence_log);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/affirmation-goals/:id', auth, (req: any, res: any) => {
+  try {
+    const { current_belief, evidence_log } = req.body;
+    db.prepare('UPDATE affirmation_goals SET current_belief=?, evidence_log=? WHERE id=? AND user_id=?').run(current_belief, evidence_log, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/affirmation-goals/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM affirmation_goals WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// anime_watchlist
+app.get('/api/anime-watchlist', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM anime_watchlist WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/anime-watchlist', auth, (req: any, res: any) => {
+  try {
+    const { media_type, priority } = req.body;
+    const result = db.prepare('INSERT INTO anime_watchlist (user_id, media_type, priority) VALUES (?, ?, ?)').run(req.user.id, media_type, priority);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/anime-watchlist/:id', auth, (req: any, res: any) => {
+  try {
+    const { media_type, priority } = req.body;
+    db.prepare('UPDATE anime_watchlist SET media_type=?, priority=? WHERE id=? AND user_id=?').run(media_type, priority, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/anime-watchlist/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM anime_watchlist WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// antique_research
+app.get('/api/antique-research', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM antique_research WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/antique-research', auth, (req: any, res: any) => {
+  try {
+    const { research_date, comparable_sale_date } = req.body;
+    const result = db.prepare('INSERT INTO antique_research (user_id, research_date, comparable_sale_date) VALUES (?, ?, ?)').run(req.user.id, research_date, comparable_sale_date);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/antique-research/:id', auth, (req: any, res: any) => {
+  try {
+    const { research_date, comparable_sale_date } = req.body;
+    db.prepare('UPDATE antique_research SET research_date=?, comparable_sale_date=? WHERE id=? AND user_id=?').run(research_date, comparable_sale_date, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/antique-research/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM antique_research WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// argument_library
+app.get('/api/argument-library', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM argument_library WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/argument-library', auth, (req: any, res: any) => {
+  try {
+    const { argument_type, strength_rating } = req.body;
+    const result = db.prepare('INSERT INTO argument_library (user_id, argument_type, strength_rating) VALUES (?, ?, ?)').run(req.user.id, argument_type, strength_rating);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/argument-library/:id', auth, (req: any, res: any) => {
+  try {
+    const { argument_type, strength_rating } = req.body;
+    db.prepare('UPDATE argument_library SET argument_type=?, strength_rating=? WHERE id=? AND user_id=?').run(argument_type, strength_rating, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/argument-library/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM argument_library WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// art_movements
+app.get('/api/art-movements', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM art_movements WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/art-movements', auth, (req: any, res: any) => {
+  try {
+    const { period, key_artists, origin_country, notes } = req.body;
+    const result = db.prepare('INSERT INTO art_movements (user_id, period, key_artists, origin_country, notes) VALUES (?, ?, ?, ?, ?)').run(req.user.id, period, key_artists, origin_country, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/art-movements/:id', auth, (req: any, res: any) => {
+  try {
+    const { period, key_artists, origin_country, notes } = req.body;
+    db.prepare('UPDATE art_movements SET period=?, key_artists=?, origin_country=?, notes=? WHERE id=? AND user_id=?').run(period, key_artists, origin_country, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/art-movements/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM art_movements WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// art_supplies
+app.get('/api/art-supplies', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM art_supplies WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/art-supplies', auth, (req: any, res: any) => {
+  try {
+    const { supply_type, is_favorite, notes } = req.body;
+    const result = db.prepare('INSERT INTO art_supplies (user_id, supply_type, is_favorite, notes) VALUES (?, ?, ?, ?)').run(req.user.id, supply_type, is_favorite, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/art-supplies/:id', auth, (req: any, res: any) => {
+  try {
+    const { supply_type, is_favorite, notes } = req.body;
+    db.prepare('UPDATE art_supplies SET supply_type=?, is_favorite=?, notes=? WHERE id=? AND user_id=?').run(supply_type, is_favorite, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/art-supplies/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM art_supplies WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// beauty_wishlist
+app.get('/api/beauty-wishlist', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM beauty_wishlist WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/beauty-wishlist', auth, (req: any, res: any) => {
+  try {
+    const { design_type, priority } = req.body;
+    const result = db.prepare('INSERT INTO beauty_wishlist (user_id, design_type, priority) VALUES (?, ?, ?)').run(req.user.id, design_type, priority);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/beauty-wishlist/:id', auth, (req: any, res: any) => {
+  try {
+    const { design_type, priority } = req.body;
+    db.prepare('UPDATE beauty_wishlist SET design_type=?, priority=? WHERE id=? AND user_id=?').run(design_type, priority, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/beauty-wishlist/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM beauty_wishlist WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// beverage_inventory
+app.get('/api/beverage-inventory', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM beverage_inventory WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/beverage-inventory', auth, (req: any, res: any) => {
+  try {
+    const { beverage_type, quantity_grams, roast_date, retailer } = req.body;
+    const result = db.prepare('INSERT INTO beverage_inventory (user_id, beverage_type, quantity_grams, roast_date, retailer) VALUES (?, ?, ?, ?, ?)').run(req.user.id, beverage_type, quantity_grams, roast_date, retailer);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/beverage-inventory/:id', auth, (req: any, res: any) => {
+  try {
+    const { beverage_type, quantity_grams, roast_date, retailer } = req.body;
+    db.prepare('UPDATE beverage_inventory SET beverage_type=?, quantity_grams=?, roast_date=?, retailer=? WHERE id=? AND user_id=?').run(beverage_type, quantity_grams, roast_date, retailer, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/beverage-inventory/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM beverage_inventory WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// bonsai_care_log
+app.get('/api/bonsai-care-log', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM bonsai_care_log WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/bonsai-care-log', auth, (req: any, res: any) => {
+  try {
+    const { care_date, fertilizer_used } = req.body;
+    const result = db.prepare('INSERT INTO bonsai_care_log (user_id, care_date, fertilizer_used) VALUES (?, ?, ?)').run(req.user.id, care_date, fertilizer_used);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/bonsai-care-log/:id', auth, (req: any, res: any) => {
+  try {
+    const { care_date, fertilizer_used } = req.body;
+    db.prepare('UPDATE bonsai_care_log SET care_date=?, fertilizer_used=? WHERE id=? AND user_id=?').run(care_date, fertilizer_used, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/bonsai-care-log/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM bonsai_care_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// book_lists
+app.get('/api/book-lists', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM book_lists WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/book-lists', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    const result = db.prepare('INSERT INTO book_lists (user_id, description) VALUES (?, ?)').run(req.user.id, description);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/book-lists/:id', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    db.prepare('UPDATE book_lists SET description=? WHERE id=? AND user_id=?').run(description, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/book-lists/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM book_lists WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// book_recommendations
+app.get('/api/book-recommendations', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM book_recommendations WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/book-recommendations', auth, (req: any, res: any) => {
+  try {
+    const { author, priority } = req.body;
+    const result = db.prepare('INSERT INTO book_recommendations (user_id, author, priority) VALUES (?, ?, ?)').run(req.user.id, author, priority);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/book-recommendations/:id', auth, (req: any, res: any) => {
+  try {
+    const { author, priority } = req.body;
+    db.prepare('UPDATE book_recommendations SET author=?, priority=? WHERE id=? AND user_id=?').run(author, priority, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/book-recommendations/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM book_recommendations WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// bujo_future_log
+app.get('/api/bujo-future-log', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM bujo_future_log WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/bujo-future-log', auth, (req: any, res: any) => {
+  try {
+    const { content, is_migrated } = req.body;
+    const result = db.prepare('INSERT INTO bujo_future_log (user_id, content, is_migrated) VALUES (?, ?, ?)').run(req.user.id, content, is_migrated);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/bujo-future-log/:id', auth, (req: any, res: any) => {
+  try {
+    const { content, is_migrated } = req.body;
+    db.prepare('UPDATE bujo_future_log SET content=?, is_migrated=? WHERE id=? AND user_id=?').run(content, is_migrated, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/bujo-future-log/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM bujo_future_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// bujo_habit_tracker
+app.get('/api/bujo-habit-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM bujo_habit_tracker WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/bujo-habit-tracker', auth, (req: any, res: any) => {
+  try {
+    const { month, days_completed } = req.body;
+    const result = db.prepare('INSERT INTO bujo_habit_tracker (user_id, month, days_completed) VALUES (?, ?, ?)').run(req.user.id, month, days_completed);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/bujo-habit-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    const { month, days_completed } = req.body;
+    db.prepare('UPDATE bujo_habit_tracker SET month=?, days_completed=? WHERE id=? AND user_id=?').run(month, days_completed, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/bujo-habit-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM bujo_habit_tracker WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// calligraphy_projects
+app.get('/api/calligraphy-projects', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM calligraphy_projects WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/calligraphy-projects', auth, (req: any, res: any) => {
+  try {
+    const { project_name, status, completion_date, notes } = req.body;
+    const result = db.prepare('INSERT INTO calligraphy_projects (user_id, project_name, status, completion_date, notes) VALUES (?, ?, ?, ?, ?)').run(req.user.id, project_name, status, completion_date, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/calligraphy-projects/:id', auth, (req: any, res: any) => {
+  try {
+    const { project_name, status, completion_date, notes } = req.body;
+    db.prepare('UPDATE calligraphy_projects SET project_name=?, status=?, completion_date=?, notes=? WHERE id=? AND user_id=?').run(project_name, status, completion_date, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/calligraphy-projects/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM calligraphy_projects WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// candle_inventory
+app.get('/api/candle-inventory', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM candle_inventory WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/candle-inventory', auth, (req: any, res: any) => {
+  try {
+    const { item_type, quantity, supplier } = req.body;
+    const result = db.prepare('INSERT INTO candle_inventory (user_id, item_type, quantity, supplier) VALUES (?, ?, ?, ?)').run(req.user.id, item_type, quantity, supplier);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/candle-inventory/:id', auth, (req: any, res: any) => {
+  try {
+    const { item_type, quantity, supplier } = req.body;
+    db.prepare('UPDATE candle_inventory SET item_type=?, quantity=?, supplier=? WHERE id=? AND user_id=?').run(item_type, quantity, supplier, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/candle-inventory/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM candle_inventory WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// carbon_goals
+app.get('/api/carbon-goals', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM carbon_goals WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/carbon-goals', auth, (req: any, res: any) => {
+  try {
+    const { category, start_date } = req.body;
+    const result = db.prepare('INSERT INTO carbon_goals (user_id, category, start_date) VALUES (?, ?, ?)').run(req.user.id, category, start_date);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/carbon-goals/:id', auth, (req: any, res: any) => {
+  try {
+    const { category, start_date } = req.body;
+    db.prepare('UPDATE carbon_goals SET category=?, start_date=? WHERE id=? AND user_id=?').run(category, start_date, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/carbon-goals/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM carbon_goals WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// card_decks
+app.get('/api/card-decks', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM card_decks WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/card-decks', auth, (req: any, res: any) => {
+  try {
+    const { card_game, is_active } = req.body;
+    const result = db.prepare('INSERT INTO card_decks (user_id, card_game, is_active) VALUES (?, ?, ?)').run(req.user.id, card_game, is_active);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/card-decks/:id', auth, (req: any, res: any) => {
+  try {
+    const { card_game, is_active } = req.body;
+    db.prepare('UPDATE card_decks SET card_game=?, is_active=? WHERE id=? AND user_id=?').run(card_game, is_active, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/card-decks/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM card_decks WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// card_meanings
+app.get('/api/card-meanings', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM card_meanings WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/card-meanings', auth, (req: any, res: any) => {
+  try {
+    const { arcana, upright_keywords, personal_meaning, notes } = req.body;
+    const result = db.prepare('INSERT INTO card_meanings (user_id, arcana, upright_keywords, personal_meaning, notes) VALUES (?, ?, ?, ?, ?)').run(req.user.id, arcana, upright_keywords, personal_meaning, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/card-meanings/:id', auth, (req: any, res: any) => {
+  try {
+    const { arcana, upright_keywords, personal_meaning, notes } = req.body;
+    db.prepare('UPDATE card_meanings SET arcana=?, upright_keywords=?, personal_meaning=?, notes=? WHERE id=? AND user_id=?').run(arcana, upright_keywords, personal_meaning, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/card-meanings/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM card_meanings WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// card_sets
+app.get('/api/card-sets', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM card_sets WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/card-sets', auth, (req: any, res: any) => {
+  try {
+    const { year, total_cards, completion_pct } = req.body;
+    const result = db.prepare('INSERT INTO card_sets (user_id, year, total_cards, completion_pct) VALUES (?, ?, ?, ?)').run(req.user.id, year, total_cards, completion_pct);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/card-sets/:id', auth, (req: any, res: any) => {
+  try {
+    const { year, total_cards, completion_pct } = req.body;
+    db.prepare('UPDATE card_sets SET year=?, total_cards=?, completion_pct=? WHERE id=? AND user_id=?').run(year, total_cards, completion_pct, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/card-sets/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM card_sets WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// climbing_gear
+app.get('/api/climbing-gear', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM climbing_gear WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/climbing-gear', auth, (req: any, res: any) => {
+  try {
+    const { gear_type, purchase_price, retire_date } = req.body;
+    const result = db.prepare('INSERT INTO climbing_gear (user_id, gear_type, purchase_price, retire_date) VALUES (?, ?, ?, ?)').run(req.user.id, gear_type, purchase_price, retire_date);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/climbing-gear/:id', auth, (req: any, res: any) => {
+  try {
+    const { gear_type, purchase_price, retire_date } = req.body;
+    db.prepare('UPDATE climbing_gear SET gear_type=?, purchase_price=?, retire_date=? WHERE id=? AND user_id=?').run(gear_type, purchase_price, retire_date, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/climbing-gear/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM climbing_gear WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// climbing_training
+app.get('/api/climbing-training', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM climbing_training WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/climbing-training', auth, (req: any, res: any) => {
+  try {
+    const { session_date, session_type, duration_minutes, exercises, max_hang_mm, campus_rungs, antagonist_sets, fatigue_level, notes } = req.body;
+    const result = db.prepare('INSERT INTO climbing_training (user_id, session_date, session_type, duration_minutes, exercises, max_hang_mm, campus_rungs, antagonist_sets, fatigue_level, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(req.user.id, session_date, session_type, duration_minutes, exercises, max_hang_mm, campus_rungs, antagonist_sets, fatigue_level, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/climbing-training/:id', auth, (req: any, res: any) => {
+  try {
+    const { session_date, session_type, duration_minutes, exercises, max_hang_mm, campus_rungs, antagonist_sets, fatigue_level, notes } = req.body;
+    db.prepare('UPDATE climbing_training SET session_date=?, session_type=?, duration_minutes=?, exercises=?, max_hang_mm=?, campus_rungs=?, antagonist_sets=?, fatigue_level=?, notes=? WHERE id=? AND user_id=?').run(session_date, session_type, duration_minutes, exercises, max_hang_mm, campus_rungs, antagonist_sets, fatigue_level, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/climbing-training/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM climbing_training WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// cms_media
+app.get('/api/cms-media', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM cms_media WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/cms-media', auth, (req: any, res: any) => {
+  try {
+    const { file_type, uploaded_at } = req.body;
+    const result = db.prepare('INSERT INTO cms_media (user_id, file_type, uploaded_at) VALUES (?, ?, ?)').run(req.user.id, file_type, uploaded_at);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/cms-media/:id', auth, (req: any, res: any) => {
+  try {
+    const { file_type, uploaded_at } = req.body;
+    db.prepare('UPDATE cms_media SET file_type=?, uploaded_at=? WHERE id=? AND user_id=?').run(file_type, uploaded_at, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/cms-media/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM cms_media WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// cms_menus
+app.get('/api/cms-menus', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM cms_menus WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/cms-menus', auth, (req: any, res: any) => {
+  try {
+    const { items } = req.body;
+    const result = db.prepare('INSERT INTO cms_menus (user_id, items) VALUES (?, ?)').run(req.user.id, items);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/cms-menus/:id', auth, (req: any, res: any) => {
+  try {
+    const { items } = req.body;
+    db.prepare('UPDATE cms_menus SET items=? WHERE id=? AND user_id=?').run(items, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/cms-menus/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM cms_menus WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// coaching_notes
+app.get('/api/coaching-notes', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM coaching_notes WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/coaching-notes', auth, (req: any, res: any) => {
+  try {
+    const { note_date, strengths, drills_assigned } = req.body;
+    const result = db.prepare('INSERT INTO coaching_notes (user_id, note_date, strengths, drills_assigned) VALUES (?, ?, ?, ?)').run(req.user.id, note_date, strengths, drills_assigned);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/coaching-notes/:id', auth, (req: any, res: any) => {
+  try {
+    const { note_date, strengths, drills_assigned } = req.body;
+    db.prepare('UPDATE coaching_notes SET note_date=?, strengths=?, drills_assigned=? WHERE id=? AND user_id=?').run(note_date, strengths, drills_assigned, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/coaching-notes/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM coaching_notes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// coffee_equipment
+app.get('/api/coffee-equipment', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM coffee_equipment WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/coffee-equipment', auth, (req: any, res: any) => {
+  try {
+    const { equipment_type, purchase_date, settings_notes } = req.body;
+    const result = db.prepare('INSERT INTO coffee_equipment (user_id, equipment_type, purchase_date, settings_notes) VALUES (?, ?, ?, ?)').run(req.user.id, equipment_type, purchase_date, settings_notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/coffee-equipment/:id', auth, (req: any, res: any) => {
+  try {
+    const { equipment_type, purchase_date, settings_notes } = req.body;
+    db.prepare('UPDATE coffee_equipment SET equipment_type=?, purchase_date=?, settings_notes=? WHERE id=? AND user_id=?').run(equipment_type, purchase_date, settings_notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/coffee-equipment/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM coffee_equipment WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// coffee_recipes
+app.get('/api/coffee-recipes', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM coffee_recipes WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/coffee-recipes', auth, (req: any, res: any) => {
+  try {
+    const { brew_method, water_grams, grind_size, steps, avg_rating } = req.body;
+    const result = db.prepare('INSERT INTO coffee_recipes (user_id, brew_method, water_grams, grind_size, steps, avg_rating) VALUES (?, ?, ?, ?, ?, ?)').run(req.user.id, brew_method, water_grams, grind_size, steps, avg_rating);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/coffee-recipes/:id', auth, (req: any, res: any) => {
+  try {
+    const { brew_method, water_grams, grind_size, steps, avg_rating } = req.body;
+    db.prepare('UPDATE coffee_recipes SET brew_method=?, water_grams=?, grind_size=?, steps=?, avg_rating=? WHERE id=? AND user_id=?').run(brew_method, water_grams, grind_size, steps, avg_rating, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/coffee-recipes/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM coffee_recipes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// coin_sets
+app.get('/api/coin-sets', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM coin_sets WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/coin-sets', auth, (req: any, res: any) => {
+  try {
+    const { series, coins_owned } = req.body;
+    const result = db.prepare('INSERT INTO coin_sets (user_id, series, coins_owned) VALUES (?, ?, ?)').run(req.user.id, series, coins_owned);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/coin-sets/:id', auth, (req: any, res: any) => {
+  try {
+    const { series, coins_owned } = req.body;
+    db.prepare('UPDATE coin_sets SET series=?, coins_owned=? WHERE id=? AND user_id=?').run(series, coins_owned, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/coin-sets/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM coin_sets WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// collection_wishlist
+app.get('/api/collection-wishlist', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM collection_wishlist WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/collection-wishlist', auth, (req: any, res: any) => {
+  try {
+    const { category, priority, found_url } = req.body;
+    const result = db.prepare('INSERT INTO collection_wishlist (user_id, category, priority, found_url) VALUES (?, ?, ?, ?)').run(req.user.id, category, priority, found_url);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/collection-wishlist/:id', auth, (req: any, res: any) => {
+  try {
+    const { category, priority, found_url } = req.body;
+    db.prepare('UPDATE collection_wishlist SET category=?, priority=?, found_url=? WHERE id=? AND user_id=?').run(category, priority, found_url, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/collection-wishlist/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM collection_wishlist WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// color_projects
+app.get('/api/color-projects', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM color_projects WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/color-projects', auth, (req: any, res: any) => {
+  try {
+    const { project_type, accent_colors, text_colors } = req.body;
+    const result = db.prepare('INSERT INTO color_projects (user_id, project_type, accent_colors, text_colors) VALUES (?, ?, ?, ?)').run(req.user.id, project_type, accent_colors, text_colors);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/color-projects/:id', auth, (req: any, res: any) => {
+  try {
+    const { project_type, accent_colors, text_colors } = req.body;
+    db.prepare('UPDATE color_projects SET project_type=?, accent_colors=?, text_colors=? WHERE id=? AND user_id=?').run(project_type, accent_colors, text_colors, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/color-projects/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM color_projects WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// composition_projects
+app.get('/api/composition-projects', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM composition_projects WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/composition-projects', auth, (req: any, res: any) => {
+  try {
+    const { description, key_signature, tempo, status } = req.body;
+    const result = db.prepare('INSERT INTO composition_projects (user_id, description, key_signature, tempo, status) VALUES (?, ?, ?, ?, ?)').run(req.user.id, description, key_signature, tempo, status);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/composition-projects/:id', auth, (req: any, res: any) => {
+  try {
+    const { description, key_signature, tempo, status } = req.body;
+    db.prepare('UPDATE composition_projects SET description=?, key_signature=?, tempo=?, status=? WHERE id=? AND user_id=?').run(description, key_signature, tempo, status, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/composition-projects/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM composition_projects WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// contractor_contacts
+app.get('/api/contractor-contacts', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM contractor_contacts WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/contractor-contacts', auth, (req: any, res: any) => {
+  try {
+    const { company, license_number, rating } = req.body;
+    const result = db.prepare('INSERT INTO contractor_contacts (user_id, company, license_number, rating) VALUES (?, ?, ?, ?)').run(req.user.id, company, license_number, rating);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/contractor-contacts/:id', auth, (req: any, res: any) => {
+  try {
+    const { company, license_number, rating } = req.body;
+    db.prepare('UPDATE contractor_contacts SET company=?, license_number=?, rating=? WHERE id=? AND user_id=?').run(company, license_number, rating, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/contractor-contacts/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM contractor_contacts WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// cookbook_chapters
+app.get('/api/cookbook-chapters', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM cookbook_chapters WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/cookbook-chapters', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    const result = db.prepare('INSERT INTO cookbook_chapters (user_id, description) VALUES (?, ?)').run(req.user.id, description);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/cookbook-chapters/:id', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    db.prepare('UPDATE cookbook_chapters SET description=? WHERE id=? AND user_id=?').run(description, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/cookbook-chapters/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM cookbook_chapters WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// coping_toolkit
+app.get('/api/coping-toolkit', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM coping_toolkit WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/coping-toolkit', auth, (req: any, res: any) => {
+  try {
+    const { skill_category, effectiveness, notes } = req.body;
+    const result = db.prepare('INSERT INTO coping_toolkit (user_id, skill_category, effectiveness, notes) VALUES (?, ?, ?, ?)').run(req.user.id, skill_category, effectiveness, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/coping-toolkit/:id', auth, (req: any, res: any) => {
+  try {
+    const { skill_category, effectiveness, notes } = req.body;
+    db.prepare('UPDATE coping_toolkit SET skill_category=?, effectiveness=?, notes=? WHERE id=? AND user_id=?').run(skill_category, effectiveness, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/coping-toolkit/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM coping_toolkit WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// correspondents
+app.get('/api/correspondents', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM correspondents WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/correspondents', auth, (req: any, res: any) => {
+  try {
+    const { relation, birthday, letters_received } = req.body;
+    const result = db.prepare('INSERT INTO correspondents (user_id, relation, birthday, letters_received) VALUES (?, ?, ?, ?)').run(req.user.id, relation, birthday, letters_received);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/correspondents/:id', auth, (req: any, res: any) => {
+  try {
+    const { relation, birthday, letters_received } = req.body;
+    db.prepare('UPDATE correspondents SET relation=?, birthday=?, letters_received=? WHERE id=? AND user_id=?').run(relation, birthday, letters_received, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/correspondents/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM correspondents WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// creator_outreach
+app.get('/api/creator-outreach', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM creator_outreach WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/creator-outreach', auth, (req: any, res: any) => {
+  try {
+    const { message, response } = req.body;
+    const result = db.prepare('INSERT INTO creator_outreach (user_id, message, response) VALUES (?, ?, ?)').run(req.user.id, message, response);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/creator-outreach/:id', auth, (req: any, res: any) => {
+  try {
+    const { message, response } = req.body;
+    db.prepare('UPDATE creator_outreach SET message=?, response=? WHERE id=? AND user_id=?').run(message, response, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/creator-outreach/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM creator_outreach WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// csat_metrics
+app.get('/api/csat-metrics', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM csat_metrics WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/csat-metrics', auth, (req: any, res: any) => {
+  try {
+    const { promoters, response_rate } = req.body;
+    const result = db.prepare('INSERT INTO csat_metrics (user_id, promoters, response_rate) VALUES (?, ?, ?)').run(req.user.id, promoters, response_rate);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/csat-metrics/:id', auth, (req: any, res: any) => {
+  try {
+    const { promoters, response_rate } = req.body;
+    db.prepare('UPDATE csat_metrics SET promoters=?, response_rate=? WHERE id=? AND user_id=?').run(promoters, response_rate, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/csat-metrics/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM csat_metrics WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// doc_folders
+app.get('/api/doc-folders', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM doc_folders WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/doc-folders', auth, (req: any, res: any) => {
+  try {
+    const { color } = req.body;
+    const result = db.prepare('INSERT INTO doc_folders (user_id, color) VALUES (?, ?)').run(req.user.id, color);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/doc-folders/:id', auth, (req: any, res: any) => {
+  try {
+    const { color } = req.body;
+    db.prepare('UPDATE doc_folders SET color=? WHERE id=? AND user_id=?').run(color, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/doc-folders/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM doc_folders WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// dream_tags
+app.get('/api/dream-tags', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM dream_tags WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/dream-tags', auth, (req: any, res: any) => {
+  try {
+    const { tag, try } = req.body;
+    const result = db.prepare('INSERT INTO dream_tags (user_id, tag, try) VALUES (?, ?, ?)').run(req.user.id, tag, try);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/dream-tags/:id', auth, (req: any, res: any) => {
+  try {
+    const { tag, try } = req.body;
+    db.prepare('UPDATE dream_tags SET tag=?, try=? WHERE id=? AND user_id=?').run(tag, try, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/dream-tags/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM dream_tags WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// drone_batteries
+app.get('/api/drone-batteries', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM drone_batteries WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/drone-batteries', auth, (req: any, res: any) => {
+  try {
+    const { battery_name, cycle_count, condition } = req.body;
+    const result = db.prepare('INSERT INTO drone_batteries (user_id, battery_name, cycle_count, condition) VALUES (?, ?, ?, ?)').run(req.user.id, battery_name, cycle_count, condition);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/drone-batteries/:id', auth, (req: any, res: any) => {
+  try {
+    const { battery_name, cycle_count, condition } = req.body;
+    db.prepare('UPDATE drone_batteries SET battery_name=?, cycle_count=?, condition=? WHERE id=? AND user_id=?').run(battery_name, cycle_count, condition, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/drone-batteries/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM drone_batteries WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// drone_maintenance_log
+app.get('/api/drone-maintenance-log', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM drone_maintenance_log WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/drone-maintenance-log', auth, (req: any, res: any) => {
+  try {
+    const { maintenance_date, details } = req.body;
+    const result = db.prepare('INSERT INTO drone_maintenance_log (user_id, maintenance_date, details) VALUES (?, ?, ?)').run(req.user.id, maintenance_date, details);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/drone-maintenance-log/:id', auth, (req: any, res: any) => {
+  try {
+    const { maintenance_date, details } = req.body;
+    db.prepare('UPDATE drone_maintenance_log SET maintenance_date=?, details=? WHERE id=? AND user_id=?').run(maintenance_date, details, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/drone-maintenance-log/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM drone_maintenance_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// ebook_highlights
+app.get('/api/ebook-highlights', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM ebook_highlights WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/ebook-highlights', auth, (req: any, res: any) => {
+  try {
+    const { highlight_text, color } = req.body;
+    const result = db.prepare('INSERT INTO ebook_highlights (user_id, highlight_text, color) VALUES (?, ?, ?)').run(req.user.id, highlight_text, color);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/ebook-highlights/:id', auth, (req: any, res: any) => {
+  try {
+    const { highlight_text, color } = req.body;
+    db.prepare('UPDATE ebook_highlights SET highlight_text=?, color=? WHERE id=? AND user_id=?').run(highlight_text, color, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/ebook-highlights/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM ebook_highlights WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// emergency_drills
+app.get('/api/emergency-drills', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM emergency_drills WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/emergency-drills', auth, (req: any, res: any) => {
+  try {
+    const { drill_date, duration_minutes, issues_found } = req.body;
+    const result = db.prepare('INSERT INTO emergency_drills (user_id, drill_date, duration_minutes, issues_found) VALUES (?, ?, ?, ?)').run(req.user.id, drill_date, duration_minutes, issues_found);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/emergency-drills/:id', auth, (req: any, res: any) => {
+  try {
+    const { drill_date, duration_minutes, issues_found } = req.body;
+    db.prepare('UPDATE emergency_drills SET drill_date=?, duration_minutes=?, issues_found=? WHERE id=? AND user_id=?').run(drill_date, duration_minutes, issues_found, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/emergency-drills/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM emergency_drills WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// energy_patterns
+app.get('/api/energy-patterns', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM energy_patterns WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/energy-patterns', auth, (req: any, res: any) => {
+  try {
+    const { hour_of_day, avg_energy, sample_count } = req.body;
+    const result = db.prepare('INSERT INTO energy_patterns (user_id, hour_of_day, avg_energy, sample_count) VALUES (?, ?, ?, ?)').run(req.user.id, hour_of_day, avg_energy, sample_count);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/energy-patterns/:id', auth, (req: any, res: any) => {
+  try {
+    const { hour_of_day, avg_energy, sample_count } = req.body;
+    db.prepare('UPDATE energy_patterns SET hour_of_day=?, avg_energy=?, sample_count=? WHERE id=? AND user_id=?').run(hour_of_day, avg_energy, sample_count, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/energy-patterns/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM energy_patterns WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// fi_milestones
+app.get('/api/fi-milestones', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM fi_milestones WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/fi-milestones', auth, (req: any, res: any) => {
+  try {
+    const { target_amount, achieved_date } = req.body;
+    const result = db.prepare('INSERT INTO fi_milestones (user_id, target_amount, achieved_date) VALUES (?, ?, ?)').run(req.user.id, target_amount, achieved_date);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/fi-milestones/:id', auth, (req: any, res: any) => {
+  try {
+    const { target_amount, achieved_date } = req.body;
+    db.prepare('UPDATE fi_milestones SET target_amount=?, achieved_date=? WHERE id=? AND user_id=?').run(target_amount, achieved_date, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/fi-milestones/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM fi_milestones WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// film_lists
+app.get('/api/film-lists', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM film_lists WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/film-lists', auth, (req: any, res: any) => {
+  try {
+    const { description, is_public } = req.body;
+    const result = db.prepare('INSERT INTO film_lists (user_id, description, is_public) VALUES (?, ?, ?)').run(req.user.id, description, is_public);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/film-lists/:id', auth, (req: any, res: any) => {
+  try {
+    const { description, is_public } = req.body;
+    db.prepare('UPDATE film_lists SET description=?, is_public=? WHERE id=? AND user_id=?').run(description, is_public, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/film-lists/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM film_lists WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// fishing_gear
+app.get('/api/fishing-gear', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM fishing_gear WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/fishing-gear', auth, (req: any, res: any) => {
+  try {
+    const { item_type, acquired_date, notes } = req.body;
+    const result = db.prepare('INSERT INTO fishing_gear (user_id, item_type, acquired_date, notes) VALUES (?, ?, ?, ?)').run(req.user.id, item_type, acquired_date, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/fishing-gear/:id', auth, (req: any, res: any) => {
+  try {
+    const { item_type, acquired_date, notes } = req.body;
+    db.prepare('UPDATE fishing_gear SET item_type=?, acquired_date=?, notes=? WHERE id=? AND user_id=?').run(item_type, acquired_date, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/fishing-gear/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM fishing_gear WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// flow_activities
+app.get('/api/flow-activities', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM flow_activities WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/flow-activities', auth, (req: any, res: any) => {
+  try {
+    const { category, total_sessions, optimal_conditions } = req.body;
+    const result = db.prepare('INSERT INTO flow_activities (user_id, category, total_sessions, optimal_conditions) VALUES (?, ?, ?, ?)').run(req.user.id, category, total_sessions, optimal_conditions);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/flow-activities/:id', auth, (req: any, res: any) => {
+  try {
+    const { category, total_sessions, optimal_conditions } = req.body;
+    db.prepare('UPDATE flow_activities SET category=?, total_sessions=?, optimal_conditions=? WHERE id=? AND user_id=?').run(category, total_sessions, optimal_conditions, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/flow-activities/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM flow_activities WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// food_wishlist
+app.get('/api/food-wishlist', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM food_wishlist WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/food-wishlist', auth, (req: any, res: any) => {
+  try {
+    const { cuisine, visited } = req.body;
+    const result = db.prepare('INSERT INTO food_wishlist (user_id, cuisine, visited) VALUES (?, ?, ?)').run(req.user.id, cuisine, visited);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/food-wishlist/:id', auth, (req: any, res: any) => {
+  try {
+    const { cuisine, visited } = req.body;
+    db.prepare('UPDATE food_wishlist SET cuisine=?, visited=? WHERE id=? AND user_id=?').run(cuisine, visited, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/food-wishlist/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM food_wishlist WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// forage_recipes
+app.get('/api/forage-recipes', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM forage_recipes WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/forage-recipes', auth, (req: any, res: any) => {
+  try {
+    const { primary_foraged, times_made, notes } = req.body;
+    const result = db.prepare('INSERT INTO forage_recipes (user_id, primary_foraged, times_made, notes) VALUES (?, ?, ?, ?)').run(req.user.id, primary_foraged, times_made, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/forage-recipes/:id', auth, (req: any, res: any) => {
+  try {
+    const { primary_foraged, times_made, notes } = req.body;
+    db.prepare('UPDATE forage_recipes SET primary_foraged=?, times_made=?, notes=? WHERE id=? AND user_id=?').run(primary_foraged, times_made, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/forage-recipes/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM forage_recipes WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// freelance_proposals
+app.get('/api/freelance-proposals', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM freelance_proposals WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/freelance-proposals', auth, (req: any, res: any) => {
+  try {
+    const { title, total_price, sent_date } = req.body;
+    const result = db.prepare('INSERT INTO freelance_proposals (user_id, title, total_price, sent_date) VALUES (?, ?, ?, ?)').run(req.user.id, title, total_price, sent_date);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/freelance-proposals/:id', auth, (req: any, res: any) => {
+  try {
+    const { title, total_price, sent_date } = req.body;
+    db.prepare('UPDATE freelance_proposals SET title=?, total_price=?, sent_date=? WHERE id=? AND user_id=?').run(title, total_price, sent_date, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/freelance-proposals/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM freelance_proposals WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// funnel_metrics
+app.get('/api/funnel-metrics', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM funnel_metrics WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/funnel-metrics', auth, (req: any, res: any) => {
+  try {
+    const { step_name, conversions, recorded_date } = req.body;
+    const result = db.prepare('INSERT INTO funnel_metrics (user_id, step_name, conversions, recorded_date) VALUES (?, ?, ?, ?)').run(req.user.id, step_name, conversions, recorded_date);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/funnel-metrics/:id', auth, (req: any, res: any) => {
+  try {
+    const { step_name, conversions, recorded_date } = req.body;
+    db.prepare('UPDATE funnel_metrics SET step_name=?, conversions=?, recorded_date=? WHERE id=? AND user_id=?').run(step_name, conversions, recorded_date, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/funnel-metrics/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM funnel_metrics WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// grant_reports
+app.get('/api/grant-reports', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM grant_reports WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/grant-reports', auth, (req: any, res: any) => {
+  try {
+    const { report_type, status, summary } = req.body;
+    const result = db.prepare('INSERT INTO grant_reports (user_id, report_type, status, summary) VALUES (?, ?, ?, ?)').run(req.user.id, report_type, status, summary);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/grant-reports/:id', auth, (req: any, res: any) => {
+  try {
+    const { report_type, status, summary } = req.body;
+    db.prepare('UPDATE grant_reports SET report_type=?, status=?, summary=? WHERE id=? AND user_id=?').run(report_type, status, summary, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/grant-reports/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM grant_reports WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// grow_journal
+app.get('/api/grow-journal', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM grow_journal WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/grow-journal', auth, (req: any, res: any) => {
+  try {
+    const { journal_date, photo_url } = req.body;
+    const result = db.prepare('INSERT INTO grow_journal (user_id, journal_date, photo_url) VALUES (?, ?, ?)').run(req.user.id, journal_date, photo_url);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/grow-journal/:id', auth, (req: any, res: any) => {
+  try {
+    const { journal_date, photo_url } = req.body;
+    db.prepare('UPDATE grow_journal SET journal_date=?, photo_url=? WHERE id=? AND user_id=?').run(journal_date, photo_url, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/grow-journal/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM grow_journal WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// gtd_reviews
+app.get('/api/gtd-reviews', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM gtd_reviews WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/gtd-reviews', auth, (req: any, res: any) => {
+  try {
+    const { notes, reviewed_at } = req.body;
+    const result = db.prepare('INSERT INTO gtd_reviews (user_id, notes, reviewed_at) VALUES (?, ?, ?)').run(req.user.id, notes, reviewed_at);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/gtd-reviews/:id', auth, (req: any, res: any) => {
+  try {
+    const { notes, reviewed_at } = req.body;
+    db.prepare('UPDATE gtd_reviews SET notes=?, reviewed_at=? WHERE id=? AND user_id=?').run(notes, reviewed_at, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/gtd-reviews/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM gtd_reviews WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// hedge_fund_trades
+app.get('/api/hedge-fund-trades', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM hedge_fund_trades WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/hedge-fund-trades', auth, (req: any, res: any) => {
+  try {
+    const { ticker, action, shares, price_usd, trade_date, notes } = req.body;
+    const result = db.prepare('INSERT INTO hedge_fund_trades (user_id, ticker, action, shares, price_usd, trade_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?)').run(req.user.id, ticker, action, shares, price_usd, trade_date, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/hedge-fund-trades/:id', auth, (req: any, res: any) => {
+  try {
+    const { ticker, action, shares, price_usd, trade_date, notes } = req.body;
+    db.prepare('UPDATE hedge_fund_trades SET ticker=?, action=?, shares=?, price_usd=?, trade_date=?, notes=? WHERE id=? AND user_id=?').run(ticker, action, shares, price_usd, trade_date, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/hedge-fund-trades/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM hedge_fund_trades WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// herb_growing
+app.get('/api/herb-growing', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM herb_growing WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/herb-growing', auth, (req: any, res: any) => {
+  try {
+    const { location, sun_preference, last_harvest, status } = req.body;
+    const result = db.prepare('INSERT INTO herb_growing (user_id, location, sun_preference, last_harvest, status) VALUES (?, ?, ?, ?, ?)').run(req.user.id, location, sun_preference, last_harvest, status);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/herb-growing/:id', auth, (req: any, res: any) => {
+  try {
+    const { location, sun_preference, last_harvest, status } = req.body;
+    db.prepare('UPDATE herb_growing SET location=?, sun_preference=?, last_harvest=?, status=? WHERE id=? AND user_id=?').run(location, sun_preference, last_harvest, status, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/herb-growing/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM herb_growing WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// hiking_achievements
+app.get('/api/hiking-achievements', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM hiking_achievements WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/hiking-achievements', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    const result = db.prepare('INSERT INTO hiking_achievements (user_id, description) VALUES (?, ?)').run(req.user.id, description);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/hiking-achievements/:id', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    db.prepare('UPDATE hiking_achievements SET description=? WHERE id=? AND user_id=?').run(description, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/hiking-achievements/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM hiking_achievements WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// homebrew_equipment
+app.get('/api/homebrew-equipment', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM homebrew_equipment WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/homebrew-equipment', auth, (req: any, res: any) => {
+  try {
+    const { item_name, category, brand, model, purchase_date, purchase_price_usd, condition, capacity_gallons, material, still_owned, sold_price_usd, batches_used, upgrade_from, impact_on_quality, rating, notes } = req.body;
+    const result = db.prepare('INSERT INTO homebrew_equipment (user_id, item_name, category, brand, model, purchase_date, purchase_price_usd, condition, capacity_gallons, material, still_owned, sold_price_usd, batches_used, upgrade_from, impact_on_quality, rating, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(req.user.id, item_name, category, brand, model, purchase_date, purchase_price_usd, condition, capacity_gallons, material, still_owned, sold_price_usd, batches_used, upgrade_from, impact_on_quality, rating, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/homebrew-equipment/:id', auth, (req: any, res: any) => {
+  try {
+    const { item_name, category, brand, model, purchase_date, purchase_price_usd, condition, capacity_gallons, material, still_owned, sold_price_usd, batches_used, upgrade_from, impact_on_quality, rating, notes } = req.body;
+    db.prepare('UPDATE homebrew_equipment SET item_name=?, category=?, brand=?, model=?, purchase_date=?, purchase_price_usd=?, condition=?, capacity_gallons=?, material=?, still_owned=?, sold_price_usd=?, batches_used=?, upgrade_from=?, impact_on_quality=?, rating=?, notes=? WHERE id=? AND user_id=?').run(item_name, category, brand, model, purchase_date, purchase_price_usd, condition, capacity_gallons, material, still_owned, sold_price_usd, batches_used, upgrade_from, impact_on_quality, rating, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/homebrew-equipment/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM homebrew_equipment WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// hop_inventory
+app.get('/api/hop-inventory', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM hop_inventory WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/hop-inventory', auth, (req: any, res: any) => {
+  try {
+    const { aa_pct, harvest_year } = req.body;
+    const result = db.prepare('INSERT INTO hop_inventory (user_id, aa_pct, harvest_year) VALUES (?, ?, ?)').run(req.user.id, aa_pct, harvest_year);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/hop-inventory/:id', auth, (req: any, res: any) => {
+  try {
+    const { aa_pct, harvest_year } = req.body;
+    db.prepare('UPDATE hop_inventory SET aa_pct=?, harvest_year=? WHERE id=? AND user_id=?').run(aa_pct, harvest_year, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/hop-inventory/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM hop_inventory WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// hustle_expenses
+app.get('/api/hustle-expenses', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM hustle_expenses WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/hustle-expenses', auth, (req: any, res: any) => {
+  try {
+    const { expense_date, description } = req.body;
+    const result = db.prepare('INSERT INTO hustle_expenses (user_id, expense_date, description) VALUES (?, ?, ?)').run(req.user.id, expense_date, description);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/hustle-expenses/:id', auth, (req: any, res: any) => {
+  try {
+    const { expense_date, description } = req.body;
+    db.prepare('UPDATE hustle_expenses SET expense_date=?, description=? WHERE id=? AND user_id=?').run(expense_date, description, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/hustle-expenses/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM hustle_expenses WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// immersion_log
+app.get('/api/immersion-log', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM immersion_log WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/immersion-log', auth, (req: any, res: any) => {
+  try {
+    const { log_date, duration_minutes, notes } = req.body;
+    const result = db.prepare('INSERT INTO immersion_log (user_id, log_date, duration_minutes, notes) VALUES (?, ?, ?, ?)').run(req.user.id, log_date, duration_minutes, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/immersion-log/:id', auth, (req: any, res: any) => {
+  try {
+    const { log_date, duration_minutes, notes } = req.body;
+    db.prepare('UPDATE immersion_log SET log_date=?, duration_minutes=?, notes=? WHERE id=? AND user_id=?').run(log_date, duration_minutes, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/immersion-log/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM immersion_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// inspiration_sources
+app.get('/api/inspiration-sources', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM inspiration_sources WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/inspiration-sources', auth, (req: any, res: any) => {
+  try {
+    const { source_type, frequency, notes } = req.body;
+    const result = db.prepare('INSERT INTO inspiration_sources (user_id, source_type, frequency, notes) VALUES (?, ?, ?, ?)').run(req.user.id, source_type, frequency, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/inspiration-sources/:id', auth, (req: any, res: any) => {
+  try {
+    const { source_type, frequency, notes } = req.body;
+    db.prepare('UPDATE inspiration_sources SET source_type=?, frequency=?, notes=? WHERE id=? AND user_id=?').run(source_type, frequency, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/inspiration-sources/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM inspiration_sources WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// interview_subjects
+app.get('/api/interview-subjects', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM interview_subjects WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/interview-subjects', auth, (req: any, res: any) => {
+  try {
+    const { title, interview_date, background } = req.body;
+    const result = db.prepare('INSERT INTO interview_subjects (user_id, title, interview_date, background) VALUES (?, ?, ?, ?)').run(req.user.id, title, interview_date, background);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/interview-subjects/:id', auth, (req: any, res: any) => {
+  try {
+    const { title, interview_date, background } = req.body;
+    db.prepare('UPDATE interview_subjects SET title=?, interview_date=?, background=? WHERE id=? AND user_id=?').run(title, interview_date, background, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/interview-subjects/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM interview_subjects WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// job_pipeline_stages
+app.get('/api/job-pipeline-stages', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM job_pipeline_stages WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/job-pipeline-stages', auth, (req: any, res: any) => {
+  try {
+    const { order_index } = req.body;
+    const result = db.prepare('INSERT INTO job_pipeline_stages (user_id, order_index) VALUES (?, ?)').run(req.user.id, order_index);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/job-pipeline-stages/:id', auth, (req: any, res: any) => {
+  try {
+    const { order_index } = req.body;
+    db.prepare('UPDATE job_pipeline_stages SET order_index=? WHERE id=? AND user_id=?').run(order_index, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/job-pipeline-stages/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM job_pipeline_stages WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// journalism_beats
+app.get('/api/journalism-beats', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM journalism_beats WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/journalism-beats', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    const result = db.prepare('INSERT INTO journalism_beats (user_id, description) VALUES (?, ?)').run(req.user.id, description);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/journalism-beats/:id', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    db.prepare('UPDATE journalism_beats SET description=? WHERE id=? AND user_id=?').run(description, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/journalism-beats/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM journalism_beats WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// kindness_challenges
+app.get('/api/kindness-challenges', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM kindness_challenges WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/kindness-challenges', auth, (req: any, res: any) => {
+  try {
+    const { challenge_duration_days, start_date, acts_completed } = req.body;
+    const result = db.prepare('INSERT INTO kindness_challenges (user_id, challenge_duration_days, start_date, acts_completed) VALUES (?, ?, ?, ?)').run(req.user.id, challenge_duration_days, start_date, acts_completed);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/kindness-challenges/:id', auth, (req: any, res: any) => {
+  try {
+    const { challenge_duration_days, start_date, acts_completed } = req.body;
+    db.prepare('UPDATE kindness_challenges SET challenge_duration_days=?, start_date=?, acts_completed=? WHERE id=? AND user_id=?').run(challenge_duration_days, start_date, acts_completed, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/kindness-challenges/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM kindness_challenges WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// knowledge_clusters
+app.get('/api/knowledge-clusters', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM knowledge_clusters WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/knowledge-clusters', auth, (req: any, res: any) => {
+  try {
+    const { node_ids } = req.body;
+    const result = db.prepare('INSERT INTO knowledge_clusters (user_id, node_ids) VALUES (?, ?)').run(req.user.id, node_ids);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/knowledge-clusters/:id', auth, (req: any, res: any) => {
+  try {
+    const { node_ids } = req.body;
+    db.prepare('UPDATE knowledge_clusters SET node_ids=? WHERE id=? AND user_id=?').run(node_ids, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/knowledge-clusters/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM knowledge_clusters WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// leather_inventory
+app.get('/api/leather-inventory', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM leather_inventory WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/leather-inventory', auth, (req: any, res: any) => {
+  try {
+    const { material_type, weight_oz, supplier, notes } = req.body;
+    const result = db.prepare('INSERT INTO leather_inventory (user_id, material_type, weight_oz, supplier, notes) VALUES (?, ?, ?, ?, ?)').run(req.user.id, material_type, weight_oz, supplier, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/leather-inventory/:id', auth, (req: any, res: any) => {
+  try {
+    const { material_type, weight_oz, supplier, notes } = req.body;
+    db.prepare('UPDATE leather_inventory SET material_type=?, weight_oz=?, supplier=?, notes=? WHERE id=? AND user_id=?').run(material_type, weight_oz, supplier, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/leather-inventory/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM leather_inventory WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// legal_documents_log
+app.get('/api/legal-documents-log', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM legal_documents_log WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/legal-documents-log', auth, (req: any, res: any) => {
+  try {
+    const { doc_name, filed_with, is_complete } = req.body;
+    const result = db.prepare('INSERT INTO legal_documents_log (user_id, doc_name, filed_with, is_complete) VALUES (?, ?, ?, ?)').run(req.user.id, doc_name, filed_with, is_complete);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/legal-documents-log/:id', auth, (req: any, res: any) => {
+  try {
+    const { doc_name, filed_with, is_complete } = req.body;
+    db.prepare('UPDATE legal_documents_log SET doc_name=?, filed_with=?, is_complete=? WHERE id=? AND user_id=?').run(doc_name, filed_with, is_complete, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/legal-documents-log/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM legal_documents_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// letter_templates
+app.get('/api/letter-templates', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM letter_templates WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/letter-templates', auth, (req: any, res: any) => {
+  try {
+    const { occasion, times_used } = req.body;
+    const result = db.prepare('INSERT INTO letter_templates (user_id, occasion, times_used) VALUES (?, ?, ?)').run(req.user.id, occasion, times_used);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/letter-templates/:id', auth, (req: any, res: any) => {
+  try {
+    const { occasion, times_used } = req.body;
+    db.prepare('UPDATE letter_templates SET occasion=?, times_used=? WHERE id=? AND user_id=?').run(occasion, times_used, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/letter-templates/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM letter_templates WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// local_resources
+app.get('/api/local-resources', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM local_resources WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/local-resources', auth, (req: any, res: any) => {
+  try {
+    const { category, serves_who } = req.body;
+    const result = db.prepare('INSERT INTO local_resources (user_id, category, serves_who) VALUES (?, ?, ?)').run(req.user.id, category, serves_who);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/local-resources/:id', auth, (req: any, res: any) => {
+  try {
+    const { category, serves_who } = req.body;
+    db.prepare('UPDATE local_resources SET category=?, serves_who=? WHERE id=? AND user_id=?').run(category, serves_who, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/local-resources/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM local_resources WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// lucid_skills
+app.get('/api/lucid-skills', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM lucid_skills WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/lucid-skills', auth, (req: any, res: any) => {
+  try {
+    const { skill_category, successes, mastery_level } = req.body;
+    const result = db.prepare('INSERT INTO lucid_skills (user_id, skill_category, successes, mastery_level) VALUES (?, ?, ?, ?)').run(req.user.id, skill_category, successes, mastery_level);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/lucid-skills/:id', auth, (req: any, res: any) => {
+  try {
+    const { skill_category, successes, mastery_level } = req.body;
+    db.prepare('UPDATE lucid_skills SET skill_category=?, successes=?, mastery_level=? WHERE id=? AND user_id=?').run(skill_category, successes, mastery_level, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/lucid-skills/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM lucid_skills WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// mh_resources
+app.get('/api/mh-resources', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM mh_resources WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/mh-resources', auth, (req: any, res: any) => {
+  try {
+    const { resource_type, rating } = req.body;
+    const result = db.prepare('INSERT INTO mh_resources (user_id, resource_type, rating) VALUES (?, ?, ?)').run(req.user.id, resource_type, rating);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/mh-resources/:id', auth, (req: any, res: any) => {
+  try {
+    const { resource_type, rating } = req.body;
+    db.prepare('UPDATE mh_resources SET resource_type=?, rating=? WHERE id=? AND user_id=?').run(resource_type, rating, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/mh-resources/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM mh_resources WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// mineral_shows
+app.get('/api/mineral-shows', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM mineral_shows WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/mineral-shows', auth, (req: any, res: any) => {
+  try {
+    const { location, spent } = req.body;
+    const result = db.prepare('INSERT INTO mineral_shows (user_id, location, spent) VALUES (?, ?, ?)').run(req.user.id, location, spent);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/mineral-shows/:id', auth, (req: any, res: any) => {
+  try {
+    const { location, spent } = req.body;
+    db.prepare('UPDATE mineral_shows SET location=?, spent=? WHERE id=? AND user_id=?').run(location, spent, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/mineral-shows/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM mineral_shows WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// minimalism_goals
+app.get('/api/minimalism-goals', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM minimalism_goals WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/minimalism-goals', auth, (req: any, res: any) => {
+  try {
+    const { target_items_removed, start_date, notes } = req.body;
+    const result = db.prepare('INSERT INTO minimalism_goals (user_id, target_items_removed, start_date, notes) VALUES (?, ?, ?, ?)').run(req.user.id, target_items_removed, start_date, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/minimalism-goals/:id', auth, (req: any, res: any) => {
+  try {
+    const { target_items_removed, start_date, notes } = req.body;
+    db.prepare('UPDATE minimalism_goals SET target_items_removed=?, start_date=?, notes=? WHERE id=? AND user_id=?').run(target_items_removed, start_date, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/minimalism-goals/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM minimalism_goals WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// model_train_layouts
+app.get('/api/model-train-layouts', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM model_train_layouts WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/model-train-layouts', auth, (req: any, res: any) => {
+  try {
+    const { layout_name, scale, era, theme, layout_sqft, track_feet, switches, locos, rolling_stock, structures, dcc_equipped, sound_equipped, scenery_pct, total_invested_usd, in_progress, notes } = req.body;
+    const result = db.prepare('INSERT INTO model_train_layouts (user_id, layout_name, scale, era, theme, layout_sqft, track_feet, switches, locos, rolling_stock, structures, dcc_equipped, sound_equipped, scenery_pct, total_invested_usd, in_progress, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(req.user.id, layout_name, scale, era, theme, layout_sqft, track_feet, switches, locos, rolling_stock, structures, dcc_equipped, sound_equipped, scenery_pct, total_invested_usd, in_progress, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/model-train-layouts/:id', auth, (req: any, res: any) => {
+  try {
+    const { layout_name, scale, era, theme, layout_sqft, track_feet, switches, locos, rolling_stock, structures, dcc_equipped, sound_equipped, scenery_pct, total_invested_usd, in_progress, notes } = req.body;
+    db.prepare('UPDATE model_train_layouts SET layout_name=?, scale=?, era=?, theme=?, layout_sqft=?, track_feet=?, switches=?, locos=?, rolling_stock=?, structures=?, dcc_equipped=?, sound_equipped=?, scenery_pct=?, total_invested_usd=?, in_progress=?, notes=? WHERE id=? AND user_id=?').run(layout_name, scale, era, theme, layout_sqft, track_feet, switches, locos, rolling_stock, structures, dcc_equipped, sound_equipped, scenery_pct, total_invested_usd, in_progress, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/model-train-layouts/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM model_train_layouts WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// moto_mods
+app.get('/api/moto-mods', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM moto_mods WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/moto-mods', auth, (req: any, res: any) => {
+  try {
+    const { mod_name, part_number, reversible } = req.body;
+    const result = db.prepare('INSERT INTO moto_mods (user_id, mod_name, part_number, reversible) VALUES (?, ?, ?, ?)').run(req.user.id, mod_name, part_number, reversible);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/moto-mods/:id', auth, (req: any, res: any) => {
+  try {
+    const { mod_name, part_number, reversible } = req.body;
+    db.prepare('UPDATE moto_mods SET mod_name=?, part_number=?, reversible=? WHERE id=? AND user_id=?').run(mod_name, part_number, reversible, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/moto-mods/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM moto_mods WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// mushroom_recipes_grow
+app.get('/api/mushroom-recipes-grow', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM mushroom_recipes_grow WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/mushroom-recipes-grow', auth, (req: any, res: any) => {
+  try {
+    const { species, success_rate } = req.body;
+    const result = db.prepare('INSERT INTO mushroom_recipes_grow (user_id, species, success_rate) VALUES (?, ?, ?)').run(req.user.id, species, success_rate);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/mushroom-recipes-grow/:id', auth, (req: any, res: any) => {
+  try {
+    const { species, success_rate } = req.body;
+    db.prepare('UPDATE mushroom_recipes_grow SET species=?, success_rate=? WHERE id=? AND user_id=?').run(species, success_rate, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/mushroom-recipes-grow/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM mushroom_recipes_grow WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// music_goals_tracker
+app.get('/api/music-goals-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM music_goals_tracker WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/music-goals-tracker', auth, (req: any, res: any) => {
+  try {
+    const { goal, status } = req.body;
+    const result = db.prepare('INSERT INTO music_goals_tracker (user_id, goal, status) VALUES (?, ?, ?)').run(req.user.id, goal, status);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/music-goals-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    const { goal, status } = req.body;
+    db.prepare('UPDATE music_goals_tracker SET goal=?, status=? WHERE id=? AND user_id=?').run(goal, status, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/music-goals-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM music_goals_tracker WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// negotiation_tactics
+app.get('/api/negotiation-tactics', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM negotiation_tactics WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/negotiation-tactics', auth, (req: any, res: any) => {
+  try {
+    const { tactic_category, when_to_use, success_rate } = req.body;
+    const result = db.prepare('INSERT INTO negotiation_tactics (user_id, tactic_category, when_to_use, success_rate) VALUES (?, ?, ?, ?)').run(req.user.id, tactic_category, when_to_use, success_rate);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/negotiation-tactics/:id', auth, (req: any, res: any) => {
+  try {
+    const { tactic_category, when_to_use, success_rate } = req.body;
+    db.prepare('UPDATE negotiation_tactics SET tactic_category=?, when_to_use=?, success_rate=? WHERE id=? AND user_id=?').run(tactic_category, when_to_use, success_rate, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/negotiation-tactics/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM negotiation_tactics WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// one_in_one_out
+app.get('/api/one-in-one-out', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM one_in_one_out WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/one-in-one-out', auth, (req: any, res: any) => {
+  try {
+    const { item_removed, notes } = req.body;
+    const result = db.prepare('INSERT INTO one_in_one_out (user_id, item_removed, notes) VALUES (?, ?, ?)').run(req.user.id, item_removed, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/one-in-one-out/:id', auth, (req: any, res: any) => {
+  try {
+    const { item_removed, notes } = req.body;
+    db.prepare('UPDATE one_in_one_out SET item_removed=?, notes=? WHERE id=? AND user_id=?').run(item_removed, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/one-in-one-out/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM one_in_one_out WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// personal_myths
+app.get('/api/personal-myths', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM personal_myths WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/personal-myths', auth, (req: any, res: any) => {
+  try {
+    const { myth_type, lessons } = req.body;
+    const result = db.prepare('INSERT INTO personal_myths (user_id, myth_type, lessons) VALUES (?, ?, ?)').run(req.user.id, myth_type, lessons);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/personal-myths/:id', auth, (req: any, res: any) => {
+  try {
+    const { myth_type, lessons } = req.body;
+    db.prepare('UPDATE personal_myths SET myth_type=?, lessons=? WHERE id=? AND user_id=?').run(myth_type, lessons, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/personal-myths/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM personal_myths WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// philosophy_positions
+app.get('/api/philosophy-positions', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM philosophy_positions WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/philosophy-positions', auth, (req: any, res: any) => {
+  try {
+    const { domain, supporting_arguments, confidence_level, evolved_from } = req.body;
+    const result = db.prepare('INSERT INTO philosophy_positions (user_id, domain, supporting_arguments, confidence_level, evolved_from) VALUES (?, ?, ?, ?, ?)').run(req.user.id, domain, supporting_arguments, confidence_level, evolved_from);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/philosophy-positions/:id', auth, (req: any, res: any) => {
+  try {
+    const { domain, supporting_arguments, confidence_level, evolved_from } = req.body;
+    db.prepare('UPDATE philosophy_positions SET domain=?, supporting_arguments=?, confidence_level=?, evolved_from=? WHERE id=? AND user_id=?').run(domain, supporting_arguments, confidence_level, evolved_from, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/philosophy-positions/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM philosophy_positions WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// plant_food_library
+app.get('/api/plant-food-library', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM plant_food_library WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/plant-food-library', auth, (req: any, res: any) => {
+  try {
+    const { category, protein_per_100g, fat_per_100g, is_complete_protein } = req.body;
+    const result = db.prepare('INSERT INTO plant_food_library (user_id, category, protein_per_100g, fat_per_100g, is_complete_protein) VALUES (?, ?, ?, ?, ?)').run(req.user.id, category, protein_per_100g, fat_per_100g, is_complete_protein);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/plant-food-library/:id', auth, (req: any, res: any) => {
+  try {
+    const { category, protein_per_100g, fat_per_100g, is_complete_protein } = req.body;
+    db.prepare('UPDATE plant_food_library SET category=?, protein_per_100g=?, fat_per_100g=?, is_complete_protein=? WHERE id=? AND user_id=?').run(category, protein_per_100g, fat_per_100g, is_complete_protein, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/plant-food-library/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM plant_food_library WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// podcast_insights
+app.get('/api/podcast-insights', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM podcast_insights WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/podcast-insights', auth, (req: any, res: any) => {
+  try {
+    const { insight_text, is_actioned } = req.body;
+    const result = db.prepare('INSERT INTO podcast_insights (user_id, insight_text, is_actioned) VALUES (?, ?, ?)').run(req.user.id, insight_text, is_actioned);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/podcast-insights/:id', auth, (req: any, res: any) => {
+  try {
+    const { insight_text, is_actioned } = req.body;
+    db.prepare('UPDATE podcast_insights SET insight_text=?, is_actioned=? WHERE id=? AND user_id=?').run(insight_text, is_actioned, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/podcast-insights/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM podcast_insights WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// poster_appraisals
+app.get('/api/poster-appraisals', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM poster_appraisals WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/poster-appraisals', auth, (req: any, res: any) => {
+  try {
+    const { appraisal_date, appraiser } = req.body;
+    const result = db.prepare('INSERT INTO poster_appraisals (user_id, appraisal_date, appraiser) VALUES (?, ?, ?)').run(req.user.id, appraisal_date, appraiser);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/poster-appraisals/:id', auth, (req: any, res: any) => {
+  try {
+    const { appraisal_date, appraiser } = req.body;
+    db.prepare('UPDATE poster_appraisals SET appraisal_date=?, appraiser=? WHERE id=? AND user_id=?').run(appraisal_date, appraiser, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/poster-appraisals/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM poster_appraisals WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// print_projects
+app.get('/api/print-projects', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM print_projects WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/print-projects', auth, (req: any, res: any) => {
+  try {
+    const { description, status, printed_parts } = req.body;
+    const result = db.prepare('INSERT INTO print_projects (user_id, description, status, printed_parts) VALUES (?, ?, ?, ?)').run(req.user.id, description, status, printed_parts);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/print-projects/:id', auth, (req: any, res: any) => {
+  try {
+    const { description, status, printed_parts } = req.body;
+    db.prepare('UPDATE print_projects SET description=?, status=?, printed_parts=? WHERE id=? AND user_id=?').run(description, status, printed_parts, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/print-projects/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM print_projects WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// prompt_collections
+app.get('/api/prompt-collections', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM prompt_collections WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/prompt-collections', auth, (req: any, res: any) => {
+  try {
+    const { listing_ids } = req.body;
+    const result = db.prepare('INSERT INTO prompt_collections (user_id, listing_ids) VALUES (?, ?)').run(req.user.id, listing_ids);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/prompt-collections/:id', auth, (req: any, res: any) => {
+  try {
+    const { listing_ids } = req.body;
+    db.prepare('UPDATE prompt_collections SET listing_ids=? WHERE id=? AND user_id=?').run(listing_ids, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/prompt-collections/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM prompt_collections WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// property_metrics
+app.get('/api/property-metrics', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM property_metrics WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/property-metrics', auth, (req: any, res: any) => {
+  try {
+    const { metric_year, total_expenses, cash_on_cash } = req.body;
+    const result = db.prepare('INSERT INTO property_metrics (user_id, metric_year, total_expenses, cash_on_cash) VALUES (?, ?, ?, ?)').run(req.user.id, metric_year, total_expenses, cash_on_cash);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/property-metrics/:id', auth, (req: any, res: any) => {
+  try {
+    const { metric_year, total_expenses, cash_on_cash } = req.body;
+    db.prepare('UPDATE property_metrics SET metric_year=?, total_expenses=?, cash_on_cash=? WHERE id=? AND user_id=?').run(metric_year, total_expenses, cash_on_cash, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/property-metrics/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM property_metrics WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// reading_collections
+app.get('/api/reading-collections', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM reading_collections WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/reading-collections', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    const result = db.prepare('INSERT INTO reading_collections (user_id, description) VALUES (?, ?)').run(req.user.id, description);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/reading-collections/:id', auth, (req: any, res: any) => {
+  try {
+    const { description } = req.body;
+    db.prepare('UPDATE reading_collections SET description=? WHERE id=? AND user_id=?').run(description, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/reading-collections/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM reading_collections WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// reading_materials
+app.get('/api/reading-materials', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM reading_materials WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/reading-materials', auth, (req: any, res: any) => {
+  try {
+    const { material_type, content_preview, times_used } = req.body;
+    const result = db.prepare('INSERT INTO reading_materials (user_id, material_type, content_preview, times_used) VALUES (?, ?, ?, ?)').run(req.user.id, material_type, content_preview, times_used);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/reading-materials/:id', auth, (req: any, res: any) => {
+  try {
+    const { material_type, content_preview, times_used } = req.body;
+    db.prepare('UPDATE reading_materials SET material_type=?, content_preview=?, times_used=? WHERE id=? AND user_id=?').run(material_type, content_preview, times_used, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/reading-materials/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM reading_materials WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// reading_sessions_lib
+app.get('/api/reading-sessions-lib', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM reading_sessions_lib WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/reading-sessions-lib', auth, (req: any, res: any) => {
+  try {
+    const { session_date, current_page } = req.body;
+    const result = db.prepare('INSERT INTO reading_sessions_lib (user_id, session_date, current_page) VALUES (?, ?, ?)').run(req.user.id, session_date, current_page);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/reading-sessions-lib/:id', auth, (req: any, res: any) => {
+  try {
+    const { session_date, current_page } = req.body;
+    db.prepare('UPDATE reading_sessions_lib SET session_date=?, current_page=? WHERE id=? AND user_id=?').run(session_date, current_page, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/reading-sessions-lib/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM reading_sessions_lib WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// recipe_collections
+app.get('/api/recipe-collections', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM recipe_collections WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/recipe-collections', auth, (req: any, res: any) => {
+  try {
+    const { recipe_ids } = req.body;
+    const result = db.prepare('INSERT INTO recipe_collections (user_id, recipe_ids) VALUES (?, ?)').run(req.user.id, recipe_ids);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/recipe-collections/:id', auth, (req: any, res: any) => {
+  try {
+    const { recipe_ids } = req.body;
+    db.prepare('UPDATE recipe_collections SET recipe_ids=? WHERE id=? AND user_id=?').run(recipe_ids, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/recipe-collections/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM recipe_collections WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// reflection_prompts
+app.get('/api/reflection-prompts', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM reflection_prompts WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/reflection-prompts', auth, (req: any, res: any) => {
+  try {
+    const { prompt_category, response_date } = req.body;
+    const result = db.prepare('INSERT INTO reflection_prompts (user_id, prompt_category, response_date) VALUES (?, ?, ?)').run(req.user.id, prompt_category, response_date);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/reflection-prompts/:id', auth, (req: any, res: any) => {
+  try {
+    const { prompt_category, response_date } = req.body;
+    db.prepare('UPDATE reflection_prompts SET prompt_category=?, response_date=? WHERE id=? AND user_id=?').run(prompt_category, response_date, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/reflection-prompts/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM reflection_prompts WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// repurpose_templates
+app.get('/api/repurpose-templates', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM repurpose_templates WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/repurpose-templates', auth, (req: any, res: any) => {
+  try {
+    const { output_type, is_active } = req.body;
+    const result = db.prepare('INSERT INTO repurpose_templates (user_id, output_type, is_active) VALUES (?, ?, ?)').run(req.user.id, output_type, is_active);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/repurpose-templates/:id', auth, (req: any, res: any) => {
+  try {
+    const { output_type, is_active } = req.body;
+    db.prepare('UPDATE repurpose_templates SET output_type=?, is_active=? WHERE id=? AND user_id=?').run(output_type, is_active, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/repurpose-templates/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM repurpose_templates WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// resale_platforms
+app.get('/api/resale-platforms', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM resale_platforms WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/resale-platforms', auth, (req: any, res: any) => {
+  try {
+    const { fee_pct } = req.body;
+    const result = db.prepare('INSERT INTO resale_platforms (user_id, fee_pct) VALUES (?, ?)').run(req.user.id, fee_pct);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/resale-platforms/:id', auth, (req: any, res: any) => {
+  try {
+    const { fee_pct } = req.body;
+    db.prepare('UPDATE resale_platforms SET fee_pct=? WHERE id=? AND user_id=?').run(fee_pct, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/resale-platforms/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM resale_platforms WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// rescue_medical
+app.get('/api/rescue-medical', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM rescue_medical WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/rescue-medical', auth, (req: any, res: any) => {
+  try {
+    const { event_date, cost, notes } = req.body;
+    const result = db.prepare('INSERT INTO rescue_medical (user_id, event_date, cost, notes) VALUES (?, ?, ?, ?)').run(req.user.id, event_date, cost, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/rescue-medical/:id', auth, (req: any, res: any) => {
+  try {
+    const { event_date, cost, notes } = req.body;
+    db.prepare('UPDATE rescue_medical SET event_date=?, cost=?, notes=? WHERE id=? AND user_id=?').run(event_date, cost, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/rescue-medical/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM rescue_medical WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// resilience_assets
+app.get('/api/resilience-assets', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM resilience_assets WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/resilience-assets', auth, (req: any, res: any) => {
+  try {
+    const { asset_type, accessibility, crisis_relevance } = req.body;
+    const result = db.prepare('INSERT INTO resilience_assets (user_id, asset_type, accessibility, crisis_relevance) VALUES (?, ?, ?, ?)').run(req.user.id, asset_type, accessibility, crisis_relevance);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/resilience-assets/:id', auth, (req: any, res: any) => {
+  try {
+    const { asset_type, accessibility, crisis_relevance } = req.body;
+    db.prepare('UPDATE resilience_assets SET asset_type=?, accessibility=?, crisis_relevance=? WHERE id=? AND user_id=?').run(asset_type, accessibility, crisis_relevance, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/resilience-assets/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM resilience_assets WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// savings_goals_personal
+app.get('/api/savings-goals-personal', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM savings_goals_personal WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/savings-goals-personal', auth, (req: any, res: any) => {
+  try {
+    const { target_amount, monthly_contribution, account_type, priority } = req.body;
+    const result = db.prepare('INSERT INTO savings_goals_personal (user_id, target_amount, monthly_contribution, account_type, priority) VALUES (?, ?, ?, ?, ?)').run(req.user.id, target_amount, monthly_contribution, account_type, priority);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/savings-goals-personal/:id', auth, (req: any, res: any) => {
+  try {
+    const { target_amount, monthly_contribution, account_type, priority } = req.body;
+    db.prepare('UPDATE savings_goals_personal SET target_amount=?, monthly_contribution=?, account_type=?, priority=? WHERE id=? AND user_id=?').run(target_amount, monthly_contribution, account_type, priority, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/savings-goals-personal/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM savings_goals_personal WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// show_notes_templates
+app.get('/api/show-notes-templates', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM show_notes_templates WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/show-notes-templates', auth, (req: any, res: any) => {
+  try {
+    const { template_content } = req.body;
+    const result = db.prepare('INSERT INTO show_notes_templates (user_id, template_content) VALUES (?, ?)').run(req.user.id, template_content);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/show-notes-templates/:id', auth, (req: any, res: any) => {
+  try {
+    const { template_content } = req.body;
+    db.prepare('UPDATE show_notes_templates SET template_content=? WHERE id=? AND user_id=?').run(template_content, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/show-notes-templates/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM show_notes_templates WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// skincare_routines
+app.get('/api/skincare-routines', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM skincare_routines WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/skincare-routines', auth, (req: any, res: any) => {
+  try {
+    const { routine_type, duration_minutes } = req.body;
+    const result = db.prepare('INSERT INTO skincare_routines (user_id, routine_type, duration_minutes) VALUES (?, ?, ?)').run(req.user.id, routine_type, duration_minutes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/skincare-routines/:id', auth, (req: any, res: any) => {
+  try {
+    const { routine_type, duration_minutes } = req.body;
+    db.prepare('UPDATE skincare_routines SET routine_type=?, duration_minutes=? WHERE id=? AND user_id=?').run(routine_type, duration_minutes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/skincare-routines/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM skincare_routines WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// sla_rules
+app.get('/api/sla-rules', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM sla_rules WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/sla-rules', auth, (req: any, res: any) => {
+  try {
+    const { first_response_hours } = req.body;
+    const result = db.prepare('INSERT INTO sla_rules (user_id, first_response_hours) VALUES (?, ?)').run(req.user.id, first_response_hours);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/sla-rules/:id', auth, (req: any, res: any) => {
+  try {
+    const { first_response_hours } = req.body;
+    db.prepare('UPDATE sla_rules SET first_response_hours=? WHERE id=? AND user_id=?').run(first_response_hours, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/sla-rules/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM sla_rules WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// sleep_goals_tracker
+app.get('/api/sleep-goals-tracker', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM sleep_goals_tracker WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/sleep-goals-tracker', auth, (req: any, res: any) => {
+  try {
+    const { target_hours, target_wake_time } = req.body;
+    const result = db.prepare('INSERT INTO sleep_goals_tracker (user_id, target_hours, target_wake_time) VALUES (?, ?, ?)').run(req.user.id, target_hours, target_wake_time);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/sleep-goals-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    const { target_hours, target_wake_time } = req.body;
+    db.prepare('UPDATE sleep_goals_tracker SET target_hours=?, target_wake_time=? WHERE id=? AND user_id=?').run(target_hours, target_wake_time, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/sleep-goals-tracker/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM sleep_goals_tracker WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// snippet_collections
+app.get('/api/snippet-collections', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM snippet_collections WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/snippet-collections', auth, (req: any, res: any) => {
+  try {
+    const { description, snippet_ids } = req.body;
+    const result = db.prepare('INSERT INTO snippet_collections (user_id, description, snippet_ids) VALUES (?, ?, ?)').run(req.user.id, description, snippet_ids);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/snippet-collections/:id', auth, (req: any, res: any) => {
+  try {
+    const { description, snippet_ids } = req.body;
+    db.prepare('UPDATE snippet_collections SET description=?, snippet_ids=? WHERE id=? AND user_id=?').run(description, snippet_ids, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/snippet-collections/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM snippet_collections WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// source_reliability
+app.get('/api/source-reliability', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM source_reliability WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/source-reliability', auth, (req: any, res: any) => {
+  try {
+    const { source_type, bias, notes } = req.body;
+    const result = db.prepare('INSERT INTO source_reliability (user_id, source_type, bias, notes) VALUES (?, ?, ?, ?)').run(req.user.id, source_type, bias, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/source-reliability/:id', auth, (req: any, res: any) => {
+  try {
+    const { source_type, bias, notes } = req.body;
+    db.prepare('UPDATE source_reliability SET source_type=?, bias=?, notes=? WHERE id=? AND user_id=?').run(source_type, bias, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/source-reliability/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM source_reliability WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// stoic_dichotomy_log
+app.get('/api/stoic-dichotomy-log', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM stoic_dichotomy_log WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/stoic-dichotomy-log', auth, (req: any, res: any) => {
+  try {
+    const { situation, what_i_dont_control, outcome } = req.body;
+    const result = db.prepare('INSERT INTO stoic_dichotomy_log (user_id, situation, what_i_dont_control, outcome) VALUES (?, ?, ?, ?)').run(req.user.id, situation, what_i_dont_control, outcome);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/stoic-dichotomy-log/:id', auth, (req: any, res: any) => {
+  try {
+    const { situation, what_i_dont_control, outcome } = req.body;
+    db.prepare('UPDATE stoic_dichotomy_log SET situation=?, what_i_dont_control=?, outcome=? WHERE id=? AND user_id=?').run(situation, what_i_dont_control, outcome, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/stoic-dichotomy-log/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM stoic_dichotomy_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// study_sessions_game
+app.get('/api/study-sessions-game', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM study_sessions_game WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/study-sessions-game', auth, (req: any, res: any) => {
+  try {
+    const { session_date, topics, notes } = req.body;
+    const result = db.prepare('INSERT INTO study_sessions_game (user_id, session_date, topics, notes) VALUES (?, ?, ?, ?)').run(req.user.id, session_date, topics, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/study-sessions-game/:id', auth, (req: any, res: any) => {
+  try {
+    const { session_date, topics, notes } = req.body;
+    db.prepare('UPDATE study_sessions_game SET session_date=?, topics=?, notes=? WHERE id=? AND user_id=?').run(session_date, topics, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/study-sessions-game/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM study_sessions_game WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// style_boards
+app.get('/api/style-boards', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM style_boards WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/style-boards', auth, (req: any, res: any) => {
+  try {
+    const { aesthetic, inspiration_links } = req.body;
+    const result = db.prepare('INSERT INTO style_boards (user_id, aesthetic, inspiration_links) VALUES (?, ?, ?)').run(req.user.id, aesthetic, inspiration_links);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/style-boards/:id', auth, (req: any, res: any) => {
+  try {
+    const { aesthetic, inspiration_links } = req.body;
+    db.prepare('UPDATE style_boards SET aesthetic=?, inspiration_links=? WHERE id=? AND user_id=?').run(aesthetic, inspiration_links, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/style-boards/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM style_boards WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// success_playbooks
+app.get('/api/success-playbooks', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM success_playbooks WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/success-playbooks', auth, (req: any, res: any) => {
+  try {
+    const { trigger_condition, is_active } = req.body;
+    const result = db.prepare('INSERT INTO success_playbooks (user_id, trigger_condition, is_active) VALUES (?, ?, ?)').run(req.user.id, trigger_condition, is_active);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/success-playbooks/:id', auth, (req: any, res: any) => {
+  try {
+    const { trigger_condition, is_active } = req.body;
+    db.prepare('UPDATE success_playbooks SET trigger_condition=?, is_active=? WHERE id=? AND user_id=?').run(trigger_condition, is_active, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/success-playbooks/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM success_playbooks WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// support_meetings
+app.get('/api/support-meetings', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM support_meetings WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/support-meetings', auth, (req: any, res: any) => {
+  try {
+    const { meeting_date, shared, rating } = req.body;
+    const result = db.prepare('INSERT INTO support_meetings (user_id, meeting_date, shared, rating) VALUES (?, ?, ?, ?)').run(req.user.id, meeting_date, shared, rating);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/support-meetings/:id', auth, (req: any, res: any) => {
+  try {
+    const { meeting_date, shared, rating } = req.body;
+    db.prepare('UPDATE support_meetings SET meeting_date=?, shared=?, rating=? WHERE id=? AND user_id=?').run(meeting_date, shared, rating, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/support-meetings/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM support_meetings WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// survival_gear_audit
+app.get('/api/survival-gear-audit', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM survival_gear_audit WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/survival-gear-audit', auth, (req: any, res: any) => {
+  try {
+    const { item_name, weight_oz, condition } = req.body;
+    const result = db.prepare('INSERT INTO survival_gear_audit (user_id, item_name, weight_oz, condition) VALUES (?, ?, ?, ?)').run(req.user.id, item_name, weight_oz, condition);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/survival-gear-audit/:id', auth, (req: any, res: any) => {
+  try {
+    const { item_name, weight_oz, condition } = req.body;
+    db.prepare('UPDATE survival_gear_audit SET item_name=?, weight_oz=?, condition=? WHERE id=? AND user_id=?').run(item_name, weight_oz, condition, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/survival-gear-audit/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM survival_gear_audit WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// sustainability_goals_food
+app.get('/api/sustainability-goals-food', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM sustainability_goals_food WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/sustainability-goals-food', auth, (req: any, res: any) => {
+  try {
+    const { goal_type, target_unit, start_date, notes } = req.body;
+    const result = db.prepare('INSERT INTO sustainability_goals_food (user_id, goal_type, target_unit, start_date, notes) VALUES (?, ?, ?, ?, ?)').run(req.user.id, goal_type, target_unit, start_date, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/sustainability-goals-food/:id', auth, (req: any, res: any) => {
+  try {
+    const { goal_type, target_unit, start_date, notes } = req.body;
+    db.prepare('UPDATE sustainability_goals_food SET goal_type=?, target_unit=?, start_date=?, notes=? WHERE id=? AND user_id=?').run(goal_type, target_unit, start_date, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/sustainability-goals-food/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM sustainability_goals_food WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// theory_topics
+app.get('/api/theory-topics', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM theory_topics WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/theory-topics', auth, (req: any, res: any) => {
+  try {
+    const { category, mastery_level } = req.body;
+    const result = db.prepare('INSERT INTO theory_topics (user_id, category, mastery_level) VALUES (?, ?, ?)').run(req.user.id, category, mastery_level);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/theory-topics/:id', auth, (req: any, res: any) => {
+  try {
+    const { category, mastery_level } = req.body;
+    db.prepare('UPDATE theory_topics SET category=?, mastery_level=? WHERE id=? AND user_id=?').run(category, mastery_level, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/theory-topics/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM theory_topics WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// triathlon_bricks
+app.get('/api/triathlon-bricks', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM triathlon_bricks WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/triathlon-bricks', auth, (req: any, res: any) => {
+  try {
+    const { bike_km, bike_time_secs, t2_secs, run_feel } = req.body;
+    const result = db.prepare('INSERT INTO triathlon_bricks (user_id, bike_km, bike_time_secs, t2_secs, run_feel) VALUES (?, ?, ?, ?, ?)').run(req.user.id, bike_km, bike_time_secs, t2_secs, run_feel);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/triathlon-bricks/:id', auth, (req: any, res: any) => {
+  try {
+    const { bike_km, bike_time_secs, t2_secs, run_feel } = req.body;
+    db.prepare('UPDATE triathlon_bricks SET bike_km=?, bike_time_secs=?, t2_secs=?, run_feel=? WHERE id=? AND user_id=?').run(bike_km, bike_time_secs, t2_secs, run_feel, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/triathlon-bricks/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM triathlon_bricks WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// urban_harvests
+app.get('/api/urban-harvests', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM urban_harvests WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/urban-harvests', auth, (req: any, res: any) => {
+  try {
+    const { harvest_date, quality } = req.body;
+    const result = db.prepare('INSERT INTO urban_harvests (user_id, harvest_date, quality) VALUES (?, ?, ?)').run(req.user.id, harvest_date, quality);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/urban-harvests/:id', auth, (req: any, res: any) => {
+  try {
+    const { harvest_date, quality } = req.body;
+    db.prepare('UPDATE urban_harvests SET harvest_date=?, quality=? WHERE id=? AND user_id=?').run(harvest_date, quality, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/urban-harvests/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM urban_harvests WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// urbex_gear
+app.get('/api/urbex-gear', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM urbex_gear WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/urbex-gear', auth, (req: any, res: any) => {
+  try {
+    const { category, condition } = req.body;
+    const result = db.prepare('INSERT INTO urbex_gear (user_id, category, condition) VALUES (?, ?, ?)').run(req.user.id, category, condition);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/urbex-gear/:id', auth, (req: any, res: any) => {
+  try {
+    const { category, condition } = req.body;
+    db.prepare('UPDATE urbex_gear SET category=?, condition=? WHERE id=? AND user_id=?').run(category, condition, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/urbex-gear/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM urbex_gear WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// user_pomodoro_log
+app.get('/api/user-pomodoro-log', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM user_pomodoro_log WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/user-pomodoro-log', auth, (req: any, res: any) => {
+  try {
+    const { task_label, duration_min, completed, notes, started_at } = req.body;
+    const result = db.prepare('INSERT INTO user_pomodoro_log (user_id, task_label, duration_min, completed, notes, started_at) VALUES (?, ?, ?, ?, ?, ?)').run(req.user.id, task_label, duration_min, completed, notes, started_at);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/user-pomodoro-log/:id', auth, (req: any, res: any) => {
+  try {
+    const { task_label, duration_min, completed, notes, started_at } = req.body;
+    db.prepare('UPDATE user_pomodoro_log SET task_label=?, duration_min=?, completed=?, notes=?, started_at=? WHERE id=? AND user_id=?').run(task_label, duration_min, completed, notes, started_at, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/user-pomodoro-log/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM user_pomodoro_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// vehicle_mods
+app.get('/api/vehicle-mods', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM vehicle_mods WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/vehicle-mods', auth, (req: any, res: any) => {
+  try {
+    const { mod_name, install_date, is_active } = req.body;
+    const result = db.prepare('INSERT INTO vehicle_mods (user_id, mod_name, install_date, is_active) VALUES (?, ?, ?, ?)').run(req.user.id, mod_name, install_date, is_active);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/vehicle-mods/:id', auth, (req: any, res: any) => {
+  try {
+    const { mod_name, install_date, is_active } = req.body;
+    db.prepare('UPDATE vehicle_mods SET mod_name=?, install_date=?, is_active=? WHERE id=? AND user_id=?').run(mod_name, install_date, is_active, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/vehicle-mods/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM vehicle_mods WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// volunteer_awards
+app.get('/api/volunteer-awards', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM volunteer_awards WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/volunteer-awards', auth, (req: any, res: any) => {
+  try {
+    const { org_id } = req.body;
+    const result = db.prepare('INSERT INTO volunteer_awards (user_id, org_id) VALUES (?, ?)').run(req.user.id, org_id);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/volunteer-awards/:id', auth, (req: any, res: any) => {
+  try {
+    const { org_id } = req.body;
+    db.prepare('UPDATE volunteer_awards SET org_id=? WHERE id=? AND user_id=?').run(org_id, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/volunteer-awards/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM volunteer_awards WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// watch_winder_slots
+app.get('/api/watch-winder-slots', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM watch_winder_slots WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/watch-winder-slots', auth, (req: any, res: any) => {
+  try {
+    const { watch_id, notes } = req.body;
+    const result = db.prepare('INSERT INTO watch_winder_slots (user_id, watch_id, notes) VALUES (?, ?, ?)').run(req.user.id, watch_id, notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/watch-winder-slots/:id', auth, (req: any, res: any) => {
+  try {
+    const { watch_id, notes } = req.body;
+    db.prepare('UPDATE watch_winder_slots SET watch_id=?, notes=? WHERE id=? AND user_id=?').run(watch_id, notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/watch-winder-slots/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM watch_winder_slots WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// wellbeing_goals
+app.get('/api/wellbeing-goals', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM wellbeing_goals WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/wellbeing-goals', auth, (req: any, res: any) => {
+  try {
+    const { goal_description, achieved } = req.body;
+    const result = db.prepare('INSERT INTO wellbeing_goals (user_id, goal_description, achieved) VALUES (?, ?, ?)').run(req.user.id, goal_description, achieved);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/wellbeing-goals/:id', auth, (req: any, res: any) => {
+  try {
+    const { goal_description, achieved } = req.body;
+    db.prepare('UPDATE wellbeing_goals SET goal_description=?, achieved=? WHERE id=? AND user_id=?').run(goal_description, achieved, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/wellbeing-goals/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM wellbeing_goals WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// writing_pitches
+app.get('/api/writing-pitches', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM writing_pitches WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/writing-pitches', auth, (req: any, res: any) => {
+  try {
+    const { topic, status } = req.body;
+    const result = db.prepare('INSERT INTO writing_pitches (user_id, topic, status) VALUES (?, ?, ?)').run(req.user.id, topic, status);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/writing-pitches/:id', auth, (req: any, res: any) => {
+  try {
+    const { topic, status } = req.body;
+    db.prepare('UPDATE writing_pitches SET topic=?, status=? WHERE id=? AND user_id=?').run(topic, status, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/writing-pitches/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM writing_pitches WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+// writing_portfolio
+app.get('/api/writing-portfolio', auth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare('SELECT * FROM writing_portfolio WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+    res.json({ success: true, data: rows });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.post('/api/writing-portfolio', auth, (req: any, res: any) => {
+  try {
+    const { content_type, published_date, excerpt, performance_notes } = req.body;
+    const result = db.prepare('INSERT INTO writing_portfolio (user_id, content_type, published_date, excerpt, performance_notes) VALUES (?, ?, ?, ?, ?)').run(req.user.id, content_type, published_date, excerpt, performance_notes);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.put('/api/writing-portfolio/:id', auth, (req: any, res: any) => {
+  try {
+    const { content_type, published_date, excerpt, performance_notes } = req.body;
+    db.prepare('UPDATE writing_portfolio SET content_type=?, published_date=?, excerpt=?, performance_notes=? WHERE id=? AND user_id=?').run(content_type, published_date, excerpt, performance_notes, req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/writing-portfolio/:id', auth, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM writing_portfolio WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});(); } catch(e) {}
 try { db.prepare(`ALTER TABLE podcast_episodes ADD COLUMN listen_percent INTEGER DEFAULT 0`).run(); } catch(e) {}
 // backfills: duration aliases, date aliases, guest aliases, revenue aliases
 try { db.prepare(`UPDATE podcast_episodes SET duration_min=COALESCE(NULLIF(duration_min,0),duration_mins,duration_minutes,0) WHERE duration_min=0`).run(); } catch(e) {}
