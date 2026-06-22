@@ -3639,7 +3639,7 @@ app.post('/api/threads/:id/summarize', requireAuth, async (req: AuthRequest, res
   const threadId = req.params.id;
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, userId) as any;
   if (!thread) { res.status(404).json({ success: false, error: 'THREAD_NOT_FOUND' }); return; }
-  const messages = db.prepare("SELECT role, content FROM thread_messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 20").all(threadId) as any[];
+  const messages = db.prepare("SELECT role, content FROM messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 20").all(threadId) as any[];
   if (!messages.length) { res.json({ success: true, title: 'Empty thread' }); return; }
   const key = safe(() => getUserKey(userId, 'anthropic'), null) || safe(() => getUserKey(userId, 'openai'), null);
   if (!key) { res.status(400).json({ success: false, error: 'NO_KEY' }); return; }
@@ -3669,7 +3669,7 @@ app.post('/api/threads/:id/tldr', requireAuth, async (req: AuthRequest, res) => 
   const threadId = req.params.id;
   const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(threadId, userId) as any;
   if (!thread) { res.status(404).json({ error: 'Not found' }); return; }
-  const msgs = db.prepare("SELECT role, content FROM thread_messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 40").all(threadId) as any[];
+  const msgs = db.prepare("SELECT role, content FROM messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 40").all(threadId) as any[];
   if (msgs.length < 3) { res.json({ bullets: ['Thread too short for summary.'] }); return; }
   const key = safe(() => getUserKey(userId, 'anthropic'), null) || safe(() => getUserKey(userId, 'openai'), null);
   if (!key) { res.status(400).json({ error: 'No LLM key configured' }); return; }
@@ -5064,7 +5064,7 @@ app.get('/api/agents/ghost/log', requireAuth, (req: any, res) => {
 // Mentor Agent — coaches owner based on work patterns
 app.post('/api/agents/mentor/analyze', requireAuth, async (req: any, res) => {
   const uid = req.user.id;
-  const threads = db.prepare(`SELECT * FROM conversations WHERE user_id=? ORDER BY updated_at DESC LIMIT 50`).all(uid);
+  const threads = db.prepare(`SELECT * FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT 50`).all(uid);
   const patterns: string[] = [];
   if (threads.length < 5) patterns.push('Not enough data yet — keep working with Forge');
   else {
@@ -7906,8 +7906,8 @@ app.get('/api/workspace/export', authMiddleware, async (req: any, res) => {
     const user = db.prepare("SELECT id,email,name,created_at FROM users WHERE id=?").get(userId) as any;
     const threads = db.prepare("SELECT * FROM threads WHERE user_id=?").all(userId);
     const messages = db.prepare("SELECT m.* FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=?").all(userId);
-    const snippets = db.prepare("SELECT * FROM snippets WHERE user_id=? LIMIT 500").all(userId) as any[];
-    const bookmarks = db.prepare("SELECT * FROM bookmarks WHERE user_id=? LIMIT 500").all(userId) as any[];
+    const snippets = (() => { try { return db.prepare("SELECT * FROM code_snippets WHERE user_id=? LIMIT 500").all(userId); } catch(e) { return []; } })();
+    const bookmarks = (() => { try { return db.prepare("SELECT * FROM message_bookmarks WHERE user_id=? LIMIT 500").all(userId); } catch(e) { return []; } })();
     res.json({
       exportedAt: new Date().toISOString(),
       user,
@@ -168168,6 +168168,17 @@ try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN distance_miles REAL DEFAULT 0
 try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN distance_km REAL DEFAULT 0`).run(); } catch(e) {}
 try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN finish_time_minutes INTEGER DEFAULT 0`).run(); } catch(e) {}
 try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN finish_time_sec INTEGER DEFAULT 0`).run(); } catch(e) {}
+
+// ─── v199 Core Table Safety Nets ──────────────────────────────────────────────
+// These tables are queried in routes but had no CREATE TABLE - add IF NOT EXISTS guards
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_keys (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, anthropic_key TEXT, openai_key TEXT, gemini_key TEXT, groq_key TEXT, mistral_key TEXT, openrouter_key TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS referrals (id INTEGER PRIMARY KEY AUTOINCREMENT, referrer_id INTEGER NOT NULL, referred_email TEXT, referred_id INTEGER, code TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS message_reactions (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, emoji TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS message_bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, message_id INTEGER NOT NULL, note TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_meta (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, meta_key TEXT NOT NULL, meta_value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, meta_key))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_members (id INTEGER PRIMARY KEY AUTOINCREMENT, workspace_id INTEGER NOT NULL, user_id INTEGER NOT NULL, role TEXT DEFAULT 'member', joined_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(workspace_id, user_id))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, streak INTEGER DEFAULT 0, last_active TEXT, longest_streak INTEGER DEFAULT 0)`).run(); } catch(e) {}
+// ─── end v199 migrations ──────────────────────────────────────────────────────
 try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN burpees_served INTEGER DEFAULT 0`).run(); } catch(e) {}
 try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN burpees INTEGER DEFAULT 0`).run(); } catch(e) {}
 try { db.prepare(`ALTER TABLE ocr_races ADD COLUMN placement INTEGER DEFAULT 0`).run(); } catch(e) {}
