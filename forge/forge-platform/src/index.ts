@@ -5373,7 +5373,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v136.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v137.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -50633,6 +50633,16 @@ app.put('/api/bucket/:id/complete', requireAuth, (req: any, res: any) => {
   const done = (db.prepare(`SELECT COUNT(*) as c FROM bucket_items WHERE user_id=? AND is_completed=1`).get(req.user.id) as any)?.c||0;
   res.json({ success: true, total_completed: done, completion_pct: Math.round(done/total*100) });
 });
+app.post('/api/bucket/:id/milestones', requireAuth, (req: any, res: any) => {
+  const { milestone_text, target_date, notes } = req.body;
+  if (!milestone_text) return res.status(400).json({ error: 'milestone_text required' });
+  const r = db.prepare(`INSERT INTO bucket_milestones (bucket_item_id,user_id,milestone_text,target_date,notes) VALUES (?,?,?,?,?)`).run(req.params.id, req.user.id, milestone_text, target_date||null, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/bucket/milestones/:id/complete', requireAuth, (req: any, res: any) => {
+  db.prepare(`UPDATE bucket_milestones SET is_completed=1,completed_date=date('now') WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
 // ─── End B414 ────────────────────────────────────────────────────────────────
 
 // ─── B415: Personal Podcast Listening & Notes Tracker ────────────────────────
@@ -51002,6 +51012,18 @@ app.get('/api/failures/themes', requireAuth, (req: any, res: any) => {
   const themes = db.prepare(`SELECT * FROM failure_themes WHERE user_id=? ORDER BY frequency DESC`).all(req.user.id);
   const by_domain = db.prepare(`SELECT domain, COUNT(*) as c, AVG(growth_score) as avg_growth FROM failure_entries WHERE user_id=? GROUP BY domain ORDER BY c DESC`).all(req.user.id);
   res.json({ themes, by_domain });
+});
+app.post('/api/failures/themes', requireAuth, (req: any, res: any) => {
+  const { theme_name, insight, resolution_strategy } = req.body;
+  if (!theme_name) return res.status(400).json({ error: 'theme_name required' });
+  const existing = db.prepare(`SELECT id, frequency FROM failure_themes WHERE user_id=? AND theme_name=?`).get(req.user.id, theme_name) as any;
+  if (existing) {
+    db.prepare(`UPDATE failure_themes SET frequency=frequency+1,last_seen=date('now'),insight=?,resolution_strategy=? WHERE id=?`).run(insight||existing.insight, resolution_strategy||existing.resolution_strategy, existing.id);
+    res.json({ id: existing.id, updated: true });
+  } else {
+    const r = db.prepare(`INSERT INTO failure_themes (user_id,theme_name,frequency,first_seen,last_seen,insight,resolution_strategy) VALUES (?,?,1,date('now'),date('now'),?,?)`).run(req.user.id, theme_name, insight||'', resolution_strategy||'');
+    res.json({ id: r.lastInsertRowid });
+  }
 });
 // ─── End B422 ────────────────────────────────────────────────────────────────
 
@@ -52103,6 +52125,12 @@ app.get('/api/oral-history/timeline', requireAuth, (req: any, res: any) => {
   const stats = db.prepare(`SELECT storyteller, COUNT(*) as stories FROM oral_stories WHERE user_id=? GROUP BY storyteller ORDER BY stories DESC`).all(req.user.id);
   res.json({ timeline: events, stories_by_storyteller: stats, total_stories: (db.prepare(`SELECT COUNT(*) as c FROM oral_stories WHERE user_id=?`).get(req.user.id) as any)?.c||0 });
 });
+app.post('/api/oral-history/timeline', requireAuth, (req: any, res: any) => {
+  const { event_title, event_date, event_era, family_branch, location, people_involved, description, significance } = req.body;
+  if (!event_title) return res.status(400).json({ error: 'event_title required' });
+  const r = db.prepare(`INSERT INTO family_timeline (user_id,event_title,event_date,event_era,family_branch,location,people_involved,description,significance) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id, event_title, event_date||null, event_era||'', family_branch||'paternal', location||'', JSON.stringify(people_involved||[]), description||'', significance||3);
+  res.json({ id: r.lastInsertRowid });
+});
 // ─── End B445 ────────────────────────────────────────────────────────────────
 
 // ─── B446: Personal Board Game Collection & Play Log ─────────────────────────
@@ -52441,6 +52469,24 @@ app.get('/api/language/:lang/vocab', requireAuth, (req: any, res: any) => {
   const vocab = db.prepare(`SELECT * FROM language_vocab WHERE user_id=? AND language=? ORDER BY next_review ASC NULLS FIRST LIMIT 20`).all(req.user.id, req.params.lang);
   res.json({ vocab, due_for_review: (db.prepare(`SELECT COUNT(*) as c FROM language_vocab WHERE user_id=? AND language=? AND (next_review<=date('now') OR next_review IS NULL) AND is_mastered=0`).get(req.user.id, req.params.lang) as any)?.c||0 });
 });
+app.post('/api/language/:lang/vocab', requireAuth, (req: any, res: any) => {
+  const { word, translation, phonetic, example_sentence, category, difficulty } = req.body;
+  if (!word || !translation) return res.status(400).json({ error: 'word and translation required' });
+  const r = db.prepare(`INSERT INTO language_vocab (user_id,language,word,translation,phonetic,example_sentence,category,difficulty) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, req.params.lang, word, translation, phonetic||'', example_sentence||'', category||'general', difficulty||'medium');
+  res.json({ id: r.lastInsertRowid });
+});
+app.post('/api/language/goals', requireAuth, (req: any, res: any) => {
+  const { language, target_level, current_level, daily_goal_mins, target_date } = req.body;
+  if (!language) return res.status(400).json({ error: 'language required' });
+  const existing = db.prepare(`SELECT id FROM language_goals WHERE user_id=? AND language=?`).get(req.user.id, language) as any;
+  if (existing) {
+    db.prepare(`UPDATE language_goals SET target_level=?,current_level=?,daily_goal_mins=?,target_date=? WHERE id=?`).run(target_level||'B2', current_level||'A1', daily_goal_mins||30, target_date||null, existing.id);
+    res.json({ id: existing.id, updated: true });
+  } else {
+    const r = db.prepare(`INSERT INTO language_goals (user_id,language,target_level,current_level,daily_goal_mins,start_date,target_date) VALUES (?,?,?,?,?,date('now'),?)`).run(req.user.id, language, target_level||'B2', current_level||'A1', daily_goal_mins||30, target_date||null);
+    res.json({ id: r.lastInsertRowid });
+  }
+});
 // ─── End B452 ────────────────────────────────────────────────────────────────
 
 // ─── B453: Personal Estate Planning & Will Organizer ─────────────────────────
@@ -52485,6 +52531,12 @@ app.post('/api/estate/documents', requireAuth, (req: any, res: any) => {
   const { doc_type, title, created_date, attorney, storage_location } = req.body;
   if (!doc_type) return res.status(400).json({ error: 'doc_type required' });
   const r = db.prepare(`INSERT INTO estate_documents (user_id,doc_type,title,created_date,attorney,storage_location,last_reviewed) VALUES (?,?,?,?,?,?,?)`).run(req.user.id, doc_type, title||doc_type, created_date||null, attorney||'', storage_location||'', new Date().toISOString().slice(0,10));
+  res.json({ id: r.lastInsertRowid });
+});
+app.post('/api/estate/contacts', requireAuth, (req: any, res: any) => {
+  const { role, name, phone, email, address, relationship, notes } = req.body;
+  if (!name || !role) return res.status(400).json({ error: 'name and role required' });
+  const r = db.prepare(`INSERT INTO estate_contacts (user_id,role,name,phone,email,address,relationship,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, role, name, phone||'', email||'', address||'', relationship||'', notes||'');
   res.json({ id: r.lastInsertRowid });
 });
 // ─── End B453 ────────────────────────────────────────────────────────────────
@@ -52747,6 +52799,17 @@ app.get('/api/breathwork/stats', requireAuth, (req: any, res: any) => {
   const by_technique = db.prepare(`SELECT technique, COUNT(*) as sessions, AVG(stress_before-stress_after) as avg_stress_red FROM breathwork_sessions WHERE user_id=? GROUP BY technique ORDER BY sessions DESC`).all(req.user.id);
   const goal = db.prepare(`SELECT streak_days FROM breathwork_goals WHERE user_id=? LIMIT 1`).get(req.user.id) as any;
   res.json({ avg_stress_reduction: Math.round((avg?.stress_red||0)*10)/10, avg_clarity_gain: Math.round((avg?.clarity_gain||0)*10)/10, avg_hold_secs: Math.round(avg?.avg_hold||0), by_technique, streak_days: goal?.streak_days||0 });
+});
+app.put('/api/breathwork/goal', requireAuth, (req: any, res: any) => {
+  const { goal_type, target_mins_daily, target_technique } = req.body;
+  const existing = db.prepare(`SELECT id FROM breathwork_goals WHERE user_id=? LIMIT 1`).get(req.user.id) as any;
+  if (existing) {
+    db.prepare(`UPDATE breathwork_goals SET goal_type=?,target_mins_daily=?,target_technique=? WHERE id=?`).run(goal_type||'daily_practice', target_mins_daily||10, target_technique||'wim_hof', existing.id);
+    res.json({ id: existing.id, updated: true });
+  } else {
+    const r = db.prepare(`INSERT INTO breathwork_goals (user_id,goal_type,target_mins_daily,target_technique,streak_days) VALUES (?,?,?,?,0)`).run(req.user.id, goal_type||'daily_practice', target_mins_daily||10, target_technique||'wim_hof');
+    res.json({ id: r.lastInsertRowid });
+  }
 });
 // ─── End B459 ────────────────────────────────────────────────────────────────
 
