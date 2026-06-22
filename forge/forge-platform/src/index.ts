@@ -4953,6 +4953,16 @@ const deliverWebhook = async (userId: string, event: string, payload: any) => {
 };
 
 app.get('/api/webhooks', requireAuth, (req: AuthRequest, res) => { res.json({ success:true, data: db.prepare('SELECT id,url,events,enabled,created_at,last_delivery,last_status,delivery_count FROM webhooks WHERE user_id=?').all(req.user!.sub) }); });
+app.post('/api/webhooks', requireAuth, (req: AuthRequest, res) => {
+  try {
+    const { url, events = [], secret } = req.body;
+    if (!url) return res.status(400).json({ success: false, error: 'url required' });
+    const id = uuidv4();
+    const sec = secret || require('crypto').randomBytes(16).toString('hex');
+    db.prepare('INSERT INTO webhooks (id,user_id,url,events,secret) VALUES (?,?,?,?,?)').run(id, req.user!.sub, url, JSON.stringify(events), sec);
+    res.status(201).json({ success: true, id, secret: sec });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.patch('/api/webhooks/:id', requireAuth, (req: AuthRequest, res) => {
   const { url,events,enabled } = req.body; const uid = req.user!.sub; const wid = req.params.id;
   if (url) db.prepare('UPDATE webhooks SET url=? WHERE id=? AND user_id=?').run(url,wid,uid);
@@ -5363,7 +5373,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v134.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v135.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -35564,6 +35574,13 @@ app.get('/api/net-worth/trend', requireAuth, (req: any, res: any) => {
     }
     res.json({ benchmarks: rows, source: 'user_data' });
   });
+  app.post('/api/model-benchmarks', requireAuth, (req: any, res: any) => {
+    const { model, task_type='general', avg_latency_ms=0, avg_cost_per_1k_tokens=0, quality_score=8, sample_count=1 } = req.body;
+    if (!model) return res.status(400).json({ error: 'model required' });
+    const id = require('crypto').randomUUID();
+    db.prepare('INSERT OR REPLACE INTO model_benchmarks(id,user_id,model,task_type,avg_latency_ms,avg_cost_per_1k_tokens,quality_score,sample_count,last_updated) VALUES(?,?,?,?,?,?,?,?,datetime(\'now\'))').run(id, req.user.id, model, task_type, avg_latency_ms, avg_cost_per_1k_tokens, quality_score, sample_count);
+    res.json({ success: true, id });
+  });
 }
 // ─── End B211 ────────────────────────────────────────────────────────────────
 
@@ -40545,6 +40562,19 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.get('/api/booking/blocks', requireAuth, (req: any, res: any) => {
+  res.json({ blocks: db.prepare(`SELECT * FROM booking_blocks WHERE user_id=? ORDER BY block_date,start_time`).all(req.user.id) });
+});
+app.post('/api/booking/blocks', requireAuth, (req: any, res: any) => {
+  const { block_date, start_time, end_time, reason='blocked' } = req.body;
+  if (!block_date||!start_time||!end_time) return res.status(400).json({ error: 'block_date, start_time, end_time required' });
+  const r = db.prepare(`INSERT INTO booking_blocks (user_id,block_date,start_time,end_time,reason) VALUES (?,?,?,?,?)`).run(req.user.id, block_date, start_time, end_time, reason);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.delete('/api/booking/blocks/:id', requireAuth, (req: any, res: any) => {
+  db.prepare(`DELETE FROM booking_blocks WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
 app.get('/api/booking/services', requireAuth, (req: any, res: any) => {
   const services = db.prepare(`SELECT * FROM booking_services WHERE user_id=? AND is_active=1 ORDER BY name ASC`).all(req.user.id);
   res.json({ services });
@@ -40679,6 +40709,14 @@ app.post('/api/prompt-marketplace/:id/download', requireAuth, (req: any, res: an
   }
   db.prepare(`UPDATE prompt_listings SET downloads=downloads+1 WHERE id=?`).run(req.params.id);
   res.json({ prompt_text: listing.prompt_text });
+});
+app.post('/api/prompt-marketplace/:id/purchase', requireAuth, (req: any, res: any) => {
+  const listing = db.prepare(`SELECT * FROM prompt_listings WHERE id=? AND is_published=1`).get(req.params.id) as any;
+  if (!listing) return res.status(404).json({ error: 'not found' });
+  const already = db.prepare(`SELECT id FROM prompt_purchases WHERE user_id=? AND listing_id=?`).get(req.user.id, req.params.id);
+  if (already) return res.json({ success: true, already_owned: true });
+  const r = db.prepare(`INSERT INTO prompt_purchases (user_id,listing_id,amount_paid) VALUES (?,?,?)`).run(req.user.id, req.params.id, listing.price||0);
+  res.json({ success: true, id: r.lastInsertRowid });
 });
 app.post('/api/prompt-marketplace/:id/review', requireAuth, (req: any, res: any) => {
   const { rating, review_text } = req.body;
@@ -45162,6 +45200,19 @@ app.get('/api/security/dashboard', requireAuth, (req: any, res: any) => {
   const tasks_pending = db.prepare(`SELECT COUNT(*) as c FROM security_tasks WHERE user_id=? AND completed=0`).get(req.user.id) as any;
   const breached_accounts = db.prepare(`SELECT account_name, service_url, breach_date FROM security_accounts WHERE user_id=? AND is_breached=1 ORDER BY breach_date DESC`).all(req.user.id);
   res.json({ latest_scan, open_incidents: incidents_open?.c||0, pending_tasks: tasks_pending?.c||0, breached_accounts });
+});
+app.get('/api/security/tasks', requireAuth, (req: any, res: any) => {
+  res.json({ tasks: db.prepare(`SELECT * FROM security_tasks WHERE user_id=? ORDER BY priority ASC, due_date ASC`).all(req.user.id) });
+});
+app.post('/api/security/tasks', requireAuth, (req: any, res: any) => {
+  const { task_name, category='password', priority=3, due_date, notes } = req.body;
+  if (!task_name) return res.status(400).json({ error: 'task_name required' });
+  const r = db.prepare(`INSERT INTO security_tasks (user_id,task_name,category,priority,due_date,notes) VALUES (?,?,?,?,?,?)`).run(req.user.id, task_name, category, priority, due_date||null, notes||null);
+  res.json({ id: r.lastInsertRowid });
+});
+app.patch('/api/security/tasks/:id/complete', requireAuth, (req: any, res: any) => {
+  db.prepare(`UPDATE security_tasks SET completed=1,completed_date=date('now') WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
 });
 // ─── End B328 ────────────────────────────────────────────────────────────────
 
@@ -60911,6 +60962,19 @@ app.post('/api/weatherstation/readings', requireAuth, (req: any, res: any) => {
     const r = db.prepare(`INSERT INTO weather_readings (user_id,temp_f,humidity_pct,pressure_hpa,wind_mph,wind_direction,rainfall_inches,uv_index,condition,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(uid,temp_f,humidity_pct,pressure_hpa,wind_mph,wind_direction,rainfall_inches,uv_index,condition,notes);
     res.json({ success: true, id: r.lastInsertRowid });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/weatherstation/alerts', requireAuth, (req: any, res: any) => {
+  try {
+    const { alert_type, threshold_value, comparison='above' } = req.body;
+    if (!alert_type || threshold_value===undefined) return res.status(400).json({ error: 'alert_type and threshold_value required' });
+    const r = db.prepare(`INSERT INTO weather_alerts (user_id,alert_type,threshold_value,comparison) VALUES (?,?,?,?)`).run(req.user.id, alert_type, threshold_value, comparison);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.delete('/api/weatherstation/alerts/:id', requireAuth, (req: any, res: any) => {
+  db.prepare(`DELETE FROM weather_alerts WHERE id=? AND user_id=?`).run(req.params.id, req.user.id);
+  res.json({ success: true });
 });
 
 // ─── B626: Personal Lego Collection & MOC Builder ────────────────────────────
