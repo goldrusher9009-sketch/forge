@@ -104,7 +104,7 @@ if (!db.prepare('SELECT id FROM users WHERE email = ?').get('admin@forge.local')
 }
 
 // ── JWT helpers ───────────────────────────────────────────────
-interface TokenPayload { sub: string; email: string; role: string; }
+interface TokenPayload { sub: string; email: string; role: string; id?: string; userId?: string; }
 const signAccess  = (p: TokenPayload) => jwt.sign(p, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
 const signRefresh = (p: TokenPayload) => jwt.sign(p, JWT_SECRET, { expiresIn: REFRESH_EXPIRES_IN } as jwt.SignOptions);
 const verifyToken = (t: string) => jwt.verify(t, JWT_SECRET) as TokenPayload;
@@ -120,7 +120,17 @@ interface AuthRequest extends Request { user?: TokenPayload; }
 function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   const h = req.headers.authorization;
   if (!h?.startsWith('Bearer ')) { res.status(401).json({ success: false, error: 'AUTHENTICATION_REQUIRED' }); return; }
-  try { req.user = verifyToken(h.slice(7)); next(); }
+  try {
+    req.user = verifyToken(h.slice(7));
+    // Backfill all access patterns: req.user.id, req.user.userId, (req as any).userId
+    if (req.user) {
+      const uid = req.user.sub;
+      if (!req.user.id) req.user.id = uid;
+      if (!req.user.userId) req.user.userId = uid;
+      (req as any).userId = uid;
+    }
+    next();
+  }
   catch { res.status(401).json({ success: false, error: 'INVALID_TOKEN', message: 'Token invalid or expired' }); }
 }
 const authMiddleware = requireAuth;
@@ -209,7 +219,7 @@ app.post('/api/auth/login', (req, res) => {
   if (!user || !bcrypt.compareSync(password, user.password)) {
     res.status(401).json({ success: false, error: 'INVALID_CREDENTIALS', message: 'Invalid email or password' }); return;
   }
-  const payload: TokenPayload = { sub: user.id, email: user.email, role: user.role };
+  const payload: TokenPayload = { sub: user.id, id: user.id, userId: user.id, email: user.email, role: user.role };
   const accessToken = signAccess(payload);
   const refreshToken = signRefresh(payload);
   db.prepare('INSERT INTO refresh_tokens (id,user_id,token,expires_at) VALUES (?,?,?,?)')
@@ -348,6 +358,22 @@ app.get('/api/queue',   requireAuth, (req: AuthRequest, res) => {
 });
 app.get('/api/history', requireAuth, (req: AuthRequest, res) => {
   res.json({ success: true, data: db.prepare('SELECT * FROM tasks WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user!.sub) });
+});
+app.post('/api/tasks', requireAuth, (req: AuthRequest, res: any) => {
+  try {
+    const { name, workflow_id, agent_id, status = 'queued' } = req.body;
+    if (!name) return res.status(400).json({ success: false, error: 'name required' });
+    const id = uuidv4();
+    db.prepare('INSERT INTO tasks (id,user_id,name,status,workflow_id,agent_id) VALUES (?,?,?,?,?,?)').run(id, req.user!.sub, name, status, workflow_id||null, agent_id||null);
+    res.json({ success: true, id });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.patch('/api/tasks/:id', requireAuth, (req: AuthRequest, res: any) => {
+  try {
+    const { status, result, error } = req.body;
+    db.prepare("UPDATE tasks SET status=COALESCE(?,status), result=COALESCE(?,result), error=COALESCE(?,error), updated_at=datetime('now') WHERE id=? AND user_id=?").run(status||null, result||null, error||null, req.params.id, req.user!.sub);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 // ── Extra DB tables ────────────────────────────────────────────
@@ -1263,6 +1289,8 @@ app.post(['/api/chat', '/api/chat/completions'], requireAuth, async (req: AuthRe
     // Log usage
     db.prepare('INSERT INTO usage_logs (id,user_id,model,provider,prompt_tokens,completion_tokens,total_tokens,provider_cost,forge_revenue,markup_multiplier) VALUES (?,?,?,?,?,?,?,?,?,?)')
       .run(uuidv4(), userId, forgeModelId, provider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup);
+    // Sync to token_usage (drives /api/usage, /api/billing/status, /api/brief)
+    try { db.prepare('INSERT INTO token_usage (user_id,model,input_tokens,output_tokens,total_tokens,cost_usd,endpoint) VALUES (?,?,?,?,?,?,?)').run(userId, forgeModelId, result.promptTokens, result.completionTokens, totalTokens, providerCost, '/api/chat'); } catch {}
 
     // Update token usage
     db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
@@ -168155,6 +168183,20 @@ try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN thread_id INTEGER DEFA
 try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN body TEXT DEFAULT ''`).run(); } catch(e) {}
 try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN publish_date TEXT DEFAULT ''`).run(); } catch(e) {}
 try { db.prepare(`ALTER TABLE content_calendar ADD COLUMN tags TEXT DEFAULT ''`).run(); } catch(e) {}
+// ─── v199 Core Table Safety Nets ──────────────────────────────────────────────
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_keys (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, anthropic_key TEXT, openai_key TEXT, gemini_key TEXT, groq_key TEXT, mistral_key TEXT, openrouter_key TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS referrals (id INTEGER PRIMARY KEY AUTOINCREMENT, referrer_id INTEGER NOT NULL, referred_email TEXT, referred_id INTEGER, code TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS message_reactions (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, emoji TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS message_bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, message_id INTEGER NOT NULL, note TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_meta (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, meta_key TEXT NOT NULL, meta_value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, meta_key))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workspace_members (id INTEGER PRIMARY KEY AUTOINCREMENT, workspace_id INTEGER NOT NULL, user_id INTEGER NOT NULL, role TEXT DEFAULT 'member', joined_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(workspace_id, user_id))`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS user_streaks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, streak INTEGER DEFAULT 0, last_active TEXT, longest_streak INTEGER DEFAULT 0)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS routing_log (id TEXT PRIMARY KEY, user_id TEXT, model_requested TEXT, model_resolved TEXT, provider TEXT, prompt_complexity TEXT, prompt_tokens INTEGER DEFAULT 0, completion_tokens INTEGER DEFAULT 0, latency_ms INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS sleep_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT, bedtime TEXT, wake_time TEXT, duration_hours REAL, quality INTEGER, notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS workout_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT, exercise_type TEXT, duration_min INTEGER, calories INTEGER, notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS meditation_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT, duration_min INTEGER, technique TEXT, notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+try { db.prepare(`CREATE TABLE IF NOT EXISTS step_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT, steps INTEGER DEFAULT 0, goal INTEGER DEFAULT 10000, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch(e) {}
+// ─── end v199 migrations ──────────────────────────────────────────────────────
 // ─── end v149 migrations ──────────────────────────────────────────────────────
 
 // ─── v150 Schema Migrations ────────────────────────────────────────────────────
