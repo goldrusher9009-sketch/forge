@@ -5373,7 +5373,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v135.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v136.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -6929,6 +6929,46 @@ app.get('/api/messages/:id/tags', authMiddleware, async (req: any, res) => {
     const tags = db.prepare('SELECT tag FROM message_tags WHERE message_id=? AND user_id=?').all(req.params.id, userId);
     res.json({ tags: tags.map((t: any) => t.tag) });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// Message bookmarks
+app.post('/api/messages/:id/bookmark', authMiddleware, (req: any, res: any) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS message_bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, note TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(message_id,user_id))`).run();
+    const { note='' } = req.body;
+    db.prepare('INSERT OR REPLACE INTO message_bookmarks (message_id,user_id,note) VALUES (?,?,?)').run(req.params.id, req.user.userId, note);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/messages/:id/bookmark', authMiddleware, (req: any, res: any) => {
+  try {
+    db.prepare('DELETE FROM message_bookmarks WHERE message_id=? AND user_id=?').run(req.params.id, req.user.userId);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/bookmarks/messages', authMiddleware, (req: any, res: any) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS message_bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, note TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(message_id,user_id))`).run();
+    const rows = db.prepare('SELECT mb.*, m.content FROM message_bookmarks mb LEFT JOIN messages m ON m.id=mb.message_id WHERE mb.user_id=? ORDER BY mb.created_at DESC LIMIT 100').all(req.user.userId);
+    res.json({ bookmarks: rows });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+// Message reactions
+app.post('/api/messages/:id/react', authMiddleware, (req: any, res: any) => {
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS message_reactions (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, emoji TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(message_id,user_id,emoji))`).run();
+    const { emoji } = req.body;
+    if (!emoji) return res.status(400).json({ error: 'emoji required' });
+    db.prepare('INSERT OR IGNORE INTO message_reactions (message_id,user_id,emoji) VALUES (?,?,?)').run(req.params.id, req.user.userId, emoji);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/messages/:id/react', authMiddleware, (req: any, res: any) => {
+  try {
+    const { emoji } = req.body;
+    db.prepare('DELETE FROM message_reactions WHERE message_id=? AND user_id=? AND emoji=?').run(req.params.id, req.user.userId, emoji);
+    res.json({ success: true });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 
 // POST /api/threads/bulk-archive — bulk archive threads
@@ -49472,6 +49512,15 @@ app.get('/api/mentalhealth/profiles/:id/trends', requireAuth, (req: any, res: an
   const avgs = db.prepare(`SELECT AVG(overall_mood) as mood, AVG(anxiety_level) as anxiety, AVG(depression_level) as depression, AVG(energy) as energy, AVG(sleep_hours) as sleep FROM daily_mh_checkins WHERE profile_id=? AND user_id=? AND checkin_date>=date('now','-30 days')`).get(req.params.id, req.user.id) as any;
   res.json({ daily_data: days, averages_30d: { mood: Math.round((avgs?.mood||0)*10)/10, anxiety: Math.round((avgs?.anxiety||0)*10)/10, depression: Math.round((avgs?.depression||0)*10)/10, energy: Math.round((avgs?.energy||0)*10)/10, sleep: Math.round((avgs?.sleep||0)*10)/10 } });
 });
+app.post('/api/mentalhealth/profiles/:id/therapy', requireAuth, (req: any, res: any) => {
+  const { session_date, session_type='individual', mood_before=5, mood_after=6, topics_covered=[], homework=[], insights, breakthroughs, next_session, notes } = req.body;
+  if (!session_date) return res.status(400).json({ error: 'session_date required' });
+  const r = db.prepare(`INSERT INTO therapy_sessions_mh (profile_id,user_id,session_date,session_type,mood_before,mood_after,topics_covered,homework,insights,breakthroughs,next_session,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.params.id, req.user.id, session_date, session_type, mood_before, mood_after, JSON.stringify(topics_covered), JSON.stringify(homework), insights||'', breakthroughs||'', next_session||null, notes||'');
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.get('/api/mentalhealth/profiles/:id/therapy', requireAuth, (req: any, res: any) => {
+  res.json({ sessions: db.prepare(`SELECT * FROM therapy_sessions_mh WHERE profile_id=? AND user_id=? ORDER BY session_date DESC`).all(req.params.id, req.user.id) });
+});
 // ─── End B394 ────────────────────────────────────────────────────────────────
 
 // ─── B395: Personal Genealogy & Family Tree Tracker ───────────────────────────
@@ -50224,6 +50273,18 @@ app.get('/api/resume/profiles/:id/export', requireAuth, (req: any, res: any) => 
   const skills = db.prepare(`SELECT * FROM resume_skills_matrix WHERE user_id=? ORDER BY proficiency DESC`).all(req.user.id);
   const achievements = db.prepare(`SELECT * FROM resume_achievements WHERE profile_id=? ORDER BY year DESC`).all(req.params.id);
   res.json({ profile, experiences, skills, achievements });
+});
+app.post('/api/resume/skills', requireAuth, (req: any, res: any) => {
+  const { skill_name, category='technical', proficiency=3, years_experience=1, is_featured=false } = req.body;
+  if (!skill_name) return res.status(400).json({ error: 'skill_name required' });
+  const r = db.prepare(`INSERT INTO resume_skills_matrix (user_id,skill_name,category,proficiency,years_experience,is_featured) VALUES (?,?,?,?,?,?)`).run(req.user.id, skill_name, category, proficiency, years_experience, is_featured?1:0);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+app.post('/api/resume/profiles/:id/achievements', requireAuth, (req: any, res: any) => {
+  const { achievement_title, description, year, impact_metric, category='professional' } = req.body;
+  if (!achievement_title) return res.status(400).json({ error: 'achievement_title required' });
+  const r = db.prepare(`INSERT INTO resume_achievements (profile_id,user_id,achievement_title,description,year,impact_metric,category) VALUES (?,?,?,?,?,?,?)`).run(req.params.id, req.user.id, achievement_title, description||'', year||new Date().getFullYear(), impact_metric||'', category);
+  res.json({ success: true, id: r.lastInsertRowid });
 });
 // ─── End B407 ────────────────────────────────────────────────────────────────
 
@@ -51523,6 +51584,12 @@ app.get('/api/mindmaps/:id', requireAuth, (req: any, res: any) => {
   const connections = db.prepare(`SELECT * FROM mindmap_connections WHERE map_id=?`).all(req.params.id);
   if (!map) return res.status(404).json({ error: 'not found' });
   res.json({ map, nodes, connections });
+});
+app.post('/api/mindmaps/:id/connections', requireAuth, (req: any, res: any) => {
+  const { from_node_id, to_node_id, label='', connection_type='related' } = req.body;
+  if (!from_node_id || !to_node_id) return res.status(400).json({ error: 'from_node_id and to_node_id required' });
+  const r = db.prepare(`INSERT INTO mindmap_connections (map_id,user_id,from_node_id,to_node_id,label,connection_type) VALUES (?,?,?,?,?,?)`).run(req.params.id, req.user.id, from_node_id, to_node_id, label, connection_type);
+  res.json({ success: true, id: r.lastInsertRowid });
 });
 // ─── End B434 ────────────────────────────────────────────────────────────────
 
@@ -60496,6 +60563,16 @@ app.post('/api/printing/jobs', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/printing/filaments', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { brand, material='PLA', color, weight_grams=1000, price_usd=0, notes } = req.body;
+    if (!brand) return res.status(400).json({ success: false, error: 'brand required' });
+    const r = db.prepare(`INSERT INTO print_filaments (user_id,brand,material,color,weight_grams,remaining_grams,price_usd,notes) VALUES (?,?,?,?,?,?,?,?)`).run(uid,brand,material,color||'',weight_grams,weight_grams,price_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── B617: Personal Martial Arts & Combat Sport Log ──────────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS martial_arts_sessions (
@@ -65659,6 +65736,16 @@ app.post('/api/hifi/equipment', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/hifi/sessions', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { album_listened, artist, format='vinyl', duration_minutes=60, setup, mood_rating=8, sound_quality_rating=8, notes } = req.body;
+    if (!album_listened) return res.status(400).json({ success: false, error: 'album_listened required' });
+    const r = db.prepare(`INSERT INTO listening_sessions (user_id,session_date,duration_minutes,setup,album_listened,artist,format,mood_rating,sound_quality_rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(uid,new Date().toISOString().slice(0,10),duration_minutes,setup||'',album_listened,artist||'',format,mood_rating,sound_quality_rating,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── B720: Personal Sourdough & Bread Baking Log ─────────────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS bread_bakes (
@@ -66711,6 +66798,16 @@ app.post('/api/languagelearning/sessions', requireAuth, (req: any, res: any) => 
     const streak_day = prev?.last_date === yesterday ? (prev?.streak_day||0)+1 : 1;
     const r = db.prepare(`INSERT INTO language_study (user_id,study_date,language,method,duration_minutes,new_words,reviews_done,accuracy_pct,listening_minutes,speaking_minutes,reading_minutes,current_level,streak_day,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,today,language,method,duration_minutes,new_words,reviews_done,accuracy_pct,listening_minutes,speaking_minutes,reading_minutes,current_level,streak_day,notes);
     res.json({ success: true, id: r.lastInsertRowid, streak_day });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/languagelearning/milestones', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { language, milestone, achieved_date, notes } = req.body;
+    if (!language || !milestone) return res.status(400).json({ success: false, error: 'language and milestone required' });
+    const r = db.prepare(`INSERT INTO language_milestones (user_id,language,milestone,achieved_date,notes) VALUES (?,?,?,?,?)`).run(uid,language,milestone,achieved_date||new Date().toISOString().slice(0,10),notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -69931,6 +70028,16 @@ app.post('/api/personaltraining/sessions', requireAuth, (req: any, res: any) => 
     const r = db.prepare(`INSERT INTO pt_sessions (user_id,client_id,client_name,session_date,duration_minutes,session_type,exercises_covered,client_effort,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(uid,client_id,client.client_name,session_date||new Date().toISOString().slice(0,10),duration_minutes,session_type,exercises_covered,client_effort,notes);
     if (client.sessions_remaining > 0) db.prepare(`UPDATE pt_clients SET sessions_remaining=sessions_remaining-1 WHERE id=? AND user_id=?`).run(client_id,uid);
     res.json({ success: true, id: r.lastInsertRowid, sessions_remaining: Math.max(0,client.sessions_remaining-1) });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/personaltraining/clients', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { client_name, goal='weight_loss', sessions_per_week=3, session_rate_usd=75, package_sessions=0, start_weight_lbs=0, notes } = req.body;
+    if (!client_name) return res.status(400).json({ success: false, error: 'client_name required' });
+    const r = db.prepare(`INSERT INTO pt_clients (user_id,client_name,goal,sessions_per_week,session_rate_usd,package_sessions,sessions_remaining,start_weight_lbs,current_weight_lbs,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(uid,client_name,goal,sessions_per_week,session_rate_usd,package_sessions,package_sessions,start_weight_lbs,start_weight_lbs,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -149513,6 +149620,16 @@ app.post('/api/nutrition/water', (req: any, res: any) => {
     const now = new Date();
     const r = db.prepare('INSERT INTO water_logs (user_id,date,amount_ml,time) VALUES (?,?,?,?)').run(u,date||now.toISOString().split('T')[0],amount_ml||250,now.toTimeString().slice(0,5));
     res.json({ success:true, id:r.lastInsertRowid });
+  } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
+});
+app.put('/api/nutrition/water/goal', (req: any, res: any) => {
+  const u = (req as any).user?.userId || 1;
+  const { goal_ml } = req.body||{};
+  if (!goal_ml) return res.status(400).json({ success:false, error:'goal_ml required' });
+  try {
+    db.prepare(`CREATE TABLE IF NOT EXISTS water_goals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNIQUE, goal_ml INTEGER DEFAULT 2000)`).run();
+    db.prepare('INSERT INTO water_goals (user_id,goal_ml) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET goal_ml=excluded.goal_ml').run(u, goal_ml);
+    res.json({ success:true });
   } catch(e:any) { res.status(500).json({ success:false, error:e.message }); }
 });
 
