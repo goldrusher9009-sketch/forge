@@ -5373,7 +5373,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v137.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v141.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 const httpServer = require('http').createServer(app);
@@ -45966,6 +45966,12 @@ app.get('/api/martialarts/profiles/:id/stats', requireAuth, (req: any, res: any)
   const comp_losses = competitions.reduce((s: number, c: any) => s + c.losses, 0);
   res.json({ profile, promotions, competitions, comp_record: `${comp_wins}-${comp_losses}` });
 });
+app.post('/api/martialarts/profiles/:id/competitions', requireAuth, (req: any, res: any) => {
+  const { event_date, event_name, location, division, weight_class, result, wins, losses, submission_wins, placement, notes } = req.body;
+  if (!event_name || !event_date) return res.status(400).json({ error: 'event_name and event_date required' });
+  const r = db.prepare(`INSERT INTO competition_results (profile_id,user_id,event_date,event_name,location,division,weight_class,result,wins,losses,submission_wins,placement,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.params.id, req.user.id, event_date, event_name, location||'', division||'', weight_class||'', result||'loss', wins||0, losses||0, submission_wins||0, placement||0, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 // ─── End B338 ────────────────────────────────────────────────────────────────
 
 // ─── B339: Seed Library & Garden Planning Tool ────────────────────────────────
@@ -46228,6 +46234,12 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.post('/api/resale/expenses', requireAuth, (req: any, res: any) => {
+  const { expense_date, category='supplies', description, amount=0 } = req.body;
+  if (!description) return res.status(400).json({ error: 'description required' });
+  const r = db.prepare(`INSERT INTO resale_expenses (user_id,expense_date,category,description,amount) VALUES (?,?,?,?,?)`).run(req.user.id, expense_date||new Date().toISOString().slice(0,10), category, description, amount);
+  res.json({ id: r.lastInsertRowid });
+});
 app.get('/api/resale/items', requireAuth, (req: any, res: any) => {
   const { status, category } = req.query as any;
   let q = `SELECT *, ROUND((sale_price - purchase_price - shipping_cost - (sale_price*platform_fee_pct/100)),2) as profit FROM resale_items WHERE user_id=?`;
@@ -46938,6 +46950,12 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.post('/api/puzzle-hunts', requireAuth, (req: any, res: any) => {
+  const { hunt_name, organizer, hunt_date, format='in_person', duration_hours=4, team_name, num_puzzles=0, puzzles_solved=0, final_rank=0, rating=4, notes } = req.body;
+  if (!hunt_name) return res.status(400).json({ error: 'hunt_name required' });
+  const r = db.prepare(`INSERT INTO puzzle_hunts (user_id,hunt_name,organizer,hunt_date,format,duration_hours,team_name,num_puzzles,puzzles_solved,final_rank,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, hunt_name, organizer||'', hunt_date||new Date().toISOString().slice(0,10), format, duration_hours, team_name||'', num_puzzles, puzzles_solved, final_rank, rating, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 app.get('/api/escape/rooms', requireAuth, (req: any, res: any) => {
   const rooms = db.prepare(`SELECT * FROM escape_rooms WHERE user_id=? ORDER BY play_date DESC`).all(req.user.id) as any[];
   const escaped = rooms.filter((r: any) => r.escaped).length;
@@ -48044,6 +48062,12 @@ app.get('/api/fiction/universes/:id', requireAuth, (req: any, res: any) => {
   const works = db.prepare(`SELECT * FROM fiction_works WHERE universe_id=? AND user_id=? ORDER BY created_at DESC`).all(req.params.id, req.user.id);
   res.json({ universe, elements, timeline, works });
 });
+app.post('/api/fiction/universes/:id/works', requireAuth, (req: any, res: any) => {
+  const { title, work_type='novel', synopsis, word_count=0, status='planning', draft_url, notes } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const r = db.prepare(`INSERT INTO fiction_works (universe_id,user_id,title,work_type,synopsis,word_count,status,draft_url,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.params.id, req.user.id, title, work_type, synopsis||'', word_count, status, draft_url||'', notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 app.post('/api/fiction/universes/:id/timeline', requireAuth, (req: any, res: any) => {
   const { event_name, event_date, description, is_key_event, related_elements } = req.body;
   if (!event_name) return res.status(400).json({ error: 'event_name required' });
@@ -48326,6 +48350,12 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.post('/api/hamradio/awards', requireAuth, (req: any, res: any) => {
+  const { award_name, award_type='dxcc', progress=0, goal=100, achieved=0, achieved_date, notes } = req.body;
+  if (!award_name) return res.status(400).json({ error: 'award_name required' });
+  const r = db.prepare(`INSERT INTO ham_awards (user_id,award_name,award_type,progress,goal,achieved,achieved_date,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, award_name, award_type, progress, goal, achieved?1:0, achieved_date||null, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 app.get('/api/hamradio/profiles', requireAuth, (req: any, res: any) => {
   const profiles = db.prepare(`SELECT p.*, (SELECT COUNT(*) FROM qso_log WHERE profile_id=p.id) as total_qsos FROM ham_profiles p WHERE p.user_id=? ORDER BY p.callsign ASC`).all(req.user.id);
   res.json({ profiles });
@@ -48738,6 +48768,12 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.post('/api/rpg/campaigns/:id/locations', requireAuth, (req: any, res: any) => {
+  const { location_name, location_type='city', description, notable_npcs=[], is_discovered=0, notes } = req.body;
+  if (!location_name) return res.status(400).json({ error: 'location_name required' });
+  const r = db.prepare(`INSERT INTO rpg_locations (campaign_id,user_id,location_name,location_type,description,notable_npcs,is_discovered,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.params.id, req.user.id, location_name, location_type, description||'', JSON.stringify(notable_npcs), is_discovered?1:0, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 app.get('/api/rpg/campaigns', requireAuth, (req: any, res: any) => {
   const campaigns = db.prepare(`SELECT c.*, (SELECT COUNT(*) FROM rpg_characters WHERE campaign_id=c.id AND is_npc=0) as player_chars, (SELECT session_date FROM rpg_sessions_log WHERE campaign_id=c.id ORDER BY session_date DESC LIMIT 1) as last_session FROM rpg_campaigns c WHERE c.user_id=? ORDER BY c.status ASC, c.created_at DESC`).all(req.user.id);
   res.json({ campaigns });
@@ -49425,6 +49461,12 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.post('/api/urbangarden/beds', requireAuth, (req: any, res: any) => {
+  const { bed_name, bed_type='container', size_sqft=4, location='balcony', soil_mix, sun_exposure='full_sun', irrigation='hand_water', notes } = req.body;
+  if (!bed_name) return res.status(400).json({ error: 'bed_name required' });
+  const r = db.prepare(`INSERT INTO urban_garden_beds (user_id,bed_name,bed_type,size_sqft,location,soil_mix,sun_exposure,irrigation,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id, bed_name, bed_type, size_sqft, location, soil_mix||'', sun_exposure, irrigation, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 app.get('/api/urbangarden/containers', requireAuth, (req: any, res: any) => {
   const containers = db.prepare(`SELECT c.*, (SELECT COUNT(*) FROM container_plants WHERE container_id=c.id AND status='growing') as active_plants FROM containers c WHERE c.user_id=? ORDER BY c.location ASC, c.container_name ASC`).all(req.user.id);
   res.json({ containers });
@@ -49673,6 +49715,12 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.post('/api/nft/holdings', requireAuth, (req: any, res: any) => {
+  const { nft_name, collection, token_id, blockchain='ethereum', purchase_price_eth=0, purchase_date, current_floor_eth=0, wallet, marketplace='opensea', notes } = req.body;
+  if (!nft_name) return res.status(400).json({ error: 'nft_name required' });
+  const r = db.prepare(`INSERT INTO nft_holdings (user_id,nft_name,collection,token_id,blockchain,purchase_price_eth,purchase_date,current_floor_eth,wallet,marketplace,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, nft_name, collection||'', token_id||'', blockchain, purchase_price_eth, purchase_date||new Date().toISOString().slice(0,10), current_floor_eth, wallet||'', marketplace, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 app.get('/api/crypto/holdings', requireAuth, (req: any, res: any) => {
   const holdings = db.prepare(`SELECT * FROM crypto_holdings WHERE user_id=? ORDER BY symbol ASC`).all(req.user.id) as any[];
   const portfolio_value = holdings.reduce((s: number, h: any) => s + h.quantity * h.current_price, 0);
@@ -50472,6 +50520,11 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.put('/api/plant-diet/goals', requireAuth, (req: any, res: any) => {
+  const { daily_calories=2000, daily_protein_g=50, daily_fiber_g=38, daily_iron_mg=18, daily_b12_mcg=2.4, diet_type='vegan' } = req.body;
+  db.prepare(`INSERT INTO plant_nutrition_goals (user_id,daily_calories,daily_protein_g,daily_fiber_g,daily_iron_mg,daily_b12_mcg,diet_type) VALUES (?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET daily_calories=excluded.daily_calories,daily_protein_g=excluded.daily_protein_g,daily_fiber_g=excluded.daily_fiber_g,daily_iron_mg=excluded.daily_iron_mg,daily_b12_mcg=excluded.daily_b12_mcg,diet_type=excluded.diet_type`).run(req.user.id, daily_calories, daily_protein_g, daily_fiber_g, daily_iron_mg, daily_b12_mcg, diet_type);
+  res.json({ success: true });
+});
 app.post('/api/plant-diet/meals', requireAuth, (req: any, res: any) => {
   const { meal_date, meal_type, meal_name, calories, protein_g, carbs_g, fat_g, fiber_g, iron_mg, b12_mcg, is_whole_food } = req.body;
   if (!meal_name) return res.status(400).json({ error: 'meal_name required' });
@@ -50907,6 +50960,12 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.post('/api/brand/touchpoints', requireAuth, (req: any, res: any) => {
+  const { touchpoint_type='speaking', event_name, date, audience_size=0, topic, outcome, follow_ups=0, pillar_ids=[], notes } = req.body;
+  if (!event_name) return res.status(400).json({ error: 'event_name required' });
+  const r = db.prepare(`INSERT INTO brand_touchpoints (user_id,touchpoint_type,event_name,date,audience_size,topic,outcome,follow_ups,pillar_ids,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, touchpoint_type, event_name, date||new Date().toISOString().slice(0,10), audience_size, topic||'', outcome||'', follow_ups, JSON.stringify(pillar_ids), notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 app.get('/api/brand/pillars', requireAuth, (req: any, res: any) => {
   const pillars = db.prepare(`SELECT p.*, (SELECT COUNT(*) FROM brand_content WHERE user_id=p.user_id AND pillar_ids LIKE '%'||p.id||'%') as content_count FROM brand_pillars p WHERE p.user_id=? ORDER BY p.strength_score DESC`).all(req.user.id);
   res.json({ pillars });
@@ -51078,6 +51137,12 @@ app.put('/api/diy/projects/:id/complete', requireAuth, (req: any, res: any) => {
   const { completion_date, actual_cost, time_hours_actual, quality_rating, notes } = req.body;
   db.prepare(`UPDATE diy_projects SET is_complete=1, completion_date=?, actual_cost=?, time_hours_actual=?, quality_rating=?, notes=? WHERE id=? AND user_id=?`).run(completion_date||new Date().toISOString().slice(0,10), actual_cost||0, time_hours_actual||0, quality_rating||4, notes||'', req.params.id, req.user.id);
   res.json({ success: true });
+});
+app.post('/api/diy/projects/:id/receipts', requireAuth, (req: any, res: any) => {
+  const { store, purchase_date, amount=0, items=[], notes } = req.body;
+  if (!store) return res.status(400).json({ error: 'store required' });
+  const r = db.prepare(`INSERT INTO diy_receipts (project_id,user_id,store,purchase_date,amount,items,notes) VALUES (?,?,?,?,?,?,?)`).run(req.params.id, req.user.id, store, purchase_date||new Date().toISOString().slice(0,10), amount, JSON.stringify(items), notes||'');
+  res.json({ id: r.lastInsertRowid });
 });
 // ─── End B423 ────────────────────────────────────────────────────────────────
 
@@ -51306,6 +51371,12 @@ try { db.exec(`
   );
 `); } catch(e) {}
 
+app.post('/api/art-history/visits', requireAuth, (req: any, res: any) => {
+  const { museum_name, visit_date, city, country='US', artworks_seen=[], standout_work, admission_cost=0, duration_hours=2, rating=4, notes } = req.body;
+  if (!museum_name) return res.status(400).json({ error: 'museum_name required' });
+  const r = db.prepare(`INSERT INTO museum_visits_art (user_id,museum_name,visit_date,city,country,artworks_seen,standout_work,admission_cost,duration_hours,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, museum_name, visit_date||new Date().toISOString().slice(0,10), city||'', country, JSON.stringify(artworks_seen), standout_work||'', admission_cost, duration_hours, rating, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 app.get('/api/art-history/artworks', requireAuth, (req: any, res: any) => {
   const { movement, artist } = req.query as any;
   let q = `SELECT * FROM artworks_studied WHERE user_id=?`;
@@ -52066,6 +52137,12 @@ app.get('/api/biohack/insights', requireAuth, (req: any, res: any) => {
   const experiments = db.prepare(`SELECT result, COUNT(*) as c FROM biohack_experiments WHERE user_id=? GROUP BY result`).all(req.user.id);
   res.json({ avg_deltas: { focus: Math.round((avg?.focus_delta||0)*10)/10, mood: Math.round((avg?.mood_delta||0)*10)/10, energy: Math.round((avg?.energy_delta||0)*10)/10 }, experiments_by_result: experiments });
 });
+app.post('/api/biohack/experiments', requireAuth, (req: any, res: any) => {
+  const { experiment_name, hypothesis, protocol, start_date, end_date, metrics=[], baseline_values={}, outcome, result='inconclusive', would_repeat=0, notes } = req.body;
+  if (!experiment_name) return res.status(400).json({ error: 'experiment_name required' });
+  const r = db.prepare(`INSERT INTO biohack_experiments (user_id,experiment_name,hypothesis,protocol,start_date,end_date,metrics,baseline_values,outcome,result,would_repeat,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id, experiment_name, hypothesis||'', protocol||'', start_date||new Date().toISOString().slice(0,10), end_date||null, JSON.stringify(metrics), JSON.stringify(baseline_values), outcome||'', result, would_repeat?1:0, notes||'');
+  res.json({ id: r.lastInsertRowid });
+});
 // ─── End B444 ────────────────────────────────────────────────────────────────
 
 // ─── B445: Personal Oral History & Family Story Archive ───────────────────────
@@ -52375,6 +52452,12 @@ app.get('/api/foraging/stats', requireAuth, (req: any, res: any) => {
   const top_plants = db.prepare(`SELECT common_name, times_foraged FROM foraged_plants WHERE user_id=? ORDER BY times_foraged DESC LIMIT 5`).all(req.user.id);
   const recipes = db.prepare(`SELECT COUNT(*) as c FROM foraged_recipes WHERE user_id=?`).get(req.user.id) as any;
   res.json({ total_trips: trips?.trips||0, total_yield_lbs: Math.round((trips?.total_yield||0)*10)/10, top_plants, recipes_created: recipes?.c||0 });
+});
+app.post('/api/foraging/recipes', requireAuth, (req: any, res: any) => {
+  const { recipe_name, main_foraged_ingredient, additional_ingredients=[], preparation, cook_time_mins=30, difficulty='easy', taste_rating=4, notes } = req.body;
+  if (!recipe_name) return res.status(400).json({ error: 'recipe_name required' });
+  const r = db.prepare(`INSERT INTO foraged_recipes (user_id,recipe_name,main_foraged_ingredient,additional_ingredients,preparation,cook_time_mins,difficulty,taste_rating,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id, recipe_name, main_foraged_ingredient||'', JSON.stringify(additional_ingredients), preparation||'', cook_time_mins, difficulty, taste_rating, notes||'');
+  res.json({ id: r.lastInsertRowid });
 });
 // ─── End B450 ────────────────────────────────────────────────────────────────
 
@@ -53920,6 +54003,17 @@ app.get('/api/screen-time/trends', requireAuth, (req: any, res: any) => {
   const by_dow = db.prepare(`SELECT strftime('%w',log_date) as dow, AVG(total_screen_mins) as avg_mins FROM screen_time_logs WHERE user_id=? AND log_date>=date('now','-90 days') GROUP BY dow ORDER BY dow`).all(req.user.id);
   const goal = db.prepare(`SELECT * FROM digital_detox_goals WHERE user_id=? LIMIT 1`).get(req.user.id);
   res.json({ avg_daily_mins: Math.round(avg?.avg_total||0), avg_social_mins: Math.round(avg?.avg_social||0), avg_productive_mins: Math.round(avg?.avg_productive||0), avg_doom_scrolls: Math.round((avg?.avg_doom||0)*10)/10, by_day_of_week: by_dow, goals: goal });
+});
+app.put('/api/screen-time/goal', requireAuth, (req: any, res: any) => {
+  const { daily_screen_limit_mins, social_media_limit_mins, phone_pickups_limit, screen_free_hours } = req.body;
+  const existing = db.prepare(`SELECT id FROM digital_detox_goals WHERE user_id=? LIMIT 1`).get(req.user.id) as any;
+  if (existing) {
+    db.prepare(`UPDATE digital_detox_goals SET daily_screen_limit_mins=?,social_media_limit_mins=?,phone_pickups_limit=?,screen_free_hours=? WHERE id=?`).run(daily_screen_limit_mins||180, social_media_limit_mins||60, phone_pickups_limit||30, screen_free_hours||8, existing.id);
+    res.json({ id: existing.id, updated: true });
+  } else {
+    const r = db.prepare(`INSERT INTO digital_detox_goals (user_id,daily_screen_limit_mins,social_media_limit_mins,phone_pickups_limit,screen_free_hours,streak_days) VALUES (?,?,?,?,?,0)`).run(req.user.id, daily_screen_limit_mins||180, social_media_limit_mins||60, phone_pickups_limit||30, screen_free_hours||8);
+    res.json({ id: r.lastInsertRowid });
+  }
 });
 // ─── End B485 ────────────────────────────────────────────────────────────────
 
@@ -56894,6 +56988,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/mycultivation/spawn', requireAuth, (req: any, res: any) => {
+  try {
+    const { culture_name, source, date_created, transfers_made=0, viable=1, notes } = req.body;
+    if (!culture_name) return res.status(400).json({ success: false, error: 'culture_name required' });
+    const r = db.prepare(`INSERT INTO mushroom_spawn (user_id,culture_name,source,date_created,transfers_made,viable,notes) VALUES (?,?,?,?,?,?,?)`).run(req.user.id, culture_name, source||'', date_created||new Date().toISOString().slice(0,10), transfers_made, viable?1:0, notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/mycultivation/grows', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -60448,6 +60550,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/surfing/boards', requireAuth, (req: any, res: any) => {
+  try {
+    const { name, shaper, board_type='shortboard', length_ft, volume_liters, fin_setup='thruster', condition='good', purchase_price_usd=0, notes } = req.body;
+    if (!name) return res.status(400).json({ success: false, error: 'name required' });
+    const r = db.prepare(`INSERT INTO surfboards (user_id,name,shaper,board_type,length_ft,volume_liters,fin_setup,condition,purchase_price_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,name,shaper||'',board_type,length_ft||null,volume_liters||null,fin_setup,condition,purchase_price_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/surf/log', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -60603,6 +60714,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/printing/printers', requireAuth, (req: any, res: any) => {
+  try {
+    const { printer_name, brand, model, build_volume, bed_type='PEI', extruder_type='bowden', max_temp_c=240, purchase_date, purchase_price=0, notes } = req.body;
+    if (!printer_name) return res.status(400).json({ success: false, error: 'printer_name required' });
+    const r = db.prepare(`INSERT INTO printers_3d (user_id,printer_name,brand,model,build_volume,bed_type,extruder_type,max_temp_c,purchase_date,purchase_price,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,printer_name,brand||'',model||'',build_volume||'',bed_type,extruder_type,max_temp_c,purchase_date||null,purchase_price,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/printing/overview', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -61376,6 +61495,15 @@ app.post('/api/ancestry/persons', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/ancestry/dna', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { region, percentage=0, service='AncestryDNA', test_year, notes } = req.body;
+    if (!region) return res.status(400).json({ success: false, error: 'region required' });
+    const r = db.prepare(`INSERT INTO dna_ethnicity (user_id,region,percentage,service,test_year,notes) VALUES (?,?,?,?,?,?)`).run(uid, region, percentage, service, test_year||new Date().getFullYear(), notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 // ─── B631: Personal Pickleball & Racket Sport Log ────────────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS pickleball_sessions (
@@ -61974,6 +62102,19 @@ try {
   )`);
 } catch(e) {}
 
+app.put('/api/cryptodca/prices', requireAuth, (req: any, res: any) => {
+  try {
+    const { coin, current_price } = req.body;
+    if (!coin || current_price === undefined) return res.status(400).json({ success: false, error: 'coin and current_price required' });
+    db.prepare(`INSERT INTO crypto_prices (user_id,coin,current_price,updated_at) VALUES (?,?,?,datetime('now')) ON CONFLICT(user_id,coin) DO UPDATE SET current_price=excluded.current_price,updated_at=excluded.updated_at`).run(req.user.id, coin, current_price);
+    res.json({ success: true });
+  } catch(e: any) {
+    try {
+      db.prepare(`INSERT OR REPLACE INTO crypto_prices (user_id,coin,current_price) VALUES (?,?,?)`).run(req.user.id, req.body.coin, req.body.current_price);
+      res.json({ success: true });
+    } catch(e2: any) { res.status(500).json({ success: false, error: e2.message }); }
+  }
+});
 app.get('/api/cryptodca/portfolio', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -63499,6 +63640,13 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/bjj/log', requireAuth, (req: any, res: any) => {
+  try {
+    const { train_date, session_type='sparring', duration_minutes=90, rounds=6, techniques_drilled, training_partner, notes } = req.body;
+    const r = db.prepare(`INSERT INTO bjj_training (user_id,train_date,session_type,duration_minutes,rounds,techniques_drilled,training_partner,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id,train_date||new Date().toISOString().slice(0,10),session_type,duration_minutes,rounds,techniques_drilled||'',training_partner||'',notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/bjj/log', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -63983,6 +64131,16 @@ app.post('/api/homegym/workouts', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/homegym/equipment', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { equipment_name, category='weights', brand, purchase_date, purchase_price_usd=0, current_value_usd, condition='good', notes } = req.body;
+    if (!equipment_name) return res.status(400).json({ success: false, error: 'equipment_name required' });
+    const r = db.prepare(`INSERT INTO home_gym_equipment (user_id,equipment_name,category,brand,purchase_date,purchase_price_usd,current_value_usd,condition,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(uid,equipment_name,category,brand||'',purchase_date||null,purchase_price_usd,current_value_usd||purchase_price_usd,condition,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ─── B685: Personal Paleo & Carnivore Diet Tracker ───────────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS diet_logs (
@@ -64355,6 +64513,14 @@ app.get('/api/scuba/log', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/penpals', requireAuth, (req: any, res: any) => {
+  try {
+    const { pal_name, country, city, met_via='IGGPPC', correspondence_start, letters_sent=0, letters_received=0, notes } = req.body;
+    if (!pal_name) return res.status(400).json({ success: false, error: 'pal_name required' });
+    const r = db.prepare(`INSERT INTO pen_pals (user_id,pal_name,country,city,met_via,correspondence_start,letters_sent,letters_received,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id,pal_name,country||'',city||'',met_via,correspondence_start||new Date().toISOString().slice(0,10),letters_sent,letters_received,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.post('/api/scuba/dives', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -64692,6 +64858,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/modeltrains/collection', requireAuth, (req: any, res: any) => {
+  try {
+    const { item_name, manufacturer, item_type='locomotive', scale='HO', road_name, road_number, era='modern', dcc_equipped=0, sound_equipped=0, purchase_price_usd=0, notes } = req.body;
+    if (!item_name) return res.status(400).json({ success: false, error: 'item_name required' });
+    const r = db.prepare(`INSERT INTO model_trains (user_id,item_name,manufacturer,item_type,scale,road_name,road_number,era,dcc_equipped,sound_equipped,purchase_price_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,item_name,manufacturer||'',item_type,scale,road_name||'',road_number||'',era,dcc_equipped?1:0,sound_equipped?1:0,purchase_price_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/modeltrains/collection', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -64848,6 +65023,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/warhammer/armies', requireAuth, (req: any, res: any) => {
+  try {
+    const { army_name, game_system='Warhammer 40K', faction, units_owned=0, units_painted=0, money_invested_usd=0, games_played=0, wins=0, notes } = req.body;
+    if (!army_name) return res.status(400).json({ success: false, error: 'army_name required' });
+    const r = db.prepare(`INSERT INTO warhammer_armies (user_id,army_name,game_system,faction,units_owned,units_painted,money_invested_usd,games_played,wins,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,army_name,game_system,faction||'',units_owned,units_painted,money_invested_usd,games_played,wins,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/warhammer/armies', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -64907,6 +65091,15 @@ try {
     created_at TEXT DEFAULT (datetime('now'))
   )`);
 } catch(e) {}
+
+app.post('/api/hydroponics/systems', requireAuth, (req: any, res: any) => {
+  try {
+    const { system_name, system_type='NFT', grow_medium='rockwool', reservoir_gallons=10, num_sites=12, location='indoor', status='active', notes } = req.body;
+    if (!system_name) return res.status(400).json({ success: false, error: 'system_name required' });
+    const r = db.prepare(`INSERT INTO hydro_systems (user_id,system_name,system_type,grow_medium,reservoir_gallons,num_sites,location,status,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id,system_name,system_type,grow_medium,reservoir_gallons,num_sites,location,status,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 app.get('/api/hydroponics/systems', requireAuth, (req: any, res: any) => {
   try {
@@ -65069,6 +65262,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/rccar/garage', requireAuth, (req: any, res: any) => {
+  try {
+    const { car_name, brand, model, car_type='buggy', scale='1/10', drivetrain='4WD', motor_type='brushless', battery_voltage=3, top_speed_mph=50, purchase_price=0, status='active', notes } = req.body;
+    if (!car_name) return res.status(400).json({ success: false, error: 'car_name required' });
+    const r = db.prepare(`INSERT INTO rc_cars (user_id,car_name,brand,model,car_type,scale,drivetrain,motor_type,battery_voltage,top_speed_mph,purchase_price,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,car_name,brand||'',model||'',car_type,scale,drivetrain,motor_type,battery_voltage,top_speed_mph,purchase_price,status,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/rccar/garage', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -65124,6 +65326,15 @@ try {
     created_at TEXT DEFAULT (datetime('now'))
   )`);
 } catch(e) {}
+
+app.post('/api/terrarium/setups', requireAuth, (req: any, res: any) => {
+  try {
+    const { terrarium_name, terrarium_type='tropical', dimensions, substrate, inhabitants, plant_species, temperature_f=75, humidity_pct=70, uvb_required=0, status='active', notes } = req.body;
+    if (!terrarium_name) return res.status(400).json({ success: false, error: 'terrarium_name required' });
+    const r = db.prepare(`INSERT INTO terrariums (user_id,terrarium_name,terrarium_type,dimensions,substrate,inhabitants,plant_species,temperature_f,humidity_pct,uvb_required,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,terrarium_name,terrarium_type,dimensions||'',substrate||'',inhabitants||'',plant_species||'',temperature_f,humidity_pct,uvb_required?1:0,status,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 app.get('/api/terrarium/setups', requireAuth, (req: any, res: any) => {
   try {
@@ -65400,6 +65611,15 @@ app.post('/api/woodworking/projects', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/woodworking/tools', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { tool_name, tool_type='power', brand, purchase_price_usd=0, purchase_date, condition='excellent', notes } = req.body;
+    if (!tool_name) return res.status(400).json({ success: false, error: 'tool_name required' });
+    const r = db.prepare(`INSERT INTO tool_inventory (user_id,tool_name,tool_type,brand,purchase_price_usd,purchase_date,condition,notes) VALUES (?,?,?,?,?,?,?,?)`).run(uid,tool_name,tool_type,brand||'',purchase_price_usd,purchase_date||null,condition,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 // ─── B713: Personal Ghost Kitchen & Meal Prep Business ───────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS meal_prep_orders (
@@ -65677,6 +65897,15 @@ app.post('/api/foraging/trips', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/foraging/trips/:id/items', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { species_name, common_name, quantity_oz=0, edible_confirmed=1, confidence_level='certain', used_for='eating', notes } = req.body;
+    if (!species_name) return res.status(400).json({ success: false, error: 'species_name required' });
+    const r = db.prepare(`INSERT INTO foraged_items (user_id,trip_id,species_name,common_name,quantity_oz,edible_confirmed,confidence_level,used_for,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(uid,req.params.id,species_name,common_name||'',quantity_oz,edible_confirmed?1:0,confidence_level,used_for,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 // ─── B718: Personal Astronomy & Telescope Log ────────────────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS observation_sessions (
@@ -65719,6 +65948,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/astronomy/dso', requireAuth, (req: any, res: any) => {
+  try {
+    const { session_id, object_name, object_type='galaxy', catalog='Messier', catalog_number, constellation, magnitude=8, difficulty=3, view_quality=7, first_observation=0, notes } = req.body;
+    if (!object_name) return res.status(400).json({ success: false, error: 'object_name required' });
+    const r = db.prepare(`INSERT INTO dso_log (user_id,session_id,object_name,object_type,catalog,catalog_number,constellation,magnitude,difficulty,view_quality,first_observation,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,session_id||null,object_name,object_type,catalog,catalog_number||'',constellation||'',magnitude,difficulty,view_quality,first_observation?1:0,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/astronomy/sessions', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -66066,6 +66303,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/reeftank/tanks', requireAuth, (req: any, res: any) => {
+  try {
+    const { tank_name, volume_gallons=75, tank_type='mixed_reef', setup_date, sump_gallons=20, display_length_in=48, substrate='crushed_coral', notes } = req.body;
+    if (!tank_name) return res.status(400).json({ success: false, error: 'tank_name required' });
+    const r = db.prepare(`INSERT INTO reef_tanks (user_id,tank_name,volume_gallons,tank_type,setup_date,sump_gallons,display_length_in,substrate,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id,tank_name,volume_gallons,tank_type,setup_date||null,sump_gallons,display_length_in,substrate,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/reef/dashboard', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -66172,6 +66418,15 @@ app.post('/api/homestead/produce', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/homestead/logs', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { log_date, category='chores', task, animal_id, duration_minutes=30, cost_usd=0, notes } = req.body;
+    if (!task) return res.status(400).json({ success: false, error: 'task required' });
+    const r = db.prepare(`INSERT INTO homestead_logs (user_id,log_date,category,task,animal_id,duration_minutes,cost_usd,notes) VALUES (?,?,?,?,?,?,?,?)`).run(uid,log_date||new Date().toISOString().slice(0,10),category,task,animal_id||null,duration_minutes,cost_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 // ─── B726: Personal Aquaponics & Fish Farm Log ───────────────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS aquaponics_systems (
@@ -66379,6 +66634,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/fpv/builds', requireAuth, (req: any, res: any) => {
+  try {
+    const { build_name, frame, frame_size_mm=5, motors, motor_kv=2400, fc_board, esc, camera, vtx, vtx_mw=400, props='5045', battery_config='4S', all_up_weight_g=280, notes } = req.body;
+    if (!build_name || !frame) return res.status(400).json({ success: false, error: 'build_name and frame required' });
+    const r = db.prepare(`INSERT INTO fpv_builds (user_id,build_name,frame,frame_size_mm,motors,motor_kv,fc_board,esc,camera,vtx,vtx_mw,props,battery_config,all_up_weight_g,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,build_name,frame,frame_size_mm,motors||'',motor_kv,fc_board||'',esc||'',camera||'',vtx||'',vtx_mw,props,battery_config,all_up_weight_g,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/fpv/dashboard', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -66498,6 +66761,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/mmatraining/competitions', requireAuth, (req: any, res: any) => {
+  try {
+    const { event_name, event_date, opponent, weight_class='welterweight', result='win', method='decision', round_ended=3, time_of_finish, notes } = req.body;
+    if (!event_name || !event_date) return res.status(400).json({ success: false, error: 'event_name and event_date required' });
+    const r = db.prepare(`INSERT INTO mma_competitions (user_id,event_name,event_date,opponent,weight_class,result,method,round_ended,time_of_finish,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,event_name,event_date,opponent||'',weight_class,result,method,round_ended,time_of_finish||null,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/mmatraining/dashboard', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -66577,6 +66849,15 @@ app.post('/api/archery/practice', requireAuth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.post('/api/archery/equipment', requireAuth, (req: any, res: any) => {
+  try {
+    const uid = req.user.id;
+    const { bow_name, bow_type='compound', brand, model, ata_length_in=32, draw_length_in=28, draw_weight_lbs=60, ibo_speed_fps=320, purchase_date, purchase_price_usd=500, notes } = req.body;
+    if (!bow_name) return res.status(400).json({ success: false, error: 'bow_name required' });
+    const r = db.prepare(`INSERT INTO bow_equipment (user_id,bow_name,bow_type,brand,model,ata_length_in,draw_length_in,draw_weight_lbs,ibo_speed_fps,purchase_date,purchase_price_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,bow_name,bow_type,brand||'',model||'',ata_length_in,draw_length_in,draw_weight_lbs,ibo_speed_fps,purchase_date||null,purchase_price_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 // ─── B733: Personal Neon Sign Making & Glass Art Log ─────────────────────────
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS neon_projects (
@@ -66664,6 +66945,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/cardcollection/sales', requireAuth, (req: any, res: any) => {
+  try {
+    const { card_id, sale_date, sale_price_usd=0, platform='eBay', fees_usd=0, notes } = req.body;
+    if (!card_id) return res.status(400).json({ success: false, error: 'card_id required' });
+    const r = db.prepare(`INSERT INTO card_sales (user_id,card_id,sale_date,sale_price_usd,platform,fees_usd,notes) VALUES (?,?,?,?,?,?,?)`).run(req.user.id,card_id,sale_date||new Date().toISOString().slice(0,10),sale_price_usd,platform,fees_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/cardcollection/portfolio', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -66722,6 +67011,16 @@ try {
     created_at TEXT DEFAULT (datetime('now'))
   )`);
 } catch(e) {}
+
+app.post('/api/pinball/machines/:id/restore', requireAuth, (req: any, res: any) => {
+  try {
+    const machine_id = parseInt(req.params.id);
+    const { restore_date, task_description, parts_replaced, parts_cost_usd=0, labor_hours=1, completed=1, notes } = req.body;
+    if (!task_description) return res.status(400).json({ success: false, error: 'task_description required' });
+    const r = db.prepare(`INSERT INTO pinball_restore_log (user_id,machine_id,restore_date,task_description,parts_replaced,parts_cost_usd,labor_hours,completed,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id,machine_id,restore_date||new Date().toISOString().slice(0,10),task_description,parts_replaced||'',parts_cost_usd,labor_hours,completed?1:0,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 app.get('/api/pinball/collection', requireAuth, (req: any, res: any) => {
   try {
@@ -67080,6 +67379,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/3dprinting/printers', requireAuth, (req: any, res: any) => {
+  try {
+    const { printer_name, brand='Bambu', model='P1S', build_volume_mm='256x256x256', extruder_type='direct_drive', nozzle_size_mm=0.4, heated_bed=1, enclosure=1, purchase_price_usd=700, purchase_date, status='operational', notes } = req.body;
+    if (!printer_name) return res.status(400).json({ success: false, error: 'printer_name required' });
+    const r = db.prepare(`INSERT INTO printers (user_id,printer_name,brand,model,build_volume_mm,extruder_type,nozzle_size_mm,heated_bed,enclosure,purchase_price_usd,purchase_date,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,printer_name,brand,model,build_volume_mm,extruder_type,nozzle_size_mm,heated_bed?1:0,enclosure?1:0,purchase_price_usd,purchase_date||null,status,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/3dprinting/dashboard', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -67220,6 +67528,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/cigars/inventory', requireAuth, (req: any, res: any) => {
+  try {
+    const { cigar_name, brand, vitola='robusto', wrapper='colorado', country='Nicaragua', ring_gauge=50, length_in=5, strength='medium', quantity=5, purchase_price_usd=12, notes } = req.body;
+    if (!cigar_name || !brand) return res.status(400).json({ success: false, error: 'cigar_name and brand required' });
+    const r = db.prepare(`INSERT INTO cigar_inventory (user_id,cigar_name,brand,vitola,wrapper,country,ring_gauge,length_in,strength,quantity,purchase_price_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,cigar_name,brand,vitola,wrapper,country,ring_gauge,length_in,strength,quantity,purchase_price_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/cigars/dashboard', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -67825,6 +68141,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/fountainpens/inks', requireAuth, (req: any, res: any) => {
+  try {
+    const { ink_name, brand, color_family='blue', color_hex, bottle_size_ml=50, purchase_price=0, sheen=0, shimmer=0, water_resistant=0, dry_time_seconds=15, rating=8, notes } = req.body;
+    if (!ink_name || !brand) return res.status(400).json({ success: false, error: 'ink_name and brand required' });
+    const r = db.prepare(`INSERT INTO ink_collection (user_id,ink_name,brand,color_family,color_hex,bottle_size_ml,purchase_price,sheen,shimmer,water_resistant,dry_time_seconds,rating,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,ink_name,brand,color_family,color_hex||null,bottle_size_ml,purchase_price,sheen?1:0,shimmer?1:0,water_resistant?1:0,dry_time_seconds,rating,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/fountainpens/collection', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -68093,6 +68418,15 @@ try {
     created_at TEXT DEFAULT (datetime('now'))
   )`);
 } catch(e) {}
+
+app.post('/api/wildlife/sightings', requireAuth, (req: any, res: any) => {
+  try {
+    const { common_name, scientific_name, category='insect', sighting_date, location, lat, lng, first_ever=0, count_seen=1, photo_taken=0, notes } = req.body;
+    if (!common_name) return res.status(400).json({ success: false, error: 'common_name required' });
+    const r = db.prepare(`INSERT INTO species_sightings (user_id,common_name,scientific_name,category,sighting_date,location,lat,lng,first_ever,count_seen,photo_taken,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,common_name,scientific_name||'',category,sighting_date||new Date().toISOString().slice(0,10),location||'',lat||null,lng||null,first_ever?1:0,count_seen,photo_taken?1:0,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 app.get('/api/macrophotography/dashboard', requireAuth, (req: any, res: any) => {
   try {
@@ -68899,6 +69233,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/hunting/stands', requireAuth, (req: any, res: any) => {
+  try {
+    const { stand_name, stand_type='treestand', location_desc, lat, lng, height_ft=20, property_name, notes } = req.body;
+    if (!stand_name) return res.status(400).json({ success: false, error: 'stand_name required' });
+    const r = db.prepare(`INSERT INTO hunting_stands (user_id,stand_name,stand_type,location_desc,lat,lng,height_ft,property_name,notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id,stand_name,stand_type,location_desc||'',lat||null,lng||null,height_ft,property_name||'',notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/bowhunting/season', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -68957,6 +69300,14 @@ try {
     created_at TEXT DEFAULT (datetime('now'))
   )`);
 } catch(e) {}
+
+app.post('/api/flytying/sessions', requireAuth, (req: any, res: any) => {
+  try {
+    const { session_date, duration_minutes=60, flies_tied=6, pattern_name, hook_size='14', materials_cost_usd=5, notes } = req.body;
+    const r = db.prepare(`INSERT INTO tying_sessions (user_id,session_date,duration_minutes,flies_tied,pattern_name,hook_size,materials_cost_usd,notes) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id,session_date||new Date().toISOString().slice(0,10),duration_minutes,flies_tied,pattern_name||'',hook_size,materials_cost_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 app.get('/api/flytying/patterns', requireAuth, (req: any, res: any) => {
   try {
@@ -69576,6 +69927,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/guitar/gear', requireAuth, (req: any, res: any) => {
+  try {
+    const { gear_type, brand, model, year=0, serial_number, finish, purchase_date, purchase_price_usd=500, current_value_usd=500, condition='excellent', notes } = req.body;
+    if (!gear_type || !brand || !model) return res.status(400).json({ success: false, error: 'gear_type, brand, and model required' });
+    const r = db.prepare(`INSERT INTO guitar_gear (user_id,gear_type,brand,model,year,serial_number,finish,purchase_date,purchase_price_usd,current_value_usd,condition,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,gear_type,brand,model,year,serial_number||'',finish||'',purchase_date||new Date().toISOString().slice(0,10),purchase_price_usd,current_value_usd,condition,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/guitar/dashboard', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -69798,6 +70157,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/boardgames/collection', requireAuth, (req: any, res: any) => {
+  try {
+    const { game_name, bgg_id=0, category='strategy', min_players=2, max_players=4, avg_playtime_minutes=90, weight=2.5, publisher, year=2020, purchase_price_usd=40, rating=7.5 } = req.body;
+    if (!game_name) return res.status(400).json({ success: false, error: 'game_name required' });
+    const r = db.prepare(`INSERT INTO boardgame_collection (user_id,game_name,bgg_id,category,min_players,max_players,avg_playtime_minutes,weight,publisher,year,purchase_price_usd,rating) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,game_name,bgg_id,category,min_players,max_players,avg_playtime_minutes,weight,publisher||'',year,purchase_price_usd,rating);
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/boardgames/collection', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -69857,6 +70224,15 @@ try {
     created_at TEXT DEFAULT (datetime('now'))
   )`);
 } catch(e) {}
+
+app.post('/api/cryptomining/rigs', requireAuth, (req: any, res: any) => {
+  try {
+    const { rig_name, coin_mined='ETH', algorithm='Ethash', hashrate_mhs=360, power_watts=900, pool='Flexpool', wallet, active=1, location='home', build_cost_usd=3000, notes } = req.body;
+    if (!rig_name) return res.status(400).json({ success: false, error: 'rig_name required' });
+    const r = db.prepare(`INSERT INTO mining_rigs (user_id,rig_name,coin_mined,algorithm,hashrate_mhs,power_watts,pool,wallet,active,location,build_cost_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,rig_name,coin_mined,algorithm,hashrate_mhs,power_watts,pool,wallet||null,active?1:0,location,build_cost_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 app.get('/api/cryptomining/dashboard', requireAuth, (req: any, res: any) => {
   try {
@@ -70147,6 +70523,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/wargames/matches', requireAuth, (req: any, res: any) => {
+  try {
+    const { game_system, match_date, army_used, opponent_army, points_limit=2000, result='win', margin_vp=0, venue='home', notes } = req.body;
+    if (!game_system) return res.status(400).json({ success: false, error: 'game_system required' });
+    const r = db.prepare(`INSERT INTO wargame_matches (user_id,game_system,match_date,army_used,opponent_army,points_limit,result,margin_vp,venue,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,game_system,match_date||new Date().toISOString().slice(0,10),army_used||'',opponent_army||'',points_limit,result,margin_vp,venue,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/minipainting/dashboard', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -70209,6 +70594,14 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/airsoft/gear', requireAuth, (req: any, res: any) => {
+  try {
+    const { gear_name, gear_type='rifle', brand, fps=350, joules=0, upgrade_level='stock', purchase_price_usd=200, upgrades_cost_usd=0, notes } = req.body;
+    if (!gear_name) return res.status(400).json({ success: false, error: 'gear_name required' });
+    const r = db.prepare(`INSERT INTO airsoft_gear (user_id,gear_name,gear_type,brand,fps,joules,upgrade_level,purchase_price_usd,upgrades_cost_usd,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,gear_name,gear_type,brand||'',fps,joules,upgrade_level,purchase_price_usd,upgrades_cost_usd,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 app.get('/api/airsoft/stats', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -74249,6 +74642,15 @@ try {
   )`);
 } catch(e) {}
 
+app.post('/api/lockpicking/collection', requireAuth, (req: any, res: any) => {
+  try {
+    const { lock_name, brand, model, lock_type='pin_tumbler', pins=5, security_pins=0, belt_ranking='white', difficulty=3, first_open_date, best_time_seconds=0, spp_done=0, notes } = req.body;
+    if (!lock_name || !brand || !model) return res.status(400).json({ success: false, error: 'lock_name, brand and model required' });
+    const r = db.prepare(`INSERT INTO lock_collection (user_id,lock_name,brand,model,lock_type,pins,security_pins,belt_ranking,difficulty,first_open_date,best_time_seconds,spp_done,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,lock_name,brand,model,lock_type,pins,security_pins,belt_ranking,difficulty,first_open_date||null,best_time_seconds,spp_done?1:0,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.get('/api/lockpicking/sessions', requireAuth, (req: any, res: any) => {
   try {
     const uid = req.user.id;
@@ -76314,6 +76716,15 @@ try {
     created_at TEXT DEFAULT (datetime('now'))
   )`);
 } catch(e) {}
+
+app.post('/api/rcflying/aircraft', requireAuth, (req: any, res: any) => {
+  try {
+    const { aircraft_name, aircraft_type='fpv_freestyle', frame, frame_size_mm=225, motors, props, purchase_cost_usd=0, status='active', notes } = req.body;
+    if (!aircraft_name) return res.status(400).json({ success: false, error: 'aircraft_name required' });
+    const r = db.prepare(`INSERT INTO rc_aircraft (user_id,aircraft_name,aircraft_type,frame,frame_size_mm,motors,props,purchase_cost_usd,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.user.id,aircraft_name,aircraft_type,frame||'',frame_size_mm,motors||'',props||'',purchase_cost_usd,status,notes||'');
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 app.get('/api/rcflying/aircraft', requireAuth, (req: any, res: any) => {
   try {
