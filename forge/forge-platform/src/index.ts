@@ -144,9 +144,6 @@ function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): void
 
 // ── App ───────────────────────────────────────────────────────
 const app = express();
-const httpServer = require('http').createServer(app);
-// REMOVED_HTTPSRV_DECL
-// REMOVED_HTTPSRV_DECL
 // Shared Socket.IO ref — set during bootstrap, used by routes for realtime push
 let ioRef: any = null;
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -172,8 +169,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v143.08' }));
-httpServer.listen(PORT, () => { console.log('Forge Platform v143.08 running on port ' + PORT); });
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v144.00' }));
+
+// ── Server listen — early, before any code that can throw ────
+const httpServer = require('http').createServer(app);
+httpServer.listen(PORT, () => { console.log('Forge Platform v144.00 running on port ' + PORT); });
+
 // SSE echo test — GET and POST, confirms SSE works through Railway proxy
 app.get('/sse-test', (_req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -5377,10 +5378,9 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v143.08', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v144.00', build: 'production', timestamp: new Date().toISOString() }));
 
-// ─── Server bootstrap ─────────────────────────────────────────────────────────
-// REMOVED_HTTPSRV_DECL
+// ─── Server bootstrap (httpServer declared + listening at top, near /health) ──
 try {
   const { Server } = require('socket.io');
   const io = new Server(httpServer, {
@@ -16084,7 +16084,7 @@ app.delete('/api/ai-question-log/:id', requireAuth, (req: Request, res: Response
 });
 // ─── End Batch 77 ────────────────────────────────────────────────────────────
 
-// DISABLED v20.50 listen: httpServer.listen(PORT, () => { console.log(`🚀 Forge Platform v20.50 running on port ${PORT}`); });
+// listen already established at top of file (v144.00)
 // ─── Batch 78 ────────────────────────────────────────────────────────────────
 // code_diff_explanations table
 db.exec(`CREATE TABLE IF NOT EXISTS code_diff_explanations (
@@ -34344,7 +34344,7 @@ app.get('/api/net-worth/trend', requireAuth, (req: any, res: any) => {
     const message_count = (db.prepare('SELECT COUNT(*) as c FROM messages').get() as any)?.c || 0;
     const thread_count = (db.prepare('SELECT COUNT(*) as c FROM threads').get() as any)?.c || 0;
     const active_today = (db.prepare("SELECT COUNT(DISTINCT user_id) as c FROM feature_usage_log WHERE date(created_at)=date('now')").get() as any)?.c || 0;
-    res.json({ users: user_count, messages: message_count, threads: thread_count, active_today, platform_version: 'v143.08' });
+    res.json({ users: user_count, messages: message_count, threads: thread_count, active_today, platform_version: 'v7.86' });
   });
 
   // AI Usage Tracking
@@ -135022,7 +135022,7 @@ app.get('/api/milestone/v21-50', (req: any, res: any) => {
   const finance = safe(()=>db.prepare('SELECT SUM(monthly_cost) as t FROM finance_subscriptions WHERE user_id=? AND active=1').get(u) as any);
   res.json({
     success: true,
-    version: 'v143.08',
+    version: 'v21.50',
     total_endpoints: 2300,
     milestone: 'B2300 — Grand OS v2 Complete',
     os_modules: {
@@ -135042,7 +135042,7 @@ app.get('/api/milestone/v21-50', (req: any, res: any) => {
 app.get('/api/forge/os-registry', (req: any, res: any) => {
   res.json({
     success: true,
-    version: 'v143.08',
+    version: 'v21.50',
     total_os_modules: 50,
     total_endpoints: 2300,
     os_modules: [
@@ -135066,7 +135066,7 @@ app.get('/api/forge/system-health', (req: any, res: any) => {
   res.json({
     success: true,
     status: 'healthy',
-    version: 'v143.08',
+    version: 'v21.50',
     timestamp: new Date().toISOString(),
     db_size_bytes: dbSize,
     uptime_ms: process.uptime() * 1000,
@@ -135080,10 +135080,10 @@ app.get('/api/forge/changelog', (_req: any, res: any) => {
   res.json({
     success: true,
     changelog: [
-      { version: 'v143.08', endpoints: 'B2251-B2300', features: 'Creator v2, Sports v2, Maker v2, Collector v2, Scholar v2, Nomad v2, Exec v2, Health v2, Finance v2' },
-      { version: 'v143.08', endpoints: 'B2201-B2250', features: 'ESM fix + 50 OS endpoints + Executive OS, Investor OS, Home Owner OS, Pet OS, Nomad OS' },
-      { version: 'v143.08', endpoints: 'B2151-B2200', features: 'Learning, Freelance, Wellness, Network, Community, Lifestyle, Wealth, Knowledge, Inner Life, Ops' },
-      { version: 'v143.08', endpoints: 'B2001-B2050', features: 'Habit Stacks, Energy Mgmt, Identity, Failure Analysis, Decision Journal, Creative Projects' },
+      { version: 'v21.50', endpoints: 'B2251-B2300', features: 'Creator v2, Sports v2, Maker v2, Collector v2, Scholar v2, Nomad v2, Exec v2, Health v2, Finance v2' },
+      { version: 'v21.25', endpoints: 'B2201-B2250', features: 'ESM fix + 50 OS endpoints + Executive OS, Investor OS, Home Owner OS, Pet OS, Nomad OS' },
+      { version: 'v21.20', endpoints: 'B2151-B2200', features: 'Learning, Freelance, Wellness, Network, Community, Lifestyle, Wealth, Knowledge, Inner Life, Ops' },
+      { version: 'v20.50', endpoints: 'B2001-B2050', features: 'Habit Stacks, Energy Mgmt, Identity, Failure Analysis, Decision Journal, Creative Projects' },
     ]
   });
 });
@@ -135883,7 +135883,7 @@ app.get('/api/milestone/v22', (req: any, res: any) => {
   const startup = safe(()=>db.prepare('SELECT * FROM startup_metrics WHERE user_id=? ORDER BY date DESC LIMIT 1').get(u) as any);
   const brand = safe(()=>db.prepare('SELECT SUM(reach) as t FROM brand_media_mentions WHERE user_id=?').get(u) as any);
   res.json({
-    success: true, version: 'v143.08', total_endpoints: 2350,
+    success: true, version: 'v22.00', total_endpoints: 2350,
     milestone: 'B2350 — Full OS Suite Complete',
     os_suite: {
       productivity_v2: { deep_work_hours: Math.round((deepwork?.t||0)/60*10)/10 },
@@ -135897,7 +135897,7 @@ app.get('/api/milestone/v22', (req: any, res: any) => {
 
 app.get('/api/forge/full-manifest', (_req: any, res: any) => {
   res.json({
-    success: true, version: 'v143.08', total_endpoints: 2350,
+    success: true, version: 'v22.00', total_endpoints: 2350,
     os_modules_count: 55,
     feature_groups: [
       'Core Chat + Threads + Models',
@@ -136686,7 +136686,7 @@ app.get('/api/milestone/v23', (req: any, res: any) => {
   const re = safe(()=>db.prepare('SELECT COUNT(*) as c, SUM(equity) as eq FROM realestate_properties WHERE user_id=?').get(u) as any);
   const biz = safe(()=>db.prepare('SELECT SUM(mrr) as m FROM business_clients WHERE user_id=?').get(u) as any);
   res.json({
-    success: true, version: 'v143.08', total_endpoints: 2400,
+    success: true, version: 'v23.00', total_endpoints: 2400,
     milestone: 'B2400 — Financial Empire OS Complete',
     financial_empire: {
       net_worth: nw?.net_worth||0,
@@ -136711,7 +136711,7 @@ app.get('/api/forge/financial-health', (req: any, res: any) => {
 
 app.get('/api/forge/empire-manifest', (_req: any, res: any) => {
   res.json({
-    success: true, version: 'v143.08', total_endpoints: 2400,
+    success: true, version: 'v23.00', total_endpoints: 2400,
     os_suite: [
       'Core Chat+Auth+Keys', 'Billing+Usage+Stripe', 'Brain+Streaks+Activity',
       'Analytics+Notifications+Ratings', 'Search+Export+Templates',
@@ -155933,12 +155933,12 @@ app.get('/api/sushi/rice-ratios', requireAuth, (req: any, res: any) => {
   }});
 });
 app.get('/api/milestone/v105', (_req: any, res: any) => {
-  res.json({ milestone: 'v105', endpoints: 'B6451-B6500', version: 'v143.08',
+  res.json({ milestone: 'v105', endpoints: 'B6451-B6500', version: 'v105.00',
     modules: ['Fermenting OS','Cheese Making OS','Bread Baking OS','Pasta Making OS','Sushi Making OS'],
     total_endpoints: 6500, lines: 155200 });
 });
 app.get('/api/forge/ferment-cheese-bread-pasta-sushi-manifest', (_req: any, res: any) => {
-  res.json({ manifest: 'ferment-cheese-bread-pasta-sushi', version: 'v143.08', endpoints: 25,
+  res.json({ manifest: 'ferment-cheese-bread-pasta-sushi', version: 'v105.00', endpoints: 25,
     domains: ['ferment','cheese','bread','pasta','sushi'], status: 'live' });
 });
 
@@ -156119,12 +156119,12 @@ app.post('/api/mead/batches/:id/staggered-nutrients', requireAuth, (req: any, re
   res.json({ success: true, protocol:'TOSNA (Tailored Organic Staggered Nutrient Addition)', schedule });
 });
 app.get('/api/milestone/v106', (_req: any, res: any) => {
-  res.json({ milestone: 'v106', endpoints: 'B6501-B6550', version: 'v143.08',
+  res.json({ milestone: 'v106', endpoints: 'B6501-B6550', version: 'v106.00',
     modules: ['Coffee Roasting OS','Tea Ceremony OS','Cocktail Mixing OS','Wine Making OS','Mead Brewing OS'],
     total_endpoints: 6550, lines: 155350 });
 });
 app.get('/api/forge/coffee-tea-cocktail-wine-mead-manifest', (_req: any, res: any) => {
-  res.json({ manifest: 'coffee-tea-cocktail-wine-mead', version: 'v143.08', endpoints: 25,
+  res.json({ manifest: 'coffee-tea-cocktail-wine-mead', version: 'v106.00', endpoints: 25,
     domains: ['coffee','tea','cocktails','wine','mead'], status: 'live' });
 });
 
