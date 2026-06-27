@@ -5002,6 +5002,104 @@ app.patch('/api/personas/:id', requireAuth, (req: AuthRequest, res) => {
 });
 app.delete('/api/personas/:id', requireAuth, (req: AuthRequest, res) => { db.prepare('DELETE FROM personas WHERE id=? AND user_id=?').run(req.params.id,req.user!.sub); res.json({ success:true }); });
 
+// ─── Agent Passport System ────────────────────────────────────────────────────
+// Every user gets an AI Twin — a persistent, benchmarked, shareable agent identity
+db.exec(`CREATE TABLE IF NOT EXISTS agent_passports (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  twin_name TEXT NOT NULL DEFAULT 'My AI Twin',
+  sector TEXT NOT NULL DEFAULT 'General Business',
+  specialties TEXT NOT NULL DEFAULT '[]',
+  system_prompt TEXT NOT NULL DEFAULT '',
+  personality TEXT NOT NULL DEFAULT 'professional',
+  icon TEXT NOT NULL DEFAULT '🤖',
+  cover_color TEXT NOT NULL DEFAULT '#ff1f35',
+  benchmark_score REAL DEFAULT 0,
+  tasks_completed INTEGER DEFAULT 0,
+  words_generated INTEGER DEFAULT 0,
+  hours_saved REAL DEFAULT 0,
+  top_skill TEXT DEFAULT '',
+  is_public INTEGER DEFAULT 0,
+  public_slug TEXT UNIQUE,
+  version INTEGER DEFAULT 1,
+  last_active TEXT DEFAULT (datetime('now')),
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS passport_benchmarks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  passport_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  score REAL NOT NULL,
+  model TEXT NOT NULL,
+  tokens_used INTEGER DEFAULT 0,
+  latency_ms INTEGER DEFAULT 0,
+  notes TEXT DEFAULT '',
+  run_at TEXT DEFAULT (datetime('now'))
+)`);
+
+app.get('/api/passport', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  let p: any = db.prepare('SELECT * FROM agent_passports WHERE user_id=? ORDER BY created_at DESC LIMIT 1').get(uid);
+  if (!p) {
+    const id = uuidv4();
+    const slug = 'twin-' + Math.random().toString(36).slice(2,10);
+    db.prepare('INSERT INTO agent_passports (id,user_id,public_slug) VALUES (?,?,?)').run(id, uid, slug);
+    p = db.prepare('SELECT * FROM agent_passports WHERE id=?').get(id);
+  }
+  try { p.specialties = JSON.parse(p.specialties); } catch { p.specialties = []; }
+  const benchmarks = db.prepare('SELECT * FROM passport_benchmarks WHERE passport_id=? ORDER BY run_at DESC LIMIT 20').all(p.id);
+  res.json({ success: true, data: { ...p, benchmarks } });
+});
+
+app.patch('/api/passport', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  const { twin_name, sector, specialties, system_prompt, personality, icon, cover_color, is_public } = req.body;
+  const p: any = db.prepare('SELECT * FROM agent_passports WHERE user_id=? ORDER BY created_at DESC LIMIT 1').get(uid);
+  if (!p) { res.status(404).json({ error: 'No passport' }); return; }
+  if (twin_name !== undefined) db.prepare("UPDATE agent_passports SET twin_name=?,updated_at=datetime('now') WHERE id=?").run(twin_name, p.id);
+  if (sector !== undefined) db.prepare("UPDATE agent_passports SET sector=?,updated_at=datetime('now') WHERE id=?").run(sector, p.id);
+  if (specialties !== undefined) db.prepare("UPDATE agent_passports SET specialties=?,updated_at=datetime('now') WHERE id=?").run(JSON.stringify(specialties), p.id);
+  if (system_prompt !== undefined) db.prepare("UPDATE agent_passports SET system_prompt=?,updated_at=datetime('now') WHERE id=?").run(system_prompt, p.id);
+  if (personality !== undefined) db.prepare("UPDATE agent_passports SET personality=?,updated_at=datetime('now') WHERE id=?").run(personality, p.id);
+  if (icon !== undefined) db.prepare("UPDATE agent_passports SET icon=?,updated_at=datetime('now') WHERE id=?").run(icon, p.id);
+  if (cover_color !== undefined) db.prepare("UPDATE agent_passports SET cover_color=?,updated_at=datetime('now') WHERE id=?").run(cover_color, p.id);
+  if (is_public !== undefined) db.prepare("UPDATE agent_passports SET is_public=?,updated_at=datetime('now') WHERE id=?").run(is_public ? 1 : 0, p.id);
+  res.json({ success: true });
+});
+
+app.post('/api/passport/benchmark', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  const { category, score, model, tokens_used=0, latency_ms=0, notes='' } = req.body;
+  if (!category || score === undefined) { res.status(400).json({ error: 'category and score required' }); return; }
+  const p: any = db.prepare('SELECT * FROM agent_passports WHERE user_id=? ORDER BY created_at DESC LIMIT 1').get(uid);
+  if (!p) { res.status(404).json({ error: 'No passport' }); return; }
+  db.prepare('INSERT INTO passport_benchmarks (passport_id,user_id,category,score,model,tokens_used,latency_ms,notes) VALUES (?,?,?,?,?,?,?,?)').run(p.id, uid, category, score, model || '', tokens_used, latency_ms, notes);
+  const avg: any = db.prepare('SELECT AVG(score) as avg FROM passport_benchmarks WHERE passport_id=?').get(p.id);
+  db.prepare("UPDATE agent_passports SET benchmark_score=?,updated_at=datetime('now') WHERE id=?").run(avg.avg || 0, p.id);
+  res.json({ success: true, score, benchmark_score: avg.avg || 0 });
+});
+
+app.post('/api/passport/activity', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  const { tasks_delta=0, words_delta=0, hours_delta=0, top_skill } = req.body;
+  const p: any = db.prepare('SELECT * FROM agent_passports WHERE user_id=? ORDER BY created_at DESC LIMIT 1').get(uid);
+  if (!p) { res.status(404).json({ error: 'No passport' }); return; }
+  db.prepare("UPDATE agent_passports SET tasks_completed=tasks_completed+?, words_generated=words_generated+?, hours_saved=hours_saved+?, last_active=datetime('now'), updated_at=datetime('now') WHERE id=?").run(tasks_delta, words_delta, hours_delta, p.id);
+  if (top_skill) db.prepare("UPDATE agent_passports SET top_skill=?,updated_at=datetime('now') WHERE id=?").run(top_skill, p.id);
+  res.json({ success: true });
+});
+
+app.get('/api/passport/public/:slug', (req: any, res: any) => {
+  const p: any = db.prepare('SELECT * FROM agent_passports WHERE public_slug=? AND is_public=1').get(req.params.slug);
+  if (!p) { res.status(404).json({ error: 'Passport not found or not public' }); return; }
+  try { p.specialties = JSON.parse(p.specialties); } catch { p.specialties = []; }
+  const benchmarks = db.prepare('SELECT category, score, model, run_at FROM passport_benchmarks WHERE passport_id=? ORDER BY run_at DESC LIMIT 10').all(p.id);
+  delete p.user_id; delete p.system_prompt;
+  res.json({ success: true, data: { ...p, benchmarks } });
+});
+
 // ─── Prompt Cache ─────────────────────────────────────────────────────────────
 db.exec(`CREATE TABLE IF NOT EXISTS prompt_cache (
   id TEXT PRIMARY KEY, user_id TEXT NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL,
