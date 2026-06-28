@@ -171595,6 +171595,88 @@ app.get('/api/admin/leads/export', requireAuth, (req: any, res: any) => {
   res.send(csv);
 });
 
+// ─── API Key Health Probe ─────────────────────────────────────────────────────
+app.get('/api/keys/health', requireAuth, async (req: any, res: any) => {
+  const userId = req.user!.sub;
+  const results: Record<string, any> = {};
+
+  const probe = async (provider: string, testFn: () => Promise<void>) => {
+    const t0 = Date.now();
+    try {
+      await testFn();
+      results[provider] = { status: 'ok', latency_ms: Date.now() - t0 };
+    } catch (e: any) {
+      results[provider] = { status: 'error', latency_ms: Date.now() - t0, error: e.message?.slice(0, 120) };
+    }
+  };
+
+  const getKey = (p: string) => getUserLLMKey(userId, p);
+
+  const probes: Promise<void>[] = [];
+
+  const anthropicKey = getKey('anthropic');
+  if (anthropicKey) probes.push(probe('anthropic', async () => {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
+  }));
+
+  const openaiKey = getKey('openai');
+  if (openaiKey) probes.push(probe('openai', async () => {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${openaiKey}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
+  }));
+
+  const geminiKey = getKey('gemini');
+  if (geminiKey) probes.push(probe('gemini', async () => {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${geminiKey}`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }], generationConfig: { maxOutputTokens: 1 } }),
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
+  }));
+
+  const groqKey = getKey('groq');
+  if (groqKey) probes.push(probe('groq', async () => {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${groqKey}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
+  }));
+
+  const mistralKey = getKey('mistral');
+  if (mistralKey) probes.push(probe('mistral', async () => {
+    const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${mistralKey}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'mistral-small-latest', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
+  }));
+
+  const orKey = getKey('openrouter');
+  if (orKey) probes.push(probe('openrouter', async () => {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${orKey}`, 'content-type': 'application/json', 'HTTP-Referer': 'https://forge-sand-two.vercel.app' },
+      body: JSON.stringify({ model: 'openai/gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
+  }));
+
+  await Promise.all(probes);
+  res.json({ results, probed_at: new Date().toISOString() });
+});
+
 // ─── Start server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Forge backend running on port ${PORT}`));
