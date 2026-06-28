@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -6813,6 +6813,10 @@ export default function ForgeApp() {
             { id:'forgeshop', icon:'🛒', label:'Smart Shopping' },
             { id:'forgememory', icon:'🧠', label:'Memory' },
             { id:'forgeauto2', icon:'⚡', label:'Forge Autonomy' },
+            { id:'dreamlog', icon:'🌙', label:'Dream Log' },
+            { id:'forgeiq', icon:'🧬', label:'Forge IQ' },
+            { id:'promptopt', icon:'✨', label:'Prompt Optimizer' },
+            { id:'shadowmode', icon:'👥', label:'Shadow Mode' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -13221,6 +13225,247 @@ export default function ForgeApp() {
                   </div>}
                 </div>}
               </div>
+            </div>
+          </div>);
+        })()}
+
+        {/* ── DREAM LOG ──────────────────────────────────────────── */}
+        {(mainTab as string) === 'dreamlog' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [log, setLog] = React.useState<any[]>([]);
+          const [brief, setBrief] = React.useState('');
+          const [suggesting, setSuggesting] = React.useState(false);
+          const [briefing, setBriefing] = React.useState(false);
+          const STATUS_COLOR:Record<string,string>={suggested:'#6366f1',building:'#f59e0b',built:'#10b981',rejected:'#ef4444'};
+          const TYPE_ICON:Record<string,string>={agent:'🤖',ui:'🎨',integration:'🔗',analytics:'📊',autonomy:'⚡',feature:'✨'};
+          const load=()=>fetch(`${API}/api/dream/log`,{headers:{'Authorization':`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setLog(d.log||[])).catch(()=>{});
+          React.useEffect(()=>{load();},[]);
+          const suggest=async()=>{setSuggesting(true);try{await fetch(`${API}/api/dream/suggest`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({})});await load();}finally{setSuggesting(false);}};
+          const getAutobrief=async()=>{setBriefing(true);try{const r=await fetch(`${API}/api/auto-brief`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({})});const d=await r.json();setBrief(d.brief||'');}finally{setBriefing(false);}};
+          const setStatus=(id:string,s:string)=>fetch(`${API}/api/dream/${id}/status`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({status:s})}).then(()=>load());
+          return(<div style={{display:'grid',gridTemplateColumns:'1fr 360px',height:'100vh',background:'#080810',color:'#fff',fontFamily:'system-ui',gap:0}}>
+            <div style={{overflowY:'auto',padding:'24px'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}}>
+                <div>
+                  <div style={{fontSize:'24px',fontWeight:800}}>🌙 Dream Log</div>
+                  <div style={{color:'#555',fontSize:'13px'}}>Forge dreams its own next features every night</div>
+                </div>
+                <div style={{display:'flex',gap:'8px'}}>
+                  <button onClick={suggest} disabled={suggesting} style={{padding:'10px 18px',background:'linear-gradient(135deg,#7c3aed,#6366f1)',color:'#fff',border:'none',borderRadius:'8px',cursor:'pointer',fontWeight:700,fontSize:'13px'}}>{suggesting?'Dreaming…':'💡 Dream New Features'}</button>
+                  <button onClick={getAutobrief} disabled={briefing} style={{padding:'10px 18px',background:'#1a1a2e',color:'#fff',border:'1px solid #333',borderRadius:'8px',cursor:'pointer',fontSize:'13px'}}>{briefing?'Writing…':'📝 Auto-Brief'}</button>
+                </div>
+              </div>
+              {brief&&<div style={{background:'rgba(99,102,241,0.08)',border:'1px solid rgba(99,102,241,0.3)',borderRadius:'12px',padding:'20px',marginBottom:'20px',fontSize:'13px',lineHeight:'1.8',color:'#c4c4ff',whiteSpace:'pre-wrap'}}><div style={{fontWeight:700,marginBottom:'8px',color:'#a78bfa'}}>📣 Forge Morning Brief</div>{brief}</div>}
+              <div style={{display:'grid',gap:'10px'}}>
+                {!log.length&&<div style={{textAlign:'center',padding:'80px',color:'#333'}}>
+                  <div style={{fontSize:'48px',marginBottom:'12px'}}>🌙</div>
+                  <div style={{fontSize:'16px',color:'#555'}}>No dreams yet — hit "Dream New Features" to start</div>
+                </div>}
+                {log.map((item:any)=><div key={item.id} style={{background:'#0d0d1a',border:'1px solid #1f1f35',borderRadius:'10px',padding:'16px',display:'grid',gridTemplateColumns:'1fr auto',gap:'12px',alignItems:'start'}}>
+                  <div>
+                    <div style={{display:'flex',gap:'8px',alignItems:'center',marginBottom:'6px'}}>
+                      <span style={{fontSize:'18px'}}>{TYPE_ICON[item.type]||'✨'}</span>
+                      <span style={{fontWeight:700,fontSize:'14px'}}>{item.title}</span>
+                      <span style={{padding:'2px 8px',borderRadius:'999px',fontSize:'10px',background:STATUS_COLOR[item.status]||'#333',color:'#fff',textTransform:'uppercase',letterSpacing:'0.5px'}}>{item.status}</span>
+                      {item.iq_delta>0&&<span style={{fontSize:'11px',color:'#10b981'}}>+{item.iq_delta} IQ</span>}
+                    </div>
+                    <div style={{fontSize:'12px',color:'#888',lineHeight:'1.6'}}>{item.description}</div>
+                    <div style={{fontSize:'10px',color:'#444',marginTop:'6px'}}>{new Date(item.created_at).toLocaleString()}</div>
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:'4px',minWidth:'90px'}}>
+                    {item.status==='suggested'&&<><button onClick={()=>setStatus(item.id,'building')} style={{padding:'5px 10px',background:'#f59e0b',color:'#000',border:'none',borderRadius:'5px',cursor:'pointer',fontSize:'11px',fontWeight:700}}>Build</button>
+                    <button onClick={()=>setStatus(item.id,'rejected')} style={{padding:'5px 10px',background:'#2a2a3e',color:'#888',border:'1px solid #333',borderRadius:'5px',cursor:'pointer',fontSize:'11px'}}>Skip</button></>}
+                    {item.status==='building'&&<button onClick={()=>setStatus(item.id,'built')} style={{padding:'5px 10px',background:'#10b981',color:'#000',border:'none',borderRadius:'5px',cursor:'pointer',fontSize:'11px',fontWeight:700}}>✓ Done</button>}
+                  </div>
+                </div>)}
+              </div>
+            </div>
+            <div style={{background:'#0d0d1a',borderLeft:'1px solid #1f1f35',padding:'20px',overflowY:'auto'}}>
+              <div style={{fontWeight:700,marginBottom:'16px',color:'#a78bfa'}}>📊 Dream Stats</div>
+              <div style={{display:'grid',gap:'10px'}}>
+                {(['suggested','building','built','rejected'] as string[]).map(s=>{const n=log.filter((l:any)=>l.status===s).length;return(<div key={s} style={{background:'#1a1a2e',borderRadius:'8px',padding:'12px',display:'flex',justifyContent:'space-between'}}>
+                  <span style={{color:'#888',textTransform:'capitalize'}}>{s}</span>
+                  <span style={{fontWeight:700,color:STATUS_COLOR[s]||'#fff'}}>{n}</span>
+                </div>);})}
+              </div>
+              <div style={{marginTop:'20px',fontWeight:700,marginBottom:'12px',color:'#a78bfa'}}>🏆 Top Ideas by IQ</div>
+              {log.sort((a:any,b:any)=>b.iq_delta-a.iq_delta).slice(0,5).map((item:any)=><div key={item.id} style={{padding:'8px',background:'#1a1a2e',borderRadius:'6px',marginBottom:'6px'}}>
+                <div style={{fontSize:'11px',fontWeight:600,color:'#ddd',marginBottom:'2px'}}>{item.title}</div>
+                <div style={{fontSize:'10px',color:'#10b981'}}>+{item.iq_delta} IQ points</div>
+              </div>)}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── FORGE IQ ───────────────────────────────────────────── */}
+        {(mainTab as string) === 'forgeiq' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [iq, setIq] = React.useState<any>(null);
+          const [history, setHistory] = React.useState<any[]>([]);
+          const [loading, setLoading] = React.useState(false);
+          const compute=async()=>{setLoading(true);try{const r=await fetch(`${API}/api/forge-iq`,{headers:{'Authorization':`Bearer ${tok}`}});const d=await r.json();setIq(d);fetch(`${API}/api/forge-iq/history`,{headers:{'Authorization':`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}finally{setLoading(false);}};
+          React.useEffect(()=>{compute();},[]);
+          const BAR=(label:string,val:number,color:string)=><div style={{marginBottom:'12px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}><span style={{fontSize:'12px',color:'#aaa'}}>{label}</span><span style={{fontSize:'12px',fontWeight:700,color}}>{val}</span></div>
+            <div style={{height:'6px',background:'#1a1a2e',borderRadius:'3px'}}><div style={{height:'6px',width:`${val}%`,background:color,borderRadius:'3px',transition:'width 0.8s'}} /></div>
+          </div>;
+          const score=iq?.score||0;
+          const scoreColor=score>=90?'#10b981':score>=80?'#6366f1':score>=70?'#f59e0b':'#ef4444';
+          return(<div style={{height:'100vh',overflowY:'auto',background:'#080810',color:'#fff',fontFamily:'system-ui',padding:'32px',maxWidth:'900px',margin:'0 auto'}}>
+            <div style={{textAlign:'center',marginBottom:'40px'}}>
+              <div style={{fontSize:'20px',fontWeight:700,color:'#888',marginBottom:'8px'}}>🧬 Forge IQ Score</div>
+              <div style={{fontSize:'96px',fontWeight:900,color:scoreColor,lineHeight:1,marginBottom:'8px',textShadow:`0 0 40px ${scoreColor}88`}}>{loading?'…':score}</div>
+              <div style={{fontSize:'16px',color:'#666'}}>/ 100 — Capability vs Claude & ChatGPT</div>
+              <button onClick={compute} disabled={loading} style={{marginTop:'16px',padding:'10px 24px',background:'linear-gradient(135deg,#7c3aed,#6366f1)',color:'#fff',border:'none',borderRadius:'8px',cursor:'pointer',fontWeight:700}}>{loading?'Computing…':'🔄 Recompute'}</button>
+            </div>
+            {iq&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'24px',marginBottom:'32px'}}>
+              <div style={{background:'#0d0d1a',border:'1px solid #1f1f35',borderRadius:'12px',padding:'20px'}}>
+                <div style={{fontWeight:700,marginBottom:'16px',color:'#a78bfa'}}>Capability Breakdown</div>
+                {Object.entries(iq.breakdown||{}).map(([k,v]:any)=>BAR(k.replace(/_/g,' '),v,scoreColor))}
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+                <div style={{background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.3)',borderRadius:'12px',padding:'16px'}}>
+                  <div style={{fontWeight:700,color:'#10b981',marginBottom:'8px'}}>✅ vs Claude</div>
+                  <div style={{fontSize:'13px',color:'#aaa',lineHeight:'1.6'}}>{iq.vs_claude||'Computing…'}</div>
+                </div>
+                <div style={{background:'rgba(99,102,241,0.08)',border:'1px solid rgba(99,102,241,0.3)',borderRadius:'12px',padding:'16px'}}>
+                  <div style={{fontWeight:700,color:'#6366f1',marginBottom:'8px'}}>✅ vs ChatGPT</div>
+                  <div style={{fontSize:'13px',color:'#aaa',lineHeight:'1.6'}}>{iq.vs_chatgpt||'Computing…'}</div>
+                </div>
+                <div style={{background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.3)',borderRadius:'12px',padding:'16px'}}>
+                  <div style={{fontWeight:700,color:'#f59e0b',marginBottom:'8px'}}>🎯 Next Unlock</div>
+                  <div style={{fontSize:'13px',color:'#aaa',lineHeight:'1.6'}}>{iq.next_unlock||'Computing…'}</div>
+                </div>
+                {iq.weakness&&<div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:'12px',padding:'16px'}}>
+                  <div style={{fontWeight:700,color:'#ef4444',marginBottom:'8px'}}>⚠️ Weakness</div>
+                  <div style={{fontSize:'13px',color:'#aaa',lineHeight:'1.6'}}>{iq.weakness}</div>
+                </div>}
+              </div>
+            </div>}
+            {history.length>1&&<div style={{background:'#0d0d1a',border:'1px solid #1f1f35',borderRadius:'12px',padding:'20px'}}>
+              <div style={{fontWeight:700,marginBottom:'12px',color:'#a78bfa'}}>📈 IQ History</div>
+              <div style={{display:'flex',gap:'8px',alignItems:'flex-end',height:'60px'}}>
+                {history.slice(0,20).reverse().map((h:any,i:number)=><div key={i} style={{flex:1,background:'#6366f1',borderRadius:'3px 3px 0 0',height:`${(h.score/100)*60}px`,minWidth:'8px'}} title={`${h.score} — ${new Date(h.computed_at).toLocaleDateString()}`}/>)}
+              </div>
+            </div>}
+          </div>);
+        })()}
+
+        {/* ── PROMPT OPTIMIZER ───────────────────────────────────── */}
+        {(mainTab as string) === 'promptopt' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [prompt, setPrompt] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/prompt/history`,{headers:{'Authorization':`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});},[]);
+          const optimize=async()=>{if(!prompt.trim()) return; setLoading(true); setResult(null);
+            try{const r=await fetch(`${API}/api/prompt/optimize`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({prompt})});const d=await r.json();setResult(d);setHistory((p:any[])=>[{original:prompt,optimized:d.optimized,improvement_pct:d.improvement_pct,created_at:new Date().toISOString()},...p]);}
+            finally{setLoading(false);}};
+          const EXAMPLES=['Write me a blog post about AI','Summarize this document','Help me with my code','Explain machine learning','Give me ideas for my startup'];
+          return(<div style={{display:'grid',gridTemplateColumns:'1fr 320px',height:'100vh',background:'#080810',color:'#fff',fontFamily:'system-ui'}}>
+            <div style={{overflowY:'auto',padding:'24px'}}>
+              <div style={{fontSize:'24px',fontWeight:800,marginBottom:'4px'}}>✨ Prompt Optimizer</div>
+              <div style={{color:'#555',fontSize:'13px',marginBottom:'24px'}}>Forge rewrites your prompts for 2–5× better AI results</div>
+              <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Enter your prompt to optimize…" rows={4} style={{width:'100%',background:'#0d0d1a',color:'#fff',border:'1px solid #333',borderRadius:'10px',padding:'14px',fontSize:'14px',resize:'vertical',boxSizing:'border-box',marginBottom:'10px'}}/>
+              {!prompt&&<div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'10px'}}>{EXAMPLES.map((ex,i)=><button key={i} onClick={()=>setPrompt(ex)} style={{padding:'5px 10px',background:'#1a1a2e',color:'#888',border:'1px solid #2a2a3e',borderRadius:'5px',cursor:'pointer',fontSize:'11px'}}>{ex}</button>)}</div>}
+              <button onClick={optimize} disabled={loading||!prompt.trim()} style={{padding:'12px 28px',background:'linear-gradient(135deg,#7c3aed,#6366f1)',color:'#fff',border:'none',borderRadius:'8px',cursor:'pointer',fontWeight:700,fontSize:'14px',boxShadow:'0 0 20px rgba(99,102,241,0.4)',marginBottom:'24px'}}>{loading?'Optimizing…':'✨ Optimize Prompt'}</button>
+              {result&&<div style={{display:'grid',gap:'16px'}}>
+                <div style={{background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.3)',borderRadius:'12px',padding:'20px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+                    <div style={{fontWeight:700,color:'#10b981'}}>✅ Optimized Prompt</div>
+                    <div style={{background:'#10b981',color:'#000',padding:'4px 12px',borderRadius:'999px',fontSize:'12px',fontWeight:700}}>+{result.improvement_pct}% better</div>
+                  </div>
+                  <div style={{background:'#0d0d1a',borderRadius:'8px',padding:'14px',fontSize:'13px',lineHeight:'1.7',color:'#e0e0e0',marginBottom:'10px',whiteSpace:'pre-wrap'}}>{result.optimized}</div>
+                  <div style={{display:'flex',gap:'6px'}}>
+                    <button onClick={()=>navigator.clipboard.writeText(result.optimized)} style={{padding:'6px 14px',background:'#1a1a2e',color:'#fff',border:'1px solid #333',borderRadius:'6px',cursor:'pointer',fontSize:'11px'}}>📋 Copy</button>
+                    <button onClick={()=>setPrompt(result.optimized)} style={{padding:'6px 14px',background:'#1a1a2e',color:'#fff',border:'1px solid #333',borderRadius:'6px',cursor:'pointer',fontSize:'11px'}}>🔁 Use as input</button>
+                  </div>
+                </div>
+                {result.improvements?.length>0&&<div style={{background:'#0d0d1a',border:'1px solid #1f1f35',borderRadius:'12px',padding:'16px'}}>
+                  <div style={{fontWeight:700,marginBottom:'10px',color:'#a78bfa'}}>What changed</div>
+                  {result.improvements.map((imp:string,i:number)=><div key={i} style={{fontSize:'12px',color:'#aaa',marginBottom:'6px',display:'flex',gap:'8px'}}><span style={{color:'#6366f1'}}>→</span>{imp}</div>)}
+                </div>}
+                {result.tip&&<div style={{background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.3)',borderRadius:'10px',padding:'14px',fontSize:'13px',color:'#fbbf24'}}>💡 {result.tip}</div>}
+                {result.techniques_used?.length>0&&<div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>{result.techniques_used.map((t:string,i:number)=><span key={i} style={{padding:'3px 10px',background:'rgba(99,102,241,0.15)',color:'#a78bfa',borderRadius:'999px',fontSize:'11px'}}>{t}</span>)}</div>}
+              </div>}
+            </div>
+            <div style={{background:'#0d0d1a',borderLeft:'1px solid #1f1f35',padding:'16px',overflowY:'auto'}}>
+              <div style={{fontWeight:700,marginBottom:'12px',color:'#a78bfa'}}>Recent Optimizations</div>
+              {!history.length&&<div style={{color:'#444',fontSize:'12px'}}>None yet — optimize a prompt!</div>}
+              {history.slice(0,15).map((h:any,i:number)=><div key={i} onClick={()=>{setPrompt(h.original);setResult(null);}} style={{padding:'10px',background:'#1a1a2e',borderRadius:'8px',marginBottom:'6px',cursor:'pointer',border:'1px solid #2a2a3e'}}>
+                <div style={{fontSize:'11px',color:'#aaa',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'3px'}}>{h.original?.slice(0,50)}…</div>
+                <div style={{fontSize:'10px',color:'#10b981'}}>+{h.improvement_pct}% improved</div>
+              </div>)}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── SHADOW MODE ────────────────────────────────────────── */}
+        {(mainTab as string) === 'shadowmode' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [prompt, setPrompt] = React.useState('');
+          const [modelA, setModelA] = React.useState('claude-3-5-sonnet-20241022');
+          const [modelB, setModelB] = React.useState('gpt-4o');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [runs, setRuns] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/shadow/runs`,{headers:{'Authorization':`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setRuns(d.runs||[])).catch(()=>{});},[]);
+          const run=async()=>{if(!prompt.trim()) return; setLoading(true); setResult(null);
+            try{const r=await fetch(`${API}/api/shadow/run`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({prompt,model_a:modelA,model_b:modelB})});const d=await r.json();setResult(d);setRuns((p:any[])=>[{id:d.id,prompt,model_a:modelA,model_b:modelB,created_at:new Date().toISOString()},...p]);}
+            finally{setLoading(false);}};
+          const loadRun=async(id:string)=>{const r=await fetch(`${API}/api/shadow/run/${id}`,{headers:{'Authorization':`Bearer ${tok}`}});const d=await r.json();setResult(d);setPrompt(d.prompt||'');};
+          const MODELS=['claude-3-5-sonnet-20241022','claude-3-opus-20240229','claude-3-haiku-20240307','gpt-4o','gpt-4o-mini','gpt-4-turbo','gemini-1.5-pro','gemini-1.5-flash'];
+          return(<div style={{display:'grid',gridTemplateColumns:'300px 1fr',height:'100vh',background:'#080810',color:'#fff',fontFamily:'system-ui'}}>
+            <div style={{background:'#0d0d1a',borderRight:'1px solid #1f1f35',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+              <div style={{padding:'16px',borderBottom:'1px solid #1f1f35'}}>
+                <div style={{fontSize:'18px',fontWeight:800,marginBottom:'4px'}}>👥 Shadow Mode</div>
+                <div style={{fontSize:'11px',color:'#555'}}>Run prompt through 2 models, compare side by side</div>
+              </div>
+              <div style={{padding:'12px',flex:1,overflowY:'auto'}}>
+                <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Enter your prompt…" rows={4} style={{width:'100%',background:'#1a1a2e',color:'#fff',border:'1px solid #333',borderRadius:'8px',padding:'10px',fontSize:'13px',resize:'none',boxSizing:'border-box',marginBottom:'10px'}}/>
+                <div style={{marginBottom:'8px'}}>
+                  <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Model A</div>
+                  <select value={modelA} onChange={e=>setModelA(e.target.value)} style={{width:'100%',background:'#1a1a2e',color:'#fff',border:'1px solid #333',borderRadius:'6px',padding:'6px',fontSize:'12px'}}>
+                    {MODELS.map(m=><option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                <div style={{marginBottom:'12px'}}>
+                  <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Model B</div>
+                  <select value={modelB} onChange={e=>setModelB(e.target.value)} style={{width:'100%',background:'#1a1a2e',color:'#fff',border:'1px solid #333',borderRadius:'6px',padding:'6px',fontSize:'12px'}}>
+                    {MODELS.map(m=><option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                <button onClick={run} disabled={loading||!prompt.trim()} style={{width:'100%',background:'linear-gradient(135deg,#7c3aed,#6366f1)',color:'#fff',border:'none',borderRadius:'8px',padding:'11px',fontWeight:700,cursor:'pointer',fontSize:'13px',marginBottom:'16px'}}>{loading?'Running…':'▶ Run Both'}</button>
+                <div style={{fontSize:'11px',color:'#444',marginBottom:'8px',textTransform:'uppercase',letterSpacing:'1px'}}>Past Runs</div>
+                {runs.map((r:any)=><div key={r.id} onClick={()=>loadRun(r.id)} style={{padding:'8px',background:'#1a1a2e',borderRadius:'6px',marginBottom:'4px',cursor:'pointer',border:'1px solid #2a2a3e'}}>
+                  <div style={{fontSize:'11px',color:'#bbb',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.prompt?.slice(0,40)}…</div>
+                  <div style={{fontSize:'10px',color:'#555',marginTop:'2px'}}>{r.model_a} vs {r.model_b}</div>
+                </div>)}
+              </div>
+            </div>
+            <div style={{overflowY:'auto',padding:'0'}}>
+              {!result&&!loading&&<div style={{textAlign:'center',padding:'80px',color:'#333'}}>
+                <div style={{fontSize:'48px',marginBottom:'12px'}}>👥</div>
+                <div style={{fontSize:'16px',color:'#555'}}>Enter a prompt and run both models to compare</div>
+              </div>}
+              {loading&&<div style={{textAlign:'center',padding:'80px',color:'#6366f1'}}>
+                <div style={{fontSize:'32px',marginBottom:'12px'}}>⚡</div>
+                <div>Running on both models simultaneously…</div>
+              </div>}
+              {result&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',height:'100%'}}>
+                {[{key:'response_a',model:result.model_a,color:'#6366f1'},{key:'response_b',model:result.model_b,color:'#10b981'}].map(side=><div key={side.key} style={{padding:'20px',borderRight:side.key==='response_a'?'1px solid #1f1f35':'none',overflowY:'auto'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
+                    <div style={{fontWeight:700,color:side.color,fontSize:'14px'}}>{side.model}</div>
+                    <button onClick={()=>navigator.clipboard.writeText(result[side.key]||'')} style={{padding:'4px 10px',background:'#1a1a2e',color:'#888',border:'1px solid #333',borderRadius:'5px',cursor:'pointer',fontSize:'11px'}}>📋</button>
+                  </div>
+                  <div style={{fontSize:'13px',lineHeight:'1.8',color:'#e0e0e0',whiteSpace:'pre-wrap'}}>{result[side.key]||'No response'}</div>
+                </div>)}
+              </div>}
             </div>
           </div>);
         })()}

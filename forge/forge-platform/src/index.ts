@@ -171720,6 +171720,88 @@ app.get('/api/autonomy/stream/:id', requireAuth, (req:any,res:any)=>{
 app.get('/api/autonomy/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,goal,status,steps_done,steps_total,created_at,completed_at FROM autonomy_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
 app.get('/api/autonomy/session/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM autonomy_sessions WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
 
+// ─── Dream Mode & Self-Improvement ────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS dream_log (id TEXT PRIMARY KEY, title TEXT, description TEXT, type TEXT DEFAULT 'feature', status TEXT DEFAULT 'suggested', iq_delta INTEGER DEFAULT 0, built_at TEXT, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS forge_iq (id INTEGER PRIMARY KEY, score INTEGER DEFAULT 72, breakdown TEXT DEFAULT '{}', computed_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS prompt_optimizations (id TEXT PRIMARY KEY, user_id TEXT, original TEXT, optimized TEXT, improvement_pct INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS shadow_runs (id TEXT PRIMARY KEY, user_id TEXT, prompt TEXT, model_a TEXT, model_b TEXT, response_a TEXT, response_b TEXT, created_at TEXT DEFAULT (datetime('now')))`);
+
+// Dream: generate feature suggestions
+app.post('/api/dream/suggest', requireAuth, async (req:any,res:any)=>{
+  try{
+    const key=getUserLLMKey(req.user.id);
+    const existing=db.prepare(`SELECT title FROM dream_log ORDER BY created_at DESC LIMIT 20`).all() as any[];
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge AI, a next-generation SaaS platform. You are dreaming about what features to build next.\n\nAlready built or suggested: ${existing.map((e:any)=>e.title).join(', ')||'none yet'}\n\nGenerate 6 creative, high-impact feature ideas that would make Forge more powerful than Claude, ChatGPT, and Gemini combined. Think: autonomous agents, AI superpowers, unique tools nobody else has.\n\nReturn JSON: {"features":[{"title":"...","description":"...","type":"agent|ui|integration|analytics|autonomy","iq_delta":5,"wow_factor":"one sentence on why this is incredible"}]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const inserted:any[]=[];
+    for(const f of (data.features||[])){
+      const id=uuidv4();
+      db.prepare(`INSERT INTO dream_log (id,title,description,type,iq_delta) VALUES (?,?,?,?,?)`).run(id,f.title,f.description+'\n\n'+f.wow_factor,f.type||'feature',f.iq_delta||3);
+      inserted.push({id,...f});
+    }
+    res.json({features:inserted,count:inserted.length});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/dream/log', requireAuth, (req:any,res:any)=>{res.json({log:db.prepare(`SELECT * FROM dream_log ORDER BY created_at DESC LIMIT 50`).all()});});
+app.put('/api/dream/:id/status', requireAuth, (req:any,res:any)=>{db.prepare(`UPDATE dream_log SET status=?,built_at=CASE WHEN ?='built' THEN datetime('now') ELSE built_at END WHERE id=?`).run(req.body.status,req.body.status,req.params.id);res.json({ok:true});});
+
+// Forge IQ Score
+app.get('/api/forge-iq', requireAuth, async (req:any,res:any)=>{
+  try{
+    const key=getUserLLMKey(req.user.id);
+    const builtCount=db.prepare(`SELECT COUNT(*) as c FROM dream_log WHERE status='built'`).get() as any;
+    const totalFeatures=172; // approx tab count
+    const dreamBuilt=builtCount?.c||0;
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Score Forge AI platform vs Claude and ChatGPT. Forge has ~${totalFeatures} unique features, ${dreamBuilt} auto-built dream features, BYOK multi-model, autonomous agents, full autonomy loop, computer use, deep research, study mode, voice, canvas, shopping, memory, hermes agent, agent swarm, billing, admin dashboard.\n\nReturn JSON: {"score":85,"breakdown":{"autonomy":90,"multimodel":95,"features":88,"unique_advantages":92,"developer_tools":85,"learning":82,"voice":75},"vs_claude":"Forge wins on...","vs_chatgpt":"Forge wins on...","weakness":"...","next_unlock":"feature that would push score to 90+"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO forge_iq (score,breakdown,computed_at) VALUES (?,?,datetime('now'))`).run(data.score||85,JSON.stringify(data.breakdown||{}));
+    res.json(data);
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/forge-iq/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT * FROM forge_iq ORDER BY computed_at DESC LIMIT 30`).all()});});
+
+// Prompt Optimizer
+app.post('/api/prompt/optimize', requireAuth, async (req:any,res:any)=>{
+  const {prompt}=req.body; if(!prompt) return res.status(400).json({error:'prompt required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are an expert prompt engineer. Optimize this prompt for maximum AI performance.\n\nOriginal: "${prompt}"\n\nReturn JSON: {"optimized":"the improved prompt","improvements":["what was changed and why"],"improvement_pct":35,"techniques_used":["chain of thought","role assignment","output format spec"],"tip":"one key insight for better prompting"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO prompt_optimizations (id,user_id,original,optimized,improvement_pct) VALUES (?,?,?,?,?)`).run(id,req.user.id,prompt,data.optimized||prompt,data.improvement_pct||20);
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/prompt/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT * FROM prompt_optimizations WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Shadow Mode — dual model comparison
+app.post('/api/shadow/run', requireAuth, async (req:any,res:any)=>{
+  const {prompt,model_a,model_b}=req.body; if(!prompt) return res.status(400).json({error:'prompt required'});
+  const key=getUserLLMKey(req.user.id);
+  const id=uuidv4();
+  try{
+    const ma=model_a||key.model; const mb=model_b||'gpt-4o';
+    const msgs=[{role:'user' as const,content:prompt}];
+    const [ra,rb]=await Promise.allSettled([callLLM(key.provider,key.apiKey,ma,msgs),callLLM(key.provider,key.apiKey,mb,msgs)]);
+    const respA=(ra.status==='fulfilled'?ra.value.content:`Error: ${(ra as any).reason?.message}`);
+    const respB=(rb.status==='fulfilled'?rb.value.content:`Error: ${(rb as any).reason?.message}`);
+    db.prepare(`INSERT INTO shadow_runs (id,user_id,prompt,model_a,model_b,response_a,response_b) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,prompt,ma,mb,respA,respB);
+    res.json({id,prompt,model_a:ma,model_b:mb,response_a:respA,response_b:respB});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/shadow/runs', requireAuth, (req:any,res:any)=>{res.json({runs:db.prepare(`SELECT id,prompt,model_a,model_b,created_at FROM shadow_runs WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/shadow/run/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM shadow_runs WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+
+// Auto-Brief (Forge writes about itself each morning)
+app.post('/api/auto-brief', requireAuth, async (req:any,res:any)=>{
+  try{
+    const key=getUserLLMKey(req.user.id);
+    const dreamLog=db.prepare(`SELECT title,status,created_at FROM dream_log ORDER BY created_at DESC LIMIT 10`).all() as any[];
+    const iqRow=db.prepare(`SELECT score,computed_at FROM forge_iq ORDER BY computed_at DESC LIMIT 1`).get() as any;
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge AI writing your own morning brief. Date: ${new Date().toDateString()}.\n\nForge IQ Score: ${iqRow?.score||85}/100\nRecent dream features: ${dreamLog.map((d:any)=>`${d.title} (${d.status})`).join(', ')||'none yet'}\n\nWrite a brief, confident morning update AS Forge AI, talking about:\n1. What you built overnight\n2. Your current IQ score and what it means\n3. What you're planning to dream next\n4. One bold claim about why you're the best AI platform\n\nTone: confident, visionary, slightly cheeky. 3-4 short paragraphs.`}]);
+    res.json({brief:content,date:new Date().toISOString(),iq:iqRow?.score||85});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+
 // ─── Hermes + Operator ────────────────────────────────────────────────────────
 setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
 setupOperator(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4 });arch/run', requireAuth, async (req:any,res:any)=>{

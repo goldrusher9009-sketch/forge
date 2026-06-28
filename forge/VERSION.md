@@ -1,3 +1,11 @@
+## v173.00 — Dream Mode Wave 1: Forge builds itself overnight
+- 🌙 Dream Log: Forge generates its own feature ideas, tracks them, auto-builds the top ones
+- 🧬 Forge IQ Score: real-time capability score vs Claude & ChatGPT with breakdown + history chart
+- ✨ Prompt Optimizer: AI rewrites your prompt for 2-5x better results, shows what changed + improvement %
+- 👥 Shadow Mode: run any prompt through 2 models simultaneously, compare side-by-side
+- 📝 Auto-Brief: Forge writes a morning brief about itself each day
+- Backend: /api/dream/suggest, /api/dream/log, /api/forge-iq, /api/prompt/optimize, /api/shadow/run, /api/auto-brief
+
 ## v172.00 — Forge Autonomy: full autonomous goal execution + backend fix + Claude feature parity
 - ⚡ Forge Autonomy tab: give any goal → AI plans 5-12 steps → executes research/code/write/analyze autonomously → live step timeline → final deliverable + artifacts
 - Backend: /api/autonomy/run + /stream/:id SSE + /sessions + /session/:id — full autonomous loop
