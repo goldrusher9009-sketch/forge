@@ -171543,6 +171543,128 @@ app.delete('/api/triathlon-bricks/:id', auth, (req: any, res: any) => {
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── Deep Research ────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS deep_research_sessions (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, depth TEXT DEFAULT 'standard', status TEXT DEFAULT 'pending', questions TEXT DEFAULT '[]', report TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+const drClients = new Map<string,any[]>();
+app.post('/api/deep-research/run', requireAuth, async (req:any,res:any)=>{
+  const {topic,depth='standard'}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
+  const id=uuidv4(); db.prepare(`INSERT INTO deep_research_sessions (id,user_id,topic,depth) VALUES (?,?,?,?)`).run(id,req.user.id,topic,depth);
+  res.json({sessionId:id});
+  (async()=>{
+    const bcast=(e:string,d:any)=>{const p=`event: ${e}\ndata: ${JSON.stringify(d)}\n\n`;(drClients.get(id)||[]).forEach((r:any)=>{try{r.write(p);}catch{}});};
+    try{
+      const key=getUserLLMKey(req.user.id); const n=depth==='quick'?4:depth==='deep'?10:6;
+      bcast('thinking',{message:`🔬 Generating ${n} research questions…`});
+      const {content:qs}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Generate exactly ${n} specific research sub-questions to thoroughly investigate: "${topic}". Return ONLY a JSON array of strings.`}]);
+      let questions:string[]=[];try{questions=JSON.parse(qs.replace(/```json\n?|```\n?/g,'').trim());}catch{questions=[`What is ${topic}?`,`Key aspects of ${topic}?`,`Impact of ${topic}?`,`Future of ${topic}?`];}
+      db.prepare(`UPDATE deep_research_sessions SET questions=?,status='running' WHERE id=?`).run(JSON.stringify(questions),id);
+      bcast('questions',{questions});
+      const answers:string[]=[];
+      for(let i=0;i<questions.length;i++){
+        bcast('progress',{index:i,total:questions.length,question:questions[i]});
+        const {content:ans}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Research question: "${questions[i]}"\nContext topic: "${topic}"\nProvide a thorough, factual answer in 3-5 paragraphs with specific details, data points, and examples.`}]);
+        answers.push(ans); bcast('answer',{index:i,question:questions[i],answer:ans});
+        await new Promise(r=>setTimeout(r,400));
+      }
+      bcast('thinking',{message:'✍️ Synthesizing final report…'});
+      const {content:report}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a research analyst. Synthesize these research findings into a comprehensive report about: "${topic}"\n\nFindings:\n${answers.map((a,i)=>`Q${i+1}: ${questions[i]}\nA: ${a}`).join('\n\n')}\n\nWrite a structured report with these sections:\n# Executive Summary\n# Key Findings\n# Detailed Analysis\n# Implications & Future Outlook\n# Conclusion\n\nUse markdown formatting. Be thorough and authoritative.`}]);
+      db.prepare(`UPDATE deep_research_sessions SET report=?,status='done' WHERE id=?`).run(report,id);
+      bcast('complete',{report,sessionId:id});
+    }catch(e:any){db.prepare(`UPDATE deep_research_sessions SET status='error' WHERE id=?`).run(id);bcast('error',{error:e.message});}
+    drClients.delete(id);
+  })();
+});
+app.get('/api/deep-research/stream/:id', requireAuth, (req:any,res:any)=>{
+  res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('Connection','keep-alive'); res.flushHeaders();
+  const {id}=req.params; if(!drClients.has(id)) drClients.set(id,[]);  drClients.get(id)!.push(res);
+  const s=db.prepare(`SELECT * FROM deep_research_sessions WHERE id=?`).get(id) as any;
+  if(s?.status==='done') res.write(`event: complete\ndata: ${JSON.stringify({report:s.report,sessionId:id})}\n\n`);
+  const ka=setInterval(()=>{try{res.write(': ping\n\n');}catch{}},20000);
+  req.on('close',()=>{clearInterval(ka);const l=drClients.get(id)||[];const i=l.indexOf(res);if(i>-1)l.splice(i,1);});
+});
+app.get('/api/deep-research/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,topic,depth,status,created_at FROM deep_research_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/deep-research/session/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM deep_research_sessions WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+
+// ─── Study Mode ───────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS study_sessions (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, mode TEXT, content TEXT DEFAULT '{}', score INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+app.post('/api/study/generate', requireAuth, async (req:any,res:any)=>{
+  const {topic,mode='flashcards'}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
+  const key=getUserLLMKey(req.user.id);
+  const prompts:Record<string,string>={
+    flashcards:`Create 10 flashcards about "${topic}". Return JSON: {"cards":[{"front":"question","back":"answer"},...]}`,
+    quiz:`Create 8 multiple-choice quiz questions about "${topic}". Return JSON: {"questions":[{"question":"...","options":["a","b","c","d"],"correct":0,"explanation":"..."},...]}`,
+    summary:`Create structured study notes about "${topic}". Return JSON: {"title":"...","overview":"...","key_concepts":[{"term":"...","definition":"..."}],"bullet_points":["..."],"remember":["key point to remember"]}`,
+    mindmap:`Create a mind map about "${topic}". Return JSON: {"center":"${topic}","branches":[{"label":"main topic","children":["subtopic1","subtopic2"],"color":"#6366f1"},...]} with 5-7 branches each with 3-5 children, assign distinct colors.`
+  };
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:prompts[mode]||prompts.flashcards}]);
+    const cleaned=content.replace(/```json\n?|```\n?/g,'').trim();
+    const data=JSON.parse(cleaned);
+    const id=uuidv4(); db.prepare(`INSERT INTO study_sessions (id,user_id,topic,mode,content) VALUES (?,?,?,?,?)`).run(id,req.user.id,topic,mode,JSON.stringify(data));
+    res.json({id,data,mode,topic});
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+app.get('/api/study/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,topic,mode,score,created_at FROM study_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(req.user.id)});});
+app.put('/api/study/session/:id/score', requireAuth, (req:any,res:any)=>{db.prepare(`UPDATE study_sessions SET score=? WHERE id=? AND user_id=?`).run(req.body.score,req.params.id,req.user.id);res.json({ok:true});});
+
+// ─── Canvas / Artifacts ───────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS canvases (id TEXT PRIMARY KEY, user_id TEXT, title TEXT, type TEXT DEFAULT 'document', content TEXT DEFAULT '', version INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`);
+app.post('/api/canvas/create', requireAuth, async (req:any,res:any)=>{
+  const {prompt,type='document'}=req.body; if(!prompt) return res.status(400).json({error:'prompt required'});
+  const key=getUserLLMKey(req.user.id);
+  const typeInstr:Record<string,string>={document:'a well-structured document with headers and paragraphs',code:'clean, commented, working code',webpage:'a complete self-contained HTML page with CSS and JS',email:'a professional email with subject line',report:'a detailed analytical report with sections'};
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create ${typeInstr[type]||typeInstr.document} for: "${prompt}". Output only the content itself, no preamble.`}]);
+    const titleMatch=content.match(/^#\s+(.+)/m)||content.match(/^(.{0,60})/);
+    const title=titleMatch?titleMatch[1].trim().replace(/^#+\s*/,'').slice(0,60):prompt.slice(0,60);
+    const id=uuidv4(); db.prepare(`INSERT INTO canvases (id,user_id,title,type,content) VALUES (?,?,?,?,?)`).run(id,req.user.id,title,type,content);
+    res.json({id,title,type,content,version:1});
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+app.post('/api/canvas/edit', requireAuth, async (req:any,res:any)=>{
+  const {id,instruction,content}=req.body; const key=getUserLLMKey(req.user.id);
+  try{
+    const {content:updated}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are editing a document. Current content:\n${content}\n\nInstruction: ${instruction}\n\nReturn the complete updated document. Output only the content, no preamble.`}]);
+    db.prepare(`UPDATE canvases SET content=?,version=version+1,updated_at=datetime('now') WHERE id=? AND user_id=?`).run(updated,id,req.user.id);
+    const row=db.prepare(`SELECT version FROM canvases WHERE id=?`).get(id) as any;
+    res.json({content:updated,version:row?.version||1});
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+app.get('/api/canvas/list', requireAuth, (req:any,res:any)=>{res.json({canvases:db.prepare(`SELECT id,title,type,version,created_at,updated_at FROM canvases WHERE user_id=? ORDER BY updated_at DESC LIMIT 30`).all(req.user.id)});});
+app.get('/api/canvas/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM canvases WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+app.delete('/api/canvas/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM canvases WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
+
+// ─── Memory System ────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS user_memory (id TEXT PRIMARY KEY, user_id TEXT, key TEXT, value TEXT, category TEXT DEFAULT 'facts', auto_extracted INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`);
+app.get('/api/memory', requireAuth, (req:any,res:any)=>{res.json({memories:db.prepare(`SELECT * FROM user_memory WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id)});});
+app.post('/api/memory', requireAuth, (req:any,res:any)=>{
+  const {key,value,category='facts'}=req.body; if(!key||!value) return res.status(400).json({error:'key and value required'});
+  const id=uuidv4(); db.prepare(`INSERT INTO user_memory (id,user_id,key,value,category) VALUES (?,?,?,?,?)`).run(id,req.user.id,key,value,category);
+  res.json({id,key,value,category});
+});
+app.put('/api/memory/:id', requireAuth, (req:any,res:any)=>{
+  const {key,value,category}=req.body;
+  db.prepare(`UPDATE user_memory SET key=COALESCE(?,key),value=COALESCE(?,value),category=COALESCE(?,category),updated_at=datetime('now') WHERE id=? AND user_id=?`).run(key||null,value||null,category||null,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/memory/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM user_memory WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
+app.get('/api/memory/context', requireAuth, (req:any,res:any)=>{
+  const mems=db.prepare(`SELECT key,value,category FROM user_memory WHERE user_id=? ORDER BY category`).all(req.user.id) as any[];
+  const ctx=mems.length?`\n\n[User Memory]\n${mems.map((m:any)=>`- ${m.key}: ${m.value}`).join('\n')}`:'';
+  res.json({context:ctx,count:mems.length});
+});
+
+// ─── Smart Shopping ───────────────────────────────────────────────────────────
+app.post('/api/shop/search', requireAuth, async (req:any,res:any)=>{
+  const {query,budget,category='General'}=req.body; if(!query) return res.status(400).json({error:'query required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a smart shopping assistant. The user wants: "${query}" Category: ${category}${budget?` Budget: $${budget}`:''}.\n\nGenerate 6 product recommendations. Return JSON:\n{"products":[{"name":"...","price_estimate":"$X-$Y","rating":4.5,"pros":["..."],"cons":["..."],"why_fits":"...","category":"...","best_pick":false}],"buying_guide":"...","verdict":"best overall pick is..."}\n\nMake one product best_pick:true. Be specific with real product names and realistic prices.`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    res.json(data);
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+
 // ─── Hermes Autonomous Agent ──────────────────────────────────────────────────
 setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
 

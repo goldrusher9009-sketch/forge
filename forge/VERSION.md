@@ -1,3 +1,13 @@
+## v171.00 — 6 Power Features: Deep Research, Study Mode, Voice, Canvas, Shopping, Memory
+- Deep Research (🔬): multi-step AI research synthesis with live SSE progress, question generation, per-answer streaming, final report with download
+- Study Mode (📚): AI-generated flashcards, quiz with scoring, structured summary, mind map — any topic
+- Voice Mode (🎙️): Web Speech API real-time voice conversation, TTS responses, conversation history
+- Forge Canvas (🖼️): collaborative document/code/webpage editor with AI create+edit, version history, export
+- Smart Shopping (🛒): AI product finder & comparison — 6 recs with pros/cons, best pick, buying guide
+- Memory (🧠): persistent user context injection across all conversations — categorized key/value store
+- Backend: /api/deep-research/*, /api/study/*, /api/canvas/*, /api/memory/*, /api/shop/search
+- All 6 features backed by SQLite with session persistence
+
 ## v170.00 — Forge Operator: autonomous browser AI agent with live step streaming
 - operator.ts: AI plans goals → executes steps (navigate/search/read/analyze/write/summarize) → streams SSE
 - /api/operator/run, /stream/:id, /sessions, /session/:id, /cancel/:id, /delete/:id
