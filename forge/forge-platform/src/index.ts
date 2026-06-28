@@ -22,6 +22,7 @@ import { execFile, exec } from 'child_process';
 import { promisify } from 'util';
 import Database from 'better-sqlite3';
 import { setupAutonomy } from './autonomy';
+import { setupHermes } from './hermes';
 import cron from 'node-cron';
 
 const execAsync = promisify(exec);
@@ -171540,17 +171541,14 @@ app.delete('/api/triathlon-bricks/:id', auth, (req: any, res: any) => {
     res.json({ success: true });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
-// urban_harvests
-app.get('/api/urban-harvests', auth, (req: any, res: any) => {
-  try {
-    const rows = db.prepare('SELECT * FROM urban_harvests WHERE user_id=? ORDER BY id DESC').all(req.user.id);
-    res.json({ success: true, data: rows });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-app.post('/api/urban-harvests', auth, (req: any, res: any) => {
-  try {
-    const { harvest_date, quality } = req.body;
-    const result = db.prepare('INSERT INTO urban_harvests (user_id, harvest_date, quality) VALUES (?, ?, ?)').run(req.user.id, harvest_date, quality);
+
+// ─── Hermes Autonomous Agent ──────────────────────────────────────────────────
+setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
+
+// ─── Start server ─────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`Forge backend running on port ${PORT}`));
+te, quality);
     res.json({ success: true, id: result.lastInsertRowid });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });

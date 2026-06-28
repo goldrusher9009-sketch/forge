@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -5986,6 +5986,7 @@ export default function ForgeApp() {
             { id:'brief', icon:'☀️', label:'Morning Brief' },
             { id:'brain', icon:'🧠', label:'Forge Brain' },
             { id:'passport', icon:'🪪', label:'AI Twin Passport' },
+            { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'notes', icon:'📝', label:'Notes' },
             { id:'personas', icon:'🎭', label:'Personas' },
             { id:'templates', icon:'📋', label:'Templates' },
@@ -12175,6 +12176,255 @@ export default function ForgeApp() {
           );
         })()}
 
+
+        {/* ── Hermes — Autonomous Agent ─────────────────────────────── */}
+        {mainTab === 'hermes' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [goal, setGoal] = React.useState('');
+          const [runId, setRunId] = React.useState<string|null>(null);
+          const [steps, setSteps] = React.useState<any[]>([]);
+          const [status, setStatus] = React.useState<'idle'|'running'|'done'|'error'|'cancelled'>('idle');
+          const [summary, setSummary] = React.useState('');
+          const [files, setFiles] = React.useState<string[]>([]);
+          const [runs, setRuns] = React.useState<any[]>([]);
+          const [totalTokens, setTotalTokens] = React.useState(0);
+          const [thinking, setThinking] = React.useState('');
+          const [viewRun, setViewRun] = React.useState<any>(null);
+          const stepsRef = React.useRef<HTMLDivElement>(null);
+          const esRef = React.useRef<EventSource|null>(null);
+
+          React.useEffect(() => {
+            fetch(`${API}/api/hermes/runs`, { headers: { Authorization: `Bearer ${tok}` } })
+              .then(r => r.json()).then(d => setRuns(d.runs || [])).catch(() => {});
+          }, [status]);
+
+          React.useEffect(() => {
+            if (stepsRef.current) stepsRef.current.scrollTop = stepsRef.current.scrollHeight;
+          }, [steps]);
+
+          const startRun = async () => {
+            if (!goal.trim() || status === 'running') return;
+            setSteps([]); setSummary(''); setFiles([]); setTotalTokens(0); setThinking('');
+            setStatus('running');
+            const r = await fetch(`${API}/api/hermes/run`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ goal }),
+            });
+            const d = await r.json();
+            if (d.error) { setStatus('error'); setSummary(d.error); return; }
+            setRunId(d.id);
+            // Open SSE stream
+            if (esRef.current) esRef.current.close();
+            const es = new EventSource(`${API}/api/hermes/stream/${d.id}`);
+            esRef.current = es;
+            es.addEventListener('step', (e: any) => {
+              const s = JSON.parse(e.data);
+              setSteps(prev => [...prev, s]);
+              setThinking('');
+            });
+            es.addEventListener('thinking', (e: any) => {
+              const d2 = JSON.parse(e.data);
+              setThinking(d2.message || '');
+            });
+            es.addEventListener('done', (e: any) => {
+              const d2 = JSON.parse(e.data);
+              setStatus(d2.status || 'done');
+              setSummary(d2.summary || '');
+              setFiles(d2.files || []);
+              setTotalTokens(d2.total_tokens || 0);
+              setThinking('');
+              es.close();
+            });
+            es.onerror = () => { setStatus('error'); setSummary('Connection lost.'); es.close(); };
+          };
+
+          const cancel = async () => {
+            if (!runId) return;
+            await fetch(`${API}/api/hermes/cancel/${runId}`, { method: 'POST', headers: { Authorization: `Bearer ${tok}` } });
+            esRef.current?.close();
+            setStatus('cancelled');
+          };
+
+          const loadRun = async (id: string) => {
+            const r = await fetch(`${API}/api/hermes/run/${id}`, { headers: { Authorization: `Bearer ${tok}` } });
+            const d = await r.json();
+            setViewRun(d);
+          };
+
+          const STEP_ICONS: Record<string,string> = { plan:'🧠', tool_call:'🔧', tool_result:'📋', reflect:'💭', done:'✅', error:'❌' };
+          const TOOL_ICONS: Record<string,string> = { web_search:'🔍', write_file:'📝', read_file:'📖', save_to_brain:'🧠', send_approval:'✋', run_agent:'🤖', http_get:'🌐', calculate:'🔢', list_files:'📁', done:'✅' };
+
+          const EXAMPLE_GOALS = [
+            'Research my top 3 competitors, summarise their pricing and weaknesses, and write a 500-word positioning strategy',
+            'Write a cold email sequence (5 emails) for a B2B SaaS targeting HR directors at mid-size companies',
+            'Create a 7-day social media content plan for a restaurant with daily captions and hashtags',
+            'Write a detailed SEO blog post about AI tools for small businesses (1000 words)',
+            'Draft a client proposal for a web design project: scope, timeline, pricing, T&Cs',
+            'Build a weekly report template with KPI sections for a SaaS company',
+          ];
+
+          return (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', background:'var(--fg-bg)', overflow:'hidden' }}>
+            {/* Header */}
+            <div style={{ padding:'20px 28px 16px', borderBottom:'1px solid var(--fg-border)', background:'var(--fg-bg2)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
+                <div style={{ width:40, height:40, borderRadius:10, background:'linear-gradient(135deg,#ff1f35,#ff6b35)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>⚡</div>
+                <div>
+                  <div style={{ fontSize:18, fontWeight:800, color:'var(--fg-text)' }}>Hermes Agent</div>
+                  <div style={{ fontSize:12, color:'var(--fg-text3)' }}>Autonomous AI — plans, executes tools, reflects, loops until done</div>
+                </div>
+                {status === 'running' && (
+                  <button onClick={cancel} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid #ef4444', background:'rgba(239,68,68,0.1)', color:'#ef4444', cursor:'pointer', fontSize:12, fontWeight:700 }}>⏹ Cancel</button>
+                )}
+              </div>
+              {/* Goal input */}
+              <div style={{ display:'flex', gap:10 }}>
+                <textarea
+                  value={goal}
+                  onChange={e => setGoal(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) startRun(); }}
+                  placeholder="Give Hermes a goal — it will plan and execute non-stop until complete…"
+                  disabled={status === 'running'}
+                  rows={2}
+                  style={{ flex:1, padding:'10px 14px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13, resize:'none', fontFamily:'inherit', opacity: status==='running' ? 0.6 : 1 }}
+                />
+                <button
+                  onClick={startRun}
+                  disabled={status === 'running' || !goal.trim()}
+                  style={{ padding:'0 20px', borderRadius:10, border:'none', background: status==='running' ? '#666' : 'linear-gradient(135deg,#ff1f35,#ff6b35)', color:'#fff', fontSize:13, fontWeight:800, cursor: status==='running' ? 'not-allowed' : 'pointer', whiteSpace:'nowrap', minWidth:100 }}
+                >
+                  {status === 'running' ? '⚡ Running…' : '⚡ Run'}
+                </button>
+              </div>
+              {/* Example goals */}
+              {status === 'idle' && (
+                <div style={{ marginTop:10, display:'flex', gap:6, flexWrap:'wrap' }}>
+                  {EXAMPLE_GOALS.map(g => (
+                    <button key={g} onClick={() => setGoal(g)} style={{ padding:'4px 10px', borderRadius:20, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>
+                      {g.slice(0,50)}…
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
+              {/* Steps feed */}
+              <div ref={stepsRef} style={{ flex:1, overflowY:'auto', padding:'16px 20px' }}>
+                {steps.length === 0 && status === 'idle' && (
+                  <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--fg-text3)' }}>
+                    <div style={{ fontSize:48, marginBottom:12 }}>⚡</div>
+                    <div style={{ fontSize:16, fontWeight:700, color:'var(--fg-text2)', marginBottom:8 }}>Hermes is ready</div>
+                    <div style={{ fontSize:13 }}>Give it a goal above. It will plan, use tools, and work non-stop until done — no hand-holding needed.</div>
+                  </div>
+                )}
+                {thinking && (
+                  <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', borderRadius:10, background:'rgba(255,31,53,0.06)', border:'1px solid rgba(255,31,53,0.15)', marginBottom:10 }}>
+                    <span style={{ fontSize:16, animation:'spin 1s linear infinite' }}>⚙️</span>
+                    <span style={{ fontSize:13, color:'var(--fg-text2)', fontStyle:'italic' }}>{thinking}</span>
+                  </div>
+                )}
+                {steps.map((s, i) => (
+                  <div key={i} style={{ marginBottom:10, borderRadius:10, border:'1px solid var(--fg-border)', overflow:'hidden', background:'var(--fg-bg2)' }}>
+                    {/* Step header */}
+                    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', background:'var(--fg-bg3)', borderBottom:'1px solid var(--fg-border)' }}>
+                      <span style={{ fontSize:14 }}>{s.type === 'tool_call' && s.tool ? (TOOL_ICONS[s.tool] || '🔧') : (STEP_ICONS[s.type] || '•')}</span>
+                      <span style={{ fontSize:11, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+                        {s.type === 'tool_call' ? `→ ${s.tool}` : s.type === 'tool_result' ? `← ${s.tool}` : s.type}
+                      </span>
+                      <span style={{ marginLeft:'auto', fontSize:10, color:'var(--fg-text3)' }}>step {s.step}{s.elapsed_ms ? ` · ${(s.elapsed_ms/1000).toFixed(1)}s` : ''}</span>
+                    </div>
+                    {/* Step body */}
+                    <div style={{ padding:'10px 14px' }}>
+                      {s.type === 'tool_call' && s.tool_input && (
+                        <div style={{ marginBottom:6 }}>
+                          {Object.entries(s.tool_input).map(([k,v]) => (
+                            <div key={k} style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:2 }}>
+                              <span style={{ fontWeight:600, color:'var(--fg-text2)' }}>{k}:</span> {String(v).slice(0,200)}{String(v).length > 200 ? '…' : ''}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {s.type === 'tool_result' && (
+                        <div style={{ fontSize:12, color:'var(--fg-text)', whiteSpace:'pre-wrap', lineHeight:1.6, maxHeight:200, overflowY:'auto' }}>{String(s.tool_output || s.content).slice(0,1000)}</div>
+                      )}
+                      {(s.type === 'reflect' || s.type === 'plan') && (
+                        <div style={{ fontSize:12, color:'var(--fg-text2)', whiteSpace:'pre-wrap', lineHeight:1.6 }}>{s.content.slice(0,600)}</div>
+                      )}
+                      {s.type === 'done' && (
+                        <div style={{ fontSize:13, color:'#10b981', fontWeight:600 }}>{s.content}</div>
+                      )}
+                      {s.type === 'error' && (
+                        <div style={{ fontSize:12, color:'#ef4444' }}>{s.content}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {/* Final summary */}
+                {status !== 'idle' && status !== 'running' && summary && (
+                  <div style={{ borderRadius:12, border:`1px solid ${status==='done'?'#10b981':'#ef4444'}`, background: status==='done'?'rgba(16,185,129,0.08)':'rgba(239,68,68,0.08)', padding:'16px 18px', marginTop:10 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color: status==='done'?'#10b981':'#ef4444', marginBottom:8 }}>
+                      {status==='done' ? '✅ Complete' : status==='cancelled' ? '⏹ Cancelled' : '❌ Error'} · {totalTokens.toLocaleString()} tokens
+                    </div>
+                    <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{summary}</div>
+                    {files.length > 0 && (
+                      <div style={{ marginTop:12 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>Files produced</div>
+                        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                          {files.map(f => (
+                            <a key={f} href={`${API}/api/hermes/file/${runId}/${encodeURIComponent(f)}`} target="_blank" rel="noreferrer"
+                              style={{ padding:'5px 12px', borderRadius:8, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', color:'var(--fg-text2)', fontSize:12, textDecoration:'none', cursor:'pointer' }}>
+                              📄 {f}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right panel — run history */}
+              <div style={{ width:260, borderLeft:'1px solid var(--fg-border)', overflowY:'auto', background:'var(--fg-bg2)' }}>
+                <div style={{ padding:'12px 14px', borderBottom:'1px solid var(--fg-border)', fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Run History</div>
+                {runs.length === 0 && <div style={{ padding:'20px 14px', fontSize:12, color:'var(--fg-text3)' }}>No runs yet.</div>}
+                {runs.map(r => (
+                  <div key={r.id} onClick={() => loadRun(r.id)} style={{ padding:'10px 14px', borderBottom:'1px solid var(--fg-border)', cursor:'pointer', background: viewRun?.id === r.id ? 'var(--fg-bg3)' : 'transparent' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                      <span style={{ fontSize:10 }}>{r.status==='done'?'✅':r.status==='error'?'❌':r.status==='cancelled'?'⏹':'⚡'}</span>
+                      <span style={{ fontSize:10, fontWeight:700, color: r.status==='done'?'#10b981':r.status==='error'?'#ef4444':'var(--fg-orange)', textTransform:'uppercase' }}>{r.status}</span>
+                      <span style={{ marginLeft:'auto', fontSize:9, color:'var(--fg-text3)' }}>{r.started_at?.slice(5,16)}</span>
+                    </div>
+                    <div style={{ fontSize:12, color:'var(--fg-text)', lineHeight:1.4 }}>{r.goal.slice(0,80)}{r.goal.length>80?'…':''}</div>
+                    {r.total_tokens > 0 && <div style={{ fontSize:10, color:'var(--fg-text3)', marginTop:3 }}>{r.total_tokens.toLocaleString()} tokens</div>}
+                  </div>
+                ))}
+                {/* Run detail panel */}
+                {viewRun && (
+                  <div style={{ padding:'12px 14px', borderTop:'2px solid var(--fg-border)' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                      <span style={{ fontSize:11, fontWeight:700, color:'var(--fg-text)' }}>Run Detail</span>
+                      <button onClick={() => setViewRun(null)} style={{ fontSize:10, background:'none', border:'none', cursor:'pointer', color:'var(--fg-text3)' }}>✕</button>
+                    </div>
+                    <div style={{ fontSize:12, color:'var(--fg-text2)', marginBottom:8, lineHeight:1.5 }}>{viewRun.goal.slice(0,120)}</div>
+                    {viewRun.final_summary && <div style={{ fontSize:11, color:'var(--fg-text3)', lineHeight:1.5, marginBottom:8 }}>{viewRun.final_summary.slice(0,200)}</div>}
+                    {Object.keys(viewRun.files || {}).length > 0 && (
+                      <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                        {Object.keys(viewRun.files).map(f => (
+                          <a key={f} href={`${API}/api/hermes/file/${viewRun.id}/${encodeURIComponent(f)}`} target="_blank" rel="noreferrer"
+                            style={{ fontSize:11, color:'var(--fg-orange)', textDecoration:'none' }}>📄 {f}</a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          );
+        })()}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
         {mainTab === 'forgeauto' && (
