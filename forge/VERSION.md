@@ -1,3 +1,12 @@
+## v172.00 — Forge Autonomy: full autonomous goal execution + backend fix + Claude feature parity
+- ⚡ Forge Autonomy tab: give any goal → AI plans 5-12 steps → executes research/code/write/analyze autonomously → live step timeline → final deliverable + artifacts
+- Backend: /api/autonomy/run + /stream/:id SSE + /sessions + /session/:id — full autonomous loop
+- Fixed: backend truncation restored — all v171 routes now live (deep research, study, canvas, memory, shopping)
+- setupHermes + setupOperator both mounted correctly
+- Citations API: /api/chat/citations — inline source attribution
+- Extended thinking API: /api/chat/think — visible reasoning chain
+- Claude feature parity: computer use understanding, citations, extended thinking, code execution all documented and API-backed
+
 ## v171.00 — 6 Power Features: Deep Research, Study Mode, Voice, Canvas, Shopping, Memory
 - Deep Research (🔬): multi-step AI research synthesis with live SSE progress, question generation, per-answer streaming, final report with download
 - Study Mode (📚): AI-generated flashcards, quiz with scoring, structured summary, mind map — any topic

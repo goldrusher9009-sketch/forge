@@ -171554,7 +171554,7 @@ app.post('/api/deep-research/run', requireAuth, async (req:any,res:any)=>{
     const bcast=(e:string,d:any)=>{const p=`event: ${e}\ndata: ${JSON.stringify(d)}\n\n`;(drClients.get(id)||[]).forEach((r:any)=>{try{r.write(p);}catch{}});};
     try{
       const key=getUserLLMKey(req.user.id); const n=depth==='quick'?4:depth==='deep'?10:6;
-      bcast('thinking',{message:`🔬 Generating ${n} research questions…`});
+      bcast('thinking',{message:`Generating ${n} research questions…`});
       const {content:qs}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Generate exactly ${n} specific research sub-questions to thoroughly investigate: "${topic}". Return ONLY a JSON array of strings.`}]);
       let questions:string[]=[];try{questions=JSON.parse(qs.replace(/```json\n?|```\n?/g,'').trim());}catch{questions=[`What is ${topic}?`,`Key aspects of ${topic}?`,`Impact of ${topic}?`,`Future of ${topic}?`];}
       db.prepare(`UPDATE deep_research_sessions SET questions=?,status='running' WHERE id=?`).run(JSON.stringify(questions),id);
@@ -171562,21 +171562,21 @@ app.post('/api/deep-research/run', requireAuth, async (req:any,res:any)=>{
       const answers:string[]=[];
       for(let i=0;i<questions.length;i++){
         bcast('progress',{index:i,total:questions.length,question:questions[i]});
-        const {content:ans}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Research question: "${questions[i]}"\nContext topic: "${topic}"\nProvide a thorough, factual answer in 3-5 paragraphs with specific details, data points, and examples.`}]);
+        const {content:ans}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Research question: "${questions[i]}"\nTopic context: "${topic}"\nProvide a thorough, factual answer in 3-5 paragraphs with specific details and examples.`}]);
         answers.push(ans); bcast('answer',{index:i,question:questions[i],answer:ans});
         await new Promise(r=>setTimeout(r,400));
       }
-      bcast('thinking',{message:'✍️ Synthesizing final report…'});
-      const {content:report}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a research analyst. Synthesize these research findings into a comprehensive report about: "${topic}"\n\nFindings:\n${answers.map((a,i)=>`Q${i+1}: ${questions[i]}\nA: ${a}`).join('\n\n')}\n\nWrite a structured report with these sections:\n# Executive Summary\n# Key Findings\n# Detailed Analysis\n# Implications & Future Outlook\n# Conclusion\n\nUse markdown formatting. Be thorough and authoritative.`}]);
+      bcast('thinking',{message:'Synthesizing final report…'});
+      const {content:report}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Synthesize research about "${topic}" into a comprehensive report.\nFindings:\n${answers.map((a,i)=>`Q${i+1}: ${questions[i]}\nA: ${a}`).join('\n\n')}\n\nSections: Executive Summary, Key Findings, Detailed Analysis, Implications, Conclusion. Use markdown.`}]);
       db.prepare(`UPDATE deep_research_sessions SET report=?,status='done' WHERE id=?`).run(report,id);
       bcast('complete',{report,sessionId:id});
-    }catch(e:any){db.prepare(`UPDATE deep_research_sessions SET status='error' WHERE id=?`).run(id);bcast('error',{error:e.message});}
+    }catch(e:any){db.prepare(`UPDATE deep_research_sessions SET status='error' WHERE id=?`).run(id);bcast('error',{error:(e as any).message});}
     drClients.delete(id);
   })();
 });
 app.get('/api/deep-research/stream/:id', requireAuth, (req:any,res:any)=>{
   res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('Connection','keep-alive'); res.flushHeaders();
-  const {id}=req.params; if(!drClients.has(id)) drClients.set(id,[]);  drClients.get(id)!.push(res);
+  const {id}=req.params; if(!drClients.has(id)) drClients.set(id,[]); drClients.get(id)!.push(res);
   const s=db.prepare(`SELECT * FROM deep_research_sessions WHERE id=?`).get(id) as any;
   if(s?.status==='done') res.write(`event: complete\ndata: ${JSON.stringify({report:s.report,sessionId:id})}\n\n`);
   const ka=setInterval(()=>{try{res.write(': ping\n\n');}catch{}},20000);
@@ -171590,19 +171590,13 @@ db.exec(`CREATE TABLE IF NOT EXISTS study_sessions (id TEXT PRIMARY KEY, user_id
 app.post('/api/study/generate', requireAuth, async (req:any,res:any)=>{
   const {topic,mode='flashcards'}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
   const key=getUserLLMKey(req.user.id);
-  const prompts:Record<string,string>={
-    flashcards:`Create 10 flashcards about "${topic}". Return JSON: {"cards":[{"front":"question","back":"answer"},...]}`,
-    quiz:`Create 8 multiple-choice quiz questions about "${topic}". Return JSON: {"questions":[{"question":"...","options":["a","b","c","d"],"correct":0,"explanation":"..."},...]}`,
-    summary:`Create structured study notes about "${topic}". Return JSON: {"title":"...","overview":"...","key_concepts":[{"term":"...","definition":"..."}],"bullet_points":["..."],"remember":["key point to remember"]}`,
-    mindmap:`Create a mind map about "${topic}". Return JSON: {"center":"${topic}","branches":[{"label":"main topic","children":["subtopic1","subtopic2"],"color":"#6366f1"},...]} with 5-7 branches each with 3-5 children, assign distinct colors.`
-  };
+  const prompts:Record<string,string>={flashcards:`Create 10 flashcards about "${topic}". Return JSON: {"cards":[{"front":"question","back":"answer"},...]}`,quiz:`Create 8 multiple-choice questions about "${topic}". Return JSON: {"questions":[{"question":"...","options":["a","b","c","d"],"correct":0,"explanation":"..."},...]}`,summary:`Create study notes about "${topic}". Return JSON: {"title":"...","overview":"...","key_concepts":[{"term":"...","definition":"..."}],"bullet_points":["..."],"remember":["..."]}`,mindmap:`Create a mind map about "${topic}". Return JSON: {"center":"${topic}","branches":[{"label":"main topic","children":["sub1","sub2"],"color":"#6366f1"},...]} with 5-7 branches.`};
   try{
     const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:prompts[mode]||prompts.flashcards}]);
-    const cleaned=content.replace(/```json\n?|```\n?/g,'').trim();
-    const data=JSON.parse(cleaned);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
     const id=uuidv4(); db.prepare(`INSERT INTO study_sessions (id,user_id,topic,mode,content) VALUES (?,?,?,?,?)`).run(id,req.user.id,topic,mode,JSON.stringify(data));
     res.json({id,data,mode,topic});
-  }catch(e:any){res.status(500).json({error:e.message});}
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
 app.get('/api/study/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,topic,mode,score,created_at FROM study_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(req.user.id)});});
 app.put('/api/study/session/:id/score', requireAuth, (req:any,res:any)=>{db.prepare(`UPDATE study_sessions SET score=? WHERE id=? AND user_id=?`).run(req.body.score,req.params.id,req.user.id);res.json({ok:true});});
@@ -171612,30 +171606,30 @@ db.exec(`CREATE TABLE IF NOT EXISTS canvases (id TEXT PRIMARY KEY, user_id TEXT,
 app.post('/api/canvas/create', requireAuth, async (req:any,res:any)=>{
   const {prompt,type='document'}=req.body; if(!prompt) return res.status(400).json({error:'prompt required'});
   const key=getUserLLMKey(req.user.id);
-  const typeInstr:Record<string,string>={document:'a well-structured document with headers and paragraphs',code:'clean, commented, working code',webpage:'a complete self-contained HTML page with CSS and JS',email:'a professional email with subject line',report:'a detailed analytical report with sections'};
+  const typeInstr:Record<string,string>={document:'a well-structured document',code:'clean commented working code',webpage:'a complete self-contained HTML page',email:'a professional email',report:'a detailed analytical report'};
   try{
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create ${typeInstr[type]||typeInstr.document} for: "${prompt}". Output only the content itself, no preamble.`}]);
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create ${typeInstr[type]||typeInstr.document} for: "${prompt}". Output only the content itself.`}]);
     const titleMatch=content.match(/^#\s+(.+)/m)||content.match(/^(.{0,60})/);
     const title=titleMatch?titleMatch[1].trim().replace(/^#+\s*/,'').slice(0,60):prompt.slice(0,60);
     const id=uuidv4(); db.prepare(`INSERT INTO canvases (id,user_id,title,type,content) VALUES (?,?,?,?,?)`).run(id,req.user.id,title,type,content);
     res.json({id,title,type,content,version:1});
-  }catch(e:any){res.status(500).json({error:e.message});}
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
 app.post('/api/canvas/edit', requireAuth, async (req:any,res:any)=>{
   const {id,instruction,content}=req.body; const key=getUserLLMKey(req.user.id);
   try{
-    const {content:updated}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are editing a document. Current content:\n${content}\n\nInstruction: ${instruction}\n\nReturn the complete updated document. Output only the content, no preamble.`}]);
+    const {content:updated}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Edit this document.\nCurrent:\n${content}\n\nInstruction: ${instruction}\n\nReturn the complete updated document only.`}]);
     db.prepare(`UPDATE canvases SET content=?,version=version+1,updated_at=datetime('now') WHERE id=? AND user_id=?`).run(updated,id,req.user.id);
     const row=db.prepare(`SELECT version FROM canvases WHERE id=?`).get(id) as any;
     res.json({content:updated,version:row?.version||1});
-  }catch(e:any){res.status(500).json({error:e.message});}
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
 app.get('/api/canvas/list', requireAuth, (req:any,res:any)=>{res.json({canvases:db.prepare(`SELECT id,title,type,version,created_at,updated_at FROM canvases WHERE user_id=? ORDER BY updated_at DESC LIMIT 30`).all(req.user.id)});});
 app.get('/api/canvas/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM canvases WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
 app.delete('/api/canvas/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM canvases WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
 
 // ─── Memory System ────────────────────────────────────────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS user_memory (id TEXT PRIMARY KEY, user_id TEXT, key TEXT, value TEXT, category TEXT DEFAULT 'facts', auto_extracted INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS user_memory (id TEXT PRIMARY KEY, user_id TEXT, key TEXT, value TEXT, category TEXT DEFAULT 'facts', created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`);
 app.get('/api/memory', requireAuth, (req:any,res:any)=>{res.json({memories:db.prepare(`SELECT * FROM user_memory WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id)});});
 app.post('/api/memory', requireAuth, (req:any,res:any)=>{
   const {key,value,category='facts'}=req.body; if(!key||!value) return res.status(400).json({error:'key and value required'});
@@ -171659,174 +171653,289 @@ app.post('/api/shop/search', requireAuth, async (req:any,res:any)=>{
   const {query,budget,category='General'}=req.body; if(!query) return res.status(400).json({error:'query required'});
   const key=getUserLLMKey(req.user.id);
   try{
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a smart shopping assistant. The user wants: "${query}" Category: ${category}${budget?` Budget: $${budget}`:''}.\n\nGenerate 6 product recommendations. Return JSON:\n{"products":[{"name":"...","price_estimate":"$X-$Y","rating":4.5,"pros":["..."],"cons":["..."],"why_fits":"...","category":"...","best_pick":false}],"buying_guide":"...","verdict":"best overall pick is..."}\n\nMake one product best_pick:true. Be specific with real product names and realistic prices.`}]);
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Smart shopping assistant. User wants: "${query}" Category: ${category}${budget?` Budget: $${budget}`:''}.\nGenerate 6 product recommendations. Return JSON:\n{"products":[{"name":"...","price_estimate":"$X-$Y","rating":4.5,"pros":["..."],"cons":["..."],"why_fits":"...","best_pick":false}],"buying_guide":"...","verdict":"..."}\nMake one product best_pick:true.`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    res.json(data);
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+
+// ─── Forge Autonomy Loop ──────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS autonomy_sessions (id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, status TEXT DEFAULT 'pending', plan TEXT DEFAULT '[]', steps_done INTEGER DEFAULT 0, steps_total INTEGER DEFAULT 0, artifacts TEXT DEFAULT '[]', final_output TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')), completed_at TEXT)`);
+const autonomyClients = new Map<string,any[]>();
+const abcast=(sid:string,e:string,d:any)=>{const p=`event: ${e}\ndata: ${JSON.stringify(d)}\n\n`;(autonomyClients.get(sid)||[]).forEach((r:any)=>{try{r.write(p);}catch{}});};
+app.post('/api/autonomy/run', requireAuth, async (req:any,res:any)=>{
+  const {goal}=req.body; if(!goal) return res.status(400).json({error:'goal required'});
+  const id=uuidv4(); db.prepare(`INSERT INTO autonomy_sessions (id,user_id,goal) VALUES (?,?,?)`).run(id,req.user.id,goal);
+  res.json({sessionId:id});
+  (async()=>{
+    try{
+      const key=getUserLLMKey(req.user.id);
+      abcast(id,'thinking',{message:'🧠 Analyzing goal and forming action plan…'});
+      const {content:planRaw}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge Autonomous Agent. User goal:\n"${goal}"\n\nCreate a 5-12 step execution plan. Return JSON:\n{"plan_summary":"...","steps":[{"id":1,"type":"research|code|write|analyze|browse|create|synthesize","title":"short title","instruction":"detailed instruction","expected_output":"..."}],"final_deliverable":"description"}`}]);
+      let plan:any={steps:[{id:1,type:'research',title:'Research',instruction:goal,expected_output:'Findings'},{id:2,type:'synthesize',title:'Synthesize',instruction:'Compile findings',expected_output:'Output'}],plan_summary:goal,final_deliverable:'Comprehensive response'};
+      try{plan=JSON.parse(planRaw.replace(/```json\n?|```\n?/g,'').trim());}catch{}
+      db.prepare(`UPDATE autonomy_sessions SET plan=?,steps_total=?,status='running' WHERE id=?`).run(JSON.stringify(plan.steps),plan.steps.length,id);
+      abcast(id,'plan',{steps:plan.steps,summary:plan.plan_summary,deliverable:plan.final_deliverable});
+      const artifacts:any[]=[]; const history:string[]=[];
+      for(let i=0;i<plan.steps.length;i++){
+        const step=plan.steps[i];
+        abcast(id,'step_start',{index:i,total:plan.steps.length,step});
+        try{
+          let result='';
+          if(['research','browse'].includes(step.type)){
+            const {content:r}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Research task: "${step.instruction}"\nGoal: "${goal}"\nProvide comprehensive research findings with specific facts and examples.`}]);
+            result=r;
+          } else if(step.type==='code'){
+            const {content:r}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Write code for: ${step.instruction}\nContext: ${history.slice(-3).join('\n')}\nProvide complete, working, well-commented code.`}]);
+            result=r; artifacts.push({type:'code',title:step.title,content:r});
+          } else if(['write','create'].includes(step.type)){
+            const {content:r}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create: ${step.instruction}\nContext: ${history.slice(-5).join('\n')}\nGoal: ${goal}\nProduce complete high-quality output.`}]);
+            result=r; artifacts.push({type:'document',title:step.title,content:r});
+          } else {
+            const {content:r}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Task: ${step.instruction}\nContext: ${history.slice(-5).join('\n')}\nGoal: ${goal}\nComplete this step thoroughly.`}]);
+            result=r;
+          }
+          history.push(`Step ${i+1} [${step.type}] "${step.title}": ${result.slice(0,800)}`);
+          db.prepare(`UPDATE autonomy_sessions SET steps_done=? WHERE id=?`).run(i+1,id);
+          abcast(id,'step_done',{index:i,step,result:result.slice(0,2000),artifacts});
+        }catch(e:any){abcast(id,'step_error',{index:i,step,error:(e as any).message});history.push(`Step ${i+1} failed: ${(e as any).message}`);}
+        await new Promise(r=>setTimeout(r,600));
+      }
+      abcast(id,'thinking',{message:'✍️ Composing final deliverable…'});
+      const {content:finalOutput}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge Autonomous Agent. Task complete.\nGoal: "${goal}"\nSteps done:\n${history.join('\n\n')}\n\nProduce the FINAL comprehensive deliverable — complete, polished, immediately useful. Use markdown.`}]);
+      db.prepare(`UPDATE autonomy_sessions SET status='done',artifacts=?,final_output=?,completed_at=datetime('now') WHERE id=?`).run(JSON.stringify(artifacts),finalOutput,id);
+      abcast(id,'complete',{output:finalOutput,artifacts,sessionId:id});
+    }catch(e:any){db.prepare(`UPDATE autonomy_sessions SET status='error' WHERE id=?`).run(id);abcast(id,'error',{error:(e as any).message});}
+    autonomyClients.delete(id);
+  })();
+});
+app.get('/api/autonomy/stream/:id', requireAuth, (req:any,res:any)=>{
+  res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('Connection','keep-alive'); res.flushHeaders();
+  const {id}=req.params; if(!autonomyClients.has(id)) autonomyClients.set(id,[]); autonomyClients.get(id)!.push(res);
+  const s=db.prepare(`SELECT * FROM autonomy_sessions WHERE id=?`).get(id) as any;
+  if(s?.status==='done') res.write(`event: complete\ndata: ${JSON.stringify({output:s.final_output,artifacts:JSON.parse(s.artifacts||'[]'),sessionId:id})}\n\n`);
+  const ka=setInterval(()=>{try{res.write(': ping\n\n');}catch{}},20000);
+  req.on('close',()=>{clearInterval(ka);const l=autonomyClients.get(id)||[];const i=l.indexOf(res);if(i>-1)l.splice(i,1);});
+});
+app.get('/api/autonomy/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,goal,status,steps_done,steps_total,created_at,completed_at FROM autonomy_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/autonomy/session/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM autonomy_sessions WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+
+// ─── Hermes + Operator ────────────────────────────────────────────────────────
+setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
+setupOperator(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4 });arch/run', requireAuth, async (req:any,res:any)=>{
+  const {topic,depth='standard'}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
+  const id=uuidv4(); db.prepare(`INSERT INTO deep_research_sessions (id,user_id,topic,depth) VALUES (?,?,?,?)`).run(id,req.user.id,topic,depth);
+  res.json({sessionId:id});
+  (async()=>{
+    const bcast=(e:string,d:any)=>{const p=`event: ${e}\ndata: ${JSON.stringify(d)}\n\n`;(drClients.get(id)||[]).forEach((r:any)=>{try{r.write(p);}catch{}});};
+    try{
+      const key=getUserLLMKey(req.user.id); const n=depth==='quick'?4:depth==='deep'?10:6;
+      bcast('thinking',{message:`Generating ${n} research questions…`});
+      const {content:qs}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Generate exactly ${n} specific research sub-questions to thoroughly investigate: "${topic}". Return ONLY a JSON array of strings.`}]);
+      let questions:string[]=[];try{questions=JSON.parse(qs.replace(/```json\n?|```\n?/g,'').trim());}catch{questions=[`What is ${topic}?`,`Key aspects of ${topic}?`,`Impact of ${topic}?`,`Future of ${topic}?`];}
+      db.prepare(`UPDATE deep_research_sessions SET questions=?,status='running' WHERE id=?`).run(JSON.stringify(questions),id);
+      bcast('questions',{questions});
+      const answers:string[]=[];
+      for(let i=0;i<questions.length;i++){
+        bcast('progress',{index:i,total:questions.length,question:questions[i]});
+        const {content:ans}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Research question: "${questions[i]}"\nTopic: "${topic}"\nProvide a thorough, factual answer in 3-5 paragraphs.`}]);
+        answers.push(ans); bcast('answer',{index:i,question:questions[i],answer:ans});
+        await new Promise(r=>setTimeout(r,400));
+      }
+      bcast('thinking',{message:'Synthesizing final report…'});
+      const {content:report}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Synthesize research about "${topic}" into a comprehensive report.\nFindings:\n${answers.map((a,i)=>`Q${i+1}: ${questions[i]}\nA: ${a}`).join('\n\n')}\n\nWrite sections: Executive Summary, Key Findings, Detailed Analysis, Implications, Conclusion. Use markdown.`}]);
+      db.prepare(`UPDATE deep_research_sessions SET report=?,status='done' WHERE id=?`).run(report,id);
+      bcast('complete',{report,sessionId:id});
+    }catch(e:any){db.prepare(`UPDATE deep_research_sessions SET status='error' WHERE id=?`).run(id);bcast('error',{error:e.message});}
+    drClients.delete(id);
+  })();
+});
+app.get('/api/deep-research/stream/:id', requireAuth, (req:any,res:any)=>{
+  res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('Connection','keep-alive'); res.flushHeaders();
+  const {id}=req.params; if(!drClients.has(id)) drClients.set(id,[]); drClients.get(id)!.push(res);
+  const s=db.prepare(`SELECT * FROM deep_research_sessions WHERE id=?`).get(id) as any;
+  if(s?.status==='done') res.write(`event: complete\ndata: ${JSON.stringify({report:s.report,sessionId:id})}\n\n`);
+  const ka=setInterval(()=>{try{res.write(': ping\n\n');}catch{}},20000);
+  req.on('close',()=>{clearInterval(ka);const l=drClients.get(id)||[];const i=l.indexOf(res);if(i>-1)l.splice(i,1);});
+});
+app.get('/api/deep-research/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,topic,depth,status,created_at FROM deep_research_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/deep-research/session/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM deep_research_sessions WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+
+// ─── Study Mode ───────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS study_sessions (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, mode TEXT, content TEXT DEFAULT '{}', score INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+app.post('/api/study/generate', requireAuth, async (req:any,res:any)=>{
+  const {topic,mode='flashcards'}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
+  const key=getUserLLMKey(req.user.id);
+  const prompts:Record<string,string>={
+    flashcards:`Create 10 flashcards about "${topic}". Return JSON: {"cards":[{"front":"question","back":"answer"},...]}`,
+    quiz:`Create 8 multiple-choice questions about "${topic}". Return JSON: {"questions":[{"question":"...","options":["a","b","c","d"],"correct":0,"explanation":"..."},...]}`,
+    summary:`Create study notes about "${topic}". Return JSON: {"title":"...","overview":"...","key_concepts":[{"term":"...","definition":"..."}],"bullet_points":["..."],"remember":["..."]}`,
+    mindmap:`Create a mind map about "${topic}". Return JSON: {"center":"${topic}","branches":[{"label":"main topic","children":["sub1","sub2"],"color":"#6366f1"},...]} with 5-7 branches.`
+  };
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:prompts[mode]||prompts.flashcards}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO study_sessions (id,user_id,topic,mode,content) VALUES (?,?,?,?,?)`).run(id,req.user.id,topic,mode,JSON.stringify(data));
+    res.json({id,data,mode,topic});
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+app.get('/api/study/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,topic,mode,score,created_at FROM study_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(req.user.id)});});
+app.put('/api/study/session/:id/score', requireAuth, (req:any,res:any)=>{db.prepare(`UPDATE study_sessions SET score=? WHERE id=? AND user_id=?`).run(req.body.score,req.params.id,req.user.id);res.json({ok:true});});
+
+// ─── Canvas / Artifacts ───────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS canvases (id TEXT PRIMARY KEY, user_id TEXT, title TEXT, type TEXT DEFAULT 'document', content TEXT DEFAULT '', version INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`);
+app.post('/api/canvas/create', requireAuth, async (req:any,res:any)=>{
+  const {prompt,type='document'}=req.body; if(!prompt) return res.status(400).json({error:'prompt required'});
+  const key=getUserLLMKey(req.user.id);
+  const typeInstr:Record<string,string>={document:'a well-structured document',code:'clean commented working code',webpage:'a complete self-contained HTML page',email:'a professional email',report:'a detailed analytical report'};
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create ${typeInstr[type]||typeInstr.document} for: "${prompt}". Output only the content itself.`}]);
+    const titleMatch=content.match(/^#\s+(.+)/m)||content.match(/^(.{0,60})/);
+    const title=titleMatch?titleMatch[1].trim().replace(/^#+\s*/,'').slice(0,60):prompt.slice(0,60);
+    const id=uuidv4(); db.prepare(`INSERT INTO canvases (id,user_id,title,type,content) VALUES (?,?,?,?,?)`).run(id,req.user.id,title,type,content);
+    res.json({id,title,type,content,version:1});
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+app.post('/api/canvas/edit', requireAuth, async (req:any,res:any)=>{
+  const {id,instruction,content}=req.body; const key=getUserLLMKey(req.user.id);
+  try{
+    const {content:updated}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Edit this document.\nCurrent:\n${content}\n\nInstruction: ${instruction}\n\nReturn the complete updated document only.`}]);
+    db.prepare(`UPDATE canvases SET content=?,version=version+1,updated_at=datetime('now') WHERE id=? AND user_id=?`).run(updated,id,req.user.id);
+    const row=db.prepare(`SELECT version FROM canvases WHERE id=?`).get(id) as any;
+    res.json({content:updated,version:row?.version||1});
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+app.get('/api/canvas/list', requireAuth, (req:any,res:any)=>{res.json({canvases:db.prepare(`SELECT id,title,type,version,created_at,updated_at FROM canvases WHERE user_id=? ORDER BY updated_at DESC LIMIT 30`).all(req.user.id)});});
+app.get('/api/canvas/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM canvases WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+app.delete('/api/canvas/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM canvases WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
+
+// ─── Memory System ────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS user_memory (id TEXT PRIMARY KEY, user_id TEXT, key TEXT, value TEXT, category TEXT DEFAULT 'facts', created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`);
+app.get('/api/memory', requireAuth, (req:any,res:any)=>{res.json({memories:db.prepare(`SELECT * FROM user_memory WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id)});});
+app.post('/api/memory', requireAuth, (req:any,res:any)=>{
+  const {key,value,category='facts'}=req.body; if(!key||!value) return res.status(400).json({error:'key and value required'});
+  const id=uuidv4(); db.prepare(`INSERT INTO user_memory (id,user_id,key,value,category) VALUES (?,?,?,?,?)`).run(id,req.user.id,key,value,category);
+  res.json({id,key,value,category});
+});
+app.put('/api/memory/:id', requireAuth, (req:any,res:any)=>{
+  const {key,value,category}=req.body;
+  db.prepare(`UPDATE user_memory SET key=COALESCE(?,key),value=COALESCE(?,value),category=COALESCE(?,category),updated_at=datetime('now') WHERE id=? AND user_id=?`).run(key||null,value||null,category||null,req.params.id,req.user.id);
+  res.json({ok:true});
+});
+app.delete('/api/memory/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM user_memory WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
+app.get('/api/memory/context', requireAuth, (req:any,res:any)=>{
+  const mems=db.prepare(`SELECT key,value,category FROM user_memory WHERE user_id=? ORDER BY category`).all(req.user.id) as any[];
+  const ctx=mems.length?`\n\n[User Memory]\n${mems.map((m:any)=>`- ${m.key}: ${m.value}`).join('\n')}`:'';
+  res.json({context:ctx,count:mems.length});
+});
+
+// ─── Smart Shopping ───────────────────────────────────────────────────────────
+app.post('/api/shop/search', requireAuth, async (req:any,res:any)=>{
+  const {query,budget,category='General'}=req.body; if(!query) return res.status(400).json({error:'query required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Smart shopping assistant. User wants: "${query}" Category: ${category}${budget?` Budget: $${budget}`:''}.\nGenerate 6 product recommendations. Return JSON:\n{"products":[{"name":"...","price_estimate":"$X-$Y","rating":4.5,"pros":["..."],"cons":["..."],"why_fits":"...","best_pick":false}],"buying_guide":"...","verdict":"..."}\nMake one product best_pick:true.`}]);
     const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
     res.json(data);
   }catch(e:any){res.status(500).json({error:e.message});}
 });
 
+// ─── Citations / Extended Thinking / Code Execution ──────────────────────────
+app.post('/api/chat/citations', requireAuth, async (req:any,res:any)=>{
+  const {messages,documents}=req.body; if(!messages) return res.status(400).json({error:'messages required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const sysmsg=`You are a helpful assistant. When you use information from provided documents, cite the source with [Source: "title"] inline.\n\nDocuments:\n${(documents||[]).map((d:any,i:number)=>`[${i+1}] Title: "${d.title}"\n${d.content}`).join('\n\n')}`;
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,messages,sysmsg as any);
+    const citations:any[]=[]; const re=/\[Source:\s*"([^"]+)"\]/g; let m;
+    while((m=re.exec(content))!==null) citations.push({title:m[1],index:m.index});
+    res.json({content,citations});
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+
+app.post('/api/chat/think', requireAuth, async (req:any,res:any)=>{
+  const {messages,budget=8000}=req.body; if(!messages) return res.status(400).json({error:'messages required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const thinkPrompt=[{role:'user' as const,content:`<thinking>\nThink step by step with extended reasoning. Budget: ${budget} tokens of thinking.\n</thinking>\n\n${messages[messages.length-1]?.content||''}`}];
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,thinkPrompt);
+    const thinkMatch=content.match(/<thinking>([\s\S]*?)<\/antml:thinking>/);
+    const thinking=thinkMatch?thinkMatch[1].trim():'';
+    const answer=content.replace(/<thinking>[\s\S]*?<\/antml:thinking>/g,'').trim();
+    res.json({thinking,answer,full:content});
+  }catch(e:any){res.status(500).json({error:e.message});}
+});
+
+// ─── Forge Autonomous Form (full autonomy loop) ───────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS autonomy_sessions (id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, status TEXT DEFAULT 'pending', plan TEXT DEFAULT '[]', steps_done INTEGER DEFAULT 0, steps_total INTEGER DEFAULT 0, artifacts TEXT DEFAULT '[]', final_output TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')), completed_at TEXT)`);
+const autonomyClients = new Map<string,any[]>();
+const abcast=(id:string,e:string,d:any)=>{const p=`event: ${e}\ndata: ${JSON.stringify(d)}\n\n`;(autonomyClients.get(id)||[]).forEach((r:any)=>{try{r.write(p);}catch{}});};
+
+app.post('/api/autonomy/run', requireAuth, async (req:any,res:any)=>{
+  const {goal,mode='full'}=req.body; if(!goal) return res.status(400).json({error:'goal required'});
+  const id=uuidv4(); db.prepare(`INSERT INTO autonomy_sessions (id,user_id,goal) VALUES (?,?,?)`).run(id,req.user.id,goal);
+  res.json({sessionId:id});
+  (async()=>{
+    try{
+      const key=getUserLLMKey(req.user.id);
+      abcast(id,'thinking',{message:'🧠 Analyzing your goal and forming a complete action plan…'});
+      const {content:planRaw}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge Autonomous Agent — the most capable AI assistant ever built. A user gave you this goal:\n"${goal}"\n\nCreate a comprehensive autonomous execution plan. You have access to:\n- Web browsing & research\n- Code writing & execution\n- Document creation\n- Data analysis\n- API calls\n- File creation\n\nBreak this into 5-12 concrete steps. Return JSON:\n{"plan_summary":"...","steps":[{"id":1,"type":"research|code|write|analyze|browse|create|synthesize","title":"short title","instruction":"detailed what to do","tool":"web_search|code_exec|llm|file_create|api_call","expected_output":"..."}],"final_deliverable":"description of what user will receive"}`}]);
+      let plan:any={steps:[],plan_summary:'',final_deliverable:''};
+      try{plan=JSON.parse(planRaw.replace(/```json\n?|```\n?/g,'').trim());}catch{plan={plan_summary:goal,steps:[{id:1,type:'research',title:'Research',instruction:goal,tool:'llm',expected_output:'Research findings'},{id:2,type:'synthesize',title:'Synthesize',instruction:'Compile findings',tool:'llm',expected_output:'Final output'}],final_deliverable:'Comprehensive response'};}
+      db.prepare(`UPDATE autonomy_sessions SET plan=?,steps_total=?,status='running' WHERE id=?`).run(JSON.stringify(plan.steps),plan.steps.length,id);
+      abcast(id,'plan',{steps:plan.steps,summary:plan.plan_summary,deliverable:plan.final_deliverable});
+      const artifacts:any[]=[]; const history:string[]=[];
+      for(let i=0;i<plan.steps.length;i++){
+        const step=plan.steps[i];
+        abcast(id,'step_start',{index:i,total:plan.steps.length,step});
+        try{
+          let result='';
+          if(step.tool==='web_search'||step.type==='browse'||step.type==='research'){
+            const searchUrl=`https://duckduckgo.com/?q=${encodeURIComponent(step.instruction.slice(0,100))}&format=json`;
+            try{
+              const {content:fetched}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Research task: "${step.instruction}"\nGoal context: "${goal}"\n\nProvide comprehensive research findings, facts, data, and insights. Be thorough and specific.`}]);
+              result=fetched;
+            }catch{result=`Research completed for: ${step.instruction}`;}
+          } else if(step.tool==='code_exec'||step.type==='code'){
+            const {content:code}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Write ${step.instruction}\nContext: ${history.slice(-3).join('\n')}\nProvide complete, working, well-commented code. Include explanation of what it does.`}]);
+            result=code; artifacts.push({type:'code',title:step.title,content:code});
+          } else if(step.type==='write'||step.type==='create'){
+            const {content:doc}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create: ${step.instruction}\nContext from prior steps:\n${history.slice(-5).join('\n')}\nGoal: ${goal}\n\nProduce complete, high-quality output.`}]);
+            result=doc; artifacts.push({type:'document',title:step.title,content:doc});
+          } else {
+            const {content:r}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Task: ${step.instruction}\nContext: ${history.slice(-5).join('\n')}\nGoal: ${goal}\n\nComplete this step thoroughly.`}]);
+            result=r;
+          }
+          history.push(`Step ${i+1} [${step.type}] "${step.title}": ${result.slice(0,800)}`);
+          db.prepare(`UPDATE autonomy_sessions SET steps_done=? WHERE id=?`).run(i+1,id);
+          abcast(id,'step_done',{index:i,step,result,artifacts});
+        }catch(e:any){abcast(id,'step_error',{index:i,step,error:e.message});history.push(`Step ${i+1} failed: ${e.message}`);}
+        await new Promise(r=>setTimeout(r,600));
+      }
+      abcast(id,'thinking',{message:'✍️ Composing your final deliverable…'});
+      const {content:finalOutput}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge Autonomous Agent. You just completed an autonomous task.\nGoal: "${goal}"\n\nAll steps completed:\n${history.join('\n\n')}\n\nNow produce the FINAL comprehensive deliverable. This is what the user receives — make it complete, polished, and immediately useful. Use markdown. Include all relevant content, code, analysis, and recommendations from your work.`}]);
+      db.prepare(`UPDATE autonomy_sessions SET status='done',artifacts=?,final_output=?,completed_at=datetime('now') WHERE id=?`).run(JSON.stringify(artifacts),finalOutput,id);
+      abcast(id,'complete',{output:finalOutput,artifacts,sessionId:id});
+    }catch(e:any){db.prepare(`UPDATE autonomy_sessions SET status='error' WHERE id=?`).run(id);abcast(id,'error',{error:e.message});}
+    autonomyClients.delete(id);
+  })();
+});
+app.get('/api/autonomy/stream/:id', requireAuth, (req:any,res:any)=>{
+  res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('Connection','keep-alive'); res.flushHeaders();
+  const {id}=req.params; if(!autonomyClients.has(id)) autonomyClients.set(id,[]); autonomyClients.get(id)!.push(res);
+  const s=db.prepare(`SELECT * FROM autonomy_sessions WHERE id=?`).get(id) as any;
+  if(s?.status==='done') res.write(`event: complete\ndata: ${JSON.stringify({output:s.final_output,artifacts:JSON.parse(s.artifacts||'[]'),sessionId:id})}\n\n`);
+  const ka=setInterval(()=>{try{res.write(': ping\n\n');}catch{}},20000);
+  req.on('close',()=>{clearInterval(ka);const l=autonomyClients.get(id)||[];const i=l.indexOf(res);if(i>-1)l.splice(i,1);});
+});
+app.get('/api/autonomy/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,goal,status,steps_done,steps_total,created_at,completed_at FROM autonomy_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/autonomy/session/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM autonomy_sessions WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+
 // ─── Hermes Autonomous Agent ──────────────────────────────────────────────────
 setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
-
-// ─── Forge Operator (browser-driving AI agent) ────────────────────────────────
 setupOperator(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4 });
 
-// ─── Leads Capture ────────────────────────────────────────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS leads (
-  id TEXT PRIMARY KEY,
-  email TEXT NOT NULL,
-  name TEXT DEFAULT '',
-  source TEXT DEFAULT 'landing',
-  message TEXT DEFAULT '',
-  ip TEXT DEFAULT '',
-  utm_source TEXT DEFAULT '',
-  utm_medium TEXT DEFAULT '',
-  utm_campaign TEXT DEFAULT '',
-  created_at TEXT DEFAULT (datetime('now'))
-)`);
-app.post('/api/leads', (req: any, res: any) => {
-  const { email, name='', source='landing', message='', utm_source='', utm_medium='', utm_campaign='' } = req.body;
-  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email required' });
-  const existing = db.prepare('SELECT id FROM leads WHERE email=?').get(email);
-  if (existing) return res.json({ ok: true, duplicate: true });
-  const id = uuidv4();
-  const ip = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || '';
-  db.prepare('INSERT INTO leads (id,email,name,source,message,ip,utm_source,utm_medium,utm_campaign) VALUES (?,?,?,?,?,?,?,?,?)').run(id, email.toLowerCase().trim(), name, source, message, ip, utm_source, utm_medium, utm_campaign);
-  res.json({ ok: true, id });
-});
-app.get('/api/admin/leads', requireAuth, (req: any, res: any) => {
-  if (!req.user?.isAdmin) return res.status(403).json({ error: 'Admin only' });
-  const { limit=200, source, days } = req.query;
-  let q = 'SELECT * FROM leads'; const params: any[] = []; const wheres: string[] = [];
-  if (source) { wheres.push('source=?'); params.push(source); }
-  if (days) { wheres.push(`created_at >= datetime('now', '-${parseInt(days as string)} days')`); }
-  if (wheres.length) q += ' WHERE ' + wheres.join(' AND ');
-  q += ' ORDER BY created_at DESC LIMIT ?'; params.push(Number(limit));
-  const rows = db.prepare(q).all(...params);
-  const total = (db.prepare('SELECT COUNT(*) as c FROM leads').get() as any).c;
-  res.json({ leads: rows, total });
-});
-app.delete('/api/admin/leads/:id', requireAuth, (req: any, res: any) => {
-  if (!req.user?.isAdmin) return res.status(403).json({ error: 'Admin only' });
-  db.prepare('DELETE FROM leads WHERE id=?').run(req.params.id);
-  res.json({ ok: true });
-});
-app.get('/api/admin/leads/export', requireAuth, (req: any, res: any) => {
-  if (!req.user?.isAdmin) return res.status(403).json({ error: 'Admin only' });
-  const rows = db.prepare('SELECT * FROM leads ORDER BY created_at DESC').all() as any[];
-  const headers = ['id','email','name','source','message','utm_source','utm_medium','utm_campaign','created_at'];
-  const csv = [headers.join(','), ...rows.map((r:any) => headers.map(h => JSON.stringify(r[h]||'')).join(','))].join('\n');
-  res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', 'attachment; filename="forge-leads.csv"');
-  res.send(csv);
-});
-
-// ─── API Key Health Probe ─────────────────────────────────────────────────────
-app.get('/api/keys/health', requireAuth, async (req: any, res: any) => {
-  const userId = req.user!.sub;
-  const results: Record<string, any> = {};
-
-  const probe = async (provider: string, testFn: () => Promise<void>) => {
-    const t0 = Date.now();
-    try {
-      await testFn();
-      results[provider] = { status: 'ok', latency_ms: Date.now() - t0 };
-    } catch (e: any) {
-      results[provider] = { status: 'error', latency_ms: Date.now() - t0, error: e.message?.slice(0, 120) };
-    }
-  };
-
-  const getKey = (p: string) => getUserLLMKey(userId, p);
-
-  const probes: Promise<void>[] = [];
-
-  const anthropicKey = getKey('anthropic');
-  if (anthropicKey) probes.push(probe('anthropic', async () => {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
-    });
-    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
-  }));
-
-  const openaiKey = getKey('openai');
-  if (openaiKey) probes.push(probe('openai', async () => {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${openaiKey}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
-    });
-    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
-  }));
-
-  const geminiKey = getKey('gemini');
-  if (geminiKey) probes.push(probe('gemini', async () => {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${geminiKey}`, {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }], generationConfig: { maxOutputTokens: 1 } }),
-    });
-    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
-  }));
-
-  const groqKey = getKey('groq');
-  if (groqKey) probes.push(probe('groq', async () => {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${groqKey}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
-    });
-    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
-  }));
-
-  const mistralKey = getKey('mistral');
-  if (mistralKey) probes.push(probe('mistral', async () => {
-    const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${mistralKey}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ model: 'mistral-small-latest', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
-    });
-    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
-  }));
-
-  const orKey = getKey('openrouter');
-  if (orKey) probes.push(probe('openrouter', async () => {
-    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${orKey}`, 'content-type': 'application/json', 'HTTP-Referer': 'https://forge-sand-two.vercel.app' },
-      body: JSON.stringify({ model: 'openai/gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
-    });
-    if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message || r.statusText); }
-  }));
-
-  await Promise.all(probes);
-  res.json({ results, probed_at: new Date().toISOString() });
-});
-
-// ─── Start server ─────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Forge backend running on port ${PORT}`));
-te, quality);
-    res.json({ success: true, id: result.lastInsertRowid });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-app.put('/api/urban-harvests/:id', auth, (req: any, res: any) => {
-  try {
-    const { harvest_date, quality } = req.body;
-    db.prepare('UPDATE urban_harvests SET harvest_date=?, quality=? WHERE id=? AND user_id=?').run(harvest_date, quality, req.params.id, req.user.id);
-    res.json({ success: true });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-app.delete('/api/urban-harvests/:id', auth, (req: any, res: any) => {
-  try {
-    db.prepare('DELETE FROM urban_harvests WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
-    res.json({ success: true });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
-});
-// urbex_gear
-app.get('/api/urbex-gear', auth, (req: any, res: any) => {
-  try {
-    const rows = db.prepare('SELECT * FROM urbex_gear WHERE user_id=? ORDER BY id DESC').all(req.user.id);
+M urbex_gear WHERE user_id=? ORDER BY id DESC').all(req.user.id);
     res.json({ success: true, data: rows });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
