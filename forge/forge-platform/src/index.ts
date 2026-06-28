@@ -23,6 +23,7 @@ import { promisify } from 'util';
 import Database from 'better-sqlite3';
 import { setupAutonomy } from './autonomy';
 import { setupHermes } from './hermes';
+import { setupOperator } from './operator';
 import cron from 'node-cron';
 
 const execAsync = promisify(exec);
@@ -171544,6 +171545,9 @@ app.delete('/api/triathlon-bricks/:id', auth, (req: any, res: any) => {
 
 // ─── Hermes Autonomous Agent ──────────────────────────────────────────────────
 setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
+
+// ─── Forge Operator (browser-driving AI agent) ────────────────────────────────
+setupOperator(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4 });
 
 // ─── Leads Capture ────────────────────────────────────────────────────────────
 db.exec(`CREATE TABLE IF NOT EXISTS leads (

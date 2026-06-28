@@ -1,3 +1,12 @@
+## v170.00 — Forge Operator: autonomous browser AI agent with live step streaming
+- operator.ts: AI plans goals → executes steps (navigate/search/read/analyze/write/summarize) → streams SSE
+- /api/operator/run, /stream/:id, /sessions, /session/:id, /cancel/:id, /delete/:id
+- Frontend: 🤖 Forge Operator tab — live action log, step-by-step visualization, final deliverable panel, session history
+- API Key Health Monitor tab (🩺) — probes all 6 providers, latency display, status banners
+- Leads capture system: /api/leads + /api/admin/leads CRUD + CSV export + admin UI tab
+- Hermes autonomous agent: full tool-using agentic loop with SSE streaming
+- Version bump: v14.50
+
 ## v169.00 — Fix bonsai_trees schema (15 missing cols across handlers)
 - common_name/species_region/age_estimate_years/height_cm/trunk_diameter_cm/pot_material/pot_size/indoor/acquisition_method/acquired_date/purchase_price_usd/estimated_value_usd/health/source
 

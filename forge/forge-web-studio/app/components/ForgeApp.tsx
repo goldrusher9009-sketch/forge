@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -6805,6 +6805,7 @@ export default function ForgeApp() {
             { id:'intelligence', icon:'🧠', label:'Intelligence' },
             { id:'swarm', icon:'🎉', label:'Agent Swarm' },
             { id:'forgevoyage', icon:'🚢', label:'ForgeVoyage' },
+            { id:'forgeoperator', icon:'🤖', label:'Forge Operator' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -12682,6 +12683,283 @@ export default function ForgeApp() {
             </div>
           </div>
         )}
+
+        {/* ── FORGE OPERATOR ─────────────────────────────────────── */}
+        {(mainTab as string) === 'forgeoperator' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [goal, setGoal] = React.useState('');
+          const [sessionId, setSessionId] = React.useState<string|null>(null);
+          const [status, setStatus] = React.useState<'idle'|'running'|'done'|'error'>('idle');
+          const [plan, setPlan] = React.useState<{action:string;url?:string;instruction:string}[]>([]);
+          const [planSummary, setPlanSummary] = React.useState('');
+          const [steps, setSteps] = React.useState<{index:number;action:string;instruction:string;url?:string;result?:string;state:'pending'|'running'|'done'|'error'}[]>([]);
+          const [thinking, setThinking] = React.useState('');
+          const [finalResult, setFinalResult] = React.useState('');
+          const [sessions, setSessions] = React.useState<any[]>([]);
+          const [activeSession, setActiveSession] = React.useState<any>(null);
+          const [loadingSession, setLoadingSession] = React.useState(false);
+          const esRef = React.useRef<EventSource|null>(null);
+          const logRef = React.useRef<HTMLDivElement>(null);
+
+          const ACTION_ICONS: Record<string,string> = {
+            navigate:'🌐', search:'🔍', read:'📖', analyze:'🧮', write:'✍️', summarize:'📋', default:'⚙️'
+          };
+          const ACTION_COLORS: Record<string,string> = {
+            navigate:'#3b82f6', search:'#8b5cf6', read:'#06b6d4', analyze:'#f59e0b', write:'#10b981', summarize:'#ec4899'
+          };
+
+          React.useEffect(() => {
+            fetch(`${API}/api/operator/sessions`, { headers: { Authorization:`Bearer ${tok}` } })
+              .then(r=>r.json()).then(d => setSessions(d.sessions || [])).catch(()=>{});
+          }, []);
+
+          React.useEffect(() => {
+            if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+          }, [steps, thinking]);
+
+          const connectSSE = (sid: string) => {
+            if (esRef.current) esRef.current.close();
+            const es = new EventSource(`${API}/api/operator/stream/${sid}?token=${tok}`);
+            esRef.current = es;
+
+            es.addEventListener('thinking', (e:any) => {
+              const d = JSON.parse(e.data);
+              setThinking(d.message);
+            });
+            es.addEventListener('plan', (e:any) => {
+              const d = JSON.parse(e.data);
+              setPlan(d.steps || []);
+              setPlanSummary(d.summary || '');
+              setSteps((d.steps || []).map((s:any, i:number) => ({...s, index:i, state:'pending'})));
+              setThinking('');
+            });
+            es.addEventListener('step_start', (e:any) => {
+              const d = JSON.parse(e.data);
+              setSteps(prev => prev.map((s,i) => i === d.index ? {...s, state:'running'} : s));
+              setThinking(`Running: ${d.instruction}`);
+            });
+            es.addEventListener('step_done', (e:any) => {
+              const d = JSON.parse(e.data);
+              setSteps(prev => prev.map((s,i) => i === d.index ? {...s, state:'done', result:d.result, url:d.url||s.url} : s));
+              setThinking('');
+            });
+            es.addEventListener('step_error', (e:any) => {
+              const d = JSON.parse(e.data);
+              setSteps(prev => prev.map((s,i) => i === d.index ? {...s, state:'error', result:d.error} : s));
+            });
+            es.addEventListener('complete', (e:any) => {
+              const d = JSON.parse(e.data);
+              setFinalResult(d.result || '');
+              setStatus('done');
+              setThinking('');
+              es.close();
+              fetch(`${API}/api/operator/sessions`, { headers: { Authorization:`Bearer ${tok}` } })
+                .then(r=>r.json()).then(d2 => setSessions(d2.sessions || [])).catch(()=>{});
+            });
+            es.addEventListener('error', (e:any) => {
+              try { const d = JSON.parse((e as any).data); setThinking(`Error: ${d.error}`); } catch {}
+              setStatus('error');
+            });
+          };
+
+          const run = async () => {
+            if (!goal.trim() || status === 'running') return;
+            setStatus('running'); setPlan([]); setPlanSummary(''); setSteps([]); setFinalResult(''); setThinking('🧠 Analyzing your goal...');
+            try {
+              const r = await fetch(`${API}/api/operator/run`, {
+                method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${tok}`},
+                body: JSON.stringify({ goal: goal.trim() })
+              });
+              const d = await r.json();
+              if (d.sessionId) { setSessionId(d.sessionId); connectSSE(d.sessionId); }
+              else { setStatus('error'); setThinking('Failed to start session'); }
+            } catch (e:any) { setStatus('error'); setThinking(e.message); }
+          };
+
+          const loadSession = async (sid: string) => {
+            setLoadingSession(true);
+            try {
+              const r = await fetch(`${API}/api/operator/session/${sid}`, { headers:{Authorization:`Bearer ${tok}`} });
+              const d = await r.json();
+              setActiveSession(d);
+              setGoal(d.session.goal);
+              setFinalResult(d.session.final_result || '');
+              setStatus(d.session.status === 'done' ? 'done' : d.session.status === 'error' ? 'error' : 'idle');
+              const p = JSON.parse(d.session.plan || '[]');
+              setPlan(p);
+              setSteps(d.steps.map((s:any) => ({
+                index: s.step_index, action: s.action, instruction: s.instruction,
+                url: s.url, result: s.result, state: s.status === 'done' ? 'done' : s.status === 'error' ? 'error' : 'pending'
+              })));
+            } finally { setLoadingSession(false); }
+          };
+
+          const EXAMPLES = [
+            'Research the top 5 AI coding tools in 2025 and compare them',
+            'Find the best cloud hosting options under $20/month for a Node.js app',
+            'Research competitors of Notion and summarize their pricing and features',
+            'Find recent news about OpenAI and summarize the key developments',
+            'Research how to build a SaaS waitlist and write a step-by-step guide',
+            'Find the top 10 productivity techniques and write an actionable summary',
+          ];
+
+          return (
+            <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--fg-bg)'}}>
+              {/* Header */}
+              <div style={{padding:'20px 28px 16px', borderBottom:'1px solid var(--fg-border)', background:'var(--fg-bg2)', flexShrink:0}}>
+                <div style={{display:'flex', alignItems:'center', gap:14, marginBottom:14}}>
+                  <div style={{width:48, height:48, borderRadius:14, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0}}>🤖</div>
+                  <div>
+                    <h2 style={{margin:0, fontSize:20, fontWeight:800, color:'var(--fg-text)'}}>Forge Operator</h2>
+                    <p style={{margin:0, fontSize:13, color:'var(--fg-text3)'}}>AI that browses, researches, writes and delivers — you watch it work in real time</p>
+                  </div>
+                  {status === 'running' && <div style={{marginLeft:'auto', display:'flex', alignItems:'center', gap:8}}>
+                    <div style={{width:8, height:8, borderRadius:'50%', background:'#10b981', animation:'pulse 1s infinite'}} />
+                    <span style={{fontSize:12, color:'#10b981', fontWeight:700}}>OPERATING</span>
+                  </div>}
+                </div>
+                <div style={{display:'flex', gap:10}}>
+                  <textarea
+                    value={goal} onChange={e=>setGoal(e.target.value)}
+                    placeholder="Give me a goal to accomplish autonomously… e.g. 'Research the best AI tools for small businesses and write a detailed comparison report'"
+                    style={{flex:1, padding:'12px 14px', borderRadius:10, border:'1px solid var(--fg-border2)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:14, resize:'none', height:64, fontFamily:'inherit', outline:'none'}}
+                    onKeyDown={e=>{if(e.key==='Enter' && !e.shiftKey){e.preventDefault();run();}}}
+                    disabled={status==='running'}
+                  />
+                  <button onClick={run} disabled={!goal.trim()||status==='running'}
+                    style={{padding:'0 24px', borderRadius:10, border:'none', background: status==='running' ? 'var(--fg-bg4)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)', color:'#fff', fontSize:14, fontWeight:700, cursor: status==='running'?'not-allowed':'pointer', whiteSpace:'nowrap', flexShrink:0}}>
+                    {status==='running' ? '⏳ Running…' : '🚀 Run'}
+                  </button>
+                </div>
+                {status === 'idle' && !goal && (
+                  <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:10}}>
+                    {EXAMPLES.map((ex,i) => (
+                      <button key={i} onClick={()=>setGoal(ex)}
+                        style={{padding:'5px 11px', borderRadius:20, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text3)', fontSize:11, cursor:'pointer'}}>
+                        {ex.length > 50 ? ex.slice(0,50)+'…' : ex}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Main content split */}
+              <div style={{flex:1, display:'flex', overflow:'hidden'}}>
+                {/* Left: Live action log */}
+                <div style={{width:480, flexShrink:0, borderRight:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', overflow:'hidden'}}>
+                  <div style={{padding:'12px 16px', borderBottom:'1px solid var(--fg-border)', background:'var(--fg-bg2)', fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
+                    Live Action Log
+                  </div>
+                  <div ref={logRef} style={{flex:1, overflowY:'auto', padding:16, display:'flex', flexDirection:'column', gap:8}}>
+                    {status === 'idle' && steps.length === 0 && (
+                      <div style={{textAlign:'center', padding:40, color:'var(--fg-text3)'}}>
+                        <div style={{fontSize:48, marginBottom:12}}>🤖</div>
+                        <div style={{fontSize:14, fontWeight:600}}>Ready to operate</div>
+                        <div style={{fontSize:12, marginTop:4}}>Give Forge a goal and watch it work</div>
+                      </div>
+                    )}
+                    {planSummary && (
+                      <div style={{padding:'10px 14px', borderRadius:10, background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.3)', fontSize:13, color:'#a5b4fc', marginBottom:4}}>
+                        📋 <strong>Plan:</strong> {planSummary}
+                      </div>
+                    )}
+                    {thinking && (
+                      <div style={{display:'flex', alignItems:'flex-start', gap:10, padding:'10px 14px', borderRadius:10, background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)'}}>
+                        <div style={{width:8, height:8, borderRadius:'50%', background:'#f59e0b', marginTop:4, flexShrink:0, animation:'pulse 1s infinite'}} />
+                        <span style={{fontSize:13, color:'#fbbf24', fontStyle:'italic'}}>{thinking}</span>
+                      </div>
+                    )}
+                    {steps.map((s, i) => {
+                      const icon = ACTION_ICONS[s.action] || ACTION_ICONS.default;
+                      const color = ACTION_COLORS[s.action] || '#64748b';
+                      const isRunning = s.state === 'running';
+                      const isDone = s.state === 'done';
+                      const isError = s.state === 'error';
+                      return (
+                        <div key={i} style={{borderRadius:10, border:`1px solid ${isRunning?color:isDone?'var(--fg-border)':isError?'#ef4444':'var(--fg-border)'}`, background: isRunning?`${color}10`:'var(--fg-bg2)', overflow:'hidden', transition:'all 0.2s'}}>
+                          <div style={{display:'flex', alignItems:'center', gap:10, padding:'10px 14px'}}>
+                            <span style={{fontSize:16}}>{icon}</span>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:11, fontWeight:700, color, textTransform:'uppercase', letterSpacing:'0.05em'}}>{s.action}</div>
+                              <div style={{fontSize:13, color:'var(--fg-text2)', marginTop:1}}>{s.instruction}</div>
+                              {s.url && <div style={{fontSize:11, color:'var(--fg-text3)', marginTop:2, wordBreak:'break-all'}}>{s.url}</div>}
+                            </div>
+                            <div style={{flexShrink:0}}>
+                              {isRunning && <div style={{width:16, height:16, border:'2px solid '+color, borderTopColor:'transparent', borderRadius:'50%', animation:'spin 0.7s linear infinite'}} />}
+                              {isDone && <span style={{color:'#10b981', fontSize:16}}>✓</span>}
+                              {isError && <span style={{color:'#ef4444', fontSize:16}}>✗</span>}
+                              {s.state==='pending' && <span style={{color:'var(--fg-text3)', fontSize:11}}>#{i+1}</span>}
+                            </div>
+                          </div>
+                          {(isDone||isError) && s.result && (
+                            <div style={{padding:'8px 14px 12px', borderTop:'1px solid var(--fg-border)', fontSize:12, color: isError?'#ef4444':'var(--fg-text3)', maxHeight:120, overflowY:'auto', lineHeight:1.5}}>
+                              {s.result.slice(0, 400)}{s.result.length > 400 ? '…' : ''}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {status === 'done' && (
+                      <div style={{padding:'10px 14px', borderRadius:10, background:'rgba(16,185,129,0.08)', border:'1px solid #10b981', fontSize:13, color:'#34d399', fontWeight:600, textAlign:'center'}}>
+                        ✅ Task complete
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: Result panel + history */}
+                <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
+                  {finalResult ? (
+                    <div style={{flex:1, overflowY:'auto', padding:24}}>
+                      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:16}}>
+                        <span style={{fontSize:20}}>📄</span>
+                        <h3 style={{margin:0, fontSize:16, fontWeight:800, color:'var(--fg-text)'}}>Final Deliverable</h3>
+                        <button onClick={()=>navigator.clipboard.writeText(finalResult)}
+                          style={{marginLeft:'auto', padding:'5px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text3)', fontSize:11, cursor:'pointer'}}>
+                          📋 Copy
+                        </button>
+                      </div>
+                      <div style={{padding:20, borderRadius:12, background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', fontSize:14, color:'var(--fg-text2)', lineHeight:1.7, whiteSpace:'pre-wrap', fontFamily:'inherit'}}>
+                        {finalResult}
+                      </div>
+                      <button onClick={()=>{setGoal('');setStatus('idle');setSteps([]);setFinalResult('');setPlan([]);setPlanSummary('');setThinking('');setSessionId(null);}}
+                        style={{marginTop:16, padding:'10px 20px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', fontSize:13, cursor:'pointer', fontWeight:600}}>
+                        + New Task
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
+                      <div style={{padding:'12px 16px', borderBottom:'1px solid var(--fg-border)', background:'var(--fg-bg2)', fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
+                        Session History
+                      </div>
+                      <div style={{flex:1, overflowY:'auto', padding:16}}>
+                        {sessions.length === 0 && (
+                          <div style={{textAlign:'center', padding:40, color:'var(--fg-text3)', fontSize:13}}>No sessions yet — run your first task!</div>
+                        )}
+                        {sessions.map((s:any) => (
+                          <div key={s.id} onClick={()=>loadSession(s.id)}
+                            style={{padding:'12px 16px', borderRadius:10, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', marginBottom:8, cursor:'pointer', transition:'all 0.15s'}}
+                            onMouseEnter={e=>(e.currentTarget.style.borderColor='#6366f1')}
+                            onMouseLeave={e=>(e.currentTarget.style.borderColor='var(--fg-border)')}>
+                            <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:4}}>
+                              <span style={{fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background: s.status==='done'?'rgba(16,185,129,0.15)':s.status==='error'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)', color: s.status==='done'?'#10b981':s.status==='error'?'#ef4444':'#f59e0b'}}>
+                                {s.status.toUpperCase()}
+                              </span>
+                              <span style={{fontSize:11, color:'var(--fg-text3)', marginLeft:'auto'}}>{s.created_at?.slice(0,16)}</span>
+                            </div>
+                            <div style={{fontSize:13, fontWeight:600, color:'var(--fg-text)', marginBottom:3}}>{s.goal.slice(0,80)}{s.goal.length>80?'…':''}</div>
+                            {s.summary_preview && <div style={{fontSize:11, color:'var(--fg-text3)'}}>{s.summary_preview}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* -- ForgeVoyage -------------------------------------------- */}
         {(mainTab as string) === 'forgevoyage' && (() => {
