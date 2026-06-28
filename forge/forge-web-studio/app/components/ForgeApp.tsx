@@ -10420,6 +10420,7 @@ export default function ForgeApp() {
                   { id:'users', label:'👥 Users' },
                   { id:'keys', label:'🔑 Platform Keys' },
                   { id:'models', label:'🤖 Models' },
+                  { id:'leads', label:'📧 Leads' },
                 ] as const).map(t => (
                   <button key={t.id} onClick={() => setAdminTab(t.id)} style={{ padding:'7px 16px', background:adminTab===t.id ? 'var(--fg-bg4)' : 'transparent', border:`1px solid ${adminTab===t.id ? 'var(--fg-orange2)' : 'transparent'}`, borderRadius:7, color:adminTab===t.id ? 'var(--fg-orange2)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight:adminTab===t.id ? 600 : 400, whiteSpace:'nowrap' }}>
                     {t.label}
@@ -10554,6 +10555,62 @@ export default function ForgeApp() {
                   </div>
                 </div>
               )}
+
+              {/* ── Leads ── */}
+              {adminTab === 'leads' && (() => {
+                const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+                const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+                const [leads, setLeads] = React.useState<any[]>([]);
+                const [total, setTotal] = React.useState(0);
+                const [loading, setLoading] = React.useState(false);
+                const [filter, setFilter] = React.useState('');
+                React.useEffect(() => {
+                  setLoading(true);
+                  fetch(`${API}/api/admin/leads?limit=500`, { headers: { Authorization: `Bearer ${tok}` } })
+                    .then(r => r.json()).then(d => { setLeads(d.leads || []); setTotal(d.total || 0); }).finally(() => setLoading(false));
+                }, []);
+                const del = async (id: string) => {
+                  await fetch(`${API}/api/admin/leads/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } });
+                  setLeads(prev => prev.filter(l => l.id !== id));
+                };
+                const filtered = filter ? leads.filter(l => l.email.includes(filter) || l.name.includes(filter) || l.source.includes(filter)) : leads;
+                const bySource = leads.reduce((acc:any, l:any) => { acc[l.source]=(acc[l.source]||0)+1; return acc; }, {});
+                return (
+                  <div>
+                    <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16, flexWrap:'wrap' }}>
+                      <div style={{ display:'flex', gap:8 }}>
+                        {Object.entries(bySource).map(([src, cnt]:any) => (
+                          <div key={src} style={{ padding:'4px 12px', borderRadius:20, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', fontSize:12, color:'var(--fg-text2)' }}>
+                            {src}: <b>{cnt}</b>
+                          </div>
+                        ))}
+                        <div style={{ padding:'4px 12px', borderRadius:20, background:'rgba(255,107,53,0.1)', border:'1px solid var(--fg-orange)', fontSize:12, color:'var(--fg-orange)', fontWeight:700 }}>
+                          Total: {total}
+                        </div>
+                      </div>
+                      <input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Filter by email / name / source…" style={{ flex:1, minWidth:200, padding:'6px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg)', color:'var(--fg-text)', fontSize:13 }} />
+                      <a href={`${API}/api/admin/leads/export`} style={{ padding:'6px 14px', borderRadius:8, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', color:'var(--fg-text2)', fontSize:12, textDecoration:'none', fontWeight:600 }}>⬇ CSV</a>
+                    </div>
+                    {loading && <p style={{ color:'var(--fg-text3)', fontSize:13 }}>Loading…</p>}
+                    <div style={{ background:'var(--fg-bg3)', borderRadius:12, border:'1px solid var(--fg-border)', overflow:'hidden' }}>
+                      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 120px 40px', padding:'10px 16px', background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)' }}>
+                        {['Email','Name','Source','UTM','Date',''].map(h => <span key={h} style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>{h}</span>)}
+                      </div>
+                      {filtered.length === 0 && !loading && <p style={{ color:'var(--fg-text3)', fontSize:13, padding:16 }}>No leads yet.</p>}
+                      {filtered.map((l:any) => (
+                        <div key={l.id} style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 120px 40px', padding:'10px 16px', borderBottom:'1px solid var(--fg-bg)', alignItems:'center' }}>
+                          <span style={{ fontSize:13, color:'var(--fg-text)', fontWeight:500 }}>{l.email}</span>
+                          <span style={{ fontSize:12, color:'var(--fg-text2)' }}>{l.name||'—'}</span>
+                          <span style={{ fontSize:12, color:'var(--fg-orange)' }}>{l.source}</span>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{[l.utm_source,l.utm_medium,l.utm_campaign].filter(Boolean).join(' / ')||'—'}</span>
+                          <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{l.created_at?.slice(0,16)}</span>
+                          <button onClick={()=>del(l.id)} style={{ background:'none', border:'none', cursor:'pointer', color:'#ef4444', fontSize:14, padding:0 }}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}

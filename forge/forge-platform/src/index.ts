@@ -171545,6 +171545,56 @@ app.delete('/api/triathlon-bricks/:id', auth, (req: any, res: any) => {
 // ─── Hermes Autonomous Agent ──────────────────────────────────────────────────
 setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
 
+// ─── Leads Capture ────────────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS leads (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  name TEXT DEFAULT '',
+  source TEXT DEFAULT 'landing',
+  message TEXT DEFAULT '',
+  ip TEXT DEFAULT '',
+  utm_source TEXT DEFAULT '',
+  utm_medium TEXT DEFAULT '',
+  utm_campaign TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+)`);
+app.post('/api/leads', (req: any, res: any) => {
+  const { email, name='', source='landing', message='', utm_source='', utm_medium='', utm_campaign='' } = req.body;
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email required' });
+  const existing = db.prepare('SELECT id FROM leads WHERE email=?').get(email);
+  if (existing) return res.json({ ok: true, duplicate: true });
+  const id = uuidv4();
+  const ip = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || '';
+  db.prepare('INSERT INTO leads (id,email,name,source,message,ip,utm_source,utm_medium,utm_campaign) VALUES (?,?,?,?,?,?,?,?,?)').run(id, email.toLowerCase().trim(), name, source, message, ip, utm_source, utm_medium, utm_campaign);
+  res.json({ ok: true, id });
+});
+app.get('/api/admin/leads', requireAuth, (req: any, res: any) => {
+  if (!req.user?.isAdmin) return res.status(403).json({ error: 'Admin only' });
+  const { limit=200, source, days } = req.query;
+  let q = 'SELECT * FROM leads'; const params: any[] = []; const wheres: string[] = [];
+  if (source) { wheres.push('source=?'); params.push(source); }
+  if (days) { wheres.push(`created_at >= datetime('now', '-${parseInt(days as string)} days')`); }
+  if (wheres.length) q += ' WHERE ' + wheres.join(' AND ');
+  q += ' ORDER BY created_at DESC LIMIT ?'; params.push(Number(limit));
+  const rows = db.prepare(q).all(...params);
+  const total = (db.prepare('SELECT COUNT(*) as c FROM leads').get() as any).c;
+  res.json({ leads: rows, total });
+});
+app.delete('/api/admin/leads/:id', requireAuth, (req: any, res: any) => {
+  if (!req.user?.isAdmin) return res.status(403).json({ error: 'Admin only' });
+  db.prepare('DELETE FROM leads WHERE id=?').run(req.params.id);
+  res.json({ ok: true });
+});
+app.get('/api/admin/leads/export', requireAuth, (req: any, res: any) => {
+  if (!req.user?.isAdmin) return res.status(403).json({ error: 'Admin only' });
+  const rows = db.prepare('SELECT * FROM leads ORDER BY created_at DESC').all() as any[];
+  const headers = ['id','email','name','source','message','utm_source','utm_medium','utm_campaign','created_at'];
+  const csv = [headers.join(','), ...rows.map((r:any) => headers.map(h => JSON.stringify(r[h]||'')).join(','))].join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="forge-leads.csv"');
+  res.send(csv);
+});
+
 // ─── Start server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Forge backend running on port ${PORT}`));
