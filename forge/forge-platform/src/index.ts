@@ -179291,3 +179291,97 @@ app.post('/api/supplement/stack', requireAuth, async (req: AuthRequest, res) => 
     res.json({ stack });
   } catch (e: any) { res.json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 84: PARENTING & FAMILY AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS parenting_style_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, child_age TEXT, challenge TEXT, advice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS family_meeting_facilitators (
+  id TEXT PRIMARY KEY, user_id TEXT, family_size TEXT, agenda TEXT, outcome TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS teen_communicators (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, teen_age TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS screen_time_managers (
+  id TEXT PRIMARY KEY, user_id TEXT, child_age TEXT, current_usage TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS family_value_setters (
+  id TEXT PRIMARY KEY, user_id TEXT, family_description TEXT, goals TEXT, charter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/parenting/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { child_age, challenge, parenting_style } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a child development and parenting expert. Provide evidence-based parenting guidance.\nChild age: ${child_age}\nChallenge: ${challenge}\nParenting style: ${parenting_style||'not specified'}\nProvide: developmental context for this age, why this challenge occurs, authoritative parenting strategies, exact scripts for common situations, what NOT to do, how to repair after mistakes, and a 2-week consistency plan.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const advice = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO parenting_style_coaches (id,user_id,child_age,challenge,advice) VALUES (?,?,?,?,?)').run(id, userId, child_age, challenge, advice);
+    res.json({ advice });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/familymeeting/facilitate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { family_size, topic, family_conflict } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a family dynamics and facilitation expert. Design and facilitate a productive family meeting.\nFamily size: ${family_size||'4'}\nTopic/purpose: ${topic}\nConflicts to address: ${family_conflict||'none specified'}\nDeliver: meeting agenda with time blocks, age-appropriate participation roles, ground rules, how to handle emotional moments, decision-making process for this family, action items template, and how to make it a positive ritual.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const outcome = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO family_meeting_facilitators (id,user_id,family_size,agenda,outcome) VALUES (?,?,?,?,?)').run(id, userId, family_size, topic, outcome);
+    res.json({ outcome });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/teen/communicate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, teen_age, your_concern } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a teen psychology and parent-teen communication expert. Help bridge the communication gap.\nSituation: ${situation}\nTeen age: ${teen_age||'15'}\nParent concern: ${your_concern}\nProvide: adolescent brain development context, why teens think/act this way, what they need to hear (vs what parents say), exact conversation scripts, how to open dialogue without walls going up, how to set limits without lecturing, and repair strategies after conflict.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const script = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO teen_communicators (id,user_id,situation,teen_age,script) VALUES (?,?,?,?,?)').run(id, userId, situation, teen_age, script);
+    res.json({ script });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/screentime/manage', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { child_age, current_usage, concerns } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a child development and digital wellness expert. Create a healthy screen time plan.\nChild age: ${child_age}\nCurrent usage: ${current_usage}\nConcerns: ${concerns||'general overuse'}\nProvide: age-appropriate screen time guidelines (WHO/AAP recommendations), content quality framework, device-free zones and times, transition rituals, how to reduce without tantrums, alternative activities by interest, family media agreement template, and how to model healthy tech use.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO screen_time_managers (id,user_id,child_age,current_usage,plan) VALUES (?,?,?,?,?)').run(id, userId, child_age, current_usage, plan);
+    res.json({ plan });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/familyvalues/set', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { family_description, values_goal, children_ages } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a family culture and values expert. Create a meaningful family values charter.\nFamily description: ${family_description}\nWhat matters most: ${values_goal}\nChildren ages: ${children_ages||'various'}\nDeliver: a 5-value family charter with: value name, what it means to this family, how to live it daily, family traditions that reinforce it, how to talk about it with kids, and a visual charter format they can display. Also include a quarterly family check-in ritual.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const charter = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO family_value_setters (id,user_id,family_description,goals,charter) VALUES (?,?,?,?,?)').run(id, userId, family_description, values_goal, charter);
+    res.json({ charter });
+  } catch (e: any) { res.json({ error: e.message }); }
+});

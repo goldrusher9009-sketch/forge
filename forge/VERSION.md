@@ -1,3 +1,5 @@
+## v256.00 — Dream Mode Wave 84: Parenting & Family AI (Parenting Coach + Family Meeting Facilitator + Teen Communicator + Screen Time Manager + Family Values Charter)
+
 ## v255.00 — Dream Mode Wave 83: Health & Longevity AI (Longevity Planner + VO2max Trainer + Stress Decoder + Recovery Optimizer + Supplement Stack Builder)
 
 ## v254.00 — Dream Mode Wave 82: Business Operations & Productivity AI (SOP Generator + KPI Designer + Meeting Designer + Delegation Coach + Workflow Optimizer)
