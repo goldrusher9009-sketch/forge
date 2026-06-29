@@ -174450,3 +174450,80 @@ app.post('/api/exit/plan', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 33: HEALTH & PERFORMANCE AI ─────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS lab_interpreters (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, interpretation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS supplement_stacks (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, stack TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS recovery_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS longevity_protocols (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mental_performance (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Lab Results Interpreter
+app.post('/api/lab/interpret', requireAuth, async (req: any, res: any) => {
+  try {
+    const { results, age, sex, symptoms } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Interpret these lab results in plain English. Note: this is for educational purposes only, not medical advice.\n\nLab results: ${results}\nAge: ${age||'not provided'}\nSex: ${sex||'not provided'}\nSymptoms/concerns: ${symptoms||'none'}\n\nRespond in JSON: { "disclaimer": "always consult a doctor", "summary": "plain English overview of results", "markers": [{"name":"marker name","value":"reported value","normal_range":"reference range","status":"optimal/normal/borderline/abnormal","plain_english":"what this means in plain language","significance":"why it matters"}], "patterns": ["pattern you notice across multiple markers"], "questions_for_doctor": ["question to ask your doctor1","question2"], "lifestyle_factors": ["lifestyle thing that commonly affects these markers"], "follow_up_recommended": "what tests to consider next" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO lab_interpreters (id,user_id,context,interpretation) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Supplement Stack Builder
+app.post('/api/supplement/stack', requireAuth, async (req: any, res: any) => {
+  try {
+    const { goals, health_concerns, medications, budget } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build an evidence-based supplement stack. Educational purposes only.\n\nHealth goals: ${goals}\nHealth concerns: ${health_concerns||'none'}\nCurrent medications: ${medications||'none'}\nMonthly budget: ${budget||'$100'}\n\nRespond in JSON: { "disclaimer": "consult doctor before starting supplements", "tier1_essentials": [{"supplement":"name","dose":"amount and timing","why":"evidence-based reason","priority":9,"monthly_cost":"$X"}], "tier2_beneficial": [{"supplement":"name","dose":"amount","why":"why it helps","priority":7,"monthly_cost":"$X"}], "tier3_optional": [{"supplement":"name","dose":"amount","why":"benefit","priority":5,"monthly_cost":"$X"}], "avoid_with_medications": ["supplement to avoid if taking certain drugs"], "synergies": ["supplement A + B works better together because"], "total_stack_cost": "estimated monthly total", "morning_protocol": "morning supplement timing", "evening_protocol": "evening supplement timing", "quality_brands": ["brand1 known for quality","brand2"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO supplement_stacks (id,user_id,context,stack) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Athletic Recovery Plan
+app.post('/api/recovery/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { sport_activity, training_load, injury_history, recovery_goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a comprehensive athletic recovery protocol.\n\nSport/activity: ${sport_activity}\nTraining load: ${training_load||'moderate'}\nInjury history: ${injury_history||'none'}\nRecovery goals: ${recovery_goals||'faster recovery, less soreness'}\n\nRespond in JSON: { "recovery_assessment": "current recovery situation", "immediate_24h": [{"intervention":"ice bath/sleep/nutrition","timing":"when to do it","how":"how to implement","benefit":"expected outcome"}], "weekly_recovery_schedule": [{"day":"Mon","focus":"what to recover","protocol":"specific actions"}], "sleep_optimization": {"target_hours":"8-9","pre_sleep":"protocol 60min before bed","sleep_environment":"ideal setup","nap_protocol":"if needed"}, "nutrition_recovery": {"post_workout":"what and when to eat","hydration":"daily targets","anti_inflammatory_foods":["food1","food2"]}, "active_recovery": ["low-intensity activity that aids recovery"], "monitoring_signs": {"good_recovery":["sign you're recovering well"],"overtraining_signs":["warning sign1"]}, "advanced_protocols": ["HRV monitoring","sauna","cold therapy — if appropriate"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO recovery_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Longevity Protocol Builder
+app.post('/api/longevity/protocol', requireAuth, async (req: any, res: any) => {
+  try {
+    const { age, current_health, priorities, lifestyle } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a science-based longevity protocol. Educational only.\n\nAge: ${age}\nCurrent health status: ${current_health||'generally healthy'}\nLongevity priorities: ${priorities||'healthspan over lifespan'}\nCurrent lifestyle: ${lifestyle||'sedentary knowledge worker'}\n\nRespond in JSON: { "biological_age_factors": ["factor that most impacts your aging"], "pillars": [{"pillar":"Exercise/Sleep/Nutrition/Stress/Social","current_grade":"B","target":"what to aim for","interventions":["specific action1"]}], "exercise_protocol": {"zone2_cardio":"150-180min/week at conversational pace","strength":"2-3x/week compound movements","vo2max":"one HIIT session/week","flexibility":"daily mobility"}, "nutrition_protocol": {"pattern":"time-restricted eating/Mediterranean/etc","key_foods":["food1","food2"],"avoid":["inflammatory food1"],"fasting":"if appropriate"}, "biomarkers_to_track": [{"marker":"name","test_frequency":"annual/quarterly","why":"what it tells you"}], "quick_wins": ["high-impact change you can make today"], "5_year_protocol": "overarching strategy for the next 5 years" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO longevity_protocols (id,user_id,context,protocol) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Mental Performance Protocol
+app.post('/api/mental/performance', requireAuth, async (req: any, res: any) => {
+  try {
+    const { work_type, current_challenges, goals, schedule } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a mental performance optimization protocol.\n\nWork type: ${work_type||'knowledge work'}\nCurrent challenges: ${current_challenges||'focus, mental fatigue'}\nPerformance goals: ${goals||'peak cognitive output'}\nTypical schedule: ${schedule||'9-5'}\n\nRespond in JSON: { "cognitive_baseline": "honest assessment of current state", "focus_protocol": {"pre_work_ritual":"5-10min routine before deep work","environment":"ideal setup","session_length":"optimal focus blocks","transition":"how to end sessions cleanly"}, "nootropic_toolkit": [{"tool":"caffeine/exercise/breathwork/etc","dose_timing":"how to use it","cognitive_benefit":"what it improves","caution":"any downside"}], "learning_acceleration": ["spaced repetition","interleaved practice","elaborative interrogation"], "decision_fatigue_prevention": ["morning routine to preserve willpower","batching decisions"], "flow_state_triggers": ["how to reliably enter flow"], "mental_recovery": ["daily practices to restore cognitive capacity"], "weekly_mental_maintenance": "weekly review and reset practice", "metrics_to_track": ["cognitive metric1 to monitor"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO mental_performance (id,user_id,context,protocol) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
