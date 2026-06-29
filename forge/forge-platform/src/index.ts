@@ -173678,3 +173678,81 @@ app.post('/api/linkedin/message', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 23: Business Intelligence AI ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS competitor_dives (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS pricing_strategies (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS customer_personas (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, persona TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS gtm_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS okr_sets (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, okrs TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Competitor Deep Dive
+app.post('/api/competitor/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { competitor_name, your_product, market, known_info } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Do a deep competitive analysis.\n\nCompetitor: ${competitor_name}\nYour product: ${your_product}\nMarket: ${market||'B2B SaaS'}\nKnown info: ${known_info||'none'}\n\nRespond in JSON: { "overview": "what they do and positioning", "strengths": ["strength1","strength2","strength3"], "weaknesses": ["weakness1","weakness2","weakness3"], "opportunities_for_you": ["opportunity1","opportunity2"], "threats_to_you": ["threat1","threat2"], "blind_spots": ["what they're missing","gap in their offering"], "their_messaging": "how they position themselves", "your_counter_positioning": "how to differentiate against them", "battle_card": {"when_you_win":"situations","when_they_win":"situations","key_objections":[{"objection":"they say X","response":"counter with Y"}]} }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO competitor_dives (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Pricing Strategy Builder
+app.post('/api/pricing/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { product, target_customer, current_price, competitors_pricing, value_metric } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a comprehensive pricing strategy.\n\nProduct: ${product}\nTarget customer: ${target_customer}\nCurrent price: ${current_price||'not set yet'}\nCompetitor pricing: ${competitors_pricing||'unknown'}\nValue metric: ${value_metric||'per user/month'}\n\nRespond in JSON: { "recommended_model": "freemium/subscription/usage/one-time/hybrid", "tiers": [{"name":"tier name","price":"$X/mo","for":"who it's for","features":["f1","f2","f3"],"psychology":"why this works"}], "anchor_price": "most expensive tier for anchoring", "decoy_tier": "tier designed to make middle tier attractive", "psychological_tactics": ["tactic1","tactic2","tactic3"], "discount_strategy": "annual vs monthly, when to discount", "price_increase_path": "how to raise prices later" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO pricing_strategies (id,user_id,context,strategy) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Customer Persona Generator
+app.post('/api/persona/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { product, market, existing_customers, problem_solved } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create 2 detailed ideal customer personas.\n\nProduct: ${product}\nMarket: ${market||'B2B'}\nExisting customers: ${existing_customers||'early stage, diverse'}\nProblem solved: ${problem_solved}\n\nRespond in JSON: { "personas": [{ "name": "persona name + emoji", "job_title": "...", "company_size": "...", "demographics": "age, background", "a_day_in_their_life": "narrative of their typical day", "goals": ["goal1","goal2"], "frustrations": ["pain1","pain2","pain3"], "triggers": ["what makes them buy now","urgency drivers"], "objections": ["objection1","objection2"], "preferred_channels": ["channel1","channel2"], "messaging_that_resonates": "specific language and framing that works", "budget_authority": "how they buy and who approves" }] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO customer_personas (id,user_id,context,persona) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Go-to-Market Planner
+app.post('/api/gtm/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { product, target_market, launch_timeline, budget_range, team_size } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a detailed go-to-market plan.\n\nProduct: ${product}\nTarget market: ${target_market}\nTimeline: ${launch_timeline||'90 days'}\nBudget: ${budget_range||'bootstrap/lean'}\nTeam size: ${team_size||'2-5 people'}\n\nRespond in JSON: { "gtm_motion": "recommended channel strategy (PLG/SLG/Community/etc)", "pre_launch": {"timeline":"week -4 to 0","actions":["action1","action2","action3"]}, "launch_week": {"timeline":"week 1","actions":["action1","action2"]}, "post_launch": {"timeline":"weeks 2-12","actions":["action1","action2","action3"]}, "channels": [{"channel":"name","priority":"high/med/low","tactic":"specific approach","expected_output":"leads/awareness/etc"}], "first_100_customers_path": "specific step-by-step approach", "metrics_to_track": ["metric1","metric2","metric3"], "common_gtm_mistakes": ["mistake1","mistake2"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO gtm_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// OKR Builder
+app.post('/api/okr/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { company_stage, team_type, strategic_focus, timeframe } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a strong OKR set with clear, measurable key results.\n\nCompany stage: ${company_stage||'early stage startup'}\nTeam: ${team_type||'growth team'}\nStrategic focus: ${strategic_focus}\nTimeframe: ${timeframe||'Q3 2025'}\n\nRespond in JSON: { "objectives": [{ "objective": "inspiring objective statement", "why_it_matters": "strategic rationale", "key_results": [{"kr":"measurable key result","baseline":"current state","target":"goal","measurement":"how to measure","scoring_guide":"0.7=good,1.0=exceptional"}] }], "common_pitfalls": ["pitfall1","pitfall2"], "check_in_cadence": "recommended review frequency", "grading_philosophy": "how to grade OKRs without gaming" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO okr_sets (id,user_id,context,okrs) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

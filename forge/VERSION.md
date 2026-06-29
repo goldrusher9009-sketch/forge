@@ -1,3 +1,10 @@
+## v195.00 — Dream Mode Wave 23: Competitor Deep Dive + Pricing Strategy + Customer Persona + GTM Planner + OKR Builder
+- 🔎 Competitor Deep Dive: SWOT + blind spots + battle card + counter-positioning
+- 💲 Pricing Strategy Builder: tiered pricing model with psychology tactics + anchoring + decoy
+- 👥 Customer Persona Generator: 2 detailed ICPs with day-in-life, triggers, objections, messaging
+- 🚀 GTM Planner: pre/launch/post sequence + channels + first 100 customers path
+- 🎯 OKR Builder: objectives + measurable KRs with baselines, targets, scoring guides
+
 ## v194.00 — Dream Mode Wave 22: Performance Review Writer + Salary Research + Offer Comparison + Career Pivot Planner + LinkedIn Message Optimizer
 - 📊 Performance Review Writer: self-review with quantified impact, growth narrative, and strong closing ask
 - 💰 Salary Research: market percentiles + negotiation leverage + talking points
