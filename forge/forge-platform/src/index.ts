@@ -178727,3 +178727,97 @@ app.post('/api/workboundary/set', requireAuth, async (req: AuthRequest, res) => 
     res.json({ scripts });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 78: FINANCE & MONEY MASTERY AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS emergency_fund_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS insurance_audit_tools (
+  id TEXT PRIMARY KEY, user_id TEXT, coverage TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS money_mindset_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, beliefs TEXT, coaching TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS financial_independence_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, profile TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS tax_loss_harvesters (
+  id TEXT PRIMARY KEY, user_id TEXT, portfolio TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/emergencyfund/build', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { monthly_expenses, current_savings, income, job_stability } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create a personalized emergency fund plan (educational, not financial advice).\nMonthly expenses: ${monthly_expenses}\nCurrent savings: ${current_savings||'$0'}\nMonthly income: ${income||'not specified'}\nJob stability: ${job_stability||'moderate'}\n\nCalculate target emergency fund size (3-6 months expenses), create a savings acceleration plan, identify expenses to cut to fund it faster, suggest high-yield savings account strategies, and provide a month-by-month milestone plan.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO emergency_fund_builders (id,user_id,situation,plan) VALUES (?,?,?,?)`).run(id,userId,monthly_expenses,plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/audit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { life_stage, current_coverage, income, dependents } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Audit my insurance coverage (educational only — consult a licensed insurance agent).\nLife stage: ${life_stage||'working adult'}\nCurrent coverage: ${current_coverage||'employer health only'}\nIncome: ${income||'not specified'}\nDependents: ${dependents||'none'}\n\nProvide an insurance audit covering: coverage gaps and over-coverage, what types of insurance are recommended for this life stage, how much coverage is typically needed, estimated cost ranges, and priority order to acquire coverage.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const audit = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO insurance_audit_tools (id,user_id,coverage,audit) VALUES (?,?,?,?)`).run(id,userId,current_coverage||'',audit);
+    res.json({ audit });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/moneymindset/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { money_beliefs, childhood_money_story, current_behaviors, goals } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Coach me on improving my money mindset.\nMoney beliefs: ${money_beliefs}\nChildhood money story: ${childhood_money_story||'not shared'}\nCurrent financial behaviors: ${current_behaviors||'not specified'}\nFinancial goals: ${goals||'financial freedom'}\n\nIdentify limiting money beliefs and their origins, reframe each belief with evidence-based counter-narratives, provide exercises to shift money mindset, and create a money affirmation practice tailored to the specific blocks identified.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const coaching = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO money_mindset_coaches (id,user_id,beliefs,coaching) VALUES (?,?,?,?)`).run(id,userId,money_beliefs,coaching);
+    res.json({ coaching });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fi/plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { age, income, expenses, savings_rate, net_worth } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create a Financial Independence (FIRE) roadmap (educational, not financial advice).\nAge: ${age}\nAnnual income: ${income}\nAnnual expenses: ${expenses||'unknown'}\nCurrent savings rate: ${savings_rate||'unknown'}\nCurrent net worth: ${net_worth||'$0'}\n\nCalculate FI number (25x annual expenses), years to FI at current savings rate, how to accelerate by increasing savings rate, the impact of income increases vs expense cuts, withdrawal strategy options (4% rule, etc.), and a milestone roadmap.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO financial_independence_planners (id,user_id,profile,plan) VALUES (?,?,?,?)`).run(id,userId,`${age}/${income}`,plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/taxloss/harvest', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { portfolio_description, unrealized_losses, tax_bracket, time_horizon } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Explain tax-loss harvesting strategy (educational only — consult a CPA/financial advisor).\nPortfolio: ${portfolio_description||'diversified ETF portfolio'}\nUnrealized losses: ${unrealized_losses||'unknown'}\nTax bracket: ${tax_bracket||'unknown'}\nTime horizon: ${time_horizon||'long-term'}\n\nExplain tax-loss harvesting: how it works, when to do it, wash sale rule to avoid, which assets to swap for similar exposure, how to track for taxes, estimated tax savings at different loss levels, and timing strategies (end of year vs throughout year).` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const strategy = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO tax_loss_harvesters (id,user_id,portfolio,strategy) VALUES (?,?,?,?)`).run(id,userId,portfolio_description||'',strategy);
+    res.json({ strategy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
