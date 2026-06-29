@@ -178257,3 +178257,97 @@ app.post('/api/family/legacy', requireAuth, async (req: AuthRequest, res) => {
     res.json({ legacy });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 73: LEARNING & KNOWLEDGE AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS analogy_makers (
+  id TEXT PRIMARY KEY, user_id TEXT, concept TEXT, analogy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mental_model_appliers (
+  id TEXT PRIMARY KEY, user_id TEXT, problem TEXT, models TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS speed_readers (
+  id TEXT PRIMARY KEY, user_id TEXT, content TEXT, summary TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS feynman_teachers (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS knowledge_connectors (
+  id TEXT PRIMARY KEY, user_id TEXT, concepts TEXT, connections TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/analogy/make', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { concept, audience, domain_preference } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create powerful analogies to explain this concept.\nConcept: ${concept}\nAudience: ${audience||'general public'}\nPreferred domain for analogies: ${domain_preference||'everyday life'}\n\nGenerate 3 different powerful analogies that make this concept instantly click. For each: explain the analogy, why it works, and where it breaks down. End with the single best analogy.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const analogy = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO analogy_makers (id,user_id,concept,analogy) VALUES (?,?,?,?)`).run(id,userId,concept,analogy);
+    res.json({ analogy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalmodel/apply', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { problem, context, desired_outcome } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Apply mental models to analyze this problem.\nProblem: ${problem}\nContext: ${context||'general'}\nDesired outcome: ${desired_outcome||'best decision'}\n\nIdentify the 3-5 most relevant mental models (first principles, inversion, second-order thinking, Occam's razor, etc.) and apply each one to reveal new insights about this problem. Conclude with an integrated recommendation.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const models = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO mental_model_appliers (id,user_id,problem,models) VALUES (?,?,?,?)`).run(id,userId,problem,models);
+    res.json({ models });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/speedread/summarize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { content, summary_length, focus_areas } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create an intelligent summary optimized for learning retention.\nContent: ${content}\nDesired summary length: ${summary_length||'concise (under 300 words)'}\nFocus areas: ${focus_areas||'key insights, actionable takeaways'}\n\nProvide: 1) A 1-sentence core thesis, 2) 5 key insights with brief explanations, 3) 3 actionable takeaways, 4) 2 questions to test understanding.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const summary = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO speed_readers (id,user_id,content,summary) VALUES (?,?,?,?)`).run(id,userId,content.substring(0,500),summary);
+    res.json({ summary });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/feynman/teach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, current_understanding, target_level } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Teach me this topic using the Feynman Technique.\nTopic: ${topic}\nMy current understanding: ${current_understanding||'beginner'}\nTarget understanding level: ${target_level||'solid conceptual grasp'}\n\nExplain this as if teaching a curious 12-year-old. Use simple language, concrete examples, and analogies. Identify where the explanation might break down and address it. End with a simple way I can test my understanding.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const explanation = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO feynman_teachers (id,user_id,topic,explanation) VALUES (?,?,?,?)`).run(id,userId,topic,explanation);
+    res.json({ explanation });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/knowledge/connect', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { concept_a, concept_b, domain } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Find surprising connections between these concepts.\nConcept A: ${concept_a}\nConcept B: ${concept_b}\nDomain context: ${domain||'cross-disciplinary'}\n\nDiscover and explain 3-5 non-obvious connections between these concepts. For each connection: name the bridge, explain the underlying pattern, and give a concrete example. This is for building a connected knowledge network.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const connections = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO knowledge_connectors (id,user_id,concepts,connections) VALUES (?,?,?,?)`).run(id,userId,`${concept_a} <-> ${concept_b}`,connections);
+    res.json({ connections });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
