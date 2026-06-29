@@ -177693,3 +177693,97 @@ app.post('/api/habit/stack', requireAuth, async (req: AuthRequest, res) => {
     res.json({ plan });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 67: PARENTING & FAMILY AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS parenting_advisors (
+  id TEXT PRIMARY KEY, user_id TEXT, child_age TEXT, situation TEXT, advice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS bedtime_story_creators (
+  id TEXT PRIMARY KEY, user_id TEXT, child_name TEXT, theme TEXT, story TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS family_meeting_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, family_size TEXT, topics TEXT, agenda TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS chore_chart_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, children TEXT, chores TEXT, chart TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS college_prep_advisors (
+  id TEXT PRIMARY KEY, user_id TEXT, student_grade TEXT, goals TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/parenting/advise', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { child_age, situation, concern } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Parenting advice needed.\nChild age: ${child_age}\nSituation: ${situation}\nConcern: ${concern||'general guidance'}\n\nProvide thoughtful, age-appropriate parenting advice with practical strategies and communication tips.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const advice = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO parenting_advisors (id,user_id,child_age,situation,advice) VALUES (?,?,?,?,?)`).run(id,userId,child_age,situation,advice);
+    res.json({ advice });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/bedtime/story', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { child_name, age, theme, length } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Write a bedtime story.\nChild's name: ${child_name}\nAge: ${age||5}\nTheme: ${theme||'adventure'}\nLength: ${length||'short (5 minutes)'}\n\nCreate an engaging, age-appropriate bedtime story with a gentle, sleep-inducing ending.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const story = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO bedtime_story_creators (id,user_id,child_name,theme,story) VALUES (?,?,?,?,?)`).run(id,userId,child_name,theme||'adventure',story);
+    res.json({ story });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/family/meeting', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { family_size, topics, frequency } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Plan a family meeting.\nFamily size: ${family_size}\nTopics to cover: ${topics}\nFrequency: ${frequency||'weekly'}\n\nCreate a structured family meeting agenda that encourages participation from all family members.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const agenda = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO family_meeting_planners (id,user_id,family_size,topics,agenda) VALUES (?,?,?,?,?)`).run(id,userId,family_size,topics,agenda);
+    res.json({ agenda });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/chore/chart', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { children, household_size, chore_types } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Build a chore chart.\nChildren: ${children}\nHousehold size: ${household_size||'average'}\nChore types preferred: ${chore_types||'all types'}\n\nCreate a fair, age-appropriate weekly chore chart with clear responsibilities and a reward system.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const chart = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO chore_chart_builders (id,user_id,children,chores,chart) VALUES (?,?,?,?,?)`).run(id,userId,children,chore_types||'',chart);
+    res.json({ chart });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/college/prep', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { student_grade, gpa, interests, goals } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `College preparation plan.\nStudent grade: ${student_grade}\nGPA: ${gpa||'unknown'}\nInterests: ${interests}\nCollege goals: ${goals}\n\nProvide a comprehensive college prep roadmap including coursework, extracurriculars, test prep, and application strategy.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO college_prep_advisors (id,user_id,student_grade,goals,plan) VALUES (?,?,?,?,?)`).run(id,userId,student_grade,goals,plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
