@@ -179747,3 +179747,90 @@ app.post('/api/mentalenergy/optimize', requireAuth, async (req: AuthRequest, res
     res.json({ plan });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── Wave 89: Relationships & Social Intelligence AI ───────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS social_style_decoders (
+  id TEXT PRIMARY KEY, user_id TEXT, scenario TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS networking_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, goals TEXT, style TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS conflict_mediators (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, parties TEXT, resolution TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS trust_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, relationship TEXT, challenges TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS social_anxiety_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, triggers TEXT, goals TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/socialstyle/decode', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { scenario, person_description, your_style } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a social intelligence and interpersonal dynamics expert. Decode social styles and provide interaction strategies.\nScenario: ${scenario}\nPerson description: ${person_description || 'unknown'}\nYour style: ${your_style || 'unknown'}\n\nProvide: social style analysis (Driver/Expressive/Analytical/Amiable), communication preferences, what they need from interactions, how to build rapport, common friction points, specific language to use/avoid, meeting/email style recommendations.` }
+    ]);
+    const analysis = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO social_style_decoders (id,user_id,scenario,analysis) VALUES (?,?,?,?)').run(uuidv4(), userId, scenario, analysis);
+    res.json({ analysis });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/networking/coach', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { goals, style, industry } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a professional networking strategist. Build a complete networking plan.\nGoals: ${goals}\nPersonality/style: ${style || 'introverted'}\nIndustry: ${industry || 'tech'}\n\nProvide: 30-day networking action plan, conversation starters for different contexts, follow-up scripts, LinkedIn outreach templates, how to give value before asking, weak ties strategy, virtual vs in-person tactics, metrics to track relationship health.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO networking_coaches (id,user_id,goals,style,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, goals, style, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/conflict/mediate', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { situation, parties, relationship_type } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a conflict resolution and mediation expert. Help resolve this conflict constructively.\nSituation: ${situation}\nParties involved: ${parties || 'two people'}\nRelationship type: ${relationship_type || 'professional'}\n\nProvide: conflict root cause analysis, each party's likely perspective, common ground identification, step-by-step conversation guide, exact scripts for the difficult conversation, what to avoid saying, how to reach a win-win, follow-up to prevent recurrence.` }
+    ]);
+    const resolution = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO conflict_mediators (id,user_id,situation,parties,resolution) VALUES (?,?,?,?,?)').run(uuidv4(), userId, situation, parties, resolution);
+    res.json({ resolution });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/trust/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { relationship, challenges, context } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a relationship trust expert. Create a trust-building strategy for this relationship.\nRelationship: ${relationship}\nCurrent challenges: ${challenges || 'low trust, poor communication'}\nContext: ${context || 'professional'}\n\nProvide: trust audit (what's broken and why), trust-building actions by week, consistency protocols, vulnerability calibration guide, how to repair trust after breaches, signals that trust is growing, long-term maintenance plan.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO trust_builders (id,user_id,relationship,challenges,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, relationship, challenges, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialanxiety/coach', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { triggers, goals, severity } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a social confidence coach (not a therapist — for severe anxiety recommend professional help). Help build social confidence.\nTriggers: ${triggers}\nSocial goals: ${goals}\nSeverity: ${severity || 'mild to moderate'}\n\nProvide: exposure hierarchy (easy→hard), pre-event preparation ritual, in-the-moment techniques, post-event processing, reframing negative social interpretations, conversation safety scripts, gradual challenge progression over 8 weeks.` }
+    ]);
+    const protocol = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO social_anxiety_coaches (id,user_id,triggers,goals,protocol) VALUES (?,?,?,?,?)').run(uuidv4(), userId, triggers, goals, protocol);
+    res.json({ protocol });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
