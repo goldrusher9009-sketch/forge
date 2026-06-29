@@ -174681,3 +174681,80 @@ app.post('/api/linkedin/rewrite', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 36: RELATIONSHIP & COMMUNICATION AI ─────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS difficult_convo_planners (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS feedback_givers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, feedback TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS persuasion_coaches (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS relationship_auditors (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS personal_ceos (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, review TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Difficult Conversation Planner
+app.post('/api/conversation/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { situation, relationship, desired_outcome, your_concerns } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Plan a difficult conversation.\n\nSituation: ${situation}\nRelationship: ${relationship||'colleague'}\nDesired outcome: ${desired_outcome}\nYour concerns: ${your_concerns||'avoid conflict'}\n\nRespond in JSON: { "pre_conversation": {"timing":"when to have it","setting":"where","your_mindset":"how to prepare yourself"}, "opening": "exact words to start the conversation (first 2-3 sentences)", "structure": [{"phase":"phase name","purpose":"what you're doing","example_language":"what to say"}], "likely_reactions": [{"reaction":"how they might respond","your_response":"what to say","what_not_to_say":"avoid this"}], "closing": "how to end the conversation constructively", "if_it_goes_badly": "what to do if it escalates or breaks down", "follow_up": "what to do after the conversation", "key_phrases": ["useful phrase to use"],"phrases_to_avoid": ["phrase that will inflame things"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO difficult_convo_planners (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Feedback Giver
+app.post('/api/feedback/craft', requireAuth, async (req: any, res: any) => {
+  try {
+    const { situation, person_role, behavior_observed, impact, desired_change } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Craft effective, kind, specific feedback.\n\nSituation: ${situation}\nPerson's role: ${person_role||'colleague'}\nBehavior observed: ${behavior_observed}\nImpact: ${impact}\nDesired change: ${desired_change}\n\nRespond in JSON: { "sbi_feedback": {"situation":"specific situation","behavior":"observable behavior only — no interpretation","impact":"impact on team/project/relationship"}, "written_version": "ready-to-say feedback in 3-4 sentences using SBI", "delivery_tips": ["how to set the tone","what body language helps","timing advice"], "positive_framing": "version that leads with strengths before the growth area", "follow_up_question": "open question to invite their perspective", "if_they_get_defensive": "how to respond", "appreciation_to_pair": "genuine appreciation to express alongside the feedback" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO feedback_givers (id,user_id,context,feedback) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Persuasion Coach
+app.post('/api/persuasion/script', requireAuth, async (req: any, res: any) => {
+  try {
+    const { goal, audience, current_resistance, context } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build an ethical persuasion script.\n\nGoal: ${goal}\nAudience: ${audience}\nCurrent resistance: ${current_resistance||'skeptical'}\nContext: ${context||'professional'}\n\nRespond in JSON: { "audience_analysis": "what they care about, their fears, their decision criteria", "core_message": "single sentence that captures your ask", "emotional_hook": "how to connect to what they care about", "logical_case": "3 strongest rational arguments", "social_proof": "what evidence or examples would move them", "objection_pre_emption": [{"objection":"likely pushback","response":"how to address it proactively"}], "call_to_action": "clear, low-friction ask", "script": "full persuasion script from opener to close", "follow_up": "if they don't decide now, what to do" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO persuasion_coaches (id,user_id,context,script) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Relationship Auditor
+app.post('/api/relationship/audit', requireAuth, async (req: any, res: any) => {
+  try {
+    const { relationship_type, description, concerns, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Audit a relationship and provide actionable insights.\n\nRelationship type: ${relationship_type||'friendship'}\nDescription: ${description}\nConcerns: ${concerns||'drifting apart'}\nGoals: ${goals||'improve the relationship'}\n\nRespond in JSON: { "health_score": "1-10 with rationale", "strengths": ["what is working well"], "patterns_to_address": [{"pattern":"recurring dynamic","impact":"how it affects the relationship","shift":"what to change"}], "energy_audit": "is this relationship giving or draining energy — honest assessment", "root_issues": ["underlying issue beneath surface symptoms"], "actionable_steps": [{"action":"specific thing to do","when":"timing","expected_outcome":"what it will accomplish"}], "conversation_to_have": "the conversation you're avoiding that needs to happen", "6_month_vision": "what this relationship could look like with intention", "boundary_suggestion": "if needed — a boundary that would help" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO relationship_auditors (id,user_id,context,audit) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Personal CEO Review
+app.post('/api/personal/ceo', requireAuth, async (req: any, res: any) => {
+  try {
+    const { time_period, wins, losses, goals, life_areas } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Run a Personal CEO Review — treat the person's life as a business and give a board-room-level review.\n\nTime period: ${time_period||'last quarter'}\nWins: ${wins}\nLosses/challenges: ${losses||'none noted'}\nGoals: ${goals||'growth'}\nLife areas to review: ${life_areas||'career, health, relationships, finances, personal growth'}\n\nRespond in JSON: { "executive_summary": "1-paragraph honest assessment", "metrics_dashboard": [{"life_area":"area","score":"1-10","trend":"up/down/flat","highlight":"best thing","concern":"biggest issue"}], "kpis_achieved": ["win with context"], "kpis_missed": ["miss with root cause analysis"], "strategic_risks": ["risk you're not paying enough attention to"], "resource_allocation": "where your time and energy is going vs where it should go", "strategic_opportunities": ["opportunity you're underinvesting in"], "next_quarter_priorities": ["priority 1","priority 2","priority 3"], "one_decision_to_make": "the single most important decision to make this quarter", "personal_board_advice": "what a wise mentor or personal board member would tell you" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO personal_ceos (id,user_id,context,review) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
