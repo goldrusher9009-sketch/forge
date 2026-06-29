@@ -175143,3 +175143,80 @@ app.post('/api/cooking/coach', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 42: SPORTS & ATHLETIC PERFORMANCE AI ─────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS training_planners (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS sport_analyzers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS injury_advisors (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mental_game_coaches (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS fantasy_advisors (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Training Planner
+app.post('/api/training/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { sport, goal, current_level, available_days, equipment } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a periodized sports training plan.\n\nSport: ${sport}\nGoal: ${goal||'improve performance'}\nCurrent level: ${current_level||'intermediate'}\nAvailable training days: ${available_days||'4 days/week'}\nEquipment: ${equipment||'standard gym'}\n\nRespond in JSON: { "program_overview": "periodization approach and philosophy", "phases": [{"phase":"phase name","duration":"weeks","focus":"training emphasis","intensity":"low/medium/high"}], "weekly_schedule": [{"day":"day name","session_type":"type","duration":"minutes","exercises":[{"exercise":"name","sets":"sets","reps":"reps or duration","rest":"rest period","coaching_cue":"technical tip"}],"session_notes":"key focus"}], "sport_specific_drills": [{"drill":"name","purpose":"what it develops","how_to":"instructions","progressions":"how to make it harder"}], "recovery_protocol": "recovery strategy between sessions", "nutrition_timing": "when and what to eat around training", "benchmark_tests": ["test to measure progress"], "deload_week": "what a recovery week looks like", "warning_signs": "signs of overtraining to watch for" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO training_planners (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Sport Analyzer
+app.post('/api/sport/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { sport, position, strengths, weaknesses, game_situation } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze an athlete's game and provide tactical improvements.\n\nSport: ${sport}\nPosition: ${position||'general'}\nStrengths: ${strengths}\nWeaknesses: ${weaknesses}\nGame situation to analyze: ${game_situation||'overall performance'}\n\nRespond in JSON: { "performance_assessment": "overall assessment of the player", "technical_skills": [{"skill":"specific skill","current":"assessment","drill_to_improve":"specific drill","focus_cue":"what to think about during practice"}], "tactical_improvements": [{"situation":"game situation","current_tendency":"what they do now","better_approach":"what to do instead","why":"reasoning"}], "physical_priorities": [{"attribute":"physical quality","importance_to_sport":"why it matters","training_method":"how to develop it"}], "film_study": ["what to look for when watching game tape"], "pre_game_routine": "mental and physical preparation", "in_game_adjustments": "how to adapt when something isn't working", "coachability_tips": "how to get the most from coaching" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO sport_analyzers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Injury Advisor (general info only)
+app.post('/api/injury/advise', requireAuth, async (req: any, res: any) => {
+  try {
+    const { injury_type, sport, pain_location, when_it_hurts } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Provide general sports injury information. NOT medical advice — always see a doctor for injuries.\n\nInjury type/description: ${injury_type}\nSport: ${sport||'general athletics'}\nPain location: ${pain_location}\nWhen it hurts: ${when_it_hurts||'during and after activity'}\n\nRespond in JSON: { "disclaimer": "important: see a medical professional for proper diagnosis and treatment", "likely_causes": ["common cause of this type of injury in this sport"], "acute_response": "RICE or appropriate immediate care protocol", "when_to_see_doctor": "specific signs that require medical attention NOW", "return_to_play": "general stages of return — not a timeline, those vary by individual", "prevention_exercises": [{"exercise":"name","purpose":"what it prevents","sets":"sets","reps":"reps"}], "movement_modifications": "how to stay active while protecting the injury", "common_mistakes": ["mistake athletes make with this injury type"], "questions_for_physio": ["question to ask your physiotherapist or doctor"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO injury_advisors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Mental Game Coach
+app.post('/api/mental/game', requireAuth, async (req: any, res: any) => {
+  try {
+    const { sport, mental_challenge, situation, level } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Coach the mental side of sports performance.\n\nSport: ${sport}\nMental challenge: ${mental_challenge||'performance anxiety'}\nSituation: ${situation||'competition'}\nCompetition level: ${level||'recreational'}\n\nRespond in JSON: { "psychological_analysis": "what is happening mentally and why", "elite_athlete_perspective": "how top athletes handle this", "pre_competition_routine": [{"timing":"when","activity":"mental technique","purpose":"what it does"}], "in_competition_tools": [{"technique":"name","how":"step-by-step","when_to_use":"situation"}], "visualization_script": "guided visualization script for this sport and challenge", "self_talk_scripts": [{"situation":"when","negative_thought":"what to replace","positive_replacement":"what to say instead"}], "pressure_reframe": "how to think about pressure differently", "flow_state_triggers": ["thing that reliably gets you in the zone"], "post_performance": "how to process both wins and losses", "long_term_mental_training": "ongoing mental skills practice" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO mental_game_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Fantasy Sports Advisor
+app.post('/api/fantasy/advise', requireAuth, async (req: any, res: any) => {
+  try {
+    const { sport, league_type, roster, situation } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Give fantasy sports advice.\n\nSport: ${sport||'football'}\nLeague type: ${league_type||'standard PPR'}\nCurrent roster: ${roster}\nSituation/question: ${situation}\n\nRespond in JSON: { "recommendation": "direct answer to their question", "reasoning": "analytical reasoning behind the recommendation", "risk_level": "low/medium/high risk of this move", "upside": "best case scenario", "downside": "worst case scenario", "waiver_targets": ["player to target on waivers and why"], "streaming_options": ["stream this week option"], "trade_opportunities": "trade to consider based on roster", "start_sit_logic": "framework for making start/sit decisions", "weekly_tips": ["general tip for this week"], "avoid_this_week": ["player to avoid and why"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO fantasy_advisors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
