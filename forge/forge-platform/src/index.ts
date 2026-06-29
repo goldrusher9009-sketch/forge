@@ -177599,3 +177599,97 @@ app.post('/api/revenue/model', requireAuth, async (req: AuthRequest, res) => {
     res.json(data);
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 66: HEALTH & WELLNESS AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS meal_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, goals TEXT, restrictions TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS workout_designers (
+  id TEXT PRIMARY KEY, user_id TEXT, fitness_level TEXT, equipment TEXT, goal TEXT, workout TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS sleep_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, issues TEXT, schedule TEXT, advice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS stress_managers (
+  id TEXT PRIMARY KEY, user_id TEXT, stressors TEXT, lifestyle TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS habit_stackers (
+  id TEXT PRIMARY KEY, user_id TEXT, existing_habits TEXT, new_habit TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/meal/plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goals, restrictions, days } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create a ${days||7}-day meal plan.\nGoals: ${goals}\nDietary restrictions: ${restrictions||'none'}\n\nProvide structured daily meal plans with breakfast, lunch, dinner, and snacks. Include macros and prep tips.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO meal_planners (id,user_id,goals,restrictions,plan) VALUES (?,?,?,?,?)`).run(id,userId,goals,restrictions||'',plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/workout/design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { fitness_level, equipment, goal, days_per_week } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Design a workout program.\nFitness level: ${fitness_level}\nEquipment: ${equipment||'none'}\nGoal: ${goal}\nDays per week: ${days_per_week||3}\n\nProvide a complete weekly workout schedule with exercises, sets, reps, and progressions.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const workout = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO workout_designers (id,user_id,fitness_level,equipment,goal,workout) VALUES (?,?,?,?,?,?)`).run(id,userId,fitness_level,equipment||'',goal,workout);
+    res.json({ workout });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sleep/optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { issues, schedule, lifestyle } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help optimize sleep quality.\nSleep issues: ${issues}\nCurrent schedule: ${schedule||'irregular'}\nLifestyle: ${lifestyle||'sedentary'}\n\nProvide a comprehensive sleep optimization plan including routines, environment tips, and habit changes.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const advice = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO sleep_optimizers (id,user_id,issues,schedule,advice) VALUES (?,?,?,?,?)`).run(id,userId,issues,schedule||'',advice);
+    res.json({ advice });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/stress/manage', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { stressors, lifestyle, severity } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create a stress management plan.\nMain stressors: ${stressors}\nLifestyle: ${lifestyle||'busy professional'}\nSeverity (1-10): ${severity||5}\n\nProvide evidence-based techniques, daily practices, and long-term strategies for managing stress.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO stress_managers (id,user_id,stressors,lifestyle,plan) VALUES (?,?,?,?,?)`).run(id,userId,stressors,lifestyle||'',plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/habit/stack', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { existing_habits, new_habit, timeframe } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Design a habit stacking plan.\nExisting habits: ${existing_habits}\nNew habit to add: ${new_habit}\nTimeframe: ${timeframe||'30 days'}\n\nUse habit stacking science to create a realistic implementation plan with cues, routines, and rewards.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO habit_stackers (id,user_id,existing_habits,new_habit,plan) VALUES (?,?,?,?,?)`).run(id,userId,existing_habits,new_habit,plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
