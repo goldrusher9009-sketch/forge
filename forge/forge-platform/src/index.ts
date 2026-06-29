@@ -177431,3 +177431,87 @@ app.post('/api/performance/review', requireAuth, async (req: AuthRequest, res) =
     res.json(data);
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 64: RELATIONSHIP & DATING AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS attraction_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, context TEXT, advice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS relationship_auditors (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS first_date_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS texting_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, conversation TEXT, coaching TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS breakup_analyzers (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/attraction/build', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, target_person, your_current_approach, what_you_want } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a dating and attraction coach. Provide practical, ethical advice for building genuine attraction. Situation: ${situation}. About the person: ${target_person}. Current approach: ${your_current_approach}. What you want: ${what_you_want}. Return JSON: { situation_read, what_theyre_likely_feeling, what_you_might_be_doing_wrong: [3], attraction_builders: [{ action, why_it_works, how_to_execute, timing }] (7), conversation_starters_for_this_person: [5], next_move: { what, when, how, expected_response }, what_not_to_do: [5], confidence_builders: [3 mindset shifts], long_game_strategy, green_flags_to_look_for: [5], red_flags_to_watch: [5] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO attraction_builders VALUES (?,?,?,?,?)').run(uuidv4(), userId, situation, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/relationship/audit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { relationship_type, duration, current_issues, what_you_want_to_know } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a relationship coach. Conduct a brutally honest but compassionate relationship audit. Type: ${relationship_type}. Duration: ${duration}. Issues: ${current_issues}. Question: ${what_you_want_to_know}. Return JSON: { relationship_health_score (1-10), overall_assessment, strengths: [{ strength, evidence, how_to_leverage }], weaknesses: [{ weakness, root_cause, how_to_fix }], patterns_detected: [{ pattern, who_drives_it, impact, change_needed }], communication_audit: { current_style, issues, recommended_style }, attachment_style_guess: { yours, theirs, compatibility }, deal_breakers_present: boolean, honest_verdict, action_plan: [{ priority, action, timeline, expected_outcome }] (5), should_you_stay_or_go: { recommendation, reasoning, caveats }, conversation_to_have: { topic, how_to_open, what_to_say, what_to_listen_for } }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO relationship_auditors VALUES (?,?,?,?)').run(uuidv4(), userId, current_issues, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/first/date', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { about_them, your_city, budget, vibe, shared_interests } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a date planning expert. Create the perfect first date experience. About them: ${about_them}. City: ${your_city}. Budget: ${budget}. Vibe: ${vibe}. Shared interests: ${shared_interests}. Return JSON: { date_concept, why_this_works_for_them, date_plans: [{ plan_name, description, schedule: [{ time, activity, location_type, why_this_moment_matters }], estimated_cost, vibe, conversation_flow, backup_plan }] (3 options), conversation_topics_to_prepare: [{ topic, why_they_might_love_it, how_to_bring_it_up }] (7), questions_to_ask: [{ question, what_you_learn_from_answer }] (10), what_to_wear_advice, how_to_end_the_date: { what_to_say, physical_escalation_guide, next_steps }, green_flags_during_date: [5], signs_to_cut_short: [3], follow_up_text_template }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO first_date_planners VALUES (?,?,?,?)').run(uuidv4(), userId, about_them, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/texting/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { conversation_history, context, goal, their_vibe } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a texting and messaging coach. Analyze this conversation and provide coaching. Conversation: ${conversation_history}. Context: ${context}. Goal: ${goal}. Their vibe: ${their_vibe}. Return JSON: { conversation_analysis: { their_interest_level (1-10), their_communication_style, what_theyre_signaling, energy_balance }, what_you_did_well: [3], what_to_change: [3], next_message_options: [{ message, tone, why_it_works, expected_response }] (4), texting_rules_for_this_person: [5], topics_to_introduce: [3], topics_to_avoid: [3], when_to_text: { best_times, frequency, when_to_pull_back }, escalation_path: { current_stage, next_stage, how_to_get_there }, red_flags_in_their_messages: [potential_issues] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO texting_coaches VALUES (?,?,?,?)').run(uuidv4(), userId, conversation_history, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/breakup/analyze', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { relationship_summary, how_it_ended, how_you_feel, what_you_want } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a compassionate breakup coach and therapist. Help process this breakup with honesty and care. Relationship: ${relationship_summary}. How it ended: ${how_it_ended}. Feelings: ${how_you_feel}. What you want: ${what_you_want}. Return JSON: { validation, what_actually_happened (honest read), your_role_in_the_dynamic, their_role_in_the_dynamic, what_this_relationship_taught_you: [5 lessons], grief_stages_youre_in: { stage, how_long_typically, what_helps }, no_contact_recommendation: { should_you, why, for_how_long }, healing_timeline: [{ week, what_to_expect, what_to_do }] (8 weeks), patterns_to_break_before_next_relationship: [3], what_youre_actually_missing (often not the person), rebuilding_yourself: { identity_rebuild: [5 actions], confidence_rebuild: [5 actions], social_life_rebuild: [5 actions] }, signs_youre_ready_to_date_again: [5], letter_to_your_past_self (100 words) }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO breakup_analyzers VALUES (?,?,?,?)').run(uuidv4(), userId, relationship_summary, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});

@@ -1,3 +1,5 @@
+## v236.00 — Dream Mode Wave 64: Relationship & Dating AI (Attraction Builder + Relationship Auditor + First Date Planner + Texting Coach + Breakup Analyzer)
+
 ## v235.00 — Dream Mode Wave 63: Peak Performance AI (Flow State Optimizer + Cognitive Enhancer + Mental Models Builder + Decision Speed Trainer + Performance Reviewer)
 
 ## v234.00 — Dream Mode Wave 62: Money & Wealth AI (Passive Income Planner + Tax Strategist + Investment Thesis Builder + Wealth Gap Analyzer + Money Mindset Coach)
