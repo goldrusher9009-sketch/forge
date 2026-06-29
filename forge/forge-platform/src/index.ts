@@ -174912,3 +174912,80 @@ app.post('/api/smallclaims/coach', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 39: PARENTING & EDUCATION AI ────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS parenting_coaches (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS lesson_planners (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS college_advisors (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS behavior_decoders (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS learning_style_maps (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Parenting Coach
+app.post('/api/parenting/coach', requireAuth, async (req: any, res: any) => {
+  try {
+    const { child_age, situation, parenting_style, what_tried } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Provide parenting guidance with empathy and evidence-based strategies.\n\nChild age: ${child_age}\nSituation: ${situation}\nParenting style: ${parenting_style||'authoritative'}\nWhat you've tried: ${what_tried||'nothing yet'}\n\nRespond in JSON: { "what_is_happening": "developmental context — why this behavior makes sense at this age", "immediate_strategy": "what to do right now in this situation", "long_term_approach": "how to address the root cause over weeks/months", "scripts": [{"scenario":"situation","say_this":"exact words","avoid_saying":"what not to say","why":"why this framing works"}], "developmental_insight": "what this behavior tells you about your child's development", "when_to_worry": "signs this might need professional support", "self_care_reminder": "brief reminder for the parent", "research_basis": "what the parenting research says about this situation" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO parenting_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Lesson Planner
+app.post('/api/lesson/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { subject, grade_level, duration, learning_objectives, student_needs } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a complete lesson plan.\n\nSubject: ${subject}\nGrade level: ${grade_level}\nDuration: ${duration||'45 minutes'}\nLearning objectives: ${learning_objectives}\nStudent needs: ${student_needs||'mixed ability class'}\n\nRespond in JSON: { "overview": "one-sentence lesson overview", "standards_alignment": "common core or content standards this addresses", "materials": ["material needed"], "warm_up": {"duration":"5 min","activity":"what to do","purpose":"why"}, "instruction": [{"phase":"phase name","duration":"time","teacher_actions":"what teacher does","student_actions":"what students do","key_questions":["question to ask"]}], "practice": {"type":"guided or independent","activity":"description","differentiation":{"struggling":"modification for struggling students","advanced":"extension for advanced students"}}, "closure": {"duration":"5 min","activity":"how to wrap up and check understanding"}, "assessment": "how to measure learning during and after this lesson", "homework": "optional homework assignment", "extension_ideas": ["enrichment activity if time allows"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO lesson_planners (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// College Advisor
+app.post('/api/college/advise', requireAuth, async (req: any, res: any) => {
+  try {
+    const { gpa, test_scores, activities, interests, budget, dream_schools } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Provide college admissions guidance.\n\nGPA: ${gpa||'unknown'}\nTest scores: ${test_scores||'not yet taken'}\nActivities/achievements: ${activities}\nInterests: ${interests}\nBudget concern: ${budget||'need financial aid'}\nDream schools: ${dream_schools||'undecided'}\n\nRespond in JSON: { "profile_assessment": "honest assessment of the student's college profile", "school_categories": {"reach":["reach school type with reasoning"],"match":["match school type"],"safety":["safety school type"]}, "application_strategy": "overall approach — what to emphasize, what narrative to build", "essay_angles": [{"prompt":"common essay topic","angle":"unique angle for this student","why_it_works":"reasoning"}], "activities_to_add": ["high-impact activity to pursue if time allows"], "timeline": [{"grade":"grade level or semester","action":"what to do"}], "financial_aid_tips": ["scholarship or aid strategy"], "major_exploration": "suggested majors based on interests", "interview_prep": "top 3 things to practice for interviews", "red_flags_to_fix": ["something in the profile to address"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO college_advisors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Behavior Decoder
+app.post('/api/behavior/decode', requireAuth, async (req: any, res: any) => {
+  try {
+    const { child_age, behavior, when_it_happens, frequency } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Decode a child's behavior through a developmental lens.\n\nChild age: ${child_age}\nBehavior: ${behavior}\nWhen it happens: ${when_it_happens||'various times'}\nFrequency: ${frequency||'often'}\n\nRespond in JSON: { "developmental_explanation": "why this behavior is developmentally normal or significant", "underlying_need": "what need the child is trying to meet with this behavior", "triggers": ["likely trigger for this behavior"], "functions": ["what function this behavior serves for the child"], "response_strategies": [{"strategy":"approach name","how":"step-by-step instructions","why":"why it works"}], "what_not_to_do": [{"mistake":"common parental response","why_it_backfires":"why it makes things worse"}], "environmental_changes": ["change to the environment that could reduce the behavior"], "connection_time": "how to use connection to address this behavior", "professional_referral": "when to see a pediatrician, therapist, or specialist" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO behavior_decoders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Learning Style Map
+app.post('/api/learning/style', requireAuth, async (req: any, res: any) => {
+  try {
+    const { learner_age, strengths, struggles, interests, school_performance } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Map a learner's style and create a personalized study strategy.\n\nLearner age: ${learner_age}\nStrengths: ${strengths}\nStruggles: ${struggles}\nInterests: ${interests||'varied'}\nSchool performance: ${school_performance||'average'}\n\nRespond in JSON: { "learning_profile": "narrative of how this person learns best", "dominant_styles": [{"style":"learning style name","evidence":"how you can tell","percentage":"rough contribution"}], "study_strategies": [{"strategy":"technique name","how_to":"step by step","why_it_works":"reason based on their style","when_to_use":"best context"}], "environment_setup": "ideal study environment description", "memory_techniques": ["memorization technique suited to this learner"], "technology_tools": ["app or tool that matches their learning style"], "what_teachers_should_know": ["insight for educators"], "red_flags_for_ld": "signs that might indicate a learning difference worth assessing", "parent_tips": ["how to support this learner at home"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO learning_style_maps (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
